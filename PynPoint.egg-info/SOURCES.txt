@@ -26,6 +26,7 @@ PynPoint.egg-info/PKG-INFO
 PynPoint.egg-info/SOURCES.txt
 PynPoint.egg-info/dependency_links.txt
 PynPoint.egg-info/not-zip-safe
+PynPoint.egg-info/requires.txt
 PynPoint.egg-info/top_level.txt
 docs/Makefile
 docs/authors.rst
@@ -36,6 +37,7 @@ docs/history.rst
 docs/index.rst
 docs/installation.rst
 docs/usage.rst
+scripts/PynPoint_workflow
 test/.DS_Store
 test/__init__.py
 test/__init__.pyc
@@ -51,3 +53,19 @@ test/test_Util.py
 test/test_basis.py
 test/test_residuals.py
 test/test_workflow.py
+test/test_data/Cube_000_Frame_0002_zoom_2.0.fits_shift.fits_planet.fits
+test/test_data/Cube_000_Frame_0166_zoom_2.0.fits_shift.fits_planet.fits
+test/test_data/Cube_001_Frame_0130_zoom_2.0.fits_shift.fits_planet.fits
+test/test_data/Cube_003_Frame_0160_zoom_2.0.fits_shift.fits_planet.fits
+test/test_data/PynPoint_test_v001.config
+test/test_data/temp_to_delete.temp
+test/test_data/test_data_PynPoint_basis.hdf5
+test/test_data/test_data_PynPoint_conv.hdf5
+test/test_data/test_data_PynPoint_images.hdf5
+test/test_data/test_data_basis_v001.hdf5
+test/test_data/test_data_images_v001.hdf5
+test/test_data/test_data_residuals_v001.hdf5
+test/test_data/testfile_basis.hdf5
+test/test_data/testfile_images.hdf5
+test/test_data/workspace_tempws.config
+test/test_data/workspace_tempws_basic.hdf5

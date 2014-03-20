@@ -3,16 +3,16 @@
 import pyfits
 import scipy
 import pylab as pl
-import glob
-import ImageChops
-from PIL import Image
-from scipy.optimize import fmin
+# import glob
+# import ImageChops
+# from PIL import Image
+# from scipy.optimize import fmin
 import time
 from scipy.ndimage.filters import gaussian_filter
-import random
-import h5py
+# import random
+# import h5py
 import numpy as np
-from scipy import linalg
+# from scipy import linalg
 
 #import extra PynPoint functions:
 import Util
