@@ -1,0 +1,48 @@
+Metadata-Version: 1.1
+Name: PynPoint
+Version: 0.1.0
+Summary: "This is the PynPoint package, which is used to analyse ADI images to find exoplanets"
+Home-page: "wiki.phys.ethz.ch/PynPoint"
+Author: Adam Amara
+Author-email: adam.amara@phys.ethz.ch
+License: Proprietary
+Description: =============================
+        PynPoint
+        =============================
+        
+        "This is the PynPoint package, which is used to analyse ADI images to find exoplanets"
+        
+        
+        Features
+        --------
+        
+        * TODO
+        
+        
+        
+        Documentation
+        -------------
+        
+        The full documentation can be generated with Sphinx
+        
+        
+        
+        History
+        -------
+        
+        0.1.0 (2014-01-01)
+        ++++++++++++++++++
+        
+        * First release on PyPI.
+Keywords: PynPoint
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Proprietary
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
