@@ -1,0 +1,14 @@
+#!/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/python
+
+import sys
+import PynPoint_v1_5 as PynPoint
+
+fileconfig = str(sys.argv[1])
+print(fileconfig)
+ws = PynPoint.workflow.run(fileconfig,force_replace=True)
+
+
+# import PynPoint_v1_5 as PynPoint
+# fileconfig = '/Users/amaraa/Work/Active_Projects/PynPoint_v1_5/test/test_data/PynPoint_test_v001.config'
+# ws = PynPoint.workflow.run(fileconfig,force_replace=True)
+# 
