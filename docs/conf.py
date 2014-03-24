@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import sys, os
+import sphinx_eth_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -254,5 +255,5 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 #sys.path.append(os.path.abspath("_theme"))
-#html_theme_path = ["_theme"]
-#html_theme = "eth"
+html_theme_path = [sphinx_eth_theme.get_html_theme_path()]
+html_theme = "sphinx_eth_theme"

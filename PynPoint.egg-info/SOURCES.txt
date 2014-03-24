@@ -30,6 +30,7 @@ PynPoint.egg-info/requires.txt
 PynPoint.egg-info/top_level.txt
 docs/.coverage
 docs/Makefile
+docs/PynPoint.rst
 docs/authors.rst
 docs/check_sphinx.py
 docs/conf.py
@@ -38,6 +39,7 @@ docs/history.rst
 docs/index.rst
 docs/installation.rst
 docs/junit-docs-ci.xml
+docs/modules.rst
 docs/usage.rst
 scripts/PynPoint_workflow
 test/.DS_Store
