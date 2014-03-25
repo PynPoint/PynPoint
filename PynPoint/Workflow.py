@@ -57,18 +57,21 @@ class workflow():
     def save(self):#,dirout):
         dirout = data=self.dirname
         self._ctx.save(dirout)
-        fsave = h5py.File(dirout+'ws_basic.hdf5','w')
+        fsave = h5py.File(dirout+'/ws_basic.hdf5','w')
         fsave.create_dataset('dirname',data=self.dirname)
         fsave.create_dataset('modules',data=self.modules)        
         fsave.close()
-        fileconfig = open(dirout+'ws.config','w')
+        fileconfig = open(dirout+'/ws.config','w')
         self.config.write(fileconfig)
         fileconfig.close()
         return dirout
         
         
     def get(self,name):
-        return self._ctx.get(name)            
+        return self._ctx.get(name)   
+        
+    def get_options(self):
+        return self._ctx.entries()
            
     
     def _init_config(self,config_in):

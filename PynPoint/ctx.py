@@ -71,6 +71,8 @@ class Ctx():
             else:
                 print('ERROR: filetype not recognised!')
             obj.add(entries[i],run_temp)
+
+        return obj
         
                 
         
