@@ -1,7 +1,7 @@
 #!/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/python
 
 import sys
-import PynPoint_v1_5 as PynPoint
+import PynPoint
 
 fileconfig = str(sys.argv[1])
 print(fileconfig)
