@@ -10,6 +10,7 @@ from Residuals import residuals
 from ctx import Ctx
 import shutil
 import h5py
+import time
 
 #import PynPoint_v1_5 as PynPoint
 
@@ -75,7 +76,7 @@ class workflow():
            
     
     def _init_config(self,config_in):
-        print(type(config_in))        
+        # print(type(config_in))        
         if (type(config_in) == types.InstanceType):
             assert config_in.__module__ == 'ConfigParser', 'Error: This instance is not from ConfigParser'
             self.config = config_in
@@ -95,7 +96,7 @@ class workflow():
             shutil.rmtree(dirname)
             
             
-        print(dirname)
+        # print(dirname)
         #assert 2==1
         os.mkdir(dirname)
         fileconfig = open(dirname+'/wf.config','w')
@@ -130,7 +131,8 @@ class workflow():
         if not extra_text is None:
             filebookkeep.write(extra_text+'\n')
         filebookkeep.write('Time stamp:\n')
-        filebookkeep.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+        filebookkeep.write(strftime("%Y-%m-%d %H:%M:%S", gmtime())+'\n')
+        filebookkeep.write(str(time.time()))        
         filebookkeep.write('\n')
         filebookkeep.close()
         
@@ -200,8 +202,8 @@ class workflow():
         
 
     def _run_residuals_mod(self,section_id,ctx):
-        print(section_id)
-        print('hihi')
+        # print(section_id)
+        # print('hihi')
         # input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
         images_in = self.config.get(section_id,'images_input')
         basis_in = self.config.get(section_id,'basis_input')
@@ -224,11 +226,61 @@ class workflow():
             kwargs = self.config._sections[options_section]
         if '__name__' in kwargs:
             del kwargs['__name__']
+        
+        if not kwargs is None:
+            kwargs = self.check_kwargs(**kwargs)
+
         return kwargs
 
         ##
+        
+    def check_kwargs(self,**kwargs):
 
+        if 'recent' in kwargs.keys():
+            kwargs['recent'] = self.str2bool(kwargs['recent'])
+            
+            
+        if 'resize' in kwargs.keys():
+        # if hasattr(kwargs, 'resize'):
+            kwargs['resize'] = self.str2bool(kwargs['resize'])
         
+        if 'cent_remove' in kwargs.keys():
+        # if hasattr(kwargs, 'cent_remove'):
+            kwargs['cent_remove'] = self.str2bool(kwargs['cent_remove'])
         
+        if 'ran_sub' in kwargs.keys():
+        # if hasattr(kwargs, 'ran_sub'):
+            kwargs['ran_sub'] = self.str2bool(kwargs['ran_sub'])
+    
+        if 'para_sort' in kwargs.keys():
+        # if hasattr(kwargs, 'para_sort'):
+            kwargs['para_sort'] = self.str2bool(kwargs['para_sort'])
+    
+        if 'inner_pix' in kwargs.keys():
+        # if hasattr(kwargs, 'inner_pix'):
+            kwargs['inner_pix'] = self.str2bool(kwargs['inner_pix'])
+
+        if 'F_int' in kwargs.keys():
+        # if hasattr(kwargs, 'F_int'):
+            kwargs['F_int'] = float(kwargs['F_int'])
+    
+        if 'F_final' in kwargs.keys():
+        # if hasattr(kwargs, 'F_final'):
+            kwargs['F_final'] = float(kwargs['F_final'])
+    
+        if 'cent_size' in kwargs.keys():
+        # if hasattr(kwargs, 'cent_size'):
+            kwargs['cent_size'] = float(kwargs['cent_size'])
+    
+        if 'edge_size' in kwargs.keys():
+        # if hasattr(kwargs, 'edge_size'):
+            kwargs['edge_size'] = float(kwargs['edge_size'])
+
+        return kwargs
+    
+        
+    def str2bool(self,v):
+        return v.lower() in ("yes", "true", "t", "1")
+  
 
 
