@@ -68,7 +68,11 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
     """
     #inner_pix needs to be a 2 elements vector with dimension in x and y
     #    im_arr = np.zeros([obj.num_files,obj.im_size[0],obj.im_size[1]]) # array to store images
-    im_norm = np.zeros(obj.num_files)
+    assert (obj.num_files > 0), 'Error: Number of files is zero - input: %f' %obj.num_files
+    assert (os.path.isfile(obj.files[0])), 'Error: The first input file is not a file  - input: %s' %obj.files[0]
+    
+
+    im_norm = np.zeros(obj.num_files)    
     para = np.zeros(obj.num_files)
     for i in range(0,obj.num_files):
         file_temp = obj.files[i]
@@ -94,7 +98,7 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
 
         if (i == 0):
             #print indx1,indx2,indy1,indy2
-            print im_temp.shape
+            # print im_temp.shape
             im_arr = np.zeros([obj.num_files,im_temp.shape[0],im_temp.shape[1]]) # setup array to store images
             obj.im_size = im_temp.shape
         #im_norm[i] = im_temp.sum()
@@ -146,18 +150,22 @@ def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
     # im_arr[i,] = im_temp/im_norm[i] # rd all the images
     
     
-    if resize is True and recent is True:
+    if str(resize) == 'True' and str(recent) == 'True':
         print 'Update: Resizing and recentring ...'
         obj.im_arr = mk_resizerecent(obj.im_arr,F_int,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
-    elif resize is True:
+    elif str(resize) == 'True':
         print 'Update: Resizing ...'
         obj.im_arr = mk_resizeonly(obj.im_arr,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
     
-    
-    if cent_remove is True:
-        #mask1 = mask(obj.im_arr[0,].shape[0],obj.im_arr[0,].shape[1])
+    print('!!!')
+    print(type(cent_remove))
+    print('L')
+    print(str(cent_remove) == 'True')
+
+    if str(cent_remove) == 'True':
+        print('!!!!! REACHED CENT_REMOVE !!!!!!')
         im_arr_omask,im_arr_imask,cent_mask = mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
         obj.im_arr = im_arr_omask
         obj.im_arr_mask = im_arr_imask
@@ -197,9 +205,9 @@ def mk_avesub(im_arr_in):
     """Function for subtracting the mean image from a Stack"""
     im_arr = im_arr_in.copy()
     im_ave = im_arr.mean(axis = 0)#/self.num_files
-    print(len(im_arr[:,0,0]))
+    #print(len(im_arr[:,0,0]))
     for i in range(0,len(im_arr[:,0,0])):
-        print(i,im_arr[i,].shape,im_ave.shape)
+        # print(i,im_arr[i,].shape,im_ave.shape)
         im_arr[i,] -= im_ave
     return im_arr,im_ave
 
@@ -314,7 +322,7 @@ def mk_resizerecent(im_arr,F_int,F_final):
 	"""
     xnum_int,ynum_int = int(im_arr.shape[1]*F_int),int(im_arr.shape[2]*F_int)
     xnum_final,ynum_final = int(im_arr.shape[1]*F_final),int(im_arr.shape[2]*F_final)
-    print xnum_int,ynum_int
+    # print xnum_int,ynum_int
     x_im_cent_int,y_im_cent_int = (xnum_int - 1.) /2.,(ynum_int - 1.) /2.
     #    im_arr_res = np.zeros([im_arr.shape[0],xnum_int,ynum_int])
     im_arr_res = np.zeros([im_arr.shape[0],xnum_final,ynum_final])
@@ -336,6 +344,10 @@ def mk_resizeonly(im_arr,F_final):
     dimensions that are F_final that of the input images
 	"""
     xnum_final,ynum_final = int(im_arr.shape[1]*F_final),int(im_arr.shape[2]*F_final)
+    print(F_final)
+    print(type(F_final))
+    print(im_arr.shape[1],im_arr.shape[2])
+    print(im_arr.shape[0],xnum_final,ynum_final)
     im_arr_res = np.zeros([im_arr.shape[0],xnum_final,ynum_final])
     for i in range(0,im_arr.shape[0]):
         im_temp = im_arr[i]
@@ -363,7 +375,7 @@ def save_data(Obj,filename):
     data_types = getattr(Obj)
     
     fsave = h5py.File(filename,'w')
-    print(filename)
+    # print(filename)
     for i in range(0,len(data_types)):
         # print(data_types[i],':',Obj.__dict__[data_types[i]])
         fsave.create_dataset(data_types[i],data=Obj.__dict__[data_types[i]],maxshape=None)        
@@ -501,7 +513,3 @@ def peak_find(imtemp,limit=0.8,printit=False):
             
     return x_peaks,y_peaks, h_peaks,sig,num_peaks
 
-
-
-
-    

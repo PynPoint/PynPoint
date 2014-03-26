@@ -58,7 +58,9 @@ def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=T
     """
     
     ##convert to hdf5
+    assert (os.path.isdir(dir_in)), 'Error: Input directory does not exist - input requested: %s'%dir_in
     file_hdf5 = Util.filename4mdir(dir_in)
+    assert os.path.isfile(file_hdf5), 'Error: No fits files found in the directory: %s, %s' %dir_in %file_hdf5
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
         Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5)
     # obj = pynpoint_parent.create_whdf5input(file_hdf5,ran_sub=False,**kwargs)
@@ -79,6 +81,7 @@ def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs
     """
     #pynpoint_parent.__init__(obj)
     #obj = pynpoint_parent()
+    assert (os.path.isfile(file_in)), 'Error: Input file does not exist - input requested: %s'%file_in    
     obj_type = obj.obj_type
     Util.restore_data(obj,file_in,checktype='raw_data')
     obj.obj_type = obj_type #'PynPoint_images' # restate since this is replaced in the restore_data
@@ -101,6 +104,8 @@ def pynpoint_create_wfitsfiles(obj,files,ran_sub=False,prep_data=True,**kwargs):
     """
     #obj = pynpoint_parent()
     num_files = np.size(files)            # number of files
+    assert (num_files >0),'Error: No files inputs, e.g.: %s' %files[0]
+    assert os.path.isfile(files[0]),'Error: No files inputs, e.g.: %s' %files[0]
     obj.files = files
     obj.num_files = num_files
     Util.rd_fits(obj)#,avesub=False,para_sort=para_sort,inner_pix=inner_pix)
