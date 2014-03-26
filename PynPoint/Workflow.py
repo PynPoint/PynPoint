@@ -119,7 +119,8 @@ class workflow():
         filebookkeep.write('Calculations completed successfully.\n')
         filebookkeep.write('\n')
         filebookkeep.write('End time:\n')
-        filebookkeep.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+        filebookkeep.write(strftime("%Y-%m-%d %H:%M:%S", gmtime())+'\n')
+        filebookkeep.write('#-Time-#: %10.20f' %time.time())        
         filebookkeep.write('\n')
         filebookkeep.close()
 
@@ -132,7 +133,7 @@ class workflow():
             filebookkeep.write(extra_text+'\n')
         filebookkeep.write('Time stamp:\n')
         filebookkeep.write(strftime("%Y-%m-%d %H:%M:%S", gmtime())+'\n')
-        filebookkeep.write(str(time.time()))        
+        filebookkeep.write('#-Time-#: %10.20f' %time.time())        
         filebookkeep.write('\n')
         filebookkeep.close()
         
