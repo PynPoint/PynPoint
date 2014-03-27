@@ -11,6 +11,7 @@ import h5py
 import glob
 from scipy import linalg
 import pylab as pl
+import time
 
 
 from Mask import mask
@@ -115,7 +116,7 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
 
 def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
               F_final=2,ran_sub=False,para_sort=True,inner_pix=False,
-              cent_size=0.2,edge_size=1.0):
+              cent_size=0.2,edge_size=1.0,stackave=None):
 
 
     """
@@ -449,10 +450,19 @@ def filename4mdir(dir_in,filetype='convert'):
     else:
         print('Warning: file type not recognised - general temp name created')
         hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_temp.hdf5'
+
+    # if not stackave is None:
+    #     hdffilename = hdffilename[:-5]+'_stck_'+str(stackave)+'_'+hdffilename[-5:]
         
     return hdffilename
     
-def conv_dirfits2hdf5(dir_in,outputfile = None):
+def filenme4stack(hdffilename,stackave):
+    hdffilename_stack = hdffilename[:-5]+'_stck_'+str(stackave)+'_'+hdffilename[-5:]
+    return hdffilename_stack
+    
+    
+    
+def conv_dirfits2hdf5(dir_in,outputfile = None):#,stackave=None):
     """
     Converts fits inputs (stored in directory) into hdf5 file format. These files are faster to load and 
     can be handeled more easily by PynPoint.
@@ -469,8 +479,40 @@ def conv_dirfits2hdf5(dir_in,outputfile = None):
     if outputfile == None:
         filehdf5 = filename4mdir(dir_in)
     else:
-        filehdf5 = outputfile    
+        filehdf5 = outputfile
+        
+    # if not stackave is None:
+    #     obj = stackave_func(obj,stackave)
+            
     save_data(obj,filehdf5)
+
+def mkstacked(file_in,file_stck,stackave):
+    """
+    Averages over adjacent images. This has the effect of reducing the size of the stack. 
+    """
+    # assert stackave ###
+    obj = dummyclass()
+
+    restore_data(obj,file_in,checktype='raw_data')
+    
+    num_new = int(np.floor(float(obj.num_files)/float(stackave)))
+    para_new = np.zeros(num_new)
+    im_arr_new = np.zeros([num_new,obj.im_arr.shape[1],obj.im_arr.shape[2]])
+    for i in range(0,num_new):
+        para_new[i] = obj.para[i*stackave:(i+1)*stackave].mean()
+        im_arr_new[i,] = obj.im_arr[i*stackave:(i+1)*stackave,].mean(axis=0)
+    obj.im_arr = im_arr_new
+    obj.para = para_new
+    obj.num_files = num_new
+    
+    save_data(obj,file_stck)
+    ### HACK:
+    # filebookkeep = open('temp_HACK.temp','w')
+    # filebookkeep.write('#-Time-#: %10.20f' %time.time()) 
+    # print('#-Time-#: %10.20f' %time.time()) 
+    # filebookkeep.close()
+    
+    
 
 def file_list(dir_in,ran_sub=False):
     """

@@ -81,8 +81,20 @@ def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs
     """
     #pynpoint_parent.__init__(obj)
     #obj = pynpoint_parent()
-    assert (os.path.isfile(file_in)), 'Error: Input file does not exist - input requested: %s'%file_in    
+    assert (os.path.isfile(file_in)), 'Error: Input file does not exist - input requested: %s'%file_in  
+    if 'stackave' in kwargs:
+        stackave = kwargs['stackave']
+    else:
+        stackave = None
+    
     obj_type = obj.obj_type
+    if not stackave is None:
+        filename_stck = Util.filenme4stack(file_in,stackave)
+        if not os.path.isfile(filename_stck):
+            Util.mkstacked(file_in,filename_stck,stackave)
+        file_in = filename_stck
+    
+    # if not os.isfile()
     Util.restore_data(obj,file_in,checktype='raw_data')
     obj.obj_type = obj_type #'PynPoint_images' # restate since this is replaced in the restore_data
     #use the ran_subset keyword

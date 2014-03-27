@@ -277,6 +277,10 @@ class workflow():
         # if hasattr(kwargs, 'edge_size'):
             kwargs['edge_size'] = float(kwargs['edge_size'])
 
+        if 'stackave' in kwargs.keys():
+        # if hasattr(kwargs, 'edge_size'):
+            kwargs['stackave'] = int(kwargs['stackave'])
+
         return kwargs
     
         
