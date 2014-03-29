@@ -71,6 +71,11 @@ class TestImages(object):
         pass
 
     def test_overall_images3(self):
+        print('-----')
+        print(self.files_fits_sorted)
+        print('-----')
+        print(self.images3.files)
+        print('-----')
         assert np.array_equal(self.images3.files , self.files_fits_sorted)
         assert self.images3.num_files == len(self.images3.files) 
         assert np.array_equal(self.images3.im_size, (146,146))
