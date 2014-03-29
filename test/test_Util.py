@@ -178,6 +178,10 @@ class TestUtil(object):
         
     def test_file_list(self):
         files_temp = PynPoint.Util.file_list(self.test_data,ran_sub=False)
+        print('-------')
+        print(files_temp)
+        print('-------')
+        print(self.files)
         assert files_temp[0] == self.files[0]
         assert files_temp[1] == self.files[2]
         assert files_temp[2] == self.files[1]
