@@ -136,6 +136,21 @@ def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
     :param edge_size:
     
     """        
+
+    if para_sort is True:
+        inds = np.argsort(obj.para)
+        print(inds)
+        print(type(inds))
+        obj.im_arr = obj.im_arr[inds,]
+        obj.para = obj.para[inds]
+        # print(obj.files)
+        print(obj.files)
+        print(len(obj.files))
+        
+        obj.files = [ obj.files[i] for i in inds] #obj.files[[0,2,1,3]]
+        
+    # print_attributes(obj)
+
     #Normalise the images so that they have 'unit area'
     obj.cent_remove = cent_remove
     # obj.im_norm = np.zeros(obj.im_arr.shape[0])
@@ -160,13 +175,13 @@ def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
         obj.im_arr = mk_resizeonly(obj.im_arr,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
     
-    print('!!!')
-    print(type(cent_remove))
-    print('L')
-    print(str(cent_remove) == 'True')
+    # print('!!!')
+    # print(type(cent_remove))
+    # print('L')
+    # print(str(cent_remove) == 'True')
 
     if str(cent_remove) == 'True':
-        print('!!!!! REACHED CENT_REMOVE !!!!!!')
+        # print('!!!!! REACHED CENT_REMOVE !!!!!!')
         im_arr_omask,im_arr_imask,cent_mask = mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
         obj.im_arr = im_arr_omask
         obj.im_arr_mask = im_arr_imask
