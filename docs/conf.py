@@ -12,7 +12,6 @@
 # serve to show the default.
 
 import sys, os
-import sphinx_eth_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -101,7 +100,6 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -254,6 +252,9 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-#sys.path.append(os.path.abspath("_theme"))
-html_theme_path = [sphinx_eth_theme.get_html_theme_path()]
-html_theme = "sphinx_eth_theme"
+try:
+    import sphinx_eth_theme
+    html_theme = "sphinx_eth_theme"
+    html_theme_path = [sphinx_eth_theme.get_html_theme_path()]
+except ImportError:
+    html_theme = 'default'
