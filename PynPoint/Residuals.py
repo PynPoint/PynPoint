@@ -64,6 +64,7 @@ class residuals(pynpoint_parent):
     def plt_res(self,num_coeff,imtype='mean',smooth=None):
         """
         plots the resulting residual images. 
+        and gives the image as a return value. 
         """
         
         options = ['mean','mean_clip','median','var']#,'psf']
