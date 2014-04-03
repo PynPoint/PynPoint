@@ -157,8 +157,8 @@ class residuals(pynpoint_parent):
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
-        if not (hasattr(self, '_res_rot_mean_clip') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot_mean_clip(num_coeff)
+        # if not (hasattr(self, '_res_rot_mean_clip') and (self.num_coeff == num_coeff)):
+        self._mk_res_rot_mean_clip(num_coeff)
         return self._res_rot_mean_clip
     
         

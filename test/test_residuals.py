@@ -92,13 +92,23 @@ class TestPynpoint_v1_5(object):
     def test_plt_res(self):
         res = self.res
         im = res.plt_res(3,imtype='median',smooth=(1,1))
+        assert np.allclose(im.mean() , 0.0050164265448112682,rtol=limit1)
         im = res.plt_res(2,imtype='mean',smooth=(2,2))
-        im = res.plt_res(1,imtype='mean_clip',smooth=(3,3))
+        assert np.allclose(im.var() , 3.0342625802397297e+51,rtol=limit1)
+        im = res.plt_res(2,imtype='mean',smooth=(3,3))
+        assert np.allclose(im.var() , 1.3500416574126507e+51,rtol=limit1)
+
+        # im = res.plt_res(1,imtype='mean_clip',smooth=(3,3))
+        # assert np.allclose(im.var() , 3.0342625802397297e+51,rtol=limit1)
         
         im = res.plt_res(3,imtype='median')
+        assert np.allclose(im.mean() , 3.1119061156702808e-22,rtol=limit1)
         im = res.plt_res(2,imtype='mean')
+        assert np.allclose(im.mean() , -1.8698034422778928e-10,rtol=limit1)
         im = res.plt_res(1,imtype='mean_clip')
+        assert np.allclose(im[100,100] , 5.4904054813419678e-07,rtol=limit1)
         im = res.plt_res(2,imtype='var')
+        assert np.allclose(im.mean() , 1.3961504420740702e-39,rtol=limit1)
         #need to assert somethings
         
         
