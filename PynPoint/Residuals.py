@@ -69,7 +69,7 @@ class residuals(pynpoint_parent):
         
         options = ['mean','mean_clip','median','var']#,'psf']
         
-        assert ave in option, 'Error: options for ave keyword are %s'%options
+        assert imtype in options, 'Error: options for ave keyword are %s'%options
         if not smooth is None:
             assert len(smooth) == 2, 'Error: smooth option should be a two element list'
             assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
@@ -186,22 +186,22 @@ class residuals(pynpoint_parent):
     def res_mean_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
-        if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
-            self._mk_res_mean_smooth(num_coeff,sigma=(2,2))
+        #if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
+        self._mk_res_mean_smooth(num_coeff,sigma=sigma)
         return self._res_mean_smooth
 
     def res_mean_clip_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
-        if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
-            self._mk_res_mean_clip_smooth(num_coeff,sigma=(2,2))
+        # if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
+        self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
         return self._res_mean_smooth
 
     def res_median_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
-        if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
-            self._mk_res_median_smooth(num_coeff,sigma=(2,2))
+        # if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
+        self._mk_res_median_smooth(num_coeff,sigma=sigma)
         return self._res_median_smooth
 
         
@@ -266,6 +266,8 @@ class residuals(pynpoint_parent):
         im1[izero,jzero] = 0.0    
         im1 *= cent_mask
         im2 = gaussian_filter(im1,sigma=sigma)
+        print('HELLO:')
+        print(sigma)
         return im2 * cent_mask
         
     
