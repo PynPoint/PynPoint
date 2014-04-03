@@ -70,29 +70,31 @@ class residuals(pynpoint_parent):
         
         assert ave in option, 'Error: options for ave keyword are %s'%options
         if not smooth is None:
-            assert isinstance(smooth, ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+            assert len(smooth) == 2, 'Error: smooth option should be a two element list'
+            assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+            assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
         assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
         
         
         if smooth is None:            
             if imtype == 'mean':
-                im = self.res_rot_mean()                
+                im = self.res_rot_mean(num_coeff)                
             elif imtype == 'mean_clip':
-                im = self.res_rot_mean_clip()
+                im = self.res_rot_mean_clip(num_coeff)
             elif imtype == 'median':
-                im = self.res_rot_median()
+                im = self.res_rot_median(num_coeff)
             elif imtype == 'var':
-                im = self.res_rot_var()
+                im = self.res_rot_var(num_coeff)
             else:
                 print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
                 return
         else:
             if imtype == 'mean':
-                im = self.res_mean_smooth()
+                im = self.res_mean_smooth(num_coeff,sigma=smooth)
             elif imtype == 'mean_clip':
-                im = self.res_mean_clip_smooth()
+                im = self.res_mean_clip_smooth(num_coeff,sigma=smooth)
             elif imtype == 'median':
-                im = self.res_median_smooth()
+                im = self.res_median_smooth(num_coeff,sigma=smooth)
             elif imtype == 'var':
                 print('Error: var image currently does not get plotted with smoothing')
                 return                
