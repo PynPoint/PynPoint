@@ -61,6 +61,54 @@ class residuals(pynpoint_parent):
         return obj
 
 
+    def plt_res(self,num_coeff,imtype='mean',smooth=None):
+        """
+        plots the resulting residual images. 
+        """
+        
+        options = ['mean','mean_clip','median','var']#,'psf']
+        
+        assert ave in option, 'Error: options for ave keyword are %s'%options
+        if not smooth is None:
+            assert isinstance(smooth, ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+        assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
+        
+        
+        if smooth is None:            
+            if imtype == 'mean':
+                im = self.res_rot_mean()                
+            elif imtype == 'mean_clip':
+                im = self.res_rot_mean_clip()
+            elif imtype == 'median':
+                im = self.res_rot_median()
+            elif imtype == 'var':
+                im = self.res_rot_var()
+            else:
+                print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+                return
+        else:
+            if imtype == 'mean':
+                im = self.res_mean_smooth()
+            elif imtype == 'mean_clip':
+                im = self.res_mean_clip_smooth()
+            elif imtype == 'median':
+                im = self.res_median_smooth()
+            elif imtype == 'var':
+                print('Error: var image currently does not get plotted with smoothing')
+                return                
+            else:
+                print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+        
+        
+        pl.figure()
+        pl.clf()
+        pl.imshow(im,origin='lower',interpolation='nearest')
+        pl.title('Residual Image: '+imtype,size='large')
+        pl.colorbar()
+        return im
+            
+
+
     def res_arr(self,num_coeff):
         """
         Returns a 3D data cube of the residuals, i.e. a psf model is 
