@@ -88,128 +88,20 @@ class TestPynpoint_v1_5(object):
         
         assert np.array_equal(self.res.res_rot_mean(1),temp_res.res_rot_mean(1))       
         #self.func4test_overall_same(self.images3,temp_images)
-    
-#--------------------------        
 
-    # def test_overall_res(self):
-    #             
-    #     assert self.res.res_rot.shape == (4,146,146)
-    #     assert self.res.res_rot.min() == -2.3716922523120405e-19
-    #     assert self.res.res_rot.max() == 2.7105054312137616e-19
-    #     assert self.res.res_rot.var() == 1.0141351006258307e-39 
-    # 
-    #     assert self.res.res_rot_var2.shape == (146,146)
-    #     assert self.res.res_rot_var2.min() == 0.0
-    #     assert self.res.res_rot_var2.max() == 1.3275235419614938e-37
-    #     assert self.res.res_rot_var2.var() == 4.8802984473993911e-77 
-    #     
-    #     assert self.res.res_arr.shape == (4,146,146)
-    #     assert self.res.res_arr.min() == -2.3716922523120409e-19
-    #     assert self.res.res_arr.max() == 2.7105054312137611e-19
-    #     assert self.res.res_arr.var() == 1.0278768366235814e-39 
-    #     
-    #     assert self.res.res_rot_mean.shape == (146,146)
-    #     assert self.res.res_rot_mean.min() == -2.9879531662161895e-20
-    #     assert self.res.res_rot_mean.max() == 2.7834474353638114e-20
-    #     assert self.res.res_rot_mean.var() == 2.4903348430563392e-41 
-    #     
-    #     assert self.res.res_rot_var.shape == (146,146)
-    #     assert self.res.res_rot_var.min() == 0.0
-    #     assert self.res.res_rot_var.max() == 1.0123453782245222e-37
-    #     assert self.res.res_rot_var.var() == 3.8865122287878855e-77 
-    #     
-    #     assert self.res.res_rot_median.shape == (146,146)
-    #     assert self.res.res_rot_median.min() == -9.3001809623637242e-20
-    #     assert self.res.res_rot_median.max() == 8.9730146834665022e-20
-    #     assert self.res.res_rot_median.var() == 1.1850463046706196e-40 
-    #     
-    #     assert self.res.res_rot_mean_clip.shape == (146,146)
-    #     #assert self.res.res_rot_mean_clip.min() == 0000
-    #     #assert self.res.res_rot_mean_clip.max() == 000
-    #     #assert self.res.res_rot_mean_clip.var() == 0000 
-    #     
-    #     assert self.res.res_clean_median.shape == (146,146)
-    #     assert self.res.res_clean_median.min() == -0.1172708307675544
-    #     assert self.res.res_clean_median.max() == 0.15102898151306077
-    #     assert self.res.res_clean_median.var() == 0.0010473907380932109 
-    #     
-    # 
-    # def test_peak_find(self):
-    #     res_null = PynPoint.residuals('','','',intype='empty')
-    #     dim = [400,600]
-    #     cents = np.array([[100,200],[50,350],[215,79]])
-    #     test_im = np.zeros(shape=dim)
-    #     for i in range(0,cents.shape[0]): 
-    #         test_im += PynPoint.Util.mk_gauss2D(dim[0],dim[1],30.,xcent=cents[i,0],ycent=cents[i,1]) 
-    #     res_null.res_clean_mean_clip = test_im
-    # 
-    #     assert not hasattr(res_null,'x_peaks')
-    #     assert not hasattr(res_null,'y_peaks')
-    #     assert not hasattr(res_null,'h_peaks')
-    #     assert not hasattr(res_null,'sig')
-    #     assert not hasattr(res_null,'p_contour')
-    #     assert not hasattr(res_null,'num_peaks')
-    # 
-    #     res_null.peak_find(limit=0.8)
-    #     assert hasattr(res_null,'x_peaks')
-    #     assert hasattr(res_null,'y_peaks')
-    #     assert hasattr(res_null,'h_peaks')
-    #     assert hasattr(res_null,'sig')
-    #     assert hasattr(res_null,'p_contour')
-    #     assert hasattr(res_null,'num_peaks')
-    #     
-    #     x = np.array(res_null.x_peaks)
-    #     x.sort()
-    #     x_cents = cents[:,1].copy()
-    #     x_cents.sort()
-    # 
-    #     y = np.array(res_null.y_peaks)
-    #     y.sort()
-    #     y_cents = cents[:,0].copy()
-    #     y_cents.sort()
-    #     
-    #     #print(x)
-    #     #print(x_cents)
-    #     
-    #     assert res_null.num_peaks == cents.shape[0]
-    #     assert np.allclose(res_null.h_peaks,np.ones(cents.shape[0]),rtol = limit2)
-    #     assert np.allclose(x,x_cents,rtol = 1e-3)
-    #     assert np.allclose(y,y_cents,rtol = 1e-2)
-    #     print('x_peaks:')
-    #     print(res_null.x_peaks)
-    #     print('y_peaks:')
-    #     print(res_null.y_peaks)
-    #     print('h_peaks:')
-    #     print(res_null.h_peaks)
-    #     
-    #     #assert 0
-    #     
-    #     # res_null.x_peaks = x_peaks 
-    #     # res_null.y_peaks = y_peaks
-    #     # res_null.h_peaks = h_peaks
-    #     # res_null.sig = sig
-    #     # res_null.p_contour = p
-    #     # res_null.num_peaks = num_peaks
-    #     
-    # 
-    #     #self.res.peak_find(limit=0.8)
-    #     x = 1
-    #     assert x==1
-    
-    # def test_res_cleaned(self):
-    #     #self.res.res_cleaned()
-    #     x = 1
-    #     assert x==1
-    # 
-    # def test_resid_nomask(self):
-    #     #self.res.resid_nomask()
-    #     x = 1
-    #     assert x==1
-    
-    # def test_save_restore(self):
-    #     x = 1
-    #     assert x==1
-
+    def test_plt_res(self):
+        res = self.res
+        im = res.plt_res(3,imtype='median',smooth=(1,1))
+        im = res.plt_res(2,imtype='mean',smooth=(2,2))
+        im = res.plt_res(1,imtype='mean_clip',smooth=(3,3))
+        
+        im = res.plt_res(3,imtype='median')
+        im = res.plt_res(2,imtype='mean')
+        im = res.plt_res(1,imtype='mean_clip')
+        im = res.plt_res(2,imtype='var')
+        #need to assert somethings
+        
+        
 
     def teardown(self):
         #tidy up
