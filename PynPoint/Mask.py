@@ -66,7 +66,7 @@ class mask:
         """This function has been written to mask out the central region (and the corners)"""
         # WOULD BE NICE TO INCLUDE AN OPTION FOR EITHER TOP-HAT CIRCLE OR GAUSSIAN
         im_size = im_arr[0,].shape
-        print(im_size)
+#         print(im_size)
         mask_c = mask.mk_circle(im_size[0],im_size[1],im_size[0]/2.,im_size[1]/2.,cent_size*im_size[0])
         mask_outside = mask.mk_circle(im_size[0],im_size[1],im_size[0]/2.,im_size[1]/2.,0.5*im_size[0])
         #mask_c = self.mask(im_size[0],im_size[1],fsize=cent_size,fxcent=0.5,fycent=0.5)
