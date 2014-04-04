@@ -266,8 +266,8 @@ class residuals(pynpoint_parent):
         im1[izero,jzero] = 0.0    
         im1 *= cent_mask
         im2 = gaussian_filter(im1,sigma=sigma)
-        print('HELLO:')
-        print(sigma)
+#         print('HELLO:')
+#         print(sigma)
         return im2 * cent_mask
         
     
