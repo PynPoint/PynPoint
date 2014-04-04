@@ -47,6 +47,6 @@ docs:
 	open docs/_build/html/index.html
 
 sdist: clean
-	pip freeze > requirements.rst
+#	pip freeze > requirements.rst
 	python setup.py sdist
 	ls -l dist
