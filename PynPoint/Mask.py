@@ -39,27 +39,27 @@ class mask:
     #         
         
     def mask(self,del_para=None):
-    	"""This function return an array containing the mask with the correct para rotation"""
-    	mask_current = self.mask_base
-    	if del_para is not None:
-    		theta = del_para
-    		xp = np.cos(theta/180.*np.pi)*(self.fxcent-0.5) - np.sin(theta/180.*np.pi)*(self.fycent - 0.5)
-    		yp = np.sin(theta/180.*np.pi)*(self.fxcent-0.5) + np.cos(theta/180.*np.pi)*(self.fycent - 0.5)
-    		xcent = (0.5+xp)*self.xnum
-    		ycent = (0.5+yp)*self.ynum
-    		mask_current =  self.mk_circle(self.xnum,self.ynum,xcent,ycent,self.size_pix/2.)
-    		self.temp_xcent=xcent
-    		self.temp_ycent=ycent
-    	else:
-    		xcent=ycent=None
-    	return mask_current#,xcent,ycent
-    	
+        """This function return an array containing the mask with the correct para rotation"""
+        mask_current = self.mask_base
+        if del_para is not None:
+            theta = del_para
+            xp = np.cos(theta/180.*np.pi)*(self.fxcent-0.5) - np.sin(theta/180.*np.pi)*(self.fycent - 0.5)
+            yp = np.sin(theta/180.*np.pi)*(self.fxcent-0.5) + np.cos(theta/180.*np.pi)*(self.fycent - 0.5)
+            xcent = (0.5+xp)*self.xnum
+            ycent = (0.5+yp)*self.ynum
+            mask_current =  self.mk_circle(self.xnum,self.ynum,xcent,ycent,self.size_pix/2.)
+            self.temp_xcent=xcent
+            self.temp_ycent=ycent
+        else:
+            xcent=ycent=None
+        return mask_current#,xcent,ycent
+
     def plt_mask(self,para=None):
-		""""This function plots the mask with the correct para rotation"""
-		pl.clf()
-		pl.imshow(self.mask(del_para=para),origin='lower',interpolation='nearest')
-		pl.title('Mask',size='large')
-		pl.colorbar()   
+        """"This function plots the mask with the correct para rotation"""
+        pl.clf()
+        pl.imshow(self.mask(del_para=para),origin='lower',interpolation='nearest')
+        pl.title('Mask',size='large')
+        pl.colorbar()   
         
     @staticmethod
     def mk_cent_remove(im_arr,cent_size=0.2,edge_size=1.0):
@@ -72,14 +72,11 @@ class mask:
         #mask_c = self.mask(im_size[0],im_size[1],fsize=cent_size,fxcent=0.5,fycent=0.5)
         # NEED TO DECIDE IF I WANT TO KEEP THE CORNERS:
         #mask_outside = self.mask(im_size[0],im_size[1],fsize=edge_size,fxcent=0.5,fycent=0.5)
+        
         cent_mask = mask_c * (1.0 - mask_outside)
-        im_arr_omask = np.zeros(shape = im_arr.shape)
-        im_arr_imask = np.zeros(shape = im_arr.shape)
-
-        #CAN PROBABLY SPEED UP THIS LOOP:!!!
-        for i in range(0,im_arr.shape[0]):
-            im_arr_imask[i,] = im_arr[i,] *(1.0 - cent_mask)
-            im_arr_omask[i,] = im_arr[i,] *cent_mask
+        res_cent_mask = (1.0 - cent_mask)
+        im_arr_imask = im_arr * res_cent_mask
+        im_arr_omask = im_arr * cent_mask
 
         return im_arr_omask,im_arr_imask,cent_mask
  

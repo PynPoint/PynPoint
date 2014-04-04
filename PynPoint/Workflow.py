@@ -16,15 +16,17 @@ import time
 
 class workflow():
     
+    obj_type = 'PynPoint_workflow'
+    # section title to be used in config to identify modules to be run
+    module_string = 'module'
+     
     def __init__(self):
         """
         Initialise an instance of the images class. The result is simple and
         almost empty (in terms of attributes)        
         """
+        pass
         
-        self.obj_type = 'PynPoint_workflow'
-        # section title to be used in config to identify modules to be run
-        self.module_string = 'module' 
         
     @staticmethod
     def run(config,force_replace=False):
@@ -140,7 +142,7 @@ class workflow():
 
     def _runmods(self):
         self._ctx = Ctx()
-        self.result_names = []
+        result_names = []
         
         #need to manage the data in some way!
         for i in range(0,len(self.modules)):
@@ -154,9 +156,28 @@ class workflow():
             else:
                 assert 1==2,'Error: mod_type option can be: images, basis or residuals'
             name = mod_type+'_'+self.modules[i]
-            self.result_names.append(name)
+            result_names.append(name)
             self._ctx.add(name,run_temp)  
-            self._timestamp('Finished '+name)              
+            self._timestamp('Finished '+name)
+            
+#         import numpy
+#         import itertools
+#         
+#         fields = ["cent_mask", "im_arr", "im_arr_mask", "im_norm", "im_ave", "para", "psf_basis", "files"]
+#         for field in fields:
+#             for (n1,n2) in itertools.combinations(result_names, 2):
+#                 o1 = self._ctx.get(n1)
+#                 o2 = self._ctx.get(n2)
+#                 try:
+#                     arr1 = getattr(o1, field)
+#                     arr2 = getattr(o2, field)
+#                     state = (numpy.all(arr1==arr2))
+#                     try:
+#                         print("%s, %s %s %s %s: %s" %(field, n1, arr1.shape, n2, arr2.shape, state))
+#                     except Exception:
+#                         print("%s, %s %s %s %s: %s" %(field, n1, numpy.array(arr1).shape, n2, numpy.array(arr2).shape, state))
+#                 except Exception:
+#                     pass
             
     
     def _run_images_mod(self,section_id):
@@ -169,7 +190,7 @@ class workflow():
             images_run = images.create_wdir(input_data,**kwargs)
 
         elif self.config.get(section_id,'intype') == 'hdffile':
-            images_run = images.create_whdfinput(input_data,**kwargs)
+            images_run = images.create_whdf5input(input_data,**kwargs)
 
         elif self.config.get(section_id,'intype') == 'restore':
             if not kwargs == None:
@@ -190,7 +211,7 @@ class workflow():
             basis_run = basis.create_wdir(input_data,**kwargs)
 
         elif self.config.get(section_id,'intype') == 'hdffile':
-            basis_run = basis.create_whdfinput(input_data,**kwargs)
+            basis_run = basis.create_whdf5input(input_data,**kwargs)
 
         elif self.config.get(section_id,'intype') == 'restore':
             if not kwargs == None:
@@ -287,5 +308,19 @@ class workflow():
     def str2bool(self,v):
         return v.lower() in ("yes", "true", "t", "1")
   
-
-
+def run(config,force_replace=False):
+    """
+    Delegates the execution to `workflow.run`
+    
+    :param config:
+    :param force_replace:
+    """
+    workflow.run(config, force_replace)
+    
+def restore(dirin):
+    """
+    Delegates the execution to `workflow.restore`
+    
+    :param dirin:
+    """
+    workflow.restore(dirin)
