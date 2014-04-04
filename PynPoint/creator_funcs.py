@@ -60,7 +60,7 @@ def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=T
     ##convert to hdf5
     assert (os.path.isdir(dir_in)), 'Error: Input directory does not exist - input requested: %s'%dir_in
     file_hdf5 = Util.filename4mdir(dir_in)    
-    print(file_hdf5)
+#     print(file_hdf5)
     # assert os.path.isfile(file_hdf5), 'Error: No fits files found in the directory: %s, %s' %dir_in %file_hdf5
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
         Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5)

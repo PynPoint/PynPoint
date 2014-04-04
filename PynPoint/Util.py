@@ -139,13 +139,13 @@ def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
 
     if para_sort is True:
         inds = np.argsort(obj.para)
-        print(inds)
-        print(type(inds))
+#         print(inds)
+#         print(type(inds))
         obj.im_arr = obj.im_arr[inds,]
         obj.para = obj.para[inds]
         # print(obj.files)
-        print(obj.files)
-        print(len(obj.files))
+#         print(obj.files)
+#         print(len(obj.files))
         
         obj.files = [ obj.files[i] for i in inds] #obj.files[[0,2,1,3]]
         
@@ -360,10 +360,10 @@ def mk_resizeonly(im_arr,F_final):
     dimensions that are F_final that of the input images
 	"""
     xnum_final,ynum_final = int(im_arr.shape[1]*F_final),int(im_arr.shape[2]*F_final)
-    print(F_final)
-    print(type(F_final))
-    print(im_arr.shape[1],im_arr.shape[2])
-    print(im_arr.shape[0],xnum_final,ynum_final)
+#     print(F_final)
+#     print(type(F_final))
+#     print(im_arr.shape[1],im_arr.shape[2])
+#     print(im_arr.shape[0],xnum_final,ynum_final)
     im_arr_res = np.zeros([im_arr.shape[0],xnum_final,ynum_final])
     for i in range(0,im_arr.shape[0]):
         im_temp = im_arr[i]
