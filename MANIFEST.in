@@ -8,3 +8,4 @@ include Makefile
 include docs/*
 include test/*
 include test/test_data/*
+include PynPoint/data/*

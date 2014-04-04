@@ -6,6 +6,7 @@ Development Lead
 ----------------
 
 * Adam Amara <adam.amara@phys.ethz.ch>
+* Joel Akeret <jakeret@phys.ethz.ch>
 
 Contributors
 ------------
