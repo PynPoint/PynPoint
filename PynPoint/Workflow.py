@@ -315,7 +315,8 @@ def run(config,force_replace=False):
     :param config:
     :param force_replace:
     """
-    workflow.run(config, force_replace)
+    ws = workflow.run(config, force_replace)
+    return ws
     
 def restore(dirin):
     """
@@ -323,4 +324,5 @@ def restore(dirin):
     
     :param dirin:
     """
-    workflow.restore(dirin)
+    ws = workflow.restore(dirin)
+    return ws
