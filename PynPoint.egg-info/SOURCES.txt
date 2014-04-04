@@ -28,7 +28,6 @@ PynPoint.egg-info/dependency_links.txt
 PynPoint.egg-info/not-zip-safe
 PynPoint.egg-info/requires.txt
 PynPoint.egg-info/top_level.txt
-docs/.coverage
 docs/Makefile
 docs/PynPoint.rst
 docs/authors.rst
@@ -38,11 +37,9 @@ docs/contributing.rst
 docs/history.rst
 docs/index.rst
 docs/installation.rst
-docs/junit-docs-ci.xml
 docs/modules.rst
 docs/usage.rst
 scripts/PynPoint_workflow
-test/.DS_Store
 test/__init__.py
 test/__init__.pyc
 test/mk_default_testdata.py
