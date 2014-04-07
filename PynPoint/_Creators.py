@@ -1,37 +1,14 @@
         
 #import external functions:
 import pyfits
-import pylab as pl
-import glob
-import time
-import h5py
 import numpy as np
 import os
 
 #import extra PynPoint functions:
-import Util
-from Mask import mask
-#import PynPoint_v1_5 as PynPoint
+import _Util
 
 
-#Images class:
-# class pynpoint_parent:
-#     """Object for dealing with the images that need to be analysed"""
-    # 
-    # def __init__(self):
-    #     """
-    #     Initialise an instance of the images class. The result is simple and
-    #     almost empty (in terms of attributes)
-    #     
-    #     """
-    #     self.obj_type = 'PynPoint_parent'
-    #     
 
-# def temp_func():
-#     print('!!!!!!!HI!!!!!!!')
-#     
-
-# @staticmethod
 def pynpoint_create_restore(obj,filename):
     """
     Creates an instance of the images class using a previously
@@ -41,10 +18,9 @@ def pynpoint_create_restore(obj,filename):
     
     """
     #obj = pynpoint_parent()
-    Util.restore_data(obj,filename)
+    _Util.restore_data(obj,filename)
     #return obj
 
-# @staticmethod
 def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using dir_in, which is the
@@ -59,16 +35,15 @@ def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=T
     
     ##convert to hdf5
     assert (os.path.isdir(dir_in)), 'Error: Input directory does not exist - input requested: %s'%dir_in
-    file_hdf5 = Util.filename4mdir(dir_in)    
+    file_hdf5 = _Util.filename4mdir(dir_in)    
 #     print(file_hdf5)
     # assert os.path.isfile(file_hdf5), 'Error: No fits files found in the directory: %s, %s' %dir_in %file_hdf5
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
-        Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5)
+        _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5)
     # obj = pynpoint_parent.create_whdf5input(file_hdf5,ran_sub=False,**kwargs)
     pynpoint_create_whdf5input(obj,file_hdf5,ran_sub=False,**kwargs)
     #return obj
 
-# @staticmethod
 def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using dir_in, which is the
@@ -90,21 +65,20 @@ def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs
     
     obj_type = obj.obj_type
     if not stackave is None:
-        filename_stck = Util.filenme4stack(file_in,stackave)
+        filename_stck = _Util.filenme4stack(file_in,stackave)
         if not os.path.isfile(filename_stck):
-            Util.mkstacked(file_in,filename_stck,stackave)
+            _Util.mkstacked(file_in,filename_stck,stackave)
         file_in = filename_stck
     
     # if not os.isfile()
-    Util.restore_data(obj,file_in,checktype='raw_data')
+    _Util.restore_data(obj,file_in,checktype='raw_data')
     obj.obj_type = obj_type #'PynPoint_images' # restate since this is replaced in the restore_data
     #use the ran_subset keyword
     if prep_data is True:
-        Util.prep_data(obj,**kwargs)                    
+        _Util.prep_data(obj,**kwargs)                    
 
     #return obj
 
-# @staticmethod
 def pynpoint_create_wfitsfiles(obj,files,ran_sub=False,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using a list of fits file names. 
@@ -121,8 +95,7 @@ def pynpoint_create_wfitsfiles(obj,files,ran_sub=False,prep_data=True,**kwargs):
     assert os.path.isfile(files[0]),'Error: No files inputs, e.g.: %s' %files[0]
     obj.files = files
     obj.num_files = num_files
-    Util.rd_fits(obj)#,avesub=False,para_sort=para_sort,inner_pix=inner_pix)
+    _Util.rd_fits(obj)#,avesub=False,para_sort=para_sort,inner_pix=inner_pix)
     if prep_data is True:
-        Util.prep_data(obj,**kwargs)
+        _Util.prep_data(obj,**kwargs)
         
- 

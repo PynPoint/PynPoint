@@ -5,12 +5,7 @@
 Tests for `workflow` module.
 """
 #from __future__ import print_function, division, absolute_import, unicode_literals
-import sys
 import os
-
-
-import pytest
-# import PynPoint_v1_5 as PynPoint
 import ConfigParser 
 import shutil
 import PynPoint

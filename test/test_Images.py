@@ -2,16 +2,13 @@
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 """
-Tests for `PynPoint_v1_5` module.
+Tests for `Images` module.
 """
 #from __future__ import print_function, division, absolute_import, unicode_literals
-
-import pytest
-# import PynPoint_v1_5 as PynPoint
-import PynPoint
-import sys
 import os
 import numpy as np
+
+import PynPoint
 
 limit0 = 1e-20
 limit1 = 1e-10
@@ -51,7 +48,7 @@ class TestImages(object):
         self.images5 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=True,ran_sub=False,recent=False)
                                 
-        hdf5file = PynPoint.Util.filename4mdir(self.test_data_dir)
+        hdf5file = PynPoint._Util.filename4mdir(self.test_data_dir)
         self.images6 = PynPoint.images.create_whdf5input(hdf5file,
                                 cent_remove=False,resize=False,ran_sub=False,recent=False)
         
@@ -226,7 +223,7 @@ class TestImages(object):
     def teardown(self):
         #tidy up
         print("tearing down " + __name__)
-        tempfilename = PynPoint.Util.filename4mdir(self.test_data_dir,filetype='convert')
+        tempfilename = PynPoint._Util.filename4mdir(self.test_data_dir,filetype='convert')
         if os.path.isfile(tempfilename):
             os.remove(tempfilename)
         

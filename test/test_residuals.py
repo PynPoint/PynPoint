@@ -6,14 +6,11 @@ Tests for `PynPoint_v1_5` module.
 """
 # from __future__ import print_function, division, absolute_import, unicode_literals
 
-import pytest
-# import PynPoint_v1_5 as PynPoint
+import os
+import numpy as np
 import PynPoint
 
 
-import sys
-import os
-import numpy as np
 
 limit0 = 1e-20
 limit1 = 1e-10
