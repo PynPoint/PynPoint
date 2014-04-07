@@ -11,10 +11,8 @@ import h5py
 import glob
 from scipy import linalg
 import pylab as pl
-import time
+from PynPoint import _Mask
 
-
-from Mask import mask
 
 class dummyclass():
     def __init__(self):
@@ -182,7 +180,7 @@ def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
 
     if str(cent_remove) == 'True':
         # print('!!!!! REACHED CENT_REMOVE !!!!!!')
-        im_arr_omask,im_arr_imask,cent_mask = mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
+        im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
         obj.im_arr = im_arr_omask
         obj.im_arr_mask = im_arr_imask
         obj.cent_mask = cent_mask        

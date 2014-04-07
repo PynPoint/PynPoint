@@ -2,26 +2,23 @@
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 """
-Tests for `PynPoint_v1_5` module.
+Tests for `_Ctx` module.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+from PynPoint import _Ctx
 import pytest
-# import PynPoint_v1_5 as PynPoint
-import PynPoint
-import numpy as np
-# from PynPoint_v1_5 import PynPoint_ctx as pynpoint_ctx
-from PynPoint import ctx as pynpoint_ctx
 
 
-class TestPynpointParent(object):
+pytest.skip("Nothing being tested yet")
+class TestCtx(object):
 
     def setup(self):
         #prepare unit test. Load data etc
         print("setting up " + __name__)
         # self.tempdata = np.array([1.,2.,3.])
-          # PynPoint.pynpointctx.ctx()#.im_arr_store(self.tempdata)
-        self.pynpointctx =pynpoint_ctx.Ctx()
+        # PynPoint.pynpointctx.ctx()#.im_arr_store(self.tempdata)
+        self.pynpointctx = _Ctx.Ctx()
         pass
 
     def test_initialise(self):

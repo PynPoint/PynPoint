@@ -8,25 +8,18 @@
 
 # External modules
 
-import pyfits
 import pylab as pl
-import glob
 import time
-import h5py
-import numpy as np
-from scipy import linalg
+import os
 
 #import extra PynPoint functions:
-import Util
-#from PynPoint_creator_funcs import *
-from creator_funcs import *
-from Mask import mask
-#from PynPoint_parent import pynpoint_parent
-from parent import pynpoint_parent
+from _BasePynPoint import base_pynpoint
+import _Util
+import _Creators
 
 
 #Basis Class
-class basis(pynpoint_parent):
+class basis(base_pynpoint):
     """This class has been prepared to contain everything
     that is needed to create a basis set from a given set of images
 	"""
@@ -49,7 +42,7 @@ class basis(pynpoint_parent):
         """
 
         obj = basis()
-        pynpoint_create_wdir(obj,dir_in,**kwargs)
+        _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
         basis_save = obj.mk_basis_set()
         return obj
 
@@ -61,7 +54,7 @@ class basis(pynpoint_parent):
         """
 
         obj = basis()
-        pynpoint_create_whdf5input(obj,file_in,**kwargs)
+        _Creators.pynpoint_create_whdf5input(obj,file_in,**kwargs)
         obj.mk_basis_set()
         return obj
 
@@ -74,8 +67,8 @@ class basis(pynpoint_parent):
         """
         
         obj = basis()
-        pynpoint_create_restore(obj,filename)
-        #Util.restore_data(obj,filename)
+        _Creators.pynpoint_create_restore(obj,filename)
+        #_Util.restore_data(obj,filename)
         return obj
 
     @staticmethod
@@ -84,7 +77,7 @@ class basis(pynpoint_parent):
         
         """
         obj = basis()
-        pynpoint_create_wfitsfiles(obj,files,**kwargs)
+        _Creators.pynpoint_create_wfitsfiles(obj,files,**kwargs)
         obj.mk_basis_set()
         return obj
         
@@ -97,9 +90,9 @@ class basis(pynpoint_parent):
         """
         if fileout is None:
             dir_in = os.path.dirname(self.files[0])
-            filename = Util.filename4mdir(dir_in,filetype='basis')
+            filename = _Util.filename4mdir(dir_in,filetype='basis')
         
-        basis_info_full = Util.mk_basis_pca(self.im_arr)#,ave_sub=True)
+        basis_info_full = _Util.mk_basis_pca(self.im_arr)#,ave_sub=True)
         self.im_ave = basis_info_full['im_ave']
         self.im_arr = basis_info_full['im_arr']
         self.psf_basis = basis_info_full['basis']

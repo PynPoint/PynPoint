@@ -1,21 +1,15 @@
         
 #import external functions:
-import pyfits
 import pylab as pl
-import glob
 import time
-import h5py
 import numpy as np
-import os
 
 #import extra PynPoint functions:
-import Util
-from Mask import mask
-#import PynPoint_v1_5 as PynPoint
+import _Util
 
 
-#Images class:
-class pynpoint_parent:
+#base class:
+class base_pynpoint:
     """Object for dealing with the images that need to be analysed"""
     
     def __init__(self):
@@ -30,10 +24,8 @@ class pynpoint_parent:
         """ Object for saving the attributes of a particular image instance. 
         Currently this uses HDF5 format
         (!!Can probably be made more efficient!!)"""
-        # print('!!!!!!!!!!!HI!!!!!!!!!!')
-        # print(filename)
 
-        Util.save_data(self,filename)
+        _Util.save_data(self,filename)
 
     def plt_im(self,ind):
         """Function for plotting the input images"""

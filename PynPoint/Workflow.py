@@ -1,5 +1,4 @@
 
-from parent import pynpoint_parent
 import ConfigParser 
 import types
 import os
@@ -7,12 +6,11 @@ from time import gmtime, strftime
 from Basis import basis
 from Images import images
 from Residuals import residuals
-from ctx import Ctx
+from _Ctx import Ctx
 import shutil
 import h5py
 import time
 
-#import PynPoint_v1_5 as PynPoint
 
 class workflow():
     
