@@ -57,6 +57,11 @@ setup(
     license='Proprietary',
     zip_safe=False,
     keywords='PynPoint',
+    entry_points={
+    'console_scripts': [
+       'PynPoint = PynPoint._Cli:run',
+       ]
+    },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         "Intended Audience :: Science/Research",
