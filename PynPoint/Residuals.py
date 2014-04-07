@@ -1,28 +1,18 @@
         
 #import external functions:
-import pyfits
-import scipy
 import pylab as pl
-# import glob
-# import ImageChops
-# from PIL import Image
-# from scipy.optimize import fmin
-import time
 from scipy.ndimage.filters import gaussian_filter
-# import random
-# import h5py
 import numpy as np
-# from scipy import linalg
 
 #import extra PynPoint functions:
-import Util
-# from PynPoint_parent import pynpoint_parent
-from parent import pynpoint_parent
+import _Util
+# from PynPoint_parent import base_pynpoint
+from _BasePynPoint import base_pynpoint
 
 
 
 #Residuals Class
-class residuals(pynpoint_parent):
+class residuals(base_pynpoint):
     """Object for dealing with the residual data. This includes object detection and flux measurement"""
 
     def __init__(self): #self,ims,basis,num_coeff,mask=None,limit=0.8,printit=False,peak_find=False,num_tweak=0,coeff_type=False,intype=None,file_in=None):
@@ -39,7 +29,7 @@ class residuals(pynpoint_parent):
     def create_restore(file_in):
 
         obj = residuals()
-        Util.restore_data(obj,file_in)
+        _Util.restore_data(obj,file_in)
         return obj
         
     @staticmethod
@@ -221,7 +211,7 @@ class residuals(pynpoint_parent):
         res_arr = self.res_arr(num_coeff)
         for i in range(0,len(delta_para)):
             res_temp = res_arr[i,]
-            res_rot[i,] = Util.mk_rotate(res_temp,delta_para[i])
+            res_rot[i,] = _Util.mk_rotate(res_temp,delta_para[i])
         self._res_rot = res_rot
          
     def _mk_res_rot_mean(self,num_coeff):

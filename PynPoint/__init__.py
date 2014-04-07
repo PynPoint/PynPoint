@@ -7,14 +7,21 @@ __credits__ = 'ETH Zurich, Institute for Astronomy'
 
 from Basis import basis
 from Images import images
-from Mask import mask
-from Residuals import residuals #as residuals
-from parent import pynpoint_parent
-import cache as pynpointcache
-import ctx as pynpointctx
-import Util as Util
+from Residuals import residuals
 from Workflow import workflow
-#from PynPoint_parent_func import pynpoint_parent_func
-#from External_routines import external_routines as ext
+
+from _BasePynPoint import base_pynpoint
+import _Ctx as pynpointctx
+import _Cache as pynpointcache
 
 from Workflow import run, restore
+
+def get_data_dir():
+    """
+    Returns the path to the data directory containing the example data sets.
+    
+    :returns path: String with path to the directory
+    """
+    from pkg_resources import resource_filename
+    import PynPoint
+    return resource_filename(PynPoint.__name__, "data")

@@ -2,23 +2,21 @@
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 """
-Tests for `PynPoint_v1_5` module.
+Tests for `_Cache` module.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import pytest
-# import PynPoint_v1_5 as PynPoint
-import PynPoint
 import numpy as np
+from PynPoint import _Cache
 
 
-class TestPynpointParent(object):
+class TestCache(object):
 
     def setup(self):
         #prepare unit test. Load data etc
         print("setting up " + __name__)
         self.tempdata = np.array([1.,2.,3.])
-        self.im_arr_cache =  PynPoint.pynpointcache.im_arr_store(self.tempdata)
+        self.im_arr_cache =  _Cache.im_arr_store(self.tempdata)
         pass
 
     def test_initialise(self):

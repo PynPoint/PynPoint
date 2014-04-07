@@ -2,29 +2,24 @@
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 """
-Tests for `PynPoint` module.
+Tests for `base_pynpoint` module.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import pytest
-from PynPoint import PynPoint
+import PynPoint
 
-
-class TestPynpoint(object):
+class TestBasePynpoint(object):
 
     def setup(self):
         #prepare unit test. Load data etc
         print("setting up " + __name__)
+        self.base_pynpoint = PynPoint.base_pynpoint()
         pass
 
-    def test_something(self):
-        x = 1
-        assert x==1
+    def test_initialise(self):
+        assert self.base_pynpoint.obj_type == 'PynPoint_parent' 
 
     def teardown(self):
         #tidy up
         print("tearing down " + __name__)
         pass
-
-if __name__ == '__main__':
-    pytest.main()

@@ -1,27 +1,15 @@
         
 #import external functions:
-import pyfits
 import pylab as pl
-import glob
 import time
-import h5py
-import numpy as np
-import os
 
 #import extra PynPoint functions:
-import Util
-from creator_funcs import *
-
-#from PynPoint_creator_funcs import *
-
-from Mask import mask
-from parent import pynpoint_parent
-#from PynPoint_parent import pynpoint_parent
-#import PynPoint_v1_5 as PynPoint
+from _BasePynPoint import base_pynpoint
+import _Creators
 
 
 #Images class:
-class images(pynpoint_parent):
+class images(base_pynpoint):
     """Object for dealing with the images that need to be analysed"""
     
     def __init__(self):
@@ -41,7 +29,7 @@ class images(pynpoint_parent):
         """
 
         obj = images()
-        pynpoint_create_wdir(obj,dir_in,**kwargs)
+        _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
         return obj
 
     @staticmethod
@@ -52,7 +40,7 @@ class images(pynpoint_parent):
         """
 
         obj = images()
-        pynpoint_create_whdf5input(obj,file_in,**kwargs)
+        _Creators.pynpoint_create_whdf5input(obj,file_in,**kwargs)
         return obj
 
         
@@ -64,7 +52,7 @@ class images(pynpoint_parent):
         """
         
         obj = images()
-        pynpoint_create_restore(obj,filename)
+        _Creators.pynpoint_create_restore(obj,filename)
         #Util.restore_data(obj,filename)
         return obj
 
@@ -74,7 +62,7 @@ class images(pynpoint_parent):
         
         """
         obj = images()
-        pynpoint_create_wfitsfiles(obj,*args,**kwargs)
+        _Creators.pynpoint_create_wfitsfiles(obj,*args,**kwargs)
         return obj
         
 

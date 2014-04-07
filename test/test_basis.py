@@ -2,23 +2,20 @@
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 """
-Tests for `PynPoint_v1_5` module basis.
+Tests for `Basis` module.
 """
 #from __future__ import print_function, division, absolute_import, unicode_literals
-
-import pytest
-# import PynPoint_v1_5 as PynPoint
-import PynPoint
-
-import sys
 import os
 import numpy as np
+
+import PynPoint
+
 
 limit0 = 1e-20
 limit1 = 1e-10
 limit2 = 2e-4
 
-class TestPynpoint_v1_5(object):
+class TestBasis(object):
 
     def setup(self):
         #prepare unit test. Load data etc
@@ -37,7 +34,7 @@ class TestPynpoint_v1_5(object):
         # self.basis1 = PynPoint.basis(self.test_data_dir,intype='dir',cent_remove=False,resize=False,ran_sub=False,recent=False)
         self.basis1 = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=False,recent=False)
-        hdf5file = PynPoint.Util.filename4mdir(self.test_data_dir)
+        hdf5file = PynPoint._Util.filename4mdir(self.test_data_dir)
         self.basis5 = PynPoint.basis.create_whdf5input(hdf5file,
                                 cent_remove=False,resize=False,ran_sub=False,recent=False)
 
@@ -186,7 +183,7 @@ class TestPynpoint_v1_5(object):
     def teardown(self):
         #tidy up
         print("tearing down " + __name__)
-        tempfilename = PynPoint.Util.filename4mdir(self.test_data_dir,filetype='convert')
+        tempfilename = PynPoint._Util.filename4mdir(self.test_data_dir,filetype='convert')
         if os.path.isfile(tempfilename):
             os.remove(tempfilename)
         
