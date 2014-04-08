@@ -51,7 +51,7 @@ Data can be retrieved from the ws instance using the get method. The options ava
 	
 To recover the residual instance (as in the interactive example) using the config example below::
 
-	res = ws.get('residual_module3')
+	res = ws.get('residuals_module3')
 	
 This can then be used in the same way as the residual instance earlier.
 
