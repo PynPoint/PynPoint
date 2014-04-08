@@ -2,20 +2,22 @@
 Usage
 ========
 
-PynPoint can be used in a numbe of ways. Below we outline two methods (i) interactive and (ii) workflow. We also provide test data to help you get started.
+PynPoint can be used in a number of ways. Below we outline two methods (i) interactive and (ii) workflow. We also provide test data to help you get started.
 
-PynPoint works through three main classes: images, basis and residuals.
+PynPoint works through three main classes: :py:class:`images`, :class:`basis` and :class:`residuals`.
 
-* images - contains the information to do with the data to be analysed
-* basis - contains information on the basis set to be used
-* residuals - manages the modeling, fitting and correction of the psf
+* :class:`images` - contains the information to do with the data to be analysed
+* :class:`basis` - contains information on the basis set to be used
+* :class:`residuals` - manages the modeling, fitting and correction of the psf
 
 Interactive
 -----------
 
-Assuming that you start with a directory (dir_in) containing a list of fits files, where each fits file contains an image of the star-planet system. In this example 
+Assuming that you start with a directory (`dir_in`) containing a list of fits files, where each fits file contains an image of the star-planet system. To execute this example run::
 
-To use PynPoint in a project::
+	$ ipython --pylab
+
+Then, to use PynPoint execute::
 
 	import PynPoint
 	images = PynPoint.images.create_wdir(dir_in)
@@ -33,7 +35,7 @@ All of the function above have a number of keywords that can also be passed. Mor
 Workflow
 --------
 
-The easiest way to run PynPoint is using the inbuilt workflow. This relies on a config file that contains the information about which functions to excute and what options to use. To run a calculation in this way::
+The easiest way to run PynPoint is using the inbuilt :class:`workflow`. This relies on a config file that contains the information about which functions to execute and what options to use. To run a calculation in this way::
 
 	import PynPoint
 	ws = PynPoint.run(config_file)
@@ -41,7 +43,7 @@ The easiest way to run PynPoint is using the inbuilt workflow. This relies on a 
 As well as returning an instance (ws) containing the run results, data is also stored in the work_space directory defined in the config_file. This can then be restored later by passing the work_space directory::
 	 
 	 import PynPoint
-	 ws.PynPoint.restore(work_space_dir)
+	 ws = PynPoint.restore(work_space_dir)
 
 Data can be retrieved from the ws instance using the get method. The options available to can be listed::
 
@@ -57,7 +59,7 @@ This can then be used in the same way as the residual instance earlier.
 Config Example
 --------------
 
-In the example config file below a workspace will be set up called 'workspace_betapic_stk5' will be used to store the results of the a calculation. The config file then calls to run three modules. The first two modules will use data stored in the directory ../data/Data_betapic_L_band/. The options used by these two modules are listed in the section [options1]. ::
+In the example config file below, a workspace will be set up called 'workspace_betapic_stk5' will be used to store the results of the a calculation. The config file then calls to run three modules. The first two modules will use data stored in the directory ../data/Data_betapic_L_band/. The options used by these two modules are listed in the section [options1]. ::
 
 	[workspace]
 	workdir = ../data/baselinerun_paper/workspace_betapic_stk5/
@@ -138,6 +140,13 @@ Later, an instance can be restored::
 Data
 ----
 
-To help you get started quickly and easily we provide access to data. As part of the distribution we provide data that has been stacked by averaging over 500 images at a time. See the install section for instructions on how to process this data. We also make available `the full data <http://www.phys.ethz.ch/~amaraa/tempfile>`_  (without stacking). 
+To help you get started quickly and easily we provide access to data. As part of the distribution we provide data that has been stacked by averaging over 500 images at a time. See the install section for instructions on how to process this data. 
+
+The path to the data can be retrieved by running::
+
+	import PynPoint
+	print(PynPoint.get_data_dir())
+
+We also make available `the full data <http://www.phys.ethz.ch/~amaraa/tempfile>`_  (without stacking). 
 
 This is the data that we used to develop PynPoint and is discussed in more detail in our papers. You can also find a short synopsis in the Science section under beta-pic.
