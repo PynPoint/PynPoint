@@ -251,16 +251,26 @@ class residuals(base_pynpoint):
     def _mk_res_median_smooth(self,num_coeff,sigma=(2,2)):
         self._res_median_smooth = self._mk_arr_smooth(self.res_rot_median(num_coeff),self.res_rot_var(num_coeff),self.cent_mask,sigma=sigma)        
 
-    def _mk_arr_smooth(self,arr_ave,arr_var,cent_mask,sigma=(2,2)):
-        (izero,jzero) = np.where(arr_var==0)
-        im1 = arr_ave/np.sqrt(arr_var)
-        im1[izero,jzero] = 0.0    
-        im1 *= cent_mask
-        im2 = gaussian_filter(im1,sigma=sigma)
-#         print('HELLO:')
-#         print(sigma)
-        return im2 * cent_mask
-        
+#     def _mk_arr_smooth(self,arr_ave,arr_var,cent_mask,sigma=(2,2)):
+#         (izero,jzero) = np.where(arr_var==0)
+#         im1 = arr_ave/np.sqrt(arr_var)
+#         im1[izero,jzero] = 0.0    
+#         im1 *= cent_mask
+#         im2 = gaussian_filter(im1,sigma=sigma)
+# #         print('HELLO:')
+# #         print(sigma)
+#         return im2 * cent_mask
+#         
+ #    def _mk_arr_smooth(self,im1,cent_mask,sigma=(2,2)):
+ #         # (izero,jzero) = np.where(arr_var==0)
+ #         # im1 = arr_ave#/np.sqrt(arr_var)
+ #         # im1[izero,jzero] = 0.0    
+ #         # im1 *= cent_mask
+ #         im2 = gaussian_filter(im1,sigma=sigma)
+ # #         print('HELLO:')
+ # #         print(sigma)
+ #         return im2 * cent_mask
+ #        
     
 
         
