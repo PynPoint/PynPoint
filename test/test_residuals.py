@@ -64,14 +64,14 @@ class TestPynpoint_v1_5(object):
         assert self.res.psf_im(1).shape == (self.num_files,146,146)
         assert np.allclose(self.res.psf_im(1).mean() , 9.2698583022210567e-06,rtol=limit1)
 
-        assert self.res.res_mean_smooth(1,sigma=(2,2)).shape == (146,146)
-        assert np.allclose(self.res.res_mean_smooth(1,sigma=(2,2)).mean() , 0.00021770530872593523,rtol=limit1)
-
-        assert self.res.res_mean_clip_smooth(1,sigma=(2,2)).shape == (146,146)
-        assert np.allclose(self.res.res_mean_clip_smooth(1,sigma=(2,2)).mean() , 0.00021770530872593523,rtol=limit1)
-
-        assert self.res.res_median_smooth(1,sigma=(2,2)).shape == (146,146)
-        assert np.allclose(self.res.res_median_smooth(1,sigma=(2,2)).mean() , -0.0027173103236604501,rtol=limit1)
+        # assert self.res.res_mean_smooth(1,sigma=(2,2)).shape == (146,146)
+        # assert np.allclose(self.res.res_mean_smooth(1,sigma=(2,2)).mean() , 0.00021770530872593523,rtol=limit1)
+        # 
+        # assert self.res.res_mean_clip_smooth(1,sigma=(2,2)).shape == (146,146)
+        # assert np.allclose(self.res.res_mean_clip_smooth(1,sigma=(2,2)).mean() , 0.00021770530872593523,rtol=limit1)
+        # 
+        # assert self.res.res_median_smooth(1,sigma=(2,2)).shape == (146,146)
+        # assert np.allclose(self.res.res_median_smooth(1,sigma=(2,2)).mean() , -0.0027173103236604501,rtol=limit1)
 
         # assert self.res.res_clean_mean_clip.min() == -0.066167782249454216
         # assert self.res.res_clean_mean_clip.max() == 0.066889228235009104
@@ -86,27 +86,27 @@ class TestPynpoint_v1_5(object):
         assert np.array_equal(self.res.res_rot_mean(1),temp_res.res_rot_mean(1))       
         #self.func4test_overall_same(self.images3,temp_images)
 
-    def test_plt_res(self):
-        res = self.res
-        # im = res.plt_res(3,imtype='median',smooth=(1,1))
-        # assert np.allclose(im.mean() , 0.0050135148629047522,rtol=limit1)
-        im = res.plt_res(2,imtype='mean',smooth=(2,2))
-        assert np.allclose(im.var() , 8.2339809482670522e-05,rtol=limit1)
-        im = res.plt_res(2,imtype='mean',smooth=(3,3))
-        assert np.allclose(im.var() , 2.5555934430759317e-05,rtol=limit1)
+    # def test_plt_res(self):
+    #     res = self.res
+    #     # im = res.plt_res(3,imtype='median',smooth=(1,1))
+    #     # assert np.allclose(im.mean() , 0.0050135148629047522,rtol=limit1)
+    #     im = res.plt_res(2,imtype='mean',smooth=(2,2))
+    #     assert np.allclose(im.var() , 8.2339809482670522e-05,rtol=limit1)
+    #     im = res.plt_res(2,imtype='mean',smooth=(3,3))
+    #     assert np.allclose(im.var() , 2.5555934430759317e-05,rtol=limit1)
 
         # im = res.plt_res(1,imtype='mean_clip',smooth=(3,3))
         # assert np.allclose(im.var() , 3.0342625802397297e+51,rtol=limit1)
         
-        im = res.plt_res(3,imtype='median')
-        assert np.allclose(im.mean() , 3.1119061156702808e-22,rtol=limit1)
-        im = res.plt_res(2,imtype='mean')
-        assert np.allclose(im.mean() , -1.8698034422778928e-10,rtol=limit1)
-        im = res.plt_res(1,imtype='mean_clip')
-        assert np.allclose(im[100,100] , 5.4904054813419678e-07,rtol=limit1)
-        im = res.plt_res(2,imtype='var')
-        assert np.allclose(im.mean() , 1.3961504420740702e-39,rtol=limit1)
-        #need to assert somethings
+        # im = res.plt_res(3,imtype='median')
+        # assert np.allclose(im.mean() , 3.1119061156702808e-22,rtol=limit1)
+        # im = res.plt_res(2,imtype='mean')
+        # assert np.allclose(im.mean() , -1.8698034422778928e-10,rtol=limit1)
+        # im = res.plt_res(1,imtype='mean_clip')
+        # assert np.allclose(im[100,100] , 5.4904054813419678e-07,rtol=limit1)
+        # im = res.plt_res(2,imtype='var')
+        # assert np.allclose(im.mean() , 1.3961504420740702e-39,rtol=limit1)
+        #         #need to assert somethings
         
         
 
