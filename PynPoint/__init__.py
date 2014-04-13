@@ -13,6 +13,7 @@ from Workflow import workflow
 from _BasePynPoint import base_pynpoint
 import _Ctx as pynpointctx
 import _Cache as pynpointcache
+import Plotter as plotter
 
 from Workflow import run, restore
 
