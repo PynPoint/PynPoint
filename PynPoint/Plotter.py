@@ -9,6 +9,7 @@
 # External modules
 
 import pylab as pl
+from scipy.ndimage.filters import gaussian_filter
 
 #import extra PynPoint functions:
 # from _BasePynPoint import base_pynpoint
@@ -89,37 +90,27 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False):
      assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
      
      
-     if smooth is None:            
-         if imtype == 'mean':
-             im = res.res_rot_mean(num_coeff)                
-         elif imtype == 'mean_clip':
-             im = res.res_rot_mean_clip(num_coeff)
-         elif imtype == 'median':
-             im = res.res_rot_median(num_coeff)
-         elif imtype == 'var':
-             im = res.res_rot_var(num_coeff)
-         else:
-             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-             return
+     if imtype == 'mean':
+         im = res.res_rot_mean(num_coeff)                
+     elif imtype == 'mean_clip':
+         im = res.res_rot_mean_clip(num_coeff)
+     elif imtype == 'median':
+         im = res.res_rot_median(num_coeff)
+     elif imtype == 'var':
+         im = res.res_rot_var(num_coeff)
      else:
-         if imtype == 'mean':
-             im = res.res_mean_smooth(num_coeff,sigma=smooth)
-         elif imtype == 'mean_clip':
-             im = res.res_mean_clip_smooth(num_coeff,sigma=smooth)
-         elif imtype == 'median':
-             im = res.res_median_smooth(num_coeff,sigma=smooth)
-         elif imtype == 'var':
-             print('Error: var image currently does not get plotted with smoothing')
-             return                
-         else:
-             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-     
-     print('ADAM: ')
-     print(im)
-     print(imtype)
-     print(smooth)
-     if im is None:
+         print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
          return
+     if not smooth is None:
+        im = gaussian_filter(im,sigma=smooth) * res.cent_mask
+         
+            
+     # print('ADAM: ')
+     # print(im)
+     # print(imtype)
+     # print(smooth)
+     # if im is None:
+     #     return
      pl.figure()
      pl.clf()
      pl.imshow(im,origin='lower',interpolation='nearest')
