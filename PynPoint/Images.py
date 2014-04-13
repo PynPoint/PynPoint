@@ -118,4 +118,4 @@ class images(base_pynpoint):
             pl.title('Active Images')
             pl.draw()
             time.sleep(time_gap)
-
+    
