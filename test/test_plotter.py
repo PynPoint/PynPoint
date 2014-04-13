@@ -57,9 +57,10 @@ class TestPlotter(object):
         assert np.allclose(im3.mean() , -6.937365756153755e-08,rtol=limit1)
         assert np.allclose(im4.mean() , 2.4505879053707469e-10,rtol=limit1)
 
-        # assert im1s.mean() == 0.00021770530872593523
-        # assert im2s.mean() == 0.00021770530872593523
-        # assert im3s.mean() == -0.0027173103236604501
+        assert np.allclose(im1s.mean() , -3.1181363069737826e-10,rtol=limit1)
+        assert np.allclose(im2s.mean() , -3.118136306973763e-10,rtol=limit1)
+        assert np.allclose(im3s.mean() , -6.8424237888987089e-08,rtol=limit1)
+        assert np.allclose(im4s.mean() , -2.369120550016369e-10,rtol=limit1)
         
         #!!!! VERY STRANGE THAT VALUES ARE THE SAME!!!! NEED To CHECK!!!!
         # assert im4s.mean() == 1.0
