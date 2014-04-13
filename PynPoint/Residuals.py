@@ -176,22 +176,22 @@ class residuals(base_pynpoint):
     def res_mean_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
-        #if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
-        self._mk_res_mean_smooth(num_coeff,sigma=sigma)
+        # if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
+        self._res_mean_smooth = self._mk_res_mean_smooth(num_coeff,sigma=sigma)
         return self._res_mean_smooth
 
     def res_mean_clip_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
         # if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
-        self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
-        return self._res_mean_smooth
+        self._res_mean_clip_smooth = self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
+        return self._res_mean_clip_smooth
 
     def res_median_smooth(self,num_coeff,sigma=(2,2)):
         """
         """
         # if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
-        self._mk_res_median_smooth(num_coeff,sigma=sigma)
+        self._res_median_smooth = self._mk_res_median_smooth(num_coeff,sigma=sigma)
         return self._res_median_smooth
 
         
@@ -234,11 +234,12 @@ class residuals(base_pynpoint):
         for i in range(0,res_rot_mean_clip.shape[0]):
             for j in range(0,res_rot_mean_clip.shape[1]):
                 temp = res_rot[:,i,j]
-                a = temp - temp.mean()
-                b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
-                b2 = b1.compress((b1 > (-1.0)* 3.0*np.sqrt(a.var())).flat)
-                res_rot_mean_clip[i,j] = temp.mean() + b2.mean()                
-        self._res_rot_mean_clip = res_rot_mean_clip
+                if temp.var() > 0.0:
+                    a = temp - temp.mean()
+                    b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
+                    b2 = b1.compress((b1 > (-1.0)* 3.0*np.sqrt(a.var())).flat)
+                    res_rot_mean_clip[i,j] = temp.mean() + b2.mean()                
+        self._res_rot_mean_clip = res_rot_mean_clip #* self.cent_mask
                         
         
     def _mk_res_mean_smooth(self,num_coeff,sigma=(2,2)):
