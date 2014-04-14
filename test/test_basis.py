@@ -82,27 +82,27 @@ class TestBasis(object):
         # temp_basis.restore(temp_file)
         self.func4test_overall_same(self.basis3,temp_basis)
         
-    def test_plt_orig(self):
-        self.basis3.plt_orig(0)
-        self.basis1.plt_orig(0)
-            
-    def test_plt_active(self):
-        self.basis3.plt_active(0)
-        
-    def test_plt_pca(self):
-        self.basis3.plt_pca(0)
+    # def test_plt_orig(self):
+    #     self.basis3.plt_orig(0)
+    #     self.basis1.plt_orig(0)
+    #         
+    # def test_plt_active(self):
+    #     self.basis3.plt_active(0)
+    #     
+    # def test_plt_pca(self):
+    #     self.basis3.plt_pca(0)
     
     # def test_plt_pcarecon(self):
     #     x = 1
     #     assert x==1
         
-    def test_anim_orig(self):
-        self.basis3.anim_orig(num_frames = 3)
-        self.basis3.anim_orig(num_frames = False)
-        
-    def test_anim_active(self):
-        self.basis3.anim_active(num_frames = 3)
-        self.basis3.anim_active(num_frames = False)
+    # def test_anim_orig(self):
+    #     self.basis3.anim_orig(num_frames = 3)
+    #     self.basis3.anim_orig(num_frames = False)
+    #     
+    # def test_anim_active(self):
+    #     self.basis3.anim_active(num_frames = 3)
+    #     self.basis3.anim_active(num_frames = False)
         
         
     def test_overall_basis3(self):

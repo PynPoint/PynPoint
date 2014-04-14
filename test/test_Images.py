@@ -193,31 +193,31 @@ class TestImages(object):
         
 
 
-    def test_plt_stackave(self):
-        basis = self.basis
-        self.images3.mk_psfmodel(basis,3)#,mask=None)
-        self.images3.plt_stackave()
-
-    def test_plt_resid(self):
-        basis = self.basis
-        self.images3.mk_psfmodel(basis,3)#,mask=None)
-        self.images3.plt_resid(0)
-
-    def test_plt_psf(self):
-        basis = self.basis
-        self.images3.mk_psfmodel(basis,3)#,mask=None)
-        self.images3.plt_psf(0)
-
-    def test_plt_im(self):
-        self.images3.plt_im(0)
-
-    def test_anim_im(self):
-        self.images3.anim_im()
-
-    def test_anim_active(self):
-        basis = self.basis
-        self.images3.mk_psfmodel(basis,3)#,mask=None)
-        self.images3.anim_active()
+    # def test_plt_stackave(self):
+    #     basis = self.basis
+    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
+    #     self.images3.plt_stackave()
+    # 
+    # def test_plt_resid(self):
+    #     basis = self.basis
+    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
+    #     self.images3.plt_resid(0)
+    # 
+    # def test_plt_psf(self):
+    #     basis = self.basis
+    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
+    #     self.images3.plt_psf(0)
+    # 
+    # def test_plt_im(self):
+    #     self.images3.plt_im(0)
+    # 
+    # def test_anim_im(self):
+    #     self.images3.anim_im()
+    # 
+    # def test_anim_active(self):
+    #     basis = self.basis
+    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
+    #     self.images3.anim_active()
 
         
     def teardown(self):
