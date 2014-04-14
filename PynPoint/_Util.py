@@ -568,3 +568,5 @@ def peak_find(imtemp,limit=0.8,printit=False):
             
     return x_peaks,y_peaks, h_peaks,sig,num_peaks
 
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")

@@ -10,6 +10,7 @@ from _Ctx import Ctx
 import shutil
 import h5py
 import time
+from PynPoint import _Util
 
 
 class workflow():
@@ -257,28 +258,28 @@ class workflow():
     def check_kwargs(self,**kwargs):
 
         if 'recent' in kwargs.keys():
-            kwargs['recent'] = self.str2bool(kwargs['recent'])
+            kwargs['recent'] = _Util.str2bool(kwargs['recent'])
             
             
         if 'resize' in kwargs.keys():
         # if hasattr(kwargs, 'resize'):
-            kwargs['resize'] = self.str2bool(kwargs['resize'])
+            kwargs['resize'] = _Util.str2bool(kwargs['resize'])
         
         if 'cent_remove' in kwargs.keys():
         # if hasattr(kwargs, 'cent_remove'):
-            kwargs['cent_remove'] = self.str2bool(kwargs['cent_remove'])
+            kwargs['cent_remove'] = _Util.str2bool(kwargs['cent_remove'])
         
         if 'ran_sub' in kwargs.keys():
         # if hasattr(kwargs, 'ran_sub'):
-            kwargs['ran_sub'] = self.str2bool(kwargs['ran_sub'])
+            kwargs['ran_sub'] = _Util.str2bool(kwargs['ran_sub'])
     
         if 'para_sort' in kwargs.keys():
         # if hasattr(kwargs, 'para_sort'):
-            kwargs['para_sort'] = self.str2bool(kwargs['para_sort'])
+            kwargs['para_sort'] = _Util.str2bool(kwargs['para_sort'])
     
         if 'inner_pix' in kwargs.keys():
         # if hasattr(kwargs, 'inner_pix'):
-            kwargs['inner_pix'] = self.str2bool(kwargs['inner_pix'])
+            kwargs['inner_pix'] = _Util.str2bool(kwargs['inner_pix'])
 
         if 'F_int' in kwargs.keys():
         # if hasattr(kwargs, 'F_int'):
@@ -303,8 +304,6 @@ class workflow():
         return kwargs
     
         
-    def str2bool(self,v):
-        return v.lower() in ("yes", "true", "t", "1")
   
 def run(config,force_replace=False):
     """
