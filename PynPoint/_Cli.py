@@ -8,6 +8,7 @@ author: jakeret
 from __future__ import print_function, division, absolute_import, unicode_literals
 import sys
 import PynPoint
+from PynPoint import _Util
 
 def run():
     """
@@ -23,7 +24,7 @@ def _main(*argv):
     argv = list(argv)
     force_replace = False
     if len(argv) > 1:
-        force_replace = bool(argv[1])
+        force_replace = _Util.str2bool(argv[1])
         
     PynPoint.run(argv[0], force_replace)
 
