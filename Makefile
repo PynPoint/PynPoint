@@ -27,6 +27,7 @@ lint:
 	flake8 PynPoint test
 
 test:
+	find . -name 'test/__pycache__' -exec rm -rf {} +
 	py.test
 
 test-all:
