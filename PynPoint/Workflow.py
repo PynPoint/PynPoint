@@ -14,16 +14,23 @@ from PynPoint import _Util
 
 
 class workflow():
+    """
+    A simple workflow engine for managing PynPoint runs. This engine takes in a configuration 
+    file where the user can specify all the operations that should be run along with keyword options
     
-    obj_type = 'PynPoint_workflow'
-    # section title to be used in config to identify modules to be run
-    module_string = 'module'
+    """
+    
      
     def __init__(self):
         """
         Initialise an instance of the images class. The result is simple and
         almost empty (in terms of attributes)        
         """
+        self.obj_type = 'PynPoint_workflow'
+        # section title to be used in config to identify modules to be run
+        self.module_string = 'module'
+        
+
         pass
         
         
@@ -32,12 +39,16 @@ class workflow():
         """
         run the workflow using config. Need to pass either a
         config instance or name of file containing config information.
+        
+        :param config: name of the config file with details of the run to be executed
+        :param force_replace: If True then the workspace directory will be overwritten if it already exists
+        
         """
         obj = workflow()
         obj._init_config(config)
         obj._setup_workspace(force_replace=force_replace)
         obj._runmods()
-        obj.save()
+        obj._save()
         # obj._report()
         # obj._helpfiles()
         obj._tidyup()
@@ -49,6 +60,10 @@ class workflow():
         """
         Restores a previously a workspace that has previously been 
         calculated by the workflow.
+        
+        :param dirin: Work directory created by by an earlier calculation (using run method). 
+        
+        
         """
         
         obj = workflow()
@@ -56,7 +71,11 @@ class workflow():
         return obj
         
         
-    def save(self):#,dirout):
+    def _save(self):#,dirout):
+        """
+        save
+        """
+        
         dirout = data=self.dirname
         self._ctx.save(dirout)
         fsave = h5py.File(dirout+'/ws_basic.hdf5','w')
@@ -70,9 +89,18 @@ class workflow():
         
         
     def get(self,name):
+        """
+        Used to extract instances of images, basis or residuals from the workflow instance
+        
+        :param name: name of the option to be restored - see get_options for available options
+        """
         return self._ctx.get(name)   
         
     def get_options(self):
+        """
+        Prints the options available to the get method
+        """
+        
         return self._ctx.entries()
            
     
@@ -249,13 +277,13 @@ class workflow():
             del kwargs['__name__']
         
         if not kwargs is None:
-            kwargs = self.check_kwargs(**kwargs)
+            kwargs = self._check_kwargs(**kwargs)
 
         return kwargs
 
         ##
         
-    def check_kwargs(self,**kwargs):
+    def _check_kwargs(self,**kwargs):
 
         if 'recent' in kwargs.keys():
             kwargs['recent'] = _Util.str2bool(kwargs['recent'])
@@ -309,8 +337,9 @@ def run(config,force_replace=False):
     """
     Delegates the execution to `workflow.run`
     
-    :param config:
-    :param force_replace:
+    :param config: name of the config file with details of the run to be executed
+    :param force_replace: If True then the workspace directory will be overwritten if it already exists
+    
     """
     ws = workflow.run(config, force_replace)
     return ws
@@ -319,7 +348,8 @@ def restore(dirin):
     """
     Delegates the execution to `workflow.restore`
     
-    :param dirin:
+    :param dirin: Work directory created by by an earlier calculation (using run method). 
+
     """
     ws = workflow.restore(dirin)
     return ws

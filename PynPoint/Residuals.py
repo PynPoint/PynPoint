@@ -51,55 +51,55 @@ class residuals(base_pynpoint):
         return obj
 
 
-    def plt_res(self,num_coeff,imtype='mean',smooth=None):
-        """
-        plots the resulting residual images. 
-        and gives the image as a return value. 
-        """
-        
-        options = ['mean','mean_clip','median','var']#,'psf']
-        
-        assert imtype in options, 'Error: options for ave keyword are %s'%options
-        if not smooth is None:
-            assert len(smooth) == 2, 'Error: smooth option should be a two element list'
-            assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-            assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-        assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
-        
-        
-        if smooth is None:            
-            if imtype == 'mean':
-                im = self.res_rot_mean(num_coeff)                
-            elif imtype == 'mean_clip':
-                im = self.res_rot_mean_clip(num_coeff)
-            elif imtype == 'median':
-                im = self.res_rot_median(num_coeff)
-            elif imtype == 'var':
-                im = self.res_rot_var(num_coeff)
-            else:
-                print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-                return
-        else:
-            if imtype == 'mean':
-                im = self.res_mean_smooth(num_coeff,sigma=smooth)
-            elif imtype == 'mean_clip':
-                im = self.res_mean_clip_smooth(num_coeff,sigma=smooth)
-            elif imtype == 'median':
-                im = self.res_median_smooth(num_coeff,sigma=smooth)
-            elif imtype == 'var':
-                print('Error: var image currently does not get plotted with smoothing')
-                return                
-            else:
-                print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-        
-        
-        pl.figure()
-        pl.clf()
-        pl.imshow(im,origin='lower',interpolation='nearest')
-        pl.title('Residual Image: '+imtype,size='large')
-        pl.colorbar()
-        return im
-            
+    # def plt_res(self,num_coeff,imtype='mean',smooth=None):
+    #     """
+    #     plots the resulting residual images. 
+    #     and gives the image as a return value. 
+    #     """
+    #     
+    #     options = ['mean','mean_clip','median','var']#,'psf']
+    #     
+    #     assert imtype in options, 'Error: options for ave keyword are %s'%options
+    #     if not smooth is None:
+    #         assert len(smooth) == 2, 'Error: smooth option should be a two element list'
+    #         assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+    #         assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+    #     assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
+    #     
+    #     
+    #     if smooth is None:            
+    #         if imtype == 'mean':
+    #             im = self.res_rot_mean(num_coeff)                
+    #         elif imtype == 'mean_clip':
+    #             im = self.res_rot_mean_clip(num_coeff)
+    #         elif imtype == 'median':
+    #             im = self.res_rot_median(num_coeff)
+    #         elif imtype == 'var':
+    #             im = self.res_rot_var(num_coeff)
+    #         else:
+    #             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+    #             return
+    #     else:
+    #         if imtype == 'mean':
+    #             im = self.res_mean_smooth(num_coeff,sigma=smooth)
+    #         elif imtype == 'mean_clip':
+    #             im = self.res_mean_clip_smooth(num_coeff,sigma=smooth)
+    #         elif imtype == 'median':
+    #             im = self.res_median_smooth(num_coeff,sigma=smooth)
+    #         elif imtype == 'var':
+    #             print('Error: var image currently does not get plotted with smoothing')
+    #             return                
+    #         else:
+    #             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+    #     
+    #     
+    #     pl.figure()
+    #     pl.clf()
+    #     pl.imshow(im,origin='lower',interpolation='nearest')
+    #     pl.title('Residual Image: '+imtype,size='large')
+    #     pl.colorbar()
+    #     return im
+    #         
 
 
     def res_arr(self,num_coeff):
@@ -163,7 +163,7 @@ class residuals(base_pynpoint):
         return self._res_rot_var
         
                 
-    def psf_im(self,num_coeff):
+    def _psf_im(self,num_coeff):
         """
         Returns a data cube with a model for the PSF.
         """
@@ -173,33 +173,33 @@ class residuals(base_pynpoint):
             self.num_coeff = num_coeff
         return self.psf_im_arr
 
-    def res_mean_smooth(self,num_coeff,sigma=(2,2)):
-        """
-        """
-        # if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
-        self._res_mean_smooth = self._mk_res_mean_smooth(num_coeff,sigma=sigma)
-        return self._res_mean_smooth
-
-    def res_mean_clip_smooth(self,num_coeff,sigma=(2,2)):
-        """
-        """
-        # if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
-        self._res_mean_clip_smooth = self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
-        return self._res_mean_clip_smooth
-
-    def res_median_smooth(self,num_coeff,sigma=(2,2)):
-        """
-        """
-        # if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
-        self._res_median_smooth = self._mk_res_median_smooth(num_coeff,sigma=sigma)
-        return self._res_median_smooth
-
+    # def res_mean_smooth(self,num_coeff,sigma=(2,2)):
+    #     """
+    #     """
+    #     # if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
+    #     self._res_mean_smooth = self._mk_res_mean_smooth(num_coeff,sigma=sigma)
+    #     return self._res_mean_smooth
+    # 
+    # def res_mean_clip_smooth(self,num_coeff,sigma=(2,2)):
+    #     """
+    #     """
+    #     # if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
+    #     self._res_mean_clip_smooth = self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
+    #     return self._res_mean_clip_smooth
+    # 
+    # def res_median_smooth(self,num_coeff,sigma=(2,2)):
+    #     """
+    #     """
+    #     # if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
+    #     self._res_median_smooth = self._mk_res_median_smooth(num_coeff,sigma=sigma)
+    #     return self._res_median_smooth
+    # 
         
     # ---Internal functions ---#
     
     def _mk_res_arr(self,num_coeff):
     	res_arr = self.im_arr.copy()
-        psf_im = self.psf_im(num_coeff)
+        psf_im = self._psf_im(num_coeff)
         for i in range(0,len(res_arr[:,0,0])):
             res_arr[i,] -= (psf_im[i,] * self.cent_mask)
             # print('HIHI')
