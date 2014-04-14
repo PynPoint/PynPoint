@@ -246,6 +246,14 @@ class TestUtil(object):
         y_cents.sort()
 
 
+    def test_str2bool(self):
+        for s in ("yes", "true", "t", "1", "Yes", "True", "T"):
+            assert PynPoint._Util.str2bool(s)
+            
+        for s in ("no", "false", "f", "0", "No", "False", "F" ):
+            assert not PynPoint._Util.str2bool(s)
+        
+
     def teardown(self):
         #tidy up
         print("tearing down " + __name__)
