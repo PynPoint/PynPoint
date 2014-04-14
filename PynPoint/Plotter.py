@@ -41,17 +41,55 @@ def plt_psf_fit(self,obj,ind,full=False):
 
 
 
-def plt_psf_bais(self,obj,ind):
-    """Function for making a plot of the PCA basis set"""
+def plt_psf_basis(obj,ind,returnval=False):
+    """
+    Plots the basis images used to model the PSF.
+    
+    :param obj: an instance that has psf_basis instance
+    :param ind: index of the basis image to be plotted
+    :param returnval: set to True if you want the function to return the 2D array
+    
+    :return: 2D array of what was plotted (optional) 
+
+    """
+    
     pl.clf()
     pl.imshow(obj.psf_basis[ind,], origin='lower',interpolation='nearest')
     pl.title('PCA',size='large')
     pl.colorbar()   
+    
+def plt_im_arr(obj,ind,returnval=False):
+    """
+    Used to plot the im_arr entry, which the image used by the instance
+
+    :param obj: an instance of images, basis or residual
+    :param ind: index of the image to be plotted
+    :param returnval: set to True if you want the function to return the 2D array
+    
+    :return: 2D array of what was plotted (optional) 
+        
+    """
+    pl.clf()
+    pl.imshow(obj.im_arr[ind,],origin='lower',interpolation='nearest')
+    pl.title('image_arr:'+str(ind),size='large')
+    pl.colorbar()
+    pl.show()
+    
+    if returnval is True:
+         return im
 
 
 
-def anim_im_arr(self,obj,time_gap=0.04,im_range = None):
-    """function for animating the input images"""
+def anim_im_arr(obj,time_gap=0.04,im_range = None):
+    """
+    Produces an animation of the im_arr entries, which are the images used in the instance.
+
+    :param obj: An instance of images, basis or residual
+    :param time_gap: Pause time between images
+    :param im_range: If None (default) then all the images will be used (this could take a long time). Otherwise im_range should be set to the range of indecies (e.g. [100,150])
+        
+    """
+    
     pl.clf()
     if not im_range is None:
         assert len(im_range) == 2,'Error: im_range needs to be a two element list, e.g. im_range = [100,200]' 
@@ -74,8 +112,18 @@ def anim_im_arr(self,obj,time_gap=0.04,im_range = None):
  
 def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False):
      """
-     plots the resulting residual images. 
+     Plots the residual results (either an average or the variance) 
      and gives the image as a return value. 
+     
+    :param res: An instance of residual class
+    :param num_coeff: Number of coefficients used in the fit
+    :param imtype: Type of image to plot. Options are: 'mean', 'mean_clip', 'median' and 'var' 
+    :param smooth: If None (default) then no smoothing is done, otherwise supply a 2 elements list (e.g. [2,2]). The image will be smoothed with a 2D Gaussian with this sigma_x and sigma_y (in pixel units).
+    :param returnval: set to True if you want the function to return the 2D array
+    
+    :return: 2D array of what was plotted (optional) 
+     
+     
      """
      
      assert res.obj_type =='PynPoint_residuals','Error: This method is for an instance of the residual class'

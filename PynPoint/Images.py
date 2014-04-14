@@ -10,7 +10,16 @@ import _Creators
 
 #Images class:
 class images(base_pynpoint):
-    """Object for dealing with the images that need to be analysed"""
+    """
+    
+    Deals with the postage stamp images that will be analysed. An instance of images can be 
+    created in a number of ways. Inputs can be either fits files or hdf5 files. Once read in
+    the data will be processed according to the user specified keyword options.
+    
+    Once created the instance of images can be saved using its save method. This can later be 
+    restored using the restore method.
+    
+    """
     
     def __init__(self):
         """
@@ -77,45 +86,45 @@ class images(base_pynpoint):
         return im_temp
 
 
-    def plt_psf(self,ind,full=False):
-        """function for plotting the PSF model"""
-        pl.clf()            
-        pl.imshow(self.mk_psf_realisation(ind,full=full),origin='lower',interpolation='nearest')
-        pl.title('PSF',size='large')
-        pl.colorbar()   
-
-
-    def plt_resid(self,ind):
-        """function for plotting the residuals between the image and PSF model"""
-        pl.clf()
-        pl.imshow(self.im_arr[ind,] - self.mk_psf_realisation(ind,full=False),origin='lower',interpolation='nearest')
-        pl.title('Residual',size='large')
-        pl.colorbar()   
-
-
-    def plt_stackave(self):
-        """function for plotting the residuals between the image and PSF model"""
-        pl.clf()
-        res_arr = self.im_arr - self.psf_im_arr
-        pl.imshow((res_arr.sum(axis = 0)/self.num_files)*self.cent_mask,origin='lower',interpolation='nearest')
-        pl.title('Average of Stack',size='large')
-        pl.colorbar()   
-
-
-    def anim_active(self,time_gap=0.04,num_frames = False):
-        """function for animating the input images"""
-        pl.clf()
-        temp_im = self.im_arr[0,] - self.mk_psf_realisation(0,full=False)
-        if num_frames is False:
-            num_frames = self.num_files
-        im_max = temp_im.max()
-        im_min = temp_im.min()
-        for i in range(0,num_frames):
-            pl.clf()
-            #            plt_resid(i)
-            temp_im = self.im_arr[i,] - self.mk_psf_realisation(i,full=False)
-            pl.imshow(temp_im,animated=True,interpolation='nearest',origin='lower',clim=[im_min,im_max])
-            pl.title('Active Images')
-            pl.draw()
-            time.sleep(time_gap)
-    
+    # def plt_psf(self,ind,full=False):
+    #     """function for plotting the PSF model"""
+    #     pl.clf()            
+    #     pl.imshow(self.mk_psf_realisation(ind,full=full),origin='lower',interpolation='nearest')
+    #     pl.title('PSF',size='large')
+    #     pl.colorbar()   
+    # 
+    # 
+    # def plt_resid(self,ind):
+    #     """function for plotting the residuals between the image and PSF model"""
+    #     pl.clf()
+    #     pl.imshow(self.im_arr[ind,] - self.mk_psf_realisation(ind,full=False),origin='lower',interpolation='nearest')
+    #     pl.title('Residual',size='large')
+    #     pl.colorbar()   
+    # 
+    # 
+    # def plt_stackave(self):
+    #     """function for plotting the residuals between the image and PSF model"""
+    #     pl.clf()
+    #     res_arr = self.im_arr - self.psf_im_arr
+    #     pl.imshow((res_arr.sum(axis = 0)/self.num_files)*self.cent_mask,origin='lower',interpolation='nearest')
+    #     pl.title('Average of Stack',size='large')
+    #     pl.colorbar()   
+    # 
+    # 
+    #     # def anim_active(self,time_gap=0.04,num_frames = False):
+    #     """function for animating the input images"""
+    #     pl.clf()
+    #     temp_im = self.im_arr[0,] - self.mk_psf_realisation(0,full=False)
+    #     if num_frames is False:
+    #         num_frames = self.num_files
+    #     im_max = temp_im.max()
+    #     im_min = temp_im.min()
+    #     for i in range(0,num_frames):
+    #         pl.clf()
+    #         #            plt_resid(i)
+    #         temp_im = self.im_arr[i,] - self.mk_psf_realisation(i,full=False)
+    #         pl.imshow(temp_im,animated=True,interpolation='nearest',origin='lower',clim=[im_min,im_max])
+    #         pl.title('Active Images')
+    #         pl.draw()
+    #         time.sleep(time_gap)
+    #     

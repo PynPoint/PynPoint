@@ -61,8 +61,8 @@ class TestPynpoint_v1_5(object):
         assert self.res.res_rot_var(1).shape == (146,146)
         assert np.allclose(self.res.res_rot_var(1).mean() , -4.4349329318527051e-10,rtol=limit1)
 
-        assert self.res.psf_im(1).shape == (self.num_files,146,146)
-        assert np.allclose(self.res.psf_im(1).mean() , 9.2698583022210567e-06,rtol=limit1)
+        assert self.res._psf_im(1).shape == (self.num_files,146,146)
+        assert np.allclose(self.res._psf_im(1).mean() , 9.2698583022210567e-06,rtol=limit1)
 
         # assert self.res.res_mean_smooth(1,sigma=(2,2)).shape == (146,146)
         # assert np.allclose(self.res.res_mean_smooth(1,sigma=(2,2)).mean() , 0.00021770530872593523,rtol=limit1)
