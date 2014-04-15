@@ -40,7 +40,7 @@ class TestPlotter(object):
 
     def test_plt_res(self):
         res = self.res
-        pynplot = PynPoint.PynPlot
+        pynplot = PynPoint.pynplot
         
         im1 = pynplot.plt_res(res,1,imtype='mean',smooth=None,returnval=True)
         im2 = pynplot.plt_res(res,1,imtype='mean_clip',smooth=None,returnval=True)
