@@ -8,8 +8,6 @@
 
 # External modules
 
-import pylab as pl
-import time
 import os
 
 #import extra PynPoint functions:
