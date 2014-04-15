@@ -112,7 +112,7 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
     obj.para = para
 
 
-def prep_data(obj,recent=False,resize=True,cent_remove=True,F_int=4,
+def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
               F_final=2,ran_sub=False,para_sort=True,inner_pix=False,
               cent_size=0.2,edge_size=1.0,stackave=None):
 
