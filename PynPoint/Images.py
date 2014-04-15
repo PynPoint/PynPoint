@@ -1,7 +1,5 @@
         
 #import external functions:
-import pylab as pl
-import time
 
 #import extra PynPoint functions:
 from _BasePynPoint import base_pynpoint
