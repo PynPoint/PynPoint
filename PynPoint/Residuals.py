@@ -1,7 +1,5 @@
         
 #import external functions:
-import pylab as pl
-from scipy.ndimage.filters import gaussian_filter
 import numpy as np
 
 #import extra PynPoint functions:
