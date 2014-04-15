@@ -18,6 +18,7 @@ Contents:
    science
    authors
    history
+   license
 
 Feedback
 ========
