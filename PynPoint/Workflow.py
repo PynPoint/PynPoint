@@ -330,26 +330,3 @@ class workflow():
             kwargs['stackave'] = int(kwargs['stackave'])
 
         return kwargs
-    
-        
-  
-def run(config,force_replace=False):
-    """
-    Delegates the execution to `workflow.run`
-    
-    :param config: name of the config file with details of the run to be executed
-    :param force_replace: If True then the workspace directory will be overwritten if it already exists
-    
-    """
-    ws = workflow.run(config, force_replace)
-    return ws
-    
-def restore(dirin):
-    """
-    Delegates the execution to `workflow.restore`
-    
-    :param dirin: Work directory created by by an earlier calculation (using run method). 
-
-    """
-    ws = workflow.restore(dirin)
-    return ws

@@ -18,6 +18,3 @@ We would like to thank several people for helping test this package before relea
 * Henning Avenhaus
 * Conor Francois
 * Maddalena Reggiani
-
-None yet. Why not be the first?
-
