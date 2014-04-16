@@ -9,7 +9,7 @@ import _Util
 
 
 #base class:
-class base_pynpoint:
+class base_pynpoint(object):
     """Object for dealing with the images that need to be analysed"""
     
     def __init__(self):
