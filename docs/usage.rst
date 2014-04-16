@@ -137,7 +137,7 @@ When using the workflow make sure that intype is set to dir in the config file::
 
 HDF5 files, such as those created after you process a directory of fits files, can also be passed directly::
 
-	images = PynPoint.images.create_whdf5dile(filename)
+	images = PynPoint.images.create_whdf5input(filename)
 	
 or for the workflow by setting::
 
