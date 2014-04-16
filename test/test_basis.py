@@ -174,6 +174,14 @@ class TestBasis(object):
         
     def test_overall_basis5(self):
         self.func4test_overall_same(self.basis5,self.basis1)
+        
+    def test_mk_psfmodel(self):
+        basis = self.basis3
+        # basis.mk_psfmodel(basis,20)
+        basis.mk_psfmodel(20)
+        assert np.allclose(basis.psf_im_arr.mean() , 9.3969370160939641e-06,rtol=limit1)
+        
+    
     # 
     # def test_overall_basis_hdf(self):
     #     self.func4test_overall_same(self.basis_hdf,self.basis3)
