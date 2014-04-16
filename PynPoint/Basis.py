@@ -172,3 +172,5 @@ class basis(base_pynpoint):
     #     
     #  
  
+    def mk_psfmodel(self, num):
+        super(basis, self).mk_psfmodel(self, num)
