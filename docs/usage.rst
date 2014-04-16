@@ -22,9 +22,9 @@ Then, to use PynPoint execute::
 	import PynPoint
 	images = PynPoint.images.create_wdir(dir_in)
 	basis = PynPoint.basis.create_wdir(dir_in)
-	res = PynPoint.residuals(images, basis)
+	res = PynPoint.residuals_create_winstances(images, basis)
 
-The results in res can be viewed using its plot method::
+The results in res can be viewed using its plot method (!! Plotting features are still being developed!! don't use yet)::
 
 	res.plt_res(5,imtype='mean')
 	
@@ -147,6 +147,6 @@ The path to the data can be retrieved by running::
 	import PynPoint
 	print(PynPoint.get_data_dir())
 
-We also make available `the full data <http://www.phys.ethz.ch/~amaraa/tempfile>`_  (without stacking). 
+We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_Shirley_L_Band_PynPoint_conv.hdf5>`_  (without stacking). 
 
 This is the data that we used to develop PynPoint and is discussed in more detail in our papers. You can also find a short synopsis in the Science section under beta-pic.
