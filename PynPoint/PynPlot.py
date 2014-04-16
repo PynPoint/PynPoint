@@ -23,14 +23,14 @@ from scipy.ndimage.filters import gaussian_filter
 plotting routines for PynPoint classes images, basis and residualts.
 """
 
-def __init__(self):
-    """
-    Initialise an instance of the images class. The result is simple and
-    almost empty (in terms of attributes)        
-    """
-    
-    self.obj_type = 'PynPoint_plotter'
-    
+# def __init__(self):
+#     """
+#     Initialise an instance of the images class. The result is simple and
+#     almost empty (in terms of attributes)        
+#     """
+#     
+#     self.obj_type = 'PynPoint_plotter'
+#     
 
 def plt_psf_fit(self,obj,ind,full=False):
     """function for plotting the PSF model"""
