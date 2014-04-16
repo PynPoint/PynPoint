@@ -20,13 +20,14 @@ Assuming that you start with a directory (`dir_in`) containing a list of fits fi
 Then, to use PynPoint execute::
 
 	import PynPoint
-	images = PynPoint.images.create_wdir(dir_in)
-	basis = PynPoint.basis.create_wdir(dir_in)
-	res = PynPoint.residuals_create_winstances(images, basis)
+	images = PynPoint.images.create_wdir(dir_in,stackave=50,cent_size=0.05)
+	basis = PynPoint.basis.create_wdir(dir_in,stackave=50,cent_size=0.05)
+	res = PynPoint.residuals.create_winstances(images, basis)
 
-The results in res can be viewed using its plot method (!! Plotting features are still being developed!! don't use yet)::
+The results in res can be viewed using its plot method::
 
-	res.plt_res(5,imtype='mean')
+	from PynPoint import pynplot
+	pynplot.plt_res(res,5,imtype='mean')
 	
 In the example above the star is modeled using the first 5 principal component and that the stack is averaged using the mean. 
 
@@ -40,20 +41,34 @@ The easiest way to run PynPoint is using the inbuilt :class:`workflow`. This rel
 	import PynPoint
 	ws = PynPoint.run(config_file)
 	
-As well as returning an instance (ws) containing the run results, data is also stored in the work_space directory defined in the config_file. This can then be restored later by passing the work_space directory::
+As well as returning an instance (ws) containing the run results, data is also stored in the work_space directory defined in the config_file. If this directory exists then you will recieve an error message stating this. If you would like to force the calculation to overwrite an exsiting directory then use the option force_replace=True. For instance::
+	
+	ws = PynPoint.run(config_file,force_replace=True)
+	
+
+The workspace data can be restored later by passing the work_space directory::
 	 
 	 import PynPoint
 	 ws = PynPoint.restore(work_space_dir)
 
-Data can be retrieved from the ws instance using the get method. The options available to can be listed::
+Data can be retrieved from the ws instance using the get method. The available instances in the ws can be listed::
 
-	ws.get_options()
+	ws.get_available()
 	
 To recover the residual instance (as in the interactive example) using the config example below::
 
 	res = ws.get('residuals_module3')
 	
 This can then be used in the same way as the residual instance earlier.
+
+Shell Script
+------------
+
+We have also included a feature so that a config file can be passed to PynPoint and processed through the workflow engine through the command line::
+
+	$ PynPoint <configfilename> True
+	
+In the above example the keyword 'True' has been set to set force_replace = True. Again, the default value is False, so the if the target output directory already exists, an error message will be returned if force_replace is not True.
 
 
 Config Example
