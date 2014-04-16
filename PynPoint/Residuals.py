@@ -167,7 +167,8 @@ class residuals(base_pynpoint):
         """
         
         if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff)):
-            self.mk_psfmodel(self,num_coeff)
+            # self.mk_psfmodel(self,num_coeff)
+            self.mk_psfmodel(num_coeff)
             self.num_coeff = num_coeff
         return self.psf_im_arr
 
@@ -248,6 +249,9 @@ class residuals(base_pynpoint):
 
     def _mk_res_median_smooth(self,num_coeff,sigma=(2,2)):
         self._res_median_smooth = self._mk_arr_smooth(self.res_rot_median(num_coeff),self.res_rot_var(num_coeff),self.cent_mask,sigma=sigma)        
+
+    def mk_psfmodel(self, num):
+        super(residuals, self).mk_psfmodel(self, num)
 
 #     def _mk_arr_smooth(self,arr_ave,arr_var,cent_mask,sigma=(2,2)):
 #         (izero,jzero) = np.where(arr_var==0)
