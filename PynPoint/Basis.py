@@ -110,67 +110,6 @@ class basis(base_pynpoint):
 
         return imtemp
 
-        
-    # def plt_orig(self,ind):
-    #     """Function for making a plot of the original image"""
-    #     pl.clf()
-    #     pl.imshow(self.mk_orig(ind), origin='lower',interpolation='nearest')
-    #     pl.title('Original Image',size='large')
-    #     pl.colorbar()   
-    # 
-    # 
-    # def plt_active(self,ind):
-    #     """Function for making a plot of the working image"""
-    #     pl.clf()
-    #     pl.imshow(self.im_arr[ind,], origin='lower',interpolation='nearest')
-    #     pl.title('Active Image',size='large')
-    #     pl.colorbar()   
-    # 
-    # 
-    # def plt_pca(self,ind):
-    #     """Function for making a plot of the PCA basis set"""
-    #     pl.clf()
-    #     pl.imshow(self.psf_basis[ind,], origin='lower',interpolation='nearest')
-    #     pl.title('PCA',size='large')
-    #     pl.colorbar()   
-    # 
-
-    # def plt_pcarecon(self,coeff):
-    #     """Function for plotting reconstruction"""
-    #     pl.clf()
-    #     pl.imshow(self.mk_pcarecon(coeff), origin='lower',interpolation='nearest')
-    #     pl.title('Reconstruction',size='large')
-    #     pl.colorbar()   
-
-
-    # def anim_orig(self,time_gap=0.04,num_frames = False):
-    #     """function for animating the input images"""
-    #     pl.clf()
-    #     if num_frames is False:
-    #         num_frames = self.num_files
-    #     for i in range(0,num_frames):
-    #         pl.clf()
-    #         pl.imshow(self.mk_orig(i),animated=True,interpolation='nearest',origin='lower')
-    #         pl.title('Original Images')
-    #         pl.draw()
-    #         time.sleep(time_gap)
-    # 
-    # 
-    # def anim_active(self,time_gap=0.04,num_frames = False):
-    #     """function for animating the input images"""
-    #     pl.clf()
-    #     if num_frames is False:
-    #         num_frames = self.num_files
-    #     im_max = self.im_arr[0,].max()
-    #     im_min = self.im_arr[0,].min()
-    #     for i in range(0,num_frames):
-    #         pl.clf()
-    #         pl.imshow(self.im_arr[i,],animated=True,interpolation='nearest',origin='lower',clim=[im_min,im_max])
-    #         pl.title('Active Images')
-    #         pl.draw()
-    #         time.sleep(time_gap)
-    #     
-    #  
  
     def mk_psfmodel(self, num):
         super(basis, self).mk_psfmodel(self, num)
