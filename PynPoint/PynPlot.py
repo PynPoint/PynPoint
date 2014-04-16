@@ -10,6 +10,7 @@
 
 import pylab as pl
 from scipy.ndimage.filters import gaussian_filter
+pl.ion()
 
 #import extra PynPoint functions:
 # from _BasePynPoint import base_pynpoint
