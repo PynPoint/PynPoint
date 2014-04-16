@@ -96,7 +96,7 @@ class workflow():
         """
         return self._ctx.get(name)   
         
-    def get_options(self):
+    def get_available(self):
         """
         Prints the options available to the get method
         """
