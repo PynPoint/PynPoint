@@ -38,14 +38,3 @@ Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing (submitted 2014)
 **image**
 
 	
-
-Other Options 
--------------
-At the command line you can also install using easy_install::
-
-    $ pip install PynPoint --user
-
-Or, if you have virtualenvwrapper installed::
-
-    $ mkvirtualenv PynPoint
-    $ pip install PynPoint

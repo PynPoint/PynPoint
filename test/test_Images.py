@@ -6,6 +6,7 @@ Tests for `Images` module.
 """
 #from __future__ import print_function, division, absolute_import, unicode_literals
 import os
+import pytest
 import numpy as np
 
 import PynPoint
@@ -114,14 +115,6 @@ class TestImages(object):
         assert images.cent_remove is False
         assert np.array_equal(images.cent_mask , np.ones(shape=(146,146))) 
                  
-    # def test_overall_images2(self):
-    #     images = self.images2
-    #     images_base = self.images3
-    #     #general comparisons with the baseline base instance
-    #     assert len(images.files) == 2 
-    #     assert images.num_files == len(images.files)
-    #     #could add extra tests
- 
     def func4test_overall_same(self,images,images_base):
         assert np.array_equal(images.files , images_base.files )
         assert np.array_equal(images.num_files , images_base.num_files)
@@ -133,12 +126,6 @@ class TestImages(object):
         assert np.array_equal(images.cent_mask,images_base.cent_mask)
         #assert np.array_equal(images.im_ave,images_base.im_ave)#,atol=limit1)
         
-    # def test_overall_images5(self):
-    #     self.func4test_overall_same(self.images5,self.images1)
-
-#    def test_overall_images_hdf(self):
-#        self.func4test_overall_same(self.images_hdf,self.images3)
-
     def test_images_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_images_hdf5.h5'))
         
@@ -165,12 +152,6 @@ class TestImages(object):
         assert np.allclose(self.images3.psf_im_arr.var() , 3.1495487274884796e-10,rtol=limit1)
         
     
-    # def test_mk_psfmodel(self):
-    #     basis = self.basis_restore
-    #     self.images3.mk_psfmodel2(basis,3,mask=None)
-    #     self.images3.mk_psfmodel(basis,3,mask=None)
-    # 
-
     def test_mk_psf_realisation(self):
         basis = self.basis
         self.images3.mk_psfmodel(basis,3)#,mask=None)
@@ -191,34 +172,6 @@ class TestImages(object):
         assert np.allclose(im_temp.max() , 0.0042106015505874173,rtol=limit1)
         assert np.allclose(im_temp.var() , 4.9033794533516369e-08,rtol=limit1)
         
-
-
-    # def test_plt_stackave(self):
-    #     basis = self.basis
-    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
-    #     self.images3.plt_stackave()
-    # 
-    # def test_plt_resid(self):
-    #     basis = self.basis
-    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
-    #     self.images3.plt_resid(0)
-    # 
-    # def test_plt_psf(self):
-    #     basis = self.basis
-    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
-    #     self.images3.plt_psf(0)
-    # 
-    # def test_plt_im(self):
-    #     self.images3.plt_im(0)
-    # 
-    # def test_anim_im(self):
-    #     self.images3.anim_im()
-    # 
-    # def test_anim_active(self):
-    #     basis = self.basis
-    #     self.images3.mk_psfmodel(basis,3)#,mask=None)
-    #     self.images3.anim_active()
-
         
     def teardown(self):
         #tidy up
@@ -228,3 +181,7 @@ class TestImages(object):
             os.remove(tempfilename)
         
         pass
+    
+
+if __name__ == '__main__':
+    pytest.main("-k TestImages")

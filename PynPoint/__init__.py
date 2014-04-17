@@ -1,19 +1,19 @@
 __author__ = 'Adam Amara'
 __email__ = 'adam.amara@phys.ethz.ch'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __credits__ = 'ETH Zurich, Institute for Astronomy'
 
 
 
-from Basis import basis
-from Images import images
-from Residuals import residuals
-from Workflow import workflow
+from PynPoint.Basis import basis
+from PynPoint.Images import images
+from PynPoint.Residuals import residuals
+from PynPoint.Workflow import workflow
 
-from _BasePynPoint import base_pynpoint
-import _Ctx as pynpointctx
-import _Cache as pynpointcache
-import PynPlot as pynplot
+from PynPoint._BasePynPoint import base_pynpoint
+import PynPoint._Ctx as pynpointctx
+import PynPoint._Cache as pynpointcache
+import PynPoint.PynPlot as pynplot
 
 def get_data_dir():
     """

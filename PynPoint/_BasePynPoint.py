@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 #import extra PynPoint functions:
-import _Util
+from PynPoint import _Util
 
 
 #base class:
@@ -35,18 +35,6 @@ class base_pynpoint(object):
         pl.colorbar()
 
 
-    # def anim_im(self,time_gap=0.04,num_frames = False):
-    #     """function for animating the input images"""
-    #     pl.clf()
-    #     if num_frames is False:
-    #         num_frames = self.num_files
-    #     for i in range(0,num_frames):
-    #         pl.clf()
-    #         pl.imshow(self.im_arr[i,],animated=True,interpolation='nearest',origin='lower')
-    #         pl.title('Original Images')
-    #         pl.draw()
-    #         time.sleep(time_gap)
-            
     def mk_psfmodel(self,basis,num):#,mask=None):
         """
         Improved function for making models of the PSF given an input basis object. 
