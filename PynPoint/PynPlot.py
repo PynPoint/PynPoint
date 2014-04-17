@@ -16,44 +16,39 @@ import time
 
 pl.ion()
 
-#import extra PynPoint functions:
-# from _BasePynPoint import base_pynpoint
-# import _Util
-# import _Creators
-
-
-#Basis Class
-#class basis(base_pynpoint):
 """
 plotting routines for PynPoint classes images, basis and residuals.
 """
 
-# def __init__(self):
-#     """
-#     Initialise an instance of the images class. The result is simple and
-#     almost empty (in terms of attributes)        
-#     """
-#     
-#     self.obj_type = 'PynPoint_plotter'
-#     
-
-def plt_psf_model():
-    """ plotting the PSF model"""
+def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
+    """ 
+    plotting the PSF model
     
-    x=1
-
-
-
-def plt_psf_fit(obj,ind,full=False):
-    """function for plotting the PSF model"""
+    :param res: an instance of residual class
+    :param ind: index of the image being modeled
+    :param num_coeff: number of basis sets to use
+    :param returnval: If True the 2D array that was plotted is returned
+    
+    """
+    
+    assert res.obj_type in ['PynPoint_residuals'], 'Error: This plot function currently only suports the class res'
+    psf_model = res._psf_im(num_coeff)
+    im = psf_model[ind]
     pl.clf()            
-    pl.imshow(obj.mk_psf_realisation(ind,full=full),origin='lower',interpolation='nearest')
+    pl.imshow(im,origin='lower',interpolation='nearest')
     pl.title('PSF',size='large')
     pl.colorbar()   
 
+    if not savefits is False:
+        hdu = pyfits.PrimaryHDU(im)
+        hdu.writeto(savefits,clobber=True)
+    
+    if returnval is True:
+         return im
+    
+    
 
-
-def plt_psf_basis(obj,ind,returnval=False):
+def plt_psf_basis(obj,ind,returnval=False,savefits=False):
     """
     Plots the basis images used to model the PSF.
     
@@ -65,12 +60,21 @@ def plt_psf_basis(obj,ind,returnval=False):
 
     """
     
+    im = obj.psf_basis[ind,]
+    
     pl.clf()
-    pl.imshow(obj.psf_basis[ind,], origin='lower',interpolation='nearest')
+    pl.imshow(im, origin='lower',interpolation='nearest')
     pl.title('PCA',size='large')
     pl.colorbar()   
+    if not savefits is False:
+        hdu = pyfits.PrimaryHDU(im)
+        hdu.writeto(savefits,clobber=True)
+
+    if returnval is True:
+         return im
     
-def plt_im_arr(obj,ind,returnval=False):
+    
+def plt_im_arr(obj,ind,returnval=False,savefits=False):
     """
     Used to plot the im_arr entry, which the image used by the instance
 
@@ -89,6 +93,10 @@ def plt_im_arr(obj,ind,returnval=False):
     pl.title('image_arr:'+str(ind),size='large')
     pl.colorbar()
     pl.show()
+    
+    if not savefits is False:
+        hdu = pyfits.PrimaryHDU(im)
+        hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
          return im

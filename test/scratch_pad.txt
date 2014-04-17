@@ -3,6 +3,21 @@ Adam Adam (6/3/2014)
 scratch pad for building the tests. This should not be used for anything but a random space to dump synpets of code.
 
 
+------------------------------
+import PynPoint
+from PynPoint import pynplot
+
+ws_dir = '/Users/adamamara/Work/Active_Projects/PynPoint_paper/data/baselinerun_paper/workspace__shirley_stk100'
+ws = PynPoint.workflow.restore(ws_dir)
+res = ws.get('residuals_module3')
+
+pynplot.plt_res(res,20)
+
+
+
+
+------------------------------
+
 import PynPoint_v1_5 as PynPoint
 fileconfig = '/Users/amaraa/Work/Active_Projects/PynPoint_v1_5/test/test_data/PynPoint_test_v001.config'
 ws = PynPoint.workflow.run(fileconfig,force_replace=True)
