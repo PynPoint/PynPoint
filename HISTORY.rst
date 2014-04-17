@@ -2,6 +2,13 @@
 
 History
 -------
+0.1.2 (2014-04-17)
+++++++++++++++++++
+
+* Bug fixes
+* Command line support
+* Refactored plotting and animating
+* Updated documentation
 
 0.1.1 (2014-04-04)
 ++++++++++++++++++
