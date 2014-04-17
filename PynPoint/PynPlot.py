@@ -29,6 +29,11 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
     :param num_coeff: number of basis sets to use
     :param returnval: If True the 2D array that was plotted is returned
     
+    Example ::
+        
+        
+        pynplot.plt_psf_model(res,6,40)
+    
     """
     
     assert res.obj_type in ['PynPoint_residuals'], 'Error: This plot function currently only suports the class res'
@@ -110,6 +115,10 @@ def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
     :param obj: An instance of images, basis or residual
     :param time_gap: Pause time between images
     :param im_range: If None (default) then all the images will be used (this could take a long time). Otherwise im_range should be set to the range of indecies (e.g. [100,150])
+    
+    Example::
+    
+        pynplot.anim_im_arr(res)
         
     """
     
@@ -148,6 +157,11 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     :param savefits: Should be either False (nothing happens) or the name of a fits file where the data should be written
     
     :return: 2D array of what was plotted (optional) 
+    
+    Example ::
+
+
+        pynplot.plt_res(res,20,imtype='mean',returnval=True)
      
      
      """
