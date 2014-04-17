@@ -10,6 +10,10 @@
 
 import pylab as pl
 from scipy.ndimage.filters import gaussian_filter
+import numpy as np
+import pyfits
+import time
+
 pl.ion()
 
 #import extra PynPoint functions:
@@ -21,7 +25,7 @@ pl.ion()
 #Basis Class
 #class basis(base_pynpoint):
 """
-plotting routines for PynPoint classes images, basis and residualts.
+plotting routines for PynPoint classes images, basis and residuals.
 """
 
 # def __init__(self):
@@ -33,7 +37,14 @@ plotting routines for PynPoint classes images, basis and residualts.
 #     self.obj_type = 'PynPoint_plotter'
 #     
 
-def plt_psf_fit(self,obj,ind,full=False):
+def plt_psf_model():
+    """ plotting the PSF model"""
+    
+    x=1
+
+
+
+def plt_psf_fit(obj,ind,full=False):
     """function for plotting the PSF model"""
     pl.clf()            
     pl.imshow(obj.mk_psf_realisation(ind,full=full),origin='lower',interpolation='nearest')
@@ -46,7 +57,7 @@ def plt_psf_basis(obj,ind,returnval=False):
     """
     Plots the basis images used to model the PSF.
     
-    :param obj: an instance that has psf_basis instance
+    :param obj: an instance that has psf_basis attribute (basis or residuals)
     :param ind: index of the basis image to be plotted
     :param returnval: set to True if you want the function to return the 2D array
     
@@ -70,6 +81,9 @@ def plt_im_arr(obj,ind,returnval=False):
     :return: 2D array of what was plotted (optional) 
         
     """
+    #To Do:
+    #       Renormalise keyword
+    
     pl.clf()
     pl.imshow(obj.im_arr[ind,],origin='lower',interpolation='nearest')
     pl.title('image_arr:'+str(ind),size='large')
@@ -81,7 +95,7 @@ def plt_im_arr(obj,ind,returnval=False):
 
 
 
-def anim_im_arr(obj,time_gap=0.04,im_range = None):
+def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
     """
     Produces an animation of the im_arr entries, which are the images used in the instance.
 
@@ -100,6 +114,8 @@ def anim_im_arr(obj,time_gap=0.04,im_range = None):
 
     im_max = im_arr[0,].max()
     im_min = im_arr[0,].min()
+    
+    num_frames = len(im_arr[:,0,0])
 
     for i in range(0,num_frames):
         pl.clf()
@@ -111,25 +127,31 @@ def anim_im_arr(obj,time_gap=0.04,im_range = None):
 
  # from residuals:
  
-def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False):
+def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False):
      """
      Plots the residual results (either an average or the variance) 
      and gives the image as a return value. 
      
     :param res: An instance of residual class
     :param num_coeff: Number of coefficients used in the fit
-    :param imtype: Type of image to plot. Options are: 'mean', 'mean_clip', 'median' and 'var' 
+    :param imtype: Type of image to plot. Options are: 'mean', 'mean_clip', 'median', 'var', 'sigma' and 'mean_sigma' 
     :param smooth: If None (default) then no smoothing is done, otherwise supply a 2 elements list (e.g. [2,2]). The image will be smoothed with a 2D Gaussian with this sigma_x and sigma_y (in pixel units).
     :param returnval: set to True if you want the function to return the 2D array
+    :param savefits: Should be either False (nothing happens) or the name of a fits file where the data should be written
     
     :return: 2D array of what was plotted (optional) 
      
      
      """
      
+     #TODO: 
+     #      renormalise to be close to ADU units
+     #      include pixel scale
+     #      include north-east arrows
+     
      assert res.obj_type =='PynPoint_residuals','Error: This method is for an instance of the residual class'
      
-     options = ['mean','mean_clip','median','var']#,'psf']
+     options = ['mean','mean_clip','median','var','sigma','mean_sigmamean']#,'psf']
      
      assert imtype in options, 'Error: options for ave keyword are %s'%options
      if not smooth is None:
@@ -147,6 +169,13 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False):
          im = res.res_rot_median(num_coeff)
      elif imtype == 'var':
          im = res.res_rot_var(num_coeff)
+     elif imtype == 'sigma':
+         im = np.sqrt(res.res_rot_var(num_coeff))
+     elif imtype == 'mean_sigmamean':
+         im_sigma = np.sqrt(res.res_rot_var(num_coeff))/np.sqrt(len(res.im_arr[:,0.,0.])) #error on mean
+         ind = np.where(im_sigma == 0.0)
+         im = (res.res_rot_mean(num_coeff)/im_sigma)* res.cent_mask
+         im[ind] = 0.0    
      else:
          print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
          return
@@ -154,17 +183,16 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False):
         im = gaussian_filter(im,sigma=smooth) * res.cent_mask
          
             
-     # print('ADAM: ')
-     # print(im)
-     # print(imtype)
-     # print(smooth)
-     # if im is None:
-     #     return
      pl.figure()
      pl.clf()
      pl.imshow(im,origin='lower',interpolation='nearest')
      pl.title('Residual Image: '+imtype,size='large')
      pl.colorbar()
+     
+     if not savefits is False:
+         hdu = pyfits.PrimaryHDU(im)
+         hdu.writeto(savefits,clobber=True)
+     
      if returnval is True:
          return im
          
