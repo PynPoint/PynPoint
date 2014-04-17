@@ -2,14 +2,15 @@
 # Written by Adam Amara 2012
 # <adam.amara@phys.ethz.ch>
 #
+from __future__ import print_function
 
 import numpy as np
 from scipy import ndimage
+from scipy import linalg
 import pyfits
 import os
 import h5py
 import glob
-from scipy import linalg
 import pylab as pl
 from PynPoint import _Mask
 
@@ -20,7 +21,7 @@ class dummyclass():
 
 def print_attributes(Obj):
     for key in Obj.__dict__:
-            print key,': ',np.shape(Obj.__dict__[key])#.shape
+            print(key,': ',np.shape(Obj.__dict__[key]))
 
 def getattr(Obj):
     """
@@ -35,22 +36,6 @@ def getattr(Obj):
         data_types.append(key)
     return data_types
 
-#ndimage.rotate(lena, 45)
-
-#have moved the mk_cent function to the mask class!!
-#def mk_cent_remove(obj,cent_size=0.2,edge_size=1.0):
-#    """This function has been written to mask out the central region (and the corners)"""
-#    # WOULD BE NICE TO INCLUDE AN OPTION FOR EITHER TOP-HAT CIRCLE OR GAUSSIAN
-#    mask_c = mask(obj.im_size[0],obj.im_size[1],fsize=cent_size,fxcent=0.5,fycent=0.5)
-#    # NEED TO DECIDE IF I WANT TO KEEP THE CORNERS:
-#    mask_outside = mask(obj.im_size[0],obj.im_size[1],fsize=edge_size,fxcent=0.5,fycent=0.5)
-#    cent_mask = mask_c.mask() * (1.0 - mask_outside.mask())
-#    im_arr_mask = np.zeros(shape = shape(obj.im_arr))
-#    for i in range(0,obj.num_files):
-#        im_arr_mask[i,] = obj.im_arr[i,] *(1.0 - cent_mask)
-#        obj.im_arr[i,] = obj.im_arr[i,] *cent_mask
-#    obj.cent_mask = cent_mask
-#    obj.im_arr_mask = im_arr_mask
 
 #Might want to think about restructing the rd_fits function. If can be called from the basis and images classes  
 #can get rid of avesub
@@ -165,11 +150,11 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
     
     
     if str(resize) == 'True' and str(recent) == 'True':
-        print 'Update: Resizing and recentring ...'
+        print('Update: Resizing and recentring ...')
         obj.im_arr = mk_resizerecent(obj.im_arr,F_int,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
     elif str(resize) == 'True':
-        print 'Update: Resizing ...'
+        print('Update: Resizing ...')
         obj.im_arr = mk_resizeonly(obj.im_arr,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
     
@@ -233,49 +218,21 @@ def gaussian(amp, center_x, center_y, width_x, width_y):
     width_y = float(width_y)
     return lambda x,y: amp*np.exp(-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
     
-#     
-# def extract_inner_pix():
-#     ##NEED TO WRITE A FUNCTION LIKE THIS
-#     if inner_pix is not False:
-#         midx = im_temp.shape[0]/2.# mid point in the x direction 
-#         midy = im_temp.shape[1]/2.# mid point in the y direction
-#         x_ext_2 = inner_pix[0]/2.# half extent of the new image in x
-#         y_ext_2 = inner_pix[1]/2.# half extent of the new image in y
-#         indx1 = np.floor(midx - x_ext_2) # lower index in x
-#         indx2 = np.ceil(midx + x_ext_2)# upper index in x
-#         indy1 = np.floor(midy - y_ext_2) # lower index in y
-#         indy2 = np.ceil(midy + y_ext_2)# upper index in y
-#         im_temp = im_temp[indx1:indx2,indy1:indy2]
-#     
-
-# def sort_by_para():
-#     ####NEED TO WRITE A FUNCTION FOR THIS
-#     if inner_pix is not False:
-#         midx = im_temp.shape[0]/2.# mid point in the x direction 
-#         midy = im_temp.shape[1]/2.# mid point in the y direction
-#         x_ext_2 = inner_pix[0]/2.# half extent of the new image in x
-#         y_ext_2 = inner_pix[1]/2.# half extent of the new image in y
-#         indx1 = np.floor(midx - x_ext_2) # lower index in x
-#         indx2 = np.ceil(midx + x_ext_2)# upper index in x
-#         indy1 = np.floor(midy - y_ext_2) # lower index in y
-#         indy2 = np.ceil(midy + y_ext_2)# upper index in y
-#         im_temp = im_temp[indx1:indx2,indy1:indy2]
-#     
 
 def mk_circle(center_x,center_y):
     """sets up a function for calculating the radius to x,y (after having been initialised with x_cent and y_cent) """
     return lambda x,y:np.sqrt((center_x-x)**2 +(center_y-y)**2)
 
 def moments(data):
-	"""Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D 	
-	distribution by calculating its   	
-	moments   	
-	"""
-	total = data.sum()
-	Y,X = np.indices(data.shape) #seems strange and backwards, check!
-	x = (X*data).sum()/total
-	y = (Y*data).sum()/total
-	return x, y
+    """Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D 	
+    distribution by calculating its   	
+    moments   	
+    """
+    total = data.sum()
+    Y,X = np.indices(data.shape) #seems strange and backwards, check!
+    x = (X*data).sum()/total
+    y = (Y*data).sum()/total
+    return x, y
 
 
 def mk_gauss2D(xnum,ynum,gauss_width,xcent=None,ycent=None):
@@ -392,7 +349,7 @@ def save_data(Obj,filename):
     # print(filename)
     for i in range(0,len(data_types)):
         # print(data_types[i],':',Obj.__dict__[data_types[i]])
-        fsave.create_dataset(data_types[i],data=Obj.__dict__[data_types[i]],maxshape=None)        
+        fsave.create_dataset(data_types[i], data=Obj.__dict__[data_types[i]], maxshape=None)        
     fsave.close()
     
     
@@ -559,12 +516,12 @@ def peak_find(imtemp,limit=0.8,printit=False):
         sig = np.sqrt((imtemp**2).sum()/np.size(imtemp.nonzero())/2.) 
     
     if printit is True:
-        print 'Number of images found:',num_peaks
-        print 
-        print 'im num','|','x','|','y'
-        print '-----------------------'
+        print('Number of images found:',num_peaks)
+        print() 
+        print('im num','|','x','|','y')
+        print('-----------------------')
         for i in range(0,num_peaks):
-            print i,'|',x_peaks[i],'|',y_peaks[i],'|',h_peaks[i],'|',h_peaks[i]/sig
+            print(i,'|',x_peaks[i],'|',y_peaks[i],'|',h_peaks[i],'|',h_peaks[i]/sig)
             
     return x_peaks,y_peaks, h_peaks,sig,num_peaks
 
