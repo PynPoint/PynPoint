@@ -44,7 +44,7 @@ PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 
 setup(
     name='PynPoint',
-    version='0.1.1',
+    version='0.1.2',
     description='"This is the PynPoint package, which is used to analyse ADI images to find exoplanets"',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Adam Amara',
@@ -71,8 +71,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
     ],
     tests_require=tests_require,
     cmdclass = {'test': PyTest},

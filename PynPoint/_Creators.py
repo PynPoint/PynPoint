@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 #import extra PynPoint functions:
-import _Util
+from PynPoint import _Util
 
 
 

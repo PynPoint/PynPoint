@@ -1,17 +1,11 @@
 #To create and manage a global context for PynPoint.
+from __future__ import print_function
 
-# global_ctx = None
 import os
 import h5py
-import PynPoint
-#import PynPoint_v1_5 as PynPoint
-# from PynPoint_v1_5 
-#from PynPoint_v1_5 
-from Basis import basis
-# from PynPoint_v1_5 
-from Images import images
-# from PynPoint_v1_5 
-from Residuals import residuals
+from PynPoint.Basis import basis
+from PynPoint.Images import images
+from PynPoint.Residuals import residuals
 
 
 class Ctx():
@@ -37,7 +31,7 @@ class Ctx():
         ctx_dir = dirout+'/ctx_info/'
         os.mkdir(ctx_dir)
         entries = self.entries()
-        print entries
+        print(entries)
         fsave = h5py.File(ctx_dir+'ctx_basic.hdf5','w')
         fsave.create_dataset('entries',data=entries)
         fsave.close()

@@ -1,11 +1,10 @@
         
 #import external functions:
 import numpy as np
+from PynPoint._BasePynPoint import base_pynpoint
+from PynPoint import _Util
 
 #import extra PynPoint functions:
-import _Util
-# from PynPoint_parent import base_pynpoint
-from _BasePynPoint import base_pynpoint
 
 
 
@@ -14,15 +13,13 @@ class residuals(base_pynpoint):
     """Object for dealing with the residual data. This includes object detection and flux measurement"""
 
     def __init__(self): #self,ims,basis,num_coeff,mask=None,limit=0.8,printit=False,peak_find=False,num_tweak=0,coeff_type=False,intype=None,file_in=None):
-    	"""
+        """
         Initialise an instance of the residual class. The result is simple and
         almost empty (in terms of attributes)
         """            
         self.obj_type = 'PynPoint_residuals'
         self.num_coeff = np.nan
-        
-        
-        
+
     @staticmethod
     def create_restore(file_in):
 
@@ -38,7 +35,7 @@ class residuals(base_pynpoint):
         obj.para = images.para 
         #---import data from basis instance:---#
         obj.psf_basis = basis.psf_basis
-         #---import data from both instances:---#
+        #---import data from both instances:---#
         assert np.array_equal(basis.cent_mask,images.cent_mask)
         obj.cent_mask = images.cent_mask
         obj.im_ave = basis.im_ave
@@ -47,57 +44,6 @@ class residuals(base_pynpoint):
         obj.im_shape = images.im_arr[0,].shape
 
         return obj
-
-
-    # def plt_res(self,num_coeff,imtype='mean',smooth=None):
-    #     """
-    #     plots the resulting residual images. 
-    #     and gives the image as a return value. 
-    #     """
-    #     
-    #     options = ['mean','mean_clip','median','var']#,'psf']
-    #     
-    #     assert imtype in options, 'Error: options for ave keyword are %s'%options
-    #     if not smooth is None:
-    #         assert len(smooth) == 2, 'Error: smooth option should be a two element list'
-    #         assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-    #         assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-    #     assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
-    #     
-    #     
-    #     if smooth is None:            
-    #         if imtype == 'mean':
-    #             im = self.res_rot_mean(num_coeff)                
-    #         elif imtype == 'mean_clip':
-    #             im = self.res_rot_mean_clip(num_coeff)
-    #         elif imtype == 'median':
-    #             im = self.res_rot_median(num_coeff)
-    #         elif imtype == 'var':
-    #             im = self.res_rot_var(num_coeff)
-    #         else:
-    #             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-    #             return
-    #     else:
-    #         if imtype == 'mean':
-    #             im = self.res_mean_smooth(num_coeff,sigma=smooth)
-    #         elif imtype == 'mean_clip':
-    #             im = self.res_mean_clip_smooth(num_coeff,sigma=smooth)
-    #         elif imtype == 'median':
-    #             im = self.res_median_smooth(num_coeff,sigma=smooth)
-    #         elif imtype == 'var':
-    #             print('Error: var image currently does not get plotted with smoothing')
-    #             return                
-    #         else:
-    #             print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-    #     
-    #     
-    #     pl.figure()
-    #     pl.clf()
-    #     pl.imshow(im,origin='lower',interpolation='nearest')
-    #     pl.title('Residual Image: '+imtype,size='large')
-    #     pl.colorbar()
-    #     return im
-    #         
 
 
     def res_arr(self,num_coeff):
@@ -172,32 +118,10 @@ class residuals(base_pynpoint):
             self.num_coeff = num_coeff
         return self.psf_im_arr
 
-    # def res_mean_smooth(self,num_coeff,sigma=(2,2)):
-    #     """
-    #     """
-    #     # if not (hasattr(self, '_res_mean_smooth') and (self.num_coeff == num_coeff)):
-    #     self._res_mean_smooth = self._mk_res_mean_smooth(num_coeff,sigma=sigma)
-    #     return self._res_mean_smooth
-    # 
-    # def res_mean_clip_smooth(self,num_coeff,sigma=(2,2)):
-    #     """
-    #     """
-    #     # if not (hasattr(self, '_res_mean_clip_smooth') and (self.num_coeff == num_coeff)):
-    #     self._res_mean_clip_smooth = self._mk_res_mean_clip_smooth(num_coeff,sigma=sigma)
-    #     return self._res_mean_clip_smooth
-    # 
-    # def res_median_smooth(self,num_coeff,sigma=(2,2)):
-    #     """
-    #     """
-    #     # if not (hasattr(self, '_res_median_smooth') and (self.num_coeff == num_coeff)):
-    #     self._res_median_smooth = self._mk_res_median_smooth(num_coeff,sigma=sigma)
-    #     return self._res_median_smooth
-    # 
-        
     # ---Internal functions ---#
     
     def _mk_res_arr(self,num_coeff):
-    	res_arr = self.im_arr.copy()
+        res_arr = self.im_arr.copy()
         psf_im = self._psf_im(num_coeff)
         for i in range(0,len(res_arr[:,0,0])):
             res_arr[i,] -= (psf_im[i,] * self.cent_mask)
@@ -205,8 +129,8 @@ class residuals(base_pynpoint):
         self._res_arr = res_arr
     
     def _mk_res_rot(self,num_coeff):        
-    	delta_para = self.para[0] - self.para
-    	res_rot = np.zeros(shape=self.im_arr.shape)
+        delta_para = self.para[0] - self.para
+        res_rot = np.zeros(shape=self.im_arr.shape)
         res_arr = self.res_arr(num_coeff)
         for i in range(0,len(delta_para)):
             res_temp = res_arr[i,]
@@ -253,26 +177,3 @@ class residuals(base_pynpoint):
     def mk_psfmodel(self, num):
         super(residuals, self).mk_psfmodel(self, num)
 
-#     def _mk_arr_smooth(self,arr_ave,arr_var,cent_mask,sigma=(2,2)):
-#         (izero,jzero) = np.where(arr_var==0)
-#         im1 = arr_ave/np.sqrt(arr_var)
-#         im1[izero,jzero] = 0.0    
-#         im1 *= cent_mask
-#         im2 = gaussian_filter(im1,sigma=sigma)
-# #         print('HELLO:')
-# #         print(sigma)
-#         return im2 * cent_mask
-#         
- #    def _mk_arr_smooth(self,im1,cent_mask,sigma=(2,2)):
- #         # (izero,jzero) = np.where(arr_var==0)
- #         # im1 = arr_ave#/np.sqrt(arr_var)
- #         # im1[izero,jzero] = 0.0    
- #         # im1 *= cent_mask
- #         im2 = gaussian_filter(im1,sigma=sigma)
- # #         print('HELLO:')
- # #         print(sigma)
- #         return im2 * cent_mask
- #        
-    
-
-        

@@ -3,13 +3,14 @@ import ConfigParser
 import types
 import os
 from time import gmtime, strftime
-from Basis import basis
-from Images import images
-from Residuals import residuals
-from _Ctx import Ctx
 import shutil
 import h5py
 import time
+
+from PynPoint.Basis import basis
+from PynPoint.Images import images
+from PynPoint.Residuals import residuals
+from PynPoint._Ctx import Ctx
 from PynPoint import _Util
 
 
@@ -20,7 +21,6 @@ class workflow():
     
     """
     
-     
     def __init__(self):
         """
         Initialise an instance of the images class. The result is simple and
@@ -29,11 +29,7 @@ class workflow():
         self.obj_type = 'PynPoint_workflow'
         # section title to be used in config to identify modules to be run
         self.module_string = 'module'
-        
-
-        pass
-        
-        
+     
     @staticmethod
     def run(config,force_replace=False):
         """

@@ -1,9 +1,7 @@
-#! /usr/bin/env python
-
 # Copyright (C) 2014 ETH Zurich, Institute for Astronomy
 
 # System imports
-#from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import print_function, division
 
 
 # External modules
@@ -11,9 +9,9 @@
 import os
 
 #import extra PynPoint functions:
-from _BasePynPoint import base_pynpoint
-import _Util
-import _Creators
+from PynPoint._BasePynPoint import base_pynpoint
+from PynPoint import _Creators
+from PynPoint import _Util
 
 
 #Basis Class
@@ -95,10 +93,6 @@ class basis(base_pynpoint):
         self.im_arr = basis_info_full['im_arr']
         self.psf_basis = basis_info_full['basis']
         self.psf_basis_type = basis_info_full['basis_type']
-        #del(basis_info_full)
-        
-        # self.save(filename)        
-        # return filename
 
 
     def mk_orig(self,ind):
