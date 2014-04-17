@@ -49,7 +49,7 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
         hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
-         return im
+        return im
     
     
 
@@ -76,9 +76,9 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False):
         hdu.writeto(savefits,clobber=True)
 
     if returnval is True:
-         return im
+        return im
     
-    
+#TODO: undefined variable 'im'
 def plt_im_arr(obj,ind,returnval=False,savefits=False):
     """
     Used to plot the im_arr entry, which the image used by the instance
@@ -104,7 +104,7 @@ def plt_im_arr(obj,ind,returnval=False,savefits=False):
         hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
-         return im
+        return im
 
 
 
@@ -142,13 +142,13 @@ def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
         time.sleep(time_gap)
     
 
- # from residuals:
+# from residuals:
  
 def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False):
-     """
-     Plots the residual results (either an average or the variance) 
-     and gives the image as a return value. 
-     
+    """
+    Plots the residual results (either an average or the variance) 
+    and gives the image as a return value. 
+    
     :param res: An instance of residual class
     :param num_coeff: Number of coefficients used in the fit
     :param imtype: Type of image to plot. Options are: 'mean', 'mean_clip', 'median', 'var', 'sigma' and 'mean_sigma' 
@@ -159,64 +159,62 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     :return: 2D array of what was plotted (optional) 
     
     Example ::
-
-
-        pynplot.plt_res(res,20,imtype='mean',returnval=True)
+    
+    
+       pynplot.plt_res(res,20,imtype='mean',returnval=True)
+    
+    
+    """
+    # TODO: renormalise to be close to ADU units
+    # TODO: include pixel scale
+    # TODO: include north-east arrows
      
-     
-     """
-     
-     #TODO: 
-     #      renormalise to be close to ADU units
-     #      include pixel scale
-     #      include north-east arrows
-     
-     assert res.obj_type =='PynPoint_residuals','Error: This method is for an instance of the residual class'
-     
-     options = ['mean','mean_clip','median','var','sigma','mean_sigmamean']#,'psf']
-     
-     assert imtype in options, 'Error: options for ave keyword are %s'%options
-     if not smooth is None:
-         assert len(smooth) == 2, 'Error: smooth option should be a two element list'
-         assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-         assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
-     assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
-     
-     
-     if imtype == 'mean':
-         im = res.res_rot_mean(num_coeff)                
-     elif imtype == 'mean_clip':
-         im = res.res_rot_mean_clip(num_coeff)
-     elif imtype == 'median':
-         im = res.res_rot_median(num_coeff)
-     elif imtype == 'var':
-         im = res.res_rot_var(num_coeff)
-     elif imtype == 'sigma':
-         im = np.sqrt(res.res_rot_var(num_coeff))
-     elif imtype == 'mean_sigmamean':
-         im_sigma = np.sqrt(res.res_rot_var(num_coeff))/np.sqrt(len(res.im_arr[:,0.,0.])) #error on mean
-         ind = np.where(im_sigma == 0.0)
-         im = (res.res_rot_mean(num_coeff)/im_sigma)* res.cent_mask
-         im[ind] = 0.0    
-     else:
-         print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-         return
-     if not smooth is None:
+    assert res.obj_type =='PynPoint_residuals','Error: This method is for an instance of the residual class'
+    
+    options = ['mean','mean_clip','median','var','sigma','mean_sigmamean']#,'psf']
+    
+    assert imtype in options, 'Error: options for ave keyword are %s'%options
+    if not smooth is None:
+        assert len(smooth) == 2, 'Error: smooth option should be a two element list'
+        assert isinstance(smooth[0], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+        assert isinstance(smooth[1], ( int, long,float) ), 'Error: smooth keyword should be set to a number.'
+    assert isinstance(num_coeff, ( int, long,float) ), 'Error: num_basis should be set to a number.'
+    
+    
+    if imtype == 'mean':
+        im = res.res_rot_mean(num_coeff)                
+    elif imtype == 'mean_clip':
+        im = res.res_rot_mean_clip(num_coeff)
+    elif imtype == 'median':
+        im = res.res_rot_median(num_coeff)
+    elif imtype == 'var':
+        im = res.res_rot_var(num_coeff)
+    elif imtype == 'sigma':
+        im = np.sqrt(res.res_rot_var(num_coeff))
+    elif imtype == 'mean_sigmamean':
+        im_sigma = np.sqrt(res.res_rot_var(num_coeff))/np.sqrt(len(res.im_arr[:,0.,0.])) #error on mean
+        ind = np.where(im_sigma == 0.0)
+        im = (res.res_rot_mean(num_coeff)/im_sigma)* res.cent_mask
+        im[ind] = 0.0    
+    else:
+        print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+        return
+    if not smooth is None:
         im = gaussian_filter(im,sigma=smooth) * res.cent_mask
-         
-            
-     pl.figure()
-     pl.clf()
-     pl.imshow(im,origin='lower',interpolation='nearest')
-     pl.title('Residual Image: '+imtype,size='large')
-     pl.colorbar()
-     
-     if not savefits is False:
-         hdu = pyfits.PrimaryHDU(im)
-         hdu.writeto(savefits,clobber=True)
-     
-     if returnval is True:
-         return im
+        
+           
+    pl.figure()
+    pl.clf()
+    pl.imshow(im,origin='lower',interpolation='nearest')
+    pl.title('Residual Image: '+imtype,size='large')
+    pl.colorbar()
+    
+    if not savefits is False:
+        hdu = pyfits.PrimaryHDU(im)
+        hdu.writeto(savefits,clobber=True)
+    
+    if returnval is True:
+        return im
          
  
     
