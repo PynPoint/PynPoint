@@ -92,9 +92,10 @@ def plt_im_arr(obj,ind,returnval=False,savefits=False):
     """
     #To Do:
     #       Renormalise keyword
+    im = obj.im_arr[ind,]
     
     pl.clf()
-    pl.imshow(obj.im_arr[ind,],origin='lower',interpolation='nearest')
+    pl.imshow(im,origin='lower',interpolation='nearest')
     pl.title('image_arr:'+str(ind),size='large')
     pl.colorbar()
     pl.show()
@@ -196,9 +197,9 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
         ind = np.where(im_sigma == 0.0)
         im = (res.res_rot_mean(num_coeff)/im_sigma)* res.cent_mask
         im[ind] = 0.0    
-    else:
-        print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-        return
+    # else:
+    #     print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
+    #     return
     if not smooth is None:
         im = gaussian_filter(im,sigma=smooth) * res.cent_mask
         
