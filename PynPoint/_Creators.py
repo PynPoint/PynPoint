@@ -1,25 +1,22 @@
-        
-#import external functions:
-import pyfits
+
+# System imports
+from __future__ import print_function, division
+   
 import numpy as np
 import os
 
-#import extra PynPoint functions:
 from PynPoint import _Util
 
 
 
-def pynpoint_create_restore(obj,filename):
+def restore(obj,filename):
     """
-    Creates an instance of the images class using a previously
-    saved file. The file should have been stored as an HDF5 file
+    Restores data from a hdf5 file previously saved
     
     :param filename: name of the inputfile 
     
     """
-    #obj = pynpoint_parent()
     _Util.restore_data(obj,filename)
-    #return obj
 
 def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
     """
