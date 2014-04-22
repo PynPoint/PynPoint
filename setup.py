@@ -54,7 +54,7 @@ setup(
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
     install_requires=requires,
-    license='Proprietary',
+    license='GPLv3',
     zip_safe=False,
     keywords='PynPoint',
     entry_points={
