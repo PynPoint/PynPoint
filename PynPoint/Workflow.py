@@ -1,4 +1,8 @@
 
+# System imports
+from __future__ import print_function, division
+
+# External modules
 import ConfigParser 
 import types
 import os
@@ -71,7 +75,7 @@ class workflow():
         save
         """
         
-        dirout = data=self.dirname
+        dirout = self.dirname
         self._ctx.save(dirout)
         fsave = h5py.File(dirout+'/ws_basic.hdf5','w')
         fsave.create_dataset('dirname',data=self.dirname)
