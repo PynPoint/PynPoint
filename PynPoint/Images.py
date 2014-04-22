@@ -1,4 +1,7 @@
         
+# System imports
+from __future__ import print_function, division
+
 #import external functions:
 
 #import extra PynPoint functions:
@@ -21,54 +24,53 @@ class images(base_pynpoint):
     
     def __init__(self):
         """
-        Initialise an instance of the images class. The result is simple and
-        almost empty (in terms of attributes)        
+        Initialise an instance of the images class.  
         """
-        
         self.obj_type = 'PynPoint_images'
         
         
-    @staticmethod
-    def create_wdir(dir_in,**kwargs): #dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
+    @classmethod
+    def create_wdir(cls, dir_in,**kwargs): #dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
         """
         Creates an instance from directory. 
-        See pynpoint_create_wdir (in PynPoint_creator_funcs.py) for more details.        
+        See :py:func:`_Creators.pynpoint_create_wdir` for more details.
         """
 
-        obj = images()
+        obj = cls()
         _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
         return obj
 
-    @staticmethod
-    def create_whdf5input(file_in,**kwargs):#file_in,ran_sub=False,prep_data=True,**kwargs)
+    @classmethod
+    def create_whdf5input(cls, file_in,**kwargs):#file_in,ran_sub=False,prep_data=True,**kwargs)
         """
         Creates an instance from hdf5 file. 
-        See pynpoint_create_whdf5input (in PynPoint_creator_funcs.py) for more details.        
+        See :py:func:`_Creators.pynpoint_create_whdf5input` for more details.
         """
 
-        obj = images()
+        obj = cls()
         _Creators.pynpoint_create_whdf5input(obj,file_in,**kwargs)
         return obj
 
         
-    @staticmethod
-    def create_restore(filename):
+    @classmethod
+    def create_restore(cls, filename):
         """
-        Creates an instance from saved file.
-        See pynpoint_create_restore (in PynPoint_creator_funcs.py) for more details.
+        Restores an instance from saved file.
+        See :py:func:`_Creators.restore` for more details.
         """
         
-        obj = images()
-        _Creators.pynpoint_create_restore(obj,filename)
-        #Util.restore_data(obj,filename)
+        obj = cls()
+        _Creators.restore(obj,filename)
         return obj
 
-    @staticmethod
-    def create_wfitsfiles(*args,**kwargs):
+    @classmethod
+    def create_wfitsfiles(cls, *args,**kwargs):
+        """
+        Creates an instance from fits files. 
+        See :py:func:`_Creators.pynpoint_create_wfitsfiles` for more details.
         """
         
-        """
-        obj = images()
+        obj = cls()
         _Creators.pynpoint_create_wfitsfiles(obj,*args,**kwargs)
         return obj
         

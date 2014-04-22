@@ -1,7 +1,13 @@
-        
-#import external functions:
+
+# System imports
+from __future__ import print_function, division
+
+# External modules
 import numpy as np
+
+#import external functions:
 from PynPoint._BasePynPoint import base_pynpoint
+from PynPoint import _Creators
 from PynPoint import _Util
 
 #import extra PynPoint functions:
@@ -12,24 +18,28 @@ from PynPoint import _Util
 class residuals(base_pynpoint):
     """Object for dealing with the residual data. This includes object detection and flux measurement"""
 
-    def __init__(self): #self,ims,basis,num_coeff,mask=None,limit=0.8,printit=False,peak_find=False,num_tweak=0,coeff_type=False,intype=None,file_in=None):
+    def __init__(self):
         """
-        Initialise an instance of the residual class. The result is simple and
-        almost empty (in terms of attributes)
+        Initialise an instance of the residual class.
         """            
         self.obj_type = 'PynPoint_residuals'
         self.num_coeff = np.nan
 
-    @staticmethod
-    def create_restore(file_in):
-
-        obj = residuals()
-        _Util.restore_data(obj,file_in)
+    @classmethod
+    def create_restore(cls, filename):
+        """
+        Restores an instance from saved file.
+        See :py:func:`_Creators.restore` for more details.
+        """
+        
+        obj = cls()
+        _Creators.restore(obj,filename)
         return obj
         
-    @staticmethod
-    def create_winstances(images,basis):
-        obj = residuals()
+    @classmethod
+    def create_winstances(cls, images,basis):
+        #TODO: use normal initializer for this. overcomplicated!
+        obj = cls()
         #---importing data from images instance:---#
         obj.im_arr = images.im_arr
         obj.para = images.para 

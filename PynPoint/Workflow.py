@@ -23,8 +23,7 @@ class workflow():
     
     def __init__(self):
         """
-        Initialise an instance of the images class. The result is simple and
-        almost empty (in terms of attributes)        
+        Initialise an instance of the images class.  
         """
         self.obj_type = 'PynPoint_workflow'
         # section title to be used in config to identify modules to be run
@@ -182,25 +181,6 @@ class workflow():
             result_names.append(name)
             self._ctx.add(name,run_temp)  
             self._timestamp('Finished '+name)
-            
-#         import numpy
-#         import itertools
-#         
-#         fields = ["cent_mask", "im_arr", "im_arr_mask", "im_norm", "im_ave", "para", "psf_basis", "files"]
-#         for field in fields:
-#             for (n1,n2) in itertools.combinations(result_names, 2):
-#                 o1 = self._ctx.get(n1)
-#                 o2 = self._ctx.get(n2)
-#                 try:
-#                     arr1 = getattr(o1, field)
-#                     arr2 = getattr(o2, field)
-#                     state = (numpy.all(arr1==arr2))
-#                     try:
-#                         print("%s, %s %s %s %s: %s" %(field, n1, arr1.shape, n2, arr2.shape, state))
-#                     except Exception:
-#                         print("%s, %s %s %s %s: %s" %(field, n1, numpy.array(arr1).shape, n2, numpy.array(arr2).shape, state))
-#                 except Exception:
-#                     pass
             
     
     def _run_images_mod(self,section_id):
