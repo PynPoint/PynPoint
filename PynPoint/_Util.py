@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/.
 
-
 from __future__ import print_function
 
 import numpy as np
@@ -34,7 +33,7 @@ def print_attributes(Obj):
     for key in Obj.__dict__:
             print(key,': ',np.shape(Obj.__dict__[key]))
 
-def getattr(Obj):
+def get_attributes(Obj):
     """
     gets attributes of the input Object and output a list containing their names
 
@@ -66,8 +65,6 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
     assert (obj.num_files > 0), 'Error: Number of files is zero - input: %f' %obj.num_files
     assert (os.path.isfile(obj.files[0])), 'Error: The first input file is not a file  - input: %s' %obj.files[0]
     
-
-    im_norm = np.zeros(obj.num_files)    
     para = np.zeros(obj.num_files)
     for i in range(0,obj.num_files):
         file_temp = obj.files[i]
@@ -133,18 +130,11 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
 
     if para_sort is True:
         inds = np.argsort(obj.para)
-#         print(inds)
-#         print(type(inds))
         obj.im_arr = obj.im_arr[inds,]
         obj.para = obj.para[inds]
-        # print(obj.files)
-#         print(obj.files)
-#         print(len(obj.files))
         
         obj.files = [ obj.files[i] for i in inds] #obj.files[[0,2,1,3]]
         
-    # print_attributes(obj)
-
     #Normalise the images so that they have 'unit area'
     obj.cent_remove = cent_remove
     # obj.im_norm = np.zeros(obj.im_arr.shape[0])
@@ -169,13 +159,8 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
         obj.im_arr = mk_resizeonly(obj.im_arr,F_final)
         obj.im_size = obj.im_arr[0,].shape # need to rework into a more elegent solution
     
-    # print('!!!')
-    # print(type(cent_remove))
-    # print('L')
-    # print(str(cent_remove) == 'True')
 
     if str(cent_remove) == 'True':
-        # print('!!!!! REACHED CENT_REMOVE !!!!!!')
         im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
         obj.im_arr = im_arr_omask
         obj.im_arr_mask = im_arr_imask
@@ -186,8 +171,7 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
         obj.cent_mask = np.ones(shape = obj.im_arr[0,].shape)
         
 
-#def mk_pca(self) :
-def mk_basis_pca(im_arr_in):#,ave_sub=True):
+def mk_basis_pca(im_arr_in):
     """
     Function for creating the set of PCA's for a stack
     of images
@@ -203,7 +187,7 @@ def mk_basis_pca(im_arr_in):#,ave_sub=True):
     #     im_arr,im_ave = mk_avesub(im_arr_in)        
     im_arr,im_ave = mk_avesub(im_arr_in)        
     
-    U,s,V = linalg.svd(im_arr.reshape(num_entries,im_size[0]*im_size[1]),full_matrices=False)        
+    _,_,V = linalg.svd(im_arr.reshape(num_entries,im_size[0]*im_size[1]),full_matrices=False)        
     #U,s,V = linalg.svd(im_arr.reshape(self.num_files,self.im_size[0]*self.im_size[1]),full_matrices=False)        
 
     basis_pca_arr = V.reshape(V.shape[0],im_size[0],im_size[1])
@@ -260,7 +244,7 @@ def gausscent(data,gauss_width=20.,itnum=3):
     """Measures the centroid after Gaussian Weight has been used"""
     xcent,ycent = moments(data)
     Y,X = np.indices(data.shape) #seems strange and backwards, check!
-    for i in range(0,itnum):
+    for _ in range(0,itnum):
         xcent,ycent
         G = gaussian(1.0,xcent,ycent,gauss_width,gauss_width)(X,Y)
         xcent,ycent = moments(data*G)        
@@ -354,7 +338,7 @@ def save_data(Obj,filename):
     if os.path.isfile(filename):
         print('Warning: the file %s have been overwritten' %filename)
 
-    data_types = getattr(Obj)
+    data_types = get_attributes(Obj)
     
     fsave = h5py.File(filename,'w')
     # print(filename)
@@ -385,14 +369,6 @@ def restore_data(Obj,filename,checktype=None):
     type_file = frestore['obj_type'].value
     frestore.close()
     assert type_comp == type_file,' Error: You have attempted to restore data from the wrong file type \n'
- # The file you provided as type: %s \n
- #        print('')
- #        print('data types & restore options:')
- #        print('   raw_data: read using one of the .create_w* instance builds')
- #        print('   PynPoint_basis: restored from a basis instance (basis.create_restore)')
- #        print('   PynPoint_images: restored from a images instance (images.create_restore)')
- #        frestore.close()
- #        return np.nan
             
     frestore = h5py.File(filename,'r')
     for keys in frestore:
