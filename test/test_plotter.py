@@ -55,9 +55,9 @@ class TestPlotter(object):
         res = self.res
         #pynplot = PynPoint.pynplot
         
-        im1_temp = self.test_data_dir+'/im1_temp.fits'
-        im2_temp = self.test_data_dir+'/im2_temp.fits'
-        im3_temp = self.test_data_dir+'/im3_temp.fits'
+        im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
+        im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
+        im3_temp = self.test_data_dir+'/outputs/im3_temp.fits'
         if os.path.isfile(im1_temp):
             os.remove(im1_temp)
         if os.path.isfile(im2_temp):
@@ -66,17 +66,17 @@ class TestPlotter(object):
             os.remove(im3_temp)
         
         
-        im1 = pynplot.plt_res(res,1,imtype='mean',smooth=None,returnval=True,savefits=im1_temp)
-        im2 = pynplot.plt_res(res,1,imtype='mean_clip',smooth=None,returnval=True,savefits=im2_temp)
-        im3 = pynplot.plt_res(res,1,imtype='median',smooth=None,returnval=True,savefits=im3_temp)
-        im4 = pynplot.plt_res(res,1,imtype='var',smooth=None,returnval=True)
-        im5 = pynplot.plt_res(res,1,imtype='sigma',smooth=None,returnval=True)
-        im6 = pynplot.plt_res(res,1,imtype='mean_sigmamean',smooth=None,returnval=True)
+        im1 = pynplot.plt_res(res,1,imtype='mean',smooth=None,returnval=True,savefits=im1_temp,mask_nan=False)
+        im2 = pynplot.plt_res(res,1,imtype='mean_clip',smooth=None,returnval=True,savefits=im2_temp,mask_nan=False)
+        im3 = pynplot.plt_res(res,1,imtype='median',smooth=None,returnval=True,savefits=im3_temp,mask_nan=False)
+        im4 = pynplot.plt_res(res,1,imtype='var',smooth=None,returnval=True,mask_nan=False)
+        im5 = pynplot.plt_res(res,1,imtype='sigma',smooth=None,returnval=True,mask_nan=False)
+        im6 = pynplot.plt_res(res,1,imtype='mean_sigmamean',smooth=None,returnval=True,mask_nan=False)
 
-        im1s = pynplot.plt_res(res,1,imtype='mean',smooth=[2,2],returnval=True)
-        im2s = pynplot.plt_res(res,1,imtype='mean_clip',smooth=[2,2],returnval=True)
-        im3s = pynplot.plt_res(res,1,imtype='median',smooth=[2,2],returnval=True)
-        im4s = pynplot.plt_res(res,1,imtype='var',smooth=[2,2],returnval=True)
+        im1s = pynplot.plt_res(res,1,imtype='mean',smooth=[2,2],returnval=True,mask_nan=False)
+        im2s = pynplot.plt_res(res,1,imtype='mean_clip',smooth=[2,2],returnval=True,mask_nan=False)
+        im3s = pynplot.plt_res(res,1,imtype='median',smooth=[2,2],returnval=True,mask_nan=False)
+        im4s = pynplot.plt_res(res,1,imtype='var',smooth=[2,2],returnval=True,mask_nan=False)
         
         assert np.allclose(im1.mean() , -4.4349329318527051e-10,rtol=limit1)
         assert np.allclose(im2.mean() , -4.4349329318526586e-10,rtol=limit1)
@@ -121,9 +121,9 @@ class TestPlotter(object):
         
     def test_im_arr(self,tmpdir):
         # im1_temp = tmpdir+'/im1_temp.fits'
-        im1_temp = self.test_data_dir+'/im1_temp.fits'
-        im2_temp = self.test_data_dir+'/im2_temp.fits'
-        im3_temp = self.test_data_dir+'/im3_temp.fits'
+        im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
+        im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
+        im3_temp = self.test_data_dir+'/outputs/im3_temp.fits'
         if os.path.isfile(im1_temp):
             os.remove(im1_temp)
         if os.path.isfile(im2_temp):
@@ -132,10 +132,10 @@ class TestPlotter(object):
             os.remove(im3_temp)
 
 
-        im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits=im1_temp)
+        im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits=im1_temp,mask_nan=False)
         # im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits='test_data/im1_temp.fits')
-        im2 = pynplot.plt_im_arr(self.basis,1,returnval=True,savefits=im2_temp)
-        im3 = pynplot.plt_im_arr(self.res,2,returnval=True,savefits=im3_temp)
+        im2 = pynplot.plt_im_arr(self.basis,1,returnval=True,savefits=im2_temp,mask_nan=False)
+        im3 = pynplot.plt_im_arr(self.res,2,returnval=True,savefits=im3_temp,mask_nan=False)
         
         assert np.allclose(im1.mean(),7.8226590446234423e-06,rtol=limit1)
         assert np.allclose(im2.mean(),-2.1439609406225518e-07,rtol=limit1)
@@ -152,16 +152,16 @@ class TestPlotter(object):
         
     
     def test_plt_psf_basis(self):
-        im1_temp = self.test_data_dir+'/im1_temp.fits'
-        im2_temp = self.test_data_dir+'/im2_temp.fits'
+        im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
+        im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
         if os.path.isfile(im1_temp):
             os.remove(im1_temp)
         if os.path.isfile(im2_temp):
             os.remove(im2_temp)
 
         
-        im1 = pynplot.plt_psf_basis(self.res,1,returnval=True,savefits=im1_temp)
-        im2 = pynplot.plt_psf_basis(self.basis,2,returnval=True,savefits=im2_temp)
+        im1 = pynplot.plt_psf_basis(self.res,1,returnval=True,savefits=im1_temp,mask_nan=False)
+        im2 = pynplot.plt_psf_basis(self.basis,2,returnval=True,savefits=im2_temp,mask_nan=False)
 
         assert np.allclose(im1.mean(),0.00065586403734947912,rtol=limit1)
         assert np.allclose(im2.mean(),-0.0004242279204660866,rtol=limit1)
@@ -173,16 +173,16 @@ class TestPlotter(object):
         
         
     def test_plt_psf_fit(self):
-        im1_temp = self.test_data_dir+'/im1_temp.fits'
-        im2_temp = self.test_data_dir+'/im2_temp.fits'
+        im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
+        im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
         if os.path.isfile(im1_temp):
             os.remove(im1_temp)
         if os.path.isfile(im2_temp):
             os.remove(im2_temp)
 
         
-        im1 = pynplot.plt_psf_model(self.res,1,2,returnval=True,savefits=im1_temp)
-        im2 = pynplot.plt_psf_model(self.res,2,3,returnval=True,savefits=im2_temp)
+        im1 = pynplot.plt_psf_model(self.res,1,2,returnval=True,savefits=im1_temp,mask_nan=False)
+        im2 = pynplot.plt_psf_model(self.res,2,3,returnval=True,savefits=im2_temp,mask_nan=False)
 
         assert np.allclose(im1.mean(),9.083088185930825e-06,rtol=limit1)
         assert np.allclose(im2.mean(),1.0384630019636352e-05,rtol=limit1)
