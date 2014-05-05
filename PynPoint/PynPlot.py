@@ -25,13 +25,14 @@ import numpy as np
 import pyfits
 import time
 
+#TODO add pyfits to the requirements
 pl.ion()
 
 """
 plotting routines for PynPoint classes images, basis and residuals.
 """
 
-def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
+def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True):
     """ 
     plotting the PSF model
     
@@ -50,6 +51,9 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
     assert res.obj_type in ['PynPoint_residuals'], 'Error: This plot function currently only suports the class res'
     psf_model = res._psf_im(num_coeff)
     im = psf_model[ind]
+    if mask_nan is True:
+        im[np.where(res.cent_mask == 0.)] = np.nan
+
     pl.clf()            
     pl.imshow(im,origin='lower',interpolation='nearest')
     pl.title('PSF',size='large')
@@ -64,7 +68,7 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False):
     
     
 
-def plt_psf_basis(obj,ind,returnval=False,savefits=False):
+def plt_psf_basis(obj,ind,returnval=False,savefits=False,mask_nan=True):
     """
     Plots the basis images used to model the PSF.
     
@@ -77,6 +81,10 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False):
     """
     
     im = obj.psf_basis[ind,]
+    if mask_nan is True:
+        im[np.where(obj.cent_mask == 0.)] = np.nan
+
+
     
     pl.clf()
     pl.imshow(im, origin='lower',interpolation='nearest')
@@ -90,7 +98,7 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False):
         return im
     
 #TODO: undefined variable 'im'
-def plt_im_arr(obj,ind,returnval=False,savefits=False):
+def plt_im_arr(obj,ind,returnval=False,savefits=False,mask_nan=True):
     """
     Used to plot the im_arr entry, which the image used by the instance
 
@@ -104,6 +112,10 @@ def plt_im_arr(obj,ind,returnval=False,savefits=False):
     #To Do:
     #       Renormalise keyword
     im = obj.im_arr[ind,]
+
+    if mask_nan is True:
+        im[np.where(obj.cent_mask == 0.)] = np.nan
+
     
     pl.clf()
     pl.imshow(im,origin='lower',interpolation='nearest')
@@ -156,7 +168,7 @@ def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
 
 # from residuals:
  
-def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False):
+def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False, mask_nan=True):
     """
     Plots the residual results (either an average or the variance) 
     and gives the image as a return value. 
@@ -167,7 +179,8 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     :param smooth: If None (default) then no smoothing is done, otherwise supply a 2 elements list (e.g. [2,2]). The image will be smoothed with a 2D Gaussian with this sigma_x and sigma_y (in pixel units).
     :param returnval: set to True if you want the function to return the 2D array
     :param savefits: Should be either False (nothing happens) or the name of a fits file where the data should be written
-    
+    :param mask_nan: If set to True (default) masked region will be set to np.nan else set to zero
+
     :return: 2D array of what was plotted (optional) 
     
     Example ::
@@ -213,6 +226,9 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     #     return
     if not smooth is None:
         im = gaussian_filter(im,sigma=smooth) * res.cent_mask
+
+    if mask_nan is True:
+        im[np.where(res.cent_mask == 0.)] = np.nan
         
            
     pl.figure()
