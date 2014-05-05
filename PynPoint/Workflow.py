@@ -17,7 +17,8 @@
 from __future__ import print_function, division
 
 # External modules
-import ConfigParser 
+import ConfigParser
+import collections
 import types
 import os
 from time import gmtime, strftime
@@ -124,7 +125,7 @@ class workflow():
             self.config = config_in
         else:
             assert(type(config_in) == str)
-            self.config = ConfigParser.ConfigParser()
+            self.config = ConfigParser.ConfigParser(dict_type=collections.OrderedDict)
             self.config.optionxform = str
 
             # self.config.optionxform(str())
