@@ -11,6 +11,8 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/.
+import re
+# import pytest
 
 
 """
@@ -138,16 +140,19 @@ class TestWorkflow(object):
         ws = PynPoint.workflow.run(self.configfile2)
 
 
+    def test_modules_from_config(self):
+        modulesCount = 10
         
+        parser = ConfigParser.ConfigParser()
+        for i in range(1, modulesCount):
+            parser.add_section("module%s"%i)
         
+        workflow = PynPoint.workflow()
+        workflow._init_config(parser)
 
-
-
-    # def test_something(self):
-    #     x = 1
-    #     assert x==1
-
-
+        assert len(workflow.modules) == modulesCount-1
+        for i, module in enumerate(workflow.modules):
+            assert int(re.search("\d+", module).group(0)) == i+1
 
     def teardown(self):
         dirname = self.data_dir+'workspace_temp'
@@ -161,3 +166,6 @@ class TestWorkflow(object):
                 
         print("tearing down " + __name__)
         pass
+    
+# if __name__ == '__main__':
+#     pytest.main("-k test_modules_from_config")
