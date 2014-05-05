@@ -30,10 +30,17 @@ class TestWorkflow(object):
         print("setting up " + __name__)
         self.data_dir = (os.path.dirname(__file__))+'/test_data/'
         configfile_temp = self.data_dir+'PynPoint_test_v001.config'
+        configfile_temp2 = self.data_dir+'PynPoint_test_v002.config'
+
         config = ConfigParser.ConfigParser()
         config.optionxform = str
 
+        config2 = ConfigParser.ConfigParser()
+        config2.optionxform = str
+
+
         self.configfile = self.data_dir+'PynPoint_test_v001_out.config'
+        self.configfile2 = self.data_dir+'PynPoint_test_v002_out.config'
 
         # workdir = /Users/amaraa/Work/Active_Projects/PynPoint_v1_5/test/test_data/workspace_temp
         # datadir = /Users/amaraa/Work/Active_Projects/PynPoint_v1_5/test/
@@ -41,9 +48,20 @@ class TestWorkflow(object):
         config.read(configfile_temp)
         config.set('workspace','workdir',self.data_dir+'workspace_temp')
         config.set('workspace','datadir',os.path.dirname(__file__)+'/')
+
+        config2.read(configfile_temp2)
+        config2.set('workspace','workdir',self.data_dir+'workspace_temp')
+        config2.set('workspace','datadir',os.path.dirname(__file__)+'/')
+
+
         cgfile = open(self.configfile,'w')
         config.write(cgfile)
         cgfile.close()
+
+        cgfile2 = open(self.configfile2,'w')
+        config2.write(cgfile2)
+        cgfile2.close()
+
 
         self.config = ConfigParser.ConfigParser()
         self.config.optionxform = str
@@ -102,21 +120,24 @@ class TestWorkflow(object):
         assert hasattr(temp_images,'im_arr')
         assert temp_images.im_arr.shape == (4,292,292)
         
-    # def test_run_basis_mod(self):
-    #     self.wf2._setup_workspace()
-    #     temp_basis = self.wf2._run_basis_mod('module2')
-    #     assert hasattr(temp_basis,'psf_basis')
-    #     assert temp_basis.im_arr.shape == (4,146,146)
-    #     
+    def test_run_basis_mod(self):
+        self.wf2._setup_workspace()
+        temp_basis = self.wf2._run_basis_mod('module2')
+        assert hasattr(temp_basis,'psf_basis')
+        assert temp_basis.im_arr.shape == (4,292,292)
+
     # def test_runmods(self):
     #     self.wf2._setup_workspace()
     #     self.wf2._runmods()
     # 
     # 
-    # def test_overall(self):
-    #     ws = PynPoint.workflow.run(self.configfile)
+    def test_overall(self):
+        ws = PynPoint.workflow.run(self.configfile)
         
-        
+    def test_overall2(self):
+        ws = PynPoint.workflow.run(self.configfile2)
+
+
         
         
 
