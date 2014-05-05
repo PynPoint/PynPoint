@@ -185,6 +185,9 @@ class workflow():
         result_names = []
         
         #need to manage the data in some way!
+
+        print(self.modules)
+
         for i in range(0,len(self.modules)):
             mod_type = self.config.get(self.modules[i],'mod_type')
             if mod_type == 'images':
