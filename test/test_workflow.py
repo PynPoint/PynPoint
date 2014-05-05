@@ -131,11 +131,11 @@ class TestWorkflow(object):
     #     self.wf2._runmods()
     # 
     # 
-    def test_overall(self):
-        ws = PynPoint.workflow.run(self.configfile)
-        
-    def test_overall2(self):
-        ws = PynPoint.workflow.run(self.configfile2)
+    # def test_overall(self):
+    #     ws = PynPoint.workflow.run(self.configfile)
+    #
+    # def test_overall2(self):
+    #     ws = PynPoint.workflow.run(self.configfile2)
 
 
         
