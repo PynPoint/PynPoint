@@ -126,16 +126,16 @@ class TestWorkflow(object):
         assert hasattr(temp_basis,'psf_basis')
         assert temp_basis.im_arr.shape == (4,292,292)
 
-    # def test_runmods(self):
-    #     self.wf2._setup_workspace()
-    #     self.wf2._runmods()
-    # 
-    # 
-    # def test_overall(self):
-    #     ws = PynPoint.workflow.run(self.configfile)
-    #
-    # def test_overall2(self):
-    #     ws = PynPoint.workflow.run(self.configfile2)
+    def test_runmods(self):
+        self.wf2._setup_workspace()
+        self.wf2._runmods()
+
+
+    def test_overall(self):
+        ws = PynPoint.workflow.run(self.configfile)
+
+    def test_overall2(self):
+        ws = PynPoint.workflow.run(self.configfile2)
 
 
         
