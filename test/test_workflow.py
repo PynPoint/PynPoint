@@ -23,6 +23,7 @@ import os
 import ConfigParser 
 import shutil
 import PynPoint
+import numpy as np
 
 
 class TestWorkflow(object):
@@ -48,11 +49,11 @@ class TestWorkflow(object):
         # datadir = /Users/amaraa/Work/Active_Projects/PynPoint_v1_5/test/
 
         config.read(configfile_temp)
-        config.set('workspace','workdir',self.data_dir+'workspace_temp')
+        config.set('workspace','workdir',self.data_dir+'workspace_temp/')
         config.set('workspace','datadir',os.path.dirname(__file__)+'/')
 
         config2.read(configfile_temp2)
-        config2.set('workspace','workdir',self.data_dir+'workspace_temp')
+        config2.set('workspace','workdir',self.data_dir+'workspace_temp2/')
         config2.set('workspace','datadir',os.path.dirname(__file__)+'/')
 
 
@@ -135,9 +136,25 @@ class TestWorkflow(object):
 
     def test_overall(self):
         ws = PynPoint.workflow.run(self.configfile)
+        ws2 = PynPoint.restore(ws.dirname)
+        ws3 = PynPoint.workflow.run(self.configfile2)
 
-    def test_overall2(self):
-        ws = PynPoint.workflow.run(self.configfile2)
+        assert ws.get_available() == ws2.get_available()
+        assert ws.get_available() == ws3.get_available()
+
+        res1 = ws.get('residuals_module3')
+        res2 = ws2.get('residuals_module3')
+        res3 = ws3.get('residuals_module3')
+
+
+        assert np.array_equal(res1.im_arr,res2.im_arr)
+        assert np.array_equal(res1.im_arr,res3.im_arr)
+        assert np.allclose(res1.im_arr.mean(),9.3949935351288022e-06)
+
+        assert np.allclose(res1.res_rot_mean(1).mean() ,  -1.9073045985046198e-10)
+        assert res1.res_rot_mean(1).mean() == res2.res_rot_mean(1).mean()
+        assert res1.res_rot_mean(1).mean() == res3.res_rot_mean(1).mean()
+
 
 
     def test_modules_from_config(self):
@@ -156,12 +173,17 @@ class TestWorkflow(object):
 
     def teardown(self):
         dirname = self.data_dir+'workspace_temp'
+        dirname2 = self.data_dir+'workspace_temp2'
         #tidy up
         if os.path.exists(dirname):
             shutil.rmtree(dirname)
+        if os.path.exists(dirname2):
+            shutil.rmtree(dirname2)
             
         if os.path.isfile(self.configfile):
             os.remove(self.configfile)
+        if os.path.isfile(self.configfile2):
+            os.remove(self.configfile2)
              
                 
         print("tearing down " + __name__)
