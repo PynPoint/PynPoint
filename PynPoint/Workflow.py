@@ -125,12 +125,19 @@ class workflow():
             self.config = config_in
         else:
             assert(type(config_in) == str)
-            self.config = ConfigParser.ConfigParser(dict_type=collections.OrderedDict)
+            self.config = ConfigParser.ConfigParser() #dict_type=collections.OrderedDict)
             self.config.optionxform = str
 
             # self.config.optionxform(str())
             self.config.read(config_in)
-        self.modules = [s for s in self.config.sections() if self.module_string in s]
+        self.modules = sorted([s for s in self.config.sections() if self.module_string in s])
+
+        # print('!!!!ADAM !!!!')
+        # print(self.modules)
+        # print(sorted(self.modules))
+        # print(len(self.module_string))
+        # assert 1==2
+
             
     def _setup_workspace(self,force_replace=False):
         dirname = self.config.get('workspace','workdir')
@@ -188,18 +195,20 @@ class workflow():
         #need to manage the data in some way!
 
         print(self.modules)
+        # self._set_run_order()
 
-        for i in range(0,len(self.modules)):
-            mod_type = self.config.get(self.modules[i],'mod_type')
+
+        for mod in self.modules:
+            mod_type = self.config.get(mod,'mod_type')
             if mod_type == 'images':
-                run_temp = self._run_images_mod(self.modules[i])
+                run_temp = self._run_images_mod(mod)
             elif mod_type == 'basis':
-                run_temp = self._run_basis_mod(self.modules[i])
+                run_temp = self._run_basis_mod(mod)
             elif mod_type == 'residuals':
-                run_temp = self._run_residuals_mod(self.modules[i],self._ctx)
+                run_temp = self._run_residuals_mod(mod,self._ctx)
             else:
                 assert 1==2,'Error: mod_type option can be: images, basis or residuals'
-            name = mod_type+'_'+self.modules[i]
+            name = mod_type+'_'+mod
             result_names.append(name)
             self._ctx.add(name,run_temp)  
             self._timestamp('Finished '+name)
