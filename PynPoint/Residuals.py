@@ -52,7 +52,7 @@ class residuals(base_pynpoint):
         
     @classmethod
     def create_winstances(cls, images,basis):
-        #TODO: use normal initializer for this. overcomplicated!
+        #TODO: use normal initializer for this.
         obj = cls()
         #---importing data from images instance:---#
         obj.im_arr = images.im_arr
@@ -79,37 +79,37 @@ class residuals(base_pynpoint):
             self._mk_res_arr(num_coeff)
         return self._res_arr
         
-    def res_rot(self,num_coeff):
+    def res_rot(self,num_coeff,extra_rot =0.0):
         """
         Returns a 3D data cube of residuals where all the images
         have been rotated to have the same para angle.
         """
         if not (hasattr(self, '_res_rot') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot(num_coeff)
+            self._mk_res_rot(num_coeff,extra_rot =extra_rot )
         return self._res_rot
         
-    def res_rot_mean(self,num_coeff):
+    def res_rot_mean(self,num_coeff,extra_rot =0.0):
         """
         Returns a 2D image of residuals after averaging down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
         if not (hasattr(self, '_res_rot_mean') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot_mean(num_coeff)
+            self._mk_res_rot_mean(num_coeff,extra_rot =extra_rot )
         return self._res_rot_mean
 
-    def res_rot_median(self,num_coeff):
+    def res_rot_median(self,num_coeff,extra_rot =0.0):
         """
         Returns a 2D image of residuals after averaging down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
         if not (hasattr(self, '_res_rot_median') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot_median(num_coeff)
+            self._mk_res_rot_median(num_coeff,extra_rot =extra_rot )
         return self._res_rot_median
 
         
-    def res_rot_mean_clip(self,num_coeff):
+    def res_rot_mean_clip(self,num_coeff,extra_rot =0.0):
         """
         Returns a 2D image of residuals after averaging down the stack.
         All the images in the stack are rotated to that they 
@@ -117,18 +117,18 @@ class residuals(base_pynpoint):
         (3 sigma)
         """
         # if not (hasattr(self, '_res_rot_mean_clip') and (self.num_coeff == num_coeff)):
-        self._mk_res_rot_mean_clip(num_coeff)
+        self._mk_res_rot_mean_clip(num_coeff,extra_rot =extra_rot )
         return self._res_rot_mean_clip
     
         
-    def res_rot_var(self,num_coeff):
+    def res_rot_var(self,num_coeff,extra_rot = 0.0):
         """
         Returns a 2D image of the variance of the residuals down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
         if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot_var(num_coeff)
+            self._mk_res_rot_var(num_coeff,extra_rot =extra_rot )
         return self._res_rot_var
         
                 
@@ -153,32 +153,32 @@ class residuals(base_pynpoint):
             # print('HIHI')
         self._res_arr = res_arr
     
-    def _mk_res_rot(self,num_coeff):        
+    def _mk_res_rot(self,num_coeff,extra_rot = 0.0):
         delta_para = self.para[0] - self.para
         res_rot = np.zeros(shape=self.im_arr.shape)
         res_arr = self.res_arr(num_coeff)
         for i in range(0,len(delta_para)):
             res_temp = res_arr[i,]
-            res_rot[i,] = _Util.mk_rotate(res_temp,delta_para[i])
+            res_rot[i,] = _Util.mk_rotate(res_temp,delta_para[i]+extra_rot)
         self._res_rot = res_rot
          
-    def _mk_res_rot_mean(self,num_coeff):
-        res_rot = self.res_rot(num_coeff)
+    def _mk_res_rot_mean(self,num_coeff,extra_rot = 0.0):
+        res_rot = self.res_rot(num_coeff,extra_rot =extra_rot)
         self._res_rot_mean = np.mean(res_rot,axis=0)
 
-    def _mk_res_rot_median(self,num_coeff):
-        self._res_rot_median = np.median(self.res_rot(num_coeff),axis=0)
+    def _mk_res_rot_median(self,num_coeff,extra_rot = 0.0):
+        self._res_rot_median = np.median(self.res_rot(num_coeff,extra_rot =extra_rot),axis=0)
         
-    def _mk_res_rot_var(self,num_coeff):
+    def _mk_res_rot_var(self,num_coeff,extra_rot = 0.0):
         res_rot_temp = self.res_rot(num_coeff).copy()
         for i in range(0,res_rot_temp.shape[0]):
-            res_rot_temp[i,] -= - self.res_rot_mean(num_coeff)
+            res_rot_temp[i,] -= - self.res_rot_mean(num_coeff,extra_rot =extra_rot)
         res_rot_var = (res_rot_temp**2.).sum(axis=0)
         self._res_rot_var = res_rot_var
         
-    def _mk_res_rot_mean_clip(self,num_coeff):
+    def _mk_res_rot_mean_clip(self,num_coeff,extra_rot = 0.0):
         res_rot_mean_clip = np.zeros(self.im_shape)
-        res_rot = self.res_rot(num_coeff)
+        res_rot = self.res_rot(num_coeff,extra_rot =extra_rot)
         for i in range(0,res_rot_mean_clip.shape[0]):
             for j in range(0,res_rot_mean_clip.shape[1]):
                 temp = res_rot[:,i,j]

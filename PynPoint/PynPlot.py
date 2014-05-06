@@ -168,7 +168,7 @@ def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
 
 # from residuals:
  
-def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False, mask_nan=True):
+def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=False, mask_nan=True,extra_rot=0.0):
     """
     Plots the residual results (either an average or the variance) 
     and gives the image as a return value. 
@@ -207,19 +207,19 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     
     
     if imtype == 'mean':
-        im = res.res_rot_mean(num_coeff)                
+        im = res.res_rot_mean(num_coeff,extra_rot = extra_rot)
     elif imtype == 'mean_clip':
-        im = res.res_rot_mean_clip(num_coeff)
+        im = res.res_rot_mean_clip(num_coeff,extra_rot = extra_rot)
     elif imtype == 'median':
-        im = res.res_rot_median(num_coeff)
+        im = res.res_rot_median(num_coeff,extra_rot = extra_rot)
     elif imtype == 'var':
-        im = res.res_rot_var(num_coeff)
+        im = res.res_rot_var(num_coeff,extra_rot = extra_rot)
     elif imtype == 'sigma':
-        im = np.sqrt(res.res_rot_var(num_coeff))
+        im = np.sqrt(res.res_rot_var(num_coeff,extra_rot = extra_rot))
     elif imtype == 'mean_sigmamean':
-        im_sigma = np.sqrt(res.res_rot_var(num_coeff))/np.sqrt(len(res.im_arr[:,0.,0.])) #error on mean
+        im_sigma = np.sqrt(res.res_rot_var(num_coeff,extra_rot = extra_rot))/np.sqrt(len(res.im_arr[:,0.,0.])) #error on mean
         ind = np.where(im_sigma == 0.0)
-        im = (res.res_rot_mean(num_coeff)/im_sigma)* res.cent_mask
+        im = (res.res_rot_mean(num_coeff,extra_rot = extra_rot)/im_sigma)* res.cent_mask
         im[ind] = 0.0    
     # else:
     #     print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
