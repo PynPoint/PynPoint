@@ -38,6 +38,9 @@ class residuals(base_pynpoint):
         """            
         self.obj_type = 'PynPoint_residuals'
         self.num_coeff = np.nan
+        self.extra_rot = np.nan
+
+
 
     @classmethod
     def create_restore(cls, filename):
@@ -84,7 +87,7 @@ class residuals(base_pynpoint):
         Returns a 3D data cube of residuals where all the images
         have been rotated to have the same para angle.
         """
-        if not (hasattr(self, '_res_rot') and (self.num_coeff == num_coeff)):
+        if not (hasattr(self, '_res_rot') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot(num_coeff,extra_rot =extra_rot )
         return self._res_rot
         
@@ -94,8 +97,8 @@ class residuals(base_pynpoint):
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
-        if not (hasattr(self, '_res_rot_mean') and (self.num_coeff == num_coeff)):
-            self._mk_res_rot_mean(num_coeff,extra_rot =extra_rot )
+        if not (hasattr(self, '_res_rot_mean') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
+            self._mk_res_rot_mean(num_coeff,extra_rot = extra_rot )
         return self._res_rot_mean
 
     def res_rot_median(self,num_coeff,extra_rot =0.0):
@@ -104,7 +107,7 @@ class residuals(base_pynpoint):
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
-        if not (hasattr(self, '_res_rot_median') and (self.num_coeff == num_coeff)):
+        if not (hasattr(self, '_res_rot_median') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot_median(num_coeff,extra_rot =extra_rot )
         return self._res_rot_median
 
@@ -127,7 +130,7 @@ class residuals(base_pynpoint):
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
-        if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff)):
+        if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot_var(num_coeff,extra_rot =extra_rot )
         return self._res_rot_var
         
@@ -137,7 +140,7 @@ class residuals(base_pynpoint):
         Returns a data cube with a model for the PSF.
         """
         
-        if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff)):
+        if not (hasattr(self, 'psf_im_arr') and (self.num_coeff == num_coeff)):
             # self.mk_psfmodel(self,num_coeff)
             self.mk_psfmodel(num_coeff)
             self.num_coeff = num_coeff
@@ -154,6 +157,9 @@ class residuals(base_pynpoint):
         self._res_arr = res_arr
     
     def _mk_res_rot(self,num_coeff,extra_rot = 0.0):
+        print('AA7:')
+        print(extra_rot)
+        # assert 1==2
         delta_para = self.para[0] - self.para
         res_rot = np.zeros(shape=self.im_arr.shape)
         res_arr = self.res_arr(num_coeff)
@@ -163,7 +169,7 @@ class residuals(base_pynpoint):
         self._res_rot = res_rot
          
     def _mk_res_rot_mean(self,num_coeff,extra_rot = 0.0):
-        res_rot = self.res_rot(num_coeff,extra_rot =extra_rot)
+        res_rot = self.res_rot(num_coeff,extra_rot = extra_rot)
         self._res_rot_mean = np.mean(res_rot,axis=0)
 
     def _mk_res_rot_median(self,num_coeff,extra_rot = 0.0):
