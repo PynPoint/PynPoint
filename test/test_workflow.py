@@ -11,14 +11,13 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/.
-import re
-# import pytest
-
 
 """
 Tests for `workflow` module.
 """
 #from __future__ import print_function, division, absolute_import, unicode_literals
+import pytest
+import re
 import os
 import ConfigParser 
 import shutil
@@ -129,11 +128,13 @@ class TestWorkflow(object):
         assert hasattr(temp_basis,'psf_basis')
         assert temp_basis.im_arr.shape == (4,292,292)
 
+    #TODO: add tests
     def test_runmods(self):
         self.wf2._setup_workspace()
         self.wf2._runmods()
 
 
+    #TODO: rename to something meaningful!
     def test_overall(self):
         ws = PynPoint.workflow.run(self.configfile)
         ws2 = PynPoint.restore(ws.dirname)
@@ -161,15 +162,30 @@ class TestWorkflow(object):
         modulesCount = 10
         
         parser = ConfigParser.ConfigParser()
-        for i in range(1, modulesCount):
+        for i in range(1, modulesCount+1):
             parser.add_section("module%s"%i)
         
         workflow = PynPoint.workflow()
         workflow._init_config(parser)
 
-        assert len(workflow.modules) == modulesCount-1
+        assert len(workflow.modules) == modulesCount
         for i, module in enumerate(workflow.modules):
             assert int(re.search("\d+", module).group(0)) == i+1
+
+    def test_illegal_module_type(self):
+        parser = ConfigParser.ConfigParser()
+        parser.add_section("module1")
+        parser.set("module1", "mod_type", "ILLEGAL")
+        
+        workflow = PynPoint.workflow()
+        workflow._init_config(parser)
+        
+        try:
+            workflow._runmods()
+            pytest.fail("Module type is not supported")
+        except TypeError:
+            assert True
+        
 
     def teardown(self):
         dirname = self.data_dir+'workspace_temp'
