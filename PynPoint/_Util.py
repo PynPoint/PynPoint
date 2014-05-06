@@ -23,6 +23,7 @@ import h5py
 import glob
 import pylab as pl
 from PynPoint import _Mask
+import random
 
 
 class dummyclass():
@@ -106,7 +107,7 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
 
 
 def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
-              F_final=2,ran_sub=False,para_sort=True,inner_pix=False,
+              F_final=2,ran_sub=None,para_sort=True,
               cent_size=0.2,edge_size=1.0,stackave=None):
 
 
@@ -122,7 +123,6 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
     :param F_final:
     :param ran_sub:
     :param para_sort:
-    :param inner_pix:
     :param cent_size:
     :param edge_size:
     
@@ -403,7 +403,10 @@ def filename4mdir(dir_in,filetype='convert'):
     elif filetype == 'basis':
         hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_basis.hdf5'
     elif filetype == 'images':
-        hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_images.hdf5'        
+        hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_images.hdf5'
+
+    elif filetype == 'random_sub':
+        hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_random_sub_.hdf5'
     else:
         print('Warning: file type not recognised - general temp name created')
         hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_temp.hdf5'
@@ -419,7 +422,7 @@ def filenme4stack(hdffilename,stackave):
     
     
     
-def conv_dirfits2hdf5(dir_in,outputfile = None):#,stackave=None):
+def conv_dirfits2hdf5(dir_in,outputfile = None,random_sample_size = None):#,stackave=None):
     """
     Converts fits inputs (stored in directory) into hdf5 file format. These files are faster to load and 
     can be handeled more easily by PynPoint.
@@ -429,7 +432,20 @@ def conv_dirfits2hdf5(dir_in,outputfile = None):#,stackave=None):
     
     """
     obj = dummyclass()
-    obj.files = file_list(dir_in)
+    files = file_list(dir_in,ran_sub=random_sample_size)
+
+    print('!!!! AAA !!!!!')
+    print(random_sample_size)
+
+    if not random_sample_size in [None,False]:
+        temp = filename4mdir(dir_in,filetype='random_sub')
+        if outputfile is None:
+            outputfile = temp[:-5]+str(random_sample_size)+temp[-5:]
+            print('file for random subset created: \n %s' %outputfile)
+
+    obj.files = files
+
+
     obj.num_files = len(obj.files)#num_files
     rd_fits(obj)#,avesub=False,para_sort=False,inner_pix=False)
     obj.obj_type = 'raw_data'
@@ -471,13 +487,13 @@ def mkstacked(file_in,file_stck,stackave):
     
     
 
-def file_list(dir_in,ran_sub=False):
+def file_list(dir_in,ran_sub=None):
     """
     lists all the fits files in a given directory
     """
     
     files = glob.glob(dir_in+'*.fits')
-    if ran_sub is not False:
+    if not ran_sub in (None,False):
         np.random.shuffle(files)#,random.random)
         files = files[0:ran_sub]     
 
@@ -514,3 +530,4 @@ def peak_find(imtemp,limit=0.8,printit=False):
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
+

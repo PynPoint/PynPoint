@@ -114,6 +114,7 @@ class residuals(base_pynpoint):
         Returns a 2D image of residuals after averaging down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
+        (3 sigma)
         """
         # if not (hasattr(self, '_res_rot_mean_clip') and (self.num_coeff == num_coeff)):
         self._mk_res_rot_mean_clip(num_coeff)
