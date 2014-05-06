@@ -31,7 +31,7 @@ def restore(obj,filename):
     """
     _Util.restore_data(obj,filename)
 
-def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
+def pynpoint_create_wdir(obj,dir_in,force_reload=False,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using dir_in, which is the
     name of a directory containing the input fits files. 
@@ -45,16 +45,28 @@ def pynpoint_create_wdir(obj,dir_in,ran_sub=False,force_reload=False,prep_data=T
     
     ##convert to hdf5
     assert (os.path.isdir(dir_in)), 'Error: Input directory does not exist - input requested: %s'%dir_in
-    file_hdf5 = _Util.filename4mdir(dir_in)    
+    file_hdf5 = _Util.filename4mdir(dir_in)
+    random_sample =  None
+    if ('ran_sub' in kwargs.keys()):
+        if not kwargs['ran_sub'] in (None,False):
+            ran_sub = int(kwargs['ran_sub'])
+            file_hdf5 = file_hdf5[:-5] +'_random_sample_'+str(ran_sub)+file_hdf5[-5:]
+            random_sample = ran_sub
+
+
+    print('random_sample: %s' %random_sample)
+    print(kwargs.keys())
+    print(kwargs['ran_sub'])
+
 #     print(file_hdf5)
     # assert os.path.isfile(file_hdf5), 'Error: No fits files found in the directory: %s, %s' %dir_in %file_hdf5
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
-        _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5)
+        _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5,random_sample_size=random_sample)
     # obj = pynpoint_parent.create_whdf5input(file_hdf5,ran_sub=False,**kwargs)
-    pynpoint_create_whdf5input(obj,file_hdf5,ran_sub=False,**kwargs)
+    pynpoint_create_whdf5input(obj,file_hdf5,**kwargs)
     #return obj
 
-def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs):
+def pynpoint_create_whdf5input(obj,file_in,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using dir_in, which is the
     name of a directory containing the input fits files. 
@@ -89,7 +101,7 @@ def pynpoint_create_whdf5input(obj,file_in,ran_sub=False,prep_data=True,**kwargs
 
     #return obj
 
-def pynpoint_create_wfitsfiles(obj,files,ran_sub=False,prep_data=True,**kwargs):
+def pynpoint_create_wfitsfiles(obj,files,ran_sub=None,prep_data=True,**kwargs):
     """
     Creates an instance of the images class using a list of fits file names. 
     As well as its input parameters, this function can pass the keyword

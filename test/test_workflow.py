@@ -74,7 +74,7 @@ class TestWorkflow(object):
         self.wf2 = wf_init = PynPoint.workflow()
         self.wf2._init_config(self.config)
         self.test_kwargs = {'para_sort': 'True', 'inner_pix': 'False', 'edge_size': '1.0', 
-                            'ran_sub': 'False', 'resize': 'True', 'F_final': '2', 
+                            'ran_sub': 'None', 'resize': 'True', 'F_final': '2',
                             'cent_size': '0.2', 'F_int': '4', 'cent_remove': 'True', 'recent': 'False'}
         
         
@@ -118,6 +118,7 @@ class TestWorkflow(object):
     
     def test_run_images_mod(self):
         self.wf2._setup_workspace()
+        # print(self.wf2.config.get('options','ran_sub'))
         temp_images = self.wf2._run_images_mod('module1')
         assert hasattr(temp_images,'im_arr')
         assert temp_images.im_arr.shape == (4,292,292)
@@ -196,10 +197,10 @@ class TestWorkflow(object):
         if os.path.exists(dirname2):
             shutil.rmtree(dirname2)
             
-        if os.path.isfile(self.configfile):
-            os.remove(self.configfile)
-        if os.path.isfile(self.configfile2):
-            os.remove(self.configfile2)
+        # if os.path.isfile(self.configfile):
+        #     os.remove(self.configfile)
+        # if os.path.isfile(self.configfile2):
+        #     os.remove(self.configfile2)
              
                 
         print("tearing down " + __name__)

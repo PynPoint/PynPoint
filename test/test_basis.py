@@ -45,17 +45,17 @@ class TestBasis(object):
 
         # self.basis1 = PynPoint.basis(self.test_data_dir,intype='dir',cent_remove=False,resize=False,ran_sub=False,recent=False)
         self.basis1 = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=False,ran_sub=False,recent=False)
+                                cent_remove=False,resize=False,ran_sub=None,recent=False)
         hdf5file = PynPoint._Util.filename4mdir(self.test_data_dir)
         self.basis5 = PynPoint.basis.create_whdf5input(hdf5file,
-                                cent_remove=False,resize=False,ran_sub=False,recent=False)
+                                cent_remove=False,resize=False,ran_sub=None,recent=False)
 
         self.basis3 = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=False,recent=False)
+                                cent_remove=True,resize=False,ran_sub=None,recent=False)
         self.basis4 = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=True,F_int=4.0,F_final=2.0,ran_sub=False,recent=True)
+                                cent_remove=False,resize=True,F_int=4.0,F_final=2.0,ran_sub=None,recent=True)
         self.basisfits = PynPoint.basis.create_wfitsfiles(self.files_fits,
-                                cent_remove=True,resize=False,ran_sub=False,recent=False)
+                                cent_remove=True,resize=False,ran_sub=None,recent=False)
 
         self.eg_array1 = np.arange(100.).reshape(4,5,5)
         self.ave_eg_array1 = np.array([[ 37.5,  38.5,  39.5,  40.5,  41.5],
