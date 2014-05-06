@@ -18,13 +18,14 @@ from __future__ import print_function, division
 
 # External modules
 import ConfigParser
-import collections
 import types
 import os
 from time import gmtime, strftime
 import shutil
 import h5py
 import time
+import re
+from operator import itemgetter
 
 from PynPoint.Basis import basis
 from PynPoint.Images import images
@@ -112,14 +113,16 @@ class workflow():
         
     def get_available(self):
         """
-        Prints the options available to the get method
+        Returns the available module names
+        
+        :return: List of modules
         """
         
         return self._ctx.entries()
            
     
     def _init_config(self,config_in):
-        # print(type(config_in))        
+        #TODO: change to isinstance!
         if (type(config_in) == types.InstanceType):
             assert config_in.__module__ == 'ConfigParser', 'Error: This instance is not from ConfigParser'
             self.config = config_in
@@ -130,15 +133,12 @@ class workflow():
 
             # self.config.optionxform(str())
             self.config.read(config_in)
-        self.modules = sorted([s for s in self.config.sections() if self.module_string in s])
-
-        # print('!!!!ADAM !!!!')
-        # print(self.modules)
-        # print(sorted(self.modules))
-        # print(len(self.module_string))
-        # assert 1==2
-
             
+        #sort the list of modules according to the digit at the end of the section name
+        moduleList = [s for s in self.config.sections() if self.module_string in s]
+        self.modules = map(itemgetter(1), sorted([(int(re.search('\d+', e).group(0)),e) for e in moduleList ], key=itemgetter(0)))
+        
+
     def _setup_workspace(self,force_replace=False):
         dirname = self.config.get('workspace','workdir')
         if force_replace==True and os.path.exists(dirname):
@@ -192,12 +192,6 @@ class workflow():
         self._ctx = Ctx()
         result_names = []
         
-        #need to manage the data in some way!
-
-        print(self.modules)
-        # self._set_run_order()
-
-
         for mod in self.modules:
             mod_type = self.config.get(mod,'mod_type')
             if mod_type == 'images':
@@ -207,7 +201,8 @@ class workflow():
             elif mod_type == 'residuals':
                 run_temp = self._run_residuals_mod(mod,self._ctx)
             else:
-                assert 1==2,'Error: mod_type option can be: images, basis or residuals'
+                raise TypeError('Error: mod_type option can be: images, basis or residuals')
+            
             name = mod_type+'_'+mod
             result_names.append(name)
             self._ctx.add(name,run_temp)  
@@ -258,8 +253,6 @@ class workflow():
         
 
     def _run_residuals_mod(self,section_id,ctx):
-        # print(section_id)
-        # print('hihi')
         # input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
         images_in = self.config.get(section_id,'images_input')
         basis_in = self.config.get(section_id,'basis_input')
@@ -270,8 +263,6 @@ class workflow():
             res_run = residuals.create_winstances(images,basis)
             
         return res_run
-            
-        
         
         
     def _get_keyword_options(self,section_id):
@@ -288,7 +279,6 @@ class workflow():
 
         return kwargs
 
-        ##
         
     def _check_kwargs(self,**kwargs):
 
