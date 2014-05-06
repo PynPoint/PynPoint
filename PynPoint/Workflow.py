@@ -210,9 +210,16 @@ class workflow():
             
     
     def _run_images_mod(self,section_id):
+
+
         input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
         kwargs = self._get_keyword_options(section_id)
-        
+        print('AA3:')
+        print(self.config.get('options1','ran_sub'))
+        print(kwargs['ran_sub'])
+        print('-AA3:')
+
+
         
         
         if self.config.get(section_id,'intype') == 'dir':
@@ -273,9 +280,16 @@ class workflow():
             kwargs = self.config._sections[options_section]
         if '__name__' in kwargs:
             del kwargs['__name__']
-        
+        print('AA4:')
+        print(self.config.get('options1','ran_sub'))
+        print(kwargs['ran_sub'])
+
         if not kwargs is None:
             kwargs = self._check_kwargs(**kwargs)
+
+        print('AA4:')
+        print(self.config.get('options1','ran_sub'))
+        print(kwargs['ran_sub'])
 
         return kwargs
 
@@ -295,16 +309,20 @@ class workflow():
             kwargs['cent_remove'] = _Util.str2bool(kwargs['cent_remove'])
         
         if 'ran_sub' in kwargs.keys():
+            print('AA5:')
+            print(kwargs['ran_sub'])
         # if hasattr(kwargs, 'ran_sub'):
             kwargs['ran_sub'] = _Util.str2bool(kwargs['ran_sub'])
-    
+            print('AA6:')
+            print(kwargs['ran_sub'])
+
         if 'para_sort' in kwargs.keys():
         # if hasattr(kwargs, 'para_sort'):
             kwargs['para_sort'] = _Util.str2bool(kwargs['para_sort'])
     
-        if 'inner_pix' in kwargs.keys():
-        # if hasattr(kwargs, 'inner_pix'):
-            kwargs['inner_pix'] = _Util.str2bool(kwargs['inner_pix'])
+        # if 'inner_pix' in kwargs.keys():
+        # # if hasattr(kwargs, 'inner_pix'):
+        #     kwargs['inner_pix'] = _Util.str2bool(kwargs['inner_pix'])
 
         if 'F_int' in kwargs.keys():
         # if hasattr(kwargs, 'F_int'):
