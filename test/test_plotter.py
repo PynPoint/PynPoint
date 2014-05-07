@@ -38,7 +38,7 @@ class TestPlotter(object):
         self.test_data_dir = test_data        
         file_basis_restore = str(self.test_data_dir+'test_data_basis_v001.hdf5'  )      
         file_images_restore = str(self.test_data_dir+'test_data_images_v001.hdf5')
-        # print(type(self.test_data_dir+'testfile_basis.hdf5'))
+
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=True,resize=False,ran_sub=False,recent=False)
 
@@ -53,8 +53,7 @@ class TestPlotter(object):
 
     def test_plt_res(self):
         res = self.res
-        #pynplot = PynPoint.pynplot
-        
+
         im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
         im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
         im3_temp = self.test_data_dir+'/outputs/im3_temp.fits'
@@ -102,25 +101,16 @@ class TestPlotter(object):
             im_temp = pynplot.plt_res(res,1,imtype='wrong_entry',smooth=None,returnval=True,savefits=im1_temp)
         except AssertionError, e:
             pass
-        # assert(e[0][0:20] == 'Error: options for a')
+
         assert(e[0] == "Error: options for ave keyword are ['mean', 'mean_clip', 'median', 'var', 'sigma', 'mean_sigmamean']")
-        
-        # assert(1==2)
-        
-        #!!!! VERY STRANGE THAT VALUES ARE THE SAME!!!! NEED To CHECK!!!!
-        # assert im4s.mean() == 1.0
 
-
-        # assert 1==2
-        
     def test_anim_im_arr(self):
         pynplot.anim_im_arr(self.res,im_range=[0,3])
         pynplot.anim_im_arr(self.images,im_range=[0,3],time_gap =0.01)
         pynplot.anim_im_arr(self.basis,im_range=None)
-        # x = 1
-        
+
     def test_im_arr(self,tmpdir):
-        # im1_temp = tmpdir+'/im1_temp.fits'
+
         im1_temp = self.test_data_dir+'/outputs/im1_temp.fits'
         im2_temp = self.test_data_dir+'/outputs/im2_temp.fits'
         im3_temp = self.test_data_dir+'/outputs/im3_temp.fits'
@@ -133,7 +123,6 @@ class TestPlotter(object):
 
 
         im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits=im1_temp,mask_nan=False)
-        # im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits='test_data/im1_temp.fits')
         im2 = pynplot.plt_im_arr(self.basis,1,returnval=True,savefits=im2_temp,mask_nan=False)
         im3 = pynplot.plt_im_arr(self.res,2,returnval=True,savefits=im3_temp,mask_nan=False)
         
