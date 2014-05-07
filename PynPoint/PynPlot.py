@@ -221,9 +221,6 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
         ind = np.where(im_sigma == 0.0)
         im = (res.res_rot_mean(num_coeff,extra_rot = extra_rot)/im_sigma)* res.cent_mask
         im[ind] = 0.0    
-    # else:
-    #     print('Error: something is wrong with ave keyword. Funny its not picked up by assert and options!')
-    #     return
     if not smooth is None:
         im = gaussian_filter(im,sigma=smooth) * res.cent_mask
 
