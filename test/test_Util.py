@@ -63,10 +63,6 @@ class TestUtil(object):
         assert self.im_arr.shape[0] == 4
         assert self.im_arr.shape[1] == 146
         assert self.im_arr.shape[2] == 146
-        # assert self.im_arr[0,100,100] == 5.8123303460888565e-05
-        # assert self.im_arr[1,80,70] == 0.00066373066511005163
-        # assert self.im_arr[2,40,10] == 1.1117342182842549e-05
-        # assert self.im_arr[3,110,110] == 2.460101677570492e-05
 
         assert self.im_arr[0,100,100] == 136.0
         assert self.im_arr[1,80,70] == 1418.280029296875
@@ -193,15 +189,6 @@ class TestUtil(object):
         print(self.files)
         for i in range(0,4):
             assert files_temp[i] in self.files
-        # 
-        # assert files_temp[0] == self.files[0]
-        # assert files_temp[1] == self.files[2]
-        # assert files_temp[2] == self.files[1]
-        # assert files_temp[3] == self.files[3]
-        # files_temp2 = PynPoint._Util.file_list(self.test_data,ran_sub=2)
-        # assert(len(files_temp2) == 2)
-        
-
 
     def test_check_type(self):
         print(self.file_images_hdf5)
@@ -232,21 +219,6 @@ class TestUtil(object):
         res_null.res_clean_mean_clip = test_im
         x_peaks,y_peaks, h_peaks,sig,num_peaks = PynPoint._Util.peak_find(test_im,limit=0.8,printit=True)
         
-        # assert not hasattr(res_null,'x_peaks')
-        # assert not hasattr(res_null,'y_peaks')
-        # assert not hasattr(res_null,'h_peaks')
-        # assert not hasattr(res_null,'sig')
-        # assert not hasattr(res_null,'p_contour')
-        # assert not hasattr(res_null,'num_peaks')
-        # 
-        # res_null.peak_find(limit=0.8)
-        # assert hasattr(res_null,'x_peaks')
-        # assert hasattr(res_null,'y_peaks')
-        # assert hasattr(res_null,'h_peaks')
-        # assert hasattr(res_null,'sig')
-        # assert hasattr(res_null,'p_contour')
-        # assert hasattr(res_null,'num_peaks')
-    
         x = np.array(x_peaks)
         x.sort()
         x_cents = cents[:,1].copy()
