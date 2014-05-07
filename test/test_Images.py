@@ -48,7 +48,6 @@ class TestImages(object):
         self.images1 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)
 
-        #KEY WORK RAN_SUB NOT YET IMPLIMENTED!!!!
         self.images2 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=2,recent=False)
         
@@ -65,27 +64,13 @@ class TestImages(object):
         self.images6 = PynPoint.images.create_whdf5input(hdf5file,
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)
         
-        
-        #self.images5 = PynPoint.images(self.files_fits_sorted,intype='files',cent_remove=False,resize=False,ran_sub=False,recent=False)
-
-        # self.basis = PynPoint.basis.create_restore(self.basis_file)
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=True,resize=False,ran_sub=None,recent=False)
                                 
         self.imagesfits = PynPoint.images.create_wfitsfiles(self.files_fits,
                                 cent_remove=True,resize=False,ran_sub=None,recent=False)
-        
-        
-        #self.basis_hdf = PynPoint.basis(self.file_hdf,intype='HDF5')
-        
-        pass
 
     def test_overall_images3(self):
-        print('-----')
-        print(self.files_fits_sorted)
-        print('-----')
-        print(self.images3.files)
-        print('-----')
         assert np.array_equal(self.images3.files , self.files_fits_sorted)
         assert self.images3.num_files == len(self.images3.files) 
         assert np.array_equal(self.images3.im_size, (146,146))
@@ -100,11 +85,8 @@ class TestImages(object):
         assert self.images3.cent_mask.min() == 0.0 
         assert self.images3.cent_mask.max() == 1.0
         assert self.images3.cent_mask.var() == 0.22491619287271775 
-        # assert self.images3.im_ave.shape == (146,146)
-        # assert self.images3.im_ave.min() == -2.4491993372066645e-05 
-        # assert self.images3.im_ave.max() == 0.00013430662147584371
-        # assert self.images3.im_ave.var() == 2.1823141818009155e-10
-        assert np.array_equal(self.images3.im_arr_mask.shape , (4,146,146)) 
+
+        assert np.array_equal(self.images3.im_arr_mask.shape , (4,146,146))
         assert np.allclose(self.images3.im_arr_mask.min() , -6.9235109549481422e-05,rtol=limit1)
         assert np.allclose(self.images3.im_arr_mask.max() , 0.0044742124155163765,rtol=limit1)
         assert np.allclose(self.images3.im_arr_mask.var() , 4.604643923044455e-08 ,rtol=limit1)
@@ -113,8 +95,8 @@ class TestImages(object):
     def test_overall_images1(self):
         images = self.images1
         images_base = self.images3
-        #general comparisons with the baseline base instance
-        assert np.array_equal(images.files, images_base.files) 
+
+        assert np.array_equal(images.files, images_base.files)
         assert images.num_files == images_base.num_files
         assert np.array_equal(images.im_size, images_base.im_size)
         assert images.im_arr.shape == images_base.im_arr.shape
@@ -136,15 +118,14 @@ class TestImages(object):
         assert np.array_equal(images.im_norm , images_base.im_norm)
         assert np.array_equal(images.im_arr , images_base.im_arr)#,atol=limit0)
         assert np.array_equal(images.cent_mask,images_base.cent_mask)
-        #assert np.array_equal(images.im_ave,images_base.im_ave)#,atol=limit1)
-        
+
+
     def test_images_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_images_hdf5.h5'))
         
         self.images3.save(temp_file)
-        #temp_images = PynPoint.images()#'',intype='empty')
-        #temp_images.restore(temp_file)
-        temp_images = PynPoint.images.create_restore(temp_file)        
+
+        temp_images = PynPoint.images.create_restore(temp_file)
         self.func4test_overall_same(self.images3,temp_images)
     
 
