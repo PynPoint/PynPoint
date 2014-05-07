@@ -141,7 +141,6 @@ class residuals(base_pynpoint):
         """
         
         if not (hasattr(self, 'psf_im_arr') and (self.num_coeff == num_coeff)):
-            # self.mk_psfmodel(self,num_coeff)
             self.mk_psfmodel(num_coeff)
             self.num_coeff = num_coeff
         return self.psf_im_arr
@@ -153,13 +152,11 @@ class residuals(base_pynpoint):
         psf_im = self._psf_im(num_coeff)
         for i in range(0,len(res_arr[:,0,0])):
             res_arr[i,] -= (psf_im[i,] * self.cent_mask)
-            # print('HIHI')
         self._res_arr = res_arr
     
     def _mk_res_rot(self,num_coeff,extra_rot = 0.0):
         print('AA7:')
         print(extra_rot)
-        # assert 1==2
         delta_para = self.para[0] - self.para
         res_rot = np.zeros(shape=self.im_arr.shape)
         res_arr = self.res_arr(num_coeff)

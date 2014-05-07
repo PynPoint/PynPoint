@@ -33,7 +33,6 @@ from PynPoint.Residuals import residuals
 from PynPoint._Ctx import Ctx
 from PynPoint import _Util
 
-
 class workflow():
     """
     A simple workflow engine for managing PynPoint runs. This engine takes in a configuration 
@@ -84,8 +83,7 @@ class workflow():
         obj = workflow()
         obj._ctx = Ctx.restore(dirin+'/ctx_info/')
         return obj
-        
-        
+
     def _save(self):#,dirout):
         """
         save
@@ -101,8 +99,7 @@ class workflow():
         self.config.write(fileconfig)
         fileconfig.close()
         return dirout
-        
-        
+
     def get(self,name):
         """
         Used to extract instances of images, basis or residuals from the workflow instance
@@ -119,8 +116,7 @@ class workflow():
         """
         
         return self._ctx.entries()
-           
-    
+
     def _init_config(self,config_in):
         #TODO: change to isinstance!
         if (type(config_in) == types.InstanceType):
@@ -137,17 +133,13 @@ class workflow():
         #sort the list of modules according to the digit at the end of the section name
         moduleList = [s for s in self.config.sections() if self.module_string in s]
         self.modules = map(itemgetter(1), sorted([(int(re.search('\d+', e).group(0)),e) for e in moduleList ], key=itemgetter(0)))
-        
 
     def _setup_workspace(self,force_replace=False):
         dirname = self.config.get('workspace','workdir')
         if force_replace==True and os.path.exists(dirname):
             print('Warning: The directory %s already existed. It has been deleted and replaced!' %dirname)
             shutil.rmtree(dirname)
-            
-            
-        # print(dirname)
-        #assert 2==1
+
         os.mkdir(dirname)
         fileconfig = open(dirname+'/wf.config','w')
         self.config.write(fileconfig)
@@ -161,9 +153,7 @@ class workflow():
         
     def _tidyup(self):
         dirname = self.config.get('workspace','workdir')
-        # if force_replace=True and os.path.exists(dirname):
-        #     shutil.rmtree(dirname)
-            
+
         filebookkeep = open(dirname+'/book_keeping.txt','a')
         filebookkeep.write('\n')
         filebookkeep.write('Calculations completed successfully.\n')
@@ -173,7 +163,6 @@ class workflow():
         filebookkeep.write('#-Time-#: %10.20f' %time.time())        
         filebookkeep.write('\n')
         filebookkeep.close()
-
 
     def _timestamp(self,extra_text=None):
         dirname = self.config.get('workspace','workdir')
@@ -186,7 +175,6 @@ class workflow():
         filebookkeep.write('#-Time-#: %10.20f' %time.time())        
         filebookkeep.write('\n')
         filebookkeep.close()
-        
 
     def _runmods(self):
         self._ctx = Ctx()
@@ -207,21 +195,12 @@ class workflow():
             result_names.append(name)
             self._ctx.add(name,run_temp)  
             self._timestamp('Finished '+name)
-            
-    
-    def _run_images_mod(self,section_id):
 
+    def _run_images_mod(self,section_id):
 
         input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
         kwargs = self._get_keyword_options(section_id)
-        print('AA3:')
-        print(self.config.get('options1','ran_sub'))
-        print(kwargs['ran_sub'])
-        print('-AA3:')
 
-
-        
-        
         if self.config.get(section_id,'intype') == 'dir':
             images_run = images.create_wdir(input_data,**kwargs)
 
@@ -236,9 +215,7 @@ class workflow():
         else:
             assert 1==2,'Error: workflow supported input types are dir, hdffile, restore'
         return images_run                    
-            
-        
-        
+
     def _run_basis_mod(self,section_id):
         input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
         kwargs = self._get_keyword_options(section_id)
@@ -260,7 +237,7 @@ class workflow():
         
 
     def _run_residuals_mod(self,section_id,ctx):
-        # input_data = self.config.get('workspace','datadir')+self.config.get(section_id,'input')
+
         images_in = self.config.get(section_id,'images_input')
         basis_in = self.config.get(section_id,'basis_input')
         
@@ -280,68 +257,42 @@ class workflow():
             kwargs = self.config._sections[options_section]
         if '__name__' in kwargs:
             del kwargs['__name__']
-        print('AA4:')
-        print(self.config.get('options1','ran_sub'))
-        print(kwargs['ran_sub'])
 
         if not kwargs is None:
             kwargs = self._check_kwargs(**kwargs)
 
-        print('AA4:')
-        print(self.config.get('options1','ran_sub'))
-        print(kwargs['ran_sub'])
-
         return kwargs
 
-        
     def _check_kwargs(self,**kwargs):
 
         if 'recent' in kwargs.keys():
             kwargs['recent'] = _Util.str2bool(kwargs['recent'])
-            
-            
+
         if 'resize' in kwargs.keys():
-        # if hasattr(kwargs, 'resize'):
             kwargs['resize'] = _Util.str2bool(kwargs['resize'])
         
         if 'cent_remove' in kwargs.keys():
-        # if hasattr(kwargs, 'cent_remove'):
             kwargs['cent_remove'] = _Util.str2bool(kwargs['cent_remove'])
         
         if 'ran_sub' in kwargs.keys():
-            print('AA5:')
-            print(kwargs['ran_sub'])
-        # if hasattr(kwargs, 'ran_sub'):
             kwargs['ran_sub'] = _Util.str2bool(kwargs['ran_sub'])
-            print('AA6:')
-            print(kwargs['ran_sub'])
 
         if 'para_sort' in kwargs.keys():
-        # if hasattr(kwargs, 'para_sort'):
             kwargs['para_sort'] = _Util.str2bool(kwargs['para_sort'])
-    
-        # if 'inner_pix' in kwargs.keys():
-        # # if hasattr(kwargs, 'inner_pix'):
-        #     kwargs['inner_pix'] = _Util.str2bool(kwargs['inner_pix'])
 
         if 'F_int' in kwargs.keys():
-        # if hasattr(kwargs, 'F_int'):
             kwargs['F_int'] = float(kwargs['F_int'])
     
         if 'F_final' in kwargs.keys():
-        # if hasattr(kwargs, 'F_final'):
             kwargs['F_final'] = float(kwargs['F_final'])
     
         if 'cent_size' in kwargs.keys():
-        # if hasattr(kwargs, 'cent_size'):
             kwargs['cent_size'] = float(kwargs['cent_size'])
     
         if 'edge_size' in kwargs.keys():
-        # if hasattr(kwargs, 'edge_size'):
             kwargs['edge_size'] = float(kwargs['edge_size'])
 
         if 'stackave' in kwargs.keys():
-        # if hasattr(kwargs, 'edge_size'):
             kwargs['stackave'] = int(kwargs['stackave'])
 
         return kwargs
