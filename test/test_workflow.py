@@ -134,9 +134,7 @@ class TestWorkflow(object):
         self.wf2._setup_workspace()
         self.wf2._runmods()
 
-
-    #TODO: rename to something meaningful!
-    def test_overall(self):
+    def test_fullruns(self):
         ws = PynPoint.workflow.run(self.configfile)
         ws2 = PynPoint.restore(ws.dirname)
         ws3 = PynPoint.workflow.run(self.configfile2)
@@ -156,8 +154,6 @@ class TestWorkflow(object):
         assert np.allclose(res1.res_rot_mean(1).mean() ,  -1.9073045985046198e-10)
         assert res1.res_rot_mean(1).mean() == res2.res_rot_mean(1).mean()
         assert res1.res_rot_mean(1).mean() == res3.res_rot_mean(1).mean()
-
-
 
     def test_modules_from_config(self):
         modulesCount = 10
@@ -197,10 +193,10 @@ class TestWorkflow(object):
         if os.path.exists(dirname2):
             shutil.rmtree(dirname2)
             
-        # if os.path.isfile(self.configfile):
-        #     os.remove(self.configfile)
-        # if os.path.isfile(self.configfile2):
-        #     os.remove(self.configfile2)
+        if os.path.isfile(self.configfile):
+            os.remove(self.configfile)
+        if os.path.isfile(self.configfile2):
+            os.remove(self.configfile2)
              
                 
         print("tearing down " + __name__)
