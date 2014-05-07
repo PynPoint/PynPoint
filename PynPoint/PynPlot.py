@@ -25,7 +25,6 @@ import numpy as np
 import pyfits
 import time
 
-#TODO add pyfits to the requirements
 pl.ion()
 
 """
@@ -192,8 +191,7 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     """
     # TODO: renormalise to be close to ADU units
     # TODO: include pixel scale
-    # TODO: include north-east arrows
-     
+
     assert res.obj_type =='PynPoint_residuals','Error: This method is for an instance of the residual class'
     
     options = ['mean','mean_clip','median','var','sigma','mean_sigmamean']#,'psf']
