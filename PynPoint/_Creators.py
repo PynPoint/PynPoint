@@ -58,13 +58,12 @@ def pynpoint_create_wdir(obj,dir_in,force_reload=False,prep_data=True,**kwargs):
     print(kwargs.keys())
     print(kwargs['ran_sub'])
 
-#     print(file_hdf5)
-    # assert os.path.isfile(file_hdf5), 'Error: No fits files found in the directory: %s, %s' %dir_in %file_hdf5
+
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
         _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5,random_sample_size=random_sample)
-    # obj = pynpoint_parent.create_whdf5input(file_hdf5,ran_sub=False,**kwargs)
+
     pynpoint_create_whdf5input(obj,file_hdf5,**kwargs)
-    #return obj
+
 
 def pynpoint_create_whdf5input(obj,file_in,prep_data=True,**kwargs):
     """
@@ -77,9 +76,9 @@ def pynpoint_create_whdf5input(obj,file_in,prep_data=True,**kwargs):
     :param ran_sub: if a number (N) is passed then a random subset of filessize is selected 
     
     """
-    #pynpoint_parent.__init__(obj)
-    #obj = pynpoint_parent()
-    assert (os.path.isfile(file_in)), 'Error: Input file does not exist - input requested: %s'%file_in  
+
+
+    assert (os.path.isfile(file_in)), 'Error: Input file does not exist - input requested: %s'%file_in
     if 'stackave' in kwargs:
         stackave = kwargs['stackave']
     else:
@@ -92,14 +91,13 @@ def pynpoint_create_whdf5input(obj,file_in,prep_data=True,**kwargs):
             _Util.mkstacked(file_in,filename_stck,stackave)
         file_in = filename_stck
     
-    # if not os.isfile()
+
     _Util.restore_data(obj,file_in,checktype='raw_data')
     obj.obj_type = obj_type #'PynPoint_images' # restate since this is replaced in the restore_data
-    #use the ran_subset keyword
+
     if prep_data is True:
         _Util.prep_data(obj,**kwargs)                    
 
-    #return obj
 
 def pynpoint_create_wfitsfiles(obj,files,ran_sub=None,prep_data=True,**kwargs):
     """
@@ -111,7 +109,6 @@ def pynpoint_create_wfitsfiles(obj,files,ran_sub=None,prep_data=True,**kwargs):
     :param ran_sub: if a number (N) is passed then a random subset of filessize is selected 
     
     """
-    #obj = pynpoint_parent()
     num_files = np.size(files)            # number of files
     assert (num_files >0),'Error: No files inputs, e.g.: %s' %files[0]
     assert os.path.isfile(files[0]),'Error: No files inputs, e.g.: %s' %files[0]

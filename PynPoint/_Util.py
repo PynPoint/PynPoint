@@ -434,9 +434,6 @@ def conv_dirfits2hdf5(dir_in,outputfile = None,random_sample_size = None):#,stac
     obj = dummyclass()
     files = file_list(dir_in,ran_sub=random_sample_size)
 
-    print('!!!! AAA !!!!!')
-    print(random_sample_size)
-
     if not random_sample_size in [None,False]:
         temp = filename4mdir(dir_in,filetype='random_sub')
         if outputfile is None:
@@ -453,17 +450,13 @@ def conv_dirfits2hdf5(dir_in,outputfile = None,random_sample_size = None):#,stac
         filehdf5 = filename4mdir(dir_in)
     else:
         filehdf5 = outputfile
-        
-    # if not stackave is None:
-    #     obj = stackave_func(obj,stackave)
-            
+
     save_data(obj,filehdf5)
 
 def mkstacked(file_in,file_stck,stackave):
     """
     Averages over adjacent images. This has the effect of reducing the size of the stack. 
     """
-    # assert stackave ###
     obj = dummyclass()
 
     restore_data(obj,file_in,checktype='raw_data')
@@ -479,13 +472,6 @@ def mkstacked(file_in,file_stck,stackave):
     obj.num_files = num_new
     
     save_data(obj,file_stck)
-    ### HACK:
-    # filebookkeep = open('temp_HACK.temp','w')
-    # filebookkeep.write('#-Time-#: %10.20f' %time.time()) 
-    # print('#-Time-#: %10.20f' %time.time()) 
-    # filebookkeep.close()
-    
-    
 
 def file_list(dir_in,ran_sub=None):
     """
