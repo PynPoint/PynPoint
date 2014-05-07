@@ -31,13 +31,11 @@ def mk_cent_remove(im_arr,cent_size=0.2,edge_size=1.0):
     """This function has been written to mask out the central region (and the corners)"""
     # WOULD BE NICE TO INCLUDE AN OPTION FOR EITHER TOP-HAT CIRCLE OR GAUSSIAN
     im_size = im_arr[0,].shape
-#         print(im_size)
+
     mask_c = mk_circle(im_size[0],im_size[1],im_size[0]/2.,im_size[1]/2.,cent_size*im_size[0])
     mask_outside = mk_circle(im_size[0],im_size[1],im_size[0]/2.,im_size[1]/2.,0.5*im_size[0])
-    #mask_c = self.mask(im_size[0],im_size[1],fsize=cent_size,fxcent=0.5,fycent=0.5)
-    # NEED TO DECIDE IF I WANT TO KEEP THE CORNERS:
-    #mask_outside = self.mask(im_size[0],im_size[1],fsize=edge_size,fxcent=0.5,fycent=0.5)
-    
+
+
     cent_mask = mask_c * (1.0 - mask_outside)
     res_cent_mask = (1.0 - cent_mask)
     im_arr_imask = im_arr * res_cent_mask
