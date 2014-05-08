@@ -155,8 +155,7 @@ class residuals(base_pynpoint):
         self._res_arr = res_arr
     
     def _mk_res_rot(self,num_coeff,extra_rot = 0.0):
-        print('AA7:')
-        print(extra_rot)
+
         delta_para = self.para[0] - self.para
         res_rot = np.zeros(shape=self.im_arr.shape)
         res_arr = self.res_arr(num_coeff)
