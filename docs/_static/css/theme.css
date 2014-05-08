@@ -81,7 +81,7 @@ q:before, q:after {
 small {
     font-size: 85%}
 sub, sup {
-    font-size: 75%;
+    font-size: 80%;
     line-height: 0;
     position: relative;
     vertical-align: baseline;
@@ -1082,7 +1082,7 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     border-color: #bf6516;
 }
 .wy-alert.wy-alert-info, .rst-content .note, .rst-content .wy-alert-info.attention, .rst-content .wy-alert-info.caution, .rst-content .wy-alert-info.danger, .rst-content .wy-alert-info.error, .rst-content .hint, .rst-content .important, .rst-content .tip, .rst-content .wy-alert-info.warning {
-    background: #2980b9;
+    background: #0056CF;
     color: #fff;
     border-color: #20638f;
 }
@@ -1092,14 +1092,14 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     border-color: #1e8449;
 }
 .wy-alert.wy-alert-neutral, .rst-content .wy-alert-neutral.note, .rst-content .wy-alert-neutral.attention, .rst-content .wy-alert-neutral.caution, .rst-content .wy-alert-neutral.danger, .rst-content .wy-alert-neutral.error, .rst-content .wy-alert-neutral.hint, .rst-content .wy-alert-neutral.important, .rst-content .wy-alert-neutral.tip, .rst-content .wy-alert-neutral.warning {
-    background: #f3f6f6;
+    background: #f3f3f3;
     border-color: #e1e4e5;
 }
 .wy-alert.wy-alert-neutral strong, .rst-content .wy-alert-neutral.note strong, .rst-content .wy-alert-neutral.attention strong, .rst-content .wy-alert-neutral.caution strong, .rst-content .wy-alert-neutral.danger strong, .rst-content .wy-alert-neutral.error strong, .rst-content .wy-alert-neutral.hint strong, .rst-content .wy-alert-neutral.important strong, .rst-content .wy-alert-neutral.tip strong, .rst-content .wy-alert-neutral.warning strong {
     color: #404040;
 }
 .wy-alert.wy-alert-neutral a, .rst-content .wy-alert-neutral.note a, .rst-content .wy-alert-neutral.attention a, .rst-content .wy-alert-neutral.caution a, .rst-content .wy-alert-neutral.danger a, .rst-content .wy-alert-neutral.error a, .rst-content .wy-alert-neutral.hint a, .rst-content .wy-alert-neutral.important a, .rst-content .wy-alert-neutral.tip a, .rst-content .wy-alert-neutral.warning a {
-    color: #2980b9;
+    color: #0056CF;
 }
 .wy-tray-container {
     position: fixed;
@@ -1127,7 +1127,7 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     background: #27ae60;
 }
 .wy-tray-container li.wy-tray-item-info {
-    background: #2980b9;
+    background: #0056CF;
 }
 .wy-tray-container li.wy-tray-item-warning {
     background: #e67e22;
@@ -1152,8 +1152,8 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     font-size: 100%;
     padding: 6px 12px;
     color: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-bottom: solid 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #c7c7c7;
+    border-bottom: solid 3px #c7c7c7;
     background-color: #27ae60;
     text-decoration: none;
     font-weight: 500;
@@ -1210,16 +1210,16 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     border: 0;
 }
 .btn-small {
-    font-size: 80%}
+    font-size: 85%}
 .btn-info {
-    background-color: #2980b9 !important;
+    background-color: #0056CF !important;
 }
 .btn-info:hover {
     background-color: #2e8ece !important;
 }
 .btn-neutral {
-    background-color: #2980b9 !important;
-    color: #fcfcfc !important;
+    background-color: #f3f3f3 !important;
+    color: #404040 !important;
 }
 .btn-neutral:hover {
     background-color: #e5ebeb !important;
@@ -1245,7 +1245,7 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
 }
 .btn-link {
     background-color: transparent !important;
-    color: #2980b9;
+    color: #0056CF;
     border-color: transparent;
 }
 .btn-link:hover {
@@ -1290,7 +1290,7 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     display: none;
     float: left;
     min-width: 100%;
-    background: #fcfcfc;
+    background: #ffffff;
     z-index: 100;
     border: solid 1px #cfd7dd;
     box-shadow: 0 5px 5px 0 rgba(0, 0, 0, 0.1);
@@ -1301,11 +1301,11 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     clear: both;
     color: #404040;
     white-space: nowrap;
-    font-size: 90%;
+    font-size: 95%;
     padding: 0 12px;
 }
 .wy-dropdown-menu>dd>a:hover {
-    background: #2980b9;
+    background: #0056CF;
     color: #fff;
 }
 .wy-dropdown-menu>dd.divider {
@@ -1321,7 +1321,7 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     background: #e3e3e3;
     text-transform: uppercase;
     font-weight: 500;
-    font-size: 80%}
+    font-size: 85%}
 .wy-dropdown-menu>dd.call-to-action:hover {
     background: #e3e3e3;
 }
@@ -1329,14 +1329,14 @@ ul.icons li .icon-large:before, ul.icons li .icon-large:before {
     color: #fff;
 }
 .wy-dropdown.wy-dropdown-bubble .wy-dropdown-menu {
-    background: #fcfcfc;
+    background: #ffffff;
     margin-top: 2px;
 }
 .wy-dropdown.wy-dropdown-bubble .wy-dropdown-menu a {
     padding: 6px 12px;
 }
 .wy-dropdown.wy-dropdown-bubble .wy-dropdown-menu a:hover {
-    background: #2980b9;
+    background: #0056CF;
     color: #fff;
 }
 .wy-dropdown.wy-dropdown-left .wy-dropdown-menu {
@@ -1401,7 +1401,7 @@ label {
     display: block;
     margin: 0 0 0.3125em 0;
     color: #999;
-    font-size: 90%}
+    font-size: 95%}
 button, input, select, textarea {
     font-size: 100%;
     margin: 0;
@@ -1433,8 +1433,8 @@ input[type="text"], input[type="password"], input[type="email"], input[type="url
     padding: 6px;
     display: inline-block;
     border: 1px solid #ccc;
-    font-size: 80%;
-    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 85%;
+    font-family: "Helvetica Neue","Lato", "proxima-nova",  Arial, sans-serif;
     box-shadow: inset 0 1px 3px #ddd;
     border-radius: 0;
     -webkit-transition: border 0.3s linear;
@@ -1467,7 +1467,7 @@ input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webki
 input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, input[type="url"]:focus, input[type="date"]:focus, input[type="month"]:focus, input[type="time"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="week"]:focus, input[type="number"]:focus, input[type="search"]:focus, input[type="tel"]:focus, input[type="color"]:focus {
     outline: 0;
     outline: thin dotted \9;
-    border-color: #2980b9;
+    border-color: #0056CF;
 }
 input.no-focus:focus {
     border-color: #ccc !important;
@@ -1478,7 +1478,7 @@ input[type="file"]:focus, input[type="radio"]:focus, input[type="checkbox"]:focu
 }
 input[type="text"][disabled], input[type="password"][disabled], input[type="email"][disabled], input[type="url"][disabled], input[type="date"][disabled], input[type="month"][disabled], input[type="time"][disabled], input[type="datetime"][disabled], input[type="datetime-local"][disabled], input[type="week"][disabled], input[type="number"][disabled], input[type="search"][disabled], input[type="tel"][disabled], input[type="color"][disabled] {
     cursor: not-allowed;
-    background-color: #f3f6f6;
+    background-color: #f3f3f3;
     color: #cad2d3;
 }
 input:focus:invalid, textarea:focus:invalid, select:focus:invalid {
@@ -1541,8 +1541,8 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 .wy-input-prefix .wy-input-context, .wy-input-suffix .wy-input-context {
     padding: 6px;
     display: inline-block;
-    font-size: 80%;
-    background-color: #f3f6f6;
+    font-size: 85%;
+    background-color: #f3f3f3;
     border: solid 1px #ccc;
     color: #999;
 }
@@ -1558,7 +1558,7 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 .wy-inline-validate .wy-input-context {
     padding: 0.5em 0.625em;
     display: inline-block;
-    font-size: 80%}
+    font-size: 85%}
 .wy-inline-validate.wy-inline-validate-success .wy-input-context {
     color: #27ae60;
 }
@@ -1569,7 +1569,7 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
     color: #e67e22;
 }
 .wy-inline-validate.wy-inline-validate-info .wy-input-context {
-    color: #2980b9;
+    color: #0056CF;
 }
 .wy-control-group {
     margin-bottom: 24px;
@@ -1597,7 +1597,7 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
     padding-left: 0.3em;
     color: #666;
     vertical-align: middle;
-    font-size: 90%}
+    font-size: 95%}
 .wy-form-message {
     display: block;
     color: #ccc;
@@ -1609,8 +1609,8 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
     padding: 4px 4px 0px 4px;
     display: inline-block;
     border: 1px solid #ccc;
-    font-size: 80%;
-    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 85%;
+    font-family: "Helvetica Neue","Lato", "proxima-nova",  Arial, sans-serif;
     box-shadow: inset 0 1px 3px #ddd;
     -webkit-transition: border 0.3s linear;
     -moz-transition: border 0.3s linear;
@@ -1683,7 +1683,7 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
     color: #27ae60;
 }
 .wy-form-upload p {
-    font-size: 90%}
+    font-size: 95%}
 .wy-form-upload .wy-form-upload-image {
     float: left;
     margin-right: 24px;
@@ -1902,7 +1902,7 @@ li.wy-form-gallery-edit .arrow {
 }
 .wy-form .wy-help-inline, .wy-form-message-inline, .wy-form-message {
     display: block;
-    font-size: 80%;
+    font-size: 85%;
     padding: 0.2em 0 0.8em;
 }
 }@media screen and (max-width: 768px) {
@@ -1940,7 +1940,7 @@ li.wy-form-gallery-edit .arrow {
     float: left;
     margin-right: 2.35765%;
     width: 100%;
-    background: #fcfcfc;
+    background: #ffffff;
     padding: 1.618em;
     margin-right: 0;
 }
@@ -1954,7 +1954,7 @@ li.wy-form-gallery-edit .arrow {
     margin-right: auto;
     max-width: 460px;
     margin-top: 1.618em;
-    background: #fcfcfc;
+    background: #ffffff;
     padding: 1.618em;
 }
 .wy-grid-index-card:before, .wy-grid-index-card:after {
@@ -2032,7 +2032,7 @@ li.wy-form-gallery-edit .arrow {
     text-align: center;
 }
 .wy-table td, .rst-content table.docutils td, .rst-content table.field-list td, .wy-table th, .rst-content table.docutils th, .rst-content table.field-list th {
-    font-size: 90%;
+    font-size: 95%;
     margin: 0;
     overflow: visible;
     padding: 8px 16px;
@@ -2066,16 +2066,16 @@ li.wy-form-gallery-edit .arrow {
     margin: 0;
 }
 .wy-table-secondary {
-    color: gray;
-    font-size: 90%}
+    color: 9D9D9D;
+    font-size: 95%}
 .wy-table-tertiary {
-    color: gray;
-    font-size: 80%}
+    color: 9D9D9D;
+    font-size: 85%}
 .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td, .rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td {
-    background-color: #f3f6f6;
+    background-color: #f3f3f3;
 }
 .wy-table-backed {
-    background-color: #f3f6f6;
+    background-color: #f3f3f3;
 }
 .wy-table-bordered-all, .rst-content table.docutils {
     border: 1px solid #e1e4e5;
@@ -2122,18 +2122,20 @@ html {
     overflow-x: hidden;
 }
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-family:  "Helvetica Neue","Lato", "proxima-nova", Arial, sans-serif;
     font-weight: normal;
-    color: #000000;
+    color: #1A1A1E;
     min-height: 100%;
     overflow-x: hidden;
     background: #edf0f2;
 }
 a {
-    color: #000000;
+	text-decoration:none;
+    color: #0056CF;
 }
 a:hover {
-    color: #000000;
+    color: #d14;
+	
 }
 .link-danger {
     color: #e74c3c;
@@ -2150,9 +2152,12 @@ a:hover {
 .text-right {
     text-align: right;
 }
-h1,h2 {
+
+h1, h2 {
     border-bottom: 1px solid #ccc;
 }
+
+
 h1, h2, h3, h4, h5, h6, legend {
     margin-top: 0;
     font-weight: 300;
@@ -2165,10 +2170,10 @@ p {
     margin-bottom: 24px;
 }
 h1 {
-    font-size: 175%}
+    font-size: 175%;
+    color: #0056CF}
 h2 {
-    font-size: 150%;
-    color: #2980B9;}
+    font-size: 150%}
 h3 {
     font-size: 125%}
 h4 {
@@ -2178,20 +2183,20 @@ h5 {
 h6 {
     font-size: 100%}
 small {
-    font-size: 80%}
+    font-size: 85%}
 code, .rst-content tt {
     white-space: nowrap;
     max-width: 100%;
     background: #fff;
     border: solid 1px #e1e4e5;
-    font-size: 75%;
+    font-size: 80%;
     padding: 0 5px;
     font-family: "Incosolata", "Consolata", "Monaco", monospace;
     color: #e74c3c;
     overflow-x: auto;
 }
 code.code-large, .rst-content tt.code-large {
-    font-size: 90%}
+    font-size: 95%}
 .full-width {
     width: 100%}
 .wy-plain-list-disc, .rst-content .section ul, .rst-content .toctree-wrapper ul {
@@ -2200,7 +2205,6 @@ code.code-large, .rst-content tt.code-large {
     margin-bottom: 24px;
 }
 .wy-plain-list-disc li, .rst-content .section ul li, .rst-content .toctree-wrapper ul li {
-    padding: 0 5px 0 5px;
     list-style: disc;
     margin-left: 24px;
 }
@@ -2238,7 +2242,7 @@ a.wy-text-warning:hover {
     color: #eb9950 !important;
 }
 .wy-text-info {
-    color: #2980b9 !important;
+    color: #0056CF !important;
 }
 a.wy-text-info:hover {
     color: #409ad5 !important;
@@ -2262,7 +2266,7 @@ a.wy-text-neutral:hover {
     color: #595959 !important;
 }
 .codeblock-example {
-    border: 1px solid #e1e4e5;
+    border: 1px solid #c7c7c7;
     border-bottom: none;
     padding: 24px;
     padding-top: 48px;
@@ -2280,19 +2284,19 @@ a.wy-text-neutral:hover {
     padding: 6px 12px;
 }
 .codeblock-example.prettyprint-example-only {
-    border: 1px solid #e1e4e5;
+    border: 1px solid #c7c7c7;
     margin-bottom: 24px;
 }
 .codeblock, div[class^='highlight'] {
-    border: 1px solid #aaa;
+    border: 1px solid #c7c7c7;
     padding: 0px;
     overflow-x: auto;
-    background: #f4f4f4;
+    background: #fff;
     margin: 1px 0 24px 0;
 }
 .codeblock div[class^='highlight'], div[class^='highlight'] div[class^='highlight'] {
-    border: none;
-    background: none;
+    border: #c7c7c7;
+    background: #f3f3f3;
     margin: 0;
 }
 .linenodiv pre {
@@ -2300,7 +2304,7 @@ a.wy-text-neutral:hover {
     margin: 0;
     padding: 12px 12px;
     font-family: "Incosolata", "Consolata", "Monaco", monospace;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.5;
     color: #d9d9d9;
 }
@@ -2309,7 +2313,7 @@ div[class^='highlight'] pre {
     margin: 0;
     padding: 12px 12px;
     font-family: "Incosolata", "Consolata", "Monaco", monospace;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.5;
     display: block;
     overflow: auto;
@@ -2328,7 +2332,7 @@ pre.literal-block {
     padding: 1.5px 5px;
 }
 .c {
-    color: #998;
+    color: #8EB209;
     font-style: italic;
 }
 .err {
@@ -2530,9 +2534,6 @@ pre.literal-block {
     color: #999;
     background-color: #eaf2f5;
 }
-.wy-breadcrumbs {
-    height: 41px;
-}
 .wy-breadcrumbs li {
     display: inline-block;
 }
@@ -2549,7 +2550,7 @@ pre.literal-block {
 .wy-breadcrumbs-extra {
     margin-bottom: 0;
     color: #b3b3b3;
-    font-size: 80%;
+    font-size: 85%;
     display: inline-block;
 }
 @media screen and (max-width: 480px) {
@@ -2601,12 +2602,12 @@ pre.literal-block {
     height: 32px;
     display: inline-block;
     line-height: 32px;
-    padding: 1.618em;
+    padding: 0 1.618em;
     display: block;
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 80%;
-    color: #2980b9;
+    font-size: 85%;
+    color: #0056CF;
     white-space: nowrap;
 }
 .wy-menu-vertical ul {
@@ -2618,34 +2619,33 @@ pre.literal-block {
 .wy-menu-vertical li.divide-bottom {
     border-bottom: solid 1px #404040;
 }
-.wy-menu-vertical li.current>a:before {
-    content: '▾';
-    padding-right: 0.809em;
+.wy-menu-vertical li.current {
+    background: #E0E0E0;
 }
-.wy-menu-vertical li.current>a {
-    color: #2980b9;
+.wy-menu-vertical li.current a {
+    color: #1A1A1E;
+    border-right: solid 1px #c9c9c9;
+    padding: 0.4045em 2.427em;
+}
+.wy-menu-vertical li.current a:hover {
+    background: #d6d6d6;
 }
 .wy-menu-vertical li.on a, .wy-menu-vertical li.current>a {
+    color: #0056CF;
+    padding: 0.4045em 1.618em;
+    font-weight: 500;
     position: relative;
+    background: #ffffff;
     border: none;
+    border-bottom: solid 1px #c9c9c9;
+    border-top: solid 1px #c9c9c9;
+    padding-left: 1.618em -4px;
 }
 .wy-menu-vertical li.on a:hover, .wy-menu-vertical li.current>a:hover {
-    background: #fcfcfc;
+    background: #ffffff;
 }
-.wy-menu-vertical li.toctree-l1>a:before {
-    content: '▸';
-    padding-right: 0.4045em;
-}
-.wy-menu-vertical li.toctree-l1.current>a:before {
-    content: '▾';
-    padding-right: 0.4045em;
-    color: #2980b9;
-}
-.wy-menu-vertical li.toctree-l1 {
-    margin-top: 0.4045em;
-}
-.wy-menu-vertical li.toctree-l2 a {
-    padding-left: 3.2em;
+.wy-menu-vertical li.tocktree-l2.current>a {
+    background: #c9c9c9;
 }
 .wy-menu-vertical li.current ul {
     display: block;
@@ -2656,37 +2656,36 @@ pre.literal-block {
 }
 .wy-menu-vertical li ul li a {
     margin-bottom: 0;
+    color: #b3b3b3;
     font-weight: normal;
 }
 .wy-menu-vertical a {
     display: inline-block;
     line-height: 20px;
-    padding: 0.2022em 1.618em;
+    padding: 0.4045em 1.618em;
     display: block;
     position: relative;
-    color: #222;
-    text-decoration: none;    
+    font-size: 100%;
+    color: #1A1A1E;
+	border-bottom: dotted 1px #c7c7c7
 }
 .wy-menu-vertical a:hover {
-    background-color: #2980b9;
+    background-color: #dbdbdb;
     cursor: pointer;
 }
 .wy-menu-vertical a:active {
-    background-color: #2980b9;
+    background-color: #0056CF;
     cursor: pointer;
     color: #fff;
 }
-.wy-menu-vertical a:visited {
-    text-decoration: none;
-}
 .wy-side-nav-search {
     z-index: 200;
-    background-color: #2980b9;
+    background-color: #0056CF;
     text-align: center;
     padding: 0.809em;
     display: block;
-    color: #fcfcfc;
-    margin-bottom: 1.2em;
+    color: #ffffff;
+    margin-bottom: 0.809em;
 }
 .wy-side-nav-search input[type=text] {
     width: 100%;
@@ -2699,11 +2698,11 @@ pre.literal-block {
     margin: auto auto 0.809em auto;
     height: 45px;
     width: 45px;
-    background-color: #2980b9;
+    background-color: #0056CF;
     padding: 5px;
     border-radius: 100%}
 .wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a {
-    color: #fcfcfc;
+    color: #ffffff;
     font-size: 100%;
     font-weight: bold;
     display: inline-block;
@@ -2714,13 +2713,13 @@ pre.literal-block {
     background: rgba(255, 255, 255, 0.1);
 }
 .wy-nav .wy-menu-vertical header {
-    color: #2980b9;
+    color: #0056CF;
 }
 .wy-nav .wy-menu-vertical a {
     color: #b3b3b3;
 }
 .wy-nav .wy-menu-vertical a:hover {
-    background-color: #2980b9;
+    background-color: #0056CF;
     color: #fff;
 }
 [data-menu-wrap] {
@@ -2748,7 +2747,7 @@ pre.literal-block {
     opacity: 0;
 }
 .wy-body-for-nav {
-    background: left repeat-y #fcfcfc;
+    background: left repeat-y #f3f3f3;
     background-image: url(data:image/png;
     base64, iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxOERBMTRGRDBFMUUxMUUzODUwMkJCOThDMEVFNURFMCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxOERBMTRGRTBFMUUxMUUzODUwMkJCOThDMEVFNURFMCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjE4REExNEZCMEUxRTExRTM4NTAyQkI5OEMwRUU1REUwIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjE4REExNEZDMEUxRTExRTM4NTAyQkI5OEMwRUU1REUwIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+EwrlwAAAAA5JREFUeNpiMDU0BAgwAAE2AJgB9BnaAAAAAElFTkSuQmCC);
     background-size: 300px 1px;
@@ -2764,12 +2763,13 @@ pre.literal-block {
     width: 300px;
     overflow: hidden;
     min-height: 100%;
-    background: #FCFCFC;
+    background: #f3f3f3;
     z-index: 200;
+	
 }
 .wy-nav-top {
     display: none;
-    background: #2980b9;
+    background: #0056CF;
     color: #fff;
     padding: 0.4045em 0.809em;
     position: relative;
@@ -2792,7 +2792,7 @@ pre.literal-block {
     margin-right: 12px;
     height: 45px;
     width: 45px;
-    background-color: #2980b9;
+    background-color: #0056CF;
     padding: 5px;
     border-radius: 100%}
 .wy-nav-top i {
@@ -2802,8 +2802,9 @@ pre.literal-block {
 }
 .wy-nav-content-wrap {
     margin-left: 300px;
-    background: #fcfcfc;
-    min-height: 100%}
+    background: #ffffff;
+    min-height: 100%;
+	border-left: solid 1px #c9c9c9}
 .wy-nav-content {
     padding: 1.618em 3.236em;
     height: 100%;
@@ -2851,11 +2852,11 @@ footer p {
     display: inline-block;
 }
 #search-results .context {
-    color: gray;
-    font-size: 90%}
+    color: 9D9D9D;
+    font-size: 95%}
 @media screen and (max-width: 768px) {
     .wy-body-for-nav {
-    background: #fcfcfc;
+    background: #ffffff;
 }
 .wy-nav-top {
     display: block;
@@ -2885,7 +2886,7 @@ footer p {
     
 .wy-nav-content {
     margin: 0;
-    background: #fcfcfc;
+    background: #ffffff;
 }
 }@media print {
     .wy-nav-side {
@@ -2899,14 +2900,14 @@ footer p {
     bottom: 0;
     left: 0;
     width: 300px;
-    color: #fcfcfc;
+    color: #ffffff;
     background: #1f1d1d;
     border-top: solid 10px #343131;
-    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-family: "Helvetica Neue","Lato", "proxima-nova",  Arial, sans-serif;
     z-index: 400;
 }
 .rst-versions a {
-    color: #2980b9;
+    color: #0056CF;
     text-decoration: none;
 }
 .rst-versions .rst-badge-small {
@@ -2917,7 +2918,7 @@ footer p {
     background-color: #272525;
     display: block;
     text-align: right;
-    font-size: 90%;
+    font-size: 95%;
     cursor: pointer;
     color: #27ae60;
     *zoom: 1;
@@ -2929,7 +2930,7 @@ footer p {
     clear: both;
 }
 .rst-versions .rst-current-version .icon, .rst-versions .rst-current-version .wy-inline-validate.wy-inline-validate-success .wy-input-context, .wy-inline-validate.wy-inline-validate-success .rst-versions .rst-current-version .wy-input-context, .rst-versions .rst-current-version .wy-inline-validate.wy-inline-validate-danger .wy-input-context, .wy-inline-validate.wy-inline-validate-danger .rst-versions .rst-current-version .wy-input-context, .rst-versions .rst-current-version .wy-inline-validate.wy-inline-validate-warning .wy-input-context, .wy-inline-validate.wy-inline-validate-warning .rst-versions .rst-current-version .wy-input-context, .rst-versions .rst-current-version .wy-inline-validate.wy-inline-validate-info .wy-input-context, .wy-inline-validate.wy-inline-validate-info .rst-versions .rst-current-version .wy-input-context, .rst-versions .rst-current-version .wy-tag-input-group .wy-tag .wy-tag-remove, .wy-tag-input-group .wy-tag .rst-versions .rst-current-version .wy-tag-remove, .rst-versions .rst-current-version .rst-content .admonition-title, .rst-content .rst-versions .rst-current-version .admonition-title, .rst-versions .rst-current-version .rst-content h1 .headerlink, .rst-content h1 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h2 .headerlink, .rst-content h2 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h3 .headerlink, .rst-content h3 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h4 .headerlink, .rst-content h4 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h5 .headerlink, .rst-content h5 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h6 .headerlink, .rst-content h6 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content dl dt .headerlink, .rst-content dl dt .rst-versions .rst-current-version .headerlink {
-    color: #fcfcfc;
+    color: #ffffff;
 }
 .rst-versions .rst-current-version .icon-book {
     float: left;
@@ -2942,9 +2943,9 @@ footer p {
     display: block;
 }
 .rst-versions .rst-other-versions {
-    font-size: 90%;
+    font-size: 95%;
     padding: 12px;
-    color: gray;
+    color: 9D9D9D;
     display: none;
 }
 .rst-versions .rst-other-versions hr {
@@ -2962,7 +2963,7 @@ footer p {
 .rst-versions .rst-other-versions dd a {
     display: inline-block;
     padding: 6px;
-    color: #fcfcfc;
+    color: #ffffff;
 }
 .rst-versions.rst-badge {
     width: auto;
@@ -3011,7 +3012,7 @@ img {
 .rst-content a.reference.external:after {
     font-family: fontawesome-webfont;
     content: " \f08e ";
-    color: #b3b3b3;
+    color: #9D9D9D;
     vertical-align: super;
     font-size: 60%}
 .rst-content blockquote {
@@ -3082,11 +3083,11 @@ img {
     display: block;
     margin: 0 0 24px 24px;
     padding: 24px;
-    background: #f3f6f6;
+    background: #f3f3f3;
     border: solid 1px #e1e4e5;
 }
 .rst-content .sidebar p, .rst-content .sidebar ul, .rst-content .sidebar dl {
-    font-size: 90%}
+    font-size: 95%}
 .rst-content .sidebar .last {
     margin-bottom: 0;
 }
@@ -3107,7 +3108,7 @@ img {
 }
 .rst-content .footnote-reference, .rst-content .citation-reference {
     vertical-align: super;
-    font-size: 90%}
+    font-size: 95%}
 .rst-content table.docutils.citation, .rst-content table.docutils.footnote {
     background: none;
     border: none;
@@ -3165,16 +3166,16 @@ img {
 .rst-content dl:not(.docutils) dt {
     display: inline-block;
     margin: 6px 0;
-    font-size: 90%;
+    font-size: 95%;
     line-height: normal;
     background: #e7f2fa;
-    color: #2980b9;
-    border-top: solid 3px #2980B9;
+    color: #0056CF;
+    border-top: solid 3px #6ab0de;
     padding: 6px;
     position: relative;
 }
 .rst-content dl:not(.docutils) dt:before {
-    color: #2980B9;
+    color: #6ab0de;
 }
 .rst-content dl:not(.docutils) dt .headerlink {
     color: #404040;
@@ -3185,7 +3186,7 @@ img {
     border: none;
     border-left: solid 3px #ccc;
     background: #f0f0f0;
-    color: gray;
+    color: 9D9D9D;
 }
 .rst-content dl:not(.docutils) dl dt .headerlink {
     color: #404040;
@@ -3209,7 +3210,7 @@ img {
 .rst-content dl:not(.docutils) .viewcode-link {
     display: inline-block;
     color: #27ae60;
-    font-size: 80%;
+    font-size: 85%;
     padding-left: 24px;
 }
 .rst-content dl:not(.docutils) .optional {
