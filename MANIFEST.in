@@ -9,7 +9,7 @@ include docs/*
 include docs/_static/css/*
 include docs/_static/font/*
 include docs/_static/js/*
-include docs/_theme/sphinx_eth/*
+include docs/_theme/sphinx_rtd_theme/*
 include test/*
 include test/test_data/*
 include PynPoint/data/*
