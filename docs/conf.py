@@ -252,9 +252,6 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-try:
-    import sphinx_eth_theme
-    html_theme = "sphinx_eth_theme"
-    html_theme_path = [sphinx_eth_theme.get_html_theme_path()]
-except ImportError:
-    html_theme = 'default'
+sys.path.append(os.path.abspath("_theme"))
+html_theme_path = ["_theme"]
+html_theme = "sphinx_rtd_theme"
