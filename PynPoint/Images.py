@@ -49,8 +49,7 @@ class images(base_pynpoint):
         Creates an instance from directory. 
         See :py:func:`_Creators.pynpoint_create_wdir` for more details.
         """
-        print('!!!!AA !!!!')
-        print(kwargs['ran_sub'])
+
         obj = cls()
         _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
         return obj

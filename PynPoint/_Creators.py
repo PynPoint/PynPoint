@@ -54,11 +54,6 @@ def pynpoint_create_wdir(obj,dir_in,force_reload=False,prep_data=True,**kwargs):
             random_sample = ran_sub
 
 
-    print('random_sample: %s' %random_sample)
-    print(kwargs.keys())
-    print(kwargs['ran_sub'])
-
-
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
         _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5,random_sample_size=random_sample)
 

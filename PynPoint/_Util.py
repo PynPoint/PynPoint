@@ -178,14 +178,8 @@ def mk_basis_pca(im_arr_in):
     """
     num_entries = im_arr_in.shape[0]
     im_size = [im_arr_in.shape[1],im_arr_in.shape[2]]
-    
-    # if ave_sub is False:
-    #     print('Warning: Calculating PCA components without subtracting the mean.')
-    #     im_ave = np.zeros(shape=np.im_arr_in[0].shape)
-    #     im_arr = im_arr_in
-    # else:
-    #     im_arr,im_ave = mk_avesub(im_arr_in)        
-    im_arr,im_ave = mk_avesub(im_arr_in)        
+
+    im_arr,im_ave = mk_avesub(im_arr_in)
     
     _,_,V = linalg.svd(im_arr.reshape(num_entries,im_size[0]*im_size[1]),full_matrices=False)        
     #U,s,V = linalg.svd(im_arr.reshape(self.num_files,self.im_size[0]*self.im_size[1]),full_matrices=False)        
@@ -199,9 +193,9 @@ def mk_avesub(im_arr_in):
     """Function for subtracting the mean image from a Stack"""
     im_arr = im_arr_in.copy()
     im_ave = im_arr.mean(axis = 0)#/self.num_files
-    #print(len(im_arr[:,0,0]))
+
     for i in range(0,len(im_arr[:,0,0])):
-        # print(i,im_arr[i,].shape,im_ave.shape)
+
         im_arr[i,] -= im_ave
     return im_arr,im_ave
 
@@ -256,27 +250,19 @@ def mk_resize(im,xnum,ynum):
     zoomx = np.float(xnum)/np.float(im.shape[0])
     zoomy = np.float(ynum)/np.float(im.shape[1])
     im_res = ndimage.interpolation.zoom(im,[zoomx,zoomy],order=3)
-    #im_res = ndimage.interpolation.zoom(im,3.0,order=1)
 
-    #im_Image =  Image.fromarray(im)
-    #Im_Image_rs = im_Image.resize([xnum,ynum],Image.BILINEAR)
-    #im_res = np.array(Im_Image_rs)
     return im_res
    
 def mk_recent(im,xoff,yoff):
     """Routines for recentring an image"""
     im_res = ndimage.interpolation.shift(im,[yoff,xoff])
-    #im_Image =  Image.fromarray(im)
-    #im_Image_off = ImageChops.offset(im_Image,xoff,yoff)
-    #im_res = np.array(im_Image_off)
+
     return im_res
 
 def mk_rotate(im,angle):
     """Routines for rotating an image"""
     im_res = ndimage.rotate(im, angle,reshape=False)
-    #im_Image =  Image.fromarray(im)
-    #im_Image_rot = im_Image.rotate(angle)
-    #im_res = np.array(im_Image_rot)
+
     return im_res
    
 def mk_resizerecent(im_arr,F_int,F_final):
@@ -310,10 +296,7 @@ def mk_resizeonly(im_arr,F_final):
     dimensions that are F_final that of the input images
 	"""
     xnum_final,ynum_final = int(im_arr.shape[1]*F_final),int(im_arr.shape[2]*F_final)
-#     print(F_final)
-#     print(type(F_final))
-#     print(im_arr.shape[1],im_arr.shape[2])
-#     print(im_arr.shape[0],xnum_final,ynum_final)
+
     im_arr_res = np.zeros([im_arr.shape[0],xnum_final,ynum_final])
     for i in range(0,im_arr.shape[0]):
         im_temp = im_arr[i]
@@ -332,8 +315,7 @@ def save_data(Obj,filename):
     
     """
     filename = str(filename)
-    # print(filename)
-    # print(type(filename))
+
     assert (type(filename) == str) , 'You need to provide the name of the file where data should be saved.'
     if os.path.isfile(filename):
         print('Warning: the file %s have been overwritten' %filename)
@@ -341,10 +323,10 @@ def save_data(Obj,filename):
     data_types = get_attributes(Obj)
     
     fsave = h5py.File(filename,'w')
-    # print(filename)
+
     for i in range(0,len(data_types)):
-        # print(data_types[i],':',Obj.__dict__[data_types[i]])
-        fsave.create_dataset(data_types[i], data=Obj.__dict__[data_types[i]], maxshape=None)        
+
+        fsave.create_dataset(data_types[i], data=Obj.__dict__[data_types[i]], maxshape=None)
     fsave.close()
     
     
@@ -357,8 +339,7 @@ def restore_data(Obj,filename,checktype=None):
     :param filename: name of the file (hdf5) where the data has been saved
     
     """
-    # assert type(filename) == str , 'You need to provide the name of the file where data was saved.'
-    # print(filename)
+
     assert os.path.isfile(filename), 'This file doesnot exist'
     if checktype == None:
         type_comp = Obj.obj_type
@@ -384,7 +365,7 @@ def check_type(filename):
     :return: string identifying the source of the file: 'PynPoint_basis', 'PynPoint_images', 'PynPoint_residuals' etc
     
     """
-    #assert type(filename) == 'str' , 'You need to provide the name of the file where data was saved.'
+
     assert os.path.isfile(filename), 'This file doesnot exist'
     frestore = h5py.File(filename,'r')    
     obj_type = frestore['obj_type'].value
@@ -411,9 +392,6 @@ def filename4mdir(dir_in,filetype='convert'):
         print('Warning: file type not recognised - general temp name created')
         hdffilename = dir_in+os.path.split(os.path.dirname(dir_in))[1]+'_PynPoint_temp.hdf5'
 
-    # if not stackave is None:
-    #     hdffilename = hdffilename[:-5]+'_stck_'+str(stackave)+'_'+hdffilename[-5:]
-        
     return hdffilename
     
 def filenme4stack(hdffilename,stackave):
