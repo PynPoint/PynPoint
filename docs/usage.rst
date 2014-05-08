@@ -8,7 +8,7 @@ PynPoint works through three main classes: :py:class:`images`, :class:`basis` an
 
 * :class:`images` - contains the information to do with the data to be analysed
 * :class:`basis` - contains information on the basis set to be used
-* :class:`residuals` - manages the modeling, fitting and correction of the psf
+* :class:`residuals` - manages the modelling, fitting and correction of the psf
 
 Interactive
 -----------
@@ -29,7 +29,7 @@ The results in res can be viewed using its plot method::
 	from PynPoint import pynplot
 	pynplot.plt_res(res,5,imtype='mean')
 	
-In the example above the star is modeled using the first 5 principal component and that the stack is averaged using the mean. 
+In the example above the star is modelled using the first 5 principal component and that the stack is averaged using the mean. 
 
 All of the function above have a number of keywords that can also be passed. More details of these keyword options are discussed in the PynPoint packages section.
 	
@@ -41,7 +41,7 @@ The easiest way to run PynPoint is using the inbuilt :class:`workflow`. This rel
 	import PynPoint
 	ws = PynPoint.run(config_file)
 	
-As well as returning an instance (ws) containing the run results, data is also stored in the work_space directory defined in the config_file. If this directory exists then you will recieve an error message stating this. If you would like to force the calculation to overwrite an exsiting directory then use the option force_replace=True. For instance::
+As well as returning an instance (ws) containing the run results, data is also stored in the work_space directory defined in the config_file. If this directory exists then you will receive an error message stating this. If you would like to force the calculation to overwrite an existing directory then use the option force_replace=True. For instance::
 	
 	ws = PynPoint.run(config_file,force_replace=True)
 	
@@ -162,6 +162,8 @@ The path to the data can be retrieved by running::
 	import PynPoint
 	print(PynPoint.get_data_dir())
 
-We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_Shirley_L_Band_PynPoint_conv.hdf5>`_  (without stacking). 
+We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_  (without stacking). This is the data that we used to develop PynPoint and is discussed in more detail in our papers and consist of high-contrast imaging data set used to confirm the existence of a massive exoplanet planet orbiting the nearby A-type star beta Pictoris (Lagrange et al. 2010). 
 
-This is the data that we used to develop PynPoint and is discussed in more detail in our papers. You can also find a short synopsis in the Science section under beta-pic.
+The data set was taken on 2009 December 26 at the Very Large Telescope with the high-resolution, adaptive optics assisted, near-infrared camera NACO in the L' filter (central wavelengths 3.8 micron) in Angular Differential Imaging (ADI) mode. It consists of 80 data cubes, each containing 300 individual exposures with an individual exposure time of 0.2 s. The total field rotation of the full data set amounted to ~44 degrees  on sky. The raw data are publicly available from the European Southern Observatory (ESO) archive (Program ID: 084.C-0739(A)) under http://archive.eso.org/cms/eso-data.html. 
+
+For the test data, basic data reduction steps (sky subtraction, bad pixel correction, and alignment of images) were already done as explained in Quanz et al. (2011). The final postage stamp size of the individual images is 73 x 73 pixels in the original image size, but for PynPoint we doubled the resolution resulting in 146 x 146 pixels for the test data images. The same test data were also used in Amara & Quanz (2012), where the PynPoint algorithm was introduced. *** NEED TO FIX LINKS ***
