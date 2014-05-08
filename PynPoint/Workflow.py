@@ -137,7 +137,7 @@ class workflow():
     def _setup_workspace(self,force_replace=False):
         dirname = self.config.get('workspace','workdir')
         if force_replace==True and os.path.exists(dirname):
-            print('Warning: The directory %s already existed. It has been deleted and replaced!' %dirname)
+            print('Warning: The directory %s already existed. \nIt has been deleted and replaced!' %dirname)
             shutil.rmtree(dirname)
 
         os.mkdir(dirname)

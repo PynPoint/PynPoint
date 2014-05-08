@@ -64,8 +64,7 @@ class Ctx():
         entries = fhdf.get('entries')[:]
         fhdf.close()
         
-#         print(entries)
-        
+
         for i in range(0,len(entries)):
             filetemp = ctx_dir+entries[i]+'.hdf5'
             data_type = str.split(entries[i],'_')[0]
