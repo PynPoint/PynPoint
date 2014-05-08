@@ -27,7 +27,7 @@ from PynPoint.Workflow import workflow
 from PynPoint._BasePynPoint import base_pynpoint
 import PynPoint._Ctx as pynpointctx
 import PynPoint._Cache as pynpointcache
-import PynPoint.PynPlot as pynplot
+import PynPoint.PynPlot #as pynplot
 
 def get_data_dir():
     """
