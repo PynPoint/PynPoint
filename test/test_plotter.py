@@ -21,7 +21,8 @@ Tests for `_PynPlot` module.
 import os
 import numpy as np
 import PynPoint
-from PynPoint import pynplot
+#from PynPoint import pynplot
+import PynPoint.PynPlot as pynplot
 
 limit0 = 1e-20
 limit1 = 1e-10
