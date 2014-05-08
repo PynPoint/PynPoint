@@ -15,15 +15,13 @@ Contents:
    usage
    PynPoint
    contributing
+   mailinglist
    science
    authors
    history
-   license
 
-Feedback
-========
 
-If you have any suggestions or questions about **PynPoint** feel free to email us
-at pynpoint@phys.ethz.ch.
+Image Credits
+=============
 
-If you encounter any errors or problems with **PynPoint**, please let us know!
+The image was produced using one of the artist renditions of the protoplanet candidate HD100546b in the `ESO <http://www.eso.org>`_ press release: `The Birth of a Giant Planet? <http://www.eso.org/public/news/eso1310/>`_. 
