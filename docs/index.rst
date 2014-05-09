@@ -24,4 +24,16 @@ Contents:
 Image Credits
 =============
 
-The image was produced using one of the artist renditions of the protoplanet candidate HD100546b in the `ESO <http://www.eso.org>`_ press release: `The Birth of a Giant Planet? <http://www.eso.org/public/news/eso1310/>`_. 
+The image was produced using one of the artist renditions of the protoplanet candidate HD100546b in the |eso| press release: |HD100546b|? 
+
+.. |eso| raw:: html
+
+	<a href="http://www.eso.org" target="_blank">ESO</a>
+	
+.. |HD100546b| raw:: html
+
+	<a href="http://www.eso.org/public/news/eso1310" target="_blank">The Birth of a Giant Planet</a>
+	
+	
+	
+	

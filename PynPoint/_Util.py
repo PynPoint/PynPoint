@@ -108,7 +108,7 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
 
 def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
               F_final=2,ran_sub=None,para_sort=True,
-              cent_size=0.2,edge_size=1.0,stackave=None):
+              cent_size=0.05,edge_size=1.0,stackave=None):
 
 
     """

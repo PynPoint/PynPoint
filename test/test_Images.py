@@ -52,7 +52,7 @@ class TestImages(object):
                                 cent_remove=False,resize=False,ran_sub=2,recent=False)
         
         self.images3 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False)
+                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
 
         self.images4 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=True,F_int=4.0,F_final=2.0,ran_sub=None,recent=True)
@@ -65,10 +65,10 @@ class TestImages(object):
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)
         
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False)
+                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
                                 
         self.imagesfits = PynPoint.images.create_wfitsfiles(self.files_fits,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False)
+                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
 
     def test_overall_images3(self):
         assert np.array_equal(self.images3.files , self.files_fits_sorted)
