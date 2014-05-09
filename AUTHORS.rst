@@ -24,6 +24,10 @@ Citations
 
 As you use PynPoint for your exciting dicoveries, please cite the two PynPoint papers that describe the method and the package: 
 
-`Amara, A. & Quanz, S. P., MNRAS vol. 427 (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ and 
+|Amara_Quanz| and 
+
+.. |Amara_Quanz| raw:: html
+
+   <a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">Amara, A. & Quanz, S. P., MNRAS vol. 427 (2012)</a>
 
 Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing (submitted 2014)

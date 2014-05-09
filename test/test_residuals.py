@@ -40,10 +40,10 @@ class TestResidual(object):
         file_images_restore = str(self.test_data_dir+'test_data_images_v001.hdf5')
 
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=False,recent=False)
+                                cent_remove=True,resize=False,ran_sub=False,recent=False,cent_size=0.2)
 
         self.images = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=False,recent=False)
+                                cent_remove=True,resize=False,ran_sub=False,recent=False,cent_size=0.2)
                                 
         self.res = PynPoint.residuals.create_winstances(self.images,self.basis)
         self.num_files = self.images.im_arr.shape[0]

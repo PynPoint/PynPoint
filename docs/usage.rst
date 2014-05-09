@@ -164,6 +164,18 @@ The path to the data can be retrieved by running::
 
 We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_  (without stacking). This is the data that we used to develop PynPoint and is discussed in more detail in our papers and consist of high-contrast imaging data set used to confirm the existence of a massive exoplanet planet orbiting the nearby A-type star beta Pictoris (Lagrange et al. 2010). 
 
-The data set was taken on 2009 December 26 at the Very Large Telescope with the high-resolution, adaptive optics assisted, near-infrared camera NACO in the L' filter (central wavelengths 3.8 micron) in Angular Differential Imaging (ADI) mode. It consists of 80 data cubes, each containing 300 individual exposures with an individual exposure time of 0.2 s. The total field rotation of the full data set amounted to ~44 degrees  on sky. The raw data are publicly available from the European Southern Observatory (ESO) archive (Program ID: 084.C-0739(A)) under http://archive.eso.org/cms/eso-data.html. 
+The data set was taken on 2009 December 26 at the Very Large Telescope with the high-resolution, adaptive optics assisted, near-infrared camera NACO in the L' filter (central wavelengths 3.8 micron) in Angular Differential Imaging (ADI) mode. It consists of 80 data cubes, each containing 300 individual exposures with an individual exposure time of 0.2 s. The total field rotation of the full data set amounted to ~44 degrees  on sky. The raw data are publicly available from the |ESO_Archive| (Program ID: 084.C-0739(A)). 
 
-For the test data, basic data reduction steps (sky subtraction, bad pixel correction, and alignment of images) were already done as explained in Quanz et al. (2011). The final postage stamp size of the individual images is 73 x 73 pixels in the original image size, but for PynPoint we doubled the resolution resulting in 146 x 146 pixels for the test data images. The same test data were also used in Amara & Quanz (2012), where the PynPoint algorithm was introduced. *** NEED TO FIX LINKS ***
+For the test data, basic data reduction steps (sky subtraction, bad pixel correction, and alignment of images) were already done as explained in Quanz et al. (2011). The final postage stamp size of the individual images is 73 x 73 pixels in the original image size, but for PynPoint we doubled the resolution resulting in 146 x 146 pixels for the test data images. The same test data were also used in |Amara_Quanz|, where the PynPoint algorithm was introduced.
+
+ and 
+
+.. |Amara_Quanz| raw:: html
+
+   <a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">Amara & Quanz (2012)</a>
+
+.. |ESO_Archive| raw:: html
+
+   <a href="http://archive.eso.org/cms/eso-data.html" target="_blank"> European Southern Observatory (ESO) archive </a>
+
+
