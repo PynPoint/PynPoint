@@ -33,7 +33,7 @@ def get_data_dir():
     """
     Returns the path to the data directory containing the example data sets.
     
-    :returns path: String with path to the directory
+    :return: String with path to the directory
     """
     from pkg_resources import resource_filename
     import PynPoint
@@ -46,7 +46,7 @@ def run(config,force_replace=False):
     :param config: name of the config file with details of the run to be executed
     :param force_replace: If True then the workspace directory will be overwritten if it already exists
     
-    :returns ws: the instance of the workflow
+    :return: the instance of the workflow
     """
     ws = workflow.run(config, force_replace)
     return ws
@@ -57,7 +57,7 @@ def restore(dirin):
     
     :param dirin: Work directory created by by an earlier calculation (using run method). 
 
-    :returns ws: the instance of the workflow
+    :return: the instance of the workflow
     """
     ws = workflow.restore(dirin)
     return ws

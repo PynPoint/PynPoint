@@ -46,8 +46,14 @@ class images(base_pynpoint):
     @classmethod
     def create_wdir(cls, dir_in,**kwargs): #dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
         """
-        Creates an instance from directory. 
-        See :py:func:`_Creators.pynpoint_create_wdir` for more details.
+        Creates an instance of the images class using dir_in, which is the
+        name of a directory containing the input fits files.
+
+        :param dir_in: name of the directory with fits files
+        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+        :return: Instance of the images class
+
+
         """
 
         obj = cls()
@@ -57,8 +63,12 @@ class images(base_pynpoint):
     @classmethod
     def create_whdf5input(cls, file_in,**kwargs):#file_in,ran_sub=False,prep_data=True,**kwargs)
         """
-        Creates an instance from hdf5 file. 
-        See :py:func:`_Creators.pynpoint_create_whdf5input` for more details.
+        Creates an instance from hdf5 file.
+
+        :param file_in: name of the hdf5 file containing the images
+        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+
+
         """
 
         obj = cls()
@@ -69,10 +79,13 @@ class images(base_pynpoint):
     @classmethod
     def create_restore(cls, filename):
         """
-        Restores an instance from saved file.
-        See :py:func:`_Creators.restore` for more details.
+        Restores data from a hdf5 file previously created using the save method of a images instance.
+
+        :param filename: name of the inputfile
+        :return: Instance of the images class
+
         """
-        
+
         obj = cls()
         _Creators.restore(obj,filename)
         return obj
@@ -80,10 +93,16 @@ class images(base_pynpoint):
     @classmethod
     def create_wfitsfiles(cls, *args,**kwargs):
         """
-        Creates an instance from fits files. 
-        See :py:func:`_Creators.pynpoint_create_wfitsfiles` for more details.
+        Creates an instance of images class from a list of fits files.
+
+        :param files: list of fits files
+        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+        :return: Instance of the images class
+
+
+
         """
-        
+
         obj = cls()
         _Creators.pynpoint_create_wfitsfiles(obj,*args,**kwargs)
         return obj

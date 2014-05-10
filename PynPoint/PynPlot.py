@@ -35,7 +35,7 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True
     """ 
     plotting the PSF model
     
-    :param res: an instance of residual class
+    :param res: an instance of residuals class
     :param ind: index of the image being modeled
     :param num_coeff: number of basis sets to use
     :param returnval: If True the 2D array that was plotted is returned
