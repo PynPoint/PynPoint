@@ -40,8 +40,23 @@ class basis(base_pynpoint):
     @classmethod
     def create_wdir(cls, dir_in,**kwargs):#dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
         """
-        Creates an instance from directory. 
-        See :py:func:`_Creators.pynpoint_create_wdir` for more details.
+        Creates an instance of the basis class using dir_in, which is the
+        name of a directory containing the input fits files.
+
+        :param dir_in: name of the directory with fits files
+        :param ran_sub:
+        :param recent:
+        :param resize:
+        :param cent_remove:
+        :param F_int:
+        :param F_final:
+        :param ran_sub: A random subset is used if a number (N) is passed.
+        :param para_sort:
+        :param cent_size:
+        :param edge_size:
+        :return: Instance of the basis class
+
+
         """
 
         obj = cls()
@@ -52,8 +67,13 @@ class basis(base_pynpoint):
     @classmethod
     def create_whdf5input(cls, file_in,**kwargs):#file_in,ran_sub=False,prep_data=True,**kwargs)
         """
-        Creates an instance from hdf5 file. 
-        See :py:func:`_Creators.pynpoint_create_whdf5input` for more details.
+        Creates an instance of basis from hdf5 file.
+
+        :param file_in: name of the hdf5 file containing the images
+        :param kwargs: Accepts the same keyword options as :py:func:`create_wdir`
+        :return: Instance of the basis class
+
+
         """
 
         obj = cls()
@@ -65,10 +85,13 @@ class basis(base_pynpoint):
     @classmethod
     def create_restore(cls, filename):
         """
-        Restores an instance from saved file.
-        See :py:func:`_Creators.restore` for more details.
+        Restores data from a hdf5 file previously created using the save method of a basis instance.
+
+        :param filename: name of the inputfile
+        :return: Instance of the basis class
+
         """
-        
+
         obj = cls()
         _Creators.restore(obj,filename)
         return obj
@@ -76,8 +99,14 @@ class basis(base_pynpoint):
     @classmethod
     def create_wfitsfiles(cls, files,**kwargs):
         """
-        Creates an instance from fits files. 
-        See :py:func:`_Creators.pynpoint_create_wfitsfiles` for more details.
+        Creates an instance of basis from a list of fits files.
+
+        :param files: list of fits files
+        :param kwargs: Accepts the same keyword options as :py:func:`create_wdir`
+        :return: Instance of the basis class
+
+
+
         """
         
         obj = cls()
@@ -104,7 +133,13 @@ class basis(base_pynpoint):
 
 
     def mk_orig(self,ind):
-        """Function for reproducing an original input image"""
+        """Function for producing an original input image
+
+        :param ind: index of the image to returned
+        :return: 2D numpy array with the original input image
+
+
+        """
         if self.cent_remove is True:
             imtemp = (self.im_arr[ind,] + self.im_ave + self.im_arr_mask[ind,]) * self.im_norm[ind]
         else:
@@ -114,4 +149,11 @@ class basis(base_pynpoint):
 
  
     def mk_psfmodel(self, num):
+        """
+        Makes a model of the PSF using its pst basis.
+
+        :param num: number of basis coefficients used in the fit
+
+        """
+
         super(basis, self).mk_psfmodel(self, num)
