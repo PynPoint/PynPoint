@@ -30,7 +30,11 @@ from PynPoint import _Util
 
 #Residuals Class
 class residuals(base_pynpoint):
-    """Object for dealing with the residual data. This includes object detection and flux measurement"""
+    """
+    For dealing with the residual data. This includes object detection and flux measurement.
+    Once created, the simplest way to access and visualise the data is to use :py:func:`PynPoint.PynPlot.plt_res`
+
+    """
 
     def __init__(self):
         """
@@ -45,8 +49,11 @@ class residuals(base_pynpoint):
     @classmethod
     def create_restore(cls, filename):
         """
-        Restores an instance from saved file.
-        See :py:func:`_Creators.restore` for more details.
+        Restores data from a hdf5 file previously created using the save method of a residuals instance.
+
+        :param filename: name of the inputfile
+        :return: Instance of the residuals class
+
         """
         
         obj = cls()
@@ -55,7 +62,14 @@ class residuals(base_pynpoint):
         
     @classmethod
     def create_winstances(cls, images,basis):
-        #TODO: use normal initializer for this.
+
+        """
+        Creates an instance of residuals
+
+        :param images: instance of the images class
+        :param basis: instance of the basis class
+        :return: instance of residuals
+        """
         obj = cls()
         #---importing data from images instance:---#
         obj.im_arr = images.im_arr
@@ -93,7 +107,7 @@ class residuals(base_pynpoint):
         
     def res_rot_mean(self,num_coeff,extra_rot =0.0):
         """
-        Returns a 2D image of residuals after averaging down the stack.
+        Returns a 2D image of residuals after averaging (mean) down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
         """
@@ -103,7 +117,7 @@ class residuals(base_pynpoint):
 
     def res_rot_median(self,num_coeff,extra_rot =0.0):
         """
-        Returns a 2D image of residuals after averaging down the stack.
+        Returns a 2D image of residuals after averaging (median) down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
         """

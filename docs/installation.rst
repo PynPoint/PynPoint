@@ -11,6 +11,8 @@ At the command line you can install using pip::
 	
 [For background information on pip see our |install_help| pages]
 
+You can also join the PynPoint mailing list by sending an email to pynpoint-join@lists.phys.ethz.ch (you can leave subject line and body of the email blank).
+
 .. |install_help| raw:: html
 
    <a href="https://wiki.phys.ethz.ch/PynPoint/installation_help" target="_blank">installation help</a>

@@ -51,12 +51,16 @@ class workflow():
     @staticmethod
     def run(config,force_replace=False):
         """
-        run the workflow using config. Need to pass either a
-        config instance or name of file containing config information.
+        run the workflow using config. Need to the name of file containing config information.
+        As well as returning an instance of workflow, a copy will also be stored to disk in the
+        location specified in the config file.
         
         :param config: name of the config file with details of the run to be executed
         :param force_replace: If True then the workspace directory will be overwritten if it already exists
-        
+        :return: Instance of workflow
+
+
+
         """
         obj = workflow()
         obj._init_config(config)
@@ -75,7 +79,8 @@ class workflow():
         Restores a previously a workspace that has previously been 
         calculated by the workflow.
         
-        :param dirin: Work directory created by by an earlier calculation (using run method). 
+        :param dirin: Work directory created by by an earlier calculation (using run method).
+        :return: Instance of workflow
         
         
         """
@@ -104,7 +109,7 @@ class workflow():
         """
         Used to extract instances of images, basis or residuals from the workflow instance
         
-        :param name: name of the option to be restored - see get_options for available options
+        :param name: name of the option to be restored - see :py:func:`get_available` for available options
         """
         return self._ctx.get(name)   
         
