@@ -2,7 +2,7 @@
 Credits
 =======
 
-Development Lead
+Development lead
 ----------------
 
 * Adam Amara <adam.amara@phys.ethz.ch>
@@ -13,7 +13,7 @@ Development Lead
 Contributors
 ------------
 
-We would like to thank several people for helping test this package before release. 
+We would like to thank several people for helping to test this package before release. 
 
 * Henning Avenhaus
 * Conor Francois
@@ -22,7 +22,7 @@ We would like to thank several people for helping test this package before relea
 Citations
 ---------
 
-As you use PynPoint for your exciting dicoveries, please cite the two PynPoint papers that describe the method and the package: 
+As you use PynPoint for your exciting discoveries, please cite the two PynPoint papers that describe the method and the package: 
 
 |Amara_Quanz| and 
 
