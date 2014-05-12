@@ -27,8 +27,8 @@ from PynPoint import _Util
 
 #Basis Class
 class basis(base_pynpoint):
-    """This class has been prepared to contain everything
-    that is needed to create a basis set from a given set of images
+    """
+    For creating a basis set from a given set of postage stamp images
 	"""
     
     def __init__(self):
@@ -40,21 +40,19 @@ class basis(base_pynpoint):
     @classmethod
     def create_wdir(cls, dir_in,**kwargs):#dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
         """
-        Creates an instance of the basis class using dir_in, which is the
-        name of a directory containing the input fits files.
+        Creates an instance of the basis class.
 
         :param dir_in: name of the directory with fits files
-        :param ran_sub:
-        :param recent:
-        :param resize:
-        :param cent_remove:
-        :param F_int:
-        :param F_final:
-        :param ran_sub: A random subset is used if a number (N) is passed.
-        :param para_sort:
-        :param cent_size:
-        :param edge_size:
-        :return: Instance of the basis class
+        :param recent: if True, the images will be re-centered
+        :param resize: if True, the final images will be increased by a factor set by F final
+        :param cent_remove: if True, the central region will be masked (size set by cent size).
+        :param F_final: factor increase in resolution of final images (resize must be True).
+        :param ran_sub: a random subset is used if a number is passed.
+        :param para_sort: if True, the images will be sorted so that the parallax angles increase through the stack.
+        :param cent_size: radius of the central mask as fraction of the full image size.
+        :param edge_size: diameter of the outer mask in fraction of the image size.
+        :param stackave: if set to an integer (N), then the stack will be reduced by averaging over adjacent N images.
+        :return: instance of the basis class
 
 
         """
@@ -69,9 +67,9 @@ class basis(base_pynpoint):
         """
         Creates an instance of basis from hdf5 file.
 
-        :param file_in: name of the hdf5 file containing the images
-        :param kwargs: Accepts the same keyword options as :py:func:`create_wdir`
-        :return: Instance of the basis class
+        :param file_in: path to the hdf5 file containing the images
+        :param kwargs: accepts the same keyword options as :py:func:`create_wdir`
+        :return: instance of the basis class
 
 
         """
@@ -88,7 +86,7 @@ class basis(base_pynpoint):
         Restores data from a hdf5 file previously created using the save method of a basis instance.
 
         :param filename: name of the inputfile
-        :return: Instance of the basis class
+        :return: instance of the basis class
 
         """
 
@@ -101,9 +99,9 @@ class basis(base_pynpoint):
         """
         Creates an instance of basis from a list of fits files.
 
-        :param files: list of fits files
-        :param kwargs: Accepts the same keyword options as :py:func:`create_wdir`
-        :return: Instance of the basis class
+        :param files: list of strings with fits filenames
+        :param kwargs: accepts the same keyword options as :py:func:`create_wdir`
+        :return: instance of the basis class
 
 
 
@@ -117,13 +115,13 @@ class basis(base_pynpoint):
 
 
 
-    def mk_basis_set(self,fileout = None):
+    def mk_basis_set(self):#,fileout = None):
         """
-        creates basis set using the input images stored in im_arr
+        creates basis set attributes using the images stored in im_arr
         """
-        if fileout is None:
-            dir_in = os.path.dirname(self.files[0])
-            filename = _Util.filename4mdir(dir_in,filetype='basis')
+        # if fileout is None:
+        #     dir_in = os.path.dirname(self.files[0])
+        #     filename = _Util.filename4mdir(dir_in,filetype='basis')
         
         basis_info_full = _Util.mk_basis_pca(self.im_arr)#,ave_sub=True)
         self.im_ave = basis_info_full['im_ave']
@@ -150,7 +148,7 @@ class basis(base_pynpoint):
  
     def mk_psfmodel(self, num):
         """
-        Makes a model of the PSF using its pst basis.
+        Makes a model of the PSF using its PSF basis.
 
         :param num: number of basis coefficients used in the fit
 

@@ -33,8 +33,10 @@ plotting routines for PynPoint classes images, basis and residuals.
 
 def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True):
     """ 
-    plotting the PSF model
+    Plots the PSF model
     
+    :param savefits: set to a filename is you wish to save a fits file
+    :param mask_nan: if True then the mask regions will be set to numpy.nan
     :param res: an instance of residuals class
     :param ind: index of the image being modeled
     :param num_coeff: number of basis sets to use
@@ -42,8 +44,8 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True
     
     Example ::
         
-        
-        pynplot.plt_psf_model(res,6,40)
+        from PynPoint import PynPlot
+        PynPlot.plt_psf_model(res,6,40)
     
     """
     
@@ -71,6 +73,8 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False,mask_nan=True):
     """
     Plots the basis images used to model the PSF.
     
+    :param savefits: set to a filename is you wish to save a fits file
+    :param mask_nan: if True then the mask regions will be set to numpy.nan
     :param obj: an instance that has psf_basis attribute (basis or residuals)
     :param ind: index of the basis image to be plotted
     :param returnval: set to True if you want the function to return the 2D array
@@ -99,8 +103,10 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False,mask_nan=True):
 #TODO: undefined variable 'im'
 def plt_im_arr(obj,ind,returnval=False,savefits=False,mask_nan=True):
     """
-    Used to plot the im_arr entry, which the image used by the instance
+    Used to plot the im_arr entry
 
+    :param savefits: set to a filename is you wish to save a fits file
+    :param mask_nan: if True then the mask regions will be set to numpy.nan
     :param obj: an instance of images, basis or residual
     :param ind: index of the image to be plotted
     :param returnval: set to True if you want the function to return the 2D array
@@ -135,13 +141,13 @@ def anim_im_arr(obj,time_gap=0.04,im_range = [0,50]):
     """
     Produces an animation of the im_arr entries, which are the images used in the instance.
 
-    :param obj: An instance of images, basis or residual
-    :param time_gap: Pause time between images
-    :param im_range: If None (default) then all the images will be used (this could take a long time). Otherwise im_range should be set to the range of indecies (e.g. [100,150])
+    :param obj: an instance of images, basis or residual
+    :param time_gap: pause time between images
+    :param im_range: if None then all the images will be used (this could take a long time). Otherwise im_range should be set to the range of indecies (e.g. [100,150])
     
     Example::
-    
-        pynplot.anim_im_arr(res)
+        from PynPoint import PynPlot
+        PynPlot.anim_im_arr(res)
         
     """
     
@@ -172,6 +178,7 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     Plots the residual results (either an average or the variance) 
     and gives the image as a return value. 
     
+    :param extra_rot: extra rotation angle. If set to zero (default) then the images will be rotated to the parallactic angle of the first images.
     :param res: An instance of residual class
     :param num_coeff: Number of coefficients used in the fit
     :param imtype: Type of image to plot. Options are: 'mean', 'mean_clip', 'median', 'var', 'sigma' and 'mean_sigma' 
@@ -185,7 +192,7 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     Example ::
     
     
-       pynplot.plt_res(res,20,imtype='mean',returnval=True)
+       PynPlot.plt_res(res,20,imtype='mean',returnval=True)
     
     
     """
