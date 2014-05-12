@@ -46,12 +46,11 @@ class images(base_pynpoint):
     @classmethod
     def create_wdir(cls, dir_in,**kwargs): #dir_in,ran_sub=False,force_reload=False,prep_data=True,**kwargs):
         """
-        Creates an instance of the images class using dir_in, which is the
-        name of a directory containing the input fits files.
+        Creates an instance of the images class.
 
         :param dir_in: name of the directory with fits files
-        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
-        :return: Instance of the images class
+        :param kwargs: accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+        :return: instance of the images class
 
 
         """
@@ -65,8 +64,8 @@ class images(base_pynpoint):
         """
         Creates an instance from hdf5 file.
 
-        :param file_in: name of the hdf5 file containing the images
-        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+        :param file_in: path to the hdf5 file containing the images
+        :param kwargs: accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
 
 
         """
@@ -96,8 +95,8 @@ class images(base_pynpoint):
         Creates an instance of images class from a list of fits files.
 
         :param files: list of fits files
-        :param kwargs: Accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
-        :return: Instance of the images class
+        :param kwargs: accepts the same keyword options as :py:func:`PynPoint.Basis.basis.create_wdir`
+        :return: instance of the images class
 
 
 
@@ -108,8 +107,14 @@ class images(base_pynpoint):
         return obj
         
 
-    def mk_psf_realisation(self,ind,full=False):    
-        """Function for making a realisation of the PSF using the data stored in the object"""
+    def mk_psf_realisation(self,ind,full=False):
+        """
+        Function for making a realisation of the PSF using the data stored in the object
+
+        :param ind: index of the image to be modelled
+        :param full: if set to True then the masked region will be included
+        :return: an image of the PSF model
+        """
         im_temp = self.psf_im_arr[ind,] 
         if self.cent_remove is True:
             if full is True:

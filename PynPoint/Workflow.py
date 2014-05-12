@@ -51,8 +51,7 @@ class workflow():
     @staticmethod
     def run(config,force_replace=False):
         """
-        run the workflow using config. Need to the name of file containing config information.
-        As well as returning an instance of workflow, a copy will also be stored to disk in the
+        Runs the workflow using config. A copy of the data produced will also be stored to disk in the
         location specified in the config file.
         
         :param config: name of the config file with details of the run to be executed
@@ -76,7 +75,7 @@ class workflow():
     @staticmethod
     def restore(dirin):
         """
-        Restores a previously a workspace that has previously been 
+        Restores a workspace that has previously been
         calculated by the workflow.
         
         :param dirin: Work directory created by by an earlier calculation (using run method).
