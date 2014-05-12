@@ -44,7 +44,7 @@ PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 
 setup(
     name='PynPoint',
-    version='0.1.2',
+    version='0.2.0',
     description='"This is the PynPoint package, which is used to analyse ADI images to find exoplanets"',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Adam Amara',
