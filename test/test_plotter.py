@@ -181,8 +181,20 @@ class TestPlotter(object):
             os.remove(im1_temp)
         if os.path.isfile(im2_temp):
             os.remove(im2_temp)
-        
-        
+
+    def test_from_paper(self):
+        from PynPoint import PynPlot
+        images = self.images
+        basis = self.basis
+        res = self.res
+
+        temp1 = PynPlot.plt_im_arr(images, 0,returnval=True)
+        temp2 = PynPlot.plt_psf_basis(basis,1,returnval=True)
+        temp3 = PynPlot.plt_res(res,2,returnval=True)
+
+        assert np.allclose(temp1[70,30],2.2650975196460617e-05)
+        assert np.allclose(temp2[70,30],-0.00054643985654258037)
+        assert np.allclose(temp3[70,30],1.8452210185342033e-07)
 
     def teardown(self):
         #tidy up

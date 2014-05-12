@@ -49,7 +49,7 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True
     
     assert res.obj_type in ['PynPoint_residuals'], 'Error: This plot function currently only suports the class res'
     psf_model = res._psf_im(num_coeff)
-    im = psf_model[ind]
+    im = psf_model[ind].copy()
     if mask_nan is True:
         im[np.where(res.cent_mask == 0.)] = np.nan
 
@@ -79,7 +79,7 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False,mask_nan=True):
 
     """
     
-    im = obj.psf_basis[ind,]
+    im = obj.psf_basis[ind,].copy()
     if mask_nan is True:
         im[np.where(obj.cent_mask == 0.)] = np.nan
 
@@ -110,7 +110,7 @@ def plt_im_arr(obj,ind,returnval=False,savefits=False,mask_nan=True):
     """
     #To Do:
     #       Renormalise keyword
-    im = obj.im_arr[ind,]
+    im = obj.im_arr[ind,].copy()
 
     if mask_nan is True:
         im[np.where(obj.cent_mask == 0.)] = np.nan

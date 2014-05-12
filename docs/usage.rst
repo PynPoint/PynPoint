@@ -149,7 +149,7 @@ The main PynPoint instances also include a save and restore feature. To save the
 	
 Later, an instance can be restored::
 
-	images = PynPoint.images.restore("images_savefile.hdf5")
+	images = PynPoint.images.create_restore("images_savefile.hdf5")
 
 
 Data
