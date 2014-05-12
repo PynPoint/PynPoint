@@ -61,7 +61,12 @@ If you run the example above, you should see this:
 
 .. image:: install_example.*
 	
-The image shows the final results at the end of the PynPoint analysis. The star of the planetary system sits at the center of the image, which is masked here. The prominent red blob to the top-right of center is the planet beta-pic b. The pixel scale for the image is 0.0135'' (half of the original data), so the total image is 2''x2''. We see that beta-pic b is roughly 22 pixels from the star (image center), corresponding to roughly 0.3''. 
+The image shows the final results at the end of the PynPoint analysis. The star of the planetary system sits at the center of the image, which is masked here. The prominent red blob to the top-right of center is the planet beta-pic b. The pixel scale for the image is 0.0135" (half of the original data), so the total image is 2"x 2". We see that beta-pic b is roughly 22 pixels from the star (image center), corresponding to roughly 0.3". 
 
-When making this result, all the images have been aligned to the parallactic angle of the first image. In this particular case, this means that North is to the left. The pynplot.plt_res function is able to produce an image that is rotated by a user-specified angle (for example to make North point up). For more discussions on the options available, ***LINK*** see usage, package notes and example tutorials. We have also made available the `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_.
+When making this result, all the images have been aligned to the parallactic angle of the first image. In this particular case, this means that North is to the left. The :py:func:`~PynPoint.PynPlot.plt_res` function is able to produce an image that is rotated by a user-specified angle (for example to make North point up). For more discussions on the options available, see  :doc:`usage` and |tutorial|. We have also made available the `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_.
+
+.. |tutorial| raw:: html
+
+	<a href="https://wiki.phys.ethz.ch/PynPoint/extra_tutorials" target"_blank"> example tutorials </a>
+
 
