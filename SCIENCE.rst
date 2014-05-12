@@ -2,9 +2,9 @@
 Science
 =======
 
-PynPoint has already been demostrated on data and has been used to find exo-planet systems. We will try to maintain a list of such systems. If you find intersting objects in your data that you would like us to list please email the PynPoint team.
+PynPoint has already been demonstrated on data and used to find exo-planet systems. We will maintain a list of such systems. If you find interesting objects in your data that you would like for us to list please, email the PynPoint team.
 
-PynPoint Results
+PynPoint results
 ----------------
 
 
@@ -21,7 +21,7 @@ In our first PynPoint paper, where we presented the PSF modeling approach based 
 2) HD100546 b - a planet in formation?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first new science result from PynPoint was the discovery of a protoplanet candidate embedded in the protoplanetary disk around the young, intermediate mass star HD100546. The brightness and morphology of the object suggest that HD100546 b might be a gas giant planet that is still in the process of formation. If confirmed, it would be the first time such an object was directly imaged. See the |HD100546b| for more details.
+The first new science result from PynPoint was the discovery of a protoplanet candidate embedded in the protoplanetary disk around the young, intermediate mass star HD100546. The brightness and morphology of the object suggest that HD100546 b might be a gas giant planet still in the process of formation. If confirmed, it would be the first time such an object was directly imaged. See the |HD100546b| for more details.
 
 .. |HD100546b| raw:: html
 
@@ -32,17 +32,17 @@ The first new science result from PynPoint was the discovery of a protoplanet ca
 3) HD95086 b - detection and confirmation of a 4-5 Jupiter mass planet
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PynPoint was used in the discovery and later in the confirmation of HD95086 b, which is, together with GJ 504 b, probably the lowest mass exoplanet ever imaged around a nearby star. The two papers can be found |Confirmation| and |Detection|.
+PynPoint was used in the discovery and later in the confirmation of HD95086 b, which is, together with GJ 504 b, probably the lowest mass exoplanet ever imaged around a nearby star. The two papers are: |Confirmation| and |Detection|.
 
 
 .. |Confirmation| raw:: html
 
-	<a href="http://adsabs.harvard.edu/abs/2013ApJ...779L..26R" target="_blank">here</a>
+	<a href="http://adsabs.harvard.edu/abs/2013ApJ...779L..26R" target="_blank">confirmation</a>
 
 
 .. |Detection| raw:: html
 
-	<a href="http://adsabs.harvard.edu/abs/2013ApJ...772L..15R" target="_blank">here</a>
+	<a href="http://adsabs.harvard.edu/abs/2013ApJ...772L..15R" target="_blank">detection</a>
 
 
 
