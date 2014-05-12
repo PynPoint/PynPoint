@@ -89,8 +89,10 @@ class residuals(base_pynpoint):
 
     def res_arr(self,num_coeff):
         """
-        Returns a 3D data cube of the residuals, i.e. a psf model is 
+        Returns a 3D data cube of the residuals, i.e. a psf model is
         removed from every image.
+
+        :param num_coeff: number of coefficients used in the PSF modelling
         """
         if not (hasattr(self,'_res_arr') and (self.num_coeff == num_coeff)):
             self._mk_res_arr(num_coeff)
@@ -100,6 +102,7 @@ class residuals(base_pynpoint):
         """
         Returns a 3D data cube of residuals where all the images
         have been rotated to have the same para angle.
+        (We recommend accessing this functionality through :py:func:`PynPoint.PynPlot.plt_res`)
         """
         if not (hasattr(self, '_res_rot') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot(num_coeff,extra_rot =extra_rot )
@@ -110,6 +113,7 @@ class residuals(base_pynpoint):
         Returns a 2D image of residuals after averaging (mean) down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
+        (We recommend accessing this functionality through :py:func:`PynPoint.PynPlot.plt_res`)
         """
         if not (hasattr(self, '_res_rot_mean') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot_mean(num_coeff,extra_rot = extra_rot )
@@ -120,6 +124,7 @@ class residuals(base_pynpoint):
         Returns a 2D image of residuals after averaging (median) down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
+        (We recommend accessing this functionality through :py:func:`PynPoint.PynPlot.plt_res`)
         """
         if not (hasattr(self, '_res_rot_median') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot_median(num_coeff,extra_rot =extra_rot )
@@ -132,6 +137,7 @@ class residuals(base_pynpoint):
         All the images in the stack are rotated to that they 
         have the same para angle.
         (3 sigma)
+        (We recommend accessing this functionality through :py:func:`PynPoint.PynPlot.plt_res`)
         """
         # if not (hasattr(self, '_res_rot_mean_clip') and (self.num_coeff == num_coeff)):
         self._mk_res_rot_mean_clip(num_coeff,extra_rot =extra_rot )
@@ -143,6 +149,7 @@ class residuals(base_pynpoint):
         Returns a 2D image of the variance of the residuals down the stack.
         All the images in the stack are rotated to that they 
         have the same para angle.
+        (We recommend accessing this functionality through :py:func:`PynPoint.PynPlot.plt_res`)
         """
         if not (hasattr(self, '_res_rot_var') and (self.num_coeff == num_coeff) and (self.extra_rot == extra_rot)):
             self._mk_res_rot_var(num_coeff,extra_rot =extra_rot )
