@@ -13,7 +13,7 @@ PynPoint works through three main classes: :py:class:`images`, :class:`basis` an
 Interactive
 -----------
 
-To analyse data, in the examples below we assume that this is a directory (`dir_in`) that contains a set of fits files, you first need to enter the python environment: ::
+To analyse data, in the examples below, we assume a directory (`dir_in`) that contains a set of fits files. First you need to enter the Python command line: ::
 
 	$ ipython 
 
@@ -74,7 +74,7 @@ In the above example, the keyword 'True' has been set to set force_replace = Tru
 Config example
 --------------
 
-In the example config file below, a workspace directory will be created called 'workspace_betapic_stk5' that will be used to store the results of the a calculation. The config file then calls for the running os three modules. The first two modules will use data stored in the directory ../data/Data_betapic_L_band/. The options used by these two modules are listed in the section [options1]. ::
+In the example config file below, a workspace directory will be created called 'workspace_betapic_stk5' that will be used to store the results of the a calculation. The config file defines three modules that will be executed. The first two modules will use data stored in the directory ../data/Data_betapic_L_band/. The options used by these two modules are listed in the section [options1]. ::
 
 	[workspace]
 	workdir = ../data/baselinerun_paper/workspace_betapic_stk5/
@@ -168,7 +168,6 @@ The data-set was taken on 2009 December 26 at the Very Large Telescope with the 
 
 For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011). The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz|, where we introduced the PynPoint algorithm.
 
- and 
 
 .. |Amara_Quanz| raw:: html
 
