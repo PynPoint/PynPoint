@@ -43,13 +43,13 @@ tests_require=['pytest>=2.3', 'mock'] #for testing
 PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 
 setup(
-    name='PynPoint',
+    name='PynPoint-exoplanet',
     version='0.2.0',
     description='"This is the PynPoint package, which is used to analyse ADI images to find exoplanets"',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Adam Amara',
     author_email='adam.amara@phys.ethz.ch',
-    url='"wiki.phys.ethz.ch/PynPoint"',
+    url='"http://pynpoint.ethz.ch"',
     packages=find_packages(PACKAGE_PATH, "test"),
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
@@ -66,7 +66,7 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         "Intended Audience :: Science/Research",
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Proprietary',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
