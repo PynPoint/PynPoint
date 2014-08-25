@@ -7,7 +7,7 @@ Through pip
 
 At the command line you can install using pip::
 
-    $ pip install PynPoint --user
+    $ pip install PynPoint-exoplanet --user
 	
 For background information on pip, see our |install_help| pages.
 
