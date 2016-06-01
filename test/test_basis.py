@@ -108,7 +108,7 @@ class TestBasis(object):
         assert self.basis3.cent_mask.shape == (146,146) 
         assert self.basis3.cent_mask.min() == 0.0 
         assert self.basis3.cent_mask.max() == 1.0
-        assert self.basis3.cent_mask.var() == 0.22491619287271775 
+        assert np.allclose(self.basis3.cent_mask.var() , 0.22491619287271775,rtol=limit1) 
         assert self.basis3.psf_basis.shape == (4,146,146) 
         assert np.allclose(self.basis3.psf_basis.var() , 4.6846490796021234e-05,rtol=limit1)
         assert self.basis3.im_ave.shape == (146,146)
