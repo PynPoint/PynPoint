@@ -84,7 +84,7 @@ class TestImages(object):
         assert self.images3.cent_mask.shape == (146,146) 
         assert self.images3.cent_mask.min() == 0.0 
         assert self.images3.cent_mask.max() == 1.0
-        assert self.images3.cent_mask.var() == 0.22491619287271775 
+        assert np.allclose(self.images3.cent_mask.var() , 0.22491619287271775 ,rtol=limit1)
 
         assert np.array_equal(self.images3.im_arr_mask.shape , (4,146,146))
         assert np.allclose(self.images3.im_arr_mask.min() , -6.9235109549481422e-05,rtol=limit1)
