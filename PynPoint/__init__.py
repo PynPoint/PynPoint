@@ -18,7 +18,6 @@ __version__ = '0.2.0'
 __credits__ = 'ETH Zurich, Institute for Astronomy'
 
 
-
 from PynPoint.Basis import basis
 from PynPoint.Images import images
 from PynPoint.Residuals import residuals
