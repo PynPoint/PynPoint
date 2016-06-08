@@ -1,5 +1,6 @@
 import os
-from Processing import PypelineModule
+import warnings
+from Processing import PypelineModule, WritingModule, ReadingModule
 
 
 class Pypeline(object):
@@ -13,7 +14,7 @@ class Pypeline(object):
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
-        self._m_modules = []
+        self._m_modules = {}
 
     def __setattr__(self, key, value):
 
@@ -27,32 +28,39 @@ class Pypeline(object):
                    pipeline_module):
         assert isinstance(pipeline_module, PypelineModule), 'Error: the given pipeline_module is not a' \
                                                             ' accepted PypelineModule.'
-        self._m_modules.append(pipeline_module)
 
-    def remove_module_by_index(self,
-                               index):
-        del self._m_modules[index]
+        # if no specific output directory is given use the default
+        if isinstance(pipeline_module, WritingModule):
+            if pipeline_module.m_output_location is None:
+                pipeline_module.m_output_location = self._m_output_place
 
-    def remove_module_by_name(self,
-                              name):
-        result = False
-        for module in self._m_modules:
-            if module.name == str(name):
-                del module
-                result = True
+        if pipeline_module.name in self._m_modules:
+            warnings.warn('Processing module names need to be unique. Overwriting the old Module')
 
-        return result
+        self._m_modules.update({pipeline_module.name: pipeline_module})
 
-    def get_modules(self):
-        modules = []
-        for module in self._m_modules:
-            modules.append(module.name)
-        return modules
+    def remove_module(self,
+                      name):
+
+        if name in self._m_modules:
+            del self._m_modules[name]
+            return True
+        else:
+            return False
+
+    def get_module_names(self):
+        return self._m_modules.keys()
 
     def run(self):
         print "Start running Pypeline ..."
-        for module in self._m_modules:
-            print "Start running " + module.name + "..."
-            module.run()
-            print "Finished running " + module.name
+        for key in self._m_modules:
+            print "Start running " + key + "..."
+            self._m_modules[key].run()
+            print "Finished running " + key
         print "Finished running Pypeline."
+
+    def run_module(self, name):
+        if name in self._m_modules:
+            self._m_modules[name].run()
+        else:
+            warnings.warn('Module not found')
