@@ -1,6 +1,9 @@
 import os
+import collections
 import warnings
+import h5py
 from Processing import PypelineModule, WritingModule, ReadingModule
+from DataIO import DataStorage
 
 
 class Pypeline(object):
@@ -14,7 +17,8 @@ class Pypeline(object):
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
-        self._m_modules = {}
+        self._m_modules = collections.OrderedDict()
+        self._m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
 
     def __setattr__(self, key, value):
 
@@ -34,10 +38,17 @@ class Pypeline(object):
             if pipeline_module.m_output_location is None:
                 pipeline_module.m_output_location = self._m_output_place
 
+        # if no specific input directory is given use the default
+        if isinstance(pipeline_module, ReadingModule):
+            if pipeline_module.m_input_location is None:
+                pipeline_module.m_input_location = self._m_input_place
+
+        pipeline_module.connect_database(self._m_data_storage)
+
         if pipeline_module.name in self._m_modules:
             warnings.warn('Processing module names need to be unique. Overwriting the old Module')
 
-        self._m_modules.update({pipeline_module.name: pipeline_module})
+        self._m_modules[pipeline_module.name] = pipeline_module
 
     def remove_module(self,
                       name):
