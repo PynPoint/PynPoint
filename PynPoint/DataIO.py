@@ -72,8 +72,6 @@ class OutputPort(Port):
 
         super(OutputPort, self).__init__(tag)
         self.m_activate = activate_init
-        self.m_dim = None
-        self.m_dtype = None
 
     # internal functions
     def _check_status_and_activate(self):
@@ -91,44 +89,47 @@ class OutputPort(Port):
 
     def _initialize_database_entry(self,
                                    first_data,
-                                   data_shape=None):
+                                   data_dim=None):
         """
-        Initializes the connection to the database for the given tag. If the tag exists its type and shape is copied, if
-        not a new dataset is created using the input first_data. Per default the inputs are stored using the following
-        data structures:
-
-            Input -> Internal structure
-            1D array -> 1D array which can be extended using the append method.
-            2D array -> 2D array with fixed size (no extension using the append method)
-            3D array -> Stack of 2D images with the same fixed image size. New images can be extended using the append
-                        method. NOTE it is not possible to store images with different sizes
-
-            TODO: explain shape and type
-
-        :param first_data:
-        :param type_in:
-        :param shape_in:
-        :return:
+        We only except the following inputs
+            (data_dim, data dimension) = (1,1), (2,1), (2,2), (3,2), (3,3)
         """
 
-        # check if the input is a numpy array
-        if type(first_data) is not np.ndarray or first_data.ndim > 3:
-            raise ValueError('Outport port can only save numpy arrays from 1D to 3D. If you want to save a int,'
-                                 'float, string ... use Port attributes instead.')
+        # check Error cases
+        if type(first_data) is not np.ndarray or first_data.ndim > 3 or first_data.ndim < 1:
+            raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want to save a int,'
+                             'float, string ... use Port attributes instead.')
 
-        # if no data_shape is given check the input data
-        if data_shape is None:
-            if first_data.ndim == 1:
+        if data_dim is None:
+            data_dim = first_data.ndim
+
+        if data_dim > 3 or data_dim < 1:
+            raise ValueError('data_dim needs to be in [1,3].')
+
+        if data_dim < first_data.ndim:
+            raise ValueError('data_dim needs to have at least the same dim as the input.')
+
+        if data_dim == 3 and first_data.ndim == 1:
+            raise ValueError('Cannot initialize 1D data in 3D data container.')
+
+        # if no data_dim is given check the input data
+        if data_dim == first_data.ndim:
+            if first_data.ndim == 1:  # case (1,1)
                 data_shape = (None,)
-            elif first_data.ndim == 2:
-                data_shape = first_data.shape
-            elif first_data.ndim == 3:
+            elif first_data.ndim == 2:  # case (2,2)
+                data_shape = (None, first_data.shape[1])
+            elif first_data.ndim == 3:  # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
             else:
-                raise ValueError('Input shape not supported')
+                raise ValueError('Input shape not supported')  # this case should never be reached
+        else:
+            if data_dim == 2:  # case (2, 1)
+                data_shape = (None, first_data.shape[0])
+            elif data_dim == 3:  # case (3, 2)
+                data_shape = (None, first_data.shape[0], first_data.shape[1])
+            else:
+                raise ValueError('Input shape not supported')  # this case should never be reached
 
-        self.m_dim = first_data.ndim
-        self.m_dtype = first_data.dtype
         self._m_data_storage.m_data_bank.create_dataset(self._m_tag,
                                                         data=first_data,
                                                         maxshape=data_shape)
@@ -138,25 +139,29 @@ class OutputPort(Port):
                   data):
         raise NotImplementedError('Missing, Sorry')
 
-
     def set_all(self,
                 data,
-                force=False):
+                data_dim=None):
 
-        '''if not self._check_status():
+        # check if port is ready to use
+        if not self._check_status_and_activate():
+            return
+
+        # check if database entry is new...
+        if self._m_tag in self._m_data_storage.m_data_bank:
+            # NO -> database entry exists
+            # remove database entry
+            del self._m_data_storage.m_data_bank[self._m_tag]
+
+        # make new database entry
+        self._initialize_database_entry(data,
+                                        data_dim=data_dim)
         return
-
-        # check if port was used before
-        # NO -> create dataset with data
-        # Yes -> delete all data and add new data
-        pass'''
-        raise NotImplementedError('Missing, Sorry')
-
 
     def append(self,
                data,
-               data_shape=None,
-               force = False):
+               data_dim=None,
+               force=False):
 
         # check if port is ready to use
         if not self._check_status_and_activate():
@@ -166,7 +171,7 @@ class OutputPort(Port):
         if self._m_tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
             self._initialize_database_entry(data,
-                                            data_shape=data_shape)
+                                            data_dim=data_dim)
             return
 
         # NO -> database entry exists
@@ -175,31 +180,22 @@ class OutputPort(Port):
                 and self._m_data_storage.m_data_bank[self._m_tag].dtype == data.dtype:
 
             # YES -> shape and type matches
-            self.m_dtype = self._m_data_storage.m_data_bank[self._m_tag].dtype
-            actual_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
-            self.m_dim = len(actual_shape)
+            tmp_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
+            tmp_dim = len(tmp_shape)
 
+            # we always append in axis one independent of the dimension
             # 1D case
-            if self.m_dim == 1:
-                self._m_data_storage.m_data_bank[self._m_tag].resize(actual_shape[0] + data.shape[0], axis=0)
-                self._m_data_storage.m_data_bank[self._m_tag][actual_shape[0]::] = data
-            # 2D case
-            if self.m_dim == 2:
-                raise NotImplementedError('Missing, Sorry')
-
-            # 3D case
-            if self.m_dim == 3:
-                print self._m_data_storage.m_data_bank[self._m_tag].shape
-                self._m_data_storage.m_data_bank[self._m_tag].resize(actual_shape[0] + data.shape[0], axis=0)
-                print self._m_data_storage.m_data_bank[self._m_tag].shape
-                self._m_data_storage.m_data_bank[self._m_tag][actual_shape[0]::] = data
+            self._m_data_storage.m_data_bank[self._m_tag].resize(tmp_shape[0] + data.shape[0], axis=0)
+            self._m_data_storage.m_data_bank[self._m_tag][tmp_shape[0]::] = data
             return
 
         # NO -> shape or type is different
         # Check force
         if force:
             # YES -> Force is true
-            raise NotImplementedError('Missing, Sorry')
+            self.set_all(data=data,
+                         data_dim=data_dim)
+            return
 
         # NO -> Error message
         raise ValueError('The port tag %s is already used with a different data type. If you want to replace it use '
@@ -210,3 +206,33 @@ class OutputPort(Port):
 
     def deactivate(self):
         self.m_activate = False
+
+    def add_attribute(self,
+                      name,
+                      value):
+        self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
+
+    def get_attribute(self,
+                      name):
+        return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
+    def check_attribute(self,
+                        name,
+                        comparison_value):
+        """
+
+        :param name:
+        :param comparison_value:
+        :return: 1 does not exist, 0 exists and is equal, -1 exists but is not equal
+        """
+        if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+
+            if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
+                return 0
+            else:
+                return -1
+        else:
+            return 1
+
+
+
