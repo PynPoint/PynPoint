@@ -50,18 +50,37 @@ class Port:
                                 data_base_in):
         self._m_data_storage = data_base_in
 
+
 class InputPort(Port):
 
-    def __init__(self):
-        super(InputPort,self).__init__()
-        pass
+    def __init__(self,
+                 tag):
+        super(InputPort,self).__init__(tag)
+
+    def _check_status_and_activate(self):
+        if self._m_data_storage is None:
+            warnings.warn("Port can not store data unless a database is connected")
+            return False
+
+        if not self._m_data_base_active:
+            self.open_port()
 
     def get_index(self,
                   index):
         pass
 
     def get_all(self):
-        pass
+        self._check_status_and_activate()
+        return self._m_data_storage.m_data_bank[self._m_tag]
+
+    def get_attribute(self,
+                      name):
+        self._check_status_and_activate()
+        return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
+    def get_all_attributes(self):
+        self._check_status_and_activate()
+        return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
 
 class OutputPort(Port):
@@ -139,6 +158,7 @@ class OutputPort(Port):
     def set_index(self,
                   index,
                   data):
+        # TODO implement with Processing Module
         raise NotImplementedError('Missing, Sorry')
 
     def set_all(self,
@@ -232,10 +252,6 @@ class OutputPort(Port):
                       value):
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
 
-    def get_attribute(self,
-                      name):
-        return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-
     def check_attribute(self,
                         name,
                         comparison_value):
@@ -246,7 +262,6 @@ class OutputPort(Port):
         :return: 1 does not exist, 0 exists and is equal, -1 exists but is not equal
         """
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
                 return 0
             else:
@@ -257,6 +272,9 @@ class OutputPort(Port):
     def del_all_attributes(self):
         for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del attr
+
+    def flush(self):
+        self._m_data_storage.m_data_bank.flush()
 
 
 
