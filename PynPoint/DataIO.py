@@ -125,8 +125,10 @@ class OutputPort(Port):
         else:
             if data_dim == 2:  # case (2, 1)
                 data_shape = (None, first_data.shape[0])
+                first_data = first_data[np.newaxis, :]
             elif data_dim == 3:  # case (3, 2)
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
+                first_data = first_data[np.newaxis, :, :]
             else:
                 raise ValueError('Input shape not supported')  # this case should never be reached
 
@@ -175,14 +177,32 @@ class OutputPort(Port):
             return
 
         # NO -> database entry exists
-        # check if the existing data has the same shape and datatype
-        if (len(self._m_data_storage.m_data_bank[self._m_tag].shape) == data.ndim) \
-                and self._m_data_storage.m_data_bank[self._m_tag].dtype == data.dtype:
+        # check if the existing data has the same dim and datatype
+        tmp_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
+        tmp_dim = len(tmp_shape)
 
-            # YES -> shape and type matches
-            tmp_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
-            tmp_dim = len(tmp_shape)
+        # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
+        if data.ndim + 1 == data_dim:
+            if data_dim == 3:
+                data = data[np.newaxis, :, :]
+            if data_dim == 2:
+                data = data[np.newaxis, :]
 
+        def _type_check():
+            if tmp_dim == data.ndim:
+                if tmp_dim == 3:
+                    return (tmp_shape[1] == data.shape[1]) \
+                        and (tmp_shape[2] == data.shape[2])
+                elif tmp_dim == 2:
+                    return tmp_shape[1] == data.shape[1]
+                else:
+                    return True
+            else:
+                return False
+
+        if _type_check():
+
+            # YES -> dim and type match
             # we always append in axis one independent of the dimension
             # 1D case
             self._m_data_storage.m_data_bank[self._m_tag].resize(tmp_shape[0] + data.shape[0], axis=0)
@@ -233,6 +253,10 @@ class OutputPort(Port):
                 return -1
         else:
             return 1
+
+    def del_all_attributes(self):
+        for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            del attr
 
 
 
