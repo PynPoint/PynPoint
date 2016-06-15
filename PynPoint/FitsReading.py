@@ -67,7 +67,8 @@ class ReadFitsCubesDirectory(ReadingModule):
         for key in self.m_non_static_keys:
             self.add_output_port("/header_"+self.m_image_tag+"/"+key)
 
-    def _read_single_file(self, fits_file,
+    def _read_single_file(self,
+                          fits_file,
                           tmp_location,
                           overwrite_keys):
 
@@ -123,7 +124,6 @@ class ReadFitsCubesDirectory(ReadingModule):
                 warnings.warn('Unknown Header "%s" key found' %str(key))
 
             hdulist.close()
-            self._m_out_ports[self.m_image_tag].close_port()
 
     def run(self):
 
@@ -149,3 +149,5 @@ class ReadFitsCubesDirectory(ReadingModule):
             self._read_single_file(fits_file,
                                    tmp_location,
                                    overwrite_keys)
+            self._m_out_ports[self.m_image_tag].flush()
+        self._m_out_ports[self.m_image_tag].close_port()

@@ -4,13 +4,13 @@ import os
 import warnings
 
 # own modules
-from DataIO import OutputPort
+from DataIO import OutputPort, InputPort
 
 class PypelineModule:
     __metaclass__ = ABCMeta
 
     def __init__(self,
-                 name_in=None):
+                 name_in):
         assert (type(name_in) == str), "Error: Name needs to be a String"
         self._m_name = name_in
 
@@ -32,19 +32,32 @@ class WritingModule(PypelineModule):
     __metaclass__ = ABCMeta
 
     def __init__(self,
-                 name_in=None,
+                 name_in,
                  output_dir=None):
         # call super for saving the name
         super(WritingModule, self).__init__(name_in)
 
         # If output_dir is None its location will be the Pypeline default output directory
-        assert (os.path.isdir(str(output_dir)) or output_dir is None), 'Error: Output directory for writing module' \
-                                                                       ' does not exist - input requested: ' \
-                                                                       '%s' % output_dir
+        assert (os.path.isdir(str(output_dir))
+                or output_dir is None), 'Error: Output directory for writing module does not exist'\
+                                        ' - input requested: %s' % output_dir
         self.m_output_location = output_dir
+        self._m_input_ports = {}
 
-    # TODO: Ports
+    def add_input_port(self,
+                       tag):
+        # TODO Documentation
 
+        tmp_port = InputPort(tag)
+        if tag in self._m_input_ports:
+            warnings.warn('Tag already used. Updating..')
+
+        self._m_input_ports[tag] = tmp_port
+
+    def connect_database(self,
+                         data_base_in):
+        for key, port in self._m_input_ports.iteritems():
+            port.set_database_connection(data_base_in)
 
 
 class ProcessingModule(PypelineModule):
@@ -59,15 +72,15 @@ class ReadingModule(PypelineModule):
     __metaclass__ = ABCMeta
 
     def __init__(self,
-                 name_in=None,
+                 name_in,
                  input_dir=None):
         super(ReadingModule, self).__init__(name_in)
         # TODO Documentation
 
         # If input_dir is None its location will be the Pypeline default input directory
-        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Error: Input directory for reading module' \
-                                                                       ' does not exist - input requested: ' \
-                                                                       '%s' % input_dir
+        assert (os.path.isdir(str(input_dir))
+                or input_dir is None), 'Error: Input directory for reading module does not exist ' \
+                                       '- input requested: %s' % input_dir
         self.m_input_location = input_dir
         self._m_out_ports = {}
 
