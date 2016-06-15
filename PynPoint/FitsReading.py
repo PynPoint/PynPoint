@@ -1,25 +1,30 @@
+"""
+Module for reading Different kinds of .fits data
+"""
 # external modules
-import numpy as np
 import os
-from astropy.io import fits
 import warnings
+import numpy as np
+from astropy.io import fits
+
 
 # own classes
-from Processing import ReadingModule
+from Processing import ReadingModule #from PynPoint.Processing import ReadingModule
 
 
 class ReadFitsCubesDirectory(ReadingModule):
     """
     Reads .fits files from the given input_dir or the default directory of the Pypeline.
     The .fits files need to be in cube mode containing multiple images per .fits file.
-    For the calculation of the paralactic angle the tags "" and "" need to be in the header of the files.
-    (THIS CLASS IS MADE FOR NACO / VLT ADI DATA)
+    For the calculation of the paralactic angle the tags "" and "" need to be in the header of the
+    files. (THIS CLASS IS MADE FOR NACO / VLT ADI DATA)
     """
 
     def __init__(self,
                  name_in=None,
                  input_dir=None,
                  image_tag="im_arr",
+                 force_overwrite_in_databank=True,
                  **kwargs):
 
         super(ReadFitsCubesDirectory, self).__init__(name_in,
@@ -27,6 +32,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         self.m_image_tag = image_tag
         self.add_output_port(image_tag,
                              True)
+        self._m_overwrite = force_overwrite_in_databank
 
         # read NACO static and non static keys
         static_keys_file = open("./config/NACO_static_header_keys.txt", "r")
@@ -39,22 +45,85 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         # add additional keys
         if 'new_static' in kwargs:
-            assert (os.path.isfile(kwargs['new_static'])), 'Error: Input file for static header keywords not found' \
-                                                           ' - input requested: %s' % kwargs['new_static']
+            assert (os.path.isfile(kwargs['new_static'])), 'Error: Input file for static header ' \
+                                                           'keywords not found - input requested:' \
+                                                           ' %s' % kwargs['new_static']
+
             static_keys_file = open(kwargs['new_static'], "r")
             self.m_static_keys.extend(static_keys_file.read().split(",\n"))
             static_keys_file.close()
 
         if 'new_non_static' in kwargs:
-            assert (os.path.isfile(kwargs['new_non_static'])), 'Error: Input file for non static header keywords not ' \
-                                                               'found - input requested: %s' % kwargs['new_non_static']
+            assert (os.path.isfile(kwargs['new_non_static'])), 'Error: Input file for non static ' \
+                                                               'header keywords not found - input' \
+                                                               ' requested: %s' \
+                                                               % kwargs['new_non_static']
+
             non_static_keys_file = open(kwargs['new_non_static'], "r")
             self.m_non_static_keys.extend(non_static_keys_file.read().split(",\n"))
             non_static_keys_file.close()
 
         # create port for each non-static key
         for key in self.m_non_static_keys:
-            self.add_output_port(key)
+            self.add_output_port("/header_"+self.m_image_tag+"/"+key)
+
+    def _read_single_file(self, fits_file,
+                          tmp_location,
+                          overwrite_keys):
+
+        print "Reading " + str(fits_file)
+
+        hdulist = fits.open(tmp_location + fits_file)
+
+        if self._m_overwrite and self.m_image_tag not in overwrite_keys:
+            # rest image array and all attached attributes
+            self._m_out_ports[self.m_image_tag].set_all(
+                hdulist[0].data.byteswap().newbyteorder(),
+                data_dim=3)
+
+            self._m_out_ports[self.m_image_tag].del_all_attributes()
+            overwrite_keys.append(self.m_image_tag)
+        else:
+            self._m_out_ports[self.m_image_tag].append(
+                hdulist[0].data.byteswap().newbyteorder(),
+                data_dim=3)
+
+        # store header info
+        tmp_header = hdulist[0].header
+
+        # store static header information (e.g. Instrument name) as attributes
+        # and non static using Ports
+        # Use the NACO / VLT specific header tags
+        for key in tmp_header:
+            if key in self.m_static_keys:
+                check = self._m_out_ports[self.m_image_tag].check_attribute(key,
+                                                                            tmp_header[key])
+                if check == -1:
+                    warnings.warn('Static keyword %s has changed. Probably the current '
+                                  'file %s does not belong to the data set "%s" of the PynPoint'
+                                  ' database. Updating Keyword...' \
+                                  % (key, fits_file, self.m_image_tag))
+                elif check == 0:
+                    # Attribute is known and is still the same
+                    pass
+                else:
+                    # Attribute is new -> add
+                    self._m_out_ports[self.m_image_tag].add_attribute(key, tmp_header[key])
+
+            elif key in self.m_non_static_keys:
+                # use Port
+                port_key = "/header_"+self.m_image_tag+"/"+key
+                if self._m_overwrite and key not in overwrite_keys:
+                    # delete key
+                    self._m_out_ports[port_key].set_all(np.asarray([tmp_header[key],]))
+                    overwrite_keys.append(key)
+                else:
+                    self._m_out_ports[port_key].append(np.asarray([tmp_header[key],]))
+            elif key is not "":
+                warnings.warn('Unknown Header "%s" key found' %str(key))
+
+            hdulist.close()
+            self._m_out_ports[self.m_image_tag].close_port()
 
     def run(self):
 
@@ -72,36 +141,11 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         assert(len(files) > 0), 'Error no .fits files found in %s' % self.m_input_location
 
+        # overwrite_keys save the database keys which were updated. Used for overwriting only
+        overwrite_keys = []
+
         # read file and append data to storage
         for fits_file in files:
-            print "Reading " + str(fits_file)
-
-            hdulist = fits.open(tmp_location + fits_file)
-            self._m_out_ports[self.m_image_tag].append(hdulist[0].data.byteswap().newbyteorder())
-
-            # store header info
-            tmp_header = hdulist[0].header
-
-            # store static header information (e.g. Instrument name) as attributes
-            # and non static using Ports
-            # Use the NACO / VLT specific header tags
-            for key in tmp_header:
-                if key in self.m_static_keys:
-                    check = self._m_out_ports[self.m_image_tag].check_attribute(key, tmp_header[key])
-                    if check == -1:
-                        warnings.warn('Static keyword %s has changed. Probably the current file %s does not '
-                                      'belong to the data set %s of the PynPoint database. '
-                                      'Updating Keyword...' % (key, fits_file, self.m_image_tag))
-                    elif check == 0:
-                        # Attribute is known and is still the same
-                        pass
-                    else:
-                        # Attribute is new -> add
-                        self._m_out_ports[self.m_image_tag].add_attribute(key, tmp_header[key])
-
-                elif key in self.m_non_static_keys:
-                    # use Port
-                    self._m_out_ports[key].append(np.asarray([tmp_header[key],]))
-
-            hdulist.close()
-        self._m_out_ports[self.m_image_tag].close_port()
+            self._read_single_file(fits_file,
+                                   tmp_location,
+                                   overwrite_keys)
