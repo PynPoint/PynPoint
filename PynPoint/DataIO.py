@@ -1,3 +1,6 @@
+"""
+Modules to save and load data in / from a .hdf5 database.
+"""
 from abc import ABCMeta, abstractmethod
 import warnings
 import h5py
@@ -31,7 +34,7 @@ class Port:
     @abstractmethod
     def __init__(self,
                  tag):
-        assert (type(tag) == str), "Error: Port tags need to be strings."
+        assert (isinstance(tag, str)), "Error: Port tags need to be strings."
         self._m_tag = tag
         self._m_data_storage = None
         self._m_data_base_active = False
@@ -55,19 +58,24 @@ class InputPort(Port):
 
     def __init__(self,
                  tag):
-        super(InputPort,self).__init__(tag)
+        super(InputPort, self).__init__(tag)
 
     def _check_status_and_activate(self):
         if self._m_data_storage is None:
-            warnings.warn("Port can not store data unless a database is connected")
+            warnings.warn("Port can not load data unless a database is connected")
             return False
 
         if not self._m_data_base_active:
             self.open_port()
 
-    def get_index(self,
-                  index):
-        pass
+        return True
+
+    def __getitem__(self, item):
+
+        if not self._check_status_and_activate():
+            return
+
+        return self._m_data_storage.m_data_bank[self._m_tag][item]
 
     def get_all(self):
         self._check_status_and_activate()
@@ -115,9 +123,9 @@ class OutputPort(Port):
         """
 
         # check Error cases
-        if type(first_data) is not np.ndarray or first_data.ndim > 3 or first_data.ndim < 1:
-            raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want to save a int,'
-                             'float, string ... use Port attributes instead.')
+        if isinstance(first_data, np.array) or first_data.ndim > 3 or first_data.ndim < 1:
+            raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want '
+                             'to save a int, float, string ... use Port attributes instead.')
 
         if data_dim is None:
             data_dim = first_data.ndim
@@ -155,11 +163,11 @@ class OutputPort(Port):
                                                         data=first_data,
                                                         maxshape=data_shape)
 
-    def set_index(self,
-                  index,
-                  data):
-        # TODO implement with Processing Module
-        raise NotImplementedError('Missing, Sorry')
+    def __setitem__(self, key, value):
+        if not self._check_status_and_activate():
+            return
+
+        self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
     def set_all(self,
                 data,
@@ -225,7 +233,8 @@ class OutputPort(Port):
             # YES -> dim and type match
             # we always append in axis one independent of the dimension
             # 1D case
-            self._m_data_storage.m_data_bank[self._m_tag].resize(tmp_shape[0] + data.shape[0], axis=0)
+            self._m_data_storage.m_data_bank[self._m_tag].resize(tmp_shape[0] + data.shape[0],
+                                                                 axis=0)
             self._m_data_storage.m_data_bank[self._m_tag][tmp_shape[0]::] = data
             return
 
@@ -238,8 +247,8 @@ class OutputPort(Port):
             return
 
         # NO -> Error message
-        raise ValueError('The port tag %s is already used with a different data type. If you want to replace it use '
-                         'force = True.' % self._m_tag)
+        raise ValueError('The port tag %s is already used with a different data type. If you want '
+                         'to replace it use force = True.' % self._m_tag)
 
     def activate(self):
         self.m_activate = True
@@ -275,6 +284,3 @@ class OutputPort(Port):
 
     def flush(self):
         self._m_data_storage.m_data_bank.flush()
-
-
-
