@@ -1,17 +1,22 @@
+"""
+Different interfaces for Pypeline Modules.
+"""
+
 # external modules
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 import os
 import warnings
 
 # own modules
-from DataIO import OutputPort, InputPort
+from PynPoint.DataIO import OutputPort, InputPort
+
 
 class PypelineModule:
     __metaclass__ = ABCMeta
 
     def __init__(self,
                  name_in):
-        assert (type(name_in) == str), "Error: Name needs to be a String"
+        assert (isinstance(name_in, str)), "Error: Name needs to be a String"
         self._m_name = name_in
 
     @property
@@ -46,7 +51,6 @@ class WritingModule(PypelineModule):
 
     def add_input_port(self,
                        tag):
-        # TODO Documentation
 
         tmp_port = InputPort(tag)
         if tag in self._m_input_ports:
@@ -59,12 +63,48 @@ class WritingModule(PypelineModule):
         for key, port in self._m_input_ports.iteritems():
             port.set_database_connection(data_base_in)
 
+    @abstractmethod
+    def run(self):
+        pass
+
 
 class ProcessingModule(PypelineModule):
+    __metaclass__ = ABCMeta
 
     def __init__(self,
                  name_in):
-        # TODO: Ports
+
+        super(ProcessingModule, self).__init__(name_in)
+
+        self._m_input_ports = {}
+        self._m_output_ports = {}
+
+    def add_input_port(self,
+                       tag):
+
+        tmp_port = InputPort(tag)
+        if tag in self._m_input_ports:
+            warnings.warn('Tag already used. Updating..')
+
+        self._m_input_ports[tag] = tmp_port
+
+    def add_output_port(self,
+                        tag):
+        tmp_port = OutputPort(tag)
+        if tag in self._m_input_ports:
+            warnings.warn('Tag already used. Updating..')
+
+        self._m_input_ports[tag] = tmp_port
+
+    def connect_database(self,
+                         data_base_in):
+        for key, port in self._m_input_ports.iteritems():
+            port.set_database_connection(data_base_in)
+        for key, port in self._m_output_ports.iteritems():
+            port.set_database_connection(data_base_in)
+
+    @abstractmethod
+    def run(self):
         pass
 
 
@@ -75,7 +115,6 @@ class ReadingModule(PypelineModule):
                  name_in,
                  input_dir=None):
         super(ReadingModule, self).__init__(name_in)
-        # TODO Documentation
 
         # If input_dir is None its location will be the Pypeline default input directory
         assert (os.path.isdir(str(input_dir))
@@ -87,7 +126,6 @@ class ReadingModule(PypelineModule):
     def add_output_port(self,
                         tag,
                         default_activation=True):
-        # TODO Documentation
 
         tmp_port = OutputPort(tag,
                               default_activation)
@@ -100,3 +138,7 @@ class ReadingModule(PypelineModule):
                          data_base_in):
         for key, port in self._m_out_ports.iteritems():
             port.set_database_connection(data_base_in)
+
+    @abstractmethod
+    def run(self):
+        pass
