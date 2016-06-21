@@ -123,7 +123,7 @@ class OutputPort(Port):
         """
 
         # check Error cases
-        if isinstance(first_data, np.array) or first_data.ndim > 3 or first_data.ndim < 1:
+        if isinstance(first_data, bytearray) or first_data.ndim > 3 or first_data.ndim < 1:
             raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want '
                              'to save a int, float, string ... use Port attributes instead.')
 
