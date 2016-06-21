@@ -1,5 +1,5 @@
 """
-Module for reading Different kinds of .fits data
+Module for reading different kinds of .fits data
 """
 # external modules
 import os
@@ -14,10 +14,26 @@ from Processing import ReadingModule #from PynPoint.Processing import ReadingMod
 
 class ReadFitsCubesDirectory(ReadingModule):
     """
+    (THIS CLASS WAS MADE FOR NACO / VLT ADI DATA. USE CAREFULLY WITH DIFFERENT DATA)
     Reads .fits files from the given input_dir or the default directory of the Pypeline.
-    The .fits files need to be in cube mode containing multiple images per .fits file.
-    For the calculation of the paralactic angle the tags "" and "" need to be in the header of the
-    files. (THIS CLASS IS MADE FOR NACO / VLT ADI DATA)
+    The .fits files need to contain 2D images with same shape and type. The header of the .fits
+    files is scanned for known static attributes (do not change from .fits file to .fits file) and
+    non static attributes (e.g. the air mass ...). Known static and non static header entries are
+    stored in the files:
+        -> config/NACO_non_static_header_keys.txt
+        -> config/NACO_static_header_keys.txt
+
+    Static entries will be saved as .hdf5 attributes while changing entries will be saved as own
+    data sets in the sub folder "header_" + image_tag. (see __init__()).
+    Not known header entries will cause warning. It is possible to extend the known keywords by
+    loading own static_header_keys and non_static_header_keys files. (see __init__(...) for more
+    information.
+
+    If the .fits files in the input directory have
+    changing static attributes or the shape of the input is changing a warning is caused too.
+
+    Note per default this module will overwrite all existing data with the same tags in the data
+    base.
     """
 
     def __init__(self,
@@ -26,6 +42,35 @@ class ReadFitsCubesDirectory(ReadingModule):
                  image_tag="im_arr",
                  force_overwrite_in_databank=True,
                  **kwargs):
+        """
+        Constructor of a ReadFitsCubesDirectory instance. As all Reading Modules it has a name and
+        input directory (see more information ReadingModule). In addition a image_tag can be chosen
+        which will be the tag / key of the read data in the .hdf5 database. For more information
+        see the class documentation.
+        :param name_in: Name of the Module
+        :type name_in: String
+        :param input_dir: Input directory where the .fits files are located. If not specified the
+            Pypeline default directory is used.
+        :type input_dir: String (Needs to be a directory, if not raises errors)
+        :param image_tag: Tag of the input data read data in the .hdf5 data base. Non static header
+            information is stored with the tag: "header_" + image_tag / #header_entry_name#
+        :type image_tag: String
+        :param force_overwrite_in_databank: If True existing data (header and the actual data set)
+            in the .hdf5 data base will be overwritten.
+        :type force_overwrite_in_databank: Boolean
+        :param kwargs:
+            new_static: Location of a file defining new static header entries used in the .fits file
+                which is useful for non NACO / VLT data. The file needs to be formatted like this:
+                    <<KEY WORD>>,
+                    <<KEY WORD>>,
+                    <<KEY WORD>>
+                while <<KEY WORD>> needs to be replaced with the header entry keyword.
+
+            new_non_static: Location of a file defining new non static header entries used in the
+            .fits file which is useful for non NACO / VLT data. The file needs to be formatted like
+            the one for new_static header entries.
+        :return: None
+        """
 
         super(ReadFitsCubesDirectory, self).__init__(name_in,
                                                      input_dir)
