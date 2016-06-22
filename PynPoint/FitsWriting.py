@@ -1,6 +1,5 @@
 """
-Module for writing data as .fits file. Note non static Attributes usually stored in the hdf5 header
-folder can not be written.
+Module for writing data as .fits file.
 """
 # external modules
 import warnings
@@ -8,19 +7,42 @@ import os
 from astropy.io import fits
 
 # own classes
-from Processing import WritingModule
+from PynPoint.Processing import WritingModule
 
 
 class WriteAsSingleFitsFile(WritingModule):
+    """
+    Module for writing a data set of the .hdf5 data base as .fits file. The data and all attached
+    attributes will be saved. Beside typical image stacks it is possible to write arrays to export
+    for example non static header information. To chose the data set from the data base its tag
+    / key has to be specified. WriteAsSingleFitsFile is a Writing Module and supports to use the
+    Pypeline default output directory as well as a own location. (see Processing.WritingModule for
+    more information)
+    """
 
     def __init__(self,
                  name_in,
                  file_name,
                  output_dir=None,
                  data_tag="im_arr"):
+        """
+        Constructor of the WriteAsSingleFitsFile module. It needs the name the output file should
+        have as well as the data set tag it has to export to the file. See class documentation for
+        more information.
+        :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
+            dictionary. (See Pypeline for more information)
+        :type name_in: String
+        :param file_name: Name of the .fits output file. Needs to end with ".fits"
+        :type file_name: String
+        :param output_dir: Output directory where the .fits file will be stored. If no folder is
+            specified the Pypeline default is chosen.
+        :param data_tag: Tag of the data base entry the module has to export as .fits file.s
+        :type data_tag: String
+        :return: None
+        """
         super(WriteAsSingleFitsFile, self).__init__(name_in=name_in,
                                                     output_dir=output_dir)
-        if type(file_name) is not str:
+        if not isinstance(file_name, str):
             raise ValueError("Output file_name needs to be a String")
 
         if not file_name.endswith(".fits"):
@@ -31,6 +53,11 @@ class WriteAsSingleFitsFile(WritingModule):
         self.add_input_port(data_tag)
 
     def run(self):
+        """
+        Run method of the module. Creates the actual .fits file and saves the data as well as its
+        attributes.
+        :return: None
+        """
 
         if not self.m_output_location.endswith('/'):
             out_name = self.m_output_location +'/' + self.m_file_name
