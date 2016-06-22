@@ -9,8 +9,8 @@ import collections
 import warnings
 
 # own modules
-from Processing import PypelineModule, WritingModule, ReadingModule
-from DataIO import DataStorage
+from PynPoint.Processing import PypelineModule, WritingModule, ReadingModule
+from PynPoint.DataIO import DataStorage
 
 
 class Pypeline(object):
