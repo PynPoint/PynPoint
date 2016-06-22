@@ -4,12 +4,12 @@ Module for reading different kinds of .fits data
 # external modules
 import os
 import warnings
-import numpy as np
 from astropy.io import fits
+import numpy as np
 
 
 # own classes
-from Processing import ReadingModule #from PynPoint.Processing import ReadingModule
+from PynPoint.Processing import ReadingModule
 
 
 class ReadFitsCubesDirectory(ReadingModule):

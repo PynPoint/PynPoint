@@ -8,7 +8,7 @@ import os
 import warnings
 
 # own modules
-from DataIO import OutputPort, InputPort
+from PynPoint.DataIO import OutputPort, InputPort
 
 
 class PypelineModule:
