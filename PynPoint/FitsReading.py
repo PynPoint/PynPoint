@@ -67,8 +67,8 @@ class ReadFitsCubesDirectory(ReadingModule):
                 while <<KEY WORD>> needs to be replaced with the header entry keyword.
 
             new_non_static: Location of a file defining new non static header entries used in the
-            .fits file which is useful for non NACO / VLT data. The file needs to be formatted like
-            the one for new_static header entries.
+            .fits file which is useful for non NACO / VLT data. The file needs to be formatted the
+            same way like the new_static header entries.
         :return: None
         """
 
@@ -116,6 +116,23 @@ class ReadFitsCubesDirectory(ReadingModule):
                           fits_file,
                           tmp_location,
                           overwrite_keys):
+        """
+        Internal function which reads a single .fits file and appends it to the database. The
+        function gets a list of overwriting_keys. If a new key (header entry or image data) is found
+        that is not on this list the old entry is overwritten if self._m_overwrite is active. After
+        replacing the old entry the key is added to the overwriting_keys. This procedure guaranties
+        that all old data base information, that does not belong to the new data set that is read by
+        ReadFitsCubesDirectory is replaced and the rest is kept.
+
+        Note the function prints the name of the file it is currently reading
+
+        :param fits_file: Name of the .fits file
+        :type fits_file: String
+        :param tmp_location: Directory where the .fits file is located.
+        :type tmp_location: String
+        :param overwrite_keys: The list of keys that will not be overwritten by the function
+        :return: None
+        """
 
         print "Reading " + str(fits_file)
 
@@ -171,6 +188,13 @@ class ReadFitsCubesDirectory(ReadingModule):
             hdulist.close()
 
     def run(self):
+        """
+        Run method of the module. It looks for all .fits files in the input directory and reads them
+        using the internal function _read_single_file().
+        Note if self._m_overwrite = force_overwrite_in_databank is True old data base information is
+        overwritten by the module.
+        :return: None
+        """
 
         if not self.m_input_location.endswith('/'):
             tmp_location = self.m_input_location +'/'
