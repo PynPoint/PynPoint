@@ -20,6 +20,7 @@ class DataStorage(object):
         """
         Constructor of a DataStorage instance. Needs the location of the .hdf5 file as input. If the
         file already exists it is opened and extended if needed, if not a new File is created.
+
         :param location_in: Location (directory + name) of the .hdf5 data bank
         :type location_in: String
         :return: None
@@ -31,6 +32,7 @@ class DataStorage(object):
     def open_connection(self):
         """
         Opens the connection to the .hdf5 file by opening / creating it.
+
         :return: None
         """
         if self.m_open:
@@ -42,6 +44,7 @@ class DataStorage(object):
         """
         Closes the connection to the .hdf5 file. All entries of the data bank will be stored on the
         hard drive and the memory is cleaned.
+
         :return: None
         """
         if not self.m_open:
@@ -66,6 +69,7 @@ class Port:
         """
         Abstract constructor of a Port. As input the tag / key is expected with is needed to build
         the connection to the database entry with the same tag / key.
+
         :param tag: Input Tag
         :type tag: String
         :return: None
@@ -79,6 +83,7 @@ class Port:
         """
         Closes the connection to the Data Storage and force it to save the data to the hard drive.
         All data that was accessed using the port is cleaned from the memory.
+
         :return: None
         """
         if self._m_data_base_active:
@@ -88,6 +93,7 @@ class Port:
     def open_port(self):
         """
         Opens the connection to the Data Storage and activates its data bank.
+
         :return: None
         """
         if not self._m_data_base_active:
@@ -98,6 +104,7 @@ class Port:
                                 data_base_in):
         """
         Sets the internal Data Storage instance.
+
         :param data_base_in: The inout data storage
         :type data_base_in: DataStorage
         :return: None
@@ -127,6 +134,7 @@ class InputPort(Port):
         """
         Constructor of the InputPort class crating a input port instance with the tag self._m_tag.
         This function is just calling the super constructor (i.e. __init__() of Port).
+
         :param tag: Input Tag
         :type tag: Sting
         :return: None
@@ -136,6 +144,7 @@ class InputPort(Port):
     def _check_status_and_activate(self):
         """
         Internal function which checks if the port is ready to use and open it.
+
         :return: Returns True if the Port can be used, False if not.
         :rtype: Boolean
         """
@@ -154,6 +163,7 @@ class InputPort(Port):
         example.
         Note this function returns a copy of the data and not the actual data bank data.
         Changing this copy will not change the data bank data.
+
         :param item: Slicing input
         :return: A array of the ordered data.
         """
@@ -161,37 +171,45 @@ class InputPort(Port):
         if not self._check_status_and_activate():
             return
 
-        return copy.deepcopy(self._m_data_storage.m_data_bank[self._m_tag][item])
+        result = self._m_data_storage.m_data_bank[self._m_tag][item]
+
+        if isinstance(result, bytearray):
+            return np.asarray(result, dtype=np.float64)
+
+        return result
 
     def get_all(self):
         """
         Returns the whole data set stored in the data bank under the Port tag (self._m_tag).
         Note this function returns a copy of the data and not the actual data bank data.
         Changing this copy will not change the data bank data.
-        :return:
+
+        :return: The data set
         """
         self._check_status_and_activate()
-        return copy.deepcopy(self._m_data_storage.m_data_bank[self._m_tag])
+        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag], dtype=np.float64)
 
     def get_attribute(self,
                       name):
         """
         Returns one attribute by name of the data set stored in the data bank under the Port tag
         (self._m_tag).
+
         :param name: Name of the attribute to be returned
         :return: The attribute value
         """
         self._check_status_and_activate()
-        return copy.deepcopy(self._m_data_storage.m_data_bank[self._m_tag].attrs[name])
+        return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
     def get_all_attributes(self):
         """
         Returns all attributes of the data set stored in the data bank under the Port tag
         (self._m_tag) as dictionary {attr_name: attr_value}.
-        :return:
+
+        :return: dictionary of all attributes
         """
         self._check_status_and_activate()
-        return copy.deepcopy(self._m_data_storage.m_data_bank[self._m_tag].attrs)
+        return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
 
 class OutputPort(Port):
@@ -219,6 +237,7 @@ class OutputPort(Port):
                  activate_init=True):
         """
         Constructor for a OutputPort class instance with the tag self._m_tag.
+
         :param tag: Tag of the Port
         :type tag: String
         :param activate_init: start activation status. If False the Port will not save data until
@@ -234,6 +253,7 @@ class OutputPort(Port):
     def _check_status_and_activate(self):
         """
         Internal function which checks if the port is ready to use and open it.
+
         :return: Returns True if the Port can be used, False if not.
         :rtype: Boolean
         """
@@ -327,6 +347,7 @@ class OutputPort(Port):
         """
         Internal function needed to change data using slicing. See class documentation for an
         example.
+
         :param key: Slicing indices to be changed
         :param value: New values
         :return: None
@@ -338,7 +359,8 @@ class OutputPort(Port):
 
     def set_all(self,
                 data,
-                data_dim=None):
+                data_dim=None,
+                keep_attributes = False):
         """
         Set the data in the data base by replacing all old values with the values of the input data.
         If no old values exists the data is just stored. Since it is not possible to change the
@@ -360,6 +382,7 @@ class OutputPort(Port):
 
         After creation it is possible to extend a data set using append(...) along the first
         dimension.
+
         :param data: The data to be saved
         :param data_dim: number of desired dimensions. If None the dimension of the first_data is
             used.
@@ -370,15 +393,24 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
+        tmp_attributes = {}
         # check if database entry is new...
         if self._m_tag in self._m_data_storage.m_data_bank:
             # NO -> database entry exists
+            if keep_attributes:
+                # we have to copy all attributes since deepcopy is not supported
+                for key, value in self._m_data_storage.m_data_bank[self._m_tag].attrs.iteritems():
+                    tmp_attributes[key] = value
+
             # remove database entry
             del self._m_data_storage.m_data_bank[self._m_tag]
 
         # make new database entry
         self._initialize_database_entry(data,
                                         data_dim=data_dim)
+        if keep_attributes:
+            for key, value in tmp_attributes.iteritems():
+                self._m_data_storage.m_data_bank[self._m_tag].attrs[key] = value
         return
 
     def append(self,
@@ -399,6 +431,7 @@ class OutputPort(Port):
         It is possible to force the function to overwrite the existing data set if or only if the
         shape or type of the input data does not match the existing data. Warning: This can delete
         all existing data.
+
         :param data: The data which will be appended
         :type data: bytearray
         :param data_dim: number of desired dimensions used if a new data set is created. If None
@@ -469,6 +502,7 @@ class OutputPort(Port):
     def activate(self):
         """
         Activates the port. A non activated port will not save data.
+
         :return: None
         """
         self.m_activate = True
@@ -476,6 +510,7 @@ class OutputPort(Port):
     def deactivate(self):
         """
         Deactivates the port. A non activated port will not save data.
+
         :return: None
         """
         self.m_activate = False
@@ -486,6 +521,7 @@ class OutputPort(Port):
         """
         Adds a attribute to the data set. Attributes need to be simple types like float, int or
         sting. (NO arrays)
+
         :param name: Name of the attribute
         :param value: Value of the attribute
         :return: None
@@ -496,6 +532,7 @@ class OutputPort(Port):
                       name):
         """
         Deletes the attribute of the data set by a given name.
+
         :param name: Name of the attribute.
         :return: None
         """
@@ -506,6 +543,7 @@ class OutputPort(Port):
                         comparison_value):
         """
         Checks if a attribute exists and if it is equal to a comparison value.
+
         :param name: Name of the attribute
         :param comparison_value: Value for comparison
         :return: 1 if the attribute does not exist
@@ -523,6 +561,7 @@ class OutputPort(Port):
     def del_all_attributes(self):
         """
         Deletes all attributes of the data set.
+
         :return: None
         """
         for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
@@ -532,6 +571,7 @@ class OutputPort(Port):
         """
         Forces the Data Storage to save all data from the memory to the hard drive without closing
         it.
+
         :return: None
         """
         self._m_data_storage.m_data_bank.flush()
