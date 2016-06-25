@@ -29,6 +29,7 @@ class WriteAsSingleFitsFile(WritingModule):
         Constructor of the WriteAsSingleFitsFile module. It needs the name the output file should
         have as well as the data set tag it has to export to the file. See class documentation for
         more information.
+
         :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
             dictionary. (See Pypeline for more information)
         :type name_in: String
@@ -56,6 +57,7 @@ class WriteAsSingleFitsFile(WritingModule):
         """
         Run method of the module. Creates the actual .fits file and saves the data as well as its
         attributes.
+
         :return: None
         """
 
