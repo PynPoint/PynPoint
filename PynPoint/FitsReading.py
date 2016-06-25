@@ -47,6 +47,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         input directory (see more information ReadingModule). In addition a image_tag can be chosen
         which will be the tag / key of the read data in the .hdf5 database. For more information
         see the class documentation.
+
         :param name_in: Name of the Module
         :type name_in: String
         :param input_dir: Input directory where the .fits files are located. If not specified the
@@ -80,11 +81,11 @@ class ReadFitsCubesDirectory(ReadingModule):
         self._m_overwrite = force_overwrite_in_databank
 
         # read NACO static and non static keys
-        static_keys_file = open("./config/NACO_static_header_keys.txt", "r")
+        static_keys_file = open("PynPoint/config/NACO_static_header_keys.txt", "r")
         self.m_static_keys = static_keys_file.read().split(",\n")
         static_keys_file.close()
 
-        non_static_keys_file = open("./config/NACO_non_static_header_keys.txt", "r")
+        non_static_keys_file = open("PynPoint/config/NACO_non_static_header_keys.txt", "r")
         self.m_non_static_keys = non_static_keys_file.read().split(",\n")
         non_static_keys_file.close()
 
@@ -111,6 +112,9 @@ class ReadFitsCubesDirectory(ReadingModule):
         # create port for each non-static key
         for key in self.m_non_static_keys:
             self.add_output_port("/header_"+self.m_image_tag+"/"+key)
+
+        # create port for file list
+        self.add_output_port("/header_"+self.m_image_tag+"/"+"Used_Files")
 
     def _read_single_file(self,
                           fits_file,
@@ -193,6 +197,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         using the internal function _read_single_file().
         Note if self._m_overwrite = force_overwrite_in_databank is True old data base information is
         overwritten by the module.
+
         :return: None
         """
 
@@ -220,3 +225,27 @@ class ReadFitsCubesDirectory(ReadingModule):
                                    overwrite_keys)
             self._m_out_ports[self.m_image_tag].flush()
         self._m_out_ports[self.m_image_tag].close_port()
+
+        # TODO add to function Documentation
+        # add number of files and files used to create the database entry as attribute / header
+        new_files_num = len(files)
+        new_files = []
+        for fits_file in files:
+            new_files.append(tmp_location+ fits_file)
+
+        if self._m_overwrite:
+            # no old files have been used
+            self._m_out_ports[self.m_image_tag].open_port()
+            self._m_out_ports[self.m_image_tag].add_attribute("Num_Files", new_files_num)
+
+            self._m_out_ports["/header_"+self.m_image_tag+"/"+"Used_Files"]\
+                .set_all(np.asarray(new_files))
+
+            self._m_out_ports["/header_"+self.m_image_tag+"/"+"Used_Files"].close_port()
+            self._m_out_ports[self.m_image_tag].close_port()
+        else:
+            # appended data
+            self._m_out_ports[self.m_image_tag].open_port()
+            new_files_num += self._m_out_ports[self.m_image_tag].get_attribute("Num_Files")
+            self._m_out_ports[self.m_image_tag].add_attribute("Num_Files", new_files_num)
+            self._m_out_ports[self.m_image_tag].close_port()
