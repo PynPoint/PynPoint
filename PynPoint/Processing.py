@@ -28,6 +28,7 @@ class PypelineModule:
         """
         Abstract constructor of a Pypeline Module which needs a Module name as identifier, checks
         its type and saves it.
+
         :param name_in: The name of the Pypeline Module
         :type name_in: String
         :return: None
@@ -41,6 +42,7 @@ class PypelineModule:
         """
         Returns the name of the Pypeline Module. The property makes sure that the internal Module
         name can not be changed.
+
         :return: The name of the Module
         :rtype: String
         """
@@ -53,6 +55,7 @@ class PypelineModule:
         """
         Abstract interface for the function connect_database which is needed to connect the Ports
         of a Pypeline Module with the Pypeline Data Storage
+
         :param data_base_in: The Data Storage
         """
         pass
@@ -86,6 +89,7 @@ class WritingModule(PypelineModule):
         Abstract constructor of a Writing Module which needs the unique name identifier as input
         (see Pypeline Module). In addition one can specify a output directory where the module will
         save its results. If no output directory is given the Pypline default is used.
+
         :param name_in: The name of the Writing Module
         :type name_in: String
         :param output_dir: Directory where the results will be saved
@@ -109,6 +113,7 @@ class WritingModule(PypelineModule):
         Method which creates a input port and append it to the internal port dictionary. This
         function should be used by classes inhering from Writing Module to make sure that only
         input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+
         :param tag: Tag of the new input port.
         :return: None
         """
@@ -123,6 +128,7 @@ class WritingModule(PypelineModule):
                          data_base_in):
         """
         Connects all ports in the internal input port dictionary to the given database.
+
         :param data_base_in: The input database
         :return: None
         """
@@ -150,6 +156,7 @@ class ProcessingModule(PypelineModule):
         """
         Abstract constructor of a ProcessingModule which needs the unique name identifier as input
         (see Pypeline Module).
+
         :param name_in: The name of the Writing Module
         :type name_in: String
         :return: None
@@ -166,6 +173,7 @@ class ProcessingModule(PypelineModule):
         Method which creates a input port and append it to the internal input port dictionary. This
         function should be used by classes inhering from Processing Module to make sure that only
         input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+
         :param tag: Tag of the new input port.
         :return: None
         """
@@ -183,6 +191,7 @@ class ProcessingModule(PypelineModule):
         This function should be used by classes inhering from Processing Module to make sure that
         only output ports with unique tags are added. The new port can be used by
         self._m_input_ports[tag]
+
         :param tag: Tag of the new output port.
         :return: None
         """
@@ -191,12 +200,13 @@ class ProcessingModule(PypelineModule):
         if tag in self._m_input_ports:
             warnings.warn('Tag already used. Updating..')
 
-        self._m_input_ports[tag] = tmp_port
+        self._m_output_ports[tag] = tmp_port
 
     def connect_database(self,
                          data_base_in):
         """
         Connects all ports in the internal input and output port dictionary to the given database.
+
         :param data_base_in: The input database
         :return: None
         """
@@ -231,6 +241,7 @@ class ReadingModule(PypelineModule):
         Abstract constructor of a ReadingModule which needs the unique name identifier as input
         (see Pypeline Module). In addition on can specify a input directory where data is located
         which will be loaded by the module. If no directory is given the Pipeline default is used.
+
         :param name_in: The name of the Reading Module
         :type name_in: String
         :param input_dir: Directory where the input files are located
@@ -255,6 +266,7 @@ class ReadingModule(PypelineModule):
         This function should be used by classes inhering from Reading Module to make sure that
         only output ports with unique tags are added. The new port can be used by
         self._m_out_ports[tag]
+
         :param tag: Tag of the new output port.
         :return: None
         """
@@ -270,6 +282,7 @@ class ReadingModule(PypelineModule):
                          data_base_in):
         """
         Connects all ports in the internal output port dictionary to the given database.
+
         :param data_base_in: The input database
         :return: None
         """

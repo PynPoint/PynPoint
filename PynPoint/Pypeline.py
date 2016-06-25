@@ -7,6 +7,7 @@ Main components:
 import os
 import collections
 import warnings
+import numpy as np
 
 # own modules
 from PynPoint.Processing import PypelineModule, WritingModule, ReadingModule
@@ -29,6 +30,7 @@ class Pypeline(object):
                  output_place_in=None):
         """
         Constructor of a Pypeline object.
+
         :param working_place_in: Working location of the Pypeline which needs to be a folder on the
             hard drive. The given folder will be used to save the PynPoint data base as .hdf5.
             NOTE: Depending on the input this .hdf5 file can become to a very large file.
@@ -53,6 +55,7 @@ class Pypeline(object):
         """
         This method is called every time a member / attribute of the Pypeline is changed.
         It checks whether a chosen working / input / output directory exists.
+
         :param key: member / attribute name
         :param value: new value for the given attribute / member
         :return: None
@@ -73,6 +76,7 @@ class Pypeline(object):
         the end of the ordered dictionary. If the input module is a reading or writing module
         without a specified input / output location the Pypeline default location is used. Moreover
         the input module is connected to the Pypeline internal data base.
+
         :param pipeline_module: The input module. Needs to be either a Processing, Reading or
             Writing Module.
         :type pipeline_module: Processing Module, Reading Module, Writing Module
@@ -102,6 +106,7 @@ class Pypeline(object):
                       name):
         """
         Removes a Pypeline module from the internal dictionary.
+
         :param name: The name (key) of the module which has to be removed.
         :type name: String
         :return: None
@@ -116,6 +121,7 @@ class Pypeline(object):
     def get_module_names(self):
         """
         Function to get information about the stored Pypeline modules.
+
         :return: Ordered list of all pipeline names (String)
         """
 
@@ -126,6 +132,7 @@ class Pypeline(object):
         Walks through all saved processing steps and calls their run methods. The order the steps
         are called depends on the order they have been added to the Pypeline instance.
         NOTE: The method prints information about the current process.
+
         :return: None
         """
 
@@ -139,6 +146,7 @@ class Pypeline(object):
     def run_module(self, name):
         """
         Runs a specific processing module identified by name.
+
         :param name: Name of the module to be run.
         :type name: String
         :return: None
@@ -147,3 +155,16 @@ class Pypeline(object):
             self._m_modules[name].run()
         else:
             warnings.warn('Module not found')
+
+    def get_data(self,
+                 tag):
+        # TODO Documentation
+        self._m_data_storage.open_connection()
+        return np.asarray(self._m_data_storage.m_data_bank[tag])
+
+    def get_attribute(self,
+                      data_tag,
+                      attr_name):
+        # TODO Documentation
+        self._m_data_storage.open_connection()
+        return self._m_data_storage.m_data_bank[data_tag].attrs[attr_name]
