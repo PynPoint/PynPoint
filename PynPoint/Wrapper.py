@@ -4,7 +4,7 @@ import warnings
 # own modules
 from PynPoint.Pypeline import Pypeline
 from FitsReading import ReadFitsCubesDirectory
-from PSFsubPrepatation import PSFdataPreparation
+from PSFsubPreparation import PSFdataPreparation
 
 class BasePynpointWrapper(object):
 
