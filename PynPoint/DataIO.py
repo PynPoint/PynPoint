@@ -67,18 +67,23 @@ class Port:
 
     @abstractmethod
     def __init__(self,
-                 tag):
+                 tag,
+                 data_storage_in=None):
         """
         Abstract constructor of a Port. As input the tag / key is expected with is needed to build
-        the connection to the database entry with the same tag / key.
+        the connection to the database entry with the same tag / key. It is possible to give the
+        Port a data storage. If this storage is not given the Pypeline module has to set it or the
+        connection needs to be added manually.
 
         :param tag: Input Tag
         :type tag: String
+        :param data_storage_in: The data storage the port is connected with
+        :type data_storage_in: DataStorage
         :return: None
         """
         assert (isinstance(tag, str)), "Error: Port tags need to be strings."
         self._m_tag = tag
-        self._m_data_storage = None
+        self._m_data_storage = data_storage_in
         self._m_data_base_active = False
 
     def close_port(self):
@@ -132,7 +137,8 @@ class InputPort(Port):
     """
 
     def __init__(self,
-                 tag):
+                 tag,
+                 data_storage_in=None):
         """
         Constructor of the InputPort class crating a input port instance with the tag self._m_tag.
         This function is just calling the super constructor (i.e. __init__() of Port).
@@ -141,7 +147,7 @@ class InputPort(Port):
         :type tag: Sting
         :return: None
         """
-        super(InputPort, self).__init__(tag)
+        super(InputPort, self).__init__(tag, data_storage_in)
 
     def _check_status_and_activate(self):
         """
@@ -204,11 +210,11 @@ class InputPort(Port):
 
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+            # item unpacks numpy types to python types hdf5 only uses numpy types
+            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
         elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
-                                [("header_" + self._m_tag + "/" + name)],
-                              dtype=np.float64)
+                              [("header_" + self._m_tag + "/" + name)])
         else:
             return None
 
@@ -252,6 +258,7 @@ class OutputPort(Port):
 
     def __init__(self,
                  tag,
+                 data_storage_in=None,
                  activate_init=True):
         """
         Constructor for a OutputPort class instance with the tag self._m_tag.
@@ -264,7 +271,7 @@ class OutputPort(Port):
         :return: None
         """
 
-        super(OutputPort, self).__init__(tag)
+        super(OutputPort, self).__init__(tag, data_storage_in)
         self.m_activate = activate_init
 
     # internal functions
@@ -467,7 +474,7 @@ class OutputPort(Port):
     def set_all(self,
                 data,
                 data_dim=None,
-                keep_attributes = False):
+                keep_attributes=False):
         """
         Set the data in the data base by replacing all old values with the values of the input data.
         If no old values exists the data is just stored. Since it is not possible to change the
@@ -562,7 +569,7 @@ class OutputPort(Port):
     def add_attribute(self,
                       name,
                       value,
-                      static = True):
+                      static=True):
 
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
