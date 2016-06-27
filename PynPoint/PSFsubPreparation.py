@@ -43,14 +43,12 @@ class PSFdataPreparation(ProcessingModule):
         self.m_image_out_tag = image_out_tag
         self.m_image_mask_out_tag = image_mask_out_tag
         self.m_mask_out_tag = mask_out_tag
-        self.m_norm_port = "header_" + image_in_tag + "/im_norm"
 
         # create Ports
         self.add_input_port(image_in_tag)
         self.add_output_port(image_mask_out_tag)
         self.add_output_port(mask_out_tag)
         self.add_output_port(image_out_tag)
-        self.add_output_port("header_" + image_in_tag + "/im_norm")
 
     @staticmethod
     def _im_norm(im_data_in):
@@ -65,7 +63,7 @@ class PSFdataPreparation(ProcessingModule):
     def _im_resizing(self,
                      im_data_in):
         x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_f_final),\
-                                      int(im_data_in.shape[2] * self.m_f_final)
+                                        int(im_data_in.shape[2] * self.m_f_final)
         im_arr_res = np.zeros([im_data_in.shape[0], x_num_final, y_num_final])
 
         for i in range(0, im_data_in.shape[0]):
@@ -133,7 +131,8 @@ class PSFdataPreparation(ProcessingModule):
 
         # image normalization
         im_norm = self._im_norm(im_data)
-        self._m_output_ports[self.m_norm_port].set_all(im_norm)
+        self._m_output_ports[self.m_image_out_tag].append_attribute_data("im_norm",
+                                                                         im_norm)
 
         # TODO para_sort
 
@@ -148,27 +147,14 @@ class PSFdataPreparation(ProcessingModule):
                                                            keep_attributes=True)
 
         # save attributes
-        self._m_output_ports[self.m_image_out_tag].add_attribute("cent_remove",
-                                                                 self.m_cent_remove)
+        attributes = {"cent_remove": self.m_cent_remove,
+                      "resize": self.m_resize,
+                      "para_sort": self.m_para_sort,
+                      "F_final": float(self.m_f_final),
+                      "cent_size": float(self.m_cent_size),
+                      "edge_size": float(self.m_edge_size)}
 
-        self._m_output_ports[self.m_image_out_tag].add_attribute("resize",
-                                                                 self.m_resize)
-
-        self._m_output_ports[self.m_image_out_tag].add_attribute("para_sort",
-                                                                 self.m_para_sort)
-
-        self._m_output_ports[self.m_image_out_tag].add_attribute("F_final",
-                                                                 str(self.m_f_final))
-
-        self._m_output_ports[self.m_image_out_tag].add_attribute("cent_size",
-                                                                 str(self.m_cent_size))
-
-        self._m_output_ports[self.m_image_out_tag].add_attribute("edge_size",
-                                                                 str(self.m_edge_size))
-
-
-
-
-
-
-
+        for key, value in attributes.iteritems():
+            self._m_output_ports[self.m_image_out_tag].add_attribute(key,
+                                                                     value,
+                                                                     static=True)
