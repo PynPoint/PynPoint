@@ -7,6 +7,8 @@ import copy
 import h5py
 import numpy as np
 
+# TODO decorator for check status of Port
+
 
 class DataStorage(object):
     """
@@ -192,16 +194,25 @@ class InputPort(Port):
     def get_attribute(self,
                       name):
         """
-        Returns one attribute by name of the data set stored in the data bank under the Port tag
-        (self._m_tag).
-
-        :param name: Name of the attribute to be returned
-        :return: The attribute value
+        first looking for statics
+        :param name:
+        :return:
         """
-        self._check_status_and_activate()
-        return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+        # TODO Documentation
 
-    def get_all_attributes(self):
+        self._check_status_and_activate()
+
+        # check if attribute is static
+        if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
+            return np.asarray(self._m_data_storage.m_data_bank
+                                [("header_" + self._m_tag + "/" + name)],
+                              dtype=np.float64)
+        else:
+            return None
+
+    def get_all_static_attributes(self):
         """
         Returns all attributes of the data set stored in the data bank under the Port tag
         (self._m_tag) as dictionary {attr_name: attr_value}.
@@ -210,6 +221,13 @@ class InputPort(Port):
         """
         self._check_status_and_activate()
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
+
+    def get_all_non_static_attributes(self):
+        result = []
+
+        for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
+            result.append(key)
+        return result
 
 
 class OutputPort(Port):
@@ -271,6 +289,7 @@ class OutputPort(Port):
 
     def _initialize_database_entry(self,
                                    first_data,
+                                   tag,
                                    data_dim=None):
         """
         Internal function which is used to create (initialize) a data base in .hdf5 data base. Since
@@ -339,9 +358,97 @@ class OutputPort(Port):
             else:
                 raise ValueError('Input shape not supported')  # this case should never be reached
 
-        self._m_data_storage.m_data_bank.create_dataset(self._m_tag,
+        self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
                                                         maxshape=data_shape)
+
+    def _set_all_key(self,
+                     tag,
+                     data,
+                     data_dim=None,
+                     keep_attributes = False):
+
+        tmp_attributes = {}
+        # check if database entry is new...
+        if tag in self._m_data_storage.m_data_bank:
+            # NO -> database entry exists
+            if keep_attributes:
+                # we have to copy all attributes since deepcopy is not supported
+                for key, value in self._m_data_storage.m_data_bank[tag].attrs.iteritems():
+                    tmp_attributes[key] = value
+
+            # remove database entry
+            del self._m_data_storage.m_data_bank[tag]
+
+        # make new database entry
+        self._initialize_database_entry(data,
+                                        tag,
+                                        data_dim=data_dim)
+        if keep_attributes:
+            for key, value in tmp_attributes.iteritems():
+                self._m_data_storage.m_data_bank[tag].attrs[key] = value
+        return
+
+    def _append_key(self,
+                    tag,
+                    data,
+                    data_dim=None,
+                    force=False):
+
+        # check if database entry is new...
+        if tag not in self._m_data_storage.m_data_bank:
+            # YES -> database entry is new
+            self._initialize_database_entry(data,
+                                            tag,
+                                            data_dim=data_dim)
+            return
+
+        # NO -> database entry exists
+        # check if the existing data has the same dim and datatype
+        tmp_shape = self._m_data_storage.m_data_bank[tag].shape
+        tmp_dim = len(tmp_shape)
+
+        # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
+        if data.ndim + 1 == data_dim:
+            if data_dim == 3:
+                data = data[np.newaxis, :, :]
+            if data_dim == 2:
+                data = data[np.newaxis, :]
+
+        def _type_check():
+            if tmp_dim == data.ndim:
+                if tmp_dim == 3:
+                    return (tmp_shape[1] == data.shape[1]) \
+                        and (tmp_shape[2] == data.shape[2])
+                elif tmp_dim == 2:
+                    return tmp_shape[1] == data.shape[1]
+                else:
+                    return True
+            else:
+                return False
+
+        if _type_check():
+
+            # YES -> dim and type match
+            # we always append in axis one independent of the dimension
+            # 1D case
+            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0],
+                                                                 axis=0)
+            self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
+            return
+
+        # NO -> shape or type is different
+        # Check force
+        if force:
+            # YES -> Force is true
+            self._set_all_key(tag,
+                              data=data,
+                              data_dim=data_dim)
+            return
+
+        # NO -> Error message
+        raise ValueError('The port tag %s is already used with a different data type. If you want '
+                         'to replace it use force = True.' % self._m_tag)
 
     def __setitem__(self, key, value):
         """
@@ -393,25 +500,10 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
-        tmp_attributes = {}
-        # check if database entry is new...
-        if self._m_tag in self._m_data_storage.m_data_bank:
-            # NO -> database entry exists
-            if keep_attributes:
-                # we have to copy all attributes since deepcopy is not supported
-                for key, value in self._m_data_storage.m_data_bank[self._m_tag].attrs.iteritems():
-                    tmp_attributes[key] = value
-
-            # remove database entry
-            del self._m_data_storage.m_data_bank[self._m_tag]
-
-        # make new database entry
-        self._initialize_database_entry(data,
-                                        data_dim=data_dim)
-        if keep_attributes:
-            for key, value in tmp_attributes.iteritems():
-                self._m_data_storage.m_data_bank[self._m_tag].attrs[key] = value
-        return
+        self._set_all_key(self._m_tag,
+                          data,
+                          data_dim,
+                          keep_attributes)
 
     def append(self,
                data,
@@ -446,58 +538,10 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
-        # check if database entry is new...
-        if self._m_tag not in self._m_data_storage.m_data_bank:
-            # YES -> database entry is new
-            self._initialize_database_entry(data,
-                                            data_dim=data_dim)
-            return
-
-        # NO -> database entry exists
-        # check if the existing data has the same dim and datatype
-        tmp_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
-        tmp_dim = len(tmp_shape)
-
-        # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
-        if data.ndim + 1 == data_dim:
-            if data_dim == 3:
-                data = data[np.newaxis, :, :]
-            if data_dim == 2:
-                data = data[np.newaxis, :]
-
-        def _type_check():
-            if tmp_dim == data.ndim:
-                if tmp_dim == 3:
-                    return (tmp_shape[1] == data.shape[1]) \
-                        and (tmp_shape[2] == data.shape[2])
-                elif tmp_dim == 2:
-                    return tmp_shape[1] == data.shape[1]
-                else:
-                    return True
-            else:
-                return False
-
-        if _type_check():
-
-            # YES -> dim and type match
-            # we always append in axis one independent of the dimension
-            # 1D case
-            self._m_data_storage.m_data_bank[self._m_tag].resize(tmp_shape[0] + data.shape[0],
-                                                                 axis=0)
-            self._m_data_storage.m_data_bank[self._m_tag][tmp_shape[0]::] = data
-            return
-
-        # NO -> shape or type is different
-        # Check force
-        if force:
-            # YES -> Force is true
-            self.set_all(data=data,
-                         data_dim=data_dim)
-            return
-
-        # NO -> Error message
-        raise ValueError('The port tag %s is already used with a different data type. If you want '
-                         'to replace it use force = True.' % self._m_tag)
+        self._append_key(self._m_tag,
+                         data=data,
+                         data_dim=data_dim,
+                         force=force)
 
     def activate(self):
         """
@@ -517,16 +561,21 @@ class OutputPort(Port):
 
     def add_attribute(self,
                       name,
-                      value):
-        """
-        Adds a attribute to the data set. Attributes need to be simple types like float, int or
-        sting. (NO arrays)
+                      value,
+                      static = True):
 
-        :param name: Name of the attribute
-        :param value: Value of the attribute
-        :return: None
-        """
-        self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
+        if static:
+            self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
+        else:
+            # add information in sub Group
+            self._set_all_key(tag=("header_" + self._m_tag + "/" + name),
+                              data=np.asarray([value,]))
+
+    def append_attribute_data(self,
+                              name,
+                              value):
+        self._append_key(tag=("header_" + self._m_tag + "/" + name),
+                         data=np.asarray([value,]))
 
     def del_attribute(self,
                       name):
@@ -536,11 +585,30 @@ class OutputPort(Port):
         :param name: Name of the attribute.
         :return: None
         """
-        del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+        # check if attribute is static
+        if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+        else:
+            # remove non static attribute
+            del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
 
-    def check_attribute(self,
-                        name,
-                        comparison_value):
+    def del_all_attributes(self):
+        """
+        Deletes all attributes of the data set.
+
+        :return: None
+        """
+        # static attributes
+        for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            del attr
+
+        # non static attributes
+        if ("header_" + self._m_tag + "/") in self._m_data_storage.m_data_bank:
+            del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/")]
+
+    def check_static_attribute(self,
+                               name,
+                               comparison_value):
         """
         Checks if a attribute exists and if it is equal to a comparison value.
 
@@ -557,15 +625,6 @@ class OutputPort(Port):
                 return -1
         else:
             return 1
-
-    def del_all_attributes(self):
-        """
-        Deletes all attributes of the data set.
-
-        :return: None
-        """
-        for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            del attr
 
     def flush(self):
         """

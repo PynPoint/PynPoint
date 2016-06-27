@@ -62,7 +62,7 @@ class WriteAsSingleFitsFile(WritingModule):
         """
 
         if not self.m_output_location.endswith('/'):
-            out_name = self.m_output_location +'/' + self.m_file_name
+            out_name = self.m_output_location + '/' + self.m_file_name
         else:
             out_name = self.m_output_location + self.m_file_name
 
@@ -73,7 +73,7 @@ class WriteAsSingleFitsFile(WritingModule):
 
         # Attributes
         prihdr = fits.Header()
-        attributes = self._m_input_ports[self.m_data_tag].get_all_attributes()
+        attributes = self._m_input_ports[self.m_data_tag].get_all_static_attributes()
         for attr in attributes:
             if len(attr) > 8:
                 prihdr["hierarch " + attr] = attributes[attr]
