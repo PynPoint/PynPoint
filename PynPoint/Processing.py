@@ -198,7 +198,7 @@ class ProcessingModule(PypelineModule):
 
         tmp_port = OutputPort(tag)
         if tag in self._m_input_ports:
-            warnings.warn('Tag already used. Updating..')
+            warnings.warn('Tag %s already used. Updating..' % tag)
 
         self._m_output_ports[tag] = tmp_port
 
