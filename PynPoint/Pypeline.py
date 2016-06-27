@@ -49,7 +49,7 @@ class Pypeline(object):
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
         self._m_modules = collections.OrderedDict()
-        self._m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
+        self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
 
     def __setattr__(self, key, value):
         """
@@ -95,7 +95,7 @@ class Pypeline(object):
             if pipeline_module.m_input_location is None:
                 pipeline_module.m_input_location = self._m_input_place
 
-        pipeline_module.connect_database(self._m_data_storage)
+        pipeline_module.connect_database(self.m_data_storage)
 
         if pipeline_module.name in self._m_modules:
             warnings.warn('Processing module names need to be unique. Overwriting the old Module')
@@ -159,12 +159,12 @@ class Pypeline(object):
     def get_data(self,
                  tag):
         # TODO Documentation
-        self._m_data_storage.open_connection()
-        return np.asarray(self._m_data_storage.m_data_bank[tag])
+        self.m_data_storage.open_connection()
+        return np.asarray(self.m_data_storage.m_data_bank[tag])
 
     def get_attribute(self,
                       data_tag,
                       attr_name):
         # TODO Documentation
-        self._m_data_storage.open_connection()
-        return self._m_data_storage.m_data_bank[data_tag].attrs[attr_name]
+        self.m_data_storage.open_connection()
+        return self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]

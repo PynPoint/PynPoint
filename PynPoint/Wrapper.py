@@ -7,6 +7,7 @@ from PynPoint.Pypeline import Pypeline
 from FitsReading import ReadFitsCubesDirectory
 from PSFsubPreparation import PSFdataPreparation
 from Hdf5Writing import Hdf5WritingModule
+from DataIO import InputPort
 
 class BasePynpointWrapper(object):
 
@@ -21,82 +22,66 @@ class BasePynpointWrapper(object):
         pass
 
 
-
 class ImageWrapper(object):
 
     class_counter = 1
 
     def __init__(self):
-        self._m_center_remove = None
-        self._m_resize = None
-        self._m_ran_sub = None
-        self._m_recent = None
-        self._m_cent_size = None
+        self._m_center_remove = True
+        self._m_resize = False
+        self._m_ran_sub = None # TODO implement in some module
+        self._m_cent_size = 0.05
+        self._m_edge_size = 1.0
+        self._m_f_final = 2.0
         self._pypeline = None
 
         # In the old PynPoint it was possible to create multiple image instances working on
         # separated data (in memory). Hence, every time a new ImageWrapper is created a new database
         # entry is required
         self._m_image_data_tag = "im_arr" + str(ImageWrapper.class_counter).zfill(2)
+        self._m_image_data_port = InputPort(self._m_image_data_tag)
         self._m_image_data_masked_tag = "im_mask_arr" + str(ImageWrapper.class_counter).zfill(2)
+        self._m_image_data_masked_port = InputPort(self._m_image_data_masked_tag)
         self._m_mask_tag = "mask_arr" + str(ImageWrapper.class_counter).zfill(2)
-        #self._m_counter = str(ImageWrapper.class_counter).zfill(2)
-        # TODO figure out if this is needed
+        self._m_mask_port = InputPort(self._m_mask_tag)
         ImageWrapper.class_counter += 1
 
     def __getattr__(self, item):
-        if item == "num_files":
-            return self._pypeline.get_attribute(self._m_image_data_tag, "Num_Files")
 
-        elif item == "files":
-            return self._pypeline.get_data("header_" + str(self._m_image_data_tag) + "/Used_Files")
+        # All static and non static attributes and their names in the database
+        # {#Name_seen_from_outside: #database_name}
+        simple_attributes = {"num_files" : "Num_Files",
+                             "files" : "Used_Files",
+                             "im_norm" : "im_norm",
+                             "para" : "NEW_PARA",
+                             "cent_remove" : "cent_remove",
+                             "resize" : "resize",
+                             "para_sort" : "para_sort",
+                             "F_final" : "F_final",
+                             "cent_size" : "cent_size",
+                             "edge_size" : "edge_size"}
+
+        data_bases = {"im_arr": self._m_image_data_port,
+                      "cent_mask": self._m_mask_port,
+                      "im_arr_mask": self._m_image_data_masked_port}
+
+        if item in simple_attributes:
+            print self._m_image_data_port.get_attribute(simple_attributes[item])
+            print type(self._m_image_data_port.get_attribute(simple_attributes[item]))
+            print type(True)
+            return self._m_image_data_port.get_attribute(simple_attributes[item])
+
+        elif item in data_bases:
+            return data_bases[item].get_all()
 
         elif item == "im_size":
             return (self._pypeline.get_data(self._m_image_data_tag).shape[1],
                     self._pypeline.get_data(self._m_image_data_tag).shape[2])
 
-        elif item == "im_arr":
-            return self._pypeline.get_data(self._m_image_data_tag)
-
-        elif item == "im_norm":
-            return self._pypeline.get_data("header_" + str(self._m_image_data_tag) + "/im_norm")
-
-        elif item == "para":
-            return self._pypeline.get_data("header_" + str(self._m_image_data_tag) + "/NEW_PARA")
-
-        elif item == "cent_mask":
-            return self._pypeline.get_data(self._m_mask_tag)
-
-        elif item == "im_arr_mask":
-            return self._pypeline.get_data(self._m_image_data_masked_tag)
-
-        # Attributes
-        elif item == "cent_remove":
-            return bool(self._pypeline.get_attribute(self._m_image_data_tag, "cent_remove"))
-
-        elif item == "resize":
-            return bool(self._pypeline.get_attribute(self._m_image_data_tag, "resize"))
-
-        elif item == "para_sort":
-            return bool(self._pypeline.get_attribute(self._m_image_data_tag, "para_sort"))
-
-        elif item == "F_final":
-            return float(self._pypeline.get_attribute(self._m_image_data_tag, "F_final"))
-
-        elif item == "cent_size":
-            return float(self._pypeline.get_attribute(self._m_image_data_tag, "cent_size"))
-
-        elif item == "edge_size":
-            return float(self._pypeline.get_attribute(self._m_image_data_tag, "edge_size"))
-
     @classmethod
     def create_wdir(cls, dir_in, **kwargs):
 
         obj = cls()
-
-        # take all attributes
-        if "ran_sub" in kwargs:
-            obj._m_ran_sub = kwargs["ran_sub"]
 
         if "cent_remove" in kwargs:
             obj._m_center_remove = kwargs["cent_remove"]
@@ -106,14 +91,24 @@ class ImageWrapper(object):
 
         if "recent" in kwargs:
             warnings.warn('Recentering is not longer supported in PynPoint preparation')
-            obj._m_recent = kwargs["recent"]
 
         if "cent_size" in kwargs:
             obj._m_cent_size = kwargs["cent_size"]
 
+        if "F_final" in kwargs:
+            obj._m_f_final = kwargs["F_final"]
+
+        if "edge_size" in kwargs:
+            obj._m_edge_size = kwargs["edge_size"]
+
         obj._pypeline = Pypeline(dir_in,
                                  dir_in,
                                  dir_in)
+
+        # connect Ports
+        obj._m_image_data_port.set_database_connection(obj._pypeline.m_data_storage)
+        obj._m_mask_port.set_database_connection(obj._pypeline.m_data_storage)
+        obj._m_image_data_masked_port.set_database_connection(obj._pypeline.m_data_storage)
 
         reading = ReadFitsCubesDirectory(name_in="reading_mod",
                                          input_dir=dir_in,
@@ -126,9 +121,8 @@ class ImageWrapper(object):
                                          image_out_tag=obj._m_image_data_tag,
                                          resize=obj._m_resize,
                                          cent_remove=obj._m_center_remove,
+                                         F_final=obj._m_f_final,
                                          cent_size=obj._m_cent_size)
-
-        # TODO check all parameters
 
         obj._pypeline.add_module(reading)
         obj._pypeline.add_module(preparation)
@@ -145,8 +139,8 @@ class ImageWrapper(object):
         head, tail = os.path.split(filename)
 
         dictionary = {self._m_image_data_tag: "im_arr",
-                     self._m_image_data_masked_tag: "im_mask_arr",
-                     self._m_mask_tag: "mask_arr"}
+                      self._m_image_data_masked_tag: "im_mask_arr",
+                      self._m_mask_tag: "mask_arr"}
 
         writing = Hdf5WritingModule("hdf5_writing",
                                     tail,
@@ -157,7 +151,6 @@ class ImageWrapper(object):
         self._pypeline.add_module(writing)
 
         self._pypeline.run_module("hdf5_writing")
-
 
     def plt_im(self,ind):
         pass
