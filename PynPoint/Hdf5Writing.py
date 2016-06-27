@@ -39,7 +39,7 @@ class Hdf5WritingModule(WritingModule):
 
             if self.m_keep_attributes:
                 # stable attributes
-                tmp_attr = self._m_input_ports[in_tag].get_all_attributes()
+                tmp_attr = self._m_input_ports[in_tag].get_all_static_attributes()
 
                 # it is not possible to copy attributes all together
                 for key, value in tmp_attr.iteritems():

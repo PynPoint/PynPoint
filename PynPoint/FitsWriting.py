@@ -68,7 +68,7 @@ class WriteAsSingleFitsFile(WritingModule):
 
         # remove old file if exists
         if os.path.isfile(out_name):
-            warnings.warn('Overwriting old file %s' %out_name)
+            warnings.warn('Overwriting old file %s' % out_name)
             os.remove(out_name)
 
         # Attributes
