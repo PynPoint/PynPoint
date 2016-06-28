@@ -1,51 +1,38 @@
-import numpy as np
 import warnings
 import os
 
-# own modules
 from PynPoint.Pypeline import Pypeline
 from PynPoint.FitsReading import ReadFitsCubesDirectory
 from PynPoint.PSFsubPreparation import PSFdataPreparation
 from PynPoint.Hdf5Writing import Hdf5WritingModule
 from PynPoint.Hdf5Reading import Hdf5ReadingModule
-from DataIO import InputPort
+
 
 class BasePynpointWrapper(object):
-
-    def __init__(self):
-        pass
-
-    def save(self, filename):
-        pass
-
-
-    def plt_im(self,ind):
-        pass
-
-
-class ImageWrapper(object):
-
     class_counter = 1
 
-    def __init__(self):
+    def __init__(self,
+                 working_pypeline):
+        self._pypeline = working_pypeline
         self._m_center_remove = True
         self._m_resize = False
         self._m_ran_sub = None # TODO implement in some module
         self._m_cent_size = 0.05
         self._m_edge_size = 1.0
         self._m_f_final = 2.0
-        self._pypeline = None
 
-        # In the old PynPoint it was possible to create multiple image instances working on
-        # separated data (in memory). Hence, every time a new ImageWrapper is created a new database
-        # entry is required
-        self._m_image_data_tag = "im_arr" + str(ImageWrapper.class_counter).zfill(2)
-        self._m_image_data_port = InputPort(self._m_image_data_tag)
-        self._m_image_data_masked_tag = "im_mask_arr" + str(ImageWrapper.class_counter).zfill(2)
-        self._m_image_data_masked_port = InputPort(self._m_image_data_masked_tag)
-        self._m_mask_tag = "mask_arr" + str(ImageWrapper.class_counter).zfill(2)
-        self._m_mask_port = InputPort(self._m_mask_tag)
-        ImageWrapper.class_counter += 1
+        # Attributes / Ports set individually by Image and Basis
+        self._m_image_data_tag = None
+        self._m_image_data_masked_tag = None
+        self._m_mask_tag = None
+
+        self._m_image_data_port = None
+        self._m_image_data_masked_port = None
+        self._m_mask_port = None
+
+        self._m_tag_root_image = None
+        self._m_tag_root_mask_image = None
+        self._m_tag_root_mask = None
 
     def __getattr__(self, item):
 
@@ -72,15 +59,20 @@ class ImageWrapper(object):
         elif item in data_bases:
             return data_bases[item].get_all()
 
-        # TODO remove Pypline function
         elif item == "im_size":
-            return (self._pypeline.get_data(self._m_image_data_tag).shape[1],
-                    self._pypeline.get_data(self._m_image_data_tag).shape[2])
+            return (self._m_image_data_port.get_all().shape[1],
+                    self._m_image_data_port.get_all().shape[2])
 
     @classmethod
-    def create_wdir(cls, dir_in, **kwargs):
+    def create_wdir(cls,
+                    dir_in,
+                    **kwargs):
 
-        obj = cls()
+        tmp_pypeline = Pypeline(dir_in,
+                                dir_in,
+                                dir_in)
+
+        obj = cls(tmp_pypeline)
 
         if "cent_remove" in kwargs:
             obj._m_center_remove = kwargs["cent_remove"]
@@ -99,15 +91,6 @@ class ImageWrapper(object):
 
         if "edge_size" in kwargs:
             obj._m_edge_size = kwargs["edge_size"]
-
-        obj._pypeline = Pypeline(dir_in,
-                                 dir_in,
-                                 dir_in)
-
-        # connect Ports
-        obj._m_image_data_port.set_database_connection(obj._pypeline.m_data_storage)
-        obj._m_mask_port.set_database_connection(obj._pypeline.m_data_storage)
-        obj._m_image_data_masked_port.set_database_connection(obj._pypeline.m_data_storage)
 
         reading = ReadFitsCubesDirectory(name_in="reading_mod",
                                          input_dir=dir_in,
@@ -137,9 +120,9 @@ class ImageWrapper(object):
 
         head, tail = os.path.split(filename)
 
-        dictionary = {self._m_image_data_tag: "im_arr",
-                      self._m_image_data_masked_tag: "im_mask_arr",
-                      self._m_mask_tag: "mask_arr"}
+        dictionary = {self._m_image_data_tag: self._m_tag_root_image,
+                      self._m_image_data_masked_tag: self._m_tag_root_mask_image,
+                      self._m_mask_tag: self._m_tag_root_mask}
 
         writing = Hdf5WritingModule("hdf5_writing",
                                     tail,
@@ -151,113 +134,37 @@ class ImageWrapper(object):
 
         self._pypeline.run_module("hdf5_writing")
 
-    def plt_im(self,ind):
-        pass
-
     @classmethod
-    def create_whdf5input(cls, file_in,**kwargs):
-        pass
-
-    @classmethod
-    def create_restore(cls, filename):
-
-        obj = cls()
-
-        tag_dict = {"im_arr": obj._m_image_data_tag,
-                    "im_mask_arr": obj._m_image_data_masked_tag,
-                    "mask_arr": obj._m_mask_tag}
+    def create_restore(cls,
+                       filename,
+                       pypline_working_place=None):
 
         head, tail = os.path.split(filename)
+
+        if pypline_working_place is None:
+            working_place = head
+        else:
+            working_place = pypline_working_place
+
+        tmp_pypeline = Pypeline(working_place,
+                                head,
+                                head)
+
+        obj = cls(tmp_pypeline)
+
+        tag_dict = {obj._m_tag_root_image: obj._m_image_data_tag,
+                    obj._m_tag_root_mask_image: obj._m_image_data_masked_tag,
+                    obj._m_tag_root_mask: obj._m_mask_tag}
+
         reading = Hdf5ReadingModule("reading",
                                     input_filename=tail,
                                     input_dir=head,
                                     tag_dictionary=tag_dict)
 
-        obj._pypeline = Pypeline(head,
-                                 head,
-                                 head)
-
         obj._pypeline.add_module(reading)
         obj._pypeline.run_module("reading")
 
-        obj._m_image_data_port.set_database_connection(obj._pypeline.m_data_storage)
-        obj._m_mask_port.set_database_connection(obj._pypeline.m_data_storage)
-        obj._m_image_data_masked_port.set_database_connection(obj._pypeline.m_data_storage)
-
         return obj
 
-    @classmethod
-    def create_wfitsfiles(cls, *args,**kwargs):
-        pass
-
-    def mk_psf_realisation(self,ind,full=False):
-        pass
-
-
-class ResidualsWrapper(BasePynpointWrapper):
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def create_restore(cls, filename):
-        pass
-
-    @classmethod
-    def create_winstances(cls, images,basis):
-        pass
-
-    def res_arr(self,num_coeff):
-        pass
-
-    def res_rot(self,num_coeff,extra_rot =0.0):
-        pass
-
-    def res_rot_mean(self,num_coeff,extra_rot =0.0):
-        pass
-
-    def res_rot_median(self,num_coeff,extra_rot =0.0):
-        pass
-
-    def res_rot_mean_clip(self,num_coeff,extra_rot =0.0):
-        pass
-
-    def res_rot_var(self,num_coeff,extra_rot = 0.0):
-        pass
-
-    def _psf_im(self,num_coeff):
-        pass
-
-    def mk_psfmodel(self, num):
-        pass
-
-
-class BasisWrapper(BasePynpointWrapper):
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def create_wdir(cls, dir_in,**kwargs):
-        pass
-
-    @classmethod
-    def create_whdf5input(cls, file_in,**kwargs):
-        pass
-
-    @classmethod
-    def create_restore(cls, filename):
-        pass
-
-    @classmethod
-    def create_wfitsfiles(cls, files,**kwargs):
-        pass
-
-    def mk_basis_set(self):
-        pass
-
-    def mk_orig(self,ind):
-        pass
-
-    def mk_psfmodel(self, num):
+    def plt_im(self,ind):
         pass
