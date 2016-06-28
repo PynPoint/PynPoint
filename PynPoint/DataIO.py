@@ -231,9 +231,13 @@ class InputPort(Port):
     def get_all_non_static_attributes(self):
         result = []
 
-        for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
-            result.append(key)
-        return result
+        # check if header Group exists
+        if ("header_" + self._m_tag + "/") in self._m_data_storage.m_data_bank:
+            for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
+                result.append(key)
+            return result
+        else:
+            return None
 
 
 class OutputPort(Port):
