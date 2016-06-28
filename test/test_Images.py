@@ -127,7 +127,7 @@ class TestImages(object):
 
         self.images3.save(temp_file)
 
-        temp_images = PynPoint.images.create_restore(temp_file)
+        temp_images = PynPoint.images.create_restore(temp_file, ".")
         self.func4test_overall_same(self.images3,temp_images)
     
 
