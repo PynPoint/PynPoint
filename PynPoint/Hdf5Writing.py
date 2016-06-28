@@ -46,7 +46,16 @@ class Hdf5WritingModule(WritingModule):
                     data_set.attrs[key] = value
 
                 # non stable attributes
-                # check if there is a header group
+            non_static_attr_keys = self._m_input_ports[in_tag].get_all_non_static_attributes()
+
+            if non_static_attr_keys is not None:
+                for key in non_static_attr_keys:
+                    print key
+                    print ("header_" + str(in_tag) + "/" + str(key))
+                    tmp_data_attr = self._m_input_ports[in_tag].get_attribute(key)
+
+                    out_file.create_dataset(("header_" + out_tag + "/" + key),
+                                            data=tmp_data_attr)
 
         out_file.close()
 
