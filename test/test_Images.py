@@ -69,7 +69,7 @@ class TestImages(object):
                                 
         self.imagesfits = PynPoint.images.create_wfitsfiles(self.files_fits,
                                 cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
-    '''
+
     def test_overall_images3(self):
         assert np.array_equal(self.images3.files , self.files_fits_sorted)
         assert self.images3.num_files == len(self.images3.files) 
@@ -90,9 +90,8 @@ class TestImages(object):
         assert np.array_equal(self.images3.im_arr_mask.shape , (4,146,146))
         assert np.allclose(self.images3.im_arr_mask.min() , -6.9235109549481422e-05,rtol=limit1)
         assert np.allclose(self.images3.im_arr_mask.max() , 0.0044742124155163765,rtol=limit1)
-        assert np.allclose(self.images3.im_arr_mask.var() , 4.604643923044455e-08 ,rtol=limit1)'''
-        
-    '''
+        assert np.allclose(self.images3.im_arr_mask.var() , 4.604643923044455e-08 ,rtol=limit1)
+
     def test_overall_images1(self):
         images = self.images1
         images_base = self.images3
@@ -108,7 +107,7 @@ class TestImages(object):
         assert np.allclose(images.im_arr.max() , 0.0044742124155163765,rtol=limit1)
         assert np.allclose(images.im_arr.var() , 4.5663498111183116e-08 ,rtol=limit1)
         assert images.cent_remove is False
-        assert np.array_equal(images.cent_mask , np.ones(shape=(146,146)))'''
+        assert np.array_equal(images.cent_mask , np.ones(shape=(146,146)))
                  
     def func4test_overall_same(self,images,images_base):
         assert np.array_equal(images.files , images_base.files )
