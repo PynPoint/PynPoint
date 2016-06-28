@@ -52,6 +52,7 @@ class BasisWrapper(BasePynpointWrapper):
                                                       pypline_working_place)
         obj.mk_basis_set()
         return obj
+    
 
     @classmethod
     def create_wfitsfiles(cls, files,**kwargs):
