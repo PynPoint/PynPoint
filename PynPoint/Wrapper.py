@@ -67,14 +67,12 @@ class ImageWrapper(object):
                       "im_arr_mask": self._m_image_data_masked_port}
 
         if item in simple_attributes:
-            print self._m_image_data_port.get_attribute(simple_attributes[item])
-            print type(self._m_image_data_port.get_attribute(simple_attributes[item]))
-            print type(True)
             return self._m_image_data_port.get_attribute(simple_attributes[item])
 
         elif item in data_bases:
             return data_bases[item].get_all()
 
+        # TODO remove Pypline function
         elif item == "im_size":
             return (self._pypeline.get_data(self._m_image_data_tag).shape[1],
                     self._pypeline.get_data(self._m_image_data_tag).shape[2])
@@ -162,7 +160,31 @@ class ImageWrapper(object):
 
     @classmethod
     def create_restore(cls, filename):
-        reading =
+
+        obj = cls()
+
+        tag_dict = {"im_arr": obj._m_image_data_tag,
+                    "im_mask_arr": obj._m_image_data_masked_tag,
+                    "mask_arr": obj._m_mask_tag}
+
+        head, tail = os.path.split(filename)
+        reading = Hdf5ReadingModule("reading",
+                                    input_filename=tail,
+                                    input_dir=head,
+                                    tag_dictionary=tag_dict)
+
+        obj._pypeline = Pypeline(head,
+                                 head,
+                                 head)
+
+        obj._pypeline.add_module(reading)
+        obj._pypeline.run_module("reading")
+
+        obj._m_image_data_port.set_database_connection(obj._pypeline.m_data_storage)
+        obj._m_mask_port.set_database_connection(obj._pypeline.m_data_storage)
+        obj._m_image_data_masked_port.set_database_connection(obj._pypeline.m_data_storage)
+
+        return obj
 
     @classmethod
     def create_wfitsfiles(cls, *args,**kwargs):

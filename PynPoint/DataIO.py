@@ -580,7 +580,7 @@ class OutputPort(Port):
         else:
             # add information in sub Group
             self._set_all_key(tag=("header_" + self._m_tag + "/" + name),
-                              data=np.asarray([value,]))
+                              data=np.asarray(value))
 
     def append_attribute_data(self,
                               name,
