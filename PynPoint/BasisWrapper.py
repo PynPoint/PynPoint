@@ -55,6 +55,7 @@ class BasisWrapper(BasePynpointWrapper):
 
     @classmethod
     def create_wfitsfiles(cls, files,**kwargs):
+        
         pass
 
     @classmethod
