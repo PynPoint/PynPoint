@@ -2,6 +2,8 @@
 Different interfaces for Pypeline Modules.
 """
 
+# TODO better abstraction
+
 # external modules
 from abc import ABCMeta, abstractmethod
 import os
@@ -36,6 +38,7 @@ class PypelineModule:
 
         assert (isinstance(name_in, str)), "Error: Name needs to be a String"
         self._m_name = name_in
+        self._m_data_base = None
 
     @property
     def name(self):
@@ -122,6 +125,9 @@ class WritingModule(PypelineModule):
         if tag in self._m_input_ports:
             warnings.warn('Tag already used. Updating..')
 
+        if self._m_data_base is not None:
+            tmp_port.set_database_connection(self._m_data_base)
+
         self._m_input_ports[tag] = tmp_port
 
     def connect_database(self,
@@ -135,6 +141,8 @@ class WritingModule(PypelineModule):
 
         for port in self._m_input_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_data_base = data_base_in
 
     @abstractmethod
     def run(self):
@@ -182,6 +190,9 @@ class ProcessingModule(PypelineModule):
         if tag in self._m_input_ports:
             warnings.warn('Tag already used. Updating..')
 
+        if self._m_data_base is not None:
+            tmp_port.set_database_connection(self._m_data_base)
+
         self._m_input_ports[tag] = tmp_port
 
     def add_output_port(self,
@@ -200,6 +211,9 @@ class ProcessingModule(PypelineModule):
         if tag in self._m_input_ports:
             warnings.warn('Tag %s already used. Updating..' % tag)
 
+        if self._m_data_base is not None:
+            tmp_port.set_database_connection(self._m_data_base)
+
         self._m_output_ports[tag] = tmp_port
 
     def connect_database(self,
@@ -215,6 +229,8 @@ class ProcessingModule(PypelineModule):
             port.set_database_connection(data_base_in)
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_data_base = data_base_in
 
     @abstractmethod
     def run(self):
@@ -276,6 +292,9 @@ class ReadingModule(PypelineModule):
         if tag in self._m_out_ports:
             warnings.warn('Tag already used. Updating..')
 
+        if self._m_data_base is not None:
+            tmp_port.set_database_connection(self._m_data_base)
+
         self._m_out_ports[tag] = tmp_port
 
     def connect_database(self,
@@ -289,6 +308,8 @@ class ReadingModule(PypelineModule):
 
         for port in self._m_out_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_data_base = data_base_in
 
     @abstractmethod
     def run(self):
