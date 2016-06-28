@@ -7,8 +7,6 @@ import copy
 import h5py
 import numpy as np
 
-# TODO decorator for check status of Port
-
 
 class DataStorage(object):
     """
@@ -39,7 +37,7 @@ class DataStorage(object):
         """
         if self.m_open:
             return
-        self.m_data_bank = h5py.File(self._m_location, mode='a')
+        self.m_data_bank = h5py.File(self._m_location, mode='a',driver="core")
         self.m_open = True
 
     def close_connection(self):
@@ -229,6 +227,7 @@ class InputPort(Port):
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
     def get_all_non_static_attributes(self):
+        self._check_status_and_activate()
         result = []
 
         # check if header Group exists
@@ -575,6 +574,9 @@ class OutputPort(Port):
                       value,
                       static=True):
 
+        if not self._check_status_and_activate():
+            return
+
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
         else:
@@ -585,6 +587,9 @@ class OutputPort(Port):
     def append_attribute_data(self,
                               name,
                               value):
+        if not self._check_status_and_activate():
+            return
+
         self._append_key(tag=("header_" + self._m_tag + "/" + name),
                          data=np.asarray([value,]))
 
@@ -596,6 +601,9 @@ class OutputPort(Port):
         :param name: Name of the attribute.
         :return: None
         """
+        if not self._check_status_and_activate():
+            return
+
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
@@ -609,6 +617,9 @@ class OutputPort(Port):
 
         :return: None
         """
+        if not self._check_status_and_activate():
+            return
+
         # static attributes
         for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del attr
@@ -629,6 +640,9 @@ class OutputPort(Port):
                  0 if the attribute exists and is equal,
                  -1 if the attribute exists but is not equal
         """
+        if not self._check_status_and_activate():
+            return
+
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
                 return 0

@@ -18,11 +18,11 @@ __version__ = '0.2.0'
 __credits__ = 'ETH Zurich, Institute for Astronomy'
 
 #from PynPoint.Residuals import residuals
-# from PynPoint.Basis import basis
+#from PynPoint.Basis import basis
 #from PynPoint.Images import images
-from PynPoint.Wrapper import ImageWrapper as images
-from PynPoint.Wrapper import ResidualsWrapper as residuals
-from PynPoint.Wrapper import BasisWrapper as basis
+from PynPoint.Image_Wrapper import ImageWrapper as images
+from PynPoint.BasisWrapper import BasisWrapper as basis
+from PynPoint.ResidualsWrapper import ResidualsWrapper as residuals
 from PynPoint.Workflow import workflow
 
 from PynPoint._BasePynPoint import base_pynpoint
