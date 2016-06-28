@@ -4,9 +4,10 @@ import os
 
 # own modules
 from PynPoint.Pypeline import Pypeline
-from FitsReading import ReadFitsCubesDirectory
-from PSFsubPreparation import PSFdataPreparation
-from Hdf5Writing import Hdf5WritingModule
+from PynPoint.FitsReading import ReadFitsCubesDirectory
+from PynPoint.PSFsubPreparation import PSFdataPreparation
+from PynPoint.Hdf5Writing import Hdf5WritingModule
+from PynPoint.Hdf5Reading import Hdf5ReadingModule
 from DataIO import InputPort
 
 class BasePynpointWrapper(object):
@@ -161,7 +162,7 @@ class ImageWrapper(object):
 
     @classmethod
     def create_restore(cls, filename):
-        pass
+        reading =
 
     @classmethod
     def create_wfitsfiles(cls, *args,**kwargs):
