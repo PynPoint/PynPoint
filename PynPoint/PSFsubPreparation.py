@@ -131,8 +131,9 @@ class PSFdataPreparation(ProcessingModule):
 
         # image normalization
         im_norm = self._im_norm(im_data)
-        self._m_output_ports[self.m_image_out_tag].append_attribute_data("im_norm",
-                                                                         im_norm)
+        self._m_output_ports[self.m_image_out_tag].add_attribute("im_norm",
+                                                                 im_norm,
+                                                                 static=False)
 
         # TODO para_sort
 

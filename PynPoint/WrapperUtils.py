@@ -34,6 +34,10 @@ class BasePynpointWrapper(object):
         self._m_tag_root_mask_image = None
         self._m_tag_root_mask = None
 
+        # containing all entry to be saved and restored (set by Basis and Image individually)
+        self._m_restore_tag_dict = {}
+        self._m_save_tag_dict = {}
+
     def __getattr__(self, item):
 
         # All static and non static attributes and their names in the database
@@ -74,44 +78,55 @@ class BasePynpointWrapper(object):
 
         obj = cls(tmp_pypeline)
 
+        obj._save_kwargs(**kwargs)
+
+        reading = ReadFitsCubesDirectory(name_in="reading_mod",
+                                         input_dir=dir_in,
+                                         image_tag=obj._m_image_data_tag)
+        obj._pypeline.add_module(reading)
+        obj._pypeline.run_module("reading_mod")
+        obj._prepare_data()
+
+        return obj
+
+    def _save_kwargs(self,
+                     **kwargs):
         if "cent_remove" in kwargs:
-            obj._m_center_remove = kwargs["cent_remove"]
+            self._m_center_remove = kwargs["cent_remove"]
 
         if "resize" in kwargs:
-            obj._m_resize = kwargs["resize"]
+            self._m_resize = kwargs["resize"]
 
         if "recent" in kwargs:
             warnings.warn('Recentering is not longer supported in PynPoint preparation')
 
         if "cent_size" in kwargs:
-            obj._m_cent_size = kwargs["cent_size"]
+            self._m_cent_size = kwargs["cent_size"]
 
         if "F_final" in kwargs:
-            obj._m_f_final = kwargs["F_final"]
+            self._m_f_final = kwargs["F_final"]
 
         if "edge_size" in kwargs:
-            obj._m_edge_size = kwargs["edge_size"]
+            self._m_edge_size = kwargs["edge_size"]
 
-        reading = ReadFitsCubesDirectory(name_in="reading_mod",
-                                         input_dir=dir_in,
-                                         image_tag=obj._m_image_data_tag)
-
+    def _prepare_data(self):
         preparation = PSFdataPreparation(name_in="prep",
-                                         image_in_tag=obj._m_image_data_tag,
-                                         image_mask_out_tag=obj._m_image_data_masked_tag,
-                                         mask_out_tag=obj._m_mask_tag,
-                                         image_out_tag=obj._m_image_data_tag,
-                                         resize=obj._m_resize,
-                                         cent_remove=obj._m_center_remove,
-                                         F_final=obj._m_f_final,
-                                         cent_size=obj._m_cent_size)
+                                         image_in_tag=self._m_image_data_tag,
+                                         image_mask_out_tag=self._m_image_data_masked_tag,
+                                         mask_out_tag=self._m_mask_tag,
+                                         image_out_tag=self._m_image_data_tag,
+                                         resize=self._m_resize,
+                                         cent_remove=self._m_center_remove,
+                                         F_final=self._m_f_final,
+                                         cent_size=self._m_cent_size)
 
-        obj._pypeline.add_module(reading)
-        obj._pypeline.add_module(preparation)
-        obj._pypeline.run()
-        return obj
+        self._pypeline.add_module(preparation)
+        self._pypeline.run_module("prep")
 
-    def save(self, filename):
+    def save(self,
+             filename):
+
+        print filename
 
         filename = str(filename)
 
@@ -120,14 +135,10 @@ class BasePynpointWrapper(object):
 
         head, tail = os.path.split(filename)
 
-        dictionary = {self._m_image_data_tag: self._m_tag_root_image,
-                      self._m_image_data_masked_tag: self._m_tag_root_mask_image,
-                      self._m_mask_tag: self._m_tag_root_mask}
-
         writing = Hdf5WritingModule("hdf5_writing",
                                     tail,
                                     output_dir=head,
-                                    tag_dictionary=dictionary,
+                                    tag_dictionary=self._m_save_tag_dict,
                                     keep_attributes=True)
 
         self._pypeline.add_module(writing)
@@ -152,19 +163,31 @@ class BasePynpointWrapper(object):
 
         obj = cls(tmp_pypeline)
 
-        tag_dict = {obj._m_tag_root_image: obj._m_image_data_tag,
-                    obj._m_tag_root_mask_image: obj._m_image_data_masked_tag,
-                    obj._m_tag_root_mask: obj._m_mask_tag}
-
         reading = Hdf5ReadingModule("reading",
                                     input_filename=tail,
                                     input_dir=head,
-                                    tag_dictionary=tag_dict)
+                                    tag_dictionary=obj._m_restore_tag_dict)
 
         obj._pypeline.add_module(reading)
         obj._pypeline.run_module("reading")
 
         return obj
 
-    def plt_im(self,ind):
+    @classmethod
+    def create_wfitsfiles(cls, files,**kwargs):
         pass
+
+    @classmethod
+    def create_whdf5input(cls,
+                          file_in,
+                          pypline_working_place=None,
+                          **kwargs):
+
+        obj = cls.create_restore(file_in,
+                                 pypline_working_place)
+
+        obj._save_kwargs(**kwargs)
+
+        obj._prepare_data()
+
+        return obj

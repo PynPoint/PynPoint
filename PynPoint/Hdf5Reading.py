@@ -1,5 +1,6 @@
 import os
 import h5py
+import numpy as np
 
 from PynPoint.Processing import ReadingModule
 
@@ -26,6 +27,8 @@ class Hdf5ReadingModule(ReadingModule):
             if entry.startswith("header_"):
                 continue
 
+            entry = str(entry)  # unicode keys cause errors
+
             if entry in self._m_tag_dictionary:
                 tmp_tag = self._m_tag_dictionary[entry]
             else:
@@ -33,7 +36,7 @@ class Hdf5ReadingModule(ReadingModule):
 
             # add data
             self.add_output_port(tmp_tag)
-            self._m_out_ports[tmp_tag].set_all(hdf5_file[entry][...])
+            self._m_out_ports[tmp_tag].set_all(np.asarray(hdf5_file[entry][...]))
 
             # add static attributes
             for attribute_name, attribute_value in hdf5_file[entry].attrs.iteritems():
@@ -63,7 +66,7 @@ class Hdf5ReadingModule(ReadingModule):
             # create file path + filename
 
             assert(os.path.isfile((tmp_dir + str(self.m_filename)))), "Error: Input file does not "\
-                                                                      "exist. Input requested: "\
+                                                                      "exist. Input requested: %s"\
                                                                       % str(self.m_filename)
 
             files.append((tmp_dir + str(self.m_filename)))
