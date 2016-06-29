@@ -37,6 +37,8 @@ class Hdf5WritingModule(WritingModule):
             data_set = out_file.create_dataset(out_tag,
                                                data=tmp_data)
 
+            # TODO raise Error if key does not exist
+
             if self.m_keep_attributes:
                 # stable attributes
                 tmp_attr = self._m_input_ports[in_tag].get_all_static_attributes()

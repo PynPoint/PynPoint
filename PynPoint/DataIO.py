@@ -37,7 +37,7 @@ class DataStorage(object):
         """
         if self.m_open:
             return
-        self.m_data_bank = h5py.File(self._m_location, mode='a',driver="core")
+        self.m_data_bank = h5py.File(self._m_location, mode='a')
         self.m_open = True
 
     def close_connection(self):
@@ -79,6 +79,7 @@ class Port:
         :type data_storage_in: DataStorage
         :return: None
         """
+
         assert (isinstance(tag, str)), "Error: Port tags need to be strings."
         self._m_tag = tag
         self._m_data_storage = data_storage_in
