@@ -88,7 +88,6 @@ class TestBasis(object):
         
     def test_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_hdf5.h5'))
-        
         self.basis3.save(temp_file)
         temp_basis = PynPoint.basis.create_restore(temp_file)#('',intype='restore')
 
@@ -144,6 +143,8 @@ class TestBasis(object):
 
         assert np.array_equal(basis.im_norm , basis_base.im_norm)
 
+        assert np.array_equal(basis.im_arr, basis_base.im_arr)
+
         assert np.array_equal(basis.psf_basis , basis_base.psf_basis)#,atol=limit1)
         assert np.array_equal(basis.cent_mask,basis_base.cent_mask)
         assert np.array_equal(basis.im_ave,basis_base.im_ave)#,atol=limit1)
@@ -158,11 +159,12 @@ class TestBasis(object):
         
 
     def teardown(self):
+        '''
         #tidy up
         print("tearing down " + __name__)
         tempfilename = PynPoint._Util.filename4mdir(self.test_data_dir,filetype='convert')
         if os.path.isfile(tempfilename):
             os.remove(tempfilename)
         
-        pass
+        pass'''
 

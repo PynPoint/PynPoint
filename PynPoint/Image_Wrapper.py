@@ -37,14 +37,15 @@ class ImageWrapper(BasePynpointWrapper):
         self._m_mask_port = InputPort(self._m_mask_tag)
         self._m_mask_port.set_database_connection(working_pypeline.m_data_storage)
 
+        self._m_restore_tag_dict = {self._m_tag_root_image: self._m_image_data_tag,
+                                    self._m_tag_root_mask_image: self._m_image_data_masked_tag,
+                                    self._m_tag_root_mask: self._m_mask_tag}
+
+        self._m_save_tag_dict = {self._m_image_data_tag: self._m_tag_root_image,
+                                 self._m_image_data_masked_tag: self._m_tag_root_mask_image,
+                                 self._m_mask_tag: self._m_tag_root_mask}
+
         ImageWrapper.class_counter += 1
-
-    def plt_im(self,ind):
-        pass
-
-    @classmethod
-    def create_wfitsfiles(cls, *args,**kwargs):
-        pass
 
     def mk_psf_realisation(self,ind,full=False):
         pass
@@ -52,6 +53,7 @@ class ImageWrapper(BasePynpointWrapper):
     @classmethod
     def create_whdf5input(cls,
                           file_in,
+                          pypline_working_place=None,
                           **kwargs):
         pass
 
