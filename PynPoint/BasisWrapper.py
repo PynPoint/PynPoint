@@ -18,6 +18,7 @@ class BasisWrapper(BasePynpointWrapper):
         self._m_tag_root_mask = "basis_cent_mask"
         self._m_tag_root_basis = "psf_basis"
         self._m_tag_root_im_average = "basis_im_ave"
+        self._m_tag_root_psf_image_arr = "basis_psf_im_arr"
 
         # In the old PynPoint it was possible to create multiple image instances working on
         # separated data (in memory). Hence, every time a new ImageWrapper is created a new database
@@ -35,6 +36,11 @@ class BasisWrapper(BasePynpointWrapper):
         self._m_mask_port = InputPort(self._m_mask_tag)
         self._m_mask_port.set_database_connection(working_pypeline.m_data_storage)
 
+        self._m_psf_image_arr_tag = self._m_tag_root_psf_image_arr + \
+                                    str(BasisWrapper.class_counter).zfill(2)
+        self._m_psf_image_arr_port = InputPort(self._m_psf_image_arr_tag)
+        self._m_psf_image_arr_port.set_database_connection(working_pypeline.m_data_storage)
+
         # ONLY for Basis not for Image
         self._m_basis_tag = self._m_tag_root_basis \
                             + str(BasisWrapper.class_counter).zfill(2)
@@ -50,13 +56,15 @@ class BasisWrapper(BasePynpointWrapper):
                                     self._m_tag_root_mask_image: self._m_image_data_masked_tag,
                                     self._m_tag_root_mask: self._m_mask_tag,
                                     self._m_tag_root_basis: self._m_basis_tag,
-                                    self._m_tag_root_im_average: self._m_im_average_tag}
+                                    self._m_tag_root_im_average: self._m_im_average_tag,
+                                    self._m_tag_root_psf_image_arr: self._m_psf_image_arr_tag}
 
         self._m_save_tag_dict = {self._m_image_data_tag: self._m_tag_root_image,
                                  self._m_image_data_masked_tag: self._m_tag_root_mask_image,
                                  self._m_mask_tag: self._m_tag_root_mask,
                                  self._m_basis_tag: self._m_tag_root_basis,
-                                 self._m_im_average_tag: self._m_tag_root_im_average}
+                                 self._m_im_average_tag: self._m_tag_root_im_average,
+                                 self._m_psf_image_arr_tag: self._m_tag_root_psf_image_arr}
 
         BasisWrapper.class_counter += 1
 
@@ -113,4 +121,6 @@ class BasisWrapper(BasePynpointWrapper):
         pass
 
     def mk_psfmodel(self, num):
-        pass
+
+        # call the super function with own attributes (basis is a basis)
+        super(BasisWrapper, self).mk_psfmodel(self, num)

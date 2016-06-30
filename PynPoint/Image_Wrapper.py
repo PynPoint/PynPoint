@@ -20,6 +20,7 @@ class ImageWrapper(BasePynpointWrapper):
         self._m_tag_root_image = "im_arr"
         self._m_tag_root_mask_image = "im_mask_arr"
         self._m_tag_root_mask = "im_cent_mask"
+        self._m_tag_root_psf_image_arr = "psf_im_arr"
 
         # In the old PynPoint it was possible to create multiple image instances working on
         # separated data (in memory). Hence, every time a new ImageWrapper is created a new database
@@ -37,13 +38,20 @@ class ImageWrapper(BasePynpointWrapper):
         self._m_mask_port = InputPort(self._m_mask_tag)
         self._m_mask_port.set_database_connection(working_pypeline.m_data_storage)
 
+        self._m_psf_image_arr_tag = self._m_tag_root_psf_image_arr + \
+                                    str(ImageWrapper.class_counter).zfill(2)
+        self._m_psf_image_arr_port = InputPort(self._m_psf_image_arr_tag)
+        self._m_psf_image_arr_port.set_database_connection(working_pypeline.m_data_storage)
+
         self._m_restore_tag_dict = {self._m_tag_root_image: self._m_image_data_tag,
                                     self._m_tag_root_mask_image: self._m_image_data_masked_tag,
-                                    self._m_tag_root_mask: self._m_mask_tag}
+                                    self._m_tag_root_mask: self._m_mask_tag,
+                                    self._m_tag_root_psf_image_arr: self._m_psf_image_arr_tag}
 
         self._m_save_tag_dict = {self._m_image_data_tag: self._m_tag_root_image,
                                  self._m_image_data_masked_tag: self._m_tag_root_mask_image,
-                                 self._m_mask_tag: self._m_tag_root_mask}
+                                 self._m_mask_tag: self._m_tag_root_mask,
+                                 self._m_psf_image_arr_tag: self._m_tag_root_psf_image_arr}
 
         ImageWrapper.class_counter += 1
 
