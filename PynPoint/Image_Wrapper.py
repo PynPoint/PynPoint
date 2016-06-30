@@ -55,8 +55,23 @@ class ImageWrapper(BasePynpointWrapper):
 
         ImageWrapper.class_counter += 1
 
-    def mk_psf_realisation(self,ind,full=False):
-        pass
+    def mk_psf_realisation(self,
+                           ind,
+                           full=False):
+        """
+        Function for making a realisation of the PSF using the data stored in the object
+
+        :param ind: index of the image to be modelled
+        :param full: if set to True then the masked region will be included
+        :return: an image of the PSF model
+        """
+        im_temp = self.psf_im_arr[ind, ]
+        if self.cent_remove is True:
+            if full is True:
+                im_temp = im_temp + self.im_arr_mask[ind,]
+            elif full is False:
+                im_temp = im_temp * self.cent_mask
+        return im_temp
 
     @classmethod
     def create_whdf5input(cls,
