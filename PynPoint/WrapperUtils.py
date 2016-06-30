@@ -1,3 +1,5 @@
+# the only way to do this is to access private members
+
 import warnings
 import os
 
@@ -6,6 +8,7 @@ from PynPoint.FitsReading import ReadFitsCubesDirectory
 from PynPoint.PSFsubPreparation import PSFdataPreparation
 from PynPoint.Hdf5Writing import Hdf5WritingModule
 from PynPoint.Hdf5Reading import Hdf5ReadingModule
+from PynPoint.PSFSubtraction import MakePSFModleModule
 
 
 class BasePynpointWrapper(object):
@@ -34,6 +37,8 @@ class BasePynpointWrapper(object):
         self._m_tag_root_mask_image = None
         self._m_tag_root_mask = None
 
+        self._m_psf_image_arr_tag = None
+
         # containing all entry to be saved and restored (set by Basis and Image individually)
         self._m_restore_tag_dict = {}
         self._m_save_tag_dict = {}
@@ -55,13 +60,17 @@ class BasePynpointWrapper(object):
 
         data_bases = {"im_arr": self._m_image_data_port,
                       "cent_mask": self._m_mask_port,
-                      "im_arr_mask": self._m_image_data_masked_port}
+                      "im_arr_mask": self._m_image_data_masked_port,
+                      "psf_im_arr": self._m_psf_image_arr_port}
 
         if item in simple_attributes:
             return self._m_image_data_port.get_attribute(simple_attributes[item])
 
         elif item in data_bases:
             return data_bases[item].get_all()
+
+        if item == "_psf_coeff":
+            return self._m_psf_image_arr_port.get_attribute("psf_coeff")
 
         elif item == "im_size":
             return (self._m_image_data_port.get_all().shape[1],
@@ -191,3 +200,22 @@ class BasePynpointWrapper(object):
         obj._prepare_data()
 
         return obj
+
+    def mk_psfmodel(self,
+                     basis,
+                     num):
+
+        tmp_im_arr_in_tag = self._m_image_data_tag
+        tmp_basis_tag = basis._m_basis_tag
+        tmp_basis_average_in_tag = basis._m_im_average_tag
+        tmp_psf_basis_out_tag = self._m_psf_image_arr_tag
+
+        psf_model_module = MakePSFModleModule(num,
+                                              name_in="psf_model_module",
+                                              im_arr_in_tag=tmp_im_arr_in_tag,
+                                              basis_in_tag=tmp_basis_tag,
+                                              basis_average_in_tag=tmp_basis_average_in_tag,
+                                              psf_basis_out_tag=tmp_psf_basis_out_tag)
+
+        self._pypeline.add_module(psf_model_module)
+        self._pypeline.run_module("psf_model_module")

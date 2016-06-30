@@ -164,6 +164,13 @@ class InputPort(Port):
 
         return True
 
+    def _check_if_data_exists(self):
+
+        if self._m_tag in self._m_data_storage.m_data_bank:
+            return True
+        else:
+            return False
+
     def __getitem__(self, item):
         """
         Internal function needed to access data using slicing. See class documentation for an
@@ -177,6 +184,9 @@ class InputPort(Port):
 
         if not self._check_status_and_activate():
             return
+
+        if self._check_if_data_exists() is False:
+            return None
 
         result = self._m_data_storage.m_data_bank[self._m_tag][item]
 
@@ -193,7 +203,12 @@ class InputPort(Port):
 
         :return: The data set
         """
+
         self._check_status_and_activate()
+
+        if self._check_if_data_exists() is False:
+            return None
+
         return np.asarray(self._m_data_storage.m_data_bank[self._m_tag], dtype=np.float64)
 
     def get_attribute(self,
@@ -206,7 +221,6 @@ class InputPort(Port):
         # TODO Documentation
 
         self._check_status_and_activate()
-
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types

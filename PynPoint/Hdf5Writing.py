@@ -34,10 +34,11 @@ class Hdf5WritingModule(WritingModule):
 
             tmp_data = self._m_input_ports[in_tag].get_all()
 
+            if tmp_data is None:
+                continue
+
             data_set = out_file.create_dataset(out_tag,
                                                data=tmp_data)
-
-            # TODO raise Error if key does not exist
 
             if self.m_keep_attributes:
                 # stable attributes
