@@ -239,10 +239,11 @@ class TestUtil(object):
         
 
     def teardown(self):
+        '''
         #tidy up
         print("tearing down " + __name__)
         tempfilename = PynPoint._Util.filename4mdir(self.test_data,filetype='convert')
         if os.path.isfile(tempfilename):
             os.remove(tempfilename)
-        pass
+        pass'''
 
