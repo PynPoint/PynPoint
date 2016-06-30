@@ -185,6 +185,7 @@ class TestWorkflow(object):
         
 
     def teardown(self):
+        '''
         dirname = self.data_dir+'workspace_temp'
         dirname2 = self.data_dir+'workspace_temp2'
         #tidy up
@@ -200,7 +201,7 @@ class TestWorkflow(object):
              
                 
         print("tearing down " + __name__)
-        pass
+        pass'''
     
 # if __name__ == '__main__':
 #     pytest.main("-k test_modules_from_config")
