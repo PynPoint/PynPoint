@@ -1,5 +1,7 @@
 
 from PynPoint.DataIO import InputPort
+from PynPoint.Image_Wrapper import ImageWrapper
+from PynPoint.BasisWrapper import BasisWrapper
 from PSFSubtraction import CreateResidualsModule
 
 import numpy as np
@@ -38,8 +40,8 @@ class ResidualsWrapper(object):
         self._m_res_var_port = InputPort(self._m_res_var)
         self._m_res_var_port.set_database_connection(self._pypeline.m_data_storage)
 
-        self._m_res_rot_mean_clip = self._m_res_rot_mean_clip_root + \
-                                    str(ResidualsWrapper.class_counter).zfill(2)
+        self._m_res_rot_mean_clip = self._m_res_rot_mean_clip_root \
+                                    + str(ResidualsWrapper.class_counter).zfill(2)
         self._m_res_rot_mean_clip_port = InputPort(self._m_res_rot_mean_clip)
         self._m_res_rot_mean_clip_port.set_database_connection(self._pypeline.m_data_storage)
 
@@ -49,11 +51,29 @@ class ResidualsWrapper(object):
         self._m_images = None
 
     @classmethod
-    def create_restore(cls, filename):
-        pass
+    def create_restore(cls,
+                       filename):
 
-    def save(self):
-        pass
+        image = ImageWrapper.create_restore(filename)
+        basis = BasisWrapper.create_restore(filename)
+
+        tmp_pypeline = image._pypeline
+
+        obj = cls(tmp_pypeline)
+
+        obj._m_basis = basis
+        obj._m_images = image
+
+        return obj
+
+    def save(self,
+             filename):
+        # save image
+        self._m_images.save(filename)
+
+        # save basis
+        self._m_basis.save(filename)
+
 
     @classmethod
     def create_winstances(cls,
