@@ -73,10 +73,3 @@ class ImageWrapper(BasePynpointWrapper):
                 im_temp = im_temp * self.cent_mask
         return im_temp
 
-    @classmethod
-    def create_whdf5input(cls,
-                          file_in,
-                          pypline_working_place=None,
-                          **kwargs):
-        pass
-
