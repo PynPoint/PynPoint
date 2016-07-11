@@ -8,7 +8,8 @@ from PynPoint.FitsReading import ReadFitsCubesDirectory
 from PynPoint.PSFsubPreparation import PSFdataPreparation
 from PynPoint.Hdf5Writing import Hdf5WritingModule
 from PynPoint.Hdf5Reading import Hdf5ReadingModule
-from PynPoint.PSFSubtraction import MakePSFModleModule
+from PynPoint.PSFSubtraction import MakePSFModelModule
+from PynPoint.StackingAndSubsampling import StackAndSubsetModule
 
 
 class BasePynpointWrapper(object):
@@ -118,6 +119,9 @@ class BasePynpointWrapper(object):
         if "edge_size" in kwargs:
             self._m_edge_size = kwargs["edge_size"]
 
+        if "ran_sub" in kwargs:
+            self._m_ran_sub = kwargs["ran_sub"]
+
     def _prepare_data(self):
         preparation = PSFdataPreparation(name_in="prep",
                                          image_in_tag=self._m_image_data_tag,
@@ -129,8 +133,17 @@ class BasePynpointWrapper(object):
                                          F_final=self._m_f_final,
                                          cent_size=self._m_cent_size)
 
+        subsample_module = StackAndSubsetModule(name_in="stacking",
+                                                image_in_tag=self._m_image_data_tag,
+                                                image_out_tag=self._m_image_data_tag,
+                                                random_subset=self._m_ran_sub)
+        # TODO add stacking
+
         self._pypeline.add_module(preparation)
+        self._pypeline.add_module(subsample_module)
+
         self._pypeline.run_module("prep")
+        self._pypeline.run_module("stacking")
 
     def save(self,
              filename):
@@ -210,7 +223,7 @@ class BasePynpointWrapper(object):
         tmp_basis_average_in_tag = basis._m_im_average_tag
         tmp_psf_basis_out_tag = self._m_psf_image_arr_tag
 
-        psf_model_module = MakePSFModleModule(num,
+        psf_model_module = MakePSFModelModule(num,
                                               name_in="psf_model_module",
                                               im_arr_in_tag=tmp_im_arr_in_tag,
                                               basis_in_tag=tmp_basis_tag,
