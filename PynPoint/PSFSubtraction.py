@@ -1,9 +1,117 @@
-from scipy import linalg
+from scipy import linalg, ndimage
 import numpy as np
 
 from PynPoint.Processing import ProcessingModule
 
-class MakePSFModleModule(ProcessingModule):
+
+class CreateResidualsModule(ProcessingModule):
+
+    def __init__(self,
+                 name_in= "residuals_module",
+                 im_arr_in_tag="im_arr",
+                 psf_im_in_tag="psf_im",
+                 mask_in_tag="cent_mask",
+                 res_arr_out_tag="res_arr",
+                 res_arr_rot_out_tag="res_rot",
+                 res_mean_tag="res_mean",
+                 res_median_tag="res_median",
+                 res_var_tag="res_var",
+                 res_rot_mean_clip_tag="res_rot_mean_clip",
+                 extra_rot=0.0):
+
+        super(CreateResidualsModule, self).__init__(name_in)
+
+        self._m_im_arr_in_tag = im_arr_in_tag
+        self.add_input_port(im_arr_in_tag)
+
+        self._m_psf_im_tag = psf_im_in_tag
+        self.add_input_port(psf_im_in_tag)
+
+        self._m_mask_in_tag = mask_in_tag
+        self.add_input_port(mask_in_tag)
+
+        # Outputs
+        self._m_res_arr_out_tag = res_arr_out_tag
+        self.add_output_port(res_arr_out_tag)
+
+        self._m_res_arr_rot_out_tag = res_arr_rot_out_tag
+        self.add_output_port(res_arr_rot_out_tag)
+
+        self._m_res_mean_tag = res_mean_tag
+        self.add_output_port(res_mean_tag)
+
+        self._m_res_median_tag = res_median_tag
+        self.add_output_port(res_median_tag)
+
+        self._m_res_var_tag = res_var_tag
+        self.add_output_port(res_var_tag)
+
+        self._m_res_rot_mean_clip_tag = res_rot_mean_clip_tag
+        self.add_output_port(res_rot_mean_clip_tag)
+
+        self.m_extra_rot = extra_rot
+
+    def run(self):
+        im_data = self._m_input_ports[self._m_im_arr_in_tag].get_all()
+        psf_im = self._m_input_ports[self._m_psf_im_tag].get_all()
+        cent_mask = self._m_input_ports[self._m_mask_in_tag].get_all()
+
+        # create result array
+        res_arr = im_data.copy()
+        for i in range(0,
+                       len(res_arr[:, 0, 0])):
+            res_arr[i, ] -= (psf_im[i, ] * cent_mask)
+
+        # rotate result array
+        para_angles = self._m_input_ports[self._m_im_arr_in_tag].get_attribute("NEW_PARA")
+        delta_para = para_angles[0] - para_angles
+        res_rot = np.zeros(shape=im_data.shape)
+        for i in range(0, len(delta_para)):
+            res_temp = res_arr[i, ]
+
+            res_rot[i, ] = ndimage.rotate(res_temp,
+                                          delta_para[i]+self.m_extra_rot,
+                                          reshape=False)
+
+        # create mean
+        tmp_res_rot_mean = np.mean(res_rot,
+                                   axis=0)
+
+        # create median
+        tmp_res_rot_median = np.median(res_rot,
+                                       axis=0)
+
+        # create variance
+        res_rot_temp = res_rot.copy()
+        for i in range(0,
+                       res_rot_temp.shape[0]):
+
+            res_rot_temp[i, ] -= - tmp_res_rot_mean
+        res_rot_var = (res_rot_temp**2.).sum(axis=0)
+        tmp_res_rot_var = res_rot_var
+
+        # create mean clip
+        res_rot_mean_clip = np.zeros(im_data[0,].shape)
+
+        for i in range(0, res_rot_mean_clip.shape[0]):
+            for j in range(0, res_rot_mean_clip.shape[1]):
+                temp = res_rot[:, i, j]
+                if temp.var() > 0.0:
+                    a = temp - temp.mean()
+                    b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
+                    b2 = b1.compress((b1 > (-1.0)*3.0*np.sqrt(a.var())).flat)
+                    res_rot_mean_clip[i, j] = temp.mean() + b2.mean()
+
+        # save results
+        self._m_output_ports[self._m_res_arr_out_tag].set_all(res_arr)
+        self._m_output_ports[self._m_res_arr_rot_out_tag].set_all(res_rot)
+        self._m_output_ports[self._m_res_mean_tag].set_all(tmp_res_rot_mean)
+        self._m_output_ports[self._m_res_median_tag].set_all(tmp_res_rot_median)
+        self._m_output_ports[self._m_res_var_tag].set_all(tmp_res_rot_var)
+        self._m_output_ports[self._m_res_rot_mean_clip_tag].set_all(res_rot_mean_clip)
+
+
+class MakePSFModelModule(ProcessingModule):
     """
     should be just a part of the whole processing
     """
@@ -19,7 +127,7 @@ class MakePSFModleModule(ProcessingModule):
         # TODO find out what num is
         self.m_num = num
 
-        super(MakePSFModleModule, self).__init__(name_in)
+        super(MakePSFModelModule, self).__init__(name_in)
 
         self._m_im_arr_in_tag = im_arr_in_tag
         self.add_input_port(im_arr_in_tag)
