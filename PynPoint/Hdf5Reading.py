@@ -32,7 +32,7 @@ class Hdf5ReadingModule(ReadingModule):
             if entry in self._m_tag_dictionary:
                 tmp_tag = self._m_tag_dictionary[entry]
             else:
-                tmp_tag = entry
+                continue
 
             # add data
             self.add_output_port(tmp_tag)

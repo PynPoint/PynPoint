@@ -2,8 +2,6 @@
 Different interfaces for Pypeline Modules.
 """
 
-# TODO better abstraction
-
 # external modules
 from abc import ABCMeta, abstractmethod
 import os

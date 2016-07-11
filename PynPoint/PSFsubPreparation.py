@@ -135,8 +135,6 @@ class PSFdataPreparation(ProcessingModule):
                                                                  im_norm,
                                                                  static=False)
 
-        # TODO para_sort
-
         # image resizing
         if self.m_resize:
             im_data = self._im_resizing(im_data)

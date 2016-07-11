@@ -28,7 +28,15 @@ lint:
 
 test:
 	find . -name 'test/__pycache__' -exec rm -rf {} +
-	py.test
+	py.test test/test_Images.py
+	py.test test/test_basis.py
+	py.test test/test_residuals.py
+	py.test test/test_plotter.py
+	py.test test/test_workflow.py
+	py.test test/test_PynPoint_cache.py
+	py.test test/test_PynPoint_ctx.py
+	py.test test/test_Cli.py
+
 
 test-all:
 	tox
