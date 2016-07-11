@@ -6,6 +6,7 @@ from PSFSubtraction import CreateResidualsModule
 
 import numpy as np
 
+
 class ResidualsWrapper(object):
     class_counter = 1
 
@@ -49,6 +50,15 @@ class ResidualsWrapper(object):
 
         self._m_basis = None
         self._m_images = None
+
+    def __getattr__(self, item):
+        data_bases = {"im_arr": self._m_images.im_arr,
+                      "cent_mask": self._m_images.cent_mask,
+                      "im_arr_mask": self._m_images.im_arr_mask,
+                      "psf_im_arr": self._m_images.psf_im_arr}
+
+        if item in data_bases:
+            return data_bases[item]
 
     @classmethod
     def create_restore(cls,

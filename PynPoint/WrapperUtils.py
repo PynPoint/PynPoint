@@ -20,7 +20,8 @@ class BasePynpointWrapper(object):
         self._pypeline = working_pypeline
         self._m_center_remove = True
         self._m_resize = False
-        self._m_ran_sub = None # TODO implement in some module
+        self._m_ran_sub = None
+        self._m_stacking = None
         self._m_cent_size = 0.05
         self._m_edge_size = 1.0
         self._m_f_final = 2.0
@@ -122,6 +123,9 @@ class BasePynpointWrapper(object):
         if "ran_sub" in kwargs:
             self._m_ran_sub = kwargs["ran_sub"]
 
+        if "stackave" in kwargs:
+            self._m_stacking = kwargs["stackave"]
+
     def _prepare_data(self):
         preparation = PSFdataPreparation(name_in="prep",
                                          image_in_tag=self._m_image_data_tag,
@@ -136,8 +140,8 @@ class BasePynpointWrapper(object):
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,
                                                 image_out_tag=self._m_image_data_tag,
-                                                random_subset=self._m_ran_sub)
-        # TODO add stacking
+                                                random_subset=self._m_ran_sub,
+                                                stacking=self._m_stacking)
 
         self._pypeline.add_module(preparation)
         self._pypeline.add_module(subsample_module)

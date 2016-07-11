@@ -124,7 +124,6 @@ class MakePSFModelModule(ProcessingModule):
                  basis_average_in_tag="basis_ave",
                  psf_basis_out_tag="psf_basis"):
 
-        # TODO find out what num is
         self.m_num = num
 
         super(MakePSFModelModule, self).__init__(name_in)
