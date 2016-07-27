@@ -1,8 +1,9 @@
 import os
+
 import h5py
 import numpy as np
 
-from PynPoint.Processing import ReadingModule
+from PynPoint.core.Processing import ReadingModule
 
 
 class Hdf5ReadingModule(ReadingModule):
@@ -23,6 +24,8 @@ class Hdf5ReadingModule(ReadingModule):
         hdf5_file = h5py.File(file_in, mode='a')
 
         for entry in hdf5_file.keys():
+            print entry
+            print self._m_tag_dictionary
             # do not read header information groups
             if entry.startswith("header_"):
                 continue
@@ -61,7 +64,7 @@ class Hdf5ReadingModule(ReadingModule):
         else:
             tmp_dir = str(self.m_input_location) + "/"
 
-        # check is a single input file is given
+        # check if a single input file is given
         if self.m_filename is not None:
             # create file path + filename
 
@@ -78,4 +81,5 @@ class Hdf5ReadingModule(ReadingModule):
                     files.append(tmp_dir + str(tmp_file))
 
         for tmp_file in files:
+            print "Reading" + str(tmp_file)
             self._read_single_hdf5(tmp_file)

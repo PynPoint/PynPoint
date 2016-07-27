@@ -18,9 +18,12 @@ Created on Apr 7, 2014
 author: jakeret
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
+
 import sys
+
 import PynPoint
-from PynPoint import _Util
+from PynPoint.old_version import _Util
+
 
 def run():
     """

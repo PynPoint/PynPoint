@@ -3,12 +3,11 @@ Different interfaces for Pypeline Modules.
 """
 
 # external modules
-from abc import ABCMeta, abstractmethod
 import os
 import warnings
+from abc import ABCMeta, abstractmethod
 
-# own modules
-from PynPoint.DataIO import OutputPort, InputPort
+from PynPoint.core.DataIO import OutputPort, InputPort
 
 
 class PypelineModule:

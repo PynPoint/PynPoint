@@ -14,16 +14,17 @@
 
 from __future__ import print_function
 
-import numpy as np
-from scipy import ndimage
-from scipy import linalg
-import pyfits
-import os
-import h5py
 import glob
+import os
+
+import h5py
+import numpy as np
+import pyfits
 import pylab as pl
-from PynPoint import _Mask
-import random
+from scipy import linalg
+from scipy import ndimage
+
+from PynPoint.old_version import _Mask
 
 
 class dummyclass():
@@ -161,7 +162,7 @@ def prep_data(obj,recent=False,resize=False,cent_remove=True,F_int=4,
     
 
     if str(cent_remove) == 'True':
-        im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(obj.im_arr,cent_size=cent_size,edge_size=edge_size)
+        im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(obj.im_arr, cent_size=cent_size, edge_size=edge_size)
         obj.im_arr = im_arr_omask
         obj.im_arr_mask = im_arr_imask
         obj.cent_mask = cent_mask        

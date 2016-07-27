@@ -14,11 +14,12 @@
 
 # System imports
 from __future__ import print_function, division
-   
-import numpy as np
+
 import os
 
-from PynPoint import _Util
+import numpy as np
+
+from PynPoint.old_version import _Util
 
 
 
@@ -29,7 +30,7 @@ def restore(obj,filename):
     :param filename: name of the inputfile 
     
     """
-    _Util.restore_data(obj,filename)
+    _Util.restore_data(obj, filename)
 
 def pynpoint_create_wdir(obj,dir_in,force_reload=False,prep_data=True,**kwargs):
     """
@@ -55,7 +56,7 @@ def pynpoint_create_wdir(obj,dir_in,force_reload=False,prep_data=True,**kwargs):
 
 
     if (force_reload is True) or (not os.path.isfile(file_hdf5)):
-        _Util.conv_dirfits2hdf5(dir_in,outputfile = file_hdf5,random_sample_size=random_sample)
+        _Util.conv_dirfits2hdf5(dir_in, outputfile = file_hdf5, random_sample_size=random_sample)
 
     pynpoint_create_whdf5input(obj,file_hdf5,**kwargs)
 
@@ -81,17 +82,17 @@ def pynpoint_create_whdf5input(obj,file_in,prep_data=True,**kwargs):
     
     obj_type = obj.obj_type
     if not stackave is None:
-        filename_stck = _Util.filenme4stack(file_in,stackave)
+        filename_stck = _Util.filenme4stack(file_in, stackave)
         if not os.path.isfile(filename_stck):
-            _Util.mkstacked(file_in,filename_stck,stackave)
+            _Util.mkstacked(file_in, filename_stck, stackave)
         file_in = filename_stck
     
 
-    _Util.restore_data(obj,file_in,checktype='raw_data')
+    _Util.restore_data(obj, file_in, checktype='raw_data')
     obj.obj_type = obj_type #'PynPoint_images' # restate since this is replaced in the restore_data
 
     if prep_data is True:
-        _Util.prep_data(obj,**kwargs)                    
+        _Util.prep_data(obj, **kwargs)
 
 
 def pynpoint_create_wfitsfiles(obj,files,ran_sub=None,prep_data=True,**kwargs):
@@ -111,5 +112,5 @@ def pynpoint_create_wfitsfiles(obj,files,ran_sub=None,prep_data=True,**kwargs):
     obj.num_files = num_files
     _Util.rd_fits(obj)#,avesub=False,para_sort=para_sort,inner_pix=inner_pix)
     if prep_data is True:
-        _Util.prep_data(obj,**kwargs)
+        _Util.prep_data(obj, **kwargs)
         

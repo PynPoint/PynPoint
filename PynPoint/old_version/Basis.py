@@ -16,13 +16,10 @@
 # System imports
 from __future__ import print_function, division
 
-# External modules
-import os
+from PynPoint.old_version._BasePynPoint import base_pynpoint
 
-#import extra PynPoint functions:
-from PynPoint._BasePynPoint import base_pynpoint
-from PynPoint import _Creators
-from PynPoint import _Util
+from PynPoint.old_version import _Creators
+from PynPoint.old_version import _Util
 
 
 #Basis Class
@@ -58,7 +55,7 @@ class basis(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
+        _Creators.pynpoint_create_wdir(obj, dir_in, **kwargs)
         basis_save = obj.mk_basis_set()
         return obj
 
@@ -75,7 +72,7 @@ class basis(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.pynpoint_create_whdf5input(obj,file_in,**kwargs)
+        _Creators.pynpoint_create_whdf5input(obj, file_in, **kwargs)
         obj.mk_basis_set()
         return obj
 
@@ -91,7 +88,7 @@ class basis(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.restore(obj,filename)
+        _Creators.restore(obj, filename)
         return obj
 
     @classmethod
@@ -108,7 +105,7 @@ class basis(base_pynpoint):
         """
         
         obj = cls()
-        _Creators.pynpoint_create_wfitsfiles(obj,files,**kwargs)
+        _Creators.pynpoint_create_wfitsfiles(obj, files, **kwargs)
         obj.mk_basis_set()
         return obj
         

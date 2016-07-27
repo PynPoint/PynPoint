@@ -1,15 +1,16 @@
 # the only way to do this is to access private members
 
-import warnings
 import os
+import warnings
 
-from PynPoint.Pypeline import Pypeline
-from PynPoint.FitsReading import ReadFitsCubesDirectory
-from PynPoint.PSFsubPreparation import PSFdataPreparation
-from PynPoint.Hdf5Writing import Hdf5WritingModule
-from PynPoint.Hdf5Reading import Hdf5ReadingModule
-from PynPoint.PSFSubtraction import MakePSFModelModule
-from PynPoint.StackingAndSubsampling import StackAndSubsetModule
+from PynPoint.io_modules.Hdf5Reading import Hdf5ReadingModule
+from PynPoint.io_modules.Hdf5Writing import Hdf5WritingModule
+from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
+
+from PynPoint.core.Pypeline import Pypeline
+from PynPoint.io_modules.FitsReading import ReadFitsCubesDirectory
+from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule
 
 
 class BasePynpointWrapper(object):

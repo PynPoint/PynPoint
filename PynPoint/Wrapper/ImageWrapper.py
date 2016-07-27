@@ -1,11 +1,6 @@
-import numpy as np
-import warnings
-import os
-
 # own modules
-from PynPoint.WrapperUtils import BasePynpointWrapper
-
-from DataIO import InputPort
+from PynPoint.wrapper.WrapperUtils import BasePynpointWrapper
+from PynPoint.core.DataIO import InputPort
 
 
 class ImageWrapper(BasePynpointWrapper):
