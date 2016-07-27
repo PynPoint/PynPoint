@@ -19,10 +19,12 @@ Tests for `_PynPlot` module.
 # from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
+
 import numpy as np
+
 import PynPoint
+
 #from PynPoint import pynplot
-import PynPoint.PynPlot as pynplot
 
 limit0 = 1e-20
 limit1 = 1e-10
@@ -66,17 +68,17 @@ class TestPlotter(object):
             os.remove(im3_temp)
         
         
-        im1 = pynplot.plt_res(res,1,imtype='mean',smooth=None,returnval=True,savefits=im1_temp,mask_nan=False)
-        im2 = pynplot.plt_res(res,1,imtype='mean_clip',smooth=None,returnval=True,savefits=im2_temp,mask_nan=False)
-        im3 = pynplot.plt_res(res,1,imtype='median',smooth=None,returnval=True,savefits=im3_temp,mask_nan=False)
-        im4 = pynplot.plt_res(res,1,imtype='var',smooth=None,returnval=True,mask_nan=False)
-        im5 = pynplot.plt_res(res,1,imtype='sigma',smooth=None,returnval=True,mask_nan=False)
-        im6 = pynplot.plt_res(res,1,imtype='mean_sigmamean',smooth=None,returnval=True,mask_nan=False)
+        im1 = PynPlot.plt_res(res, 1, imtype='mean', smooth=None, returnval=True, savefits=im1_temp, mask_nan=False)
+        im2 = PynPlot.plt_res(res, 1, imtype='mean_clip', smooth=None, returnval=True, savefits=im2_temp, mask_nan=False)
+        im3 = PynPlot.plt_res(res, 1, imtype='median', smooth=None, returnval=True, savefits=im3_temp, mask_nan=False)
+        im4 = PynPlot.plt_res(res, 1, imtype='var', smooth=None, returnval=True, mask_nan=False)
+        im5 = PynPlot.plt_res(res, 1, imtype='sigma', smooth=None, returnval=True, mask_nan=False)
+        im6 = PynPlot.plt_res(res, 1, imtype='mean_sigmamean', smooth=None, returnval=True, mask_nan=False)
 
-        im1s = pynplot.plt_res(res,1,imtype='mean',smooth=[2,2],returnval=True,mask_nan=False)
-        im2s = pynplot.plt_res(res,1,imtype='mean_clip',smooth=[2,2],returnval=True,mask_nan=False)
-        im3s = pynplot.plt_res(res,1,imtype='median',smooth=[2,2],returnval=True,mask_nan=False)
-        im4s = pynplot.plt_res(res,1,imtype='var',smooth=[2,2],returnval=True,mask_nan=False)
+        im1s = PynPlot.plt_res(res, 1, imtype='mean', smooth=[2, 2], returnval=True, mask_nan=False)
+        im2s = PynPlot.plt_res(res, 1, imtype='mean_clip', smooth=[2, 2], returnval=True, mask_nan=False)
+        im3s = PynPlot.plt_res(res, 1, imtype='median', smooth=[2, 2], returnval=True, mask_nan=False)
+        im4s = PynPlot.plt_res(res, 1, imtype='var', smooth=[2, 2], returnval=True, mask_nan=False)
         
         assert np.allclose(im1.mean() , -4.4349329318527051e-10,rtol=limit1)
         assert np.allclose(im2.mean() , -4.4349329318526586e-10,rtol=limit1)
@@ -99,16 +101,16 @@ class TestPlotter(object):
         
         
         try:
-            im_temp = pynplot.plt_res(res,1,imtype='wrong_entry',smooth=None,returnval=True,savefits=im1_temp)
+            im_temp = PynPlot.plt_res(res, 1, imtype='wrong_entry', smooth=None, returnval=True, savefits=im1_temp)
         except AssertionError, e:
             pass
 
         assert(e[0] == "Error: options for ave keyword are ['mean', 'mean_clip', 'median', 'var', 'sigma', 'mean_sigmamean']")
 
     def test_anim_im_arr(self):
-        pynplot.anim_im_arr(self.res,im_range=[0,3])
-        pynplot.anim_im_arr(self.images,im_range=[0,3],time_gap =0.01)
-        pynplot.anim_im_arr(self.basis,im_range=None)
+        PynPlot.anim_im_arr(self.res, im_range=[0, 3])
+        PynPlot.anim_im_arr(self.images, im_range=[0, 3], time_gap =0.01)
+        PynPlot.anim_im_arr(self.basis, im_range=None)
 
     def test_im_arr(self,tmpdir):
 
@@ -123,9 +125,9 @@ class TestPlotter(object):
             os.remove(im3_temp)
 
 
-        im1 = pynplot.plt_im_arr(self.images,0,returnval=True,savefits=im1_temp,mask_nan=False)
-        im2 = pynplot.plt_im_arr(self.basis,1,returnval=True,savefits=im2_temp,mask_nan=False)
-        im3 = pynplot.plt_im_arr(self.res,2,returnval=True,savefits=im3_temp,mask_nan=False)
+        im1 = PynPlot.plt_im_arr(self.images, 0, returnval=True, savefits=im1_temp, mask_nan=False)
+        im2 = PynPlot.plt_im_arr(self.basis, 1, returnval=True, savefits=im2_temp, mask_nan=False)
+        im3 = PynPlot.plt_im_arr(self.res, 2, returnval=True, savefits=im3_temp, mask_nan=False)
         
         assert np.allclose(im1.mean(),7.8226590446234423e-06,rtol=limit1)
         assert np.allclose(im2.mean(),-2.1439609406225518e-07,rtol=limit1)
@@ -150,8 +152,8 @@ class TestPlotter(object):
             os.remove(im2_temp)
 
         
-        im1 = pynplot.plt_psf_basis(self.res,1,returnval=True,savefits=im1_temp,mask_nan=False)
-        im2 = pynplot.plt_psf_basis(self.basis,2,returnval=True,savefits=im2_temp,mask_nan=False)
+        im1 = PynPlot.plt_psf_basis(self.res, 1, returnval=True, savefits=im1_temp, mask_nan=False)
+        im2 = PynPlot.plt_psf_basis(self.basis, 2, returnval=True, savefits=im2_temp, mask_nan=False)
 
         assert np.allclose(im1.mean(),0.00065586403734947912,rtol=limit1)
         assert np.allclose(im2.mean(),-0.0004242279204660866,rtol=limit1)
@@ -171,8 +173,8 @@ class TestPlotter(object):
             os.remove(im2_temp)
 
         
-        im1 = pynplot.plt_psf_model(self.res,1,2,returnval=True,savefits=im1_temp,mask_nan=False)
-        im2 = pynplot.plt_psf_model(self.res,2,3,returnval=True,savefits=im2_temp,mask_nan=False)
+        im1 = PynPlot.plt_psf_model(self.res, 1, 2, returnval=True, savefits=im1_temp, mask_nan=False)
+        im2 = PynPlot.plt_psf_model(self.res, 2, 3, returnval=True, savefits=im2_temp, mask_nan=False)
 
         assert np.allclose(im1.mean(),9.083088185930825e-06,rtol=limit1)
         assert np.allclose(im2.mean(),1.0384630019636352e-05,rtol=limit1)
@@ -183,14 +185,14 @@ class TestPlotter(object):
             os.remove(im2_temp)
 
     def test_from_paper(self):
-        from PynPoint import PynPlot
+        from PynPoint.old_version import PynPlot
         images = self.images
         basis = self.basis
         res = self.res
 
-        temp1 = PynPlot.plt_im_arr(images, 0,returnval=True)
-        temp2 = PynPlot.plt_psf_basis(basis,1,returnval=True)
-        temp3 = PynPlot.plt_res(res,2,returnval=True)
+        temp1 = PynPlot.plt_im_arr(images, 0, returnval=True)
+        temp2 = PynPlot.plt_psf_basis(basis, 1, returnval=True)
+        temp3 = PynPlot.plt_res(res, 2, returnval=True)
 
         assert np.allclose(temp1[70,30],2.2650975196460617e-05)
         assert np.allclose(temp2[70,30],-0.00054643985654258037)

@@ -10,8 +10,7 @@ from __future__ import division
 import numpy as np
 from scipy import ndimage
 
-
-from PynPoint.Processing import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 
 
 class PSFdataPreparation(ProcessingModule):
@@ -128,6 +127,8 @@ class PSFdataPreparation(ProcessingModule):
     def run(self):
 
         im_data = self._m_input_ports[self.m_image_in_tag].get_all()
+
+        print self.m_image_in_tag
 
         # image normalization
         im_norm = self._im_norm(im_data)

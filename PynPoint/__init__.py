@@ -17,18 +17,19 @@ __email__ = 'adam.amara@phys.ethz.ch'
 __version__ = '0.2.0'
 __credits__ = 'ETH Zurich, Institute for Astronomy'
 
-#from PynPoint.Residuals import residuals
-#from PynPoint.Basis import basis
-#from PynPoint.Images import images
-from PynPoint.Image_Wrapper import ImageWrapper as images
-from PynPoint.BasisWrapper import BasisWrapper as basis
-from PynPoint.ResidualsWrapper import ResidualsWrapper as residuals
-from PynPoint.Workflow import workflow
+# from PynPoint.Residuals import residuals
+# from PynPoint.Basis import basis
+# from PynPoint.Images import images
 
-from PynPoint._BasePynPoint import base_pynpoint
-import PynPoint._Ctx as pynpointctx
-import PynPoint._Cache as pynpointcache
-import PynPoint.PynPlot #as pynplot
+import PynPoint.old_version.PynPlot
+import PynPoint.old_version._Cache as pynpointcache
+import PynPoint.old_version._Ctx as pynpointctx
+from PynPoint.wrapper.BasisWrapper import BasisWrapper as basis
+from PynPoint.wrapper.ImageWrapper import ImageWrapper as images
+from PynPoint.wrapper.ResidualsWrapper import ResidualsWrapper as residuals
+from PynPoint.old_version.Workflow import workflow
+from PynPoint.old_version._BasePynPoint import base_pynpoint
+
 
 def get_data_dir():
     """

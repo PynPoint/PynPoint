@@ -4,14 +4,14 @@ Main components:
     -> class Pypeline
 """
 # external modules
-import os
 import collections
+import os
 import warnings
-import numpy as np
 
-# own modules
-from PynPoint.Processing import PypelineModule, WritingModule, ReadingModule
-from PynPoint.DataIO import DataStorage
+import numpy as np
+from PynPoint.core.DataIO import DataStorage
+
+from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule
 
 
 class Pypeline(object):

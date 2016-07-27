@@ -19,6 +19,7 @@ Tests for `_Cache` module.
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import numpy as np
+
 from PynPoint import _Cache
 
 

@@ -18,8 +18,9 @@ Tests for `_Ctx` module.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from PynPoint import _Ctx
 import pytest
+
+from PynPoint import _Ctx
 
 
 pytest.skip("Nothing being tested yet")
