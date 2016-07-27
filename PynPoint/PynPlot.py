@@ -238,6 +238,7 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     pl.imshow(im,origin='lower',interpolation='nearest')
     pl.title('Residual Image: '+imtype,size='large')
     pl.colorbar()
+    pl.savefig("test.png")
     
     if not savefits is False:
         hdu = pyfits.PrimaryHDU(im)
