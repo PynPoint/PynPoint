@@ -16,13 +16,12 @@
 # System imports
 from __future__ import print_function, division
 
-# External modules
 import numpy as np
+from PynPoint.old_version._BasePynPoint import base_pynpoint
 
-#import external functions:
-from PynPoint._BasePynPoint import base_pynpoint
-from PynPoint import _Creators
-from PynPoint import _Util
+from PynPoint.old_version import _Creators
+from PynPoint.old_version import _Util
+
 
 #import extra PynPoint functions:
 
@@ -57,7 +56,7 @@ class residuals(base_pynpoint):
         """
         
         obj = cls()
-        _Creators.restore(obj,filename)
+        _Creators.restore(obj, filename)
         return obj
         
     @classmethod
@@ -182,7 +181,7 @@ class residuals(base_pynpoint):
         res_arr = self.res_arr(num_coeff)
         for i in range(0,len(delta_para)):
             res_temp = res_arr[i,]
-            res_rot[i,] = _Util.mk_rotate(res_temp,delta_para[i]+extra_rot)
+            res_rot[i,] = _Util.mk_rotate(res_temp, delta_para[i] + extra_rot)
         self._res_rot = res_rot
          
     def _mk_res_rot_mean(self,num_coeff,extra_rot = 0.0):

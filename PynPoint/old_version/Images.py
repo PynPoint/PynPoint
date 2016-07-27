@@ -16,11 +16,9 @@
 # System imports
 from __future__ import print_function, division
 
-#import external functions:
+from PynPoint.old_version._BasePynPoint import base_pynpoint
 
-#import extra PynPoint functions:
-from PynPoint._BasePynPoint import base_pynpoint
-from PynPoint import _Creators
+from PynPoint.old_version import _Creators
 
 
 #Images class:
@@ -56,7 +54,7 @@ class images(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.pynpoint_create_wdir(obj,dir_in,**kwargs)
+        _Creators.pynpoint_create_wdir(obj, dir_in, **kwargs)
         return obj
 
     @classmethod
@@ -71,7 +69,7 @@ class images(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.pynpoint_create_whdf5input(obj,file_in,**kwargs)
+        _Creators.pynpoint_create_whdf5input(obj, file_in, **kwargs)
         return obj
 
         
@@ -86,7 +84,7 @@ class images(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.restore(obj,filename)
+        _Creators.restore(obj, filename)
         return obj
 
     @classmethod
@@ -103,7 +101,7 @@ class images(base_pynpoint):
         """
 
         obj = cls()
-        _Creators.pynpoint_create_wfitsfiles(obj,*args,**kwargs)
+        _Creators.pynpoint_create_wfitsfiles(obj, *args, **kwargs)
         return obj
         
 

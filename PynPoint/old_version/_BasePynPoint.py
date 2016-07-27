@@ -13,11 +13,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/.
         
 #import external functions:
-import pylab as pl
 import numpy as np
+import pylab as pl
 
-#import extra PynPoint functions:
-from PynPoint import _Util
+from PynPoint.old_version import _Util
 
 
 #base class:
@@ -37,7 +36,7 @@ class base_pynpoint(object):
         Currently this uses HDF5 format
         (!!Can probably be made more efficient!!)"""
 
-        _Util.save_data(self,filename)
+        _Util.save_data(self, filename)
 
     def plt_im(self,ind):
         """Function for plotting the input images"""

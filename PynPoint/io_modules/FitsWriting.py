@@ -2,12 +2,12 @@
 Module for writing data as .fits file.
 """
 # external modules
-import warnings
 import os
+import warnings
+
 from astropy.io import fits
 
-# own classes
-from PynPoint.Processing import WritingModule
+from PynPoint.core.Processing import WritingModule
 
 
 class WriteAsSingleFitsFile(WritingModule):

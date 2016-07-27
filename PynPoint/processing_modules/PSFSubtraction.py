@@ -1,7 +1,7 @@
-from scipy import linalg, ndimage
 import numpy as np
+from scipy import linalg, ndimage
 
-from PynPoint.Processing import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 
 
 class CreateResidualsModule(ProcessingModule):

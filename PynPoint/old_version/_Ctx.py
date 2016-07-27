@@ -15,10 +15,12 @@
 from __future__ import print_function
 
 import os
+
 import h5py
-from PynPoint.Basis import basis
-from PynPoint.Images import images
-from PynPoint.Residuals import residuals
+
+from PynPoint.old_version.Basis import basis
+from PynPoint.old_version.Images import images
+from PynPoint.old_version.Residuals import residuals
 
 
 class Ctx():

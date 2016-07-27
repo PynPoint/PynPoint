@@ -46,7 +46,7 @@ class TestBasis(object):
 
         self.basis1 = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)
-        hdf5file = PynPoint._Util.filename4mdir(self.test_data_dir)
+        hdf5file = PynPoint.old_version._Util.filename4mdir(self.test_data_dir)
         self.basis5 = PynPoint.basis.create_whdf5input(hdf5file,
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)
 

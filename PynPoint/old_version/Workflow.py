@@ -16,22 +16,22 @@
 # System imports
 from __future__ import print_function, division
 
-# External modules
 import ConfigParser
-import types
 import os
-from time import gmtime, strftime
-import shutil
-import h5py
-import time
 import re
+import shutil
+import time
+import types
 from operator import itemgetter
+from time import gmtime, strftime
 
-from PynPoint.Basis import basis
-from PynPoint.Images import images
-from PynPoint.Residuals import residuals
-from PynPoint._Ctx import Ctx
-from PynPoint import _Util
+import h5py
+from PynPoint.old_version._Ctx import Ctx
+
+from PynPoint.old_version import _Util
+from PynPoint.old_version.Basis import basis
+from PynPoint.old_version.Images import images
+from PynPoint.old_version.Residuals import residuals
 
 class workflow():
     """

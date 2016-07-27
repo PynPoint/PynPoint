@@ -1,7 +1,6 @@
 import numpy as np
 
-
-from PynPoint.Processing import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 
 
 class StackAndSubsetModule(ProcessingModule):

@@ -19,6 +19,7 @@ Tests for `_Mask` module.
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import numpy as np
+
 from PynPoint import _Mask
 
 
@@ -34,7 +35,7 @@ class TestMask(object):
 
 
     def test_mk_circle(self):
-        im_temp = _Mask.mk_circle(400,400,100.,200.,20.)
+        im_temp = _Mask.mk_circle(400, 400, 100., 200., 20.)
         assert im_temp.shape[0] == 400
         assert im_temp.shape[1] == 400
         assert im_temp.max() == 1.0
@@ -46,7 +47,7 @@ class TestMask(object):
 
     def test_mk_cent_remove(self):
         temp_arr = np.ones([10,400,400])*np.pi
-        im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(temp_arr,cent_size=0.2,edge_size=1.0)
+        im_arr_omask,im_arr_imask,cent_mask = _Mask.mk_cent_remove(temp_arr, cent_size=0.2, edge_size=1.0)
         assert temp_arr.shape[0] == 10
         assert im_arr_omask.shape[0] == 10
         assert im_arr_omask.shape[1] == 400

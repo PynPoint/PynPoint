@@ -22,6 +22,7 @@ import pytest
 import numpy as np
 
 import PynPoint
+import PynPoint.old_version
 
 limit0 = 1e-20
 limit1 = 1e-10
@@ -41,7 +42,7 @@ class TestImages(object):
         test_data+'Cube_001_Frame_0130_zoom_2.0.fits_shift.fits_planet.fits',
         test_data+'Cube_000_Frame_0166_zoom_2.0.fits_shift.fits_planet.fits',
         test_data+'Cube_003_Frame_0160_zoom_2.0.fits_shift.fits_planet.fits']
-        self.basis_file = self.test_data_dir  + 'test_data_basis_v001.hdf5'
+        self.basis_file = self.test_data_dir + 'test_data_basis_v001.hdf5'
         
         self.files_fits_sorted = [self.files_fits[0],self.files_fits[2],self.files_fits[1],self.files_fits[3]]
 
@@ -60,9 +61,11 @@ class TestImages(object):
         self.images5 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=True,ran_sub=None,recent=False)
                                 
-        hdf5file = PynPoint._Util.filename4mdir(self.test_data_dir)
-        self.images6 = PynPoint.images.create_whdf5input(hdf5file,
-                                cent_remove=False,resize=False,ran_sub=None,recent=False)
+        hdf5file = PynPoint.old_version._Util.filename4mdir(self.test_data_dir)
+
+        # not used
+        '''self.images6 = PynPoint.images.create_whdf5input(hdf5file,
+                                cent_remove=False,resize=False,ran_sub=None,recent=False)'''
         
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)

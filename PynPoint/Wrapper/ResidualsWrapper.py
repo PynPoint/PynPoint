@@ -1,10 +1,9 @@
-
-from PynPoint.DataIO import InputPort
-from PynPoint.Image_Wrapper import ImageWrapper
-from PynPoint.BasisWrapper import BasisWrapper
-from PSFSubtraction import CreateResidualsModule
-
 import numpy as np
+
+from PynPoint.wrapper.BasisWrapper import BasisWrapper
+from PynPoint.wrapper.ImageWrapper import ImageWrapper
+from PynPoint.core.DataIO import InputPort
+from PynPoint.processing_modules.PSFSubtraction import CreateResidualsModule
 
 
 class ResidualsWrapper(object):

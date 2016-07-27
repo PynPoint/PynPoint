@@ -21,7 +21,7 @@ def mk_circle(xnum,ynum,xcent,ycent,rad_lim):
     """function for making a circular aperture"""
     from PynPoint import _Util
     Y,X = np.indices([xnum,ynum]) #seems strange and backwards, check!
-    rad = _Util.mk_circle(xcent,ycent)(X,Y)
+    rad = _Util.mk_circle(xcent, ycent)(X, Y)
     i,j = np.where(rad <= rad_lim)
     mask_base = np.ones((xnum,ynum),float) #something strange about the order of x and y!
     mask_base[i,j] = 0.0
