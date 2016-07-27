@@ -3,25 +3,24 @@ Modules to save and load data as / from a .hdf5 database.
 """
 from abc import ABCMeta, abstractmethod
 import warnings
-import copy
 import h5py
 import numpy as np
 
 
 class DataStorage(object):
     """
-    Instances of DataStorage manage the opening and closing of .hdf5 databases. They have a internal
-    data bank (self.m_data_bank) which gives direct access to the data bank if the storage is open
-    (self.m_open == True). Furthermore it knows the location of the .hdf5 file.
+    Instances of DataStorage manage to open and cloase .hdf5 databases. They have an internal data
+    bank (self.m_data_bank) which gives direct access to the data bank if the storage
+    is open (self.m_open == True). Furthermore it knows the location of the .hdf5 file.
     """
 
     def __init__(self,
                  location_in):
         """
         Constructor of a DataStorage instance. Needs the location of the .hdf5 file as input. If the
-        file already exists it is opened and extended if needed, if not a new File is created.
+        file already exists it is opened and extended, if not a new File is created.
 
-        :param location_in: Location (directory + name) of the .hdf5 data bank
+        :param location_in: Location (directory + filename) of the .hdf5 data bank
         :type location_in: String
         :return: None
         """
@@ -31,7 +30,7 @@ class DataStorage(object):
 
     def open_connection(self):
         """
-        Opens the connection to the .hdf5 file by opening / creating it.
+        Opens the connection to the .hdf5 file by opening an old file or creating a new one.
 
         :return: None
         """
@@ -56,10 +55,11 @@ class DataStorage(object):
 class Port:
     """
     Abstract interface and implementation of common functionality of the Input and Output Port.
-    Each Port has a internal tag which is the its key to the database. If for example data is stored
-    under the entry "im_arr" in the central data storage only a port with the tag (self._m_tag) can
-    access or change that data. Furthermore a port knows exact one Data Storage instance and if it
-    is active or not (self._m_data_base_active).
+    Each Port has a internal tag which is the its key to a database (Data Storage instance).
+    If for example data is stored under the entry "im_arr" in the central data storage only a port
+    with the tag (self._m_tag == "im_arr) can access or change that data.
+    Furthermore a port knows exact one data storage instance and whether it is active or not
+    (self._m_data_base_active).
     """
     __metaclass__ = ABCMeta
 
@@ -68,10 +68,10 @@ class Port:
                  tag,
                  data_storage_in=None):
         """
-        Abstract constructor of a Port. As input the tag / key is expected with is needed to build
+        Abstract constructor of a Port. As input the tag / key is expected which is needed to build
         the connection to the database entry with the same tag / key. It is possible to give the
         Port a data storage. If this storage is not given the Pypeline module has to set it or the
-        connection needs to be added manually.
+        connection needs to be added manually using set_database_connection(data_base_in).
 
         :param tag: Input Tag
         :type tag: String
@@ -124,26 +124,32 @@ class InputPort(Port):
     input port one can access:
         -> the complete actual dataset using the get_all() method
         -> a single attribute of the dataset using get_attribute()
-        -> all attributes of the dataset using get_all_attributes()
+        -> all attributes of the dataset using gget_all_static_attributes() and
+            get_all_non_static_attributes()
         -> a part of the actual dataset using slicing
             for example:
             tmp_in_port = InputPort("Some_tag")
-            data = tmp_in_port[0,:,:] # returns the first 2D image of a 3D image stack
+            data = tmp_in_port[0,:,:] # returns the first 2D image of a 3D image stack.
             (See more information about how 1D 2D and 3D data is organized in the documentation of
-            Output Port (append, set_all).
-    Note that all data accessed using a input port in copied to the memory to avoid InputPorts
-    changing data of the database.
+            Output Port (append, set_all))
+    InputPorts can load two different types of Attributes which give additional information about
+    the data set the port is linked to.:
+        -> static attributes: Contain global information about the data that is not changing through
+            the data. (e.g. the instrument used for the observation)
+        -> non-static attributes: Contain small data sets with information that is different for
+            the parts of the data set. (e.g. the airmass which is changing during the observation.)
     """
 
     def __init__(self,
                  tag,
                  data_storage_in=None):
         """
-        Constructor of the InputPort class crating a input port instance with the tag self._m_tag.
-        This function is just calling the super constructor (i.e. __init__() of Port).
+        Constructor of the InputPort class crating a input port instance with can read data stored
+        in the central database under the tag "tag".
+        This function is just calling the super constructor i.e. __init__() of Port.
 
         :param tag: Input Tag
-        :type tag: Sting
+        :type tag: String
         :return: None
         """
         super(InputPort, self).__init__(tag, data_storage_in)
@@ -165,21 +171,23 @@ class InputPort(Port):
         return True
 
     def _check_if_data_exists(self):
+        """
+        Internal function which checks if data exists for the Port specific tag.
 
-        if self._m_tag in self._m_data_storage.m_data_bank:
-            return True
-        else:
-            return False
+        :return: True if data exists, False if not
+        :rtype: Boolean
+        """
+
+        return self._m_tag in self._m_data_storage.m_data_bank
 
     def __getitem__(self, item):
         """
         Internal function needed to access data using slicing. See class documentation for an
         example.
-        Note this function returns a copy of the data and not the actual data bank data.
-        Changing this copy will not change the data bank data.
 
         :param item: Slicing input
-        :return: A array of the ordered data.
+        :return: An array of the selected data. Returns None if no data exists.
+        :rtype: nparray
         """
 
         if not self._check_status_and_activate():
@@ -198,10 +206,9 @@ class InputPort(Port):
     def get_all(self):
         """
         Returns the whole data set stored in the data bank under the Port tag (self._m_tag).
-        Note this function returns a copy of the data and not the actual data bank data.
-        Changing this copy will not change the data bank data.
 
         :return: The data set
+        :rtype: nparray
         """
 
         self._check_status_and_activate()
@@ -214,18 +221,22 @@ class InputPort(Port):
     def get_attribute(self,
                       name):
         """
-        first looking for statics
-        :param name:
-        :return:
+        Returns an attribute which is connected to the data set of the port. The function can return
+        static and non-static attributes (It is first looking for static attributes). See class
+        documentation for more information about static and non-static attributes.
+
+        :param name: The name of the attribute
+        :type name: String
+        :return: The attribute value. Returns None if the attribute does not exist.
+        :rtype: nparray and simple types
         """
-        # TODO Documentation
 
         self._check_status_and_activate()
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
             return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
-        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
+        if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)])
         else:
@@ -233,20 +244,29 @@ class InputPort(Port):
 
     def get_all_static_attributes(self):
         """
-        Returns all attributes of the data set stored in the data bank under the Port tag
-        (self._m_tag) as dictionary {attr_name: attr_value}.
+        Returns all static attributes of the data set of the Port as dictionary
+        {attr_name: attr_value}.
 
-        :return: dictionary of all attributes
+        :return: dictionary of all attributes {attr_name: attr_value}
+        :rtype: dictionary
         """
         self._check_status_and_activate()
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
     def get_all_non_static_attributes(self):
+        """
+        Returns a list of all non-static attribute keys (Not the actual data). See class
+        documentation for more information about static and non-static attributes.
+
+        :return: List of non-static attribute keys
+        :rtype: List[String]
+        """
+
         self._check_status_and_activate()
         result = []
 
         # check if header Group exists
-        if ("header_" + self._m_tag + "/") in self._m_data_storage.m_data_bank:
+        if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
                 result.append(key)
             return result
@@ -256,14 +276,12 @@ class InputPort(Port):
 
 class OutputPort(Port):
     """
-    Output Ports can be used to save data with a specific tag to a (.hdf5) Data Storage. The
-    following methods allow different ways of saving data:
+    Output Ports can be used to save data with a specific tag to a (.hdf5) Data Storage. OutputPorts
+    are Ports. Look at the documentation of Port for more information. The following methods allow
+    different ways of saving data to the data storage:
         -> replace and set the whole data set with set_all(...)
         -> append data to the existing data set using append(...). For more information see function
            documentation.
-        -> set or create a single attribute of the data set using add_attribute()
-        -> delete a single attribute using del_attribute(...)
-        -> delete all attributes using del_all_attributes()
         -> set a part of the actual data set using slicing
             for example:
             tmp_in_port = OutputPort("Some_tag")
@@ -271,6 +289,13 @@ class OutputPort(Port):
             tmp_in_port[0,:,:] = data # Sets the first 2D image of a 3D image stack
             For more information about how data is organized inside and can be modified see function
             documentation of the function set_all() and append().
+        -> modify or create a attribute of the data set using add_attribute()
+        -> delete a attribute using del_attribute(...)
+        -> delete all attributes using del_all_attributes()
+        -> append information to non-static attributes using append_attribute_data(...). See
+        add_attribute() for more information about static and non-static attributes.
+        -> check if a static attribute exists and is equal to a given value using
+        check_static_attribute()
     It is possible to deactivate a Output Port to stop him saving data.
     """
 
@@ -283,6 +308,8 @@ class OutputPort(Port):
 
         :param tag: Tag of the Port
         :type tag: String
+        :param data_storage_in: The data storage the port is connected with (can be set later)
+        :type data_storage_in: DataStorage
         :param activate_init: start activation status. If False the Port will not save data until
             it is activated.
         :type activate_init: Boolean
@@ -295,7 +322,7 @@ class OutputPort(Port):
     # internal functions
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use and open it.
+        Internal function which checks if the port is ready to use.
 
         :return: Returns True if the Port can be used, False if not.
         :rtype: Boolean
@@ -320,8 +347,8 @@ class OutputPort(Port):
         Internal function which is used to create (initialize) a data base in .hdf5 data base. Since
         it is not possible to change the number of dimensions later in the processing history the
         right dimension has to be specified during the creation of the data set. The function needs
-        first data as input and optional a desired dimension of the internal data set in the .hdf5
-        file. The following options are available:
+        a first dataset as input and optional a desired dimension of the internal data set in the
+        .hdf5 file. The following options are available:
         - (#dimension of the first input data#, #desired data_dim#)
         -> (1, 1) 1D input or single value stored as list in .hdf5
         -> (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
@@ -391,7 +418,23 @@ class OutputPort(Port):
                      tag,
                      data,
                      data_dim=None,
-                     keep_attributes = False):
+                     keep_attributes=False):
+        """
+        Internal function which sets the values of a data set under the tag "tag" using the data
+        of the input "data". If old data exists it will be overwritten. This Function is used in
+        set_all() as well as for setting non-static attributes.
+        :param tag: Data base tag of the data to be modified
+        :type tag: String
+        :param data: The data which is used to replace the old data.
+        :type data: numpy array
+        :param data_dim: Dimension of the data that is saved. See set_all() and append of more
+        documentation()
+        :type data_dim: int
+        :param keep_attributes: Parameter which can be set True to keep all static attributes of the
+         dataset. Non-static attributes will be kept, (Not needed for setting non-static attributes)
+        :type keep_attributes: Boolean
+        :return: None
+        """
 
         tmp_attributes = {}
         # check if database entry is new...
@@ -419,6 +462,10 @@ class OutputPort(Port):
                     data,
                     data_dim=None,
                     force=False):
+        """
+        Internal function for appending data to a dataset or appending non-static attribute
+        information. See append() for more information.
+        """
 
         # check if database entry is new...
         if tag not in self._m_data_storage.m_data_bank:
@@ -458,7 +505,7 @@ class OutputPort(Port):
             # we always append in axis one independent of the dimension
             # 1D case
             self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0],
-                                                                 axis=0)
+                                                         axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
             return
 
@@ -516,8 +563,12 @@ class OutputPort(Port):
         dimension.
 
         :param data: The data to be saved
+        :type data: numpy array
         :param data_dim: number of desired dimensions. If None the dimension of the first_data is
             used.
+        :type data_dim: int
+        :param keep_attributes: If True all attributes of the dataset remain the same.
+        :type keep_attributes: Boolean
         :return: None
         """
 
@@ -550,7 +601,7 @@ class OutputPort(Port):
         all existing data.
 
         :param data: The data which will be appended
-        :type data: bytearray
+        :type data: numpy array
         :param data_dim: number of desired dimensions used if a new data set is created. If None
             the dimension of the first_data is used.
         :type data_dim: int
@@ -588,6 +639,24 @@ class OutputPort(Port):
                       name,
                       value,
                       static=True):
+        """
+        Adds a attribute to the dataset of the Port with the attribute name "name" and the value
+        "value". Two different types of attributes are supported:
+        1. static attributes:
+            Contain a single value or name (e.g. The name of the used Instrument).
+        2. non-static attributes:
+            Contain a data set which is connected to the actual data set (e.g. Instrument
+            temperature). It is possible to append additional information to non-static attributes
+            later. This is not supported by static attributes.
+        Static and non-static attributes are stored in a different way using the .hdf5 file format.
+
+        :param name: The name of the attribute
+        :type name: String
+        :param value: The value of the attribute
+        :param static: If True the attribute will be static (default)
+        :type static: Boolean
+        :return: None
+        """
 
         if not self._check_status_and_activate():
             return
@@ -602,6 +671,15 @@ class OutputPort(Port):
     def append_attribute_data(self,
                               name,
                               value):
+        """
+        Function for appending data to non-static attributes.
+
+        :param name: Name of the attribute
+        :type name: String
+        :param value: Value which will be appended to the data set.
+        :return: None
+        """
+
         if not self._check_status_and_activate():
             return
 
@@ -611,7 +689,8 @@ class OutputPort(Port):
     def del_attribute(self,
                       name):
         """
-        Deletes the attribute of the data set by a given name.
+        Deletes the attribute of the data set by a given name. Finds and removes static and
+        non-static attributes.
 
         :param name: Name of the attribute.
         :return: None
@@ -623,12 +702,12 @@ class OutputPort(Port):
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
         else:
-            # remove non static attribute
+            # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
 
     def del_all_attributes(self):
         """
-        Deletes all attributes of the data set.
+        Deletes all static and non-static attributes of the data set.
 
         :return: None
         """
@@ -639,8 +718,8 @@ class OutputPort(Port):
         for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del attr
 
-        # non static attributes
-        if ("header_" + self._m_tag + "/") in self._m_data_storage.m_data_bank:
+        # non-static attributes
+        if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/")]
 
     def check_static_attribute(self,
