@@ -16,7 +16,7 @@ class Hdf5ReadingModule(ReadingModule):
     LEAD TO INCONSISTENCY IN THE DATA BASE!!!)
     Reads a .hdf5 files from the given input_dir or the default directory of the Pypeline.
     A tag dictionary has to be set in order to choose the datasets which will be imported by the
-    module.
+    module. The module reads static and non-static attributes too.
     """
 
     def __init__(self,
