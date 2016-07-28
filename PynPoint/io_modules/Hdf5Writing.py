@@ -21,9 +21,7 @@ class Hdf5WritingModule(WritingModule):
         self.m_tag_dictionary = tag_dictionary
         self.m_keep_attributes = keep_attributes
 
-        # Add Ports
-        for key in tag_dictionary:
-            self.add_input_port(key)
+        # Ports will be created on the fly
 
     def run(self):
 
@@ -32,7 +30,9 @@ class Hdf5WritingModule(WritingModule):
 
         for in_tag, out_tag in self.m_tag_dictionary.iteritems():
 
-            tmp_data = self._m_input_ports[in_tag].get_all()
+            tmp_port = self.add_input_port(in_tag)
+
+            tmp_data = tmp_port.get_all()
 
             if tmp_data is None:
                 continue
@@ -42,21 +42,21 @@ class Hdf5WritingModule(WritingModule):
 
             if self.m_keep_attributes:
                 # stable attributes
-                tmp_attr = self._m_input_ports[in_tag].get_all_static_attributes()
+                tmp_attr = tmp_port.get_all_static_attributes()
 
                 # it is not possible to copy attributes all together
                 for key, value in tmp_attr.iteritems():
                     data_set.attrs[key] = value
 
                 # non stable attributes
-            non_static_attr_keys = self._m_input_ports[in_tag].get_all_non_static_attributes()
+                non_static_attr_keys = tmp_port.get_all_non_static_attributes()
 
-            if non_static_attr_keys is not None:
-                for key in non_static_attr_keys:
-                    tmp_data_attr = self._m_input_ports[in_tag].get_attribute(key)
+                if non_static_attr_keys is not None:
+                    for key in non_static_attr_keys:
+                        tmp_data_attr = tmp_port.get_attribute(key)
 
-                    out_file.create_dataset(("header_" + out_tag + "/" + key),
-                                            data=tmp_data_attr)
+                        out_file.create_dataset(("header_" + out_tag + "/" + key),
+                                                data=tmp_data_attr)
 
         out_file.close()
 

@@ -73,9 +73,11 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         super(ReadFitsCubesDirectory, self).__init__(name_in,
                                                      input_dir)
+
+        self.m_image_out_port = self.add_output_port(image_tag,
+                                                     True)
         self.m_image_tag = image_tag
-        self.add_output_port(image_tag,
-                             True)
+
         self._m_overwrite = force_overwrite_in_databank
 
         # get location of the Reading module
@@ -138,16 +140,14 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         if self._m_overwrite and self.m_image_tag not in overwrite_keys:
             # rest image array and all attached attributes
-            self._m_out_ports[self.m_image_tag].set_all(
-                hdulist[0].data.byteswap().newbyteorder(),
-                data_dim=3)
+            self.m_image_out_port.set_all(hdulist[0].data.byteswap().newbyteorder(),
+                                          data_dim=3)
 
-            self._m_out_ports[self.m_image_tag].del_all_attributes()
+            self.m_image_out_port.del_all_attributes()
             overwrite_keys.append(self.m_image_tag)
         else:
-            self._m_out_ports[self.m_image_tag].append(
-                hdulist[0].data.byteswap().newbyteorder(),
-                data_dim=3)
+            self.m_image_out_port.append(hdulist[0].data.byteswap().newbyteorder(),
+                                         data_dim=3)
 
         # store header info
         tmp_header = hdulist[0].header
@@ -157,8 +157,8 @@ class ReadFitsCubesDirectory(ReadingModule):
         # Use the NACO / VLT specific header tags
         for key in tmp_header:
             if key in self.m_static_keys:
-                check = self._m_out_ports[self.m_image_tag].check_static_attribute(key,
-                                                                                   tmp_header[key])
+                check = self.m_image_out_port.check_static_attribute(key,
+                                                                     tmp_header[key])
                 if check == -1:
                     warnings.warn('Static keyword %s has changed. Probably the current '
                                   'file %s does not belong to the data set "%s" of the PynPoint'
@@ -169,13 +169,13 @@ class ReadFitsCubesDirectory(ReadingModule):
                     pass
                 else:
                     # Attribute is new -> add
-                    self._m_out_ports[self.m_image_tag].add_attribute(key,
-                                                                      tmp_header[key],
-                                                                      static=True)
+                    self.m_image_out_port.add_attribute(key,
+                                                        tmp_header[key],
+                                                        static=True)
 
             elif key in self.m_non_static_keys:
-                self._m_out_ports[self.m_image_tag].append_attribute_data(key,
-                                                                          tmp_header[key])
+                self.m_image_out_port.append_attribute_data(key,
+                                                            tmp_header[key])
 
             elif key is not "":
                 warnings.warn('Unknown Header "%s" key found' %str(key))
@@ -183,8 +183,8 @@ class ReadFitsCubesDirectory(ReadingModule):
         hdulist.close()
 
         # append used file to header information
-        self._m_out_ports[self.m_image_tag].append_attribute_data("Used_Files",
-                                                                  tmp_location + fits_file)
+        self.m_image_out_port.append_attribute_data("Used_Files",
+                                                    tmp_location + fits_file)
 
     def run(self):
         """
@@ -219,16 +219,16 @@ class ReadFitsCubesDirectory(ReadingModule):
             self._read_single_file(fits_file,
                                    tmp_location,
                                    overwrite_keys)
-            self._m_out_ports[self.m_image_tag].flush()
-        self._m_out_ports[self.m_image_tag].close_port()
+            self.m_image_out_port.flush()
+        self.m_image_out_port.close_port()
 
         # Update number of files used to create the data base entry
         new_files_num = len(files)
         if self._m_overwrite:
             # no old files have been used
-            self._m_out_ports[self.m_image_tag].open_port()
-            self._m_out_ports[self.m_image_tag].add_attribute("Num_Files", new_files_num)
+            self.m_image_out_port.open_port()
+            self.m_image_out_port.add_attribute("Num_Files", new_files_num)
         else:
             # appended data
-            new_files_num += self._m_out_ports[self.m_image_tag].get_attribute("Num_Files")
-            self._m_out_ports[self.m_image_tag].add_attribute("Num_Files", new_files_num)
+            self.m_image_out_port.add_value_to_static_attribute("Num_Files",
+                                                                new_files_num)

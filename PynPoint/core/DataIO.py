@@ -203,6 +203,15 @@ class InputPort(Port):
 
         return result
 
+    def get_shape(self):
+        """
+        Returns the shape of the dataset
+        :return: shape of the dataset
+        :rtype: tuple
+        """
+        self.open_port()
+        return self._m_data_storage.m_data_bank[self._m_tag].shape
+
     def get_all(self):
         """
         Returns the whole data set stored in the data bank under the Port tag (self._m_tag).
@@ -216,7 +225,8 @@ class InputPort(Port):
         if self._check_if_data_exists() is False:
             return None
 
-        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag], dtype=np.float64)
+        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...],
+                          dtype=np.float64)
 
     def get_attribute(self,
                       name):
@@ -238,7 +248,7 @@ class InputPort(Port):
             return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
-                              [("header_" + self._m_tag + "/" + name)])
+                              [("header_" + self._m_tag + "/" + name)][...])
         else:
             return None
 
@@ -685,6 +695,22 @@ class OutputPort(Port):
 
         self._append_key(tag=("header_" + self._m_tag + "/" + name),
                          data=np.asarray([value,]))
+
+    def add_value_to_static_attribute(self,
+                                      name,
+                                      value):
+        """
+        Function which adds an integer of float to an existing static attribute.
+        :param name: Name of the attribute
+        :type name: String
+        :param value: Value to be added
+        :type value: int or float
+        :return: None
+        """
+        if not self._check_status_and_activate():
+            return
+
+        self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
     def del_attribute(self,
                       name):

@@ -15,11 +15,9 @@ class StackAndSubsetModule(ProcessingModule):
         super(StackAndSubsetModule, self).__init__(name_in)
 
         # Ports
-        self.m_image_in_tag = image_in_tag
-        self.add_input_port(image_in_tag)
+        self.m_image_in_port = self.add_input_port(image_in_tag)
 
-        self.m_image_out_tag = image_out_tag
-        self.add_output_port(image_out_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_subset = random_subset
         self.m_stacking = stacking
@@ -30,7 +28,7 @@ class StackAndSubsetModule(ProcessingModule):
             return
 
         # get the data
-        tmp_data = self._m_input_ports[self.m_image_in_tag].get_all()
+        tmp_data = self.m_image_in_port.get_all()
 
         # check if the random subset is available
         if tmp_data.shape[0] < self.m_subset:
@@ -38,9 +36,9 @@ class StackAndSubsetModule(ProcessingModule):
                              "number of images in the source.")
 
         # get attributes
-        tmp_files = self._m_input_ports[self.m_image_in_tag].get_attribute("Used_Files")
-        tmp_num_files = self._m_input_ports[self.m_image_in_tag].get_attribute("Num_Files")
-        para_angles = self._m_input_ports[self.m_image_in_tag].get_attribute("NEW_PARA")
+        tmp_files = self.m_image_in_port.get_attribute("Used_Files")
+        tmp_num_files = self.m_image_in_port.get_attribute("Num_Files")
+        para_angles = self.m_image_in_port.get_attribute("NEW_PARA")
 
         # Do random subset first like in the old PynPoint
         if self.m_subset not in (None, False):
@@ -73,18 +71,18 @@ class StackAndSubsetModule(ProcessingModule):
             para_angles = para_new
 
         # Save results
-        self._m_output_ports[self.m_image_out_tag].set_all(tmp_data,
-                                                           keep_attributes=True)
+        self.m_image_out_port.set_all(tmp_data,
+                                      keep_attributes=True)
 
         # Save Attributes
-        self._m_output_ports[self.m_image_out_tag].add_attribute("NEW_PARA",
-                                                                 para_angles,
-                                                                 static=False)
+        self.m_image_out_port.add_attribute("NEW_PARA",
+                                            para_angles,
+                                            static=False)
 
-        self._m_output_ports[self.m_image_out_tag].add_attribute("Used_Files",
-                                                                 tmp_files,
-                                                                 static=False)
+        self.m_image_out_port.add_attribute("Used_Files",
+                                            tmp_files,
+                                            static=False)
 
-        self._m_output_ports[self.m_image_out_tag].add_attribute("Num_Files",
-                                                                 tmp_num_files,
-                                                                 static=True)
+        self.m_image_out_port.add_attribute("Num_Files",
+                                            tmp_num_files,
+                                            static=True)

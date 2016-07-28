@@ -113,9 +113,12 @@ class WritingModule(PypelineModule):
         Method which creates a input port and append it to the internal port dictionary. This
         function should be used by classes inhering from Writing Module to make sure that only
         input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+        or by using the returned Port.
 
         :param tag: Tag of the new input port.
-        :return: None
+        :type tag: String
+        :return: The new Port
+        :rtype: InputPort
         """
 
         tmp_port = InputPort(tag)
@@ -126,6 +129,8 @@ class WritingModule(PypelineModule):
             tmp_port.set_database_connection(self._m_data_base)
 
         self._m_input_ports[tag] = tmp_port
+
+        return tmp_port
 
     def connect_database(self,
                          data_base_in):
@@ -178,9 +183,12 @@ class ProcessingModule(PypelineModule):
         Method which creates a input port and append it to the internal input port dictionary. This
         function should be used by classes inhering from Processing Module to make sure that only
         input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+        or by using the returned Port.
 
         :param tag: Tag of the new input port.
-        :return: None
+        :type tag: String
+        :return: The new Port
+        :rtype: InputPort
         """
 
         tmp_port = InputPort(tag)
@@ -192,16 +200,20 @@ class ProcessingModule(PypelineModule):
 
         self._m_input_ports[tag] = tmp_port
 
+        return tmp_port
+
     def add_output_port(self,
                         tag):
         """
         Method which creates a output port and append it to the internal output port dictionary.
         This function should be used by classes inhering from Processing Module to make sure that
         only output ports with unique tags are added. The new port can be used by
-        self._m_input_ports[tag]
+        self._m_input_ports[tag] or by using the returned Port.
 
         :param tag: Tag of the new output port.
-        :return: None
+        :type tag: String
+        :return: The new Port
+        :rtype: OutputPort
         """
 
         tmp_port = OutputPort(tag)
@@ -212,6 +224,8 @@ class ProcessingModule(PypelineModule):
             tmp_port.set_database_connection(self._m_data_base)
 
         self._m_output_ports[tag] = tmp_port
+
+        return tmp_port
 
     def connect_database(self,
                          data_base_in):
@@ -228,6 +242,32 @@ class ProcessingModule(PypelineModule):
             port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
+
+    def apply_function_to_images(self,
+                                 func,
+                                 image_in_tag="im_arr",
+                                 image_out_tag="im_arr_filtered",
+                                 num_images_in_memory=100):
+        """
+        Function which can be used to apply a filter (a image function) to all frames of the data
+        set stored under the tag "image_in_tag". Note the Processing Module needs to have a Input
+        with the same name! The result is stored under the "image_out_tag". It is possible to set a
+        maximum number of frames that is loaded into the memory for low memory requirements.
+        :param func: The function which is applied to all images
+        :type func: function
+        :param image_in_tag: Tag of the image InputPort
+        :type image_in_tag: String
+        :param image_out_tag: Tag of the image OutputPort
+        :type image_out_tag: String
+        :param num_images_in_memory: Maximum number of Frames which will be loaded to the memory. If
+            None all frames will be load at once. (This is probably the fastest but most memory
+            expensive option)
+        :type num_images_in_memory: int
+        :return: None
+        """
+
+        number_of_images = self._m_input_ports[image_in_tag].get_shape()[0]
+        print number_of_images
 
     @abstractmethod
     def run(self):
@@ -278,14 +318,19 @@ class ReadingModule(PypelineModule):
         Method which creates a output port and append it to the internal output port dictionary.
         This function should be used by classes inhering from Reading Module to make sure that
         only output ports with unique tags are added. The new port can be used by
-        self._m_out_ports[tag]
+        self._m_out_ports[tag] or by using the returned Port.
 
         :param tag: Tag of the new output port.
-        :return: None
+        :type tag: String
+        :param default_activation: Activation status of the Port after creation
+        :type default_activation: Boolean
+        :return: The new Port
+        :rtype: OutputPort
         """
 
         tmp_port = OutputPort(tag,
-                              default_activation)
+                              activate_init=default_activation)
+
         if tag in self._m_out_ports:
             warnings.warn('Tag already used. Updating..')
 
@@ -293,6 +338,8 @@ class ReadingModule(PypelineModule):
             tmp_port.set_database_connection(self._m_data_base)
 
         self._m_out_ports[tag] = tmp_port
+
+        return tmp_port
 
     def connect_database(self,
                          data_base_in):
