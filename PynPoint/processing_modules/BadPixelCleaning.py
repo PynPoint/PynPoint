@@ -15,11 +15,18 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
         super(BadPixelCleaningSigmaFilterModule, self).__init__(name_in)
 
         # Ports
-        self.m_image_in_tag = image_in_tag
-        self.add_input_port(image_in_tag)
+        self.m_image_in_port = self.add_input_port(image_in_tag)
 
-        self.m_image_out_tag = image_out_tag
-        self.add_output_port(image_out_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
     def run(self):
-        pass
+
+        def make_black(image_in):
+            for i in range(image_in.shape[0]):
+                for j in range(image_in.shape[1]):
+                    image_in[i, j] = 0
+            return image_in
+
+        self.apply_function_to_images(make_black,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port)
