@@ -118,6 +118,7 @@ class FlatSubtractionModule(ProcessingModule):
             dark_shape = tmp_flat.shape
             x_off = (dark_shape[0] - shape_of_input[0]) / 2
             y_off = (dark_shape[1] - shape_of_input[1]) / 2
+            x_off += 1 # TODO find solution for NACO
             tmp_flat = tmp_flat[x_off: shape_of_input[0] + x_off,
                        y_off: shape_of_input[1] + y_off]
 
