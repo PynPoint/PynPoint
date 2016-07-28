@@ -6,6 +6,7 @@ Different interfaces for Pypeline Modules.
 import os
 import warnings
 from abc import ABCMeta, abstractmethod
+import numpy as np
 
 from PynPoint.core.DataIO import OutputPort, InputPort
 
@@ -217,7 +218,7 @@ class ProcessingModule(PypelineModule):
         """
 
         tmp_port = OutputPort(tag)
-        if tag in self._m_input_ports:
+        if tag in self._m_output_ports:
             warnings.warn('Tag %s already used. Updating..' % tag)
 
         if self._m_data_base is not None:
@@ -245,8 +246,9 @@ class ProcessingModule(PypelineModule):
 
     def apply_function_to_images(self,
                                  func,
-                                 image_in_tag="im_arr",
-                                 image_out_tag="im_arr_filtered",
+                                 image_in_port,
+                                 image_out_port,
+                                 func_args = None,
                                  num_images_in_memory=100):
         """
         Function which can be used to apply a filter (a image function) to all frames of the data
@@ -255,10 +257,10 @@ class ProcessingModule(PypelineModule):
         maximum number of frames that is loaded into the memory for low memory requirements.
         :param func: The function which is applied to all images
         :type func: function
-        :param image_in_tag: Tag of the image InputPort
-        :type image_in_tag: String
-        :param image_out_tag: Tag of the image OutputPort
-        :type image_out_tag: String
+        :param image_in_port: InputPort of the Image
+        :type image_in_port: InputPort
+        :param image_out_port: OutputPort of the result
+        :type image_out_port: OutputPort
         :param num_images_in_memory: Maximum number of Frames which will be loaded to the memory. If
             None all frames will be load at once. (This is probably the fastest but most memory
             expensive option)
@@ -266,8 +268,46 @@ class ProcessingModule(PypelineModule):
         :return: None
         """
 
-        number_of_images = self._m_input_ports[image_in_tag].get_shape()[0]
-        print number_of_images
+        number_of_images = image_in_port.get_shape()[0]
+
+        # check if input and output Port have the same tag
+        if image_out_port.tag == image_in_port.tag:
+            # we want to update the frames
+            update = True
+        else:
+            # we want to replace old values or create a new data set
+            update = False
+
+        i = 0
+        first_time = True
+        while i < number_of_images:
+            if i + num_images_in_memory > number_of_images:
+                j = number_of_images
+            else:
+                j = i + num_images_in_memory
+
+            tmp_frames = image_in_port[i:j]
+            tmp_res = np.zeros(tmp_frames.shape)
+
+            # process frames
+            # check if additional arguments are given
+            if func_args is None:
+                for k in range(tmp_frames.shape[0]):
+                    tmp_res[k] = func(tmp_frames[k])
+            else:
+                for k in range(tmp_frames.shape[0]):
+                    tmp_res[k] = func(tmp_frames[k], * func_args)
+
+            if update:
+                image_out_port[i:j] = tmp_res
+            elif first_time:
+                # The first time we have to reset the eventually existing data
+                image_out_port.set_all(tmp_res)
+                first_time = False
+            else:
+                image_out_port.append(tmp_res)
+
+            i = j
 
     @abstractmethod
     def run(self):

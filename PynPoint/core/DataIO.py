@@ -85,6 +85,14 @@ class Port:
         self._m_data_storage = data_storage_in
         self._m_data_base_active = False
 
+    @property
+    def tag(self):
+        """
+        Getter for the internal tag (no setter!!!)
+        :return:
+        """
+        return self._m_tag
+
     def close_port(self):
         """
         Closes the connection to the Data Storage and force it to save the data to the hard drive.
