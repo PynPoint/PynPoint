@@ -38,21 +38,21 @@ class Hdf5ReadingModule(ReadingModule):
                 continue
 
             # add data
-            self.add_output_port(tmp_tag)
-            self._m_out_ports[tmp_tag].set_all(np.asarray(hdf5_file[entry][...]))
+            tmp_port = self.add_output_port(tmp_tag)
+            tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
 
             # add static attributes
             for attribute_name, attribute_value in hdf5_file[entry].attrs.iteritems():
-                self._m_out_ports[tmp_tag].add_attribute(name=attribute_name,
-                                                         value=attribute_value)
+                tmp_port.add_attribute(name=attribute_name,
+                                       value=attribute_value)
 
             # add non static attributes if existing
             if ("header_" + entry) in hdf5_file:
                 for non_static_attr in hdf5_file[("header_" + entry)]:
-                    self._m_out_ports[tmp_tag].\
-                        add_attribute(name=non_static_attr,
-                                      value=hdf5_file[("header_" + entry+"/"+non_static_attr)][...],
-                                      static=False)
+                    tmp_port.add_attribute(name=non_static_attr,
+                                           value=hdf5_file[("header_" + entry+
+                                                            "/"+non_static_attr)][...],
+                                           static=False)
 
     def run(self):
 

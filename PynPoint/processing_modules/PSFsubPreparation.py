@@ -38,16 +38,11 @@ class PSFdataPreparation(ProcessingModule):
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
 
-        self.m_image_in_tag = image_in_tag
-        self.m_image_out_tag = image_out_tag
-        self.m_image_mask_out_tag = image_mask_out_tag
-        self.m_mask_out_tag = mask_out_tag
-
         # create Ports
-        self.add_input_port(image_in_tag)
-        self.add_output_port(image_mask_out_tag)
-        self.add_output_port(mask_out_tag)
-        self.add_output_port(image_out_tag)
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
+        self.m_mask_out_port = self.add_output_port(mask_out_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
     @staticmethod
     def _im_norm(im_data_in):
@@ -111,30 +106,28 @@ class PSFdataPreparation(ProcessingModule):
             cent_mask = mask_c * (1.0 - mask_outside)
             res_cent_mask = (1.0 - cent_mask)
             im_arr_i_mask = im_data_in * res_cent_mask
-            self._m_output_ports[self.m_image_mask_out_tag].set_all(im_arr_i_mask)
+            self.m_image_mask_out_port.set_all(im_arr_i_mask)
 
             im_arr_o_mask = im_data_in * cent_mask
 
-            self._m_output_ports[self.m_mask_out_tag].set_all(cent_mask)
+            self.m_mask_out_port.set_all(cent_mask)
             return im_arr_o_mask
 
         else:
             cent_mask = np.ones(im_size)
 
-        self._m_output_ports[self.m_mask_out_tag].set_all(cent_mask)
+        self.m_mask_out_port.set_all(cent_mask)
         return im_data_in
 
     def run(self):
 
-        im_data = self._m_input_ports[self.m_image_in_tag].get_all()
-
-        print self.m_image_in_tag
+        im_data = self.m_image_in_port.get_all()
 
         # image normalization
         im_norm = self._im_norm(im_data)
-        self._m_output_ports[self.m_image_out_tag].add_attribute("im_norm",
-                                                                 im_norm,
-                                                                 static=False)
+        self.m_image_out_port.add_attribute("im_norm",
+                                            im_norm,
+                                            static=False)
 
         # image resizing
         if self.m_resize:
@@ -143,8 +136,8 @@ class PSFdataPreparation(ProcessingModule):
         # image masking
         im_data = self._im_masking(im_data)
 
-        self._m_output_ports[self.m_image_out_tag].set_all(im_data,
-                                                           keep_attributes=True)
+        self.m_image_out_port.set_all(im_data,
+                                      keep_attributes=True)
 
         # save attributes
         attributes = {"cent_remove": self.m_cent_remove,
@@ -155,6 +148,6 @@ class PSFdataPreparation(ProcessingModule):
                       "edge_size": float(self.m_edge_size)}
 
         for key, value in attributes.iteritems():
-            self._m_output_ports[self.m_image_out_tag].add_attribute(key,
-                                                                     value,
-                                                                     static=True)
+            self.m_image_out_port.add_attribute(key,
+                                                value,
+                                                static=True)
