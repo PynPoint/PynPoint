@@ -50,8 +50,7 @@ class WriteAsSingleFitsFile(WritingModule):
             raise ValueError("Output file_name needs to end with .fits")
 
         self.m_file_name = file_name
-        self.m_data_tag = data_tag
-        self.add_input_port(data_tag)
+        self.m_data_port = self.add_input_port(data_tag)
 
     def run(self):
         """
@@ -73,7 +72,7 @@ class WriteAsSingleFitsFile(WritingModule):
 
         # Attributes
         prihdr = fits.Header()
-        attributes = self._m_input_ports[self.m_data_tag].get_all_static_attributes()
+        attributes = self.m_data_port.get_all_static_attributes()
         for attr in attributes:
             if len(attr) > 8:
                 prihdr["hierarch " + attr] = attributes[attr]
@@ -81,9 +80,9 @@ class WriteAsSingleFitsFile(WritingModule):
                 prihdr[attr] = attributes[attr]
 
         # Data
-        hdu = fits.PrimaryHDU(self._m_input_ports[self.m_data_tag].get_all(),
+        hdu = fits.PrimaryHDU(self.m_data_port.get_all(),
                               header=prihdr)
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(out_name)
 
-        self._m_input_ports[self.m_data_tag].close_port()
+        self.m_data_port.close_port()

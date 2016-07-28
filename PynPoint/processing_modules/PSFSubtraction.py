@@ -21,40 +21,25 @@ class CreateResidualsModule(ProcessingModule):
 
         super(CreateResidualsModule, self).__init__(name_in)
 
-        self._m_im_arr_in_tag = im_arr_in_tag
-        self.add_input_port(im_arr_in_tag)
-
-        self._m_psf_im_tag = psf_im_in_tag
-        self.add_input_port(psf_im_in_tag)
-
-        self._m_mask_in_tag = mask_in_tag
-        self.add_input_port(mask_in_tag)
+        # Inputs
+        self._m_im_arr_in_port = self.add_input_port(im_arr_in_tag)
+        self._m_psf_im_port = self.add_input_port(psf_im_in_tag)
+        self._m_mask_in_port = self.add_input_port(mask_in_tag)
 
         # Outputs
-        self._m_res_arr_out_tag = res_arr_out_tag
-        self.add_output_port(res_arr_out_tag)
-
-        self._m_res_arr_rot_out_tag = res_arr_rot_out_tag
-        self.add_output_port(res_arr_rot_out_tag)
-
-        self._m_res_mean_tag = res_mean_tag
-        self.add_output_port(res_mean_tag)
-
-        self._m_res_median_tag = res_median_tag
-        self.add_output_port(res_median_tag)
-
-        self._m_res_var_tag = res_var_tag
-        self.add_output_port(res_var_tag)
-
-        self._m_res_rot_mean_clip_tag = res_rot_mean_clip_tag
-        self.add_output_port(res_rot_mean_clip_tag)
+        self._m_res_arr_out_port = self.add_output_port(res_arr_out_tag)
+        self._m_res_arr_rot_out_port = self.add_output_port(res_arr_rot_out_tag)
+        self._m_res_mean_port = self.add_output_port(res_mean_tag)
+        self._m_res_median_port = self.add_output_port(res_median_tag)
+        self._m_res_var_port = self.add_output_port(res_var_tag)
+        self._m_res_rot_mean_clip_port = self.add_output_port(res_rot_mean_clip_tag)
 
         self.m_extra_rot = extra_rot
 
     def run(self):
-        im_data = self._m_input_ports[self._m_im_arr_in_tag].get_all()
-        psf_im = self._m_input_ports[self._m_psf_im_tag].get_all()
-        cent_mask = self._m_input_ports[self._m_mask_in_tag].get_all()
+        im_data = self._m_im_arr_in_port.get_all()
+        psf_im = self._m_psf_im_port.get_all()
+        cent_mask = self._m_mask_in_port.get_all()
 
         # create result array
         res_arr = im_data.copy()
@@ -63,7 +48,7 @@ class CreateResidualsModule(ProcessingModule):
             res_arr[i, ] -= (psf_im[i, ] * cent_mask)
 
         # rotate result array
-        para_angles = self._m_input_ports[self._m_im_arr_in_tag].get_attribute("NEW_PARA")
+        para_angles = self._m_im_arr_in_port.get_attribute("NEW_PARA")
         delta_para = para_angles[0] - para_angles
         res_rot = np.zeros(shape=im_data.shape)
         for i in range(0, len(delta_para)):
@@ -103,12 +88,12 @@ class CreateResidualsModule(ProcessingModule):
                     res_rot_mean_clip[i, j] = temp.mean() + b2.mean()
 
         # save results
-        self._m_output_ports[self._m_res_arr_out_tag].set_all(res_arr)
-        self._m_output_ports[self._m_res_arr_rot_out_tag].set_all(res_rot)
-        self._m_output_ports[self._m_res_mean_tag].set_all(tmp_res_rot_mean)
-        self._m_output_ports[self._m_res_median_tag].set_all(tmp_res_rot_median)
-        self._m_output_ports[self._m_res_var_tag].set_all(tmp_res_rot_var)
-        self._m_output_ports[self._m_res_rot_mean_clip_tag].set_all(res_rot_mean_clip)
+        self._m_res_arr_out_port.set_all(res_arr)
+        self._m_res_arr_rot_out_port.set_all(res_rot)
+        self._m_res_mean_port.set_all(tmp_res_rot_mean)
+        self._m_res_median_port.set_all(tmp_res_rot_median)
+        self._m_res_var_port.set_all(tmp_res_rot_var)
+        self._m_res_rot_mean_clip_port.set_all(res_rot_mean_clip)
 
 
 class MakePSFModelModule(ProcessingModule):
@@ -118,7 +103,7 @@ class MakePSFModelModule(ProcessingModule):
 
     def __init__(self,
                  num,
-                 name_in = "psf_model_module",
+                 name_in="psf_model_module",
                  im_arr_in_tag="im_arr",
                  basis_in_tag="basis_im",
                  basis_average_in_tag="basis_ave",
@@ -128,23 +113,19 @@ class MakePSFModelModule(ProcessingModule):
 
         super(MakePSFModelModule, self).__init__(name_in)
 
-        self._m_im_arr_in_tag = im_arr_in_tag
-        self.add_input_port(im_arr_in_tag)
-
-        self._m_basis_average_in_tag = basis_average_in_tag
-        self.add_input_port(basis_average_in_tag)
-
-        self._m_basis_in_tag = basis_in_tag
-        self.add_input_port(basis_in_tag)
+        # Inputs
+        self._m_im_arr_in_port = self.add_input_port(im_arr_in_tag)
+        self._m_basis_average_in_port = self.add_input_port(basis_average_in_tag)
+        self._m_basis_in_port = self.add_input_port(basis_in_tag)
 
         self._m_psf_basis_out_tag = psf_basis_out_tag
-        self.add_output_port(psf_basis_out_tag)
+        self._m_psf_basis_out_port = self.add_output_port(psf_basis_out_tag)
 
     def run(self):
 
-        im_data = self._m_input_ports[self._m_im_arr_in_tag].get_all()
-        basis_data = self._m_input_ports[self._m_basis_in_tag].get_all()
-        basis_average = self._m_input_ports[self._m_basis_average_in_tag].get_all()
+        im_data = self._m_im_arr_in_port.get_all()
+        basis_data = self._m_basis_in_port.get_all()
+        basis_average = self._m_basis_average_in_port.get_all()
 
         temp_im_arr = np.zeros([im_data.shape[0],
                                 im_data.shape[1]*im_data.shape[2]])
@@ -168,12 +149,12 @@ class MakePSFModelModule(ProcessingModule):
                                           im_data.shape[1],
                                           im_data.shape[2])
 
-        self._m_output_ports[self._m_psf_basis_out_tag].set_all(result,
-                                                                keep_attributes=True)
+        self._m_psf_basis_out_port.set_all(result,
+                                           keep_attributes=True)
 
-        self._m_output_ports[self._m_psf_basis_out_tag].add_attribute(name="psf_coeff",
-                                                                      value=psf_coeff,
-                                                                      static=False)
+        self._m_psf_basis_out_port.add_attribute(name="psf_coeff",
+                                                 value=psf_coeff,
+                                                 static=False)
 
 
 class MakePCABasisModule(ProcessingModule):
@@ -190,17 +171,13 @@ class MakePCABasisModule(ProcessingModule):
 
         super(MakePCABasisModule, self).__init__(name_in)
 
-        self._m_im_arr_in_tag = im_arr_in_tag
-        self.add_input_port(im_arr_in_tag)
+        # Inputs
+        self._m_im_arr_in_port = self.add_input_port(im_arr_in_tag)
 
-        self._m_im_arr_out_tag = im_arr_out_tag
-        self.add_output_port(im_arr_out_tag)
-
-        self._m_im_average_out_tag = im_average_out_tag
-        self.add_output_port(im_average_out_tag)
-
-        self._m_basis_out_tag = basis_out_tag
-        self.add_output_port(basis_out_tag)
+        # Outputs
+        self._m_im_arr_out_port = self.add_output_port(im_arr_out_tag)
+        self._m_im_average_out_port = self.add_output_port(im_average_out_tag)
+        self._m_basis_out_port = self.add_output_port(basis_out_tag)
 
     @staticmethod
     def _make_average_sub(im_arr_in):
@@ -212,7 +189,7 @@ class MakePCABasisModule(ProcessingModule):
 
     def run(self):
 
-        im_data = self._m_input_ports[self._m_im_arr_in_tag].get_all()
+        im_data = self._m_im_arr_in_port.get_all()
 
         num_entries = im_data.shape[0]
         im_size = [im_data.shape[1],
@@ -226,8 +203,8 @@ class MakePCABasisModule(ProcessingModule):
 
         basis_pca_arr = V.reshape(V.shape[0], im_size[0], im_size[1])
 
-        self._m_output_ports[self._m_im_arr_out_tag].set_all(tmp_im_data, keep_attributes=True)
-        self._m_output_ports[self._m_im_average_out_tag].set_all(tmp_im_ave)
-        self._m_output_ports[self._m_basis_out_tag].set_all(basis_pca_arr)
-        self._m_output_ports[self._m_basis_out_tag].add_attribute(name="basis_type",
-                                                                  value="pca")
+        self._m_im_arr_out_port.set_all(tmp_im_data, keep_attributes=True)
+        self._m_im_average_out_port.set_all(tmp_im_ave)
+        self._m_basis_out_port.set_all(basis_pca_arr)
+        self._m_basis_out_port.add_attribute(name="basis_type",
+                                             value="pca")
