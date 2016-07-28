@@ -270,6 +270,9 @@ class ProcessingModule(PypelineModule):
 
         number_of_images = image_in_port.get_shape()[0]
 
+        if num_images_in_memory is None:
+            num_images_in_memory = number_of_images
+
         # check if input and output Port have the same tag
         if image_out_port.tag == image_in_port.tag:
             # we want to update the frames
