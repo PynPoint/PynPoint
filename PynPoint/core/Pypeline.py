@@ -158,13 +158,26 @@ class Pypeline(object):
 
     def get_data(self,
                  tag):
-        # TODO Documentation
+        """
+        Small function for easy direct data base access (for data sets)
+        :param tag: data set tag
+        :type tag: String
+        :return: The data as numpy array
+        """
         self.m_data_storage.open_connection()
         return np.asarray(self.m_data_storage.m_data_bank[tag])
 
     def get_attribute(self,
                       data_tag,
                       attr_name):
-        # TODO Documentation
+        """
+        Small function for easy direct data base access (for attributes). Supports only static
+        attributes.
+        :param data_tag: data set tag
+        :type data_tag: String
+        :param attr_name: name of the attribute
+        :type attr_name: String
+        :return: The attribute
+        """
         self.m_data_storage.open_connection()
         return self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]
