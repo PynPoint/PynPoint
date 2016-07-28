@@ -244,11 +244,11 @@ class ProcessingModule(PypelineModule):
 
         self._m_data_base = data_base_in
 
-    def apply_function_to_images(self,
-                                 func,
+    @staticmethod
+    def apply_function_to_images(func,
                                  image_in_port,
                                  image_out_port,
-                                 func_args = None,
+                                 func_args=None,
                                  num_images_in_memory=100):
         """
         Function which can be used to apply a filter (a image function) to all frames of the data
@@ -261,6 +261,8 @@ class ProcessingModule(PypelineModule):
         :type image_in_port: InputPort
         :param image_out_port: OutputPort of the result
         :type image_out_port: OutputPort
+        :param func_args: additional arguments of the input function "func"
+        :type func_args: tuple
         :param num_images_in_memory: Maximum number of Frames which will be loaded to the memory. If
             None all frames will be load at once. (This is probably the fastest but most memory
             expensive option)
@@ -274,12 +276,10 @@ class ProcessingModule(PypelineModule):
             num_images_in_memory = number_of_images
 
         # check if input and output Port have the same tag
-        if image_out_port.tag == image_in_port.tag:
-            # we want to update the frames
-            update = True
-        else:
-            # we want to replace old values or create a new data set
-            update = False
+
+        # we want to replace old values or create a new data set if True
+        # if not we want to update the frames
+        update = image_out_port.tag == image_in_port.tag
 
         i = 0
         first_time = True
