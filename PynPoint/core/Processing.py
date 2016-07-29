@@ -255,6 +255,8 @@ class ProcessingModule(PypelineModule):
         set stored under the tag "image_in_tag". Note the Processing Module needs to have a Input
         with the same name! The result is stored under the "image_out_tag". It is possible to set a
         maximum number of frames that is loaded into the memory for low memory requirements.
+        Note the function "func" is not allowed to change the shape of the images if the input and
+        output port have the same tag and num_images_in_memory is not None.
         :param func: The function which is applied to all images
         :type func: function
         :param image_in_port: InputPort of the Image
@@ -290,25 +292,35 @@ class ProcessingModule(PypelineModule):
                 j = i + num_images_in_memory
 
             tmp_frames = image_in_port[i:j]
-            tmp_res = np.zeros(tmp_frames.shape)
+            tmp_res = []
 
             # process frames
             # check if additional arguments are given
             if func_args is None:
                 for k in range(tmp_frames.shape[0]):
-                    tmp_res[k] = func(tmp_frames[k])
+                    tmp_res.append(func(tmp_frames[k]))
             else:
                 for k in range(tmp_frames.shape[0]):
-                    tmp_res[k] = func(tmp_frames[k], * func_args)
+                    tmp_res.append(func(tmp_frames[k], * func_args))
 
             if update:
-                image_out_port[i:j] = tmp_res
+                try:
+                    if num_images_in_memory == number_of_images:
+                        image_out_port.set_all(np.array(tmp_res),
+                                               keep_attributes=True)
+                    else:
+                        image_out_port[i:j] = np.array(tmp_res)
+                except TypeError:
+                    raise ValueError("Input and output port have the same tag while %s is changing "
+                                     "the image shape. This is only possible for "
+                                     "num_images_in_memory == None. Change num_images_in_memory"
+                                     "or choose different port tags." % func)
             elif first_time:
                 # The first time we have to reset the eventually existing data
-                image_out_port.set_all(tmp_res)
+                image_out_port.set_all(np.array(tmp_res))
                 first_time = False
             else:
-                image_out_port.append(tmp_res)
+                image_out_port.append(np.array(tmp_res))
 
             i = j
 
