@@ -3,6 +3,45 @@ import warnings
 from PynPoint.core.Processing import ProcessingModule
 
 
+def _image_cutting(data,
+                   image_in_port,
+                   dark=True):
+
+    if dark:
+        name = "dark"
+    else:
+        name = "flat"
+
+    # check dim of the dark. We need only the first frame.
+    if data.ndim == 3:
+        tmp_data = data[0]
+    elif data.ndim == 2:
+        tmp_data = data
+    else:
+        raise ValueError("Dimension of input %s not supported. "
+                         "Only 2D and 3D dark array can be used." % name)
+
+    # check shape of the dark and cut if needed
+    shape_of_input = (image_in_port.get_shape()[1],
+                      image_in_port.get_shape()[2])
+
+    if tmp_data.shape[0] < shape_of_input[0] or tmp_data.shape[1] < shape_of_input[1]:
+        raise ValueError("Input %s resolution smaller than image resolution." % name)
+
+    if not (tmp_data.shape == shape_of_input):
+        # cut the dark first
+        dark_shape = tmp_data.shape
+        x_off = (dark_shape[0] - shape_of_input[0]) / 2
+        y_off = (dark_shape[1] - shape_of_input[1]) / 2
+        tmp_data = tmp_data[x_off: shape_of_input[0] + x_off, y_off:shape_of_input[1] + y_off]
+
+        warnings.warn("The given %s has a different shape than the input images and was cut "
+                      "around the center in order to get the same resolution. If the position "
+                      "of the %s does not match the input frame you have to cut the %s "
+                      "before using this module." % (name, name, name))
+    return tmp_data
+
+
 class DarkSubtractionModule(ProcessingModule):
 
     def __init__(self,
@@ -29,34 +68,8 @@ class DarkSubtractionModule(ProcessingModule):
 
         dark = self.m_dark_in_port.get_all()
 
-        # check dim of the dark. We need only the first frame.
-        if dark.ndim == 3:
-            tmp_dark = dark[0]
-        elif dark.ndim == 2:
-            tmp_dark = dark
-        else:
-            raise ValueError("Dimension of input dark not supported. "
-                             "Only 2D and 3D dark array can be used.")
-
-        # check shape of the dark and cut if needed
-        shape_of_input = (self.m_image_in_port.get_shape()[1],
-                          self.m_image_in_port.get_shape()[2])
-
-        if tmp_dark.shape[0] < shape_of_input[0] or tmp_dark.shape[1] < shape_of_input[1]:
-            raise ValueError("Input dark resolution smaller than image resolution.")
-
-        if not (tmp_dark.shape == shape_of_input):
-            # cut the dark first
-            dark_shape = tmp_dark.shape
-            x_off = (dark_shape[0] - shape_of_input[0]) / 2
-            y_off = (dark_shape[1] - shape_of_input[1]) / 2
-            tmp_dark = tmp_dark[x_off: shape_of_input[0] + x_off,
-                       y_off: shape_of_input[1] + y_off]
-
-            warnings.warn("The given dark has a different shape than the input images and was cut "
-                          "around the center in order to get the same resolution. If the position "
-                          "of the dark does not match the input frame you have to cut the dark "
-                          "before using this module.")
+        tmp_dark = _image_cutting(dark,
+                                  self.m_image_in_port)
 
         self.apply_function_to_images(dark_subtraction_image,
                                       self.m_image_in_port,
@@ -64,9 +77,10 @@ class DarkSubtractionModule(ProcessingModule):
                                       func_args=(tmp_dark,),
                                       num_images_in_memory=self.m_number_of_images_in_memory)
 
-        history = "simple subtraction"
-        self.m_image_out_port.add_attribute("history: dark subtraction",
-                                            history)
+        self.m_image_out_port.add_history_information("dark_subtraction",
+                                                      "simple subtraction")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
 
@@ -97,35 +111,9 @@ class FlatSubtractionModule(ProcessingModule):
 
         flat = self.m_flat_in_port.get_all()
 
-        # check dim of the dark. We need only the first frame.
-        if flat.ndim == 3:
-            tmp_flat = flat[0]
-        elif flat.ndim == 2:
-            tmp_flat = flat
-        else:
-            raise ValueError("Dimension of input dark not supported. "
-                             "Only 2D and 3D dark array can be used.")
-
-        # check shape of the dark and cut if needed
-        shape_of_input = (self.m_image_in_port.get_shape()[1],
-                          self.m_image_in_port.get_shape()[2])
-
-        if tmp_flat.shape[0] < shape_of_input[0] or tmp_flat.shape[1] < shape_of_input[1]:
-            raise ValueError("Input dark resolution smaller than image resolution.")
-
-        if not (tmp_flat.shape == shape_of_input):
-            # cut the dark first
-            dark_shape = tmp_flat.shape
-            x_off = (dark_shape[0] - shape_of_input[0]) / 2
-            y_off = (dark_shape[1] - shape_of_input[1]) / 2
-            x_off += 1 # TODO find solution for NACO
-            tmp_flat = tmp_flat[x_off: shape_of_input[0] + x_off,
-                       y_off: shape_of_input[1] + y_off]
-
-            warnings.warn("The given dark has a different shape than the input images and was cut "
-                          "around the center in order to get the same resolution. If the position "
-                          "of the dark does not match the input frame you have to cut the dark "
-                          "before using this module.")
+        tmp_flat = _image_cutting(flat,
+                                  self.m_image_in_port,
+                                  dark=False)
 
         self.apply_function_to_images(flat_subtraction_image,
                                       self.m_image_in_port,
@@ -133,8 +121,9 @@ class FlatSubtractionModule(ProcessingModule):
                                       func_args=(tmp_flat,),
                                       num_images_in_memory=self.m_number_of_images_in_memory)
 
-        history = "simple division"
-        self.m_image_out_port.add_attribute("history: flat subtraction",
-                                            history)
+        self.m_image_out_port.add_history_information("flat_subtraction",
+                                                      "simple subtraction")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
