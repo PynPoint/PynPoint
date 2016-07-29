@@ -120,7 +120,9 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
                                       num_images_in_memory=self.m_number_of_images_in_memory)
 
         history = "Sigma filtering with Sigma = " + str(self.m_sigma)
-        self.m_image_out_port.add_attribute("history: bp_cleaning",
-                                            history)
+        self.m_image_out_port.add_history_information("bp_cleaning",
+                                                      history)
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()

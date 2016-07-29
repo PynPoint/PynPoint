@@ -720,6 +720,33 @@ class OutputPort(Port):
 
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
+    def copy_attributes_from_input_port(self,
+                                        input_port):
+        """
+        Copies all static and non-static attributes from a given InputPort. Attributes which already
+        exist will be overwritten. Non-static attributes will be linked not copied!
+        :param input_port: The InputPort containing header information
+        :type input_port: InputPort
+        :return: None
+        """
+        # link non-static attributes
+        if ("header_" + input_port.tag + "/") in self._m_data_storage.m_data_bank:
+            for attr_name, attr_data in self._m_data_storage\
+                    .m_data_bank["header_" + input_port.tag + "/"].iteritems():
+
+                # overwrite existing header information in the database
+                if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
+                    del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
+
+                self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
+                    attr_data
+
+        # copy static attributes
+        attributes = input_port.get_all_static_attributes()
+        for attr_name, attr_val in attributes.iteritems():
+            self.add_attribute(attr_name,
+                               attr_val)
+
     def del_attribute(self,
                       name):
         """
@@ -778,6 +805,20 @@ class OutputPort(Port):
                 return -1
         else:
             return 1
+
+    def add_history_information(self,
+                                pipeline_step,
+                                history_information):
+        """
+        Adds an attribute which contains history information.
+        :param pipeline_step: name of the pipeline step which was performed
+        :type pipeline_step: String
+        :param history_information: extra information like parameters
+        :type history_information: String
+        :return: None
+        """
+        self.add_attribute("History: " + pipeline_step,
+                           history_information)
 
     def flush(self):
         """
