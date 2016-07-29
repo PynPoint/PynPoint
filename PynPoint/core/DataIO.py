@@ -724,11 +724,15 @@ class OutputPort(Port):
                                         input_port):
         """
         Copies all static and non-static attributes from a given InputPort. Attributes which already
-        exist will be overwritten. Non-static attributes will be linked not copied!
+        exist will be overwritten. Non-static attributes will be linked not copied! If Input Port
+        tag == Output Port tag (self.tag) nothing will be changed.
         :param input_port: The InputPort containing header information
         :type input_port: InputPort
         :return: None
         """
+        if input_port.tag == self._m_tag:
+            return
+
         # link non-static attributes
         if ("header_" + input_port.tag + "/") in self._m_data_storage.m_data_bank:
             for attr_name, attr_data in self._m_data_storage\
