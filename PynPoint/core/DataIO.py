@@ -498,6 +498,9 @@ class OutputPort(Port):
         tmp_shape = self._m_data_storage.m_data_bank[tag].shape
         tmp_dim = len(tmp_shape)
 
+        if data_dim is None:
+            data_dim = tmp_dim
+
         # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
         if data.ndim + 1 == data_dim:
             if data_dim == 3:
