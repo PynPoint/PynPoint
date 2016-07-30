@@ -737,7 +737,7 @@ class OutputPort(Port):
             return
 
         # link non-static attributes
-        if ("header_" + input_port.tag + "/") in self._m_data_storage.m_data_bank:
+        if "header_" + input_port.tag + "/" in self._m_data_storage.m_data_bank:
             for attr_name, attr_data in self._m_data_storage\
                     .m_data_bank["header_" + input_port.tag + "/"].iteritems():
 

@@ -153,8 +153,6 @@ class BasePynpointWrapper(object):
     def save(self,
              filename):
 
-        print filename
-
         filename = str(filename)
 
         if os.path.isfile(filename):
@@ -162,8 +160,8 @@ class BasePynpointWrapper(object):
 
         head, tail = os.path.split(filename)
 
-        writing = Hdf5WritingModule("hdf5_writing",
-                                    tail,
+        writing = Hdf5WritingModule(tail,
+                                    name_in="hdf5_writing",
                                     output_dir=head,
                                     tag_dictionary=self._m_save_tag_dict,
                                     keep_attributes=True)
