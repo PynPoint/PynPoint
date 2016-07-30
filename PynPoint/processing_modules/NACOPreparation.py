@@ -1,4 +1,4 @@
-import warnings
+import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -43,3 +43,35 @@ class CutTopTwoLinesModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
+
+
+class AngleCalculationModule(ProcessingModule):
+
+    def __init__(self,
+                 name_in="angle_calcuation",
+                 data_tag="im_arr"):
+
+        super(AngleCalculationModule, self).__init__(name_in)
+
+        # Ports
+        self.m_data_in_port = self.add_input_port(data_tag)
+        self.m_data_out_port = self.add_output_port(data_tag)
+
+    def run(self):
+
+        input_angles_start = self.m_data_in_port.get_attribute("ESO TEL PARANG START")
+        input_angles_end = self.m_data_in_port.get_attribute("ESO TEL PARANG END")
+
+        steps = self.m_data_in_port.get_attribute("NAXIS3")
+
+        new_angles = []
+
+        for i in range(0, len(input_angles_start)):
+            new_angles = np.append(new_angles,
+                                   np.linspace(input_angles_start[i],
+                                               input_angles_end[i],
+                                               num=steps))
+
+        self.m_data_out_port.add_attribute("NEW_PARA",
+                                           new_angles,
+                                           static=False)
