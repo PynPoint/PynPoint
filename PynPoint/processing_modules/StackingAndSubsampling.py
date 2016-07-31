@@ -77,8 +77,9 @@ class StackAndSubsetModule(ProcessingModule):
                     im_arr_new[i, ] = tmp_data[i*self.m_stacking:(i+1)*self.m_stacking, ]\
                         .mean(axis=0)
                 else:
-                    im_arr_new[i,] = self.m_image_in_port[i * self.m_stacking:(i + 1) * self.m_stacking, ] \
-                        .mean(axis=0)
+                    im_arr_new[i, ] = self.m_image_in_port[i * self.m_stacking:(i + 1)
+                                                             * self.m_stacking, ] \
+                                                           .mean(axis=0)
 
                 print "loop " + str(i) + " of " + str(num_new)
 
