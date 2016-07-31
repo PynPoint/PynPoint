@@ -185,6 +185,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         # append used file to header information
         self.m_image_out_port.append_attribute_data("Used_Files",
                                                     tmp_location + fits_file)
+        self.m_image_out_port.flush()
 
     def run(self):
         """

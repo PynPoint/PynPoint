@@ -139,6 +139,8 @@ class PSFdataPreparation(ProcessingModule):
         self.m_image_out_port.set_all(im_data,
                                       keep_attributes=True)
 
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         # save attributes
         attributes = {"cent_remove": self.m_cent_remove,
                       "resize": self.m_resize,
