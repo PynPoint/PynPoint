@@ -4,6 +4,7 @@ import cv2
 from skimage.feature import register_translation
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
+from scipy.misc import imresize
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -78,6 +79,7 @@ class StarAlignmentModule(ProcessingModule):
                  image_out_tag="im_arr_aligned",
                  interpolation="spline",
                  accuracy=10,
+                 resize=1,
                  num_images_in_memory=100):
 
         super(StarAlignmentModule, self).__init__(name_in)
@@ -96,6 +98,7 @@ class StarAlignmentModule(ProcessingModule):
         self.m_interpolation = interpolation
         self.m_accuracy = accuracy
         self.m_num_images_in_memory = num_images_in_memory
+        self.m_resize = resize
 
     def run(self):
 
@@ -111,15 +114,21 @@ class StarAlignmentModule(ProcessingModule):
                                                 image_in,
                                                 self.m_accuracy)
 
+            offset *= self.m_resize
+
+            tmp_image = imresize(image_in,
+                                 image_in.shape * self.m_resize,
+                                 interp="cubic")
+
             if self.m_interpolation == "spline":
-                tmp_image = shift(image_in, offset, order=5)
+                tmp_image = shift(tmp_image, offset, order=5)
 
             elif self.m_interpolation == "fft":
-                tmp_image_spec = fourier_shift(np.fft.fftn(image_in), offset)
+                tmp_image_spec = fourier_shift(np.fft.fftn(tmp_image), offset)
                 tmp_image = np.fft.ifftn(tmp_image_spec)
 
             elif self.m_interpolation == "bilinear":
-                tmp_image = shift(image_in, offset, order=1)
+                tmp_image = shift(tmp_image, offset, order=1)
 
             else:
                 raise ValueError("Interpolation needs to be spline, bilinear or fft")
