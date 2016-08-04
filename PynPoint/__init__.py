@@ -12,14 +12,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/.
 
-__author__ = 'Adam Amara'
-__email__ = 'adam.amara@phys.ethz.ch'
-__version__ = '0.2.0'
-__credits__ = 'ETH Zurich, Institute for Astronomy'
-
+# PynPoint 0.2.x
 # from PynPoint.Residuals import residuals
 # from PynPoint.Basis import basis
 # from PynPoint.Images import images
+
+import warnings
 
 import PynPoint.old_version.PynPlot
 import PynPoint.old_version._Cache as pynpointcache
@@ -29,6 +27,14 @@ from PynPoint.wrapper.ImageWrapper import ImageWrapper as images
 from PynPoint.wrapper.ResidualsWrapper import ResidualsWrapper as residuals
 from PynPoint.old_version.Workflow import workflow
 from PynPoint.old_version._BasePynPoint import base_pynpoint
+
+# PynPoint 0.3.x
+from PynPoint.core import Pypeline
+
+__author__ = 'Adam Amara'
+__email__ = 'adam.amara@phys.ethz.ch'
+__version__ = '0.3.0'
+__credits__ = 'ETH Zurich, Institute for Astronomy'
 
 
 def get_data_dir():
@@ -41,17 +47,22 @@ def get_data_dir():
     import PynPoint
     return resource_filename(PynPoint.__name__, "data")
 
+
 def run(config,force_replace=False):
     """
     Delegates the execution to :py:meth:`workflow.run`
+    NOT IMPLEMENTED OR TESTED FOR VERSION 0.3.x
     
     :param config: name of the config file with details of the run to be executed
     :param force_replace: If True then the workspace directory will be overwritten if it already exists
     
     :return: the instance of the workflow
     """
+    raise DeprecationWarning('This function is not supported any longer in PynPoint version 0.3.0.')
+
     ws = workflow.run(config, force_replace)
     return ws
+
     
 def restore(dirin):
     """
@@ -61,5 +72,8 @@ def restore(dirin):
 
     :return: the instance of the workflow
     """
+
+    raise DeprecationWarning('This function is not supported any longer in PynPoint version 0.3.0.')
+
     ws = workflow.restore(dirin)
     return ws

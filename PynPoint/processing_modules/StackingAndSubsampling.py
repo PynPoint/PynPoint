@@ -48,7 +48,10 @@ class StackAndSubsetModule(ProcessingModule):
                                           self.m_subset,
                                           replace=False)
 
+            tmp_choice = np.sort(tmp_choice)
+
             tmp_data = self.m_image_in_port[tmp_choice, :, :]
+            para_angles = para_angles[tmp_choice]
             tmp_data_shape = tmp_data.shape
 
             if tmp_files is not None:
@@ -80,8 +83,6 @@ class StackAndSubsetModule(ProcessingModule):
                     im_arr_new[i, ] = self.m_image_in_port[i * self.m_stacking:(i + 1)
                                                              * self.m_stacking, ] \
                                                            .mean(axis=0)
-
-                print "loop " + str(i) + " of " + str(num_new)
 
             # Update for saving
             tmp_data = im_arr_new

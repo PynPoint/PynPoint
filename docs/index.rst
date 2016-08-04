@@ -9,10 +9,12 @@ Contents:
 =========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    installation
    usage
+   pypeline
+   own_modules
    PynPoint
    contributing
    mailinglist

@@ -255,3 +255,11 @@ texinfo_documents = [
 sys.path.append(os.path.abspath("_theme"))
 html_theme_path = ["_theme"]
 html_theme = "sphinx_rtd_theme"
+
+def skip(app, what, name, obj, skip, options):
+    if name == "__init__":
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
