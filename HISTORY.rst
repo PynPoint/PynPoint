@@ -2,6 +2,10 @@
 
 History
 -------
+0.3.0 (2016-07-131)
+++++++++++++++++++
+* internal release of the new Pipeline architecture
+
 0.2.0 (2014-05-13)
 ++++++++++++++++++
 * First public PyPI release

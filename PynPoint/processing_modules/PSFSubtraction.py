@@ -220,7 +220,7 @@ class CreateResidualsModule(ProcessingModule):
 
         # rotate result array
         para_angles = self.m_im_arr_in_port.get_attribute("NEW_PARA")
-        delta_para = para_angles[0] - para_angles
+        delta_para = - para_angles
         res_rot = np.zeros(shape=im_data.shape)
         for i in range(0, len(delta_para)):
             res_temp = res_arr[i, ]
