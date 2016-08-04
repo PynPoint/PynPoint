@@ -48,7 +48,7 @@ class CutTopTwoLinesModule(ProcessingModule):
 class AngleCalculationModule(ProcessingModule):
 
     def __init__(self,
-                 name_in="angle_calcuation",
+                 name_in="angle_calculation",
                  data_tag="im_arr"):
 
         super(AngleCalculationModule, self).__init__(name_in)

@@ -48,7 +48,6 @@ coverage:
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/PynPoint.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
