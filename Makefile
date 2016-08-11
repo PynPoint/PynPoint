@@ -52,7 +52,6 @@ docs:
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
 
 sdist: clean
 #	pip freeze > requirements.rst

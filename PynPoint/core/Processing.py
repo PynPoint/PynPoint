@@ -147,6 +147,16 @@ class WritingModule(PypelineModule):
 
         self._m_data_base = data_base_in
 
+    def get_all_input_tags(self):
+        """
+        Returns a list of all input tags
+
+        :return: list of input tags
+        :rtype: list
+        """
+
+        return self._m_input_ports.keys()
+
     @abstractmethod
     def run(self):
         pass
@@ -324,6 +334,26 @@ class ProcessingModule(PypelineModule):
 
             i = j
 
+    def get_all_input_tags(self):
+        """
+        Returns a list of all input tags
+
+        :return: list of input tags
+        :rtype: list
+        """
+
+        return self._m_input_ports.keys()
+
+    def get_all_output_tags(self):
+        """
+        Returns a list of all output tags
+
+        :return: list of output tags
+        :rtype: list
+        """
+
+        return self._m_output_ports.keys()
+
     @abstractmethod
     def run(self):
         pass
@@ -364,7 +394,7 @@ class ReadingModule(PypelineModule):
                 or input_dir is None), 'Error: Input directory for reading module does not exist ' \
                                        '- input requested: %s' % input_dir
         self.m_input_location = input_dir
-        self._m_out_ports = {}
+        self._m_output_ports = {}
 
     def add_output_port(self,
                         tag,
@@ -386,13 +416,13 @@ class ReadingModule(PypelineModule):
         tmp_port = OutputPort(tag,
                               activate_init=default_activation)
 
-        if tag in self._m_out_ports:
+        if tag in self._m_output_ports:
             warnings.warn('Tag already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
 
-        self._m_out_ports[tag] = tmp_port
+        self._m_output_ports[tag] = tmp_port
 
         return tmp_port
 
@@ -405,10 +435,20 @@ class ReadingModule(PypelineModule):
         :return: None
         """
 
-        for port in self._m_out_ports.itervalues():
+        for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
+
+    def get_all_output_tags(self):
+        """
+        Returns a list of all output tags
+
+        :return: list of output tags
+        :rtype: list
+        """
+
+        return self._m_output_ports.keys()
 
     @abstractmethod
     def run(self):
