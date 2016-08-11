@@ -2,9 +2,9 @@
 Usage
 ========
 
-PynPoint can be used in a number of ways. Since the PynPoint architecture has change completely in version 0.3.0 some old user interfaces are not ported to the new version, yet. The easiest way to use the new PynPoint Pipeline is to write a small python script or use the interactive mode of python. We provide test data to help you get started.
+PynPoint can be used in a number of ways. Since PynPoint version 0.3.0 the architecture and the user interfaces have change completely in order to enable raw data processing. Due to this redesign some old features like the workflow are missing in the new architecture. At the moment the easiest way to use the PynPoint Pipeline is to write a small python script or use the interactive mode of python. We provide test data to help you get started.
 
-PynPoint works through two different components:
+The PynPoint Pipeline works through two different components:
 
 1. Pipeline modules which read and process the raw data and finally write out the results. Three different module types exist:
 
@@ -12,9 +12,12 @@ PynPoint works through two different components:
 
 	1.2 :class:`PynPoint.core.Processing.ProcessingModule` - process the data (e.g. dark-/flat-/background-/PSF-subtraction)
 
-	1.3 :class:`PynPoint.core.Processing.WritingModule` - write out the results of ProcessingModules
+	1.3 :class:`PynPoint.core.Processing.WritingModule` - exports or displaies the results of previous ProcessingModules
 
 2. The actual pipeline :class:`PynPoint.core.Pypeline` - capsules a list of pipeline modules
+
+
+.. _interactive:
 
 Interactive
 -----------
@@ -39,42 +42,42 @@ and all pipeline modules (pipeline steps) we what to execute: ::
 	StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
 	StackAndSubsetModule
 
-First step we need to create an instance of the :class:`PynPoint.core.Pypeline` ::
+In order to be able to handle the different processing steps we need to create an instance of the :class:`PynPoint.core.Pypeline` ::
 
 	pipeline = Pypeline(working_place_in,
 				input_place_in,
 				output_place_in)
 
-Now we are ready to add the different pipeline steps. For an explanation about the different modules check out their documentation in the :ref:`pynpoint-package` documentation. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. 
+Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. According to |Amara_Quanz| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
 
-reading the raw data: ::
+1. Read the raw data: ::
 
 	reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
-	                                    image_tag="im_arr")
+	                                      image_tag="im_arr")
 	pipeline.add_module(reading_data)
 
-reading the dark from the directory `dark_dir`: ::
+2. Import the dark current from the directory `dark_dir`: ::
 
 	reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
                                       	  input_dir= dark_dir,
                                       	  image_tag="dark_arr")
 	pipeline.add_module(reading_dark)
 
-reading the flat from the directory `flat_dir`: ::
+3. Read the flat-field exposure from the directory `flat_dir`: ::
 
 	reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
                                       	  input_dir= flat_dir,
                                       	  image_tag=“flat_arr")
 	pipeline.add_module(reading_flat)
 
-cutting the top two lines of the input frames (Needed for NACO Data): ::
+4. Cut the top two lines of the input frames (Needed for NACO Data): ::
 
 	cutting = CutTopTwoLinesModule(name_in="NACO_cutting",
-	                                image_in_tag="im_arr",
-	                                image_out_tag="im_arr_cut")
+						image_in_tag="im_arr",
+                               	      image_out_tag="im_arr_cut")
 	pipeline.add_module(cutting)
 
-dark and flat subtraction: ::
+5. Dark- and flat-subtraction: ::
 
 	dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
                            		image_in_tag="im_arr_cut",
@@ -89,14 +92,14 @@ dark and flat subtraction: ::
 	pipeline.add_module(dark_sub)
 	pipeline.add_module(flat_sub)
 
-bad pixel cleaning: ::
+6. Bad pixel cleaning: ::
 
 	bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="sigma_filtering",
 	                                                image_in_tag="flat_sub_arr",
 	                                                image_out_tag="im_arr_bp_clean")
 	pipeline.add_module(bp_cleaning)
 
-background subtraction: ::
+7. Background subtraction: ::
 
 	bg_subtraction = SimpleBackgroundSubtractionModule(name_in="background_subtraction",
 							star_pos_shift=602,
@@ -104,7 +107,7 @@ background subtraction: ::
                                                    	image_out_tag="bg_cleaned_arr")
 	pipeline.add_module(bg_subtraction)
 
-star extraction and alignment: ::
+8. Star extraction and alignment: ::
 
 	extraction = StarExtractionModule(name_in="star_cutting",
 	                                  image_in_tag="bg_cleaned_arr",
@@ -120,13 +123,13 @@ star extraction and alignment: ::
 	pipeline.add_module(extraction)
 	pipeline.add_module(alignment)
 
-calculating the parallactic angle: ::
+9. Calculate the parallactic angle: ::
 
 	angle_calc = AngleCalculationModule(name_in="angle_calculation",
 	                                    data_tag="im_arr_aligned")
 	pipeline.add_module(angle_calc)
 
-subsampling the data by stacking: ::
+10. Subsample the data using stacking: ::
 
 	subset = StackAndSubsetModule(name_in="stacking_subset",
 	                              image_in_tag="im_arr_aligned",
@@ -135,7 +138,7 @@ subsampling the data by stacking: ::
 	                              stacking=20)
 	pipeline.add_module(subset)
 
-subtract the stars PSF using PCA: ::
+11. Subtract the stars PSF using PCA: ::
 
 	psf_sub = PSFSubtractionModule(pca_number=10,
 	                               name_in="PSF_subtraction",
@@ -144,7 +147,7 @@ subtract the stars PSF using PCA: ::
 	                               res_mean_tag="res_mean")
 	pipeline.add_module(psf_sub)
 
-writing out the result of the last step: ::
+12. Write out the result of the last step: ::
 
 	writing = WriteAsSingleFitsFile(name_in="Fits_writing",
 	                                file_name="test.fits",
@@ -161,6 +164,52 @@ In the example above, the star is modelled using the first 10 principal componen
 
 All of the functions above have a number of keywords that can also be passed to them. More details of these keyword options are discussed in the :ref:`pynpoint-package` section.
 	
+Python Skript
+-------------
+Another way of using the PynPoint pipeline is to create a python script and run it. Just copy the same lines of code from the :ref:`interactive` section into an empty .py file an run it using: ::
+
+$ python test_file.py
+
+Data types
+----------
+
+PynPoint currently works with two input data types:
+
+* fits files
+
+* hdf5 files
+
+
+The first time you use fits files as inputs, PynPoint will create a HDF5 database in the `working_place_in` of the Pypeline. This is because the HDF5 file is much faster to read than small fits files and it provides the possibility to read subsets of huge datasets. To use fits inputs, you will need to put all the fits files in one directory and then pass this directory to the appropriate PynPoint Pypeline (`input_place_in`). Next you need to add a FitsReadingModule. If you do not define a own input directory for this ReadingModule it will look for data in the Pypeline default location `input_place_in`. Setting a own directory makes it possible to to read for example dark currents or flat field exposures from different directories. If you finally run the Pypeline the PynPoint ReadingModule will look for all *.fits files in the given folder and imports them into the Pypeline HDF5 database. In 'interactive' mode, this can be done by::
+
+	pipeline = Pypeline(working_place_in,
+				input_place_in,
+				output_place_in)
+
+	# takes the default location
+	reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
+	                                      image_tag="im_arr")
+	pipeline.add_module(reading_data)
+
+	# uses own location 
+	reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
+                                      	  input_dir= some/own/location,
+                                      	  image_tag=“flat_arr")
+	pipeline.add_module(reading_flat)
+	
+	pipeline.run()
+
+The code above will read all .fits files form the `input_place_in` and `some/own/location` and stores them into the Pypeline HDF5 database. The chosen tags are important for other pipeline steps in order to let them access data directly from this database.
+
+If you what to restore data from a Pypeline database which is located in a folder `some/folder/on/drive` you just need to create a Pypeline instance with a `working_place_in`=`some/folder/on/drive` like: ::
+
+	pipeline = Pypeline(some/folder/on/drive,
+				input_place_in,
+				output_place_in)
+
+HDF5 files can be an input as well. Using a :class:`PynPoint.io_modules.Hdf5Reading` module you can export data from a Pypeline database. This data can be imported using a :class:`PynPoint.io_modules.Hdf5Writing` module later. For more information have a look at the package documentation.
+
+
 Workflow
 --------
 The workflow is not supported in version 0.3.0.
@@ -168,44 +217,6 @@ The workflow is not supported in version 0.3.0.
 Command line interface
 ----------------------
 No command line interface supported in version 0.3.0
-
-Data types
-----------
-
-PynPoint currently works with three input data types:
-
-* fits files
-
-* hdfs files
-
-* save/restore files
-
-
-
-The first time you use fits files as inputs, PynPoint will create a HDF5 of the data inside the same directory as the fits files. This is because the HDF5 file is much faster to read than several thousands of small fits files. To use fits inputs, you will need to put all the fits files in one directory and then pass this directory to the appropriate PynPoint call. The PynPoint method will then look for all *.fits files in that folder. In 'interactive' mode, this can be done by::
-
-	images = PynPoint.images.create_wdir(dir_in)
-	
-When using the workflow make sure that ``intype`` is set to ``dir`` in the config file:: 
-
-	intype = dir
-
-HDF5 files, such as those created after you process a directory of fits files, can also be passed directly::
-
-	images = PynPoint.images.create_whdf5input("filename.hdf5")
-	
-Alternatively, is can set in the workflow using::
-
-	intype = hdf5
-	
-The main PynPoint instances also include a save and restore feature. To save the state of an instance::
-
-	images.save("images_savefile.hdf5")
-	
-Later, an instance can be restored::
-
-	images = PynPoint.images.create_restore("images_savefile.hdf5")
-
 
 Data
 ----
@@ -221,7 +232,7 @@ We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_beta
 
 The data-set was taken on 2009 December 26 at the Very Large Telescope with the high-resolution, adaptive optics assisted, near-infrared camera NACO in the L' filter (central wavelengths 3.8 micron) in Angular Differential Imaging (ADI) mode. It consists of 80 data cubes, each containing 300 individual exposures with an individual exposure time of 0.2 s. The total field rotation of the full data-set amounted to ~44 degrees  on the sky. The raw data are publicly available from the |ESO_Archive| (Program ID: 084.C-0739(A)). 
 
-For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011). The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz|, where we introduced the PynPoint algorithm.
+For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011) using the other pipeline modules introduced in the :ref:`interactive` section. The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz|, where we introduced the PynPoint algorithm.
 
 
 .. |Amara_Quanz| raw:: html
@@ -232,4 +243,28 @@ For the test data, basic data reduction steps (sky subtraction, bad pixel correc
 
    <a href="http://archive.eso.org/cms/eso-data.html" target="_blank"> European Southern Observatory (ESO) archive </a>
 
+.. _dataaccess:
 
+Looking inside HDF5 files
+-------------------------
+
+In order to access data from the HDF5 PynPoint database you have three options:
+
+	* Use one of the Writing Modules to export data to a .fits file, as done in the :ref:`interactive` section.
+	* Use the easy access functions of the :class:`PynPoint.core.Pypeline` class: ::
+
+		pipeline.get_data(...)
+	and ::
+
+		pipeline.get_attribute(..., ...)
+	* Use an external tool.
+
+We recommend to use for example |HDF5_View|, which can read, edit and visualise HDF5 files. Unfortunately |HDF5_View| gets very slow for huge input files (>100GB). An alternative tool which is still fast for huge datasets is |HDF5_GIT|, however it can not edit the files.
+
+.. |HDF5_View| raw:: html
+
+   <a href="https://www.hdfgroup.org/products/java/hdfview/" target="_blank">HDFView</a>
+
+.. |HDF5_GIT| raw:: html
+
+   <a href="https://pypi.python.org/pypi/h5pyViewer" target="_blank"> h5pyViewer 0.0.1.6 </a>

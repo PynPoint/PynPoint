@@ -2,7 +2,7 @@
 
 History
 -------
-0.3.0 (2016-07-131)
+0.3.0 (2016-07-31)
 ++++++++++++++++++
 * internal release of the new Pipeline architecture
 
