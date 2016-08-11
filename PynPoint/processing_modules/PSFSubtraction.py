@@ -122,6 +122,13 @@ class PSFSubtractionModule(ProcessingModule):
                                   res_rot_mean_clip_tag=res_rot_mean_clip_tag,
                                   extra_rot=extra_rot)
 
+    def get_all_input_tags(self):
+        return self._m_preparation_images.get_all_input_tags() +\
+            self._m_preparation_reference.get_all_input_tags()
+
+    def get_all_output_tags(self):
+        return self._m_residuals_module.get_all_output_tags()
+
     def connect_database(self,
                          data_base_in):
 
