@@ -48,7 +48,7 @@ In order to be able to handle the different processing steps we need to create a
 				input_place_in,
 				output_place_in)
 
-Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. According to |Amara_Quanz| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
+Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. According to |Amara_Quanz2| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
 
 1. Read the raw data: ::
 
@@ -235,9 +235,9 @@ The data-set was taken on 2009 December 26 at the Very Large Telescope with the 
 For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011) using the other pipeline modules introduced in the :ref:`interactive` section. The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz|, where we introduced the PynPoint algorithm.
 
 
-.. |Amara_Quanz| raw:: html
+.. |Amara_Quanz2| raw:: html
 
-   <a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">Amara & Quanz (2012)</a>
+   <a href="http://www.sciencedirect.com/science/article/pii/S2213133715000049" target="_blank">Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing vol. 10 (2015)</a>
 
 .. |ESO_Archive| raw:: html
 
