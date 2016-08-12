@@ -10,7 +10,7 @@ Before you start reading this chapter you should check your python knowledge. Be
 
     * basics of the python |Types in Python| like lists, tupels and dictionaries
     * how |Classes in Python| work, particularly inheritance is important.
-    * |ABC in Python| as interface
+    * |ABC in Python| as interfaces
 
 In addition you should know :ref:`pipeline-architecture`.
 
@@ -27,11 +27,11 @@ All pipeline modules are classes which contain the parameters of the pipeline st
     
     class DummyModule(ProcessingModule):
 
-If you are using an IDE like PyChar you might geht a warning like this:
+If you are using an IDE like PyCharm you might geht a warning like this:
 
 .. image:: images/abstract.png
 
-The abstract class ProcessingModule has some abstract methods which have to be implemented by its children classes (i.e. __init__() and run()). Thus we have to implement the __init__() function (i.e. the constructor of our module): ::
+The abstract class ProcessingModule has some abstract methods which have to be implemented by its children classes (e.g. __init__() and run()). Thus we have to implement the __init__() function (i.e. the constructor of our module): ::
 
     def __init__(self,
                  name_in="dummy",
@@ -41,11 +41,11 @@ The abstract class ProcessingModule has some abstract methods which have to be i
                  out_tag_2="result2”,
                  some_parameter=0):
 
-Each __init__ function for a Pypeline module needs to have a name_in argument which is needed to run individual modules by name (please choose a default name). Furthermore we have to define input and output tags which can be set by the user in order to access data from the central database. As a next step we call the constructor of the ProcessingModule: ::
+Each __init__ function of a Pypeline module needs to have a name_in argument which is needed by the pipeline to run individual modules by name (please choose a default name). Furthermore we have to define input and output tags which can be set by the user in order to access data from the central database. The first line of the constructor has to be a call of the ProcessingModule constructor: ::
    
     super(DummyModule, self).__init__(name_in)
 
-Next we can add the ports behind the tags which help us accessing the data from the central database:
+Next we can add the ports behind the tags which help us accessing the data from the central database: ::
 
         # Ports
         self.m_in_port_1 = self.add_input_port(in_tag_1)
@@ -55,7 +55,7 @@ Next we can add the ports behind the tags which help us accessing the data from 
         self.m_out_port_2 = self.add_output_port(out_tag_2)
 
 You should always use the functions add_input_port and add_output_port in oder to add a Port! Do not add a Port by manually creating an instance of InputPort or OutputPort.
-Last you need to save all parameters: ::
+Last you need to save all module parameters: ::
 
         self.m_parameter = some_parameter
 
@@ -94,7 +94,24 @@ Next you can implement your algorithm. And finally write out the results using y
         
         self.m_out_port_2[0:2] = result2
 
-For more information about how to store data have a look at the package documentation :class:`PynPoint.core.DataIO.OutputPort`. 
+For more information about how to store data have a look at the package documentation :class:`PynPoint.core.DataIO.OutputPort`.
+
+After you have saved the data you should always copy the attribute information of the input port and add history information. Do this for all Output Ports: ::
+
+        self.m_out_port_1.add_history_information("dummyModule",
+                                                      "nothing useful")
+
+        self.m_out_port_1.copy_attributes_from_input_port(self.m_in_port_1)
+        
+Finally you need to close the ports: ::
+
+        self.m_out_port_1.close_port()
+
+It is enough to close only one port and all other ports will be closed automatically.
+
+**Problems with different sized results:** If you wirte a module that is changing the shape of the resulting images or data you should worry about the following. If a user chooses the same tag as input and output you can not save a subset of the results while the old input data still exists. **Example:** A list of 200 images (200x200) is stored under the tag `im_arr`. The user of your module sets the input and output tag to `im_arr`. Your module loads the first 100 images using slicing and changes their shape (100x100). Now it is not possible to replace the first 100 images of the dataset using slicing since the last 100 images have a different shape. You can only use the set_all() method which will delete the last 100 input images. **How to solve this problem:** The frist option could be to load all data at once and save it after the processing (only for the case in_tag=out_tag). Unfortunally this can lead to high memory requirements. Second option: raise an error if in_tag=out_tag.
+
+	
 
 .. |Classes in Python| raw:: html
 
@@ -160,6 +177,10 @@ The Dummy Module from above: ::
                                             value=attribute_result)
 
             self.m_out_port_2[0:2] = result2
+
+Additional Functionality
+------------------------
+Some pipeline processing modules are apply a method to each image of the image stack. Hence we have implemented a function, which applies a other function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.processing_modules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
 
 Conventions
 -----------
