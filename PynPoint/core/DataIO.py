@@ -128,36 +128,49 @@ class Port:
 
 class InputPort(Port):
     """
-    InputPorts can be used to read data with a specific tag from a (.hdf5) Data Storage. With a
-    input port one can access:
-        -> the complete actual dataset using the get_all() method
-        -> a single attribute of the dataset using get_attribute()
-        -> all attributes of the dataset using gget_all_static_attributes() and
-            get_all_non_static_attributes()
-        -> a part of the actual dataset using slicing
-            for example:
+    InputPorts can be used to read datasets with a specific tag from a (.hdf5) database. You can use
+    an InputPort instance to access:
+
+        * the complete dataset using the get_all() method.
+        * a single attribute of the dataset using get_attribute().
+        * all attributes of the dataset using get_all_static_attributes() and
+          get_all_non_static_attributes().
+        * a part of the dataset using slicing. For example:
+
+        .. code-block:: python
+
             tmp_in_port = InputPort("Some_tag")
             data = tmp_in_port[0,:,:] # returns the first 2D image of a 3D image stack.
-            (See more information about how 1D 2D and 3D data is organized in the documentation of
-            Output Port (append, set_all))
+
+    (More information about how 1D 2D and 3D data is organized in the documentation of Output
+    Port (:func:`PynPoint.core.DataIO.OutputPort.append` and
+    :func:`PynPoint.core.DataIO.OutputPort.set_all`)
+
     InputPorts can load two different types of Attributes which give additional information about
-    the data set the port is linked to.:
-        -> static attributes: Contain global information about the data that is not changing through
-            the data. (e.g. the instrument used for the observation)
-        -> non-static attributes: Contain small data sets with information that is different for
-            the parts of the data set. (e.g. the airmass which is changing during the observation.)
+    the data set the port is linked to:
+
+        * static attributes: Contain global information about a dataset which is not changing
+          through the data. (e.g. The name of the instrument used for the observation)
+        * non-static attributes: Contain small datasets with information about the actual dataset
+          which is different for parts of the dataset (e.g. the airmass which is changing during the
+          observation).
     """
 
     def __init__(self,
                  tag,
                  data_storage_in=None):
         """
-        Constructor of the InputPort class crating a input port instance with can read data stored
-        in the central database under the tag "tag".
-        This function is just calling the super constructor i.e. __init__() of Port.
+        Constructor of the InputPort class which creates an input port instance which can read data
+        stored in the central database under the tag `tag`. If you write a PypelineModule you should
+        not create instances manually! Use the add_input_port() function instead.
 
-        :param tag: Input Tag
-        :type tag: String
+        :param tag: The tag of the port. The port can be used in order to get data from the dataset
+                    with the key `tag`.
+        :type tag: str
+        :param data_storage_in: It is possible to give the constructor of an InputPort a DataStorage
+                                instance which will link the port to that DataStorage. Usually the
+                                DataStorage is set later by calling set_database_connection().
+        :type data_storage_in: DataStorage
         :return: None
         """
         super(InputPort, self).__init__(tag, data_storage_in)
@@ -167,7 +180,7 @@ class InputPort(Port):
         Internal function which checks if the port is ready to use and open it.
 
         :return: Returns True if the Port can be used, False if not.
-        :rtype: Boolean
+        :rtype: bool
         """
         if self._m_data_storage is None:
             warnings.warn("Port can not load data unless a database is connected")
@@ -183,19 +196,21 @@ class InputPort(Port):
         Internal function which checks if data exists for the Port specific tag.
 
         :return: True if data exists, False if not
-        :rtype: Boolean
+        :rtype: bool
         """
 
         return self._m_tag in self._m_data_storage.m_data_bank
 
     def __getitem__(self, item):
         """
-        Internal function needed to access data using slicing. See class documentation for an
-        example.
+        Internal function which handles the data access using slicing. See class documentation for a
+        example (:class:`PynPoint.core.DataIO.InputPort`).
 
-        :param item: Slicing input
-        :return: An array of the selected data. Returns None if no data exists.
-        :rtype: nparray
+        :param item: Slicing parameter
+        :type item: slice
+        :return: The selected data as numpy array. Returns None if no data exists under the tag of
+                 the Port.
+        :rtype: numpy array
         """
 
         if not self._check_status_and_activate():
@@ -213,8 +228,10 @@ class InputPort(Port):
 
     def get_shape(self):
         """
-        Returns the shape of the dataset
-        :return: shape of the dataset
+        Returns the shape of the dataset the port is linked to. This can be useful if you need the
+        shape without loading the whole data.
+
+        :return: Shape of the dataset
         :rtype: tuple
         """
         self.open_port()
@@ -222,10 +239,11 @@ class InputPort(Port):
 
     def get_all(self):
         """
-        Returns the whole data set stored in the data bank under the Port tag (self._m_tag).
+        Returns the whole dataset stored in the data bank under the tag of the Port. Be careful
+        using this function for loading huge datasets!
 
-        :return: The data set
-        :rtype: nparray
+        :return: The data of the dataset as numpy array
+        :rtype: numpy array
         """
 
         self._check_status_and_activate()
@@ -239,14 +257,15 @@ class InputPort(Port):
     def get_attribute(self,
                       name):
         """
-        Returns an attribute which is connected to the data set of the port. The function can return
-        static and non-static attributes (It is first looking for static attributes). See class
+        Returns an attribute which is connected to the dataset of the port. The function can return
+        static and non-static attributes (But it is first looking for static attributes). See class
         documentation for more information about static and non-static attributes.
+        (:class:`PynPoint.core.DataIO.InputPort`)
 
-        :param name: The name of the attribute
-        :type name: String
+        :param name: The name of the attribute to be returned
+        :type name: str
         :return: The attribute value. Returns None if the attribute does not exist.
-        :rtype: nparray and simple types
+        :rtype: numpy array for non-static attributes and simple types for static attributes.
         """
 
         self._check_status_and_activate()
@@ -262,22 +281,25 @@ class InputPort(Port):
 
     def get_all_static_attributes(self):
         """
-        Returns all static attributes of the data set of the Port as dictionary
+        Returns all static attributes of the dataset which is linked to the Port tag. The result is
+        a dictionary which is organized like this:
+
         {attr_name: attr_value}.
 
-        :return: dictionary of all attributes {attr_name: attr_value}
-        :rtype: dictionary
+        :return: Dictionary of all attributes {attr_name: attr_value}
+        :rtype: dict
         """
         self._check_status_and_activate()
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
     def get_all_non_static_attributes(self):
         """
-        Returns a list of all non-static attribute keys (Not the actual data). See class
+        Returns a list of all non-static attribute keys (Not the actual attribute data). See class
         documentation for more information about static and non-static attributes.
+        (:class:`PynPoint.core.DataIO.InputPort`)
 
-        :return: List of non-static attribute keys
-        :rtype: List[String]
+        :return: List of all existing non-static attribute keys
+        :rtype: list[str]
         """
 
         self._check_status_and_activate()
