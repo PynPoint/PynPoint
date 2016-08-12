@@ -1,5 +1,3 @@
-.. _pynpoint-package:
-
 PynPoint package
 ================
 
