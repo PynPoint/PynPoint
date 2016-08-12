@@ -74,13 +74,17 @@ That is it! If this worked, you should have a picture like the one in the sectio
 
 You are now ready to go. As you use PynPoint for your exciting discoveries, **please cite the two PynPoint papers** that describe the method and the package: 
 
-|Amara_Quanz| ; and 
+|Amara_Quanz| ; and |Amara_Quanz2|
 
 .. |Amara_Quanz| raw:: html
 
    <a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">Amara, A. & Quanz, S. P., MNRAS vol. 427 (2012)</a>
+   
+.. |Amara_Quanz2| raw:: html
 
-Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing (submitted 2014)
+   <a href="http://www.sciencedirect.com/science/article/pii/S2213133715000049" target="_blank">Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing vol. 10 (2015)</a>
+
+
 
 
 Initial result
@@ -92,4 +96,4 @@ If you run the example above, you should see this:
 	
 The image shows the final results at the end of the PynPoint analysis. The star of the planetary system sits at the center of the image, which is masked here. The prominent red blob to the top-right of center is the planet beta-pic b. The pixel scale for the image is 0.0135" (half of the original data), so the total image is 2"x 2". We see that beta-pic b is roughly 22 pixels from the star (image center), corresponding to roughly 0.3". 
 
-When making this result, all the images have been aligned to the parallactic angle of the first image. In this particular case, this means that North is to the left. The :py:func:`~PynPoint.PynPlot.plt_res` function is able to produce an image that is rotated by a user-specified angle (for example to make North point up). For more discussions on the options available, see  :doc:`usage`. We have also made available the `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_.
+When making this result, all the images have been aligned to the parallactic angle of the first image. In this particular case, this means that North is to the left. We have also made available the `the full data <http://www.phys.ethz.ch/~amaraa/Data_betapic_L_Band_PynPoint_conv.hdf5>`_.
