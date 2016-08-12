@@ -261,6 +261,8 @@ def skip(app, what, name, obj, skip, options):
         return False
     if name == "__getitem__":
         return False
+    if name == "__setitem__":
+        return False
     return skip
 
 def setup(app):

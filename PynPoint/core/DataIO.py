@@ -1,5 +1,5 @@
 """
-Modules to save and load data as / from a .hdf5 database.
+Modules to save and load data from a central DataStorage (.hdf5).
 """
 from abc import ABCMeta, abstractmethod
 import warnings
@@ -9,19 +9,20 @@ import numpy as np
 
 class DataStorage(object):
     """
-    Instances of DataStorage manage to open and cloase .hdf5 databases. They have an internal data
-    bank (self.m_data_bank) which gives direct access to the data bank if the storage
-    is open (self.m_open == True). Furthermore it knows the location of the .hdf5 file.
+    Instances of DataStorage manage to open and close the Pypeline .hdf5 databases. They have an
+    internal h5py data bank (self.m_data_bank) which gives direct access to the data if the storage
+    is open (self.m_open == True).
     """
 
     def __init__(self,
                  location_in):
         """
-        Constructor of a DataStorage instance. Needs the location of the .hdf5 file as input. If the
-        file already exists it is opened and extended, if not a new File is created.
+        Constructor of a DataStorage instance. It needs the location of the .hdf5 file (Pypeline
+        database) as input. If the file already exists it is opened and extended, if not a new File
+        will be created.
 
         :param location_in: Location (directory + filename) of the .hdf5 data bank
-        :type location_in: String
+        :type location_in: str
         :return: None
         """
         self._m_location = location_in
@@ -55,10 +56,10 @@ class DataStorage(object):
 class Port:
     """
     Abstract interface and implementation of common functionality of the Input and Output Port.
-    Each Port has a internal tag which is the its key to a database (Data Storage instance).
-    If for example data is stored under the entry "im_arr" in the central data storage only a port
-    with the tag (self._m_tag == "im_arr) can access or change that data.
-    Furthermore a port knows exact one data storage instance and whether it is active or not
+    Each Port has a internal tag which is its key to a dataset of the DataStorage. If for example
+    data is stored under the entry *im_arr* in the central data storage only a port
+    with the tag (self._m_tag = *im_arr*) can access and change that data.
+    Furthermore a port knows exact one DataStorage instance and whether it is active or not
     (self._m_data_base_active).
     """
     __metaclass__ = ABCMeta
@@ -70,11 +71,11 @@ class Port:
         """
         Abstract constructor of a Port. As input the tag / key is expected which is needed to build
         the connection to the database entry with the same tag / key. It is possible to give the
-        Port a data storage. If this storage is not given the Pypeline module has to set it or the
+        Port a DataStorage. If this storage is not given the Pypeline module has to set it or the
         connection needs to be added manually using set_database_connection(data_base_in).
 
         :param tag: Input Tag
-        :type tag: String
+        :type tag: str
         :param data_storage_in: The data storage the port is connected with
         :type data_storage_in: DataStorage
         :return: None
@@ -89,6 +90,7 @@ class Port:
     def tag(self):
         """
         Getter for the internal tag (no setter!!!)
+
         :return:
         """
         return self._m_tag
@@ -117,9 +119,9 @@ class Port:
     def set_database_connection(self,
                                 data_base_in):
         """
-        Sets the internal Data Storage instance.
+        Sets the internal DataStorage instance.
 
-        :param data_base_in: The inout data storage
+        :param data_base_in: The input DataStorage
         :type data_base_in: DataStorage
         :return: None
         """
@@ -316,27 +318,36 @@ class InputPort(Port):
 
 class OutputPort(Port):
     """
-    Output Ports can be used to save data with a specific tag to a (.hdf5) Data Storage. OutputPorts
-    are Ports. Look at the documentation of Port for more information. The following methods allow
-    different ways of saving data to the data storage:
-        -> replace and set the whole data set with set_all(...)
-        -> append data to the existing data set using append(...). For more information see function
-           documentation.
-        -> set a part of the actual data set using slicing
-            for example:
+    Output Ports can be used to save results under a given tag to a (.hdf5) Data Storage. An
+    instance of OutputPort with self.tag= `tag` can store data under the key `tag` by using one of
+    the following methods:
+
+        * set_all(...) - replaces and sets the whole dataset
+        * append(...) - appends data to the existing data set. For more information see
+          function documentation (:func:`PynPoint.core.DataIO.OutputPort.append`).
+        * slicing - sets a part of the actual dataset. Example:
+
+        .. code-block:: python
+
             tmp_in_port = OutputPort("Some_tag")
             data = np.ones(200, 200) # 2D image filled with ones
             tmp_in_port[0,:,:] = data # Sets the first 2D image of a 3D image stack
-            For more information about how data is organized inside and can be modified see function
-            documentation of the function set_all() and append().
-        -> modify or create a attribute of the data set using add_attribute()
-        -> delete a attribute using del_attribute(...)
-        -> delete all attributes using del_all_attributes()
-        -> append information to non-static attributes using append_attribute_data(...). See
-        add_attribute() for more information about static and non-static attributes.
-        -> check if a static attribute exists and is equal to a given value using
-        check_static_attribute()
-    It is possible to deactivate a Output Port to stop him saving data.
+
+        * add_attribute(...) - modifies or creates a attribute of the dataset
+        * del_attribute(...) - deletes a attribute
+        * del_all_attributes(...) - deletes all attributes
+        * append_attribute_data(...) - appends information to non-static attributes. See
+          add_attribute() (:func:`PynPoint.core.DataIO.OutputPort.add_attribute`) for more
+          information about static and non-static attributes.
+        * check_static_attribute(...) - checks if a static attribute exists and if it is equal to a
+          given value
+        * other functions listed below
+
+    For more information about how data is organized inside the central database have a look at the
+    function documentation of the function :func:`PynPoint.core.DataIO.OutputPort.set_all` and
+    :func:`PynPoint.core.DataIO.OutputPort.append`.
+
+    Furthermore it is possible to deactivate a OutputPort to stop him saving data.
     """
 
     def __init__(self,
@@ -344,15 +355,18 @@ class OutputPort(Port):
                  data_storage_in=None,
                  activate_init=True):
         """
-        Constructor for a OutputPort class instance with the tag self._m_tag.
+        Constructor of the OutputPort class which creates an output port instance which can write
+        data to the the central database under the tag `tag`. If you write a PypelineModule you
+        should not create instances manually! Use the add_output_port() function instead.
 
-        :param tag: Tag of the Port
-        :type tag: String
-        :param data_storage_in: The data storage the port is connected with (can be set later)
+        :param tag: The tag of the port. The port can be used in order to write data to the dataset
+                    with the key = `tag`.
+        :type tag: str
+        :param data_storage_in: It is possible to give the constructor of an OutputPort a
+                                DataStorage instance which will link the port to that DataStorage.
+                                Usually the DataStorage is set later by calling
+                                set_database_connection().
         :type data_storage_in: DataStorage
-        :param activate_init: start activation status. If False the Port will not save data until
-            it is activated.
-        :type activate_init: Boolean
         :return: None
         """
 
@@ -384,27 +398,7 @@ class OutputPort(Port):
                                    tag,
                                    data_dim=None):
         """
-        Internal function which is used to create (initialize) a data base in .hdf5 data base. Since
-        it is not possible to change the number of dimensions later in the processing history the
-        right dimension has to be specified during the creation of the data set. The function needs
-        a first dataset as input and optional a desired dimension of the internal data set in the
-        .hdf5 file. The following options are available:
-        - (#dimension of the first input data#, #desired data_dim#)
-        -> (1, 1) 1D input or single value stored as list in .hdf5
-        -> (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
-        -> (2, 2) 2D input and 2D array stored inside (i.e. a list of lists with a fixed size).
-        -> (2, 3) 2D input but 3D array stored inside (i.e. a stack of images with a fixed size).
-        -> (3, 3) 3D input and 3D array stored inside (i.e. a stack of images with a fixed size).
-
-        For 2D and 3D data the first dimension always represents the list / stack (variable size)
-        while the second (or third) dimension has a fixed size.
-            Example: Input 2D array with size (200, 200) Desired dimension 3D
-                The result is a 3D data set with the dimension (1, 200, 200). It is possible to
-                append other images with the size (200, 200) or other stacks of images with the
-                size (:, 200, 200).
-
-        After creation it is possible to extend a data set using append(...) along the first
-        dimension.
+        Internal function which is used to create (initialize) a data base in .hdf5 data base.
 
         :param first_data: The initial data
         :type first_data: bytearray
@@ -463,6 +457,7 @@ class OutputPort(Port):
         Internal function which sets the values of a data set under the tag "tag" using the data
         of the input "data". If old data exists it will be overwritten. This Function is used in
         set_all() as well as for setting non-static attributes.
+
         :param tag: Data base tag of the data to be modified
         :type tag: String
         :param data: The data which is used to replace the old data.
@@ -568,7 +563,7 @@ class OutputPort(Port):
     def __setitem__(self, key, value):
         """
         Internal function needed to change data using slicing. See class documentation for an
-        example.
+        example (:class:`PynPoint.core.DataIO.OutputPort`).
 
         :param key: Slicing indices to be changed
         :param value: New values
@@ -587,31 +582,43 @@ class OutputPort(Port):
         Set the data in the data base by replacing all old values with the values of the input data.
         If no old values exists the data is just stored. Since it is not possible to change the
         number of dimensions of a data set later in the processing history one can choose a
-        dimension different to the input data of the function.
-        - (#dimension of the first input data#, #desired data_dim#)
-        -> (1, 1) 1D input or single value stored as list in .hdf5
-        -> (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
-        -> (2, 2) 2D input and 2D array stored inside (i.e. a list of lists with a fixed size).
-        -> (2, 3) 2D input but 3D array stored inside (i.e. a stack of images with a fixed size).
-        -> (3, 3) 3D input and 3D array stored inside (i.e. a stack of images with a fixed size).
+        dimension different to the input data. The following cases are implemented:
+
+            * (#dimension of the first input data#, #desired data_dim#)
+            * (1, 1) 1D input or single value will be stored as list in .hdf5
+            * (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
+            * (2, 2) 2D input (single image)and 2D array stored inside (i.e. a list of lists with a
+              fixed size).
+            * (2, 3) 2D input (single image) but 3D array stored inside (i.e. a stack of images with
+              a fixed size).
+            * (3, 3) 3D input and 3D array stored inside (i.e. a stack of images with a fixed size).
 
         For 2D and 3D data the first dimension always represents the list / stack (variable size)
-        while the second (or third) dimension has a fixed size.
-            Example: Input 2D array with size (200, 200) Desired dimension 3D
-                The result is a 3D data set with the dimension (1, 200, 200). It is possible to
-                append other images with the size (200, 200) or other stacks of images with the
-                size (:, 200, 200).
-
-        After creation it is possible to extend a data set using append(...) along the first
+        while the second (or third) dimension has a fixed size. After creation it is possible to
+        extend a data set using :func:`PynPoint.core.DataIO.OutputPort.append` along the first
         dimension.
+
+        **Example 1:**
+
+        Input 2D array with size (200, 200). Desired dimension 3D. The result is a 3D dataset with
+        the dimension (1, 200, 200). It is possible to append other images with the size (200, 200)
+        or other stacks of images with the size (:, 200, 200).
+
+        **Example 2:**
+
+        Input 2D array with size (200, 200). Desired dimension 2D. The result is a 2D dataset with
+        the dimension (200, 200). It is possible to append other list with the length 200
+        or other stacks of lines with the size (:, 200). However it is not possible to append other
+        2D images along a third dimension.
 
         :param data: The data to be saved
         :type data: numpy array
         :param data_dim: number of desired dimensions. If None the dimension of the first_data is
-            used.
+                         used.
         :type data_dim: int
-        :param keep_attributes: If True all attributes of the dataset remain the same.
-        :type keep_attributes: Boolean
+        :param keep_attributes: If True all attributes of a old dataset which will be replaced
+                                remain the same.
+        :type keep_attributes: bool
         :return: None
         """
 
@@ -629,27 +636,29 @@ class OutputPort(Port):
                data_dim=None,
                force=False):
         """
-        Appends input data to the existing data set with the tag of the Port along the first
+        Appends data to an existing dataset with the tag of the Port along the first
         dimension. If no data exists with the tag of the Port a new data set is created.
         For more information about how the dimensions are organized see documentation of
-        the function set_all(). Note it is not possible to append data with a different shape or
-        data type to the existing data set.
-            Example: Internal data set is 3D (storing a stack of 2D images) with shape
-            (233, 300, 300) which mean it contains 233 images with 300 x 300 pixel values. It is
-            only possible to extend along the first dimension by appending new images with the size
-            of (300, 300) or by appending a stack of images (:, 300, 300). Everything else will
-            raise exceptions.
-        It is possible to force the function to overwrite the existing data set if or only if the
-        shape or type of the input data does not match the existing data. Warning: This can delete
-        all existing data.
+        the function :func:`PynPoint.core.DataIO.OutputPort.set_all`. Note it is not possible to
+        append data with a different shape or data type to the existing dataset.
+
+        **Example:** An internal data set is 3D (storing a stack of 2D images) with shape
+        (233, 300, 300) which mean it contains 233 images with a resolution of 300 x 300 pixel.
+        Thus it is only possible to extend along the first dimension by appending new images with
+        a size of (300, 300) or by appending a stack of images (:, 300, 300). Everything else will
+        raise exceptions.
+
+        It is possible to force the function to overwrite the existing data set if and only if the
+        shape or type of the input data does not match the existing data. **Warning**: This can
+        delete the existing data.
 
         :param data: The data which will be appended
         :type data: numpy array
-        :param data_dim: number of desired dimensions used if a new data set is created. If None
-            the dimension of the first_data is used.
+        :param data_dim: Number of desired dimensions used if a new data set is created. If None
+                         the dimension of the *data* is used.
         :type data_dim: int
-        :param force: If true existing data will be overwritten of shape or type does not match.
-        :type force: Boolean
+        :param force: If True existing data will be overwritten if shape or type does not match.
+        :type force: bool
         :return: None
         """
 
@@ -683,21 +692,26 @@ class OutputPort(Port):
                       value,
                       static=True):
         """
-        Adds a attribute to the dataset of the Port with the attribute name "name" and the value
-        "value". Two different types of attributes are supported:
-        1. static attributes:
-            Contain a single value or name (e.g. The name of the used Instrument).
-        2. non-static attributes:
-            Contain a data set which is connected to the actual data set (e.g. Instrument
-            temperature). It is possible to append additional information to non-static attributes
-            later. This is not supported by static attributes.
+        Adds a attribute to the dataset of the Port with the attribute name = `name` and the value =
+        `value`. Two different types of attributes are supported:
+
+            1. **static attributes**:
+               Contain a single value or name (e.g. The name of the used Instrument).
+            2. **non-static attributes**:
+               Contain a dataset which is connected to the actual data set (e.g. Instrument
+               temperature). It is possible to append additional information to non-static
+               attributes later (:func:`PynPoint.core.DataIO.OutputPort.append_attribute_data`).
+               This is not supported by static attributes.
+
         Static and non-static attributes are stored in a different way using the .hdf5 file format.
+        Static attributes will be direct attributes while non-static attributes are stored in a
+        group with the name *header_* + name of the dataset.
 
         :param name: The name of the attribute
-        :type name: String
+        :type name: str
         :param value: The value of the attribute
         :param static: If True the attribute will be static (default)
-        :type static: Boolean
+        :type static: bool
         :return: None
         """
 
@@ -715,11 +729,11 @@ class OutputPort(Port):
                               name,
                               value):
         """
-        Function for appending data to non-static attributes.
+        Function which appends data to non-static attributes.
 
         :param name: Name of the attribute
-        :type name: String
-        :param value: Value which will be appended to the data set.
+        :type name: str
+        :param value: Value which will be appended to the attribute dataset.
         :return: None
         """
 
@@ -734,8 +748,9 @@ class OutputPort(Port):
                                       value):
         """
         Function which adds an integer of float to an existing static attribute.
+
         :param name: Name of the attribute
-        :type name: String
+        :type name: str
         :param value: Value to be added
         :type value: int or float
         :return: None
@@ -749,8 +764,10 @@ class OutputPort(Port):
                                         input_port):
         """
         Copies all static and non-static attributes from a given InputPort. Attributes which already
-        exist will be overwritten. Non-static attributes will be linked not copied! If Input Port
-        tag == Output Port tag (self.tag) nothing will be changed.
+        exist will be overwritten. Non-static attributes will be linked not copied! If the InputPort
+        tag = OutputPort tag (self.tag) nothing will be changed. Use this function in all modules
+        to keep the header information.
+
         :param input_port: The InputPort containing header information
         :type input_port: InputPort
         :return: None
@@ -779,10 +796,11 @@ class OutputPort(Port):
     def del_attribute(self,
                       name):
         """
-        Deletes the attribute of the data set by a given name. Finds and removes static and
+        Deletes the attribute of the dataset with the given name. Finds and removes static and
         non-static attributes.
 
         :param name: Name of the attribute.
+        :type name: str
         :return: None
         """
         if not self._check_status_and_activate():
@@ -797,7 +815,7 @@ class OutputPort(Port):
 
     def del_all_attributes(self):
         """
-        Deletes all static and non-static attributes of the data set.
+        Deletes all static and non-static attributes of the dataset.
 
         :return: None
         """
@@ -819,10 +837,13 @@ class OutputPort(Port):
         Checks if a attribute exists and if it is equal to a comparison value.
 
         :param name: Name of the attribute
+        :type name: str
         :param comparison_value: Value for comparison
-        :return: 1 if the attribute does not exist
-                 0 if the attribute exists and is equal,
-                 -1 if the attribute exists but is not equal
+        :return:
+                     * 1 if the attribute does not exist
+                     * 0 if the attribute exists and is equal,
+                     * -1 if the attribute exists but is not equal
+        :rtype: int
         """
         if not self._check_status_and_activate():
             return
@@ -839,11 +860,13 @@ class OutputPort(Port):
                                 pipeline_step,
                                 history_information):
         """
-        Adds an attribute which contains history information.
-        :param pipeline_step: name of the pipeline step which was performed
-        :type pipeline_step: String
-        :param history_information: extra information like parameters
-        :type history_information: String
+        Adds an attribute which contains history information. Call this function at the end of all
+        modules
+
+        :param pipeline_step: Name of the pipeline step which was performed.
+        :type pipeline_step: str
+        :param history_information: Extra information about the step e.g. parameters
+        :type history_information: str
         :return: None
         """
         self.add_attribute("History: " + pipeline_step,
