@@ -179,8 +179,7 @@ PynPoint currently works with two input data types:
 
 * hdf5 files
 
-
-The first time you use fits files as inputs, PynPoint will create a HDF5 database in the `working_place_in` of the Pypeline. This is because the HDF5 file is much faster to read than small fits files and it provides the possibility to read subsets of huge datasets. To use fits inputs, you will need to put all the fits files in one directory and then pass this directory to the appropriate PynPoint Pypeline (`input_place_in`). Next you need to add a FitsReadingModule. If you do not define a own input directory for this ReadingModule it will look for data in the Pypeline default location `input_place_in`. Setting a own directory makes it possible to to read for example dark currents or flat field exposures from different directories. If you finally run the Pypeline the PynPoint ReadingModule will look for all *.fits files in the given folder and imports them into the Pypeline HDF5 database. In 'interactive' mode, this can be done by::
+The first time you use fits files as inputs, PynPoint will create a HDF5 database in the *working_place_in* of the Pypeline. This is because the HDF5 file is much faster to read than small fits files and it provides the possibility to read subsets of huge datasets. To use fits inputs, you will need to put all the fits files in one directory and then pass this directory to the appropriate PynPoint Pypeline (*input_place_in*). Next you need to add a FitsReadingModule. If you do not define a own input directory for this ReadingModule it will look for data in the Pypeline default location *input_place_in*. Setting a own directory makes it possible to to read for example dark currents or flat field exposures from different directories. If you finally run the Pypeline the PynPoint ReadingModule will look for all .fits files in the given folder and imports them into the Pypeline HDF5 database. In *interactive* mode, this can be done by::
 
 	pipeline = Pypeline(working_place_in,
 				input_place_in,
@@ -232,7 +231,7 @@ We also make available `the full data <http://www.phys.ethz.ch/~amaraa/Data_beta
 
 The data-set was taken on 2009 December 26 at the Very Large Telescope with the high-resolution, adaptive optics assisted, near-infrared camera NACO in the L' filter (central wavelengths 3.8 micron) in Angular Differential Imaging (ADI) mode. It consists of 80 data cubes, each containing 300 individual exposures with an individual exposure time of 0.2 s. The total field rotation of the full data-set amounted to ~44 degrees  on the sky. The raw data are publicly available from the |ESO_Archive| (Program ID: 084.C-0739(A)). 
 
-For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011) using the other pipeline modules introduced in the :ref:`interactive` section. The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz|, where we introduced the PynPoint algorithm.
+For the test data, basic data reduction steps (sky subtraction, bad pixel correction and alignment of images) were already done as explained in Quanz et al. (2011) using the other pipeline modules introduced in the :ref:`interactive` section. The final postage stamp size of the individual images is 73 x 73 pixels in the original image size. For PynPoint, we doubled the resolution, resulting in 146 x 146 pixels for the test data images. The same test data was also used in |Amara_Quanz2|, where we introduced the PynPoint algorithm.
 
 
 .. |Amara_Quanz2| raw:: html
@@ -254,9 +253,9 @@ In order to access data from the HDF5 PynPoint database you have three options:
 	* Use the easy access functions of the :class:`PynPoint.core.Pypeline` class: ::
 
 		pipeline.get_data(...)
-	and ::
-
+	    # and
 		pipeline.get_attribute(..., ...)
+
 	* Use an external tool.
 
 We recommend to use for example |HDF5_View|, which can read, edit and visualise HDF5 files. Unfortunately |HDF5_View| gets very slow for huge input files (>100GB). An alternative tool which is still fast for huge datasets is |HDF5_GIT|, however it can not edit the files.

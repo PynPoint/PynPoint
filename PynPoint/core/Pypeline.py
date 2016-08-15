@@ -1,7 +1,5 @@
 """
-Module for the capsuling of different pipeline processing steps.
-Main components:
-    -> class Pypeline
+Module which capsules different pipeline processing steps.
 """
 # external modules
 import collections
@@ -16,12 +14,11 @@ from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModul
 
 class Pypeline(object):
     """
-    Pipeline class used for the management of various processing steps. The Pipeline has a central
-    data storage on the hard drive which can be accessed by the different Modules using Ports.
-    Furthermore a Pypeline instance inheres a internal dictionary of Pipeline steps (modules) and
-    their names. This dictionary is ordered based on the order the steps have been added to the
-    pypeline. It is possible to run the whole Pypeline (i.e. all modules / steps) or a single
-    Modules by name.
+    A Pypeline instance can be used to manage various processing steps. It inheres a internal
+    dictionary of Pipeline steps (modules) and their names. A Pypeline has a central DataStorage on
+    the hard drive which can be accessed by these different modules. The order of the modules
+    depends on the order the steps have been added to the pypeline. It is possible to run the whole
+    Pypeline (i.e. all modules / steps) or a single modules by name.
     """
 
     def __init__(self,
@@ -32,16 +29,19 @@ class Pypeline(object):
         Constructor of a Pypeline object.
 
         :param working_place_in: Working location of the Pypeline which needs to be a folder on the
-            hard drive. The given folder will be used to save the PynPoint data base as .hdf5.
-            NOTE: Depending on the input this .hdf5 file can become to a very large file.
-        :type working_place_in: String
-        :param input_place_in: Default input directory of the Pypeline. All Reading Modules added to
-         the Pypeline will use this directory to look for input data. It is possible to specify
-            different locations for different Reading Modules using their constructors.
-        :type input_place_in: String
-        :param output_place_in: Default result directory used to save the output of all Writing
-            Modules added to the Pypeline. It is possible to specify different locations for
-            different Writing Modules using their constructors.
+                                 hard drive. The given folder will be used to save the central
+                                 PynPoint database (a .hdf5 file). **NOTE**: Depending on the input
+                                 this .hdf5 file can become very large!
+        :type working_place_in: str
+        :param input_place_in: Default input directory of the Pypeline. All ReadingModules added to
+                               the Pypeline can use this directory to look for input data. It is
+                               possible to specify a different location for each Reading Modules
+                               using their constructors.
+        :type input_place_in: str
+        :param output_place_in: Default result directory used to save the output of all
+                                WritingModules added to the Pypeline. It is possible to specify
+                                a different locations for each WritingModule using their
+                                constructors.
         :return: None
         """
 
@@ -104,14 +104,14 @@ class Pypeline(object):
     def add_module(self,
                    pipeline_module):
         """
-        Adds a given pipeline module to the internal Pypeline dictionary. The module is appended at
-        the end of the ordered dictionary. If the input module is a reading or writing module
-        without a specified input / output location the Pypeline default location is used. Moreover
-        the input module is connected to the Pypeline internal data base.
+        Adds a given pipeline module to the internal Pypeline step dictionary. The module is
+        appended at the end of this ordered dictionary. If the input module is a reading or writing
+        module without a specified input / output location the Pypeline default location is used.
+        Moreover the given module is connected to the Pypeline internal data storage.
 
         :param pipeline_module: The input module. Needs to be either a Processing, Reading or
-            Writing Module.
-        :type pipeline_module: Processing Module, Reading Module, Writing Module
+                                Writing Module.
+        :type pipeline_module: ProcessingModule, ReadingModule, WritingModule
         :return: None
         """
         assert isinstance(pipeline_module, PypelineModule), 'Error: the given pipeline_module is '\
@@ -140,7 +140,7 @@ class Pypeline(object):
         Removes a Pypeline module from the internal dictionary.
 
         :param name: The name (key) of the module which has to be removed.
-        :type name: String
+        :type name: str
         :return: None
         """
 
@@ -152,9 +152,10 @@ class Pypeline(object):
 
     def get_module_names(self):
         """
-        Function to get information about the stored Pypeline modules.
+        Function which returns a list of all module names.
 
-        :return: Ordered list of all pipeline names (String)
+        :return: Ordered list of all pipeline names
+        :rtype: list[str]
         """
 
         return self._m_modules.keys()
@@ -162,8 +163,9 @@ class Pypeline(object):
     def validate_pipeline(self):
         """
         Function which checks if all input ports of the pipeline are lined to previous output ports.
+
         :return: True if pipeline is valid False of not. The second parameter gives the name of the
-        module which is not valid.
+                 module which is not valid.
         :rtype: bool, str
         """
 
@@ -184,12 +186,12 @@ class Pypeline(object):
 
     def validate_pipeline_module(self, name):
         """
-        Checks if the data for the module with the name `name` exists.
+        Checks if the data for the module with the name *name* exists.
 
         :param name: name of the module to be checked
         :type name: str
         :return: True if pipeline is valid False of not. The second parameter gives the name of the
-        module which is not valid.
+                 module which is not valid.
         :rtype: bool, str
         """
 
@@ -207,8 +209,8 @@ class Pypeline(object):
     def run(self):
         """
         Walks through all saved processing steps and calls their run methods. The order the steps
-        are called depends on the order they have been added to the Pypeline instance.
-        NOTE: The method prints information about the current process.
+        are called depends on the order they have been added to the Pypeline.
+        **NOTE:** This method prints information about the current process.
 
         :return: None
         """
@@ -232,8 +234,8 @@ class Pypeline(object):
         """
         Runs a specific processing module identified by name.
 
-        :param name: Name of the module to be run.
-        :type name: String
+        :param name: Name of the module.
+        :type name: str
         :return: None
         """
         print "validating module..."
@@ -251,10 +253,12 @@ class Pypeline(object):
     def get_data(self,
                  tag):
         """
-        Small function for easy direct data base access (for data sets)
-        :param tag: data set tag
-        :type tag: String
-        :return: The data as numpy array
+        Small function for easy data base access.
+
+        :param tag: Dataset tag
+        :type tag: str
+        :return: The dataset
+        :rtype: numpy array
         """
         self.m_data_storage.open_connection()
         return np.asarray(self.m_data_storage.m_data_bank[tag])
@@ -263,12 +267,12 @@ class Pypeline(object):
                       data_tag,
                       attr_name):
         """
-        Small function for easy direct data base access (for attributes). Supports only static
-        attributes.
-        :param data_tag: data set tag
-        :type data_tag: String
-        :param attr_name: name of the attribute
-        :type attr_name: String
+        Small function for easy attributes data access. Supports only static attributes.
+
+        :param data_tag: Dataset tag
+        :type data_tag: str
+        :param attr_name: Name of the attribute
+        :type attr_name: str
         :return: The attribute
         """
         self.m_data_storage.open_connection()
