@@ -12,12 +12,12 @@ from PynPoint.core.Processing import WritingModule
 
 class WriteAsSingleFitsFile(WritingModule):
     """
-    Module for writing a data set of the .hdf5 data base as .fits file. The data and all attached
-    attributes will be saved. Beside typical image stacks it is possible to write arrays to export
-    for example non static header information. To chose the data set from the data base its tag
+    Module for writing a data set of the central .hdf5 data base as .fits file. The data and all
+    attached attributes will be saved. Beside typical image stacks it is possible to export for
+    example non static header information. To choose the data set from the data base its tag
     / key has to be specified. WriteAsSingleFitsFile is a Writing Module and supports to use the
-    Pypeline default output directory as well as a own location. (see Processing.WritingModule for
-    more information)
+    Pypeline default output directory as well as a own location. (see
+    :class:`PynPoint.core.Processing.WritingModule` for more information)
     """
 
     def __init__(self,
@@ -26,19 +26,21 @@ class WriteAsSingleFitsFile(WritingModule):
                  output_dir=None,
                  data_tag="im_arr"):
         """
-        Constructor of the WriteAsSingleFitsFile module. It needs the name the output file should
-        have as well as the data set tag it has to export to the file. See class documentation for
+        Constructor of the WriteAsSingleFitsFile module. It needs the name of the output file as
+        well as the dataset tag which has to exported into that file. See class documentation for
         more information.
 
         :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
-            dictionary. (See Pypeline for more information)
-        :type name_in: String
-        :param file_name: Name of the .fits output file. Needs to end with ".fits"
-        :type file_name: String
+                        dictionary. (See :class:`PynPoint.core.Pypeline.Pypeline` for more
+                        information)
+        :type name_in: str
+        :param file_name: Name of the .fits output file. Needs to end with *.fits*
+        :type file_name: str
         :param output_dir: Output directory where the .fits file will be stored. If no folder is
-            specified the Pypeline default is chosen.
-        :param data_tag: Tag of the data base entry the module has to export as .fits file.s
-        :type data_tag: String
+                           specified the Pypeline default is chosen.
+        :type output_dir: str
+        :param data_tag: Tag of the data base entry the module has to export as .fits file.
+        :type data_tag: str
         :return: None
         """
         super(WriteAsSingleFitsFile, self).__init__(name_in=name_in,
@@ -54,8 +56,7 @@ class WriteAsSingleFitsFile(WritingModule):
 
     def run(self):
         """
-        Run method of the module. Creates the actual .fits file and saves the data as well as its
-        attributes.
+        Run method of the module. Creates a .fits file and saves the data as well as its attributes.
 
         :return: None
         """
