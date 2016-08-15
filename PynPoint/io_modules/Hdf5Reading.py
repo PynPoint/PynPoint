@@ -12,11 +12,12 @@ from PynPoint.core.Processing import ReadingModule
 
 class Hdf5ReadingModule(ReadingModule):
     """
-    (THIS CLASS WAS MADE FOR READING hdf5 FILES CREATED BY THE HDF5WRITING MODULE. OTHER DATA CAN
-    LEAD TO INCONSISTENCY IN THE DATA BASE!!!)
+    ***THIS CLASS WAS MADE FOR READING hdf5 FILES CREATED BY THE HDF5WRITING MODULE. OTHER DATA CAN
+    LEAD TO INCONSISTENCY IN THE DATA BASE!!!***
+
     Reads a .hdf5 files from the given input_dir or the default directory of the Pypeline.
     A tag dictionary has to be set in order to choose the datasets which will be imported by the
-    module. The module reads static and non-static attributes too.
+    module. The module reads static and non-static attributes.
     """
 
     def __init__(self,
@@ -28,20 +29,23 @@ class Hdf5ReadingModule(ReadingModule):
         Constructor of a Hdf5ReadingModule instance.
 
         :param name_in: Name of the module
-        :type name_in: String
+        :type name_in: str
         :param input_filename: The input file name. It needs to be a .hdf5 file. If no .hdf5 file is
-            given all files inside the input location will be imported.
-        :type input_filename: String
+                               given all files inside the input location will be imported.
+        :type input_filename: str
         :param input_dir: The directory of the input .hdf5 file. If no location is given, the
-            Pypeline default input location is used.
-        :type input_dir: String
+                          Pypeline default input location is used.
+        :type input_dir: str
         :param tag_dictionary: Directory of all dataset keys / tags which will be imported. The
-            dictionary is used like this:
-            {"tag_of_the_dataset_in_the_hdf5_file" : "name_of_the_imported_dataset"}
+                               dictionary is used like this:
 
-            All datasets of the external .hdf5 file  which match one of the "tag_of_the_dataset_in_
-            the_hdf5_file" tags in the tag_dictionary will be imported. Their names inside the
-            internal PynPoint database will be changed to "name_of_the_imported_dataset".
+                               {*tag_of_the_dataset_in_the_hdf5_file* :
+                               *name_of_the_imported_dataset*}
+
+                               All datasets of the external .hdf5 file  which match one of the
+                               *tag_of_the_dataset_in_the_hdf5_file* tags in the tag_dictionary
+                               will be imported. Their names inside the internal PynPoint database
+                               will be changed to *name_of_the_imported_dataset*.
         :type tag_dictionary: dict
         """
 
@@ -59,7 +63,7 @@ class Hdf5ReadingModule(ReadingModule):
         Internal function which reads a single .hdf5 file.
 
         :param file_in: name of the .hdf5 file
-        :type file_in: String
+        :type file_in: str
         :return: None
         """
         hdf5_file = h5py.File(file_in, mode='a')
@@ -97,6 +101,7 @@ class Hdf5ReadingModule(ReadingModule):
         """
         Run method of the module. It looks for all .hdf5 files in the input directory and reads them
         using the internal function _read_single_hdf5().
+        
         :return: None
         """
 
