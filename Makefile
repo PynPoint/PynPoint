@@ -49,6 +49,10 @@ coverage:
 
 docs:
 	rm -f docs/modules.rst
+	rm -f docs/PynPoint.io_modules.rst
+	rm -f docs/PynPoint.old_version.rst
+	rm -f docs/PynPoint.processing_modules.rst
+	rm -f docs/PynPoint.wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
