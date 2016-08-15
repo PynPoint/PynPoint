@@ -13,24 +13,24 @@ from PynPoint.core.DataIO import OutputPort, InputPort
 
 class PypelineModule:
     """
-    Abstract interface for the different pipeline Modules
-        - Reading Module
-        - Writing Module
-        - Processing Module
-    Each pipeline module has a name as a unique identifier in the Pypeline processing step
-    dictionary and has to implement the functions connect_database and run which are used in the
-    Pypeline methods.
+    Abstract interface for the different pipeline Modules:
+
+        * Reading Module (:class:`PynPoint.core.Processing.ReadingModule`)
+        * Writing Module (:class:`PynPoint.core.Processing.WritingModule`)
+        * Processing Module (:class:`PynPoint.core.Processing.ProcessingModule`)
+
+    Each pipeline module has a name as a unique identifier in the Pypeline and has to implement the
+    functions connect_database and run which are used in the Pypeline methods.
     """
     __metaclass__ = ABCMeta
 
     def __init__(self,
                  name_in):
         """
-        Abstract constructor of a Pypeline Module which needs a Module name as identifier, checks
-        its type and saves it.
+        Abstract constructor of a Pypeline Module which needs a name as identifier.
 
         :param name_in: The name of the Pypeline Module
-        :type name_in: String
+        :type name_in: str
         :return: None
         """
 
@@ -41,11 +41,11 @@ class PypelineModule:
     @property
     def name(self):
         """
-        Returns the name of the Pypeline Module. The property makes sure that the internal Module
+        Returns the name of the Pypeline Module. This property makes sure that the internal module
         name can not be changed.
 
         :return: The name of the Module
-        :rtype: String
+        :rtype: str
         """
 
         return self._m_name
@@ -55,16 +55,17 @@ class PypelineModule:
                          data_base_in):
         """
         Abstract interface for the function connect_database which is needed to connect the Ports
-        of a Pypeline Module with the Pypeline Data Storage
+        of a PypelineModule with the Pypeline Data Storage.
 
         :param data_base_in: The Data Storage
+        :type data_base_in: DataStorage
         """
         pass
 
     @abstractmethod
     def run(self):
         """
-        Abstract interface for the run method of a Pypeline Module which should execute the
+        Abstract interface for the run method of a Pypeline Module which inheres the actual
         algorithm behind the module.
         """
         pass
@@ -73,13 +74,11 @@ class PypelineModule:
 class WritingModule(PypelineModule):
     """
     The abstract class WritingModule is a interface for processing steps in the pipeline which do
-    not change the content of the internal Data Storage. They only have reading access to the data
-    base. Writing Modules can be used to export save or plot data in the .hdf5 data base using a
-    different file format. Since Writing Modules are Pypeline Modules they have a name. In addition
-    one can specify a directory on the hard drive where the output of the module will be saved.
-    If no output directory is given the default Pypline output directory is used. Writing modules
-    only have a dictionary of input ports (self._m_input_ports) (the tags / keys of the data to be
-    saved or plotted) but no output ports.
+    not change the content of the internal DataStorage. They only have reading access to the central
+    data base. WritingModules can be used to export save or plot data from the .hdf5 data base by
+    using a different file format. WritingModules know directory on the hard drive where the output
+    of the module can be saved. If no output directory is given the default Pypline output directory
+    is used. WritingModules have a dictionary of inputports (self._m_input_ports) but no output ports.
     """
     __metaclass__ = ABCMeta
 
@@ -88,13 +87,16 @@ class WritingModule(PypelineModule):
                  output_dir=None):
         """
         Abstract constructor of a Writing Module which needs the unique name identifier as input
-        (see Pypeline Module). In addition one can specify a output directory where the module will
-        save its results. If no output directory is given the Pypline default is used.
+        (more information: :class:`PynPoint.core.Processing.PypelineModule`). In addition one can
+        specify a output directory where the module will save its results. If no output directory is
+        given the Pypline default directory is used. Call this function in all __init__() functions
+        inheriting from this class.
 
         :param name_in: The name of the Writing Module
-        :type name_in: String
-        :param output_dir: Directory where the results will be saved
-        :type output_dir: String (Needs to be a directory, raises error if not)
+        :type name_in: str
+        :param output_dir: Directory where the results will be saved (Needs to be a directory,
+                           raises error if not).
+        :type output_dir: str
         :return: None
         """
 
@@ -111,14 +113,17 @@ class WritingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Method which creates a input port and append it to the internal port dictionary. This
-        function should be used by classes inhering from Writing Module to make sure that only
-        input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+        Method which creates a new InputPort and append it to the internal InputPort dictionary.
+        This function should be used by classes inheriting from Processing Module to make sure that
+        only InputPort with unique tags are added. The new port can be used by: ::
+
+             Port = self._m_input_ports[tag]
+
         or by using the returned Port.
 
         :param tag: Tag of the new input port.
-        :type tag: String
-        :return: The new Port
+        :type tag: str
+        :return: The new InputPort
         :rtype: InputPort
         """
 
@@ -136,9 +141,11 @@ class WritingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal input port dictionary to the given database.
+        Connects all ports in the internal input and output port dictionaries to the given database.
+        This function is called by Pypeline and connects its DataStorage object to all module ports.
 
         :param data_base_in: The input database
+        :type data_base_in: DataStorage
         :return: None
         """
 
@@ -164,11 +171,10 @@ class WritingModule(PypelineModule):
 
 class ProcessingModule(PypelineModule):
     """
-    The abstract class ProcessingModule is a interface for all processing steps in the pipeline
-    which capsule a pipeline step with a specific algorithm. They have reading and writing access to
-    the data base. Since Writing Modules are Pypeline Modules they have a name. Processing modules
-    have a dictionary of input ports (self._m_input_ports) (The data needed for the processing step
-    and a dictionary of output ports (self._m_output_ports) (Results of the processing step).
+    The abstract class ProcessingModule is an interface for all processing steps in the pipeline
+    which reads, processes and saves data. Hence they have reading and writing access to the central
+    data base using a dictionary of output ports (self._m_output_ports) and a dictionary of input
+    ports (self._m_input_ports).
     """
     __metaclass__ = ABCMeta
 
@@ -176,11 +182,11 @@ class ProcessingModule(PypelineModule):
                  name_in):
         """
         Abstract constructor of a ProcessingModule which needs the unique name identifier as input
-        (see Pypeline Module).
+        (more information: :class:`PynPoint.core.Processing.PypelineModule`). Call this function in
+        all __init__() functions inheriting from this class.
 
-        :param name_in: The name of the Writing Module
-        :type name_in: String
-        :return: None
+        :param name_in: The name of the Processing Module
+        :type name_in: str
         """
 
         super(ProcessingModule, self).__init__(name_in)
@@ -191,14 +197,17 @@ class ProcessingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Method which creates a input port and append it to the internal input port dictionary. This
-        function should be used by classes inhering from Processing Module to make sure that only
-        input ports with unique tags are added. The new port can be used by self._m_input_ports[tag]
+        Method which creates a new InputPort and append it to the internal InputPort dictionary.
+        This function should be used by classes inheriting from Processing Module to make sure that
+        only InputPort with unique tags are added. The new port can be used by: ::
+
+             Port = self._m_input_ports[tag]
+
         or by using the returned Port.
 
         :param tag: Tag of the new input port.
-        :type tag: String
-        :return: The new Port
+        :type tag: str
+        :return: The new InputPort
         :rtype: InputPort
         """
 
@@ -214,22 +223,31 @@ class ProcessingModule(PypelineModule):
         return tmp_port
 
     def add_output_port(self,
-                        tag):
+                        tag,
+                        default_activation=True):
         """
-        Method which creates a output port and append it to the internal output port dictionary.
-        This function should be used by classes inhering from Processing Module to make sure that
-        only output ports with unique tags are added. The new port can be used by
-        self._m_input_ports[tag] or by using the returned Port.
+        Method which creates a new OutputPort and append it to the internal OutputPort dictionary.
+        This function should be used by classes inheriting from Processing Module to make sure that
+        only OutputPort with unique tags are added. The new port can be used by: ::
+
+             Port = self._m_output_ports[tag]
+
+        or by using the returned Port.
 
         :param tag: Tag of the new output port.
-        :type tag: String
-        :return: The new Port
+        :type tag: str
+        :param default_activation: Activation status of the Port after creation. Deactivated Ports
+                                   will not save their results until the are activated.
+        :type default_activation: bool
+        :return: The new OutputPort
         :rtype: OutputPort
         """
 
-        tmp_port = OutputPort(tag)
+        tmp_port = OutputPort(tag,
+                              activate_init=default_activation)
+
         if tag in self._m_output_ports:
-            warnings.warn('Tag %s already used. Updating..' % tag)
+            warnings.warn('Tag already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -241,9 +259,11 @@ class ProcessingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal input and output port dictionary to the given database.
+        Connects all ports in the internal input and output port dictionaries to the given database.
+        This function is called by Pypeline and connects its DataStorage object to all module ports.
 
         :param data_base_in: The input database
+        :type data_base_in: DataStorage
         :return: None
         """
 
@@ -261,23 +281,40 @@ class ProcessingModule(PypelineModule):
                                  func_args=None,
                                  num_images_in_memory=100):
         """
-        Function which can be used to apply a filter (a image function) to all frames of the data
-        set stored under the tag "image_in_tag". Note the Processing Module needs to have a Input
-        with the same name! The result is stored under the "image_out_tag". It is possible to set a
-        maximum number of frames that is loaded into the memory for low memory requirements.
-        Note the function "func" is not allowed to change the shape of the images if the input and
-        output port have the same tag and num_images_in_memory is not None.
-        :param func: The function which is applied to all images
+        Often a algorithm is applied to all images of a 3D data stack. Hence we have implemented
+        this function which applies a given function to all images of a data stack. The function
+        needs a port which is linked to the input data, a port which is linked to the output place
+        and the actual function. Since the input dataset might be larger than the available memory
+        it is possible to set a maximum number of frames that is loaded into the memory.
+
+        **Note** the function *func* is not allowed to change the shape of the images if the input
+        and output port have the same tag and num_images_in_memory is not None.
+
+        Have a look at the code of
+        :class:`PynPoint.processing_modules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule` for
+        an **Example**.
+
+
+        :raises: ValueError
+        :param func: The function which is applied to all images.
+                     It needs to have a definition similar to: ::
+
+                         def some_image_function(image_in,
+                                                 parameter1,
+                                                 parameter2,
+                                                 parameter3):
+
+                             # some algorithm here
         :type func: function
-        :param image_in_port: InputPort of the Image
+        :param image_in_port: InputPort which is linked to the input data
         :type image_in_port: InputPort
-        :param image_out_port: OutputPort of the result
+        :param image_out_port: OutputPort which is linked to the result place
         :type image_out_port: OutputPort
-        :param func_args: additional arguments of the input function "func"
+        :param func_args: Additional arguments which are needed by the  function *func*
         :type func_args: tuple
-        :param num_images_in_memory: Maximum number of Frames which will be loaded to the memory. If
-            None all frames will be load at once. (This is probably the fastest but most memory
-            expensive option)
+        :param num_images_in_memory: Maximum number of frames which will be loaded to the memory. If
+                                     None all frames will be load at once. (This is probably the
+                                     fastest but most memory expensive option)
         :type num_images_in_memory: int
         :return: None
         """
@@ -363,12 +400,10 @@ class ReadingModule(PypelineModule):
     """
     The abstract class ReadingModule is a interface for processing steps in the pipeline which do
     not use any information of the internal data storage. They only have writing access to the data
-    base which makes the the perfect tool to load data of a different file format to the data base.
-    Since Reading Modules are Pypeline Modules they have a name. In addition
-    one can specify a directory on the hard drive where the input data of the module is located.
-    If no input directory is given the default Pypline input directory is used. Reading modules
-    only have a dictionary of output ports (self._m_out_ports) (the tags / keys of the data to be
-    saved to the data base) but no input ports.
+    base which makes them the perfect tool for loading data of a different file formats into the
+    central data base. One can specify a directory on the hard drive where the input data for the
+    module is located. If no input directory is given the default Pypline input directory is used.
+    Reading modules have a dictionary of output ports (self._m_out_ports) but no input ports.
     """
     __metaclass__ = ABCMeta
 
@@ -377,13 +412,16 @@ class ReadingModule(PypelineModule):
                  input_dir=None):
         """
         Abstract constructor of a ReadingModule which needs the unique name identifier as input
-        (see Pypeline Module). In addition on can specify a input directory where data is located
-        which will be loaded by the module. If no directory is given the Pipeline default is used.
+        (more information: :class:`PynPoint.core.Processing.PypelineModule`). In addition one can
+        specify a input directory where data is located which will be loaded by the module. If no
+        directory is given the Pipeline default directory is used. Call this function in all
+        __init__() functions inheriting from this class.
 
         :param name_in: The name of the Reading Module
-        :type name_in: String
-        :param input_dir: Directory where the input files are located
-        :type input_dir: String (Needs to be a directory, raises error if not)
+        :type name_in: str
+        :param input_dir: Directory where the input files are located (Needs to be a directory,
+                          raises error if not)
+        :type input_dir: str
         :return: None
         """
 
@@ -400,16 +438,20 @@ class ReadingModule(PypelineModule):
                         tag,
                         default_activation=True):
         """
-        Method which creates a output port and append it to the internal output port dictionary.
-        This function should be used by classes inhering from Reading Module to make sure that
-        only output ports with unique tags are added. The new port can be used by
-        self._m_out_ports[tag] or by using the returned Port.
+        Method which creates a new OutputPort and append it to the internal OutputPort dictionary.
+        This function should be used by classes inheriting from Processing Module to make sure that
+        only OutputPort with unique tags are added. The new port can be used by: ::
+
+             Port = self._m_output_ports[tag]
+
+        or by using the returned Port.
 
         :param tag: Tag of the new output port.
-        :type tag: String
-        :param default_activation: Activation status of the Port after creation
-        :type default_activation: Boolean
-        :return: The new Port
+        :type tag: str
+        :param default_activation: Activation status of the Port after creation. Deactivated Ports
+                                   will not save their results until the are activated.
+        :type default_activation: bool
+        :return: The new OutputPort
         :rtype: OutputPort
         """
 
@@ -429,9 +471,11 @@ class ReadingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal output port dictionary to the given database.
+        Connects all ports in the internal input and output port dictionaries to the given database.
+        This function is called by Pypeline and connects its DataStorage object to all module ports.
 
         :param data_base_in: The input database
+        :type data_base_in: DataStorage
         :return: None
         """
 
