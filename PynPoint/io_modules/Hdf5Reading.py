@@ -101,7 +101,7 @@ class Hdf5ReadingModule(ReadingModule):
         """
         Run method of the module. It looks for all .hdf5 files in the input directory and reads them
         using the internal function _read_single_hdf5().
-        
+
         :return: None
         """
 
