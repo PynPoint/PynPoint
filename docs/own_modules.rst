@@ -180,7 +180,7 @@ The Dummy Module from above: ::
 
 Additional Functionality
 ------------------------
-Some pipeline processing modules are apply a method to each image of the image stack. Hence we have implemented a function, which applies a other function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.processing_modules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
+Some pipeline processing modules apply a method to each image of the image stack. Hence we have implemented a function, which applies a function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.processing_modules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
 
 Conventions
 -----------
