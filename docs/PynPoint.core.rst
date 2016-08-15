@@ -12,6 +12,10 @@ Submodules
 
 :py:mod:`PynPoint.core.Processing`
 
+    * :py:class:`PynPoint.core.Processing.WritingModule`
+    * :py:class:`PynPoint.core.Processing.ReadingModule`
+    * :py:class:`PynPoint.core.Processing.ProcessingModule`
+
 :py:mod:`PynPoint.core.Pypeline`
 
 PynPoint.core.DataIO module
