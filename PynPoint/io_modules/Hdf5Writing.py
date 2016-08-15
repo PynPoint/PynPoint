@@ -10,8 +10,8 @@ from PynPoint.core.Processing import WritingModule
 class Hdf5WritingModule(WritingModule):
     """
     Module which exports a part of the PynPoint internal database to a separated .hdf5 file. The
-    datasets of the database can be chosen using an tag_dictionary as input. The module can export
-    static and non-static attributes too.
+    datasets of the database can be chosen using a tag_dictionary. The module will export static and
+    non-static attributes, too.
     """
 
     def __init__(self,
@@ -24,16 +24,20 @@ class Hdf5WritingModule(WritingModule):
         Constructor of a Hdf5WritingModule instance.
 
         :param name_in: Name of the Pypeline module
-        :type name_in: String
+        :type name_in: str
         :param file_name: Name of the file which will be created by the module.
-        :type file_name: String
-        :param output_dir: Location where the result .hdf5 will be stored
-        :type output_dir: String
-        :param tag_dictionary: Directory containing all tags / keys of the dataset which will be
-            exported from the PynPoint internal database. The datasets will be exported like this:
-            {"tag_of_the_dataset_in_the_PynPoint_database" : "name_of_the_exported_dataset"}
+        :type file_name: str
+        :param output_dir: Location where the result .hdf5 will be stored. If no location is given,
+                           the Pypeline default output location is used.
+        :type output_dir: str
+        :param tag_dictionary: Directory containing all tags / keys of the datasets which will be
+                               exported from the PynPoint internal database. The datasets will be
+                               exported like this:
+
+                                {*tag_of_the_dataset_in_the_PynPoint_database* :
+                                *name_of_the_exported_dataset*}
         :type tag_dictionary: dict
-        :param keep_attributes: If True all static and non-static attributes will be exported too.
+        :param keep_attributes: If True all static and non-static attributes will be exported.
         :type keep_attributes: bool
         """
 
