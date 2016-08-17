@@ -82,8 +82,6 @@ class Pypeline(object):
         :rtype: bool, str
         """
 
-        print type(module)
-
         if isinstance(module, ReadingModule):
             existing_data_tags.extend(module.get_all_output_tags())
 
@@ -176,9 +174,6 @@ class Pypeline(object):
             validation = self._validate(module,
                                         existing_data_tags)
 
-            print validation
-            print existing_data_tags
-
             if not validation[0]:
                 return validation
 
@@ -196,7 +191,7 @@ class Pypeline(object):
         """
 
         self.m_data_storage.open_connection()
-        existing_data_tags = self.m_data_storage.m_data_bank.keys
+        existing_data_tags = self.m_data_storage.m_data_bank.keys()
 
         if name in self._m_modules:
             module = self._m_modules[name]
@@ -239,7 +234,7 @@ class Pypeline(object):
         :return: None
         """
         print "validating module..."
-        validation = self.validate_pipeline()
+        validation = self.validate_pipeline_module(name)
         if not validation[0]:
             raise AttributeError('Pipeline module %s is looking for data under a tag which does not'
                                  ' exist in the database.'
