@@ -17,16 +17,9 @@
 # from PynPoint.Basis import basis
 # from PynPoint.Images import images
 
-import warnings
-
-import PynPoint.old_version.PynPlot
-import PynPoint.old_version._Cache as pynpointcache
-import PynPoint.old_version._Ctx as pynpointctx
 from PynPoint.wrapper.BasisWrapper import BasisWrapper as basis
 from PynPoint.wrapper.ImageWrapper import ImageWrapper as images
 from PynPoint.wrapper.ResidualsWrapper import ResidualsWrapper as residuals
-from PynPoint.old_version.Workflow import workflow
-from PynPoint.old_version._BasePynPoint import base_pynpoint
 
 # PynPoint 0.3.x
 from PynPoint.core import Pypeline
@@ -60,9 +53,6 @@ def run(config,force_replace=False):
     """
     raise DeprecationWarning('This function is not supported any longer in PynPoint version 0.3.0.')
 
-    ws = workflow.run(config, force_replace)
-    return ws
-
     
 def restore(dirin):
     """
@@ -74,6 +64,3 @@ def restore(dirin):
     """
 
     raise DeprecationWarning('This function is not supported any longer in PynPoint version 0.3.0.')
-
-    ws = workflow.restore(dirin)
-    return ws

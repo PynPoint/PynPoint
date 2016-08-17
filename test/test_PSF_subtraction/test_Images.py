@@ -182,17 +182,10 @@ class TestImages(object):
 
         assert images2.im_arr.shape == (2, 146, 146)
 
-
-        
     def teardown(self):
         #tidy up
-
-        '''print("tearing down " + __name__)
-        tempfilename = PynPoint._Util.filename4mdir(self.test_data_dir,filetype='convert')
-        if os.path.isfile(tempfilename):
-            os.remove(tempfilename)
-        
-        pass'''
+        if os.path.isfile(self.test_data_dir + "PynPoint_database.hdf5"):
+            os.remove(self.test_data_dir + "PynPoint_database.hdf5")
     
 
 if __name__ == '__main__':

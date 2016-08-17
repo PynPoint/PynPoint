@@ -28,23 +28,15 @@ lint:
 
 test:
 	find . -name 'test/__pycache__' -exec rm -rf {} +
-	py.test test/test_Images.py
-	py.test test/test_basis.py
-	py.test test/test_residuals.py
-	py.test test/test_plotter.py
-	py.test test/test_workflow.py
-	py.test test/test_PynPoint_cache.py
-	py.test test/test_PynPoint_ctx.py
-	py.test test/test_Cli.py
-
+	py.test --ignore=test/old_tests/
 
 test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint setup.py test
-	coverage report -m
-	coverage html
+	coverage run --source PynPoint -m py.test --ignore=test/old_tests/
+	coverage report -m --omit=PynPoint/old_version/*
+	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html
 
 docs:

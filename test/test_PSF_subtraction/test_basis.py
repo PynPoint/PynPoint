@@ -86,7 +86,7 @@ class TestBasis(object):
 
         pass
         
-    def test_save_restore(self,tmpdir):
+    def test_basis_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_hdf5.h5'))
         self.basis3.save(temp_file)
         temp_basis = PynPoint.basis.create_restore(temp_file)#('',intype='restore')
@@ -156,15 +156,9 @@ class TestBasis(object):
         basis = self.basis3
         basis.mk_psfmodel(20)
         assert np.allclose(basis.psf_im_arr.mean() , 9.3969370160939641e-06,rtol=limit1)
-        
 
     def teardown(self):
-        '''
-        #tidy up
-        print("tearing down " + __name__)
-        tempfilename = PynPoint._Util.filename4mdir(self.test_data_dir,filetype='convert')
-        if os.path.isfile(tempfilename):
-            os.remove(tempfilename)
-        
-        pass'''
+        if os.path.isfile(self.test_data_dir + "PynPoint_database.hdf5"):
+            os.remove(self.test_data_dir + "PynPoint_database.hdf5")
+
 

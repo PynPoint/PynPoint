@@ -68,7 +68,7 @@ class TestResidual(object):
         assert self.res._psf_im(1).shape == (self.num_files,146,146)
         assert np.allclose(self.res._psf_im(1).mean() , 9.2698583022210567e-06,rtol=limit1)
 
-    def test_res_save_restore(self,tmpdir):
+    def test_residuals_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_res_hdf5.h5'))
         
         self.res.save(temp_file)
@@ -79,5 +79,5 @@ class TestResidual(object):
 
     def teardown(self):
         #tidy up
-        print("tearing down " + __name__)
-        pass
+        if os.path.isfile(self.test_data_dir + "PynPoint_database.hdf5"):
+            os.remove(self.test_data_dir + "PynPoint_database.hdf5")
