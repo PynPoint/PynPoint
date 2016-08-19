@@ -2,6 +2,7 @@ import warnings
 
 from PynPoint.core.Processing import ProcessingModule
 
+warnings.simplefilter("always")
 
 def _image_cutting(data,
                    image_in_port,

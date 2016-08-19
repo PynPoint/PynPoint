@@ -12,6 +12,8 @@ from PynPoint.core.Pypeline import Pypeline
 from PynPoint.io_modules.FitsReading import ReadFitsCubesDirectory
 from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule
 
+warnings.simplefilter("always")
+
 
 class BasePynpointWrapper(object):
     class_counter = 1

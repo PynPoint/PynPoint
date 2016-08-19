@@ -10,6 +10,8 @@ import numpy as np
 
 from PynPoint.core.DataIO import OutputPort, InputPort
 
+warnings.simplefilter("always")
+
 
 class PypelineModule:
     """
