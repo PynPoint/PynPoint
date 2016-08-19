@@ -39,6 +39,13 @@ coverage:
 	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html
 
+coverage_file:
+	coverage run --source PynPoint -m py.test ${File}
+	coverage report -m --omit=PynPoint/old_version/*
+	coverage html --omit=PynPoint/old_version/*
+	open htmlcov/index.html
+
+
 docs:
 	rm -f docs/modules.rst
 	rm -f docs/PynPoint.io_modules.rst
