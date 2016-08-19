@@ -9,6 +9,8 @@ from astropy.io import fits
 
 from PynPoint.core.Processing import WritingModule
 
+warnings.simplefilter("always")
+
 
 class WriteAsSingleFitsFile(WritingModule):
     """

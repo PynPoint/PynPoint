@@ -7,6 +7,8 @@ import h5py
 import numpy as np
 import os
 
+warnings.simplefilter("always")
+
 
 class DataStorage(object):
     """
@@ -209,10 +211,21 @@ class InputPort(Port):
 
         return self._m_tag in self._m_data_storage.m_data_bank
 
+    def _check_error_cases(self):
+
+        if not self._check_status_and_activate():
+            return False
+
+        if self._check_if_data_exists() is False:
+            warnings.warn("No data under the tag which is linked by the InputPort")
+            return False
+
+        return True
+
     def __getitem__(self, item):
         """
         Internal function which handles the data access using slicing. See class documentation for a
-        example (:class:`PynPoint.core.DataIO.InputPort`).
+        example (:class:`PynPoint.core.DataIO.InputPort`). None if the data does not exist.
 
         :param item: Slicing parameter
         :type item: slice
@@ -221,16 +234,10 @@ class InputPort(Port):
         :rtype: numpy array
         """
 
-        if not self._check_status_and_activate():
+        if not self._check_error_cases():
             return
 
-        if self._check_if_data_exists() is False:
-            return None
-
         result = self._m_data_storage.m_data_bank[self._m_tag][item]
-
-        if isinstance(result, bytearray):
-            return np.asarray(result, dtype=np.float64)
 
         return result
 
@@ -239,9 +246,12 @@ class InputPort(Port):
         Returns the shape of the dataset the port is linked to. This can be useful if you need the
         shape without loading the whole data.
 
-        :return: Shape of the dataset
+        :return: Shape of the dataset, None is data set does not exist.
         :rtype: tuple
         """
+        if not self._check_error_cases():
+            return
+
         self.open_port()
         return self._m_data_storage.m_data_bank[self._m_tag].shape
 
@@ -250,14 +260,12 @@ class InputPort(Port):
         Returns the whole dataset stored in the data bank under the tag of the Port. Be careful
         using this function for loading huge datasets!
 
-        :return: The data of the dataset as numpy array
+        :return: The data of the dataset as numpy array. None if the data does not exist.
         :rtype: numpy array
         """
 
-        self._check_status_and_activate()
-
-        if self._check_if_data_exists() is False:
-            return None
+        if not self._check_error_cases():
+            return
 
         return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...],
                           dtype=np.float64)
@@ -276,7 +284,9 @@ class InputPort(Port):
         :rtype: numpy array for non-static attributes and simple types for static attributes.
         """
 
-        self._check_status_and_activate()
+        if not self._check_error_cases():
+            return
+
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
@@ -285,6 +295,7 @@ class InputPort(Port):
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)][...])
         else:
+            warnings.warn('No attribute found - requested: %s' % name)
             return None
 
     def get_all_static_attributes(self):
@@ -297,7 +308,9 @@ class InputPort(Port):
         :return: Dictionary of all attributes {attr_name: attr_value}
         :rtype: dict
         """
-        self._check_status_and_activate()
+        if not self._check_error_cases():
+            return
+
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
     def get_all_non_static_attributes(self):
@@ -310,7 +323,9 @@ class InputPort(Port):
         :rtype: list[str]
         """
 
-        self._check_status_and_activate()
+        if not self._check_error_cases():
+            return
+
         result = []
 
         # check if header Group exists
