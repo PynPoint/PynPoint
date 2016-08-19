@@ -54,6 +54,9 @@ class Hdf5ReadingModule(ReadingModule):
         if tag_dictionary is None:
             tag_dictionary = {}
 
+        for out_tag in tag_dictionary.itervalues():
+            self.add_output_port(out_tag)
+
         self.m_filename = input_filename
         self._m_tag_dictionary = tag_dictionary
 
@@ -81,7 +84,7 @@ class Hdf5ReadingModule(ReadingModule):
                 continue
 
             # add data
-            tmp_port = self.add_output_port(tmp_tag)
+            tmp_port = self._m_output_ports[tmp_tag]
             tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
 
             # add static attributes
