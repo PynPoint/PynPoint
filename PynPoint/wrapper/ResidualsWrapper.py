@@ -108,6 +108,9 @@ class ResidualsWrapper(object):
     def _mk_result(self,
                    extra_rot_in=0.0):
 
+        if "res_module" in self._pypeline._m_modules:
+            return
+
         res_module = CreateResidualsModule(name_in="res_module",
                                            im_arr_in_tag=self._m_images._m_image_data_tag,
                                            psf_im_in_tag=self._m_images._m_psf_image_arr_tag,
