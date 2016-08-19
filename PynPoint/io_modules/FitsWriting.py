@@ -21,8 +21,8 @@ class WriteAsSingleFitsFile(WritingModule):
     """
 
     def __init__(self,
-                 name_in,
                  file_name,
+                 name_in="fits_writing",
                  output_dir=None,
                  data_tag="im_arr"):
         """

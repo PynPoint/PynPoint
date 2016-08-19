@@ -96,7 +96,7 @@ class Pypeline(object):
                     return False, module.name
 
             existing_data_tags.extend(module.get_all_output_tags())
-        else:
+        else: # pragma: no cover
             return False, None
 
         return True, None
@@ -137,11 +137,12 @@ class Pypeline(object):
     def remove_module(self,
                       name):
         """
-        Removes a Pypeline module from the internal dictionary.
+        Removes a Pypeline module from the internal dictionary. Returns
 
         :param name: The name (key) of the module which has to be removed.
         :type name: str
-        :return: None
+        :return: True if module was deleted False if module does not exist
+        :rtype: bool
         """
 
         if name in self._m_modules:
@@ -214,7 +215,6 @@ class Pypeline(object):
 
         print "validating Pipeline..."
         validation = self.validate_pipeline()
-        print validation
         if not validation[0]:
             raise AttributeError('Pipeline module %s is looking for data under a tag which is not '
                                  'created by a previous module or does not exist in the database.'
@@ -235,14 +235,17 @@ class Pypeline(object):
         :type name: str
         :return: None
         """
-        print "validating module..."
-        validation = self.validate_pipeline_module(name)
-        if not validation[0]:
-            raise AttributeError('Pipeline module %s is looking for data under a tag which does not'
-                                 ' exist in the database.'
-                                 % validation[1])
 
         if name in self._m_modules:
+
+            print "validating module..."
+            validation = self.validate_pipeline_module(name)
+            if not validation[0]:
+                raise AttributeError(
+                    'Pipeline module %s is looking for data under a tag which does not'
+                    ' exist in the database.'
+                    % validation[1])
+
             self._m_modules[name].run()
         else:
             warnings.warn('Module not found')
