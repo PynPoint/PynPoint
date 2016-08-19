@@ -22,7 +22,7 @@ You can also join the PynPoint mailing list by sending an email to pynpoint-join
 Initial test
 ------------
 
-We have provided some useable data as part of the package. To perform your first calculations do the following: ::
+We have provided some useable data as part of the package. To perform your first calculations do the following (change /some/location/Desktop into a location on your disk): ::
 
 	import PynPoint
 	from PynPoint import Pypeline
@@ -63,7 +63,7 @@ We have provided some useable data as part of the package. To perform your first
 	plt.title("Residual Image: mean")
 	plt.colorbar()
 
-	plt.savefig(“/some/location/result.png")
+	plt.savefig("/some/location/result.png")
 	
 That is it! If this worked, you should have a picture like the one in the section below. What you see in the image is the planet |beta_pic|. 
 

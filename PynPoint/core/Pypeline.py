@@ -86,14 +86,16 @@ class Pypeline(object):
             existing_data_tags.extend(module.get_all_output_tags())
 
         elif isinstance(module, WritingModule):
-            if not set(module.get_all_input_tags()) < set(existing_data_tags):
-                return False, module.name
+            for tag in module.get_all_input_tags():
+                if tag not in existing_data_tags:
+                    return False, module.name
 
         elif isinstance(module, ProcessingModule):
-            if not set(module.get_all_input_tags()) < set(existing_data_tags):
-                return False, module.name
-            else:
-                existing_data_tags.extend(module.get_all_output_tags())
+            for tag in module.get_all_input_tags():
+                if tag not in existing_data_tags:
+                    return False, module.name
+
+            existing_data_tags.extend(module.get_all_output_tags())
         else:
             return False, None
 
