@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pytest
+import warnings
 
 from PynPoint.core import Pypeline
 from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
@@ -93,17 +94,17 @@ class TestPypeline(object):
                                       data_tag="im_arr")
 
         # no default location
-        wirte2 = WriteAsSingleFitsFile(name_in="writing2",
+        write2 = WriteAsSingleFitsFile(name_in="writing2",
                                        file_name="result.fits",
                                        data_tag="im_arr",
                                        output_dir=dir_in)
 
         pipeline.add_module(write)
 
-        pipeline.add_module(wirte2)
+        pipeline.add_module(write2)
 
         with pytest.warns(UserWarning):
-            pipeline.add_module(wirte2)
+            pipeline.add_module(write2)
 
         pipeline.run()
         pipeline.run_module("reading")
@@ -195,8 +196,3 @@ class TestPypeline(object):
         assert pipeline.get_module_names() == ["filter"]
 
         assert pipeline.remove_module("none") is False
-
-
-
-
-
