@@ -11,6 +11,8 @@ from PynPoint.core.DataIO import DataStorage
 
 from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
+warnings.simplefilter("always")
+
 
 class Pypeline(object):
     """
