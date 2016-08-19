@@ -22,8 +22,6 @@ import os
 import numpy as np
 import PynPoint
 
-
-
 limit0 = 1e-20
 limit1 = 1e-10
 limit2 = 2e-4
@@ -35,9 +33,7 @@ class TestResidual(object):
         #prepare unit test. Load data etc
         print("setting up " + __name__)
         test_data = str(os.path.dirname(__file__)+'/test_data/')
-        self.test_data_dir = test_data        
-        file_basis_restore = str(self.test_data_dir+'test_data_basis_v001.hdf5'  )      
-        file_images_restore = str(self.test_data_dir+'test_data_images_v001.hdf5')
+        self.test_data_dir = test_data
 
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
                                 cent_remove=True,resize=False,ran_sub=False,recent=False,cent_size=0.2)
@@ -74,8 +70,9 @@ class TestResidual(object):
         self.res.save(temp_file)
         temp_res = PynPoint.residuals.create_restore(temp_file) 
         
-        assert np.array_equal(self.res.res_rot_mean(1),temp_res.res_rot_mean(1))       
+        assert np.array_equal(self.res.res_rot_mean(1),temp_res.res_rot_mean(1))
 
+        os.remove(temp_file)
 
     def teardown(self):
         #tidy up
