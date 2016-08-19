@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import warnings
 import h5py
 import numpy as np
+import os
 
 
 class DataStorage(object):
@@ -25,6 +26,11 @@ class DataStorage(object):
         :type location_in: str
         :return: None
         """
+
+        assert (os.path.isdir(os.path.split(location_in)[0])), 'Error: Input directory for ' \
+                                                               'DataStorage does not exist - input'\
+                                                               'requested: %s' % location_in
+
         self._m_location = location_in
         self.m_data_bank = None
         self.m_open = False
