@@ -54,8 +54,8 @@ class StarExtractionModule(ProcessingModule):
                                  'large to be cut')
 
             # cut the image
-            cut_image = current_image[argmax[0] - psf_radius:argmax[0] + psf_radius,
-                                      argmax[1] - psf_radius:argmax[1] + psf_radius]
+            cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
+                                      int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
             return cut_image
 
@@ -117,7 +117,8 @@ class StarAlignmentModule(ProcessingModule):
             offset *= self.m_resize
 
             tmp_image = imresize(image_in,
-                                 image_in.shape * self.m_resize,
+                                 (image_in.shape[0] * self.m_resize,
+                                  image_in.shape[1] * self.m_resize),
                                  interp="cubic")
 
             if self.m_interpolation == "spline":
