@@ -9,7 +9,6 @@ from astropy.io import fits
 from PynPoint.core.Processing import ReadingModule
 
 import warnings
-warnings.simplefilter("always")
 
 
 class ReadFitsCubesDirectory(ReadingModule):

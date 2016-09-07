@@ -4,6 +4,9 @@ import pytest
 
 from PynPoint.core.DataIO import DataStorage
 
+import warnings
+warnings.simplefilter("always")
+
 
 class TestDataStorage(object):
 
