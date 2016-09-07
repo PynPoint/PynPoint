@@ -7,11 +7,11 @@ from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, DarkS
 
 
 pype = Pypeline("/Volumes/Seagate/Beta_Pic2/",
-                "/Volumes/Seagate/Beta_Pic2/00_raw_Data",
+                "/Volumes/Seagate/Beta_Pic2/01_raw_part",
                 "/Volumes/Seagate/Beta_Pic2/")
 
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
-                                      image_tag="im_ar")
+                                      image_tag="im_arr")
 
 
 reading_dark = ReadFitsCubesDirectory("Dark_reading",
@@ -30,6 +30,11 @@ dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
                                  image_in_tag="im_arr_cut",
                                  dark_in_tag="dark_arr",
                                  image_out_tag="dark_sub_arr")
+
+clean_flat = DarkSubtractionModule(name_in="flat_dark_subtraction",
+                                   image_in_tag="flat_arr",
+                                   dark_in_tag="dark_arr",
+                                   image_out_tag="flat_arr")
 
 flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
                                  image_in_tag="dark_sub_arr",
@@ -79,75 +84,31 @@ psf_sub = PSFSubtractionModule(pca_number=10,
 
 writing = WriteAsSingleFitsFile(name_in="Fits_writing",
                                 file_name="test.fits",
-                                data_tag="res_mean")
+                                data_tag="flat_sub_arr")
 
 
-pype.add_module(reading_data)
-pype.add_module(reading_dark)
+#pype.add_module(reading_data)
+#pype.add_module(reading_dark)
 pype.add_module(reading_flat)
 
-pype.add_module(cutting)
+#pype.add_module(cutting)
 
-pype.add_module(dark_sub)
+#pype.add_module(dark_sub)
+pype.add_module(clean_flat)
 pype.add_module(flat_sub)
-pype.add_module(bp_cleaning)
-pype.add_module(bg_subtraction)
-pype.add_module(extraction)
-pype.add_module(alignment)
+#pype.add_module(bp_cleaning)
+#pype.add_module(bg_subtraction)
+#pype.add_module(extraction)
+#pype.add_module(alignment)
 
-pype.add_module(subset)
+#pype.add_module(subset)
 
-pype.add_module(psf_sub)
+#pype.add_module(psf_sub)
 
 pype.add_module(writing)
 
 
-#pype.add_module(j)
-
 pype.run()
-
-'''
-
-import PynPoint
-from PynPoint import Pypeline
-from PynPoint.io_modules.Hdf5Reading import Hdf5ReadingModule
-from PynPoint.processing_modules import PSFSubtractionModule
-from matplotlib import pyplot as plt
-
-
-pipeline = Pypeline("/Users/markusbonse/Desktop",
-                    PynPoint.get_data_dir(),
-                    "/Users/markusbonse/Desktop")
-
-reading_dict = {"im_arr": "im_arr"}
-
-reading = Hdf5ReadingModule(name_in="hdf5_reading",
-                            tag_dictionary=reading_dict)
-
-pipeline.add_module(reading)
-
-
-subtraction = PSFSubtractionModule(6,
-                                   name_in="PSF_subtraction",
-                                   images_in_tag="im_arr",
-                                   reference_in_tag="im_arr",
-                                   res_mean_tag="result",
-                                   cent_remove=True,
-                                   cent_size=0.07)
-
-pipeline.add_module(subtraction)
-
-pipeline.run()
-
-result = pipeline.get_data("result")
-
-plt.imshow(result,
-           origin='lower',
-           interpolation='nearest')
-plt.title("Residual Image: mean")
-plt.colorbar()
-
-plt.savefig("/Users/markusbonse/Desktop/result.png")'''
 
 
 
