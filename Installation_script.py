@@ -84,22 +84,22 @@ psf_sub = PSFSubtractionModule(pca_number=10,
 
 writing = WriteAsSingleFitsFile(name_in="Fits_writing",
                                 file_name="test.fits",
-                                data_tag="flat_sub_arr")
+                                data_tag="im_arr_aligned")
 
 
 #pype.add_module(reading_data)
 #pype.add_module(reading_dark)
-pype.add_module(reading_flat)
+#pype.add_module(reading_flat)
 
 #pype.add_module(cutting)
 
 #pype.add_module(dark_sub)
-pype.add_module(clean_flat)
-pype.add_module(flat_sub)
+#pype.add_module(clean_flat)
+#pype.add_module(flat_sub)
 #pype.add_module(bp_cleaning)
 #pype.add_module(bg_subtraction)
 #pype.add_module(extraction)
-#pype.add_module(alignment)
+pype.add_module(alignment)
 
 #pype.add_module(subset)
 
