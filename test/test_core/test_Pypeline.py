@@ -7,6 +7,9 @@ from PynPoint.core import Pypeline
 from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
 from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule
 
+import warnings
+warnings.simplefilter("always")
+
 
 class TestPypeline(object):
 

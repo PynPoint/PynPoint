@@ -4,6 +4,9 @@ import pytest
 
 from PynPoint.core.DataIO import InputPort, DataStorage
 
+import warnings
+warnings.simplefilter("always")
+
 
 class TestInputPort(object):
 

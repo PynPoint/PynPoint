@@ -3,7 +3,7 @@ import numpy as np
 from PynPoint.core.Processing import ProcessingModule
 import warnings
 
-warnings.simplefilter("always")
+#warnings.simplefilter("always")
 
 
 def _image_cutting(data,
