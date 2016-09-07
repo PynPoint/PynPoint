@@ -1,8 +1,10 @@
-import warnings
+import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
+import warnings
 
 warnings.simplefilter("always")
+
 
 def _image_cutting(data,
                    image_in_port,
@@ -108,7 +110,8 @@ class FlatSubtractionModule(ProcessingModule):
 
         def flat_subtraction_image(image_in,
                                    flat_in):
-            return image_in - flat_in
+
+            return image_in / flat_in
 
         flat = self.m_flat_in_port.get_all()
 
@@ -116,10 +119,24 @@ class FlatSubtractionModule(ProcessingModule):
                                   self.m_image_in_port,
                                   dark=False)
 
+        # shift all values to positive
+        flat_min = np.min(tmp_flat)
+
+        # +1 and -1 to prevent division by zero
+        if flat_min < 0:
+            tmp_flat -= np.ones(tmp_flat.shape) * (flat_min - 1)
+        else:
+            tmp_flat -= np.ones(tmp_flat.shape) * (flat_min + 1)
+
+        flat_median = np.median(np.median(tmp_flat))
+
+        # normalization
+        tmp_flat /= float(flat_median)
+
         self.apply_function_to_images(flat_subtraction_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      func_args=(tmp_flat,),
+                                      func_args=(tmp_flat, ),
                                       num_images_in_memory=self.m_number_of_images_in_memory)
 
         self.m_image_out_port.add_history_information("flat_subtraction",

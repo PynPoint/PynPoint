@@ -4,12 +4,12 @@ Different interfaces for Pypeline Modules.
 
 # external modules
 import os
-import warnings
 from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from PynPoint.core.DataIO import OutputPort, InputPort
 
+import warnings
 warnings.simplefilter("always")
 
 

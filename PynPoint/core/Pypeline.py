@@ -4,13 +4,13 @@ Module which capsules different pipeline processing steps.
 # external modules
 import collections
 import os
-import warnings
 
 import numpy as np
 from PynPoint.core.DataIO import DataStorage
 
 from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
+import warnings
 warnings.simplefilter("always")
 
 

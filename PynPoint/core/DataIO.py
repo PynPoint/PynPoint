@@ -595,6 +595,13 @@ class OutputPort(Port):
 
         self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
+    def del_all_data(self):
+        # check if port is ready to use
+        if not self._check_status_and_activate():
+            return
+
+        del self._m_data_storage.m_data_bank[self._m_tag]
+
     def set_all(self,
                 data,
                 data_dim=None,
@@ -642,6 +649,8 @@ class OutputPort(Port):
         :type keep_attributes: bool
         :return: None
         """
+
+        data = np.asarray(data)
 
         # check if port is ready to use
         if not self._check_status_and_activate():
