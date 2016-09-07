@@ -3,12 +3,12 @@ Module for reading different kinds of .fits data
 """
 # external modules
 import os
-import warnings
 
 from astropy.io import fits
 
 from PynPoint.core.Processing import ReadingModule
 
+import warnings
 warnings.simplefilter("always")
 
 
