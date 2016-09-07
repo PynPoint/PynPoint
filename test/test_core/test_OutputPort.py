@@ -4,6 +4,9 @@ import numpy as np
 
 from PynPoint.core.DataIO import OutputPort, DataStorage, InputPort
 
+import warnings
+warnings.simplefilter("always")
+
 
 class TestOutputPort(object):
 
