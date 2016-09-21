@@ -70,7 +70,8 @@ release = PynPoint.__version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'PynPoint.wrapper.rst', 'PynPoint.old_version.rst',
+                    'modules.rst', 'license.rst']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -255,3 +256,15 @@ texinfo_documents = [
 sys.path.append(os.path.abspath("_theme"))
 html_theme_path = ["_theme"]
 html_theme = "sphinx_rtd_theme"
+
+def skip(app, what, name, obj, skip, options):
+    if name == "__init__":
+        return False
+    if name == "__getitem__":
+        return False
+    if name == "__setitem__":
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)

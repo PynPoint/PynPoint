@@ -8,6 +8,7 @@ Development lead
 * Adam Amara <adam.amara@phys.ethz.ch>
 * Joel Akeret <jakeret@phys.ethz.ch>
 * Sascha Quanz <sascha.quanz@astro.phys.ethz.ch>
+* Markus Bonse <mbonse@uni-koblenz.de>
 
 
 Contributors

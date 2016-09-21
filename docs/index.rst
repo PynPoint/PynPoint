@@ -13,6 +13,8 @@ Contents:
 
    installation
    usage
+   pypeline
+   own_modules
    PynPoint
    contributing
    mailinglist
