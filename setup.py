@@ -37,7 +37,12 @@ The full documentation can be generated with Sphinx"""
 
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
-requires = ["numpy","scipy","pyfits","matplotlib","h5py"] #during runtime
+requires = ["numpy",
+            "scipy",
+            "pyfits",
+            "matplotlib",
+            "h5py",
+            "numba"] #during runtime
 tests_require=['pytest>=2.3', 'mock'] #for testing
 
 PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
