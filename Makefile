@@ -28,24 +28,33 @@ lint:
 
 test:
 	find . -name 'test/__pycache__' -exec rm -rf {} +
-	py.test
+	py.test --ignore=test/old_tests/
 
 test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint setup.py test
-	coverage report -m
-	coverage html
+	coverage run --source PynPoint -m py.test --ignore=test/old_tests/
+	coverage report -m --omit=PynPoint/old_version/*
+	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html
 
+coverage_file:
+	coverage run --source PynPoint -m py.test ${File}
+	coverage report -m --omit=PynPoint/old_version/*
+	coverage html --omit=PynPoint/old_version/*
+	open htmlcov/index.html
+
+
 docs:
-	rm -f docs/PynPoint.rst
 	rm -f docs/modules.rst
+	rm -f docs/PynPoint.io_modules.rst
+	rm -f docs/PynPoint.old_version.rst
+	rm -f docs/PynPoint.processing_modules.rst
+	rm -f docs/PynPoint.wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
 
 sdist: clean
 #	pip freeze > requirements.rst
