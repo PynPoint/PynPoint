@@ -598,7 +598,8 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
-        del self._m_data_storage.m_data_bank[self._m_tag]
+        if self._m_tag in self._m_data_storage.m_data_bank:
+            del self._m_data_storage.m_data_bank[self._m_tag]
 
     def set_all(self,
                 data,
@@ -848,6 +849,9 @@ class OutputPort(Port):
         :return: None
         """
         if not self._check_status_and_activate():
+            return
+
+        if not self._m_tag in self._m_data_storage.m_data_bank:
             return
 
         # static attributes
