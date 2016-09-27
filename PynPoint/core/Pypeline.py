@@ -4,6 +4,7 @@ Module which capsules different pipeline processing steps.
 # external modules
 import collections
 import os
+import atexit
 
 import numpy as np
 from PynPoint.core.DataIO import DataStorage
@@ -51,6 +52,22 @@ class Pypeline(object):
         self._m_output_place = output_place_in
         self._m_modules = collections.OrderedDict()
         self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
+
+        #atexit.register(self._exit_program())
+
+    def _exit_program(self):
+        """
+        This function is called if the program is interrupted. It closes the database to prevent
+        data loss.
+        :return: None
+        """
+        if self.m_data_storage.m_data_bank is None:
+            return
+
+        print "The program was exited. Closing database ... DO NOT KILL THE PROCESS!!! KILLING " \
+              "THE PROCESS CAN DAMAGE THE PYNPOINT DATABASE!!!"
+        self.m_data_storage.m_data_bank.close()
+        print "Finished closing database."
 
     def __setattr__(self, key, value):
         """
@@ -247,7 +264,9 @@ class Pypeline(object):
                     ' exist in the database.'
                     % validation[1])
 
+            print "Start running module..."
             self._m_modules[name].run()
+            print "finished running module..."
         else:
             warnings.warn('Module not found')
 
