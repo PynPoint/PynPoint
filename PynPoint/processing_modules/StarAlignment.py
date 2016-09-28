@@ -104,7 +104,13 @@ class StarAlignmentModule(ProcessingModule):
 
         # get ref image
         if self.m_ref_image_in_port is not None:
-            ref_image = self.m_ref_image_in_port.get_all()
+            if len(self.m_ref_image_in_port.get_shape()) == 3:
+                ref_image = np.asarray(self.m_ref_image_in_port[0, :, :],
+                                       dtype=np.float64)
+            elif len(self.m_ref_image_in_port.get_shape()) == 2:
+                ref_image = self.m_ref_image_in_port.get_all()
+            else:
+                raise ValueError("reference Image needs to be 2 D or 3 D.")
         else:
             ref_image = self.m_image_in_port[0]
 
@@ -116,10 +122,14 @@ class StarAlignmentModule(ProcessingModule):
 
             offset *= self.m_resize
 
-            tmp_image = imresize(image_in,
-                                 (image_in.shape[0] * self.m_resize,
-                                  image_in.shape[1] * self.m_resize),
-                                 interp="cubic")
+            if self.m_resize is not 1:
+                tmp_image = imresize(np.asarray(image_in,
+                                                dtype=np.float64),
+                                     (image_in.shape[0] * self.m_resize,
+                                      image_in.shape[1] * self.m_resize),
+                                     interp="cubic")
+            else:
+                tmp_image = image_in
 
             if self.m_interpolation == "spline":
                 tmp_image = shift(tmp_image, offset, order=5)
