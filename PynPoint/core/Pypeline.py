@@ -53,7 +53,7 @@ class Pypeline(object):
         self._m_modules = collections.OrderedDict()
         self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
 
-        #atexit.register(self._exit_program())
+        atexit.register(self._exit_program())
 
     def _exit_program(self):
         """

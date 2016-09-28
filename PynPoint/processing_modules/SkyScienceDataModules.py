@@ -1,5 +1,7 @@
 import numpy as np
-import collections
+from skimage.feature import register_translation
+from scipy.ndimage import fourier_shift
+from scipy.ndimage import shift
 
 from PynPoint.io_modules import ReadFitsCubesDirectory
 from PynPoint.core import ProcessingModule
@@ -102,7 +104,7 @@ class SkySubtraction(ProcessingModule):
                              self.m_index))
 
         # add time stamps of Sky data
-        dates = self.m_sky_in_port.get_attribute("DATE")
+        dates = self.m_sky_in_port.get_attribute("ESO DET EXP NO")
 
         for i in range(len(dates)):
             self.m_time_stamps.append(TimeStamp(dates[i],
@@ -110,7 +112,7 @@ class SkySubtraction(ProcessingModule):
                                          i))
 
         # add time stamps of Science data
-        dates = self.m_science_in_port.get_attribute("DATE")
+        dates = self.m_science_in_port.get_attribute("ESO DET EXP NO")
         number_of_frames_per_cube = self.m_science_in_port.get_attribute("NAXIS3")
 
         for i in range(len(dates)):
@@ -166,7 +168,7 @@ class SkySubtraction(ProcessingModule):
 
             time_entry = self.m_time_stamps[i]
 
-            print "Subtract background from file " + str(i) + " of " + \
+            print "Subtract background from file " + str(i+1) + " of " + \
                   str(len(self.m_time_stamps)) + " files..."
 
             if time_entry.m_sky_or_science == "SKY":
@@ -185,3 +187,93 @@ class SkySubtraction(ProcessingModule):
         self.m_science_out_port.add_history_information("background_subtraction",
                                                         "using Sky Flat subtraction")
         self.m_science_out_port.close_port()
+
+
+class AlignmentSkyAndScienceDataModule(ProcessingModule):
+
+    def __init__(self,
+                 position_of_center,
+                 name_in="align_sky_and_science",
+                 science_in_tag="science_arr",
+                 sky_in_tag="sky_arr",
+                 science_out_tag="science_arr",
+                 sky_out_tag="sky_arr",
+                 interpolation="spline",
+                 size_of_center=(100, 100),
+                 accuracy=10,
+                 num_images_in_memory=100):
+
+        super(AlignmentSkyAndScienceDataModule, self).__init__(name_in)
+
+        # Ports
+
+        self.m_science_in_port = self.add_input_port(science_in_tag)
+        self.m_science_out_port = self.add_output_port(science_out_tag)
+
+        self.m_sky_in_port = self.add_input_port(sky_in_tag)
+        self.m_sky_out_port = self.add_output_port(sky_out_tag)
+
+        # Parameter
+        self.m_interpolation = interpolation
+        self.m_accuracy = accuracy
+        self.m_num_images_in_memory = num_images_in_memory
+        self.m_center_size = size_of_center
+        self.m_center_position = position_of_center
+        self.m_x_off = self.m_center_position[0] - (self.m_center_size[0] / 2)
+        self.m_y_off = self.m_center_position[1] - (self.m_center_size[1] / 2)
+
+    def run(self):
+
+        def cut_image_around_position(image_in):
+            return image_in[self.m_x_off: self.m_center_size[0] + self.m_x_off,
+                            self.m_y_off:self.m_center_size[1] + self.m_y_off]
+
+        # create reference image
+        ref_image = cut_image_around_position(self.m_sky_in_port[0])
+
+        def align_single_image(image_in):
+
+            offset, _, _ = register_translation(ref_image,
+                                                cut_image_around_position(image_in),
+                                                self.m_accuracy)
+
+            if self.m_interpolation == "spline":
+                tmp_image = shift(image_in, offset, order=5)
+
+            elif self.m_interpolation == "fft":
+                tmp_image_spec = fourier_shift(np.fft.fftn(image_in), offset)
+                tmp_image = np.fft.ifftn(tmp_image_spec)
+
+            elif self.m_interpolation == "bilinear":
+                tmp_image = shift(image_in, offset, order=1)
+
+            else:
+                raise ValueError("Interpolation needs to be spline, bilinear or fft")
+
+            return tmp_image
+
+        # align all Science data
+        self.apply_function_to_images(align_single_image,
+                                      self.m_science_in_port,
+                                      self.m_science_out_port,
+                                      num_images_in_memory=self.m_num_images_in_memory)
+
+        self.m_science_out_port.copy_attributes_from_input_port(self.m_science_in_port)
+
+        history = "cross-correlation"
+        self.m_science_out_port.add_history_information("Sky-Science alignment",
+                                                        history)
+
+        # align all Sky data
+        self.apply_function_to_images(align_single_image,
+                                      self.m_sky_in_port,
+                                      self.m_sky_out_port,
+                                      num_images_in_memory=self.m_num_images_in_memory)
+
+        self.m_sky_out_port.copy_attributes_from_input_port(self.m_sky_in_port)
+
+        history = "cross-correlation"
+        self.m_sky_out_port.add_history_information("Sky-Science alignment",
+                                                    history)
+
+        self.m_sky_out_port.close_port()
