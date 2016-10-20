@@ -202,21 +202,21 @@ class TestOutputPort(object):
     def test_append_new_data(self):
         # using append even if no data exists
         control, out_port = self.create_input_and_output_port("new_data")
-        # ---- 1D input ----
+        # ----- 1D input -----
         data = [3, ]
         out_port.append(data)
 
         assert control.get_all() == data
         out_port.del_all_data()
 
-        # ---- 2D input ----
+        # ----- 2D input -----
         data = [[3, 3], [3, 2]]
         out_port.append(data)
 
         assert np.array_equal(control.get_all(), data)
         out_port.del_all_data()
 
-        # ---- 3D input ----
+        # ----- 3D input -----
         data = [[[3, 3], [3, 2]], [[3, 1], [3, 1]]]
         out_port.append(data)
 
@@ -224,11 +224,73 @@ class TestOutputPort(object):
         out_port.del_all_data()
 
     def test_append_existing_data(self):
-        # 1 Element input
-        # 1D input
-        # 2D input
-        # 3D input
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+
+        # ----- 1D -----
+        out_port.append([2, 3, 5], data_dim=1)
+        out_port.append([3, 3, 5])
+        assert np.array_equal(control.get_all(),
+                              [2, 3, 5, 3, 3, 5])
+        out_port.del_all_data()
+
+        # ----- 2D -----
+        # 1D input append to 1D data
+        out_port.append([1, 1], data_dim=2)
+        out_port.append([3, 3])
+        assert np.array_equal(control.get_all(),
+                              [[1, 1], [3, 3]])
+        out_port.del_all_data()
+
+        # 1D input append to 2D data
+        out_port.append([[2, 3], [1, 1]], data_dim=2)
+        out_port.append([3, 3])
+        assert np.array_equal(control.get_all(),
+                              [[2, 3], [1, 1], [3, 3]])
+        out_port.del_all_data()
+
+        # 2D input append to 2D data
+        out_port.append([[2, 3], [1, 1]], data_dim=2)
+        out_port.append([[3, 3], [8, 8]])
+        assert np.array_equal(control.get_all(),
+                              [[2, 3], [1, 1], [3, 3], [8, 8]])
+        out_port.del_all_data()
+
+        # 2D input append to 3D data
+        out_port.append([[[2, 3], [1, 1]],
+                         [[2, 4], [1, 1]]], data_dim=3)
+        out_port.append([[3, 3], [8, 8]])
+        assert np.array_equal(control.get_all(),
+                              [[[2, 3], [1, 1]],
+                               [[2, 4], [1, 1]],
+                               [[3, 3], [8, 8]]])
+        out_port.del_all_data()
+
+        # 3D input append to 3D data
+        out_port.append([[[2, 3], [1, 1]],
+                         [[2, 4], [1, 1]]], data_dim=3)
+        out_port.append([[[22, 7], [10, 221]],
+                         [[223, 46], [1, 15]]])
+
+        assert np.array_equal(control.get_all(),
+                              [[[2, 3], [1, 1]],
+                               [[2, 4], [1, 1]],
+                               [[22, 7], [10, 221]],
+                               [[223, 46], [1, 15]]])
+        out_port.del_all_data()
+
+    def test_append_existing_data_force_overwriting(self):
+        control, out_port = self.create_input_and_output_port("new_data")
+
+        # Error case (no force)
+        out_port.append([2, 3, 5], data_dim=1)
+
+        out_port.append([[[22, 7], [10, 221]],
+                         [[223, 46], [1, 15]]],
+                        force=True)
+
+        assert np.array_equal(control.get_all(), [[[22, 7], [10, 221]],
+                                                  [[223, 46], [1, 15]]])
+        out_port.del_all_data()
 
     def test_append_existing_data_error(self):
         # ---- port not active ----
@@ -236,39 +298,176 @@ class TestOutputPort(object):
         out_port.deactivate()
         data = [1, ]
         out_port.append(data)
+        out_port.del_all_data()
+        out_port.activate()
 
         # 1 Element input
 
         # 1D input
         # 2D input
         # 3D input
-        pass
 
-    def test_activate_deactivate(self):
-        pass
+        # Error case (no force)
+        out_port.set_all([2, 3, 5], data_dim=1)
+
+        with pytest.raises(ValueError) as ex_info:
+            out_port.append([[[22, 7], [10, 221]],
+                             [[223, 46], [1, 15]]])
+
+        assert ex_info.value.message == 'The port tag new_data is already used with a different ' \
+                                        'data type. If you want to replace it use force = True.'
+        out_port.del_all_data()
+
+    def test_set_data_using_slicing(self):
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([2, 5, 6, 7, ])
+        out_port[3] = 44
+        assert np.array_equal(control.get_all(),
+                              [2, 5, 6, 44, ])
+        out_port.deactivate()
+        out_port[2] = 0
+        assert np.array_equal(control.get_all(),
+                              [2, 5, 6, 44, ])
+        out_port.activate()
+        out_port.del_all_data()
+
+    def test_del_all_data(self):
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, 1])
+        out_port.del_all_data()
+
+        assert control.get_all() is None
 
     def test_add_static_attribute(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([1])
+
+        out_port.add_attribute("attr1",
+                               value=5)
+        out_port.add_attribute("attr2",
+                               value="no")
+
+        assert control.get_attribute("attr1") == 5
+
+        # update
+        out_port.add_attribute("attr1",
+                               value=6)
+        assert control.get_attribute("attr1") == 6
+        assert control.get_attribute("attr2") == "no"
+
+        out_port.deactivate()
+        out_port.add_attribute("attr3",
+                               value=33)
+
+        assert control.get_attribute("attr3") is None
+        out_port.activate()
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_add_static_attribute_error(self):
-        # add array
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+
+        # add attribute while no data is set
+        with pytest.warns(UserWarning) as warning:
+            out_port.add_attribute("attr1",
+                                   value=6)
+
+        # check that only one warning was raised
+        assert len(warning) == 1
+        # check that the message matches
+        assert warning[0].message.args[0] == "Can not save attribute while no data exists."
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_add_non_static_attribute(self):
         # two different data types
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([1])
+
+        out_port.add_attribute("attr1",
+                               value=[6, 3],
+                               static=False)
+
+        assert np.array_equal(control.get_attribute("attr1"),
+                              [6, 3])
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_append_attribute_data(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.del_all_data()
+        out_port.set_all([1])
 
-    def test_append_attribute_data_error(self):
-        pass
+        out_port.add_attribute("attr1",
+                               value=[2, 3],
+                               static=False)
 
-    def test_append_add_value_to_static_attribute(self):
-        pass
+        assert np.array_equal(control.get_attribute("attr1"),
+                              [2, 3])
+
+        out_port.append_attribute_data("attr1",
+                                       value=2)
+
+        assert np.array_equal(control.get_attribute("attr1"),
+                              [2, 3, 2])
+
+        out_port.deactivate()
+        out_port.append_attribute_data("attr1",
+                                       value=2)
+
+        assert np.array_equal(control.get_attribute("attr1"),
+                              [2, 3, 2])
+
+        out_port.activate()
+        out_port.del_all_attributes()
+        out_port.del_all_data()
+
+    def test_add_value_to_static_attribute(self):
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([1])
+
+        out_port.add_attribute("attr1",
+                               value=4)
+
+        assert control.get_attribute("attr1") == 4
+        out_port.add_value_to_static_attribute("attr1",
+                                               value=2)
+        assert control.get_attribute("attr1") == 6
+
+        out_port.deactivate()
+        out_port.add_value_to_static_attribute("attr1",
+                                               value=2)
+        assert control.get_attribute("attr1") == 6
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_add_value_to_static_attribute_error(self):
-        pass
+        # add non int or float data
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([1])
+
+        out_port.add_attribute("attr1",
+                               value="bla")
+
+        assert control.get_attribute("attr1") == "bla"
+        with pytest.raises(ValueError) as error:
+            out_port.add_value_to_static_attribute("attr1",
+                                                   value="bla")
+
+        assert error.value.message == "Can only add integer and float values to an existing " \
+                                      "attribute"
+
+        # add data to not existing attribute
+        with pytest.raises(AttributeError) as error2:
+            out_port.add_value_to_static_attribute("attr42",
+                                                   value=3)
+        assert error2.value.message == "Can not add value to not existing attribute"
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_copy_attributes_from_input_port(self):
         pass
