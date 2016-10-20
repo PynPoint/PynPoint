@@ -288,6 +288,8 @@ class InputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
+            if type(self._m_data_storage.m_data_bank[self._m_tag].attrs[name]) is str:
+                return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
             return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
@@ -539,6 +541,9 @@ class OutputPort(Port):
         if data_dim is None:
             data_dim = tmp_dim
 
+        # convert input data to numpy array
+        data = np.asarray(data)
+
         # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
         if data.ndim + 1 == data_dim:
             if data_dim == 3:
@@ -573,8 +578,7 @@ class OutputPort(Port):
         if force:
             # YES -> Force is true
             self._set_all_key(tag,
-                              data=data,
-                              data_dim=data_dim)
+                              data=data)
             return
 
         # NO -> Error message
@@ -749,6 +753,10 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
+        if self._m_tag not in self._m_data_storage.m_data_bank:
+            warnings.warn("Can not save attribute while no data exists.")
+            return
+
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
         else:
@@ -760,7 +768,7 @@ class OutputPort(Port):
                               name,
                               value):
         """
-        Function which appends data to non-static attributes.
+        Function which appends a single data value to non-static attributes.
 
         :param name: Name of the attribute
         :type name: str
@@ -772,7 +780,7 @@ class OutputPort(Port):
             return
 
         self._append_key(tag=("header_" + self._m_tag + "/" + name),
-                         data=np.asarray([value,]))
+                         data=np.asarray([value, ]))
 
     def add_value_to_static_attribute(self,
                                       name,
@@ -788,6 +796,12 @@ class OutputPort(Port):
         """
         if not self._check_status_and_activate():
             return
+
+        if not isinstance(value, int) or isinstance(value, float):
+            raise ValueError("Can only add integer and float values to an existing attribute")
+
+        if name not in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            raise AttributeError("Can not add value to not existing attribute")
 
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
