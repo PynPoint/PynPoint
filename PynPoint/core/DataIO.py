@@ -425,9 +425,11 @@ class OutputPort(Port):
             used.
         :return: None
         """
+        # convert input data into numpy array
+        first_data = np.asarray(first_data)
 
         # check Error cases
-        if isinstance(first_data, bytearray) or first_data.ndim > 3 or first_data.ndim < 1:
+        if first_data.ndim > 3 or first_data.ndim < 1:
             raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want '
                              'to save a int, float, string ... use Port attributes instead.')
 
@@ -452,7 +454,7 @@ class OutputPort(Port):
             elif first_data.ndim == 3:  # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
             else:
-                raise ValueError('Input shape not supported')  # this case should never be reached
+                raise ValueError('Input shape not supported')  # pragma: no cover
         else:
             if data_dim == 2:  # case (2, 1)
                 data_shape = (None, first_data.shape[0])
@@ -461,7 +463,7 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
             else:
-                raise ValueError('Input shape not supported')  # this case should never be reached
+                raise ValueError('Input shape not supported') # pragma: no cover
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
