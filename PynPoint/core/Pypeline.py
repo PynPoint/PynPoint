@@ -4,6 +4,7 @@ Module which capsules different pipeline processing steps.
 # external modules
 import collections
 import os
+import atexit
 
 import numpy as np
 from PynPoint.core.DataIO import DataStorage
@@ -247,7 +248,9 @@ class Pypeline(object):
                     ' exist in the database.'
                     % validation[1])
 
+            print "Start running module..."
             self._m_modules[name].run()
+            print "finished running module..."
         else:
             warnings.warn('Module not found')
 
