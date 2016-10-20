@@ -53,22 +53,6 @@ class Pypeline(object):
         self._m_modules = collections.OrderedDict()
         self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
 
-        atexit.register(self._exit_program())
-
-    def _exit_program(self):
-        """
-        This function is called if the program is interrupted. It closes the database to prevent
-        data loss.
-        :return: None
-        """
-        if self.m_data_storage.m_data_bank is None:
-            return
-
-        print "The program was exited. Closing database ... DO NOT KILL THE PROCESS!!! KILLING " \
-              "THE PROCESS CAN DAMAGE THE PYNPOINT DATABASE!!!"
-        self.m_data_storage.m_data_bank.close()
-        print "Finished closing database."
-
     def __setattr__(self, key, value):
         """
         This method is called every time a member / attribute of the Pypeline is changed.

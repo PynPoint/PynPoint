@@ -1,3 +1,8 @@
+"""
+End to End pipeline for Sky / Science data. (Cubes containing sky frames and cubes containing the
+star) NACO/AGPM
+"""
+
 from PynPoint import Pypeline
 
 from PynPoint.processing_modules import ReadFitsSkyDirectory, MeanSkyCubes, DarkSubtractionModule, \
@@ -161,12 +166,14 @@ subset = StackAndSubsetModule(name_in="stacking_subset",
                               image_in_tag="star_cut_arr",
                               image_out_tag="star_stacked",
                               random_subset=None,
-                              stacking=20)
+                              stacking=None)
+
 pipeline.add_module(subset)
 
 # --- PCA
 
-psf_sub = PSFSubtractionModule(pca_number=10,
+psf_sub = PSFSubtractionModule(pca_number=20,
+                               cent_size=0.05,
                                name_in="PSF_subtraction",
                                images_in_tag="star_stacked",
                                reference_in_tag="star_stacked",
@@ -181,7 +188,7 @@ writing = WriteAsSingleFitsFile(name_in="Fits_writing",
 pipeline.add_module(writing)
 
 writing2 = WriteAsSingleFitsFile(name_in="Fits_writing_input",
-                                 file_name="results/planet.fits",
+                                 file_name="results/data.fits",
                                  data_tag="star_stacked")
 pipeline.add_module(writing2)
 
