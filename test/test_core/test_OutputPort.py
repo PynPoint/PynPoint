@@ -1,7 +1,10 @@
+"""
+Test Cases for DataIO Outport
+"""
+
 import os
 import pytest
 import numpy as np
-import warnings
 
 from PynPoint.core.DataIO import OutputPort, DataStorage, InputPort
 
@@ -470,25 +473,169 @@ class TestOutputPort(object):
         out_port.del_all_data()
 
     def test_copy_attributes_from_input_port(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
-    def test_copy_attributes_from_input_port_error(self):
-        pass
+        out_port.set_all([0, ])
+
+
+        # some static attributes
+        out_port.add_attribute("attr1",
+                               33)
+
+        out_port.add_attribute("attr2",
+                               "string")
+
+        out_port.add_attribute("attr3",
+                               [1, 2, 3])
+
+        # non static attributes
+        out_port.add_attribute("attr_non_static",
+                               [3, 4, 5, 6],
+                               static=False)
+
+        copy_control, copy_port = self.create_input_and_output_port("other_data")
+        copy_port.del_all_attributes()
+        copy_port.del_all_data()
+
+        copy_port.set_all([1, ])
+        # for attribute overwriting
+        copy_port.add_attribute("attr_non_static",
+                                [3, 4, 44, 6],
+                                static=False)
+
+        copy_port.copy_attributes_from_input_port(control)
+
+        assert copy_control.get_attribute("attr1") == 33
+        assert copy_control.get_attribute("attr2") == "string"
+        assert np.array_equal(copy_control.get_attribute("attr3"),
+                              [1, 2, 3])
+        assert np.array_equal(copy_control.get_attribute("attr_non_static"),
+                              [3, 4, 5, 6])
+
+        copy_port.del_all_attributes()
+        copy_port.del_all_data()
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
+
+    def test_copy_attributes_from_input_port_same_tag(self):
+
+        control1, out_port1 = self.create_input_and_output_port("new_data")
+        out_port1.set_all([0, ])
+
+        control2, out_port2 = self.create_input_and_output_port("new_data")
+        out_port2.set_all([2, ])
+
+        out_port1.add_attribute("attr1",
+                                2)
+
+        out_port2.copy_attributes_from_input_port(control1)
+
+        assert control2.get_attribute("attr1") == 2
+
+        out_port1.del_all_data()
+        out_port1.del_all_attributes()
 
     def test_del_attribute(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, ])
 
-    def test_del_attribute_not_existing(self):
-        pass
+        # static
+        out_port.add_attribute("attr1",
+                               4)
+        out_port.add_attribute("attr2",
+                               5)
+
+        # non static
+        out_port.add_attribute("attr_non_static_1",
+                               [1, 2, 3],
+                               static=False)
+
+        out_port.add_attribute("attr_non_static_2",
+                               [2, 4, 6, 8],
+                               static=False)
+
+        out_port.del_attribute("attr1")
+
+        out_port.del_attribute("attr_non_static_1")
+
+        # check is only the chosen attributes are deleted and the rest is still there
+        assert control.get_attribute("attr1") is None
+        assert control.get_attribute("attr2") == 5
+        assert control.get_attribute("attr_non_static_1") is None
+        assert np.array_equal(control.get_attribute("attr_non_static_2"),
+                              [2, 4, 6, 8])
+        out_port.del_all_data()
+        out_port.del_all_attributes()
+
+    def test_del_attribute_error_case(self):
+
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, ])
+
+        # deactivated port
+        out_port.add_attribute("attr_1",
+                               5.554)
+        out_port.deactivate()
+        out_port.del_attribute("attr_1")
+        assert control.get_attribute("attr_1") == 5.554
+
+        out_port.activate()
+        # not existing
+        with pytest.warns(UserWarning) as warning:
+            out_port.del_attribute("not_existing")
+
+        # check that only one warning was raised
+        assert len(warning) == 1
+        # check that the message matches
+        assert warning[0].message.args[0] == "Attribute not_existing does not exist and could " \
+                                             "not be deleted."
+
+        out_port.del_all_attributes()
+        out_port.del_all_data()
 
     def test_del_all_attributes(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, ])
+
+        out_port.add_attribute("attr_1",
+                               4)
+        out_port.add_attribute("attr_2",
+                               [1, 3],
+                               static=False)
+
+        out_port.del_all_attributes()
+
+        assert control.get_attribute("attr_1") is None
+        assert control.get_attribute("attr_2") is None
+
+        out_port.del_all_data()
 
     def test_add_history_information(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, ])
 
-    def test_flush(self):
-        pass
+        out_port.add_history_information("none",
+                                         "very_important")
+        assert control.get_attribute("History: none") == "very_important"
 
     def test_check_static_attribute(self):
-        pass
+        control, out_port = self.create_input_and_output_port("new_data")
+        out_port.set_all([0, ])
+
+        out_port.add_attribute("attr",
+                               5)
+
+        assert out_port.check_static_attribute("attr", 5) == 0
+        assert out_port.check_static_attribute("attr_bla", 3) == 1
+        assert out_port.check_static_attribute("attr", 33) == -1
+
+        out_port.deactivate()
+
+        assert out_port.check_static_attribute("attr", 5) is None
+
+        out_port.activate()
+        out_port.del_all_data()
+        out_port.del_all_attributes()
