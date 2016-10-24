@@ -288,9 +288,13 @@ class InputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
-            if type(self._m_data_storage.m_data_bank[self._m_tag].attrs[name]) is str:
-                return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
+            attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
+            try:
+                return attr.item()
+            except:
+                return attr
+
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)][...])
@@ -826,17 +830,23 @@ class OutputPort(Port):
                     .m_data_bank["header_" + input_port.tag + "/"].iteritems():
 
                 # overwrite existing header information in the database
+                print "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank
                 if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
+                    print "dell"
                     del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
 
                 self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
                     attr_data
+
+                print "inside " + str(self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name][...])
 
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
         for attr_name, attr_val in attributes.iteritems():
             self.add_attribute(attr_name,
                                attr_val)
+
+        self._m_data_storage.m_data_bank.flush()
 
     def del_attribute(self,
                       name):
@@ -854,9 +864,11 @@ class OutputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-        else:
+        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
+        else:
+            warnings.warn("Attribute %s does not exist and could not be deleted." % name)
 
     def del_all_attributes(self):
         """
@@ -871,8 +883,7 @@ class OutputPort(Port):
             return
 
         # static attributes
-        for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            del attr
+        self._m_data_storage.m_data_bank[self._m_tag].attrs.clear()
 
         # non-static attributes
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
