@@ -288,7 +288,13 @@ class InputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
-            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name].item()
+            attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
+            try:
+                return attr.item()
+            except:
+                return attr
+
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)][...])
@@ -425,9 +431,11 @@ class OutputPort(Port):
             used.
         :return: None
         """
+        # convert input data into numpy array
+        first_data = np.asarray(first_data)
 
         # check Error cases
-        if isinstance(first_data, bytearray) or first_data.ndim > 3 or first_data.ndim < 1:
+        if first_data.ndim > 3 or first_data.ndim < 1:
             raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want '
                              'to save a int, float, string ... use Port attributes instead.')
 
@@ -452,7 +460,7 @@ class OutputPort(Port):
             elif first_data.ndim == 3:  # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
             else:
-                raise ValueError('Input shape not supported')  # this case should never be reached
+                raise ValueError('Input shape not supported')  # pragma: no cover
         else:
             if data_dim == 2:  # case (2, 1)
                 data_shape = (None, first_data.shape[0])
@@ -461,7 +469,7 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
             else:
-                raise ValueError('Input shape not supported')  # this case should never be reached
+                raise ValueError('Input shape not supported') # pragma: no cover
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
@@ -537,6 +545,9 @@ class OutputPort(Port):
         if data_dim is None:
             data_dim = tmp_dim
 
+        # convert input data to numpy array
+        data = np.asarray(data)
+
         # if the dimension offset is 1 add that dimension (e.g. save 2D image in 3D image stack)
         if data.ndim + 1 == data_dim:
             if data_dim == 3:
@@ -571,8 +582,7 @@ class OutputPort(Port):
         if force:
             # YES -> Force is true
             self._set_all_key(tag,
-                              data=data,
-                              data_dim=data_dim)
+                              data=data)
             return
 
         # NO -> Error message
@@ -747,6 +757,10 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
+        if self._m_tag not in self._m_data_storage.m_data_bank:
+            warnings.warn("Can not save attribute while no data exists.")
+            return
+
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
         else:
@@ -758,7 +772,7 @@ class OutputPort(Port):
                               name,
                               value):
         """
-        Function which appends data to non-static attributes.
+        Function which appends a single data value to non-static attributes.
 
         :param name: Name of the attribute
         :type name: str
@@ -770,7 +784,7 @@ class OutputPort(Port):
             return
 
         self._append_key(tag=("header_" + self._m_tag + "/" + name),
-                         data=np.asarray([value,]))
+                         data=np.asarray([value, ]))
 
     def add_value_to_static_attribute(self,
                                       name,
@@ -786,6 +800,12 @@ class OutputPort(Port):
         """
         if not self._check_status_and_activate():
             return
+
+        if not isinstance(value, int) or isinstance(value, float):
+            raise ValueError("Can only add integer and float values to an existing attribute")
+
+        if name not in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+            raise AttributeError("Can not add value to not existing attribute")
 
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
@@ -810,17 +830,23 @@ class OutputPort(Port):
                     .m_data_bank["header_" + input_port.tag + "/"].iteritems():
 
                 # overwrite existing header information in the database
+                print "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank
                 if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
+                    print "dell"
                     del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
 
                 self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
                     attr_data
+
+                print "inside " + str(self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name][...])
 
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
         for attr_name, attr_val in attributes.iteritems():
             self.add_attribute(attr_name,
                                attr_val)
+
+        self._m_data_storage.m_data_bank.flush()
 
     def del_attribute(self,
                       name):
@@ -838,9 +864,11 @@ class OutputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-        else:
+        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
+        else:
+            warnings.warn("Attribute %s does not exist and could not be deleted." % name)
 
     def del_all_attributes(self):
         """
@@ -855,8 +883,7 @@ class OutputPort(Port):
             return
 
         # static attributes
-        for attr in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            del attr
+        self._m_data_storage.m_data_bank[self._m_tag].attrs.clear()
 
         # non-static attributes
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
