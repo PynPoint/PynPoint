@@ -4,7 +4,7 @@ import cv2
 from skimage.feature import register_translation
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
-from scipy.misc import imresize
+from skimage.transform import rescale
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -16,6 +16,7 @@ class StarExtractionModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
                  psf_size=3,
+                 psf_size_as_pixel_resolution=False,
                  num_images_in_memory=100,
                  fwhm_star=7):
 
@@ -27,13 +28,17 @@ class StarExtractionModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_psf_size = psf_size
+        self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
         self.m_num_images_in_memory = num_images_in_memory
         self.m_fwhm_star = fwhm_star # needed for the best gaussian blur 7 is good for L-band data
 
     def run(self):
 
-        pixel_scale = self.m_image_in_port.get_attribute('ESO INS PIXSCALE')
-        psf_radius = np.floor((self.m_psf_size / 2) / pixel_scale)
+        if self.m_psf_size_as_pixel_resolution:
+            psf_radius = np.floor(self.m_psf_size / 2.0)
+        else:
+            pixel_scale = self.m_image_in_port.get_attribute('ESO INS PIXSCALE')
+            psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
 
         def cut_psf(current_image):
 
@@ -123,11 +128,17 @@ class StarAlignmentModule(ProcessingModule):
             offset *= self.m_resize
 
             if self.m_resize is not 1:
-                tmp_image = imresize(np.asarray(image_in,
+                # the rescale function normalizes all values to [0 ... 1]. We want to keep the total
+                # flux of the images and rescale the images afterwards
+                sum_before = sum(image_in)
+                tmp_image = rescale(image=np.asarray(image_in,
                                                 dtype=np.float64),
-                                     (image_in.shape[0] * self.m_resize,
-                                      image_in.shape[1] * self.m_resize),
-                                     interp="cubic")
+                                    scale=(image_in.shape[0] * self.m_resize,
+                                           image_in.shape[1] * self.m_resize),
+                                    order=5,
+                                    mode="reflect")
+                sum_after = sum(tmp_image)
+                tmp_image = tmp_image*(sum_before/sum_after)
             else:
                 tmp_image = image_in
 
@@ -152,6 +163,12 @@ class StarAlignmentModule(ProcessingModule):
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        # Change pix to mas scale corresponding to the reshaping
+        tmp_pixscale = self.m_image_in_port.get_attribute("ESO INS PIXSCALE")
+
+        tmp_pixscale /= self.m_resize
+        self.m_image_out_port.add_attribute("ESO INS PIXSCALE", tmp_pixscale)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
         self.m_image_out_port.add_history_information("PSF align",
