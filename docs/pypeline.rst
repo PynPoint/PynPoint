@@ -5,7 +5,7 @@ The PynPoint Architecture
 
 In version 0.3.0 we have redesigned the whole PynPoint architecture in order to make it an end to end data processing tool for ADI data instead of a PSF-subtraction toolkit. Our goal was to create a pipeline which inheres a list of different pipeline-modules, one for each processing step. Moreover we designed the new pipeline to be extendable for new data processing techniques or data types in future. A list of all currently available Pipeline-modules is given in the :ref:`pipeline-modules` section.
 
-The actual pipeline is located in a different sub-package then the functionality of the processing steps. This makes it possible to extend the functionality of the pipeline steps without changing the core of the pipeline.
+The actual pipeline is located in a different sub-package than the functionality of the processing steps. This makes it possible to extend the functionality of the pipeline steps without changing the core of the pipeline.
 
 The image below illustrates the structure of the central pipeline architecture using a UML class diagram:
 
@@ -22,7 +22,7 @@ Central Data Storage
 
 One central idea of the new PynPoint Pipeline is to separate the data and the pipeline steps. This has different reasons:
 
-	1. Some raw dataset are very large which makes it hard to work with them on a computer with small memory (RAM). Therefore we decided to use a central storage on the hard drive.
+	1. Some raw datasets are very large which makes it hard to work with them on a computer with small memory (RAM). Therefore we decided to use a central storage on the hard drive.
 	2. Some data is used in different steps of the pipeline. A central database makes it easy to access that data without making a copy.
 	3. The central storage on the hard drive will remain updated after each step. If the program crashes or is interrupted by the user you do not have to run the already finished steps again.
 

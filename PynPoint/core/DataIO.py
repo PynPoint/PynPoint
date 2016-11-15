@@ -732,7 +732,8 @@ class OutputPort(Port):
                       static=True):
         """
         Adds a attribute to the dataset of the Port with the attribute name = `name` and the value =
-        `value`. Two different types of attributes are supported:
+        `value`. If the attribute already exists it will be overwritten. Two different types of
+        attributes are supported:
 
             1. **static attributes**:
                Contain a single value or name (e.g. The name of the used Instrument).
