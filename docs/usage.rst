@@ -34,7 +34,7 @@ the pipeline modules for reading and writing .fits data ::
 
 	from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
 
-and all pipeline modules (pipeline steps) we what to execute: ::
+and all pipeline modules (pipeline steps) we want to execute: ::
 
 	from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
 	DarkSubtractionModule, FlatSubtractionModule, CutTopTwoLinesModule, \
