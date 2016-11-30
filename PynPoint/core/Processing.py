@@ -276,6 +276,70 @@ class ProcessingModule(PypelineModule):
         self._m_data_base = data_base_in
 
     @staticmethod
+    def apply_function_to_line_in_time(func,
+                                       image_in_port,
+                                       image_out_port,
+                                       func_args=None):
+        """
+
+        :param func:
+        :param image_in_port:
+        :type image_in_port: InputPort
+        :param image_out_port:
+        :type image_out_port: OutputPort
+        :param func_args:
+        :return:
+        """
+
+        # TODO test and documentation
+
+        number_of_lines_i = image_in_port.get_shape()[1]
+        number_of_lines_j = image_in_port.get_shape()[2]
+
+        def apply_function(tmp_line_in):
+            # process line
+            # check if additional arguments are given
+            if func_args is None:
+                return np.array(func(tmp_line_in))
+            else:
+                return np.array(func(tmp_line_in, *func_args))
+
+        # get first line in time
+        init_line = image_in_port[:, 0, 0]
+        length_of_processed_data = apply_function(init_line).shape[0]
+
+        # we want to replace old values or create a new data set if True
+        # if not we want to update the frames
+        update = image_out_port.tag == image_in_port.tag
+        if update and length_of_processed_data != image_in_port.get_shape()[0]:
+            raise ValueError(
+                "Input and output port have the same tag while %s is changing "
+                "the length of the signal. Use different input and output ports "
+                "instead. " % func)
+
+        image_out_port.set_all(np.zeros(length_of_processed_data,
+                                        image_in_port.get_shape()[1],
+                                        image_in_port.get_shape()[2]),
+                               data_dim=3,
+                               keep_attributes=False)  # overwrite old existing attributes
+
+        for i in range(0, number_of_lines_i):
+            for j in range(0, number_of_lines_j):
+                tmp_line = image_in_port[:, i, j]
+                tmp_res = apply_function(tmp_line)
+
+                if tmp_res.shape[0] != length_of_processed_data:
+                    # The processed line has the wrong size -> raise error
+                    raise ValueError(
+                        "The function %s produces results with different length. This is not "
+                        "supported." % func)
+
+                else:
+                    image_out_port[:, i, j] = tmp_res
+
+        return
+
+    @staticmethod
     def apply_function_to_images(func,
                                  image_in_port,
                                  image_out_port,
