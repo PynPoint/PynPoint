@@ -317,14 +317,16 @@ class ProcessingModule(PypelineModule):
                 "the length of the signal. Use different input and output ports "
                 "instead. " % func)
 
-        image_out_port.set_all(np.zeros(length_of_processed_data,
+        image_out_port.set_all(np.zeros((length_of_processed_data,
                                         image_in_port.get_shape()[1],
-                                        image_in_port.get_shape()[2]),
+                                        image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
         for i in range(0, number_of_lines_i):
+            print "processed line nr. " + str(i+1) + " of " + str(number_of_lines_i) + " lines."
             for j in range(0, number_of_lines_j):
+
                 tmp_line = image_in_port[:, i, j]
                 tmp_res = apply_function(tmp_line)
 
@@ -398,6 +400,7 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
         while i < number_of_images:
+            print "processed image " + str(i+1) + " of " + str(number_of_images) + " images"
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:
