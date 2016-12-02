@@ -8,3 +8,6 @@ from StarAlignment import StarAlignmentModule, StarExtractionModule
 from SkyScienceDataModules import ReadFitsSkyDirectory, MeanSkyCubes, SkySubtraction,\
     AlignmentSkyAndScienceDataModule
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule
+
+from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
+    WaveletTimeDenoisingModule
