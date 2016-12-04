@@ -6,6 +6,8 @@ Different interfaces for Pypeline Modules.
 import os
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import multiprocessing
+import time
 
 from PynPoint.core.DataIO import OutputPort, InputPort
 
@@ -170,6 +172,13 @@ class WritingModule(PypelineModule):
         pass
 
 
+class TaskData(object):
+    def __init__(self,
+                 data_array,
+                 position):
+        self.m_data_array = data_array
+        self.m_position = position
+
 class ProcessingModule(PypelineModule):
     """
     The abstract class ProcessingModule is an interface for all processing steps in the pipeline
@@ -274,6 +283,208 @@ class ProcessingModule(PypelineModule):
             port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
+
+    @staticmethod
+    def apply_function_to_line_in_time_multi_processing(func,
+                                                        image_in_port,
+                                                        image_out_port,
+                                                        func_args=None):
+
+        def apply_function(tmp_line_in):
+            # process line
+            # check if additional arguments are given
+            if func_args is None:
+                return np.array(func(tmp_line_in))
+            else:
+                return np.array(func(tmp_line_in, *func_args))
+
+        class Reader(multiprocessing.Process):
+            def __init__(self,
+                         data_in_port_in,
+                         data_mutex_in,
+                         list_of_positions_in,
+                         tasks_queue_in,
+                         number_of_processors):
+                multiprocessing.Process.__init__(self)
+                self.m_list_of_positions = list_of_positions_in
+                self.m_data_mutex = data_mutex_in
+                self.m_task_queue = tasks_queue_in
+                self.m_data_in_port = data_in_port_in
+                self.m_number_of_processors = number_of_processors
+
+            def run(self):
+
+                for position in self.m_list_of_positions:
+                    # lock Mutex and read data
+                    with self.m_data_mutex:
+                        print "reading data from position " + str(position)
+                        tmp_data = self.m_data_in_port[:, position[0], position[1]]
+
+                    # add Task to task list
+                    self.m_task_queue.put(TaskData(tmp_data, position))
+                    print "new data ready for processing"
+
+                for i in range(self.m_number_of_processors - 1):
+                    # poison pills
+                    print "new pill added"
+                    self.m_task_queue.put(1)
+
+                # Final poison pill
+                self.m_task_queue.put(None)
+                print "final pill added"
+
+                return
+
+        class LineProcessor(multiprocessing.Process):
+
+            def __init__(self,
+                         tasks_queue_in,
+                         result_queue_in):
+
+                multiprocessing.Process.__init__(self)
+                self.m_task_queue = tasks_queue_in
+                self.m_result_queue = result_queue_in
+
+            def run(self):
+                proc_name = self.name
+
+                while True:
+                    next_task = self.m_task_queue.get()
+
+                    if next_task is 1:
+                        # Poison pill means shutdown
+                        print '%s: Exiting' % proc_name
+                        self.m_task_queue.task_done()
+                        break
+
+                    if next_task is None:
+                        # got final Poison pill
+                        self.m_result_queue.put(None)  # shut down writer process
+
+                        print '%s: Exiting' % proc_name
+                        self.m_task_queue.task_done()
+                        break
+
+                    print "Process " + proc_name + " got data for position " + str(
+                        next_task.m_position) + " and starts processing..."
+
+                    result = TaskData(apply_function(next_task.m_data_array),
+                                      next_task.m_position)
+
+                    self.m_task_queue.task_done()
+
+                    self.m_result_queue.put(result)
+                    print "Process " + proc_name + " finished processing!"
+
+                return
+
+        class Writer(multiprocessing.Process):
+
+            def __init__(self,
+                         result_queue_in,
+                         data_out_port_in,
+                         data_mutex_in):
+                multiprocessing.Process.__init__(self)
+                self.m_result_queue = result_queue_in
+                self.m_data_mutex = data_mutex_in
+                self.m_data_out_port = data_out_port_in
+
+            def run(self):
+
+                while True:
+                    next_result = self.m_result_queue.get()
+
+                    print "Writer got result for position " + str(next_result.m_position)
+
+                    if next_result is None:
+                        print "shutting down writer..."
+                        self.m_result_queue.task_done()
+                        break
+
+                    with self.m_data_mutex:
+                        self.m_data_out_port[:,
+                                             next_result.m_position[0],
+                                             next_result.m_position[1]] = next_result.m_data_array
+                    self.m_result_queue.task_done()
+
+        # get first line in time
+        init_line = image_in_port[:, 0, 0]
+        length_of_processed_data = apply_function(init_line).shape[0]
+
+        # we want to replace old values or create a new data set if True
+        # if not we want to update the frames
+        update = image_out_port.tag == image_in_port.tag
+        if update and length_of_processed_data != image_in_port.get_shape()[0]:
+            raise ValueError(
+                "Input and output port have the same tag while %s is changing "
+                "the length of the signal. Use different input and output ports "
+                "instead. " % func)
+
+        print "start setting zeros"
+
+        image_out_port.set_all(np.zeros((length_of_processed_data,
+                                        image_in_port.get_shape()[1],
+                                        image_in_port.get_shape()[2])),
+                               data_dim=3,
+                               keep_attributes=False)  # overwrite old existing attributes
+
+        print "new output created"
+
+        number_of_lines_i = image_in_port.get_shape()[1]
+        number_of_lines_j = image_in_port.get_shape()[2]
+        list_of_positions = [(i, j) for i in range(number_of_lines_i)
+                                    for j in range(number_of_lines_j)]
+
+        num_processors = multiprocessing.cpu_count()
+
+        # Establish communication queues
+
+        # buffer twice the data as processes are available
+        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
+        result_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
+
+        # data base mutex
+        data_mutex = multiprocessing.Lock()
+
+        # create reader
+        reader = Reader(data_in_port_in=image_in_port,
+                        data_mutex_in=data_mutex,
+                        list_of_positions_in=list_of_positions,
+                        tasks_queue_in=tasks_queue,
+                        number_of_processors=num_processors)
+
+        # Start consumers
+        line_processors = [LineProcessor(tasks_queue_in=tasks_queue,
+                                         result_queue_in=result_queue)
+                           for i in xrange(num_processors)]
+
+        # create writer
+        writer = Writer(result_queue_in=result_queue,
+                        data_out_port_in=image_out_port,
+                        data_mutex_in=data_mutex)
+
+        print "all processes created"
+
+        # start all processes
+        reader.start()
+
+        print "reader started"
+
+        for processor in line_processors:
+            processor.start()
+
+        writer.start()
+        print "writer started"
+
+        # Wait for all of the tasks to finish
+        tasks_queue.join()
+        result_queue.join()
+
+        for processor in line_processors:
+            processor.join()
+
+        writer.join()
+        reader.join()
 
     @staticmethod
     def apply_function_to_line_in_time(func,
