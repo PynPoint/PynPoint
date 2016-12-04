@@ -138,10 +138,11 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
                                                              self.m_image_in_port,
-                                                             self.m_image_out_port)
+                                                             self.m_image_out_port,
+                                                             num_rows_in_memory=80)
 
-        '''self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_history_information("Time denoising",
                                                       "Using Wavelet analysis")
         # TODO add more information here
-        self.m_image_out_port.close_port()'''
+        self.m_image_out_port.close_port()
