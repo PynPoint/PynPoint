@@ -317,12 +317,10 @@ class ProcessingModule(PypelineModule):
                 for position in self.m_list_of_positions:
                     # lock Mutex and read data
                     with self.m_data_mutex:
-                        print "reading data from position " + str(position)
+                        #print "reading data from position " + str(position)
                         tmp_data = self.m_data_in_port[:, position[0], position[1]]
 
-                    # add Task to task list
                     self.m_task_queue.put(TaskData(tmp_data, position))
-                    print "new data ready for processing"
 
                 for i in range(self.m_number_of_processors - 1):
                     # poison pills
@@ -365,8 +363,8 @@ class ProcessingModule(PypelineModule):
                         self.m_task_queue.task_done()
                         break
 
-                    print "Process " + proc_name + " got data for position " + str(
-                        next_task.m_position) + " and starts processing..."
+                    '''print "Process " + proc_name + " got data for position " + str(
+                        next_task.m_position) + " and starts processing..."'''
 
                     result = TaskData(apply_function(next_task.m_data_array),
                                       next_task.m_position)
@@ -374,7 +372,7 @@ class ProcessingModule(PypelineModule):
                     self.m_task_queue.task_done()
 
                     self.m_result_queue.put(result)
-                    print "Process " + proc_name + " finished processing!"
+                    #print "Process " + proc_name + " finished processing!"
 
                 return
 
@@ -391,10 +389,15 @@ class ProcessingModule(PypelineModule):
 
             def run(self):
 
+                last_line = -1
                 while True:
                     next_result = self.m_result_queue.get()
 
-                    print "Writer got result for position " + str(next_result.m_position)
+                    if next_result.m_position[0] != last_line:
+                        print "Start processing line " + str(next_result.m_position)
+                        last_line = next_result.m_position[0]
+
+                    print str(next_result.m_position)
 
                     if next_result is None:
                         print "shutting down writer..."
@@ -420,15 +423,13 @@ class ProcessingModule(PypelineModule):
                 "the length of the signal. Use different input and output ports "
                 "instead. " % func)
 
-        print "start setting zeros"
+        print "Preparing database for analysis ..."
 
         image_out_port.set_all(np.zeros((length_of_processed_data,
                                         image_in_port.get_shape()[1],
                                         image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
-
-        print "new output created"
 
         number_of_lines_i = image_in_port.get_shape()[1]
         number_of_lines_j = image_in_port.get_shape()[2]
@@ -437,10 +438,12 @@ class ProcessingModule(PypelineModule):
 
         num_processors = multiprocessing.cpu_count()
 
+        print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
+
         # Establish communication queues
 
         # buffer twice the data as processes are available
-        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
+        tasks_queue = multiprocessing.JoinableQueue(maxsize=0)
         result_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
 
         # data base mutex
@@ -463,18 +466,13 @@ class ProcessingModule(PypelineModule):
                         data_out_port_in=image_out_port,
                         data_mutex_in=data_mutex)
 
-        print "all processes created"
-
         # start all processes
         reader.start()
-
-        print "reader started"
 
         for processor in line_processors:
             processor.start()
 
         writer.start()
-        print "writer started"
 
         # Wait for all of the tasks to finish
         tasks_queue.join()
