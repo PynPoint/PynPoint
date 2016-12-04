@@ -114,18 +114,13 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                     order=self.m_wavelet_configuration.m_wavelet_order,
                     frequency_resolution=self.m_wavelet_configuration.m_resolution)
 
-                #cwt_capsule.plot_signal()
-
                 cwt_capsule.compute_cwt()
-
-                #cwt_capsule.plot_spectrum()
 
                 cwt_capsule.denoise_spectrum_universal_threshold(
                     padded_input_signal=True,
                     threshold=self.m_denoising_threshold)
 
                 cwt_capsule.update_signal()
-                #cwt_capsule.plot_signal()
 
                 # remove padding
                 res_signal = cwt_capsule.get_signal()
@@ -141,12 +136,12 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         else:
             return
 
-        self.apply_function_to_line_in_time(denoise_line_in_time,
-                                            self.m_image_in_port,
-                                            self.m_image_out_port)
+        self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
+                                                             self.m_image_in_port,
+                                                             self.m_image_out_port)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        '''self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_history_information("Time denoising",
                                                       "Using Wavelet analysis")
-        # TODO add more information here
+        # TODO add more information here'''
         self.m_image_out_port.close_port()
