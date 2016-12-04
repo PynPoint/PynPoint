@@ -9,6 +9,8 @@ import numpy as np
 import multiprocessing
 import time
 
+import matplotlib.pyplot as plt
+
 from PynPoint.core.DataIO import OutputPort, InputPort
 
 import warnings
@@ -288,7 +290,8 @@ class ProcessingModule(PypelineModule):
     def apply_function_to_line_in_time_multi_processing(func,
                                                         image_in_port,
                                                         image_out_port,
-                                                        func_args=None):
+                                                        func_args=None,
+                                                        num_rows_in_memory=40):
 
         def apply_function(tmp_line_in):
             # process line
@@ -302,34 +305,39 @@ class ProcessingModule(PypelineModule):
             def __init__(self,
                          data_in_port_in,
                          data_mutex_in,
-                         list_of_positions_in,
+                         total_number_of_rows,
                          tasks_queue_in,
-                         number_of_processors):
+                         number_of_processors,
+                         num_rows_in_memory_in):
                 multiprocessing.Process.__init__(self)
-                self.m_list_of_positions = list_of_positions_in
+                self.m_total_number_of_rows = total_number_of_rows
                 self.m_data_mutex = data_mutex_in
                 self.m_task_queue = tasks_queue_in
                 self.m_data_in_port = data_in_port_in
                 self.m_number_of_processors = number_of_processors
+                self.m_number_of_rows_in_memory = num_rows_in_memory_in
 
             def run(self):
 
-                for position in self.m_list_of_positions:
+                i = 0
+                while i < self.m_total_number_of_rows:
+                    # read rows from i to j
+                    j = min((i + self.m_number_of_rows_in_memory), self.m_total_number_of_rows)
+
                     # lock Mutex and read data
                     with self.m_data_mutex:
-                        #print "reading data from position " + str(position)
-                        tmp_data = self.m_data_in_port[:, position[0], position[1]]
+                        print "reading lines from " + str(i) + " to " + str(j)
+                        tmp_data = self.m_data_in_port[:, i:j, :]
 
-                    self.m_task_queue.put(TaskData(tmp_data, position))
+                    self.m_task_queue.put(TaskData(tmp_data, (i, j)))
+                    i = j
 
                 for i in range(self.m_number_of_processors - 1):
                     # poison pills
-                    print "new pill added"
                     self.m_task_queue.put(1)
 
                 # Final poison pill
                 self.m_task_queue.put(None)
-                print "final pill added"
 
                 return
 
@@ -363,16 +371,22 @@ class ProcessingModule(PypelineModule):
                         self.m_task_queue.task_done()
                         break
 
-                    '''print "Process " + proc_name + " got data for position " + str(
-                        next_task.m_position) + " and starts processing..."'''
+                    print "Process " + proc_name + " got data for row " + str(
+                        next_task.m_position) + " and starts processing..."
 
-                    result = TaskData(apply_function(next_task.m_data_array),
+                    result_arr = np.zeros(next_task.m_data_array.shape)
+                    for i in range(next_task.m_data_array.shape[1]):
+                        for j in range(next_task.m_data_array.shape[2]):
+                            tmp_line = next_task.m_data_array[:, i, j]
+                            result_arr[:, i, j] = apply_function(tmp_line)
+
+                    result = TaskData(result_arr,
                                       next_task.m_position)
 
                     self.m_task_queue.task_done()
 
                     self.m_result_queue.put(result)
-                    #print "Process " + proc_name + " finished processing!"
+                    print "Process " + proc_name + " finished processing!"
 
                 return
 
@@ -389,25 +403,20 @@ class ProcessingModule(PypelineModule):
 
             def run(self):
 
-                last_line = -1
                 while True:
                     next_result = self.m_result_queue.get()
-
-                    if next_result.m_position[0] != last_line:
-                        print "Start processing line " + str(next_result.m_position)
-                        last_line = next_result.m_position[0]
-
-                    print str(next_result.m_position)
 
                     if next_result is None:
                         print "shutting down writer..."
                         self.m_result_queue.task_done()
                         break
 
+                    print "Start writing row " + str(next_result.m_position)
+
                     with self.m_data_mutex:
                         self.m_data_out_port[:,
-                                             next_result.m_position[0],
-                                             next_result.m_position[1]] = next_result.m_data_array
+                                             next_result.m_position[0] : next_result.m_position[1],
+                                             :] = next_result.m_data_array
                     self.m_result_queue.task_done()
 
         # get first line in time
@@ -431,19 +440,20 @@ class ProcessingModule(PypelineModule):
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        number_of_lines_i = image_in_port.get_shape()[1]
-        number_of_lines_j = image_in_port.get_shape()[2]
-        list_of_positions = [(i, j) for i in range(number_of_lines_i)
-                                    for j in range(number_of_lines_j)]
-
         num_processors = multiprocessing.cpu_count()
+
+        number_of_rows = image_in_port.get_shape()[1]
+        if num_rows_in_memory is None:
+            num_rows_in_memory = int(np.ceil(image_in_port.get_shape()[1]/num_processors))
+        else:
+            num_rows_in_memory = int(np.ceil(num_rows_in_memory/num_processors))
 
         print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
 
         # Establish communication queues
 
         # buffer twice the data as processes are available
-        tasks_queue = multiprocessing.JoinableQueue(maxsize=0)
+        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
         result_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
 
         # data base mutex
@@ -452,9 +462,10 @@ class ProcessingModule(PypelineModule):
         # create reader
         reader = Reader(data_in_port_in=image_in_port,
                         data_mutex_in=data_mutex,
-                        list_of_positions_in=list_of_positions,
+                        total_number_of_rows=number_of_rows,
                         tasks_queue_in=tasks_queue,
-                        number_of_processors=num_processors)
+                        number_of_processors=num_processors,
+                        num_rows_in_memory_in=num_rows_in_memory)
 
         # Start consumers
         line_processors = [LineProcessor(tasks_queue_in=tasks_queue,
