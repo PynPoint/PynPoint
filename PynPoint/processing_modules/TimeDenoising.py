@@ -143,5 +143,5 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         '''self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_history_information("Time denoising",
                                                       "Using Wavelet analysis")
-        # TODO add more information here'''
-        self.m_image_out_port.close_port()
+        # TODO add more information here
+        self.m_image_out_port.close_port()'''
