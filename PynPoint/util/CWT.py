@@ -121,10 +121,10 @@ class WaveletAnalysisCapsule:
 
     def compute_cwt(self):
         self.__m_spectrum = wave.cwt(self.__m_data,
-                                   dt=1,
-                                   scales=self.__m_scales,
-                                   wf=self.__m_wavelet,
-                                   p=self.__m_order)
+                                     dt=1,
+                                     scales=self.__m_scales,
+                                     wf=self.__m_wavelet,
+                                     p=self.__m_order)
 
     def update_signal(self):
         self.__m_data = wave.icwt(self.__m_spectrum,
@@ -200,8 +200,6 @@ class WaveletAnalysisCapsule:
         else:
             sigma = mad(self.__m_spectrum[0, :].real)
         uthresh = sigma*np.sqrt(2.0*np.log(self.__m_data_size)) * threshold
-
-        #print "denoise spectrum using threshold: " + str(uthresh)
 
         self.__m_spectrum = _fast_zeros(soft,
                                         self.__m_spectrum,
