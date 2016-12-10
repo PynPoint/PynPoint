@@ -44,7 +44,7 @@ dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
                                  image_out_tag="02_dark_sub")
 
 flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
-                                 image_in_tag="02_raw_data_dark_sub",
+                                 image_in_tag="02_dark_sub",
                                  flat_in_tag="00_flat_arr",
                                  image_out_tag="02_dark_flat_sub")
 
