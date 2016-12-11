@@ -93,11 +93,11 @@ class Pypeline(object):
                     return False, module.name
 
         elif isinstance(module, ProcessingModule):
+            existing_data_tags.extend(module.get_all_output_tags())
             for tag in module.get_all_input_tags():
                 if tag not in existing_data_tags:
                     return False, module.name
 
-            existing_data_tags.extend(module.get_all_output_tags())
         else: # pragma: no cover
             return False, None
 
