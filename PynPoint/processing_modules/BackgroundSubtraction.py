@@ -50,6 +50,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             print "Subtracting background from stack-part " + str(i) + " of " + \
                   str(int(np.floor(number_of_frames/self.m_star_prs_shift))) + " stack-parts"
             # calc the mean (next)
+            print (i+1) * self.m_star_prs_shift % (number_of_frames)
+            print (i+2) * self.m_star_prs_shift % (number_of_frames)
             tmp_data = self.m_image_in_port[(i+1) * self.m_star_prs_shift % (number_of_frames-1):
                                             (i+2) * self.m_star_prs_shift % (number_of_frames-1),
                                             :, :]
