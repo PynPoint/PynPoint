@@ -69,7 +69,7 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)'''
+pipeline.add_module(bg_subtraction)
 
 # 05 Star extraction
 
@@ -79,7 +79,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=None,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)
+pipeline.add_module(star_cut)'''
 
 # 06 Alignment
 
@@ -88,8 +88,8 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 image_out_tag="06_star_arr_aligned",
                                 interpolation="spline",
                                 accuracy=10,
-                                resize=2,
-                                num_images_in_memory=None)
+                                resize=2.0,
+                                num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
 # xx run Pipeline
