@@ -62,21 +62,21 @@ bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
 pipeline.add_module(bp_cleaning)
-'''
+
 # 04 Background Subtraction
 
 bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)
+pipeline.add_module(bg_subtraction)'''
 
 # 05 Star extraction
 
 star_cut = StarExtractionModule(name_in="star_cutting",
                                 image_in_tag="04_mean_background_sub",
                                 image_out_tag="05_star_arr_cut",
-                                psf_size=2.5,
+                                psf_size=3.0,
                                 num_images_in_memory=None,
                                 fwhm_star=7)
 pipeline.add_module(star_cut)
