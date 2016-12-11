@@ -133,8 +133,8 @@ class StarAlignmentModule(ProcessingModule):
                 sum_before = np.sum(image_in)
                 tmp_image = rescale(image=np.asarray(image_in,
                                                      dtype=np.float64),
-                                    scale=(image_in.shape[0] * self.m_resize,
-                                           image_in.shape[1] * self.m_resize),
+                                    scale=(self.m_resize,
+                                           self.m_resize),
                                     order=5,
                                     mode="reflect")
                 sum_after = np.sum(tmp_image)
