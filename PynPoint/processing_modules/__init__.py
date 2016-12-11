@@ -1,4 +1,4 @@
-from BackgroundSubtraction import SimpleBackgroundSubtractionModule
+from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgroundSubtractionModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from NACOPreparation import AngleCalculationModule, CutTopTwoLinesModule
