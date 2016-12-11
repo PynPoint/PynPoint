@@ -132,7 +132,7 @@ class StarAlignmentModule(ProcessingModule):
                 # flux of the images and rescale the images afterwards
                 sum_before = sum(image_in)
                 tmp_image = rescale(image=np.asarray(image_in,
-                                                dtype=np.float64),
+                                                     dtype=np.float64),
                                     scale=(image_in.shape[0] * self.m_resize,
                                            image_in.shape[1] * self.m_resize),
                                     order=5,
