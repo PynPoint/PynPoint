@@ -2,6 +2,7 @@ from statsmodels.robust import mad
 import numpy as np
 import pywt
 from PynPoint.util import WaveletAnalysisCapsule
+from copy import deepcopy
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -58,37 +59,84 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  image_in_tag="star_arr",
                  image_out_tag="star_arr_denoised",
                  denoising_threshold=1.0,
-                 padding="zero"):
+                 padding="zero",
+                 num_rows_in_memory=40):
+        """
+        :type image_in_tag: list and str
+        :type denoising_threshold: list and float
+        """
 
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
 
-        # Ports
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        # Ports
+        if type(denoising_threshold) is list:
+            assert type(image_out_tag) is list
+            assert len(image_out_tag) == len(denoising_threshold)
+
+            self.m_list_mode = True
+            self.m_port_dict = dict()
+
+            for i in range(len(image_out_tag)):
+                self.m_port_dict[denoising_threshold[i]] = self.add_output_port(image_out_tag[i])
+
+            # create tmp data port
+            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising")
+            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising")
+
+        elif type(denoising_threshold) is float and type(image_in_tag) is str:
+            self.m_list_mode = False
+            self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        else:
+            raise ValueError("image_in_tag needs to be a list or a string.")
+
+        self.m_num_rows_in_memory = num_rows_in_memory
 
         # Parameters
         self.m_wavelet_configuration = wavelet_configuration
         self.m_denoising_threshold = denoising_threshold
+        assert padding in ["zeros", "const_mean"]
         self.m_padding = padding  # TODO check paddings
 
     def run(self):
 
         if type(self.m_wavelet_configuration) is DwtWaveletConfiguration:
             # use DWT denoising
+            if self.m_padding == "const_mean":
+                self.m_padding = "constant"
+
             def denoise_line_in_time(signal_in):
-                # TODO add padding
                 coef = pywt.wavedec(signal_in,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
                                     level=6,
-                                    mode="constant")
+                                    mode=self.m_padding)
 
                 sigma = mad(coef[-1])
-                uthresh = sigma * np.sqrt(2 * np.log(len(signal_in))) * self.m_denoising_threshold
-                denoised = coef[:]
-                denoised[1:] = (pywt.threshold(i, value=uthresh, mode="soft") for i in denoised[1:])
-                return pywt.waverec(denoised,
-                                    wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    mode="constant")
+                uthresh = sigma * np.sqrt(2 * np.log(len(signal_in)))\
+
+                if self.m_list_mode:
+                    tmp_res = []
+                    for threshold in self.m_denoising_threshold:
+                        current_threshold = threshold * uthresh
+                        tmp_denoised = deepcopy(coef[:])
+                        tmp_denoised[1:] = (pywt.threshold(i, value=current_threshold, mode="soft")
+                                            for i in tmp_denoised[1:])
+
+                        tmp_res += list(pywt.waverec(tmp_denoised,
+                                                     wavelet=self.m_wavelet_configuration.m_wavelet,
+                                                     mode=self.m_padding))
+                    return np.asarray(tmp_res)
+
+                else:
+                    threshold = uthresh * self.m_denoising_threshold
+                    denoised = coef[:]
+                    denoised[1:] = (pywt.threshold(i, value=threshold, mode="soft")
+                                    for i in denoised[1:])
+                    return pywt.waverec(denoised,
+                                        wavelet=self.m_wavelet_configuration.m_wavelet,
+                                        mode=self.m_padding)
 
         elif type(self.m_wavelet_configuration) is CwtWaveletConfiguration:
             # use CWT denoising
@@ -116,33 +164,78 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 cwt_capsule.compute_cwt()
 
-                cwt_capsule.denoise_spectrum_universal_threshold(
-                    padded_input_signal=True,
-                    threshold=self.m_denoising_threshold)
+                def denoise_one_thresold(capsule_in,
+                                         threshold_in):
+                    capsule_in.denoise_spectrum_universal_threshold(
+                        padded_input_signal=True,
+                        threshold=threshold_in)
 
-                cwt_capsule.update_signal()
+                    capsule_in.update_signal()
 
-                # remove padding
-                res_signal = cwt_capsule.get_signal()
-                res_signal = res_signal[line_size: -line_size]
+                    # remove padding
+                    res_signal = capsule_in.get_signal()
+                    res_signal = res_signal[line_size: -line_size]
 
-                if self.m_wavelet_configuration.m_keep_mean:
-                    mean_after = np.mean(res_signal)
-                    diff = mean - mean_after
-                    res_signal += np.ones(len(res_signal)) * diff
+                    if self.m_wavelet_configuration.m_keep_mean:
+                        mean_after = np.mean(res_signal)
+                        diff = mean - mean_after
+                        res_signal += np.ones(len(res_signal)) * diff
 
-                return res_signal
+                    return res_signal
+
+                if self.m_list_mode:
+                    tmp_res = []
+                    for threshold in self.m_denoising_threshold:
+                        tmp_cwt_capsule = deepcopy(cwt_capsule)
+                        tmp_res += list(denoise_one_thresold(tmp_cwt_capsule,
+                                                             threshold))
+                    return np.asarray(tmp_res)
+
+                else:
+                    return denoise_one_thresold(cwt_capsule,
+                                                self.m_denoising_threshold)
 
         else:
             return
 
-        self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
-                                                             self.m_image_in_port,
-                                                             self.m_image_out_port,
-                                                             num_rows_in_memory=80)
+        if self.m_list_mode:
+            # Calculate Results
+            self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
+                                                                 self.m_image_in_port,
+                                                                 self.m_tmp_data_port_denoising,
+                                                                 num_rows_in_memory=
+                                                                 self.m_num_rows_in_memory)
+            print "Finished analyzing date. Start splitting ..."
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Time denoising",
-                                                      "Using Wavelet analysis")
-        # TODO add more information here
-        self.m_image_out_port.close_port()
+            tmp_num_elements_per_threshold = self.m_image_in_port.get_shape()[0]
+            for i in range(0, len(self.m_denoising_threshold), 1):
+                tmp_threshold = self.m_denoising_threshold[i]
+                tmp_port = self.m_port_dict[tmp_threshold]
+                tmp_port.set_all(
+                    self.m_tmp_data_port_denoising_in[(i + 0) * tmp_num_elements_per_threshold:
+                                                      (i + 1) * tmp_num_elements_per_threshold,
+                                                      :, :])
+                # TODO create parameter for num frames in memory
+
+                tmp_port.copy_attributes_from_input_port(self.m_image_in_port)
+                tmp_port.add_history_information("Wavelet time denoising",
+                                                 "threshold " + str(tmp_threshold))
+
+            # clean up tmp data port
+            self.m_tmp_data_port_denoising.del_all_attributes()
+            self.m_tmp_data_port_denoising.del_all_data()
+            self.m_image_in_port.close_port()
+
+        else:
+            self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
+                                                                 self.m_image_in_port,
+                                                                 self.m_image_out_port,
+                                                                 num_rows_in_memory=
+                                                                 self.m_num_rows_in_memory)
+
+            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_image_out_port.add_history_information("Wavelet time denoising",
+                                                          "threshold " +
+                                                          str(self.m_denoising_threshold))
+
+            self.m_image_out_port.close_port()

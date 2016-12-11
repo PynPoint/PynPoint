@@ -301,6 +301,19 @@ class ProcessingModule(PypelineModule):
             else:
                 return np.array(func(tmp_line_in, *func_args))
 
+        # get first line in time
+        init_line = image_in_port[:, 0, 0]
+        length_of_processed_data = apply_function(init_line).shape[0]
+
+        # we want to replace old values or create a new data set if True
+        # if not we want to update the frames
+        update = image_out_port.tag == image_in_port.tag
+        if update and length_of_processed_data != image_in_port.get_shape()[0]:
+            raise ValueError(
+                "Input and output port have the same tag while %s is changing "
+                "the length of the signal. Use different input and output ports "
+                "instead. " % func)
+
         class Reader(multiprocessing.Process):
             def __init__(self,
                          data_in_port_in,
@@ -374,7 +387,9 @@ class ProcessingModule(PypelineModule):
                     print "Process " + proc_name + " got data for row " + str(
                         next_task.m_position) + " and starts processing..."
 
-                    result_arr = np.zeros(next_task.m_data_array.shape)
+                    result_arr = np.zeros((length_of_processed_data,
+                                          next_task.m_data_array.shape[1],
+                                          next_task.m_data_array.shape[2]))
                     for i in range(next_task.m_data_array.shape[1]):
                         for j in range(next_task.m_data_array.shape[2]):
                             tmp_line = next_task.m_data_array[:, i, j]
@@ -418,19 +433,6 @@ class ProcessingModule(PypelineModule):
                                              next_result.m_position[0] : next_result.m_position[1],
                                              :] = next_result.m_data_array
                     self.m_result_queue.task_done()
-
-        # get first line in time
-        init_line = image_in_port[:, 0, 0]
-        length_of_processed_data = apply_function(init_line).shape[0]
-
-        # we want to replace old values or create a new data set if True
-        # if not we want to update the frames
-        update = image_out_port.tag == image_in_port.tag
-        if update and length_of_processed_data != image_in_port.get_shape()[0]:
-            raise ValueError(
-                "Input and output port have the same tag while %s is changing "
-                "the length of the signal. Use different input and output ports "
-                "instead. " % func)
 
         print "Preparing database for analysis ..."
 
