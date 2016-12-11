@@ -130,14 +130,14 @@ class StarAlignmentModule(ProcessingModule):
             if self.m_resize is not 1:
                 # the rescale function normalizes all values to [0 ... 1]. We want to keep the total
                 # flux of the images and rescale the images afterwards
-                sum_before = sum(image_in)
+                sum_before = np.sum(image_in)
                 tmp_image = rescale(image=np.asarray(image_in,
                                                      dtype=np.float64),
                                     scale=(image_in.shape[0] * self.m_resize,
                                            image_in.shape[1] * self.m_resize),
                                     order=5,
                                     mode="reflect")
-                sum_after = sum(tmp_image)
+                sum_after = np.sum(tmp_image)
                 tmp_image = tmp_image*(sum_before/sum_after)
             else:
                 tmp_image = image_in
