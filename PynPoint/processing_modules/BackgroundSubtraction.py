@@ -47,11 +47,12 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         # process the rest of the stack
         for i in range(1, int(np.floor(number_of_frames/self.m_star_prs_shift)), 1):
-            print "Subtracting background of stack-part " + str(i) + " of " + \
+            print "Subtracting background from stack-part " + str(i) + " of " + \
                   str(int(np.floor(number_of_frames/self.m_star_prs_shift))) + " stack-parts"
             # calc the mean (next)
-            tmp_data = self.m_image_in_port[(i+1) * self.m_star_prs_shift % number_of_frames:
-                                            (i+2) * self.m_star_prs_shift % number_of_frames, :, :]
+            tmp_data = self.m_image_in_port[(i+1) * self.m_star_prs_shift % (number_of_frames-1):
+                                            (i+2) * self.m_star_prs_shift % (number_of_frames-1),
+                                            :, :]
             tmp_mean = np.mean(tmp_data, axis=0)
             # calc the mean (previous)
             tmp_data = self.m_image_in_port[(i-1) * self.m_star_prs_shift:
