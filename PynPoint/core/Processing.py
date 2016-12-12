@@ -436,6 +436,7 @@ class ProcessingModule(PypelineModule):
 
         print "Preparing database for analysis ..."
 
+        # TODO: try to create without stalling huge memory
         image_out_port.set_all(np.zeros((length_of_processed_data,
                                         image_in_port.get_shape()[1],
                                         image_in_port.get_shape()[2])),
