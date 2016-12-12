@@ -82,8 +82,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 self.m_port_dict[denoising_threshold[i]] = self.add_output_port(image_out_tag[i])
 
             # create tmp data port
-            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising")
-            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising")
+            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising2")
+            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising2")
 
         elif type(denoising_threshold) is float and type(image_in_tag) is str:
             self.m_list_mode = False
