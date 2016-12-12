@@ -205,12 +205,17 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                                                  self.m_tmp_data_port_denoising,
                                                                  num_rows_in_memory=
                                                                  self.m_num_rows_in_memory)
-            print "Finished analyzing date. Start splitting ..."
+            print "Finished analyzing. Start splitting ..."
 
             tmp_num_elements_per_threshold = self.m_image_in_port.get_shape()[0]
             for i in range(0, len(self.m_denoising_threshold), 1):
                 tmp_threshold = self.m_denoising_threshold[i]
                 tmp_port = self.m_port_dict[tmp_threshold]
+
+                print tmp_num_elements_per_threshold * i
+                print tmp_num_elements_per_threshold *(i+1)
+                print self.m_tmp_data_port_denoising_in.get_shape()
+
                 tmp_port.set_all(
                     self.m_tmp_data_port_denoising_in[(i + 0) * tmp_num_elements_per_threshold:
                                                       (i + 1) * tmp_num_elements_per_threshold,
