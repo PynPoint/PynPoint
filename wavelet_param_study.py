@@ -104,11 +104,10 @@ pipeline.add_module(angle_calc)'''
 wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   wavelet_order=2.0,
                                   keep_mean=True,
-                                  resolution=10)
+                                  resolution=0.2)
 
 k = 1
-for j in [list(np.arange(0.0, 0.7, 0.2)),
-          list(np.arange(0.8, 2.1, 0.2)),
+for j in [list(np.arange(0.0, 2.1, 0.2)),
           list(np.arange(2.2, 4.1, 0.2)),
           list(np.arange(4.2, 6.1, 0.2)),
           list(np.arange(6.2, 8.1, 0.2))]:
@@ -121,7 +120,7 @@ for j in [list(np.arange(0.0, 0.7, 0.2)),
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
-                                           image_in_tag="06_star_arr_aligned2",
+                                           image_in_tag="06_star_arr_aligned",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
