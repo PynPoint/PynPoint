@@ -80,7 +80,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=None,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)
+pipeline.add_module(star_cut)'''
 
 # 06 Alignment
 
@@ -89,7 +89,7 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 image_out_tag="06_star_arr_aligned2",
                                 interpolation="spline",
                                 accuracy=10,
-                                resize=2.0,
+                                resize=1.0,
                                 num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
@@ -97,7 +97,7 @@ pipeline.add_module(alignment)
 
 angle_calc = AngleCalculationModule(name_in="angle_calculation",
                                     data_tag="06_star_arr_aligned2")
-pipeline.add_module(angle_calc)'''
+pipeline.add_module(angle_calc)
 
 # 07 Wavelet Analysis
 #wavelet = DwtWaveletConfiguration()
