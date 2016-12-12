@@ -456,8 +456,8 @@ class ProcessingModule(PypelineModule):
         # Establish communication queues
 
         # buffer twice the data as processes are available
-        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
-        result_queue = multiprocessing.JoinableQueue(maxsize=num_processors * 2)
+        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
+        result_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
 
         # data base mutex
         data_mutex = multiprocessing.Lock()

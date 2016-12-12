@@ -81,30 +81,30 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 num_images_in_memory=None,
                                 fwhm_star=7)
 pipeline.add_module(star_cut)
-
+'''
 # 06 Alignment
 
 alignment = StarAlignmentModule(name_in="star_alignment",
                                 image_in_tag="05_star_arr_cut",
-                                image_out_tag="06_star_arr_aligned",
+                                image_out_tag="06_star_arr_aligned2",
                                 interpolation="spline",
                                 accuracy=10,
-                                resize=2.0,
+                                resize=1.0,
                                 num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
 
 angle_calc = AngleCalculationModule(name_in="angle_calculation",
-                                    data_tag="06_star_arr_aligned")
+                                    data_tag="06_star_arr_aligned2")
 pipeline.add_module(angle_calc)
-'''
+
 # 07 Wavelet Analysis
 #wavelet = DwtWaveletConfiguration()
 wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   wavelet_order=2.0,
                                   keep_mean=True,
-                                  resolution=1)
+                                  resolution=10)
 
 k = 1
 for j in [list(np.arange(0.0, 0.7, 0.2)),
@@ -121,7 +121,7 @@ for j in [list(np.arange(0.0, 0.7, 0.2)),
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
-                                           image_in_tag="06_star_arr_aligned",
+                                           image_in_tag="06_star_arr_aligned2",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
