@@ -82,8 +82,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 self.m_port_dict[denoising_threshold[i]] = self.add_output_port(image_out_tag[i])
 
             # create tmp data port
-            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising2")
-            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising2")
+            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising")
+            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising")
 
         elif type(denoising_threshold) is float and type(image_in_tag) is str:
             self.m_list_mode = False
@@ -212,9 +212,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 tmp_threshold = self.m_denoising_threshold[i]
                 tmp_port = self.m_port_dict[tmp_threshold]
 
-                print tmp_num_elements_per_threshold * i
-                print tmp_num_elements_per_threshold *(i+1)
-                print self.m_tmp_data_port_denoising_in.get_shape()
+                print "splitting part "+str(i+1) + " of " + str(len(self.m_denoising_threshold)) \
+                      + "parts"
 
                 tmp_port.set_all(
                     self.m_tmp_data_port_denoising_in[(i + 0) * tmp_num_elements_per_threshold:
