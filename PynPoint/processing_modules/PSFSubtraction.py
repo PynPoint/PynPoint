@@ -24,7 +24,7 @@ class PSFSubtractionModule(ProcessingModule):
         super(PSFSubtractionModule, self).__init__(name_in)
 
         # additional keywords
-        if "basis_tag" in kwargs:
+        if "basis_out_tag" in kwargs:
             basis_tag = kwargs["basis_out_tag"]
         else:
             basis_tag = "pca_basis_set"
@@ -127,7 +127,11 @@ class PSFSubtractionModule(ProcessingModule):
             self._m_preparation_reference.get_all_input_tags()
 
     def get_all_output_tags(self):
-        return self._m_residuals_module.get_all_output_tags()
+        return self._m_residuals_module.get_all_output_tags() + \
+               self._m_preparation_images.get_all_output_tags() + \
+               self._m_make_pca_basis.get_all_output_tags() + \
+               self._m_preparation_reference.get_all_output_tags() + \
+               self._m_make_psf_model.get_all_output_tags()
 
     def connect_database(self,
                          data_base_in):
