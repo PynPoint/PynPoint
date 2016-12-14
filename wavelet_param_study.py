@@ -21,7 +21,7 @@ pipeline = Pypeline("/scratch/user/mbonse/Working_files/",
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/01_raw_part/",
-                    "/Volumes/Seagate/Beta_Pic02/results")'''
+                    "/Volumes/Seagate/Beta_Pic02/results")
 
 
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
@@ -83,23 +83,23 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=None,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)
+pipeline.add_module(star_cut)'''
 
 # 06 Alignment
 
 alignment = StarAlignmentModule(name_in="star_alignment",
                                 image_in_tag="05_star_arr_cut",
-                                image_out_tag="06_star_arr_aligned2",
+                                image_out_tag="06_star_arr_aligned",
                                 interpolation="spline",
                                 accuracy=10,
-                                resize=1.0,
+                                resize=2.0,
                                 num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
 
 angle_calc = AngleCalculationModule(name_in="angle_calculation",
-                                    data_tag="06_star_arr_aligned2")
+                                    data_tag="06_star_arr_aligned")
 pipeline.add_module(angle_calc)
 
 
@@ -121,11 +121,11 @@ for j in [list(np.arange(0.0, 2.1, 0.2)),
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("07_wavelet_denoised_" + str(int(i)) + "_" + str(int((i % 1.0)*10)))
+        wavelet_names.append("07_wavelet_denoised_large_" + str(int(i)) + "_" + str(int((i % 1.0)*10)))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
-                                           image_in_tag="06_star_arr_aligned2",
+                                           image_in_tag="06_star_arr_aligned",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",

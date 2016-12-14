@@ -36,19 +36,9 @@ ff = {"07_wavelet_denoised_0_0" : "07_wavelet_denoised_0_0",
       "07_wavelet_denoised_5_4" : "07_wavelet_denoised_5_4",
       "07_wavelet_denoised_5_6" : "07_wavelet_denoised_5_6",
       "07_wavelet_denoised_5_8" : "07_wavelet_denoised_5_8",
-      "07_wavelet_denoised_6_0" : "07_wavelet_denoised_6_0",
-      "07_wavelet_denoised_6_2" : "07_wavelet_denoised_6_2",
-      "07_wavelet_denoised_6_4" : "07_wavelet_denoised_6_4",
-      "07_wavelet_denoised_6_6" : "07_wavelet_denoised_6_6",
-      "07_wavelet_denoised_6_8" : "07_wavelet_denoised_6_8",
-      "07_wavelet_denoised_7_0" : "07_wavelet_denoised_7_0",
-      "07_wavelet_denoised_7_2" : "07_wavelet_denoised_7_2",
-      "07_wavelet_denoised_7_4" : "07_wavelet_denoised_7_4",
-      "07_wavelet_denoised_7_6" : "07_wavelet_denoised_7_6",
-      "07_wavelet_denoised_7_8" : "07_wavelet_denoised_7_8",
-      "07_wavelet_denoised_8_0" : "07_wavelet_denoised_8_0"}
+      "07_wavelet_denoised_6_0" : "07_wavelet_denoised_6_0"}
 
-saving = Hdf5WritingModule("PynPoint_database2.hdf5",
+saving = Hdf5WritingModule("PynPoint_database_01.hdf5",
                            tag_dictionary=ff)
 
 pipeline.add_module(saving)
