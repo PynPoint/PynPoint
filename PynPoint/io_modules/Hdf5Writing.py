@@ -95,4 +95,6 @@ class Hdf5WritingModule(WritingModule):
 
         out_file.close()
 
+        self._m_data_base.close()
+
 

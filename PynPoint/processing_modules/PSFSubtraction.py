@@ -176,6 +176,8 @@ class PSFSubtractionModule(ProcessingModule):
             port.add_history_information("PSF_subtraction",
                                          history)
 
+        out_ports[0].flush()
+
 
 class CreateResidualsModule(ProcessingModule):
 
@@ -277,6 +279,8 @@ class CreateResidualsModule(ProcessingModule):
         self.m_res_var_port.set_all(tmp_res_rot_var)
         self.m_res_rot_mean_clip_port.set_all(res_rot_mean_clip)
 
+        self.m_res_arr_out_port.flush()
+
 
 class MakePSFModelModule(ProcessingModule):
     """
@@ -337,6 +341,7 @@ class MakePSFModelModule(ProcessingModule):
         self._m_psf_basis_out_port.add_attribute(name="psf_coeff",
                                                  value=psf_coeff,
                                                  static=False)
+        self._m_psf_basis_out_port.flush()
 
 
 class MakePCABasisModule(ProcessingModule):
@@ -390,3 +395,5 @@ class MakePCABasisModule(ProcessingModule):
         self._m_basis_out_port.set_all(basis_pca_arr)
         self._m_basis_out_port.add_attribute(name="basis_type",
                                              value="pca")
+
+        self._m_basis_out_port.flush()
