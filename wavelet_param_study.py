@@ -29,12 +29,12 @@ reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
 pipeline.add_module(reading_data)
 
 reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      input_dir="/Volumes/Seagate/Beta_Pic02/00_Dark_and_Flat/Dark",
+                                      input_dir="/scratch/user/mbonse/Data/00_Dark_and_Flat/Dark",
                                       image_tag="00_dark_arr")
 pipeline.add_module(reading_dark)
 
 reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      input_dir="/Volumes/Seagate/Beta_Pic02/00_Dark_and_Flat/Flat",
+                                      input_dir="/scratch/user/mbonse/Data/00_Dark_and_Flat/Flat",
                                       image_tag="00_flat_arr")
 pipeline.add_module(reading_flat)
 
