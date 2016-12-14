@@ -142,6 +142,8 @@ wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
                  "07_wavelet_denoised_8_0"]'''
 
+print wavelet_names
+
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))
 
@@ -163,6 +165,7 @@ for denoising_result in wavelet_names:
                                            prep_tag="prep_data",
                                            basis_out_tag="pca_basis",
                                            image_ave_tag="im_ave",
+                                           cent_mask_tag="cent_mask",
                                            cent_size=0.05)
     pipeline.add_module(psf_subtraction)
 
@@ -189,7 +192,7 @@ for denoising_result in wavelet_names:
                                           denoising_result + "_" + str(pca_number),
                                   im_arr_in_tag="prep_data",
                                   psf_im_in_tag="tmp_psf_model",
-                                  mask_in_tag="cent_mask_tag",
+                                  mask_in_tag="cent_mask",
                                   res_mean_tag="08_res_mean_for_" + denoising_result +
                                                "_" + str(pca_number).zfill(2),
                                   res_median_tag="08_res_median_for_" + denoising_result +
