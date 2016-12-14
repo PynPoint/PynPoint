@@ -21,7 +21,7 @@ pipeline = Pypeline("/scratch/user/mbonse/Working_files/",
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/01_raw_part/",
-                    "/Volumes/Seagate/Beta_Pic02/results")
+                    "/Volumes/Seagate/Beta_Pic02/results")'''
 
 
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
@@ -105,26 +105,24 @@ pipeline.add_module(angle_calc)
 
 # 07 Wavelet Analysis
 #wavelet = DwtWaveletConfiguration()
+
 wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   wavelet_order=2.0,
                                   keep_mean=True,
                                   resolution=0.2)
-'''
 
-wavelet_names = []
-# k = 1
+#wavelet_names = []
+k = 1
 for j in [list(np.arange(0.0, 2.1, 0.2)),
           list(np.arange(2.2, 4.1, 0.2)),
-          list(np.arange(4.2, 6.1, 0.2)),
-          list(np.arange(6.2, 8.1, 0.2))]:
+          list(np.arange(4.2, 6.1, 0.2))]:
 
     wavelet_thresholds = j
 
-    #wavelet_names = []
+    wavelet_names = []
     for i in wavelet_thresholds:
         wavelet_names.append("07_wavelet_denoised_" + str(int(i)) + "_" + str(int((i % 1.0)*10)))
 
-    '''
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
                                            image_in_tag="06_star_arr_aligned2",
@@ -133,14 +131,17 @@ for j in [list(np.arange(0.0, 2.1, 0.2)),
                                            padding="const_mean",
                                            num_rows_in_memory=48)
     pipeline.add_module(denoising)
-    k += 1'''
+    k += 1
+
+'''
+
 
 # 08 PSF Subtraction and preparation
 
-'''
+
 wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
-                 "07_wavelet_denoised_8_0"]'''
+                 "07_wavelet_denoised_8_0"]
 
 print wavelet_names
 
@@ -213,7 +214,7 @@ for denoising_result in wavelet_names:
                                         data_tag="08_res_mean_for_" + denoising_result +
                                                  "_" + str(pca_number).zfill(2))
         pipeline.add_module(writing)
-
+'''
 # xx run Pipeline
 
 pipeline.run()
