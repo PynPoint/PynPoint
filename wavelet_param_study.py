@@ -14,7 +14,7 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Working_files/07_gross/",
+pipeline = Pypeline("/scratch/user/mbonse/Working_files/08_klein/",
                     "/scratch/user/mbonse/Data/00_raw_Data/",
                     "/scratch/user/mbonse/results/")
 
@@ -83,7 +83,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=None,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)'''
+pipeline.add_module(star_cut)
 
 # 06 Alignment
 
@@ -133,17 +133,47 @@ for j in [list(np.arange(0.0, 2.1, 0.2)),
     pipeline.add_module(denoising)
     k += 1
 
-'''
 
+'''
 
 # 08 PSF Subtraction and preparation
 
-
+'''
 wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
-                 "07_wavelet_denoised_8_0"]
+                 "07_wavelet_denoised_8_0"]'''
 
-print wavelet_names
+wavelet_names = ["07_wavelet_denoised_0_0",
+                 "07_wavelet_denoised_0_2",
+                 "07_wavelet_denoised_0_4",
+                 "07_wavelet_denoised_0_6",
+                 "07_wavelet_denoised_0_8",
+                 "07_wavelet_denoised_1_0",
+                 "07_wavelet_denoised_1_2",
+                 "07_wavelet_denoised_1_4",
+                 "07_wavelet_denoised_1_6",
+                 "07_wavelet_denoised_1_8",
+                 "07_wavelet_denoised_2_0",
+                 "07_wavelet_denoised_2_2",
+                 "07_wavelet_denoised_2_4",
+                 "07_wavelet_denoised_2_6",
+                 "07_wavelet_denoised_2_8",
+                 "07_wavelet_denoised_3_0",
+                 "07_wavelet_denoised_3_2",
+                 "07_wavelet_denoised_3_4",
+                 "07_wavelet_denoised_3_6",
+                 "07_wavelet_denoised_3_8",
+                 "07_wavelet_denoised_4_0",
+                 "07_wavelet_denoised_4_2",
+                 "07_wavelet_denoised_4_4",
+                 "07_wavelet_denoised_4_6",
+                 "07_wavelet_denoised_4_8",
+                 "07_wavelet_denoised_5_0",
+                 "07_wavelet_denoised_5_2",
+                 "07_wavelet_denoised_5_4",
+                 "07_wavelet_denoised_5_6",
+                 "07_wavelet_denoised_5_8",
+                 "07_wavelet_denoised_6_0"]
 
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))
@@ -214,7 +244,7 @@ for denoising_result in wavelet_names:
                                         data_tag="08_res_mean_for_" + denoising_result +
                                                  "_" + str(pca_number).zfill(2))
         pipeline.add_module(writing)
-'''
+
 # xx run Pipeline
 
 pipeline.run()
