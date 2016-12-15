@@ -14,7 +14,7 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Working_files/",
+pipeline = Pypeline("/scratch/user/mbonse/Working_files/07_gross/",
                     "/scratch/user/mbonse/Data/00_raw_Data/",
                     "/scratch/user/mbonse/results/")
 
