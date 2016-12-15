@@ -14,7 +14,7 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Working_files/08_klein4/",
+pipeline = Pypeline("/scratch/user/mbonse/Working_files/08_klein5/",
                     "/scratch/user/mbonse/Data/00_raw_Data/",
                     "/scratch/user/mbonse/results/")
 
@@ -143,11 +143,12 @@ wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
                  "07_wavelet_denoised_8_0"]'''
 
-wavelet_names = ["07_wavelet_denoised_4_0",
-                 "07_wavelet_denoised_4_2",
-                 "07_wavelet_denoised_4_4",
-                 "07_wavelet_denoised_4_6",
-                 "07_wavelet_denoised_4_8"]
+wavelet_names = ["07_wavelet_denoised_5_0",
+                 "07_wavelet_denoised_5_2",
+                 "07_wavelet_denoised_5_4",
+                 "07_wavelet_denoised_5_6",
+                 "07_wavelet_denoised_5_8",
+                 "07_wavelet_denoised_6_0"]
 
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))
