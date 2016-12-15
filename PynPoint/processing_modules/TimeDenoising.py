@@ -213,7 +213,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 tmp_port = self.m_port_dict[tmp_threshold]
 
                 print "splitting part "+str(i+1) + " of " + str(len(self.m_denoising_threshold)) \
-                      + "parts"
+                      + " parts"
 
                 tmp_port.set_all(
                     self.m_tmp_data_port_denoising_in[(i + 0) * tmp_num_elements_per_threshold:
