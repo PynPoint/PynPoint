@@ -143,9 +143,7 @@ wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
                  "07_wavelet_denoised_8_0"]'''
 
-wavelet_names = ["07_wavelet_denoised_0_0",
-                 "07_wavelet_denoised_0_2",
-                 "07_wavelet_denoised_0_4",
+wavelet_names = ["07_wavelet_denoised_0_4",
                  "07_wavelet_denoised_0_6",
                  "07_wavelet_denoised_0_8",
                  "07_wavelet_denoised_1_0",
@@ -183,7 +181,7 @@ pca_numbers.extend(range(25, 90, 5))
 for denoising_result in wavelet_names:
 
     psf_subtraction = PSFSubtractionModule(0,
-                                           name_in="PSF_sub_for" + denoising_result,
+                                           name_in="PSF_sub_for_" + denoising_result,
                                            images_in_tag=denoising_result,
                                            reference_in_tag=denoising_result,
                                            res_mean_tag="08_res_mean_for_" + denoising_result +

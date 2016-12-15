@@ -261,7 +261,7 @@ class CreateResidualsModule(ProcessingModule):
 
         # create mean clip
         res_rot_mean_clip = np.zeros(im_data[0,].shape)
-
+        '''
         for i in range(0, res_rot_mean_clip.shape[0]):
             for j in range(0, res_rot_mean_clip.shape[1]):
                 temp = res_rot[:, i, j]
@@ -269,7 +269,7 @@ class CreateResidualsModule(ProcessingModule):
                     a = temp - temp.mean()
                     b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
                     b2 = b1.compress((b1 > (-1.0)*3.0*np.sqrt(a.var())).flat)
-                    res_rot_mean_clip[i, j] = temp.mean() + b2.mean()
+                    res_rot_mean_clip[i, j] = temp.mean() + b2.mean()'''
 
         # save results
         self.m_res_arr_out_port.set_all(res_arr)
