@@ -5,7 +5,7 @@ from PynPoint.io_modules import Hdf5WritingModule
 pipeline = Pypeline("/scratch/user/mbonse/Working_files/",
                     "/scratch/user/mbonse/Data/00_raw_Data/",
                     "/scratch/user/mbonse/results/")
-
+'''
 ff = {"07_wavelet_denoised_0_0" : "07_wavelet_denoised_0_0",
       "07_wavelet_denoised_0_2" : "07_wavelet_denoised_0_2",
       "07_wavelet_denoised_0_4" : "07_wavelet_denoised_0_4",
@@ -36,9 +36,11 @@ ff = {"07_wavelet_denoised_0_0" : "07_wavelet_denoised_0_0",
       "07_wavelet_denoised_5_4" : "07_wavelet_denoised_5_4",
       "07_wavelet_denoised_5_6" : "07_wavelet_denoised_5_6",
       "07_wavelet_denoised_5_8" : "07_wavelet_denoised_5_8",
-      "07_wavelet_denoised_6_0" : "07_wavelet_denoised_6_0"}
+      "07_wavelet_denoised_6_0" : "07_wavelet_denoised_6_0"}'''
 
-saving = Hdf5WritingModule("PynPoint_database_01.hdf5",
+ff = {"05_star_arr_cut" : "05_star_arr_cut"}
+
+saving = Hdf5WritingModule("PynPoint_database_02.hdf5",
                            tag_dictionary=ff)
 
 pipeline.add_module(saving)
