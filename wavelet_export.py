@@ -8,7 +8,7 @@ pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_g
 
 # ---------------------------
 
-ff = {"07_wavelet_denoised_large_0_0" : "07_wavelet_denoised_large_0_0",
+ff = {"06_star_arr_aligned" : "07_wavelet_denoised_large_0_0",
       "07_wavelet_denoised_large_0_2" : "07_wavelet_denoised_large_0_2",
       "07_wavelet_denoised_large_0_4" : "07_wavelet_denoised_large_0_4",
       "07_wavelet_denoised_large_0_6" : "07_wavelet_denoised_large_0_6",
@@ -20,6 +20,8 @@ saving1 = Hdf5WritingModule("PynPoint_database.hdf5",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving1)
+
+'''
 
 # ---------------------------
 
@@ -98,6 +100,6 @@ saving6 = Hdf5WritingModule("PynPoint_database.hdf5",
 pipeline.add_module(saving6)
 
 # ---------------------------
-
+'''
 
 pipeline.run()
