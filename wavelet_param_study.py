@@ -14,27 +14,27 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Working_files/08_klein5/",
-                    "/scratch/user/mbonse/Data/00_raw_Data/",
-                    "/scratch/user/mbonse/results/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_raw_data/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/results/")
 
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/01_raw_part/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
 
 reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      input_dir="/scratch/user/mbonse/Data/00_Dark_and_Flat/Dark",
+                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_dark/",
                                       image_tag="00_dark_arr")
 pipeline.add_module(reading_dark)
 
 reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      input_dir="/scratch/user/mbonse/Data/00_Dark_and_Flat/Flat",
+                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_flat/",
                                       image_tag="00_flat_arr")
 pipeline.add_module(reading_flat)
 
@@ -93,7 +93,7 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 interpolation="spline",
                                 accuracy=10,
                                 resize=2.0,
-                                num_images_in_memory=1000)
+                                num_images_in_memory=None)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
@@ -102,7 +102,7 @@ angle_calc = AngleCalculationModule(name_in="angle_calculation",
                                     data_tag="06_star_arr_aligned")
 pipeline.add_module(angle_calc)
 
-
+'''
 # 07 Wavelet Analysis
 #wavelet = DwtWaveletConfiguration()
 
@@ -141,7 +141,7 @@ for j in [list(np.arange(0.0, 2.1, 0.2)),
 '''
 wavelet_names = ["07_wavelet_denoised_0_0",
                  "07_wavelet_denoised_4_0",
-                 "07_wavelet_denoised_8_0"]'''
+                 "07_wavelet_denoised_8_0"]
 
 wavelet_names = ["07_wavelet_denoised_5_0",
                  "07_wavelet_denoised_5_2",
@@ -218,7 +218,7 @@ for denoising_result in wavelet_names:
                                                 "_" + str(pca_number).zfill(2),
                                         data_tag="08_res_mean_for_" + denoising_result +
                                                  "_" + str(pca_number).zfill(2))
-        pipeline.add_module(writing)
+        pipeline.add_module(writing)'''
 
 # xx run Pipeline
 
