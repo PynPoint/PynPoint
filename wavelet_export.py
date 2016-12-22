@@ -4,7 +4,7 @@ from PynPoint.io_modules import Hdf5WritingModule
 
 pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/",
                     "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross")
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/")
 
 # ---------------------------
 
