@@ -87,3 +87,5 @@ for denoising_result in wavelet_names:
                                         data_tag="08_res_mean_for_" + denoising_result +
                                                  "_" + str(pca_number).zfill(2))
         pipeline.add_module(writing)
+
+pipeline.run()
