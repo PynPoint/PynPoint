@@ -79,7 +79,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 image_in_tag="04_mean_background_sub",
                                 image_out_tag="05_star_arr_cut",
                                 psf_size=3.0,
-                                num_images_in_memory=None,
+                                num_images_in_memory=1000,
                                 fwhm_star=7)
 pipeline.add_module(star_cut)
 
