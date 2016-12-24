@@ -31,7 +31,7 @@ for j in [list(np.arange(0.2, 2.1, 0.2)),
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
-                                           num_rows_in_memory=None)
+                                           num_rows_in_memory=60)
     pipeline.add_module(denoising)
     k += 1
 
