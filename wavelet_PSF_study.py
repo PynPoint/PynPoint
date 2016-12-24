@@ -14,11 +14,11 @@ pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_g
 
 # 08 PSF Subtraction and preparation
 
-wavelet_names = ["07_wavelet_denoised_large_" + str(part) + "_0",
-                 "07_wavelet_denoised_large_" + str(part) + "_2",
-                 "07_wavelet_denoised_large_" + str(part) + "_4",
-                 "07_wavelet_denoised_large_" + str(part) + "_6",
-                 "07_wavelet_denoised_large_" + str(part) + "_8"]
+wavelet_names = ["07_wavelet_denoised_" + str(part) + "_0",
+                 "07_wavelet_denoised_" + str(part) + "_2",
+                 "07_wavelet_denoised_" + str(part) + "_4",
+                 "07_wavelet_denoised_" + str(part) + "_6",
+                 "07_wavelet_denoised_" + str(part) + "_8"]
 
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))
