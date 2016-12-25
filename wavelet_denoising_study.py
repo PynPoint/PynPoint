@@ -15,9 +15,12 @@ wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   resolution=0.2)
 
 k = 1
-for j in [list(np.arange(0.2, 2.1, 0.2)),
-          list(np.arange(2.2, 4.1, 0.2)),
-          list(np.arange(4.2, 6.0, 0.2))]:
+for j in [list(np.arange(0.2, 1.1, 0.2)),
+          list(np.arange(1.2, 2.1, 0.2)),
+          list(np.arange(2.2, 3.1, 0.2)),
+          list(np.arange(3.2, 4.1, 0.2)),
+          list(np.arange(4.2, 5.1, 0.2)),
+          list(np.arange(5.2, 6.0, 0.2))]:
 
     wavelet_thresholds = j
 
@@ -31,7 +34,7 @@ for j in [list(np.arange(0.2, 2.1, 0.2)),
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
-                                           num_rows_in_memory=60)
+                                           num_rows_in_memory=30)
     pipeline.add_module(denoising)
     k += 1
 
