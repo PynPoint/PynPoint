@@ -443,13 +443,13 @@ class ProcessingModule(PypelineModule):
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        num_processors = 30.0 #float(multiprocessing.cpu_count())
+        num_processors = 30 #multiprocessing.cpu_count()
 
         number_of_rows = image_in_port.get_shape()[1]
         if num_rows_in_memory is None:
-            num_rows_in_memory = int(np.ceil(image_in_port.get_shape()[1]/num_processors))
+            num_rows_in_memory = int(np.ceil(image_in_port.get_shape()[1]/float(num_processors)))
         else:
-            num_rows_in_memory = int(np.ceil(num_rows_in_memory/num_processors))
+            num_rows_in_memory = int(np.ceil(num_rows_in_memory/float(num_processors)))
 
         print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
 
