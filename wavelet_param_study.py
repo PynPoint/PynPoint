@@ -21,7 +21,7 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -81,7 +81,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=1000,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)
+pipeline.add_module(star_cut)'''
 
 # 06 Alignment
 
@@ -90,8 +90,8 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 image_out_tag="06_star_arr_aligned",
                                 interpolation="spline",
                                 accuracy=10,
-                                resize=2.0,
-                                num_images_in_memory=None)
+                                resize=1.0,
+                                num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
