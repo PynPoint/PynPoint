@@ -15,12 +15,9 @@ wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   resolution=0.2)
 
 k = 1
-for j in [list(np.arange(0.2, 1.1, 0.2)),
-          list(np.arange(1.2, 2.1, 0.2)),
-          list(np.arange(2.2, 3.1, 0.2)),
-          list(np.arange(3.2, 4.1, 0.2)),
-          list(np.arange(4.2, 5.1, 0.2)),
-          list(np.arange(5.2, 6.0, 0.2))]:
+for j in [list(np.arange(0.2, 2.1, 0.2)),
+          list(np.arange(2.2, 4.1, 0.2)),
+          list(np.arange(4.2, 6.0, 0.2))]:
 
     wavelet_thresholds = j
 
