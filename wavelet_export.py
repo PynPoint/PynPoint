@@ -2,9 +2,9 @@ from PynPoint import Pypeline
 from PynPoint.io_modules import Hdf5WritingModule
 
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/")
 
 # ---------------------------
 
