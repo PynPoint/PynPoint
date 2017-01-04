@@ -7,7 +7,7 @@ from StackingAndSubsampling import StackAndSubsetModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule
 from SkyScienceDataModules import ReadFitsSkyDirectory, MeanSkyCubes, SkySubtraction,\
     AlignmentSkyAndScienceDataModule
-from SimpleTools import CutAroundCenterModule, CutAroundPositionModule
+from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule
