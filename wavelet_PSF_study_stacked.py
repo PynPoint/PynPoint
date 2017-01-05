@@ -7,9 +7,9 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/results_stacked/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/results_stacked/")
 
 
 # 08 PSF Subtraction and preparation
@@ -26,7 +26,7 @@ pca_numbers.extend(range(25, 90, 5))
 for denoising_result in wavelet_names:
 
     # 07_02 scaling
-    scaling = ScaleFramesModule(2,
+    scaling = ScaleFramesModule(1,
                                 name_in="scaling_for_" + denoising_result,
                                 image_in_tag=denoising_result,
                                 image_out_tag="07_scaled_for_" + denoising_result,
