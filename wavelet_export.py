@@ -23,7 +23,7 @@ pipeline.add_module(saving1)'''
 
 # ---------------------------
 
-ff = {"07_wavelet_denoised_1_0" : "07_wavelet_denoised_1_0"}
+ff = {"07_wavelet_denoised_large_1_0" : "07_wavelet_denoised_1_0"}
 
 saving2 = Hdf5WritingModule("PynPoint_database_tmp.hdf5",
                             name_in="hdf5_writing_02",
