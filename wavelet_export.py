@@ -2,9 +2,9 @@ from PynPoint import Pypeline
 from PynPoint.io_modules import Hdf5WritingModule
 
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/08_gross/")
 
 # ---------------------------
 '''
@@ -23,15 +23,11 @@ pipeline.add_module(saving1)'''
 
 # ---------------------------
 
-ff = {"07_wavelet_denoised_1_0" : "07_wavelet_denoised_1_0",
-      "07_wavelet_denoised_1_1" : "07_wavelet_denoised_1_2",
-      "07_wavelet_denoised_1_4" : "07_wavelet_denoised_1_4",
-      "07_wavelet_denoised_1_6" : "07_wavelet_denoised_1_6",
-      "07_wavelet_denoised_1_8" : "07_wavelet_denoised_1_8"}
+ff = {"07_wavelet_denoised_1_0" : "07_wavelet_denoised_1_0"}
 
-saving2 = Hdf5WritingModule("PynPoint_database.hdf5",
+saving2 = Hdf5WritingModule("PynPoint_database_tmp.hdf5",
                             name_in="hdf5_writing_02",
-                            output_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/08_klein_1",
+                            output_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29/Working_files/",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving2)
