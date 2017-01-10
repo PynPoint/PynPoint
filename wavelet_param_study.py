@@ -11,9 +11,9 @@ StarExtractionModule, StarAlignmentModule
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26/working_files/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_raw_data/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26/results/")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/Data/00_raw_data/",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/results/")
 
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
@@ -21,18 +21,18 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-'''
+
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
 
 reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_dark/",
+                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_25/Data/00_dark/",
                                       image_tag="00_dark_arr")
 pipeline.add_module(reading_dark)
 
 reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26/data/00_flat/",
+                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_25/Data/00_flat/",
                                       image_tag="00_flat_arr")
 pipeline.add_module(reading_flat)
 
@@ -67,7 +67,7 @@ pipeline.add_module(bp_cleaning)
 
 # 04 Background Subtraction
 
-bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
+bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=402,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
@@ -81,7 +81,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 psf_size=3.0,
                                 num_images_in_memory=1000,
                                 fwhm_star=7)
-pipeline.add_module(star_cut)'''
+pipeline.add_module(star_cut)
 
 # 06 Alignment
 
