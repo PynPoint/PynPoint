@@ -30,7 +30,7 @@ for j in [[0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("07_wavelet_denoised_" + str(int(i)) + "_" + str(int((i % 1.0)*10)))
+        wavelet_names.append("07_wavelet_denoised_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
