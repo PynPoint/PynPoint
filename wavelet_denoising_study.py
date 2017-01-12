@@ -4,7 +4,7 @@ from PynPoint.processing_modules import CwtWaveletConfiguration, WaveletTimeDeno
 
 
 pipeline = Pypeline("/scratch/user/mbonse/Eps_Eri/working_files",
-                    "/scratch/user/mbonse/Eps_Eri/working_files/Data",
+                    "/scratch/user/mbonse/Eps_Eri/Data",
                     "/scratch/user/mbonse/Eps_Eri/results/")
 
 
