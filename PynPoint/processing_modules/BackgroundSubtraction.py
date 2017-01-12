@@ -43,11 +43,11 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         # clean first stack
         tmp_data = self.m_image_in_port[1:self.m_star_prs_shift, :, :]
         tmp_data = tmp_data - tmp_mean
-        self.m_image_out_port.append(tmp_data)
+        self.m_image_out_port.append(tmp_data)  # TODO This will not work for same in and out port
 
         # the last and the one before will be performed afterwards
-        top = int(np.floor(number_of_frames /
-                           self.m_star_prs_shift)) - 1
+        top = int(np.ceil(number_of_frames /
+                          self.m_star_prs_shift)) - 2
 
         # process the rest of the stack
         for i in range(1, top, 1):
