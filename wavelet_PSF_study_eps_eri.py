@@ -20,19 +20,10 @@ pca_numbers.extend(range(25, 90, 5))
 
 for denoising_result in wavelet_names:
 
-    # 07_02 scaling
-    scaling = ScaleFramesModule(1,
-                                name_in="scaling_for_" + denoising_result,
-                                image_in_tag=denoising_result,
-                                image_out_tag="07_scaled_for_" + denoising_result,
-                                number_of_images_in_memory=400)
-
-    pipeline.add_module(scaling)
-
     # 07_03 stacking
 
     stacking = StackAndSubsetModule(name_in="stacking_for_" + denoising_result,
-                                    image_in_tag="07_scaled_for_" + denoising_result,
+                                    image_in_tag=denoising_result,
                                     image_out_tag="07_stacked_for_" + denoising_result,
                                     stacking=10)
 
