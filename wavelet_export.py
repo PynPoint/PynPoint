@@ -87,8 +87,8 @@ pipeline.add_module(saving5)
 ff = {"07_wavelet_denoised_5_0" : "07_wavelet_denoised_5_0",
       "07_wavelet_denoised_5_2" : "07_wavelet_denoised_5_2",
       "07_wavelet_denoised_5_4" : "07_wavelet_denoised_5_4",
-      "07_wavelet_denoised_5_5" : "07_wavelet_denoised_5_6",
-      "07_wavelet_denoised_5_7" : "07_wavelet_denoised_5_8"}
+      "07_wavelet_denoised_5_6" : "07_wavelet_denoised_5_6",
+      "07_wavelet_denoised_5_8" : "07_wavelet_denoised_5_8"}
 
 saving6 = Hdf5WritingModule("PynPoint_database.hdf5",
                             name_in="hdf5_writing_06",
