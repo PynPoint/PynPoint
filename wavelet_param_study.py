@@ -21,7 +21,7 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -63,7 +63,7 @@ pipeline.add_module(flat_sub)
 bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
-pipeline.add_module(bp_cleaning)
+pipeline.add_module(bp_cleaning)'''
 
 # 04 Background Subtraction
 
