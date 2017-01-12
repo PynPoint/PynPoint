@@ -4,7 +4,7 @@ from PynPoint.processing_modules import CwtWaveletConfiguration, WaveletTimeDeno
 
 
 pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_raw_data/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_raw_Data/",
                     "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results/")
 
 
