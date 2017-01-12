@@ -4,8 +4,8 @@ from PynPoint.io_modules import WriteAsSingleFitsFile
 
 from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, CreateResidualsModule
 
-pipeline = Pypeline("/scratch/user/mbonse/Eps_Eri/Data/",
-                    "/scratch/user/mbonse/Eps_Eri/working_files/",
+pipeline = Pypeline("/scratch/user/mbonse/Eps_Eri/working_files/",
+                    "/scratch/user/mbonse/Eps_Eri/Data/",
                     "/scratch/user/mbonse/Eps_Eri/results")
 
 
