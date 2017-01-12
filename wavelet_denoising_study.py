@@ -3,9 +3,9 @@ import numpy as np
 from PynPoint.processing_modules import CwtWaveletConfiguration, WaveletTimeDenoisingModule
 
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/Data/00_raw_data/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/results/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_raw_data/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results/")
 
 
 # 07 Wavelet Analysis
