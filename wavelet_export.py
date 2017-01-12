@@ -2,24 +2,21 @@ from PynPoint import Pypeline
 from PynPoint.io_modules import Hdf5WritingModule
 
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/Data/00_raw_data/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/results/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results")
 
 # ---------------------------
 
-ff = {"06_star_arr_aligned" : "07_wavelet_denoised_0_0",
-      "07_wavelet_denoised_0_2" : "07_wavelet_denoised_0_2",
-      "07_wavelet_denoised_0_4" : "07_wavelet_denoised_0_4",
-      "07_wavelet_denoised_0_6" : "07_wavelet_denoised_0_6",
-      "07_wavelet_denoised_0_8" : "07_wavelet_denoised_0_8"}
+ff = {"04_mean_background_sub" : "04_mean_background_sub"}
 
-saving1 = Hdf5WritingModule("PynPoint_database.hdf5",
+saving1 = Hdf5WritingModule("PynPoint_database_04.hdf5",
                             name_in="hdf5_writing_01",
-                            output_dir="/scratch/user/mbonse/HR8799_2012_08_25/working_files/08_klein_0",
+                            output_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving1)
+'''
 
 # ---------------------------
 
@@ -96,7 +93,7 @@ saving6 = Hdf5WritingModule("PynPoint_database.hdf5",
 
 pipeline.add_module(saving6)
 
-# ---------------------------
+# ---------------------------'''
 
 
 pipeline.run()
