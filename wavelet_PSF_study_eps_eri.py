@@ -21,18 +21,18 @@ pca_numbers.extend(range(25, 90, 5))
 for denoising_result in wavelet_names:
 
     # 07_03 stacking
-
+    '''
     stacking = StackAndSubsetModule(name_in="stacking_for_" + denoising_result,
                                     image_in_tag=denoising_result,
                                     image_out_tag="07_stacked_for_" + denoising_result,
                                     stacking=10)
 
-    pipeline.add_module(stacking)
+    pipeline.add_module(stacking)'''
 
     psf_subtraction = PSFSubtractionModule(0,
                                            name_in="PSF_sub_for_" + denoising_result,
-                                           images_in_tag="07_stacked_for_" + denoising_result,
-                                           reference_in_tag="07_stacked_for_" + denoising_result,
+                                           images_in_tag=denoising_result,
+                                           reference_in_tag=denoising_result,
                                            res_mean_tag="08_res_mean_for_stacked_" + denoising_result +
                                                         "_" + str(0).zfill(2),  # 0 PCAs
                                            res_median_tag="08_res_median_for_stacked_" + denoising_result +
