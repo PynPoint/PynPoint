@@ -12,27 +12,18 @@ pipeline = Pypeline("/scratch/user/mbonse/Eps_Eri/working_files/",
 # 08 PSF Subtraction and preparation
 
 wavelet_names = ["07_wavelet_denoised_1_0",
-                 "07_wavelet_denoised_3_0",
-                 "bg_cleaned_arr"]
+                 "bg_cleaned_arr",
+                 "07_wavelet_denoised_3_0"]
 
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 150, 5))
 
 for denoising_result in wavelet_names:
 
-    # 07_03 stacking
-
-    stacking = StackAndSubsetModule(name_in="stacking_for_" + denoising_result,
-                                    image_in_tag=denoising_result,
-                                    image_out_tag="07_stacked_for_" + denoising_result,
-                                    stacking=10)
-
-    pipeline.add_module(stacking)
-
     psf_subtraction = PSFSubtractionModule(0,
                                            name_in="PSF_sub_for_" + denoising_result,
-                                           images_in_tag="07_stacked_for_" + denoising_result,
-                                           reference_in_tag="07_stacked_for_" + denoising_result,
+                                           images_in_tag=denoising_result,
+                                           reference_in_tag=denoising_result,
                                            res_mean_tag="08_res_mean_for_stacked_" + denoising_result +
                                                         "_" + str(0).zfill(2),  # 0 PCAs
                                            res_median_tag="08_res_median_for_stacked_" + denoising_result +
@@ -47,7 +38,7 @@ for denoising_result in wavelet_names:
                                            cent_size=0.05)
     pipeline.add_module(psf_subtraction)
 
-    writing = WriteAsSingleFitsFile("08_res_mean_for_stacked_" + denoising_result +
+    writing = WriteAsSingleFitsFile("08_res_mean_for_" + denoising_result +
                                     "_" + str(0).zfill(2) + ".fits",
                                     name_in="writing_" + "08_res_mean_for_stacked_" + denoising_result +
                                             "_" + str(0).zfill(2),
@@ -84,7 +75,7 @@ for denoising_result in wavelet_names:
 
         # write out result as fits
 
-        writing = WriteAsSingleFitsFile("08_res_mean_for_stacked_" + denoising_result +
+        writing = WriteAsSingleFitsFile("08_res_mean_for_" + denoising_result +
                                         "_" + str(pca_number).zfill(2) + ".fits",
                                         name_in="writing_" + "08_res_mean_for_stacked_" + denoising_result +
                                                 "_" + str(pca_number).zfill(2),
