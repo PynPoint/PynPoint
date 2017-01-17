@@ -88,7 +88,7 @@ class SignalToNoise(object):
             snr = signal / noise
 
             print snr
-            '''
+
             fig = plt.figure()
             fig.add_subplot(1,3,1)
             plt.imshow(img, origin = 'lower', interpolation = 'nearest', vmin = -4.e-6, vmax = 10.e-6)
@@ -97,7 +97,7 @@ class SignalToNoise(object):
             fig.add_subplot(1,3,3)
             plt.imshow(img * (1. - (self.noise_mask + self.signal_mask)), origin = 'lower', interpolation = 'nearest', vmin = -4.e-6, vmax = 10.e-6)
             plt.savefig(dir_in + str(ind) + "_Signal_to_noise.pdf")
-            plt.close()'''
+            plt.close()
 
             snr_list.append(snr)
 
