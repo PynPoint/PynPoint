@@ -8,9 +8,9 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/results/")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results/")
 
 # 08 PSF Subtraction and preparation
 
@@ -19,9 +19,12 @@ wavelet_names = ["07_wavelet_denoised_" + str(part) + "_0",
                  "07_wavelet_denoised_" + str(part) + "_4",
                  "07_wavelet_denoised_" + str(part) + "_6",
                  "07_wavelet_denoised_" + str(part) + "_8"]
-
+'''
 pca_numbers = range(1, 20, 1)
-pca_numbers.extend(range(25, 90, 5))
+pca_numbers.extend(range(25, 90, 5))'''
+
+pca_numbers = range(1, 30, 1)
+pca_numbers.extend(range(32, 152, 2))
 
 for denoising_result in wavelet_names:
 
