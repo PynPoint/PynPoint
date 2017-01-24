@@ -41,7 +41,7 @@ folder_list = ["results_0_0/",
 
 planet_pos = (65, 63) # BP 29
 #planet_pos = (58.5, 67.5)  # HR8799 e 75 68
-planet_pos = (74, 67) # HR8799 d
+#planet_pos = (74, 67) # HR8799 d
 
 # shifts = np.linspace(-3.0, 3.0, num= 20) #
 
@@ -52,7 +52,7 @@ print "BP 29 small"
 
 for tmploc in folder_list:
     print "------------- " + tmploc + "---------------"
-    tmp_location = "/Users/markusbonse/Desktop/HR8799/" + tmploc
+    tmp_location = "/Users/markusbonse/Desktop/BetaPic_29_small/" + tmploc
 
     last_planet_pos = planet_pos
 
