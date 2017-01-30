@@ -97,7 +97,7 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 interpolation="spline",
                                 accuracy=10,
                                 resize=1.0,
-                                num_images_in_memory=1000)
+                                num_images_in_memory=100)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
