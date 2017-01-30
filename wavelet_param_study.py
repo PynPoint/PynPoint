@@ -62,11 +62,12 @@ flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
                                  image_out_tag="02_dark_flat_sub")
 
 pipeline.add_module(dark_sub)
-pipeline.add_module(flat_sub)
+pipeline.add_module(flat_sub)'''
 
 # 03 Bad Pixel
 
-bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="Bad_Pixel_filtering",
+bp_cleaning = BadPixelCleaningSigmaFilterModule(sigma=10,
+                                                name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
 pipeline.add_module(bp_cleaning)
@@ -77,7 +78,7 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=162,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction) '''
+pipeline.add_module(bg_subtraction)
 
 # 03 second Bad Pixel cleaning
 
