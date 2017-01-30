@@ -51,6 +51,9 @@ class StarExtractionModule(ProcessingModule):
                                             kernel_size,
                                             sigma)
 
+            # TODO remove this hack
+            search_image[170:180, 410:415] = 0
+
             # cut the image by maximum
             argmax = np.unravel_index(search_image.argmax(), search_image.shape)
 
