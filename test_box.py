@@ -3,15 +3,7 @@ import glob, os
 import numpy as np
 import operator
 
-folder_list = ["results_0_0/",
-               "results_0_2/",
-               "results_0_4/",
-               "results_0_6/",
-"results_0_8/",
-               "results_1_0/",
-               "results_1_2/",
-               "results_1_4/",
-               "results_1_6/",
+folder_list = ["results_1_6/",
                "results_1_8/",
 "results_2_0/",
                "results_2_2/",
@@ -73,15 +65,16 @@ for tmploc in folder_list:
             snr_result_list.append(tmp_result[2])
             planet_pos_list.append(tmp_result[3])
 
+        '''
         result_fit = fpf_calculator.fpf_calculator(tmp_location + str(file),
                                                    filetype="fits",
                                                    planet_position=planet_pos,
                                                    radius=3.6/2.0,
                                                    method="fit",
                                                    plot=False,
-                                                   save=False)
-        snr_result_list.append(result_fit[2])
-        planet_pos_list.append(result_fit[3])
+                                                   save=False)'''
+        #snr_result_list.append(result_fit[2])
+        #planet_pos_list.append(result_fit[3])
 
         index, value = max(enumerate(snr_result_list), key=operator.itemgetter(1))
         #print planet_pos_list[index]
