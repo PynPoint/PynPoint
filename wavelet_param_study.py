@@ -21,7 +21,7 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -77,12 +77,19 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=162,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)
+pipeline.add_module(bg_subtraction) '''
+
+# 03 second Bad Pixel cleaning
+
+bp_cleaning2 = BadPixelCleaningSigmaFilterModule(name_in="Bad_Pixel_filtering_2",
+                                                 image_in_tag="04_mean_background_sub",
+                                                 image_out_tag="04_mean_background_sub_cleaned")
+pipeline.add_module(bp_cleaning2)
 
 # 05 Star extraction
 
 star_cut = StarExtractionModule(name_in="star_cutting",
-                                image_in_tag="04_mean_background_sub",
+                                image_in_tag="04_mean_background_sub_cleaned",
                                 image_out_tag="05_star_arr_cut",
                                 psf_size=3.0,
                                 num_images_in_memory=100,
