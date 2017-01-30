@@ -175,7 +175,7 @@ def create_fake_planet(dir_raw,psf_fits,dir_fake_planets,fake_planet_pos,mag,sub
     if psf_type=='fits':
         psf = pipeline.get_data('psf_model')
 
-    center=[len(psf)/2.,len(psf)/2.] #Assumes centering already done
+    center=[len(psf)/2. - 1.,len(psf)/2. -1.] #Assumes centering already done
     #Cut the PSF if requested:
     if cutting_psf==True:
         star_psf=psf[center[1]-psf_cut/2.:center[1]+psf_cut/2.,center[0]-psf_cut/2.:center[0]+psf_cut/2.]
