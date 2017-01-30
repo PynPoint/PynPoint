@@ -54,6 +54,7 @@ class StarExtractionModule(ProcessingModule):
             # cut the image by maximum
             argmax = np.unravel_index(search_image.argmax(), search_image.shape)
 
+            print argmax
             if argmax[0] <= psf_radius or argmax[1] <= psf_radius:
                 print "cutting center"
                 argmax = (256, 256)
