@@ -11,9 +11,9 @@ StarExtractionModule, StarAlignmentModule
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_small/working_files/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_raw_Data/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_small/results/")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/",
+                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/data/00_raw_data",
+                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/results/")
 
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
@@ -21,18 +21,18 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-'''
+
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
 
 reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_Dark_and_Flat/Dark/",
+                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_26_ND/data/00_dark_and_flat/dark/",
                                       image_tag="00_dark_arr")
 pipeline.add_module(reading_dark)
 
 reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_small/Data/00_Dark_and_Flat/Flat/",
+                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_26_ND/data/00_dark_and_flat/flat/",
                                       image_tag="00_flat_arr")
 pipeline.add_module(reading_flat)
 
@@ -43,11 +43,17 @@ cutting = CutTopTwoLinesModule(name_in="NACO_cutting",
                                image_out_tag="01_raw_data_cut")
 pipeline.add_module(cutting)
 
+# Dark Cutting
+cutting_dark = CutTopTwoLinesModule(name_in="NACO_cutting_dark",
+                                    image_in_tag="00_dark_arr",
+                                    image_out_tag="01_dark_arr")
+pipeline.add_module(cutting_dark)
+
 # 02 Dark and Flat Subtraction
 
 dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
                                  image_in_tag="01_raw_data_cut",
-                                 dark_in_tag="00_dark_arr",
+                                 dark_in_tag="01_dark_arr",
                                  image_out_tag="02_dark_sub")
 
 flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
@@ -63,11 +69,11 @@ pipeline.add_module(flat_sub)
 bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
-pipeline.add_module(bp_cleaning)'''
+pipeline.add_module(bp_cleaning)
 
 # 04 Background Subtraction
 
-bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
+bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=162,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
