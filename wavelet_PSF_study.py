@@ -8,17 +8,22 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/results/")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/results/")
 
 # 08 PSF Subtraction and preparation
 
-wavelet_names = ["07_wavelet_denoised_" + str(part) + "_0",
-                 "07_wavelet_denoised_" + str(part) + "_2",
-                 "07_wavelet_denoised_" + str(part) + "_4",
-                 "07_wavelet_denoised_" + str(part) + "_6",
-                 "07_wavelet_denoised_" + str(part) + "_8"]
+if str(part) == "0":
+    wavelet_names = ["07_wavelet_denoised_0_0"]
+elif str(part) == "1":
+    wavelet_names = ["07_wavelet_denoised_0_8"]
+elif str(part) == "2":
+    wavelet_names = ["07_wavelet_denoised_1_0"]
+else:
+    wavelet_names = ["07_wavelet_denoised_1_2"]
+
+
 '''
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))'''
