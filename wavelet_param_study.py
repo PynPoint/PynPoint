@@ -85,7 +85,7 @@ star_cut = StarExtractionModule(name_in="star_cutting",
                                 image_in_tag="04_mean_background_sub",
                                 image_out_tag="05_star_arr_cut",
                                 psf_size=3.0,
-                                num_images_in_memory=1000,
+                                num_images_in_memory=100,
                                 fwhm_star=12)
 pipeline.add_module(star_cut)
 
@@ -97,7 +97,7 @@ alignment = StarAlignmentModule(name_in="star_alignment",
                                 interpolation="spline",
                                 accuracy=10,
                                 resize=1.0,
-                                num_images_in_memory=100)
+                                num_images_in_memory=1000)
 pipeline.add_module(alignment)
 
 # 06 Angle Calculation
