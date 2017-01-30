@@ -84,16 +84,16 @@ pipeline.add_module(bg_subtraction)'''
 
 star_cut = StarExtractionModule(name_in="star_cutting",
                                 image_in_tag="04_mean_background_sub",
-                                image_out_tag="05_star_arr_cut",
+                                image_out_tag="05_star_arr_cut2",
                                 psf_size=3.0,
-                                num_images_in_memory=100,
+                                num_images_in_memory=1000,
                                 fwhm_star=12)
 pipeline.add_module(star_cut)
 
 # 06 Alignment
 
 alignment = StarAlignmentModule(name_in="star_alignment",
-                                image_in_tag="05_star_arr_cut",
+                                image_in_tag="05_star_arr_cut2",
                                 image_out_tag="06_star_arr_aligned",
                                 interpolation="spline",
                                 accuracy=10,
