@@ -8,9 +8,9 @@ pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/",
 
 # ---------------------------
 
-ff = {"05_star_arr_cut" : "'05_star_arr_cut"}
+ff = {"04_mean_background_sub" : "'04_mean_background_sub"}
 
-saving1 = Hdf5WritingModule("PynPoint_database_05.hdf5",
+saving1 = Hdf5WritingModule("PynPoint_database_04.hdf5",
                             name_in="hdf5_writing_01",
                             output_dir="/scratch/user/mbonse/HR8799_2012_08_26_ND/results/",
                             tag_dictionary=ff)
