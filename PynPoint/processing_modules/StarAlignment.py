@@ -59,7 +59,8 @@ class StarExtractionModule(ProcessingModule):
 
             if argmax[0] <= psf_radius or argmax[1] <= psf_radius:
                 print "cutting center"
-                argmax[0], argmax[1] = 256, 256
+                argmax[0] = 256
+                argmax[1] = 256
 
                 '''
                 raise ValueError('Highest value is near the border. PSF size is too '
