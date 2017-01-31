@@ -8,7 +8,7 @@ pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/",
 
 # ---------------------------
 
-ff = {"06_star_arr_aligned" : "07_wavelet_denoised_0_0"}
+ff = {"06_star_arr_aligned" : "07_wavelet_denoised_0_1"}
 
 saving1 = Hdf5WritingModule("PynPoint_database.hdf5",
                             name_in="hdf5_writing_01",
