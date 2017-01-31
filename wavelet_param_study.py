@@ -21,7 +21,7 @@ pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
                     "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
-'''
+
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -66,7 +66,7 @@ pipeline.add_module(flat_sub)
 
 # 03 Bad Pixel
 
-bp_cleaning = BadPixelCleaningSigmaFilterModule(sigma=2,
+bp_cleaning = BadPixelCleaningSigmaFilterModule(sigma=5,
                                                 name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
@@ -78,13 +78,13 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=162,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)'''
+pipeline.add_module(bg_subtraction)
 
 # 05 Star extraction
 
 star_cut = StarExtractionModule(name_in="star_cutting",
                                 image_in_tag="04_mean_background_sub",
-                                image_out_tag="05_star_arr_cut2",
+                                image_out_tag="05_star_arr_cut",
                                 psf_size=3.0,
                                 num_images_in_memory=1000,
                                 fwhm_star=12)
@@ -93,7 +93,7 @@ pipeline.add_module(star_cut)
 # 06 Alignment
 
 alignment = StarAlignmentModule(name_in="star_alignment",
-                                image_in_tag="05_star_arr_cut2",
+                                image_in_tag="05_star_arr_cut",
                                 image_out_tag="06_star_arr_aligned",
                                 interpolation="spline",
                                 accuracy=10,
