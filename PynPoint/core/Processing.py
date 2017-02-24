@@ -443,7 +443,7 @@ class ProcessingModule(PypelineModule):
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        num_processors = 30 #multiprocessing.cpu_count()
+        num_processors = multiprocessing.cpu_count()
 
         number_of_rows = image_in_port.get_shape()[1]
         if num_rows_in_memory is None:

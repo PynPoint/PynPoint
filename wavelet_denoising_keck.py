@@ -2,11 +2,9 @@ from PynPoint import Pypeline
 import numpy as np
 from PynPoint.processing_modules import CwtWaveletConfiguration, WaveletTimeDenoisingModule
 
-
-pipeline = Pypeline("/scratch/user/mbonse/EPS_ERI_2015_small/Workplace/",
-                    "/scratch/user/mbonse/EPS_ERI_2015_small/Workplace/",
-                    "/scratch/user/mbonse/EPS_ERI_2015_small/results/")
-
+pipeline = Pypeline("/Users/markusbonse/Desktop/",
+                    "/Users/markusbonse/Desktop/Science",
+                    "/Users/markusbonse/Desktop/results")
 
 # 07 Wavelet Analysis
 wavelet = CwtWaveletConfiguration(wavelet="dog",
@@ -16,7 +14,7 @@ wavelet = CwtWaveletConfiguration(wavelet="dog",
 
 k = 1
 
-for j in [[1.0, 0.8, 1.2, 2.0], ]:
+for j in [[1.0,], ]:
 
     wavelet_thresholds = j
 
@@ -26,11 +24,11 @@ for j in [[1.0, 0.8, 1.2, 2.0], ]:
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
-                                           image_in_tag="06_star_arr_aligned",
+                                           image_in_tag="04_star_aligned",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
-                                           num_rows_in_memory=30)
+                                           num_rows_in_memory=None)
     pipeline.add_module(denoising)
     k += 1
 
