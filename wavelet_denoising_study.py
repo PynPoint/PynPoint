@@ -26,7 +26,7 @@ for j in [[1.0, 0.8, 1.2, 2.0], ]:
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
-                                           image_in_tag="data_prep",
+                                           image_in_tag="bg_bp_cleaned_arr_cut",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
                                            padding="const_mean",
