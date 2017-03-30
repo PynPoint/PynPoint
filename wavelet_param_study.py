@@ -11,9 +11,9 @@ StarExtractionModule, StarAlignmentModule, TimeNormalizationModule
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/",
-                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/data/00_raw_data",
-                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/results/")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/results")
 
 '''
 pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
