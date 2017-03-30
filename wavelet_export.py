@@ -20,7 +20,7 @@ pipeline.add_module(saving1)
 
 # ---------------------------
 
-ff = {"07_wavelet_denoised_1_0" : "07_wavelet_denoised_1_0"}
+ff = {"08_wavelet_denoised_1_0" : "08_wavelet_denoised_1_0"}
 
 saving2 = Hdf5WritingModule("PynPoint_database.hdf5",
                             name_in="hdf5_writing_02",
@@ -31,7 +31,7 @@ pipeline.add_module(saving2)
 
 # ---------------------------
 
-ff = {"07_wavelet_denoised_2_0" : "07_wavelet_denoised_2_0"}
+ff = {"08_wavelet_denoised_2_0" : "08_wavelet_denoised_2_0"}
 
 saving3 = Hdf5WritingModule("PynPoint_database.hdf5",
                             name_in="hdf5_writing_03",
