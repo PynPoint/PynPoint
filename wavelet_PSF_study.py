@@ -8,20 +8,18 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/working_files/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_26_ND/results/")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/results")
 
 # 08 PSF Subtraction and preparation
 
 if str(part) == "0":
-    wavelet_names = ["07_wavelet_denoised_0_0"]
+    wavelet_names = ["08_wavelet_denoised_0_0"]
 elif str(part) == "1":
-    wavelet_names = ["07_wavelet_denoised_0_8"]
-elif str(part) == "2":
-    wavelet_names = ["07_wavelet_denoised_1_0"]
+    wavelet_names = ["08_wavelet_denoised_1_0"]
 else:
-    wavelet_names = ["07_wavelet_denoised_1_2"]
+    wavelet_names = ["08_wavelet_denoised_2_0"]
 
 
 '''
@@ -37,11 +35,11 @@ for denoising_result in wavelet_names:
                                            name_in="PSF_sub_for_" + denoising_result,
                                            images_in_tag=denoising_result,
                                            reference_in_tag=denoising_result,
-                                           res_mean_tag="08_res_mean_for_" + denoising_result +
+                                           res_mean_tag="09_res_mean_for_" + denoising_result +
                                                         "_" + str(0).zfill(2),  # 0 PCAs
-                                           res_median_tag="08_res_median_for_" + denoising_result +
+                                           res_median_tag="09_res_median_for_" + denoising_result +
                                                         "_" + str(0).zfill(2),  # 0 PCAs
-                                           res_rot_mean_clip_tag="08_res_rot_mean_clip_for_"
+                                           res_rot_mean_clip_tag="09_res_rot_mean_clip_for_"
                                                                  + denoising_result +
                                                                  "_" + str(0).zfill(2),  # 0 PCAs
                                            prep_tag="prep_data",
@@ -53,9 +51,9 @@ for denoising_result in wavelet_names:
 
     writing = WriteAsSingleFitsFile("08_res_mean_for_" + denoising_result +
                                     "_" + str(0).zfill(2) + ".fits",
-                                    name_in="writing_" + "08_res_mean_for_" + denoising_result +
+                                    name_in="writing_" + "09_res_mean_for_" + denoising_result +
                                             "_" + str(0).zfill(2),
-                                    data_tag="08_res_mean_for_" + denoising_result +
+                                    data_tag="09_res_mean_for_" + denoising_result +
                                              "_" + str(0).zfill(2))
     pipeline.add_module(writing)
 
@@ -75,11 +73,11 @@ for denoising_result in wavelet_names:
                                   im_arr_in_tag="prep_data",
                                   psf_im_in_tag="tmp_psf_model",
                                   mask_in_tag="cent_mask",
-                                  res_mean_tag="08_res_mean_for_" + denoising_result +
+                                  res_mean_tag="09_res_mean_for_" + denoising_result +
                                                "_" + str(pca_number).zfill(2),
-                                  res_median_tag="08_res_median_for_" + denoising_result +
+                                  res_median_tag="09_res_median_for_" + denoising_result +
                                                "_" + str(pca_number).zfill(2),
-                                  res_rot_mean_clip_tag="08_res_rot_mean_clip_for_" +
+                                  res_rot_mean_clip_tag="09_res_rot_mean_clip_for_" +
                                                         denoising_result + "_" +
                                                         str(pca_number).zfill(2),)
 
@@ -88,11 +86,11 @@ for denoising_result in wavelet_names:
 
         # write out result as fits
 
-        writing = WriteAsSingleFitsFile("08_res_mean_for_" + denoising_result +
+        writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
                                         "_" + str(pca_number).zfill(2) + ".fits",
-                                        name_in="writing_" + "08_res_mean_for_" + denoising_result +
+                                        name_in="writing_" + "09_res_mean_for_" + denoising_result +
                                                 "_" + str(pca_number).zfill(2),
-                                        data_tag="08_res_mean_for_" + denoising_result +
+                                        data_tag="09_res_mean_for_" + denoising_result +
                                                  "_" + str(pca_number).zfill(2))
         pipeline.add_module(writing)
 
