@@ -15,12 +15,13 @@ pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/normal
                     "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized",
                     "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/results")
 
-'''
-pipeline = Pypeline("/Volumes/Seagate/Beta_Pic02/Working_files/",
-                    "/Volumes/Seagate/Beta_Pic02/01_raw_part/",
-                    "/Volumes/Seagate/Beta_Pic02/results")
 
 '''
+pipeline = Pypeline("/Volumes/Seagate/ETH/HR8799/",
+                    "/Volumes/Seagate/ETH/HR8799/",
+                    "/Volumes/Seagate/ETH/HR8799/")'''
+
+
 '''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
