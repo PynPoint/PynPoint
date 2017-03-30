@@ -243,3 +243,41 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                                           str(self.m_denoising_threshold))
 
             self.m_image_out_port.close_port()
+
+
+class TimeNormalizationModule(ProcessingModule):
+
+    def __init__(self,
+                 name_in="normalization",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_normalized",
+                 number_of_images_in_memory=100):
+
+        super(TimeNormalizationModule, self).__init__(name_in=name_in)
+
+        # Ports
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_number_of_images_in_memory = number_of_images_in_memory
+
+    def run(self):
+
+        def image_normalization(image_in):
+
+            median = np.median(image_in)
+            tmp_image = image_in / median
+
+            return tmp_image
+
+        self.apply_function_to_images(image_normalization,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      num_images_in_memory=self.m_number_of_images_in_memory)
+
+        self.m_image_out_port.add_history_information("Frame normalization",
+                                                      "using median")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()

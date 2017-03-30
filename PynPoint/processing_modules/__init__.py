@@ -10,4 +10,4 @@ from SkyScienceDataModules import ReadFitsSkyDirectory, MeanSkyCubes, SkySubtrac
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
-    WaveletTimeDenoisingModule
+    WaveletTimeDenoisingModule, TimeNormalizationModule
