@@ -6,7 +6,7 @@ from PynPoint.io_modules import ReadFitsCubesDirectory
 from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
 DarkSubtractionModule, FlatSubtractionModule, CutTopTwoLinesModule, \
 AngleCalculationModule, MeanBackgroundSubtractionModule, \
-StarExtractionModule, StarAlignmentModule
+StarExtractionModule, StarAlignmentModule, TimeNormalizationModule
 
 
 # 00 reading the data
@@ -78,7 +78,7 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=162,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)'''
+pipeline.add_module(bg_subtraction)
 
 # 05 Star extraction
 
@@ -105,7 +105,14 @@ pipeline.add_module(alignment)
 
 angle_calc = AngleCalculationModule(name_in="angle_calculation",
                                     data_tag="06_star_arr_aligned")
-pipeline.add_module(angle_calc)
+pipeline.add_module(angle_calc)'''
+
+# 07 Frame Normalization
+
+normalization = TimeNormalizationModule(name_in="frame_normalization",
+                                        image_in_tag="06_star_arr_aligned",
+                                        image_out_tag="07_star_arr_normalized")
+pipeline.add_module(normalization)
 
 # xx run Pipeline
 
