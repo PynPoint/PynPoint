@@ -266,7 +266,7 @@ class TimeNormalizationModule(ProcessingModule):
         def image_normalization(image_in):
 
             median = np.median(image_in)
-            tmp_image = image_in / median
+            tmp_image = image_in - median
 
             return tmp_image
 
