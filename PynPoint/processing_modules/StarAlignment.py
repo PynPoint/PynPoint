@@ -65,6 +65,8 @@ class StarExtractionModule(ProcessingModule):
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
+            return cut_image
+
         self.apply_function_to_images(cut_psf,
                                       self.m_image_in_port,
                                       self.m_image_out_port,

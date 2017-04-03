@@ -22,7 +22,7 @@ pipeline = Pypeline("/Volumes/Seagate/ETH/HR8799/",
                     "/Volumes/Seagate/ETH/HR8799/")'''
 
 
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -79,7 +79,7 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)
+pipeline.add_module(bg_subtraction)'''
 
 # 05 Star extraction
 
