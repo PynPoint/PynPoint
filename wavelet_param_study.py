@@ -79,7 +79,7 @@ bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
-pipeline.add_module(bg_subtraction)'''
+pipeline.add_module(bg_subtraction)
 
 # 05 Star extraction
 
@@ -106,7 +106,7 @@ pipeline.add_module(alignment)
 
 angle_calc = AngleCalculationModule(name_in="angle_calculation",
                                     data_tag="06_star_arr_aligned")
-pipeline.add_module(angle_calc)
+pipeline.add_module(angle_calc)'''
 
 # 07 Frame Normalization
 
