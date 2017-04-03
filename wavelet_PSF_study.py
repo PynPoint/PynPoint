@@ -8,9 +8,9 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25/working_files/normalized/results")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Data/00_raw_data",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Results")
 
 # 08 PSF Subtraction and preparation
 
@@ -26,8 +26,8 @@ else:
 pca_numbers = range(1, 20, 1)
 pca_numbers.extend(range(25, 90, 5))'''
 
-pca_numbers = range(1, 30, 1)
-pca_numbers.extend(range(32, 152, 2))
+pca_numbers = range(1, 100, 1)
+pca_numbers.extend(range(100, 152, 2))
 
 for denoising_result in wavelet_names:
 
@@ -46,7 +46,7 @@ for denoising_result in wavelet_names:
                                            basis_out_tag="pca_basis",
                                            image_ave_tag="im_ave",
                                            cent_mask_tag="cent_mask",
-                                           cent_size=0.07)
+                                           cent_size=0.05)
     pipeline.add_module(psf_subtraction)
 
     writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
