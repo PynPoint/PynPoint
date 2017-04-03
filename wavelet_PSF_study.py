@@ -49,7 +49,7 @@ for denoising_result in wavelet_names:
                                            cent_size=0.07)
     pipeline.add_module(psf_subtraction)
 
-    writing = WriteAsSingleFitsFile("08_res_mean_for_" + denoising_result +
+    writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
                                     "_" + str(0).zfill(2) + ".fits",
                                     name_in="writing_" + "09_res_mean_for_" + denoising_result +
                                             "_" + str(0).zfill(2),
