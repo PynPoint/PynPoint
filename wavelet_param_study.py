@@ -22,7 +22,7 @@ pipeline = Pypeline("/Volumes/Seagate/ETH/HR8799/",
                     "/Volumes/Seagate/ETH/HR8799/")'''
 
 
-
+'''
 reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                       image_tag="00_raw_data")
 pipeline.add_module(reading_data)
@@ -71,7 +71,7 @@ bp_cleaning = BadPixelCleaningSigmaFilterModule(sigma=5,
                                                 name_in="Bad_Pixel_filtering",
                                                 image_in_tag="02_dark_flat_sub",
                                                 image_out_tag="03_bad_pixel_clean")
-pipeline.add_module(bp_cleaning)
+pipeline.add_module(bp_cleaning)'''
 
 # 04 Background Subtraction
 
