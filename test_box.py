@@ -8,10 +8,11 @@ folder_list = ["0_0/",
                "2_0/"]
 
 # planet_pos = (65, 63) # BP 29
-planet_pos = (58.5, 67.5)  # HR8799 e
+# planet_pos = (58.5, 67.5)  # HR8799 e
 # planet_pos = (186.0, 142.0)  # HR8799 e keck
 # planet_pos = (47.0, 60.0)  # HR8799 f
 # planet_pos = (74, 67) # HR8799 d
+planet_pos = (65, 63) # BP 26
 
 shifts = np.linspace(-2.0, 2.0, num= 20) # HR8799 e
 
@@ -22,12 +23,12 @@ shifts = np.linspace(-2.0, 2.0, num= 20) # HR8799 e
 #shifts = np.linspace(-4.0, 4.0, num=20)  # HR8799 f 75 68
 planet_shifts = [(planet_pos[0] + x, planet_pos[1] + y) for x in shifts for y in shifts]
 
-print "HR8799e"
+print "Beta Pic 26"
 
 for tmploc in folder_list:
     print "------------- " + tmploc + "---------------"
 
-    tmp_location = "/Users/markusbonse/Desktop/results/" + tmploc
+    tmp_location = "/Users/markusbonse/Desktop/Results/" + tmploc
 
     last_planet_pos = planet_pos
 
@@ -54,13 +55,13 @@ for tmploc in folder_list:
 
         print str(value)
 
-        '''
+
         fpf_calculator.fpf_calculator(tmp_location + str(file),
                                       filetype="fits",
                                       planet_position=planet_pos_list[index],
                                       radius=4.0 / 2.0,
                                       method="exact",
                                       plot=True,
-                                      save=False)'''
+                                      save=False)
 
 
