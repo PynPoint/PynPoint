@@ -2,6 +2,7 @@ import numpy as np
 #import mlpy.wavelet as wave
 import continous as wave
 from scipy.special import gamma, hermite
+from scipy.signal import medfilt
 from statsmodels.robust import mad
 from numba import jit
 import copy
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 # --- Wavelet analysis Capsule ---------
 # TODO: Documentation
 
+
 @jit(cache=True)
 def _fast_zeros(soft,
                 spectrum,
@@ -18,10 +20,11 @@ def _fast_zeros(soft,
         if soft:
             for i in range(0, spectrum.shape[0], 1):
                 for j in range(0, spectrum.shape[1], 1):
-                    if 1 - uthresh/abs(spectrum[i, j].real) < 0:
-                        spectrum[i, j] *= 0
+                    tmp_value = spectrum[i, j].real
+                    if abs(spectrum[i, j]) > uthresh:
+                        spectrum[i, j] = np.sign(tmp_value) * (abs(tmp_value) - uthresh)
                     else:
-                        spectrum[i, j] *= 1 - uthresh/abs(spectrum[i, j].real)
+                        spectrum[i, j] = 0
         else:
             for i in range(0, spectrum.shape[0], 1):
                 for j in range(0, spectrum.shape[1], 1):
@@ -30,14 +33,32 @@ def _fast_zeros(soft,
 
         return spectrum
 
+'''
+@jit(cache=True)
+def _fast_zeros_planet_save(spectrum,
+                            uthresh,
+                            uplanet):
+
+    for i in range(0, spectrum.shape[0], 1):
+        for j in range(0, spectrum.shape[1], 1):
+            tmp_value = spectrum[i, j].real
+            if abs(spectrum[i, j]) > uthresh * uplanet[i]:
+                spectrum[i, j] = np.sign(tmp_value) * (abs(tmp_value) - uthresh*uplanet[i])
+            else:
+                spectrum[i, j] = 0
+
+    return spectrum
+'''
+
 
 class WaveletAnalysisCapsule:
 
     def __init__(self,
                  signal_in,
-                 wavelet_in = 'dog',
-                 order = 2,
-                 frequency_resolution = 0.1):
+                 wavelet_in='dog',
+                 order=2,
+                 padding="none",
+                 frequency_resolution=0.1):
 
         # save input data
         self.__m_supported_wavelets = ['dog', 'morlet']
@@ -67,11 +88,18 @@ class WaveletAnalysisCapsule:
                                           14: 0.3254,
                                           16: 0.2844,
                                           20: 0.2272}
-        self.__m_data = signal_in
-        self.__m_data_size = len(signal_in)
         self.__m_wavelet = wavelet_in
 
-        if not order in self.__m_C_reconstructions:
+        if padding not in ["none", "const_median", "zeros"]:
+            raise ValueError("Padding can only be none, const_mean and zeros")
+
+        self.__m_data = signal_in - np.ones(len(signal_in)) * np.mean(signal_in)
+        self.__m_padding = padding
+        self.__pad_signal()
+        self.__m_data_size = len(self.__m_data)
+        self.__m_data_mean = np.mean(signal_in)
+
+        if order not in self.__m_C_reconstructions:
             raise ValueError('Wavelet ' + str(wavelet_in) + ' does not support order ' + str(order) +
                              ". \n Only orders: " + str(sorted(self.__m_C_reconstructions.keys())).strip('[]') +
                              " are supported")
@@ -104,6 +132,20 @@ class WaveletAnalysisCapsule:
         herm = pHpoly / (np.power(2, float(order) / 2))
         return ((-1)**(order+1)) / np.sqrt(gamma(order + 0.5)) * herm
 
+    def __pad_signal(self):
+        padding_length = int(len(self.__m_data) * 0.5)
+        if self.__m_padding == "none":
+            return
+
+        elif self.__m_padding == "zeros":
+            new_data = np.append(self.__m_data, np.zeros(padding_length, dtype=np.float64))
+            self.__m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
+
+        else:
+            median = np.median(self.__m_data)
+            new_data = np.append(self.__m_data, np.ones(padding_length)*median)
+            self.__m_data = np.append(np.ones(padding_length)*median, new_data)
+
     def __compute_reconstruction_factor(self):
         dj = self.__m_frequency_resolution
         wavelet = self.__m_wavelet
@@ -135,78 +177,80 @@ class WaveletAnalysisCapsule:
         reconstruction_factor = self.__compute_reconstruction_factor()
         self.__m_data *= reconstruction_factor
 
-    def filter_periods(self,
-                       cutoff):
+    '''
+    def __transform_period(self,
+                         period):
 
         tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
 
         def transformation(x):
             return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
 
-        cutoff_scaled = transformation(cutoff)
+        cutoff_scaled = transformation(period)
 
         scale_new = tmp_y[-1] - tmp_y[0]
         scale_old = self.__m_spectrum.shape[0]
 
         factor = scale_old / scale_new
-
         cutoff_scaled *= factor
 
-        self.__m_spectrum[cutoff_scaled::] = 0
-
-    def block_period(self,
-                     period,
-                     cutoff_range,
-                     inverse = False):
-
-        # TODO handle Error cases with to large or to small period and range
-
-        start_period = period - cutoff_range
-        end_period = period + cutoff_range
-
-        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
-
-        def transformation(x):
-            return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
-
-        start_period_scaled = transformation(start_period)
-        end_period_scaled = transformation(end_period)
-
-        scale_new = tmp_y[-1] - tmp_y[0]
-        scale_old = self.__m_spectrum.shape[0]
-
-        factor = scale_old / scale_new
-
-        start_period_scaled *= factor
-        end_period_scaled *= factor
-
-        # delete Region
-        if inverse:
-            self.__m_spectrum[0:start_period_scaled] = 0
-            self.__m_spectrum[end_period_scaled::] = 0
-        else:
-            self.__m_spectrum[start_period_scaled:end_period_scaled] = 0
+        return cutoff_scaled '''
 
     def denoise_spectrum_universal_threshold(self,
                                              threshold=1.0,
-                                             soft=False,
-                                             padded_input_signal=False):
+                                             soft=False):
 
-        if padded_input_signal:
-            noise = self.__m_spectrum[0, :].real
-            noise_length_3 = len(noise)/3
-            noise = noise[noise_length_3: (noise_length_3*2)]
-            sigma = mad(noise)
+        if not self.__m_padding == "none":
+            noise_length_4 = len(self.__m_data)/4
+            noise_spectrum = self.__m_spectrum[0, noise_length_4: (noise_length_4*3)].real
         else:
-            sigma = mad(self.__m_spectrum[0, :].real)
-        uthresh = sigma*np.sqrt(2.0*np.log(self.__m_data_size)) * threshold
+            noise_spectrum = self.__m_spectrum[0, :].real
+
+        sigma = mad(noise_spectrum)
+        uthresh = sigma*np.sqrt(2.0*np.log(len(noise_spectrum))) * threshold
 
         self.__m_spectrum = _fast_zeros(soft,
                                         self.__m_spectrum,
                                         uthresh)
 
+    '''
+    def denoise_spectrum_universal_threshold_planet_save(self,
+                                                         low_border,
+                                                         high_border):
+        if not self.__m_padding == "none":
+            noise_length_4 = len(self.__m_data)/4
+            noise_spectrum = self.__m_spectrum[0, noise_length_4: (noise_length_4*3)].real
+        else:
+            noise_spectrum = self.__m_spectrum[0, :].real
+
+        low_border_wv = self.__transform_period(low_border)
+        high_border_wv = self.__transform_period(high_border)
+
+        def two_sigmoid(x):
+            return 1.0/(1+np.exp(-low_border_wv + x)) + 1/(1+np.exp(high_border_wv-x))
+
+        sigma = mad(noise_spectrum)
+        uthresh = sigma * np.sqrt(2.0 * np.log(len(noise_spectrum)))
+
+        uplanet = map(two_sigmoid, np.linspace(0,
+                                               self.__m_spectrum.shape[0],
+                                               self.__m_spectrum.shape[0]))
+
+        self.__m_spectrum = _fast_zeros_planet_save(self.__m_spectrum,
+                                                    uthresh,
+                                                    uplanet)
+        '''
+
+    def median_filter(self):
+        self.__m_data = medfilt(self.__m_data, 19)
+
     def get_signal(self):
-        return self.__m_data
+
+        tmp_data = self.__m_data + np.ones(len(self.__m_data))*self.__m_data_mean
+        if self.__m_padding == "none":
+            return tmp_data
+        else:
+            return tmp_data[len(self.__m_data)/4: 3*len(self.__m_data)/4]
 
     # ----- plotting functions --------
 
@@ -225,7 +269,7 @@ class WaveletAnalysisCapsule:
                            tmp_x[-1],
                            tmp_y[0],
                            tmp_y[-1]],
-                   cmap=plt.get_cmap("gray"),
+                   cmap=plt.get_cmap("gist_ncar"),
                    origin='lower')
 
         plt.yscale('log', basey=2)

@@ -60,6 +60,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  image_out_tag="star_arr_denoised",
                  denoising_threshold=1.0,
                  padding="zero",
+                 median_filter=True,
+                 threshold_function="soft",
                  num_rows_in_memory=40):
         """
         :type image_in_tag: list and str
@@ -82,8 +84,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 self.m_port_dict[denoising_threshold[i]] = self.add_output_port(image_out_tag[i])
 
             # create tmp data port
-            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising2")
-            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising2")
+            self.m_tmp_data_port_denoising = self.add_output_port("tmp_data_port_denoising")
+            self.m_tmp_data_port_denoising_in = self.add_input_port("tmp_data_port_denoising")
 
         elif type(denoising_threshold) is float and type(image_in_tag) is str:
             self.m_list_mode = False
@@ -97,8 +99,14 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         # Parameters
         self.m_wavelet_configuration = wavelet_configuration
         self.m_denoising_threshold = denoising_threshold
-        assert padding in ["zeros", "const_mean"]
-        self.m_padding = padding  # TODO check paddings
+        assert padding in ["zero", "const_median", "none"]
+        self.m_padding = padding
+        assert threshold_function in ["soft", "hard"]
+        if threshold_function == "soft":
+            self.m_threshold_function = True
+        else:
+            self.m_threshold_function = False
+        self.m_median_filter = median_filter
 
     def run(self):
 
@@ -106,6 +114,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             # use DWT denoising
             if self.m_padding == "const_mean":
                 self.m_padding = "constant"
+            if self.m_padding == "none":
+                self.m_padding = "periodic"
 
             def denoise_line_in_time(signal_in):
                 coef = pywt.wavedec(signal_in,
@@ -114,14 +124,16 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                     mode=self.m_padding)
 
                 sigma = mad(coef[-1])
-                uthresh = sigma * np.sqrt(2 * np.log(len(signal_in)))\
+                uthresh = sigma * np.sqrt(2 * np.log(len(signal_in)))
 
                 if self.m_list_mode:
                     tmp_res = []
                     for threshold in self.m_denoising_threshold:
                         current_threshold = threshold * uthresh
                         tmp_denoised = deepcopy(coef[:])
-                        tmp_denoised[1:] = (pywt.threshold(i, value=current_threshold, mode="soft")
+                        tmp_denoised[1:] = (pywt.threshold(i,
+                                                           value=current_threshold,
+                                                           mode=self.m_threshold_function)
                                             for i in tmp_denoised[1:])
 
                         tmp_res += list(pywt.waverec(tmp_denoised,
@@ -132,7 +144,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 else:
                     threshold = uthresh * self.m_denoising_threshold
                     denoised = coef[:]
-                    denoised[1:] = (pywt.threshold(i, value=threshold, mode="soft")
+                    denoised[1:] = (pywt.threshold(i,
+                                                   value=threshold,
+                                                   mode=self.m_threshold_function)
                                     for i in denoised[1:])
                     return pywt.waverec(denoised,
                                         wavelet=self.m_wavelet_configuration.m_wavelet,
@@ -142,44 +156,24 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             # use CWT denoising
             def denoise_line_in_time(signal_in):
 
-                # we need have length of the signal as border right and left
-                line_size = int(len(signal_in) * 0.5)
-                if self.m_padding == "zeros":
-                    line = np.zeros(line_size)
-                elif self.m_padding == "const_mean":
-                    line = np.ones(line_size)
-                else:
-                    return
-
-                mean = np.mean(signal_in)
-                border = line * mean
-                signal_in = np.append(border, signal_in)
-                signal_in = np.append(signal_in, border)
-
                 cwt_capsule = WaveletAnalysisCapsule(
                     signal_in,
+                    padding=self.m_padding,
                     wavelet_in=self.m_wavelet_configuration.m_wavelet,
                     order=self.m_wavelet_configuration.m_wavelet_order,
                     frequency_resolution=self.m_wavelet_configuration.m_resolution)
 
                 cwt_capsule.compute_cwt()
 
-                def denoise_one_thresold(capsule_in,
-                                         threshold_in):
-                    capsule_in.denoise_spectrum_universal_threshold(
-                        padded_input_signal=True,
-                        threshold=threshold_in)
+                def denoise_one_threshold(capsule_in,
+                                          threshold_in):
+                    capsule_in.denoise_spectrum_universal_threshold(threshold=threshold_in,
+                                                                    soft=self.m_threshold_function)
+                    if self.m_median_filter:
+                        capsule_in.median_filter()
 
                     capsule_in.update_signal()
-
-                    # remove padding
                     res_signal = capsule_in.get_signal()
-                    res_signal = res_signal[line_size: -line_size]
-
-                    if self.m_wavelet_configuration.m_keep_mean:
-                        mean_after = np.mean(res_signal)
-                        diff = mean - mean_after
-                        res_signal += np.ones(len(res_signal)) * diff
 
                     return res_signal
 
@@ -187,13 +181,13 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                     tmp_res = []
                     for threshold in self.m_denoising_threshold:
                         tmp_cwt_capsule = deepcopy(cwt_capsule)
-                        tmp_res += list(denoise_one_thresold(tmp_cwt_capsule,
-                                                             threshold))
+                        tmp_res += list(denoise_one_threshold(tmp_cwt_capsule,
+                                                              threshold))
                     return np.asarray(tmp_res)
 
                 else:
-                    return denoise_one_thresold(cwt_capsule,
-                                                self.m_denoising_threshold)
+                    return denoise_one_threshold(cwt_capsule,
+                                                 self.m_denoising_threshold)
 
         else:
             return
@@ -219,7 +213,6 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                     self.m_tmp_data_port_denoising_in[(i + 0) * tmp_num_elements_per_threshold:
                                                       (i + 1) * tmp_num_elements_per_threshold,
                                                       :, :])
-                # TODO create parameter for num frames in memory
 
                 tmp_port.copy_attributes_from_input_port(self.m_image_in_port)
                 tmp_port.add_history_information("Wavelet time denoising",
