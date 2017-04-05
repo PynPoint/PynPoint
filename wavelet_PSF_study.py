@@ -1,5 +1,4 @@
 from PynPoint import Pypeline
-import numpy as np
 from PynPoint.processing_modules import PSFSubtractionModule
 from PynPoint.io_modules import WriteAsSingleFitsFile
 
