@@ -51,7 +51,7 @@ for j in [[1.0, 2.0], ]:
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="const_mean",
+                                           padding="zero",
                                            median_filter=True,
                                            threshold_function="hard",
                                            num_rows_in_memory=30)
@@ -72,7 +72,7 @@ for j in [[1.0, 2.0], ]:
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="const_mean",
+                                           padding="zero",
                                            median_filter=False,
                                            threshold_function="soft",
                                            num_rows_in_memory=30)
@@ -93,7 +93,7 @@ for j in [[1.0, 2.0], ]:
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="const_mean",
+                                           padding="zero",
                                            median_filter=True,
                                            threshold_function="soft",
                                            num_rows_in_memory=30)
