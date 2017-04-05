@@ -90,8 +90,8 @@ class WaveletAnalysisCapsule:
                                           20: 0.2272}
         self.__m_wavelet = wavelet_in
 
-        if padding not in ["none", "const_median", "zeros"]:
-            raise ValueError("Padding can only be none, const_mean and zeros")
+        if padding not in ["none", "const_median", "zero"]:
+            raise ValueError("Padding can only be none, const_median and zero")
 
         self.__m_data = signal_in - np.ones(len(signal_in)) * np.mean(signal_in)
         self.__m_padding = padding
@@ -137,7 +137,7 @@ class WaveletAnalysisCapsule:
         if self.__m_padding == "none":
             return
 
-        elif self.__m_padding == "zeros":
+        elif self.__m_padding == "zero":
             new_data = np.append(self.__m_data, np.zeros(padding_length, dtype=np.float64))
             self.__m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
 
