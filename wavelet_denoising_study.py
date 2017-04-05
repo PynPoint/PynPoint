@@ -14,6 +14,8 @@ wavelet = CwtWaveletConfiguration(wavelet="dog",
                                   keep_mean=True,
                                   resolution=0.2)
 
+k = 1
+
 # hard threshold
 for j in [[1.0, 2.0], ]:
 
@@ -33,7 +35,7 @@ for j in [[1.0, 2.0], ]:
                                            threshold_function="hard",
                                            num_rows_in_memory=30)
     pipeline.add_module(denoising)
-
+    k += 1
 
 # hard threshold + median
 for j in [[1.0, 2.0], ]:
@@ -54,7 +56,7 @@ for j in [[1.0, 2.0], ]:
                                            threshold_function="hard",
                                            num_rows_in_memory=30)
     pipeline.add_module(denoising)
-
+    k += 1
 
 # soft threshold
 for j in [[1.0, 2.0], ]:
@@ -75,7 +77,7 @@ for j in [[1.0, 2.0], ]:
                                            threshold_function="soft",
                                            num_rows_in_memory=30)
     pipeline.add_module(denoising)
-
+    k += 1
 
 # soft threshold + median
 for j in [[1.0, 2.0], ]:
@@ -96,6 +98,6 @@ for j in [[1.0, 2.0], ]:
                                            threshold_function="soft",
                                            num_rows_in_memory=30)
     pipeline.add_module(denoising)
-
+    k += 1
 
 pipeline.run()
