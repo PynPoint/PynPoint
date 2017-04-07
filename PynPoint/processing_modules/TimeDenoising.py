@@ -99,7 +99,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         # Parameters
         self.m_wavelet_configuration = wavelet_configuration
         self.m_denoising_threshold = denoising_threshold
-        assert padding in ["zero", "const_median", "none"]
+        assert padding in ["zero", "mirror", "none"]
         self.m_padding = padding
         assert threshold_function in ["soft", "hard"]
         if threshold_function == "soft":
