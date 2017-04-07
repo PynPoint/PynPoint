@@ -258,8 +258,14 @@ class WaveletAnalysisCapsule:
 
     def __plot_or_save_spectrum(self):
         plt.close()
+
+        plt.figure(figsize=(8, 6))
+        plt.subplot(1, 1, 1)
+
+
         tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
         tmp_x = np.arange(0, self.__m_data_size, 1.0)
+
 
         scaled_spec = copy.deepcopy(self.__m_spectrum.real)
         for i in range(len(scaled_spec)):
@@ -273,6 +279,32 @@ class WaveletAnalysisCapsule:
                            tmp_y[-1]],
                    cmap=plt.get_cmap("gist_ncar"),
                    origin='lower')
+
+        # TODO if for no padding
+        # COI first part (only for DOG) with padding
+
+        inner_frequency = 2.*np.pi/np.sqrt(self.__m_order + 0.5)
+        coi = np.append(np.zeros(len(tmp_x)/4),
+                        tmp_x[0:len(tmp_x) / 4])
+        coi = np.append(coi,
+                        tmp_x[0:len(tmp_x) / 4][::-1])
+        coi = np.append(coi,
+                        np.zeros(len(tmp_x) / 4))
+
+        plt.plot(np.arange(0, len(coi), 1.0),
+                 inner_frequency * coi / np.sqrt(2),
+                 color="white")
+
+        plt.fill_between(np.arange(0, len(coi), 1.0),
+                         inner_frequency * coi / np.sqrt(2),
+                         np.ones(len(tmp_x)) * tmp_y[-1],
+                         facecolor="none",
+                         edgecolor='white',
+                         alpha=0.4,
+                         hatch="x")
+
+        plt.ylim([tmp_y[0],
+                  tmp_y[-1]])
 
         plt.yscale('log', basey=2)
         plt.ylabel("Period in [s]")
