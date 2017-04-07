@@ -17,20 +17,20 @@ wavelet = CwtWaveletConfiguration(wavelet="dog",
 k = 1
 
 # hard threshold
-for j in [[1.0, 2.0], ]:
+for j in [[1.0], ]:
 
     wavelet_thresholds = j
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("08_wavelet_denoised_hard_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
+        wavelet_names.append("08_wavelet_denoised_mirror_hard_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="zero",
+                                           padding="mirror",
                                            median_filter=False,
                                            threshold_function="hard",
                                            num_rows_in_memory=30)
@@ -38,20 +38,20 @@ for j in [[1.0, 2.0], ]:
     k += 1
 
 # hard threshold + median
-for j in [[1.0, 2.0], ]:
+for j in [[1.0], ]:
 
     wavelet_thresholds = j
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("08_wavelet_denoised_hard_median_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
+        wavelet_names.append("08_wavelet_denoised_mirror_hard_median_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="zero",
+                                           padding="mirror",
                                            median_filter=True,
                                            threshold_function="hard",
                                            num_rows_in_memory=30)
@@ -59,20 +59,20 @@ for j in [[1.0, 2.0], ]:
     k += 1
 
 # soft threshold
-for j in [[1.0, 2.0], ]:
+for j in [[1.0], ]:
 
     wavelet_thresholds = j
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("08_wavelet_denoised_soft_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
+        wavelet_names.append("08_wavelet_denoised_mirror_soft_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="zero",
+                                           padding="mirror",
                                            median_filter=False,
                                            threshold_function="soft",
                                            num_rows_in_memory=30)
@@ -80,20 +80,20 @@ for j in [[1.0, 2.0], ]:
     k += 1
 
 # soft threshold + median
-for j in [[1.0, 2.0], ]:
+for j in [[1.0], ]:
 
     wavelet_thresholds = j
 
     wavelet_names = []
     for i in wavelet_thresholds:
-        wavelet_names.append("08_wavelet_denoised_soft_median_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
+        wavelet_names.append("08_wavelet_denoised_mirror_soft_median_" + str(int(i)) + "_" + str(int(round((i % 1.0)*10))))
 
     denoising = WaveletTimeDenoisingModule(wavelet_configuration=wavelet,
                                            name_in="wavelet_time_denoising" + str(k),
                                            image_in_tag="07_star_arr_normalized",
                                            image_out_tag=wavelet_names,
                                            denoising_threshold=wavelet_thresholds,
-                                           padding="zero",
+                                           padding="mirror",
                                            median_filter=True,
                                            threshold_function="soft",
                                            num_rows_in_memory=30)

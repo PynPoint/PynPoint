@@ -90,8 +90,8 @@ class WaveletAnalysisCapsule:
                                           20: 0.2272}
         self.__m_wavelet = wavelet_in
 
-        if padding not in ["none", "const_median", "zero"]:
-            raise ValueError("Padding can only be none, const_median and zero")
+        if padding not in ["none", "zero", "mirror"]:
+            raise ValueError("Padding can only be none, zero or mirror")
 
         self.__m_data = signal_in - np.ones(len(signal_in)) * np.mean(signal_in)
         self.__m_padding = padding
@@ -142,9 +142,11 @@ class WaveletAnalysisCapsule:
             self.__m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
 
         else:
-            median = np.median(self.__m_data)
-            new_data = np.append(self.__m_data, np.ones(padding_length)*median)
-            self.__m_data = np.append(np.ones(padding_length)*median, new_data)
+            # Mirror Padding
+            left_half_signal = self.__m_data[:padding_length]
+            right_half_signal = self.__m_data[padding_length:]
+            new_data = np.append(self.__m_data, right_half_signal[::-1])
+            self.__m_data = np.append(left_half_signal[::-1], new_data)
 
     def __compute_reconstruction_factor(self):
         dj = self.__m_frequency_resolution
