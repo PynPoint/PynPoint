@@ -3,9 +3,10 @@ import glob, os
 import numpy as np
 import operator
 
-folder_list = ["0_0/",
-               "1_0/",
-               "2_0/"]
+folder_list = ["no/",
+               "hard_median/",
+               "soft/",
+               "soft_median/"]
 
 # planet_pos = (65, 63) # BP 29
 # planet_pos = (58.5, 67.5)  # HR8799 e
@@ -43,7 +44,7 @@ for tmploc in folder_list:
             tmp_result = fpf_calculator.fpf_calculator(tmp_location + str(file),
                                                        filetype="fits",
                                                        planet_position=shift,
-                                                       radius=4./2.0,
+                                                       radius=4.0/2.0,
                                                        method="exact",
                                                        plot=False,
                                                        save=False)
@@ -55,13 +56,13 @@ for tmploc in folder_list:
 
         print str(value)
 
-
+        '''
         fpf_calculator.fpf_calculator(tmp_location + str(file),
                                       filetype="fits",
                                       planet_position=planet_pos_list[index],
                                       radius=4.0 / 2.0,
                                       method="exact",
                                       plot=True,
-                                      save=False)
+                                      save=False)'''
 
 
