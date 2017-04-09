@@ -3,10 +3,8 @@ import glob, os
 import numpy as np
 import operator
 
-folder_list = ["no/",
-               "hard_median/",
-               "soft/",
-               "soft_median/"]
+folder_list = ["hard/",
+               "soft/",]
 
 # planet_pos = (65, 63) # BP 29
 # planet_pos = (58.5, 67.5)  # HR8799 e
