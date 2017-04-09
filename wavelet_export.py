@@ -2,21 +2,23 @@ from PynPoint import Pypeline
 from PynPoint.io_modules import Hdf5WritingModule
 
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Data/00_raw_data",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Results")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace",
+                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_raw_data",
+                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Results")
 
 # ---------------------------
 
-ff = {"08_wavelet_denoised_mirror_hard_1_0" : "08_wavelet_denoised_mirror_hard_1_0"}
+ff = {"06_star_arr_aligned" : "06_star_arr_aligned",
+      "07_star_arr_normalized": "07_star_arr_normalized"}
 
-saving1 = Hdf5WritingModule("PynPoint_database.hdf5",
+saving1 = Hdf5WritingModule("PynPoint_database_06_07.hdf5",
                             name_in="hdf5_writing_01",
-                            output_dir="/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace/08_klein_0",
+                            output_dir="/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace/saves",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving1)
 
+'''
 
 # ---------------------------
 
@@ -53,7 +55,7 @@ saving4 = Hdf5WritingModule("PynPoint_database.hdf5",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving4)
-
+'''
 # ---------------------------
 
 pipeline.run()
