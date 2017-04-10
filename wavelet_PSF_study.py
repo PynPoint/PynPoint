@@ -7,9 +7,9 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 part = raw_input("Please enter denoising value: ")
 
-pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Data/00_raw_data",
-                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Results")
+pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_raw_data",
+                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Results")
 
 # 08 PSF Subtraction and preparation
 
