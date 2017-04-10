@@ -14,13 +14,18 @@ pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace/08_
 # 08 PSF Subtraction and preparation
 
 if str(part) == "0":
-    wavelet_names = ["08_wavelet_denoised_mirror_hard_1_0"]
+    wavelet_names = ["06_star_arr_aligned",
+                     "08_wavelet_denoised_mirror_hard_1_0",
+                     "08_wavelet_denoised_mirror_hard_median_1_0"]
 elif str(part) == "1":
-    wavelet_names = ["08_wavelet_denoised_mirror_hard_median_1_0"]
+    wavelet_names = ["08_wavelet_denoised_mirror_soft_1_0",
+                     "08_wavelet_denoised_mirror_soft_median_1_0"]
 elif str(part) == "2":
-    wavelet_names = ["08_wavelet_denoised_mirror_soft_1_0"]
+    wavelet_names = ["08_wavelet_denoised_zero_hard_1_0",
+                     "08_wavelet_denoised_zero_hard_median_1_0"]
 else:
-    wavelet_names = ["08_wavelet_denoised_mirror_soft_median_1_0"]
+    wavelet_names = ["08_wavelet_denoised_zero_soft_1_0",
+                     "08_wavelet_denoised_zero_soft_median_1_0"]
 
 
 '''
