@@ -52,7 +52,7 @@ for denoising_result in wavelet_names:
                                            basis_out_tag="pca_basis",
                                            image_ave_tag="im_ave",
                                            cent_mask_tag="cent_mask",
-                                           cent_size=0.05)
+                                           cent_size=0.07)
     pipeline.add_module(psf_subtraction)
 
     writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
