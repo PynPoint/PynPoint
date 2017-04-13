@@ -13,7 +13,7 @@ ff = {"06_star_arr_aligned" : "06_star_arr_aligned",
 
 saving1 = Hdf5WritingModule("PynPoint_database_06_07.hdf5",
                             name_in="hdf5_writing_01",
-                            output_dir="/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace",
+                            output_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Workplace",
                             tag_dictionary=ff)
 
 pipeline.add_module(saving1)
