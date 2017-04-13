@@ -11,9 +11,9 @@ StarExtractionModule, StarAlignmentModule, TimeNormalizationModule
 
 # 00 reading the data
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace",
-                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_raw_data",
-                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Results")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Workplace",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Data/00_raw_Data",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Results")
 
 
 '''
@@ -26,12 +26,12 @@ reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
 pipeline.add_module(reading_data)
 
 reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_Dark_and_Flat/00_dark/",
+                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Data/00_Dark_and_Flat/Dark/",
                                       image_tag="00_dark_arr")
 pipeline.add_module(reading_dark)
 
 reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      input_dir="/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_Dark_and_Flat/00_flat/",
+                                      input_dir="/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Data/00_Dark_and_Flat/Flat/",
                                       image_tag="00_flat_arr")
 pipeline.add_module(reading_flat)
 
@@ -73,7 +73,7 @@ pipeline.add_module(bp_cleaning)
 
 # 04 Background Subtraction
 
-bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=402,
+bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=602,
                                                  name_in="mean_background_subtraction",
                                                  image_in_tag="03_bad_pixel_clean",
                                                  image_out_tag="04_mean_background_sub")
