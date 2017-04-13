@@ -6,31 +6,29 @@ from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule, Creat
 
 
 part = raw_input("Please enter denoising value: ")
+'''
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Workplace/08_klein_" + str(part) + "/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Data/",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_29_norm/Results")'''
 
-pipeline = Pypeline("/scratch/user/mbonse/HR8799_2012_08_25_norm/Workplace/08_klein_" + str(part) + "/",
-                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Data/00_raw_data",
-                    "/scratch/user/mbonse/HR8799_2012_08_25_norm/Results")
+pipeline = Pypeline("/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Workplace",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Data/00_raw_data",
+                    "/scratch/user/mbonse/Beta_Pic_2009_12_26_norm/Results")
 
 # 08 PSF Subtraction and preparation
-
-if str(part) == "0":
-    wavelet_names = ["06_star_arr_aligned",
-                     "08_wavelet_denoised_mirror_hard_1_0",
-                     "08_wavelet_denoised_mirror_hard_median_1_0"]
-elif str(part) == "1":
-    wavelet_names = ["08_wavelet_denoised_mirror_soft_1_0",
-                     "08_wavelet_denoised_mirror_soft_median_1_0"]
-elif str(part) == "2":
-    wavelet_names = ["08_wavelet_denoised_zero_hard_1_0",
-                     "08_wavelet_denoised_zero_hard_median_1_0"]
-else:
-    wavelet_names = ["08_wavelet_denoised_zero_soft_1_0",
-                     "08_wavelet_denoised_zero_soft_median_1_0"]
-
-
 '''
-pca_numbers = range(1, 20, 1)
-pca_numbers.extend(range(25, 90, 5))'''
+if str(part) == "0":
+    wavelet_names = ["06_star_arr_aligned",]
+elif str(part) == "1":
+    wavelet_names = ["08_wavelet_denoised_mirror_hard_1_0",]
+elif str(part) == "2":
+    wavelet_names = ["08_wavelet_denoised_mirror_soft_1_0",]
+elif str(part) == "3":
+    wavelet_names = ["08_wavelet_denoised_zero_hard_1_0",]
+else:
+    wavelet_names = ["08_wavelet_denoised_zero_soft_1_0", ]'''
+
+wavelet_names = ["08_wavelet_denoised_planet_save_1_0",]
 
 pca_numbers = range(1, 100, 1)
 pca_numbers.extend(range(100, 152, 2))
@@ -52,7 +50,7 @@ for denoising_result in wavelet_names:
                                            basis_out_tag="pca_basis",
                                            image_ave_tag="im_ave",
                                            cent_mask_tag="cent_mask",
-                                           cent_size=0.07)
+                                           cent_size=0.05)
     pipeline.add_module(psf_subtraction)
 
     writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
