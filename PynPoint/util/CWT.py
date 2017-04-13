@@ -262,7 +262,6 @@ class WaveletAnalysisCapsule:
         plt.figure(figsize=(8, 6))
         plt.subplot(1, 1, 1)
 
-
         tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
         tmp_x = np.arange(0, self.__m_data_size, 1.0)
 
@@ -295,6 +294,9 @@ class WaveletAnalysisCapsule:
                  inner_frequency * coi / np.sqrt(2),
                  color="white")
 
+        plt.ylim([tmp_y[0],
+                  tmp_y[-1]])
+
         plt.fill_between(np.arange(0, len(coi), 1.0),
                          inner_frequency * coi / np.sqrt(2),
                          np.ones(len(tmp_x)) * tmp_y[-1],
@@ -302,9 +304,6 @@ class WaveletAnalysisCapsule:
                          edgecolor='white',
                          alpha=0.4,
                          hatch="x")
-
-        plt.ylim([tmp_y[0],
-                  tmp_y[-1]])
 
         plt.yscale('log', basey=2)
         plt.ylabel("Period in [s]")
