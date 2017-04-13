@@ -33,7 +33,7 @@ def _fast_zeros(soft,
 
         return spectrum
 
-'''
+
 @jit(cache=True)
 def _fast_zeros_planet_save(spectrum,
                             uthresh,
@@ -41,14 +41,11 @@ def _fast_zeros_planet_save(spectrum,
 
     for i in range(0, spectrum.shape[0], 1):
         for j in range(0, spectrum.shape[1], 1):
-            tmp_value = spectrum[i, j].real
-            if abs(spectrum[i, j]) > uthresh * uplanet[i]:
-                spectrum[i, j] = np.sign(tmp_value) * (abs(tmp_value) - uthresh*uplanet[i])
-            else:
+            if abs(spectrum[i, j]) < uthresh * uplanet[i]:
                 spectrum[i, j] = 0
 
     return spectrum
-'''
+
 
 
 class WaveletAnalysisCapsule:
@@ -179,7 +176,6 @@ class WaveletAnalysisCapsule:
         reconstruction_factor = self.__compute_reconstruction_factor()
         self.__m_data *= reconstruction_factor
 
-    '''
     def __transform_period(self,
                          period):
 
@@ -196,7 +192,7 @@ class WaveletAnalysisCapsule:
         factor = scale_old / scale_new
         cutoff_scaled *= factor
 
-        return cutoff_scaled '''
+        return cutoff_scaled
 
     def denoise_spectrum_universal_threshold(self,
                                              threshold=1.0,
@@ -215,7 +211,6 @@ class WaveletAnalysisCapsule:
                                         self.__m_spectrum,
                                         uthresh)
 
-    '''
     def denoise_spectrum_universal_threshold_planet_save(self,
                                                          low_border,
                                                          high_border):
@@ -241,7 +236,7 @@ class WaveletAnalysisCapsule:
         self.__m_spectrum = _fast_zeros_planet_save(self.__m_spectrum,
                                                     uthresh,
                                                     uplanet)
-        '''
+
 
     def median_filter(self):
         self.__m_data = medfilt(self.__m_data, 19)
