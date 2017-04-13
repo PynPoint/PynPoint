@@ -3,16 +3,18 @@ import glob, os
 import numpy as np
 import operator
 
-folder_list = ["1_Hard_Zeros_norm/",
-               "1_no_wavelets/",]
+folder_list = ["mirr_soft/",
+               "zero_hard/",
+               "zero_soft/",
+               "no/",]
 
 # planet_pos = (65, 63) # BP 29
-# planet_pos = (58.5, 67.5)  # HR8799 e
+planet_pos = (58.5, 67.5)  # HR8799 e
 # planet_pos = (186.0, 142.0)  # HR8799 e keck
 # planet_pos = (47.0, 60.0)  # HR8799 f
 # planet_pos = (75, 67) # HR8799 d
 #planet_pos = (65, 63) # BP 26
-planet_pos = (27, 77) # HR8799 c
+#planet_pos = (27, 77) # HR8799 c
 
 shifts = np.linspace(-2.0, 2.0, num= 20) # HR8799 e
 
@@ -27,7 +29,7 @@ print "HR8799"
 for tmploc in folder_list:
     print "------------- " + tmploc + "---------------"
 
-    tmp_location = "/Volumes/Seagate/Paper_Results/01_SNR_Studies/HR8799/Residuals/" + tmploc
+    tmp_location = "/Users/markusbonse/Desktop/Results/" + tmploc
 
     last_planet_pos = planet_pos
 
@@ -53,6 +55,7 @@ for tmploc in folder_list:
         index, value = max(enumerate(snr_result_list), key=operator.itemgetter(1))
 
         print str(value)
+
         '''
         fpf_calculator.fpf_calculator(tmp_location + str(file),
                                       filetype="fits",
