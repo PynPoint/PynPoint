@@ -42,12 +42,12 @@ for denoising_result in wavelet_names:
                                            images_in_tag=denoising_result,
                                            reference_in_tag=denoising_result,
                                            res_mean_tag="09_res_mean_for_" + denoising_result +
-                                                        "_" + str(0).zfill(2),  # 0 PCAs
+                                                        "_" + str(0).zfill(3),  # 0 PCAs
                                            res_median_tag="09_res_median_for_" + denoising_result +
-                                                        "_" + str(0).zfill(2),  # 0 PCAs
+                                                        "_" + str(0).zfill(3),  # 0 PCAs
                                            res_rot_mean_clip_tag="09_res_rot_mean_clip_for_"
                                                                  + denoising_result +
-                                                                 "_" + str(0).zfill(2),  # 0 PCAs
+                                                                 "_" + str(0).zfill(3),  # 0 PCAs
                                            prep_tag="prep_data",
                                            basis_out_tag="pca_basis",
                                            image_ave_tag="im_ave",
@@ -56,11 +56,11 @@ for denoising_result in wavelet_names:
     pipeline.add_module(psf_subtraction)
 
     writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
-                                    "_" + str(0).zfill(2) + ".fits",
+                                    "_" + str(0).zfill(3) + ".fits",
                                     name_in="writing_" + "09_res_mean_for_" + denoising_result +
-                                            "_" + str(0).zfill(2),
+                                            "_" + str(0).zfill(3),
                                     data_tag="09_res_mean_for_" + denoising_result +
-                                             "_" + str(0).zfill(2))
+                                             "_" + str(0).zfill(3))
     pipeline.add_module(writing)
 
     for pca_number in pca_numbers:
@@ -80,12 +80,12 @@ for denoising_result in wavelet_names:
                                   psf_im_in_tag="tmp_psf_model",
                                   mask_in_tag="cent_mask",
                                   res_mean_tag="09_res_mean_for_" + denoising_result +
-                                               "_" + str(pca_number).zfill(2),
+                                               "_" + str(pca_number).zfill(3),
                                   res_median_tag="09_res_median_for_" + denoising_result +
-                                               "_" + str(pca_number).zfill(2),
+                                               "_" + str(pca_number).zfill(3),
                                   res_rot_mean_clip_tag="09_res_rot_mean_clip_for_" +
                                                         denoising_result + "_" +
-                                                        str(pca_number).zfill(2),)
+                                                        str(pca_number).zfill(3),)
 
         pipeline.add_module(tmp_make_psf_model)
         pipeline.add_module(tmp_residuals_module)
@@ -93,11 +93,11 @@ for denoising_result in wavelet_names:
         # write out result as fits
 
         writing = WriteAsSingleFitsFile("09_res_mean_for_" + denoising_result +
-                                        "_" + str(pca_number).zfill(2) + ".fits",
+                                        "_" + str(pca_number).zfill(3) + ".fits",
                                         name_in="writing_" + "09_res_mean_for_" + denoising_result +
-                                                "_" + str(pca_number).zfill(2),
+                                                "_" + str(pca_number).zfill(3),
                                         data_tag="09_res_mean_for_" + denoising_result +
-                                                 "_" + str(pca_number).zfill(2))
+                                                 "_" + str(pca_number).zfill(3))
         pipeline.add_module(writing)
 
 pipeline.run()
