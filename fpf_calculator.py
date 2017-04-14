@@ -67,7 +67,7 @@ def fpf_calculator(image,filetype,planet_position,radius,method='exact',subpix=2
     size = len(data[0])
 
     #Define the center (i.e.: the image is supposed to be centered on the central star):
-    center=np.array([size/2. -1.,size/2. -1])
+    center=np.array([size/2. ,size/2.])
 
     #Round up the size of the range of search for the local maximum:
     ros=math.ceil(radius)

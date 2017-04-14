@@ -4,10 +4,7 @@ import numpy as np
 import operator
 
 folder_list = ["no/",
-               "zero_soft/",
-               "zero_hard/",
-               "mirror_hard/",
-               "mirror_soft/"]
+               "hard/",]
 
 planet_pos = (65, 62) # BP 26
 # planet_pos = (65, 63) # BP 29
@@ -30,7 +27,7 @@ print "Beta Pic 26"
 for tmploc in folder_list:
     print "------------- " + tmploc + "---------------"
 
-    tmp_location = "/Users/markusbonse/Desktop/Beta_Pic_26/" + tmploc
+    tmp_location = "/Users/markusbonse/Desktop/Results/" #+ tmploc
 
     last_planet_pos = planet_pos
 
@@ -55,14 +52,15 @@ for tmploc in folder_list:
 
         index, value = max(enumerate(snr_result_list), key=operator.itemgetter(1))
 
+        print value
+
+        '''
         tmp_result = fpf_calculator.fpf_calculator(tmp_location + str(file),
                                       filetype="fits",
                                       planet_position=planet_pos_list[index],
                                       radius=4.0 / 2.0,
                                       method="exact",
                                       plot=True,
-                                      save=False)
-
-        print np.sort(tmp_result[4])
+                                      save=False)'''
 
 
