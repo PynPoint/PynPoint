@@ -235,7 +235,7 @@ class CreateResidualsModule(ProcessingModule):
         para_angles = self.m_im_arr_in_port.get_attribute("NEW_PARA")
         delta_para = - para_angles
         res_rot = np.zeros(shape=im_data.shape)
-        for i in range(0, len(delta_para)):
+        for i in range(0, len(delta_para) -1):
             res_temp = res_arr[i, ]
 
             res_rot[i, ] = ndimage.rotate(res_temp,

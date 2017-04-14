@@ -233,9 +233,13 @@ class WaveletAnalysisCapsule:
                                                self.__m_spectrum.shape[0],
                                                self.__m_spectrum.shape[0]))
 
+        print self.__m_spectrum.shape
+
         self.__m_spectrum = _fast_zeros_planet_save(self.__m_spectrum,
                                                     uthresh,
                                                     uplanet)
+
+        print self.__m_spectrum.shape
 
 
     def median_filter(self):
@@ -258,7 +262,7 @@ class WaveletAnalysisCapsule:
         plt.subplot(1, 1, 1)
 
         tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
-        tmp_x = np.arange(0, self.__m_data_size, 1.0)
+        tmp_x = np.arange(0, self.__m_data_size + 1, 1)
 
 
         scaled_spec = copy.deepcopy(self.__m_spectrum.real)
@@ -292,9 +296,9 @@ class WaveletAnalysisCapsule:
         plt.ylim([tmp_y[0],
                   tmp_y[-1]])
 
-        plt.fill_between(np.arange(0, len(coi), 1.0),
+        plt.fill_between(np.arange(0, len(coi) , 1.0),
                          inner_frequency * coi / np.sqrt(2),
-                         np.ones(len(tmp_x)) * tmp_y[-1],
+                         np.ones(len(coi)) * tmp_y[-1],
                          facecolor="none",
                          edgecolor='white',
                          alpha=0.4,
