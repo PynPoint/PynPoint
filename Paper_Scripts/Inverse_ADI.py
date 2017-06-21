@@ -3,11 +3,12 @@ from PynPoint.io_modules import WriteAsSingleFitsFile
 from PynPoint.processing_modules import RemoveMeanOrMedianModule, RotateFramesModule, \
     CombineADIModule, SimpleSpeckleSubtraction
 
-pipeline = Pypeline("/Volumes/Seagate/0_PCA_study",
-                    "/Volumes/Seagate/0_PCA_study",
-                    "/Volumes/Seagate/0_PCA_study")
+pipeline = Pypeline("/Volumes/Seagate/0_PCA_study_HR8799",
+                    "/Volumes/Seagate/0_PCA_study_HR8799",
+                    "/Volumes/Seagate/0_PCA_study_HR8799")
 
-tag = "08_wavelet_denoised_mirror_soft_1_0"
+tag = "08_wavelet_denoised_mirror_hard_1_0"
+#tag = "08_wavelet_denoised_mirror_soft_1_0"
 #tag = "06_star_arr_aligned"
 
 # --- 00 Remove Median ---
@@ -84,7 +85,7 @@ combine_mean = CombineADIModule(type_in="mean",
 
 pipeline.add_module(combine_mean)
 
-writing_mean = WriteAsSingleFitsFile("Inverse_ADI_mean_wavelets.fits",
+writing_mean = WriteAsSingleFitsFile("05_inv_ADI_mean_hard_wavelets.fits",
                                      name_in="fits_writing_mean",
                                      data_tag=tag + "_07_mean")
 
@@ -98,7 +99,7 @@ combine_median = CombineADIModule(type_in="median",
 
 pipeline.add_module(combine_median)
 
-writing_median = WriteAsSingleFitsFile("Inverse_ADI_median_wavelets.fits",
+writing_median = WriteAsSingleFitsFile("06_inv_ADI_median_hard_wavelets.fits",
                                        name_in="fits_writing_median",
                                        data_tag=tag + "_07_median")
 
