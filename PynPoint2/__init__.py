@@ -17,12 +17,12 @@
 # from PynPoint.Basis import basis
 # from PynPoint.Images import images
 
-from PynPoint.wrapper.BasisWrapper import BasisWrapper as basis
-from PynPoint.wrapper.ImageWrapper import ImageWrapper as images
-from PynPoint.wrapper.ResidualsWrapper import ResidualsWrapper as residuals
+from PynPoint2.wrapper.BasisWrapper import BasisWrapper as basis
+from PynPoint2.wrapper.ImageWrapper import ImageWrapper as images
+from PynPoint2.wrapper.ResidualsWrapper import ResidualsWrapper as residuals
 
 # PynPoint 0.3.x
-from PynPoint.core import Pypeline
+from PynPoint2.core import Pypeline
 
 __author__ = 'Adam Amara'
 __email__ = 'adam.amara@phys.ethz.ch'
