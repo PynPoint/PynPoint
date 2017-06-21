@@ -1,7 +1,6 @@
-from PynPoint.core import ProcessingModule
+from PynPoint2.core import ProcessingModule
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from scipy import ndimage
 

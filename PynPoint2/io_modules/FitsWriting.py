@@ -6,7 +6,7 @@ import os
 
 from astropy.io import fits
 
-from PynPoint.core.Processing import WritingModule
+from PynPoint2.core.Processing import WritingModule
 
 import warnings
 

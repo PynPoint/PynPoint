@@ -6,7 +6,7 @@ from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 from skimage.transform import rescale
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 
 
 class StarExtractionModule(ProcessingModule):

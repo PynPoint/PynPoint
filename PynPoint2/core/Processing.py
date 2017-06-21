@@ -11,7 +11,7 @@ import time
 
 import matplotlib.pyplot as plt
 
-from PynPoint.core.DataIO import OutputPort, InputPort
+from PynPoint2.core.DataIO import OutputPort, InputPort
 
 import warnings
 

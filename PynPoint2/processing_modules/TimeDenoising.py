@@ -1,10 +1,10 @@
 from statsmodels.robust import mad
 import numpy as np
 import pywt
-from PynPoint.util import WaveletAnalysisCapsule
+from PynPoint2.util import WaveletAnalysisCapsule
 from copy import deepcopy
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 
 import matplotlib.pyplot as plt
 
