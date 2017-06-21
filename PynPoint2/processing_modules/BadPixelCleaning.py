@@ -6,7 +6,7 @@ import copy
 import cv2
 from numba import jit
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 
 
 class BadPixelCleaningSigmaFilterModule(ProcessingModule):

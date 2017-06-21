@@ -3,8 +3,8 @@ from skimage.feature import register_translation
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 
-from PynPoint.io_modules import ReadFitsCubesDirectory
-from PynPoint.core import ProcessingModule
+from PynPoint2.io_modules import ReadFitsCubesDirectory
+from PynPoint2.core import ProcessingModule
 
 
 class ReadFitsSkyDirectory(ReadFitsCubesDirectory):

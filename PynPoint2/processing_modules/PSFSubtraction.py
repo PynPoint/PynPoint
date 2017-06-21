@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import linalg, ndimage
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 from PSFsubPreparation import PSFdataPreparation
 
 

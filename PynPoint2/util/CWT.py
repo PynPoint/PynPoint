@@ -1,5 +1,4 @@
 import numpy as np
-#import mlpy.wavelet as wave
 import continous as wave
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
