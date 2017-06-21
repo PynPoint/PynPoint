@@ -7,9 +7,9 @@ import os
 import atexit
 
 import numpy as np
-from PynPoint.core.DataIO import DataStorage
+from PynPoint2.core.DataIO import DataStorage
 
-from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
+from PynPoint2.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
 import warnings
 

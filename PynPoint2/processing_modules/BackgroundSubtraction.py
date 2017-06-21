@@ -1,5 +1,5 @@
 import numpy as np
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 
 
 class MeanBackgroundSubtractionModule(ProcessingModule):

@@ -10,7 +10,7 @@ from __future__ import division
 import numpy as np
 from scipy import ndimage
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 
 
 class PSFdataPreparation(ProcessingModule):

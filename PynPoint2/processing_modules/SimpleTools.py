@@ -1,4 +1,4 @@
-from PynPoint.core import ProcessingModule
+from PynPoint2.core import ProcessingModule
 from skimage.transform import rescale
 import numpy as np
 

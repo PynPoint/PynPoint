@@ -1,6 +1,6 @@
 import numpy as np
 
-from PynPoint.core.Processing import ProcessingModule
+from PynPoint2.core.Processing import ProcessingModule
 import warnings
 
 #warnings.simplefilter("always")

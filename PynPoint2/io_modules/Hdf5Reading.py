@@ -7,7 +7,7 @@ import os
 import h5py
 import numpy as np
 
-from PynPoint.core.Processing import ReadingModule
+from PynPoint2.core.Processing import ReadingModule
 
 
 class Hdf5ReadingModule(ReadingModule):
