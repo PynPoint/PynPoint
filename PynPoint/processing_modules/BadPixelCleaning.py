@@ -6,8 +6,6 @@ import copy
 import cv2
 from numba import jit
 
-import matplotlib.pylab as plt
-
 from PynPoint.core.Processing import ProcessingModule
 
 
