@@ -1,5 +1,6 @@
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule
-from BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
+    BadPixelMapCreationModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from NACOPreparation import AngleCalculationModule, CutTopTwoLinesModule
 from PSFSubtraction import PSFSubtractionModule
