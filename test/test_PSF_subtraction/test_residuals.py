@@ -47,22 +47,33 @@ class TestResidual(object):
     def test_res_rot_mean(self):
 
         assert self.res.res_arr(1).shape == (self.num_files,146,146)
-        assert np.allclose(self.res.res_arr(1).mean() , -1.6263342535536864e-22,rtol=limit1)
-        assert np.allclose(self.res.res_arr(1).var() , 2.0608041905384247e-09,rtol=limit1)
+        print self.res.res_arr(1).mean()
+        print self.res.res_arr(1).var()
+
+        print self.res.res_rot(1).mean()
+
+        print self.res.res_rot_mean(1).mean()
+
+        print self.res.res_rot_var(1).mean()
+
+        print self.res._psf_im(1).mean()
+
+        assert np.allclose(self.res.res_arr(1).mean() , -6.99879052984e-21,rtol=limit1)
+        assert np.allclose(self.res.res_arr(1).var() , 6.04791954677e-08,rtol=limit1)
 
         assert self.res.res_rot(1).shape == (self.num_files,146,146)
-        assert np.allclose(self.res.res_rot(1).mean() ,-4.4349329318721066e-10,rtol=limit1)
+        assert np.allclose(self.res.res_rot(1).mean() ,-1.98001052939e-09,rtol=limit1)
 
         assert self.res.res_rot_mean(1).shape == (146,146)
-        assert np.allclose(self.res.res_rot_mean(1).mean() , -4.4349329318527051e-10,rtol=limit1)
+        assert np.allclose(self.res.res_rot_mean(1).mean() , -1.98001052939e-09,rtol=limit1)
 
         assert self.res.res_rot_mean_clip(1).shape == (146,146)
 
         assert self.res.res_rot_var(1).shape == (146,146)
-        assert np.allclose(self.res.res_rot_var(1).mean() , -4.4349329318527051e-10,rtol=limit1)
+        assert np.allclose(self.res.res_rot_var(1).mean() , 2.39710290476e-07,rtol=limit1)
 
         assert self.res._psf_im(1).shape == (self.num_files,146,146)
-        assert np.allclose(self.res._psf_im(1).mean() , 9.2698583022210567e-06,rtol=limit1)
+        assert np.allclose(self.res._psf_im(1).mean() , 0.000293242276843,rtol=limit1)
 
     def test_residuals_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_res_hdf5.h5'))
