@@ -831,15 +831,11 @@ class OutputPort(Port):
                     .m_data_bank["header_" + input_port.tag + "/"].iteritems():
 
                 # overwrite existing header information in the database
-                print "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank
                 if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
-                    print "dell"
                     del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
 
                 self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
                     attr_data
-
-                print "inside " + str(self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name][...])
 
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
