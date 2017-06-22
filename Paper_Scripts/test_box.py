@@ -1,4 +1,4 @@
-import fpf_calculator
+import SNR.fpf_calculator
 import glob, os
 import numpy as np
 import operator

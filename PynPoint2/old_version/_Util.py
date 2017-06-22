@@ -24,7 +24,7 @@ import pylab as pl
 from scipy import linalg
 from scipy import ndimage
 
-from PynPoint.old_version import _Mask
+from PynPoint2.old_version import _Mask
 
 
 class dummyclass():
