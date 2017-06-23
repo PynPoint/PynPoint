@@ -173,8 +173,8 @@ class BadPixelMapCreationModule(ProcessingModule):
                 if flat[i, j] < max_val_flat * self.m_flat_threshold:
                     bpmap[i, j] = 0
 
-        plt.imshow(bpmap)
-        plt.show()
+        #  plt.imshow(bpmap, interpolation="none")
+        #  plt.show()
 
         self.m_bp_map_out_port.set_all(bpmap)
 
@@ -251,7 +251,9 @@ class BadPixelInterpolationModule(ProcessingModule):
 
         if bad_pixel_map.shape[0] != self.m_image_in_port.get_shape()[1] or \
            bad_pixel_map.shape[1] != self.m_image_in_port.get_shape()[2]:
-           print "Error missing here"
+           raise ValueError("The given size of the input bad pixel map does not fit the dataset "
+                            "size. Beforehand using this module run one of the Simple Tools to "
+                            "fit the size.")
 
         def bad_pixel_interpolation_image(image_in):
             image_in = image_in * bad_pixel_map
