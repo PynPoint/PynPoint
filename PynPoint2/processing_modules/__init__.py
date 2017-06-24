@@ -2,7 +2,7 @@ from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgro
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
-    BadPixelMapCreationModule
+    BadPixelMapCreationModule, BadPixelInterpolationRefinementModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from NACOPreparation import AngleCalculationModule, CutTopTwoLinesModule
 from PSFSubtraction import PSFSubtractionModule
