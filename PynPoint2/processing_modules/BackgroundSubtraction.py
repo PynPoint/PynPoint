@@ -36,7 +36,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         tmp_res = self.m_image_in_port[0, :, :] - tmp_mean
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            self.m_image_out_port[0] = tmp_res
+            raise NotImplementedError("Same input and output port not implemented yet.")
         else:
             self.m_image_out_port.set_all(tmp_res, data_dim=3)
 
@@ -74,11 +74,12 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         # calc the mean (previous)
         tmp_data = self.m_image_in_port[(top - 1) * self.m_star_prs_shift:
                                         (top + 0) * self.m_star_prs_shift, :, :]
-        tmp_mean = np.mean(tmp_data)
+        tmp_mean = np.mean(tmp_data, axis=0)
         # calc the mean (next)
         # "number_of_frames" is important if the last step is to huge
         tmp_data = self.m_image_in_port[(top + 1) * self.m_star_prs_shift:
                                         number_of_frames, :, :]
+
         tmp_mean = (tmp_mean + np.mean(tmp_data, axis=0)) / 2.0
 
         # subtract mean
@@ -91,7 +92,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         # calc the mean (previous)
         tmp_data = self.m_image_in_port[(top + 0) * self.m_star_prs_shift:
                                         (top + 1) * self.m_star_prs_shift, :, :]
-        tmp_mean = np.mean(tmp_data)
+        tmp_mean = np.mean(tmp_data, axis=0)
 
         # subtract mean
         tmp_data = self.m_image_in_port[(top + 1) * self.m_star_prs_shift:
