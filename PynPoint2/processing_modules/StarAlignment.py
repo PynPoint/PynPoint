@@ -15,6 +15,7 @@ class StarExtractionModule(ProcessingModule):
                  name_in="star_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
+                 pos_out_tag="star_positions",
                  psf_size=3,
                  psf_size_as_pixel_resolution=False,
                  num_images_in_memory=100,
@@ -26,6 +27,7 @@ class StarExtractionModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+        self.m_pos_out_port = self.add_output_port(pos_out_tag)
 
         self.m_psf_size = psf_size
         self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
@@ -39,6 +41,8 @@ class StarExtractionModule(ProcessingModule):
         else:
             pixel_scale = self.m_image_in_port.get_attribute('ESO INS PIXSCALE')
             psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
+
+        star_positions = []
 
         def cut_psf(current_image):
 
@@ -65,12 +69,16 @@ class StarExtractionModule(ProcessingModule):
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
+            star_positions.append(argmax)
+
             return cut_image
 
         self.apply_function_to_images(cut_psf,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       num_images_in_memory=self.m_num_images_in_memory)
+
+        self.m_pos_out_port.set_all(np.array(star_positions))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_history_information("PSF extract",
