@@ -96,6 +96,7 @@ class StarAlignmentModule(ProcessingModule):
                  interpolation="spline",
                  accuracy=10,
                  resize=1,
+                 num_references=10,
                  num_images_in_memory=100):
 
         super(StarAlignmentModule, self).__init__(name_in)
@@ -115,27 +116,35 @@ class StarAlignmentModule(ProcessingModule):
         self.m_accuracy = accuracy
         self.m_num_images_in_memory = num_images_in_memory
         self.m_resize = resize
+        self.m_num_references = num_references
 
     def run(self):
 
         # get ref image
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
-                ref_image = np.asarray(self.m_ref_image_in_port[0, :, :],
-                                       dtype=np.float64)
+                ref_images = np.asarray(self.m_ref_image_in_port.get_all(),
+                                        dtype=np.float64)
             elif len(self.m_ref_image_in_port.get_shape()) == 2:
-                ref_image = self.m_ref_image_in_port.get_all()
+                ref_images = np.array([self.m_ref_image_in_port.get_all(),])
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
         else:
-            ref_image = self.m_image_in_port[0]
+            ref_images = self.m_image_in_port[np.sort(
+                np.random.choice(self.m_image_in_port.get_shape()[0],
+                                 self.m_num_references,
+                                 replace=False)), :, :]
 
         def align_image(image_in):
 
-            offset, _, _ = register_translation(ref_image,
-                                                image_in,
-                                                self.m_accuracy)
+            offset = np.array([0.0, 0.0])
+            for i in range(self.m_num_references):
+                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
+                                                        image_in,
+                                                        self.m_accuracy)
+                offset += tmp_offset
 
+            offset /= float(self.m_num_references)
             offset *= self.m_resize
 
             if self.m_resize is not 1:
