@@ -167,12 +167,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 def denoise_one_threshold(capsule_in,
                                           threshold_in):
-                    '''
-                    capsule_in.denoise_spectrum_universal_threshold(threshold=threshold_in,
-                                                                    soft=self.m_threshold_function)'''
 
-                    capsule_in.denoise_spectrum_universal_threshold_planet_save(2000,
-                                                                                24000)
+                    capsule_in.denoise_spectrum_universal_threshold(threshold=threshold_in,
+                                                                    soft=self.m_threshold_function)
 
                     if self.m_median_filter:
                         capsule_in.median_filter()
