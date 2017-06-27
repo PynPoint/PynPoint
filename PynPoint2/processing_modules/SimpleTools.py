@@ -1,5 +1,6 @@
 from PynPoint2.core import ProcessingModule
 from skimage.transform import rescale
+from scipy.ndimage import shift
 import numpy as np
 
 
@@ -145,3 +146,41 @@ class ScaleFramesModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
+
+
+class ShiftForCenteringModule(ProcessingModule):
+
+    def __init__(self,
+                 shift_vector,
+                 name_in="shift",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_shifted",
+                 number_of_images_in_memory=100):
+
+        super(ShiftForCenteringModule, self).__init__(name_in=name_in)
+
+        # Ports
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_number_of_images_in_memory = number_of_images_in_memory
+        self.m_shift_vector = shift_vector
+
+    def run(self):
+
+        def image_shift(image_in):
+
+            return shift(image_in, self.m_shift_vector, order=5)
+
+        self.apply_function_to_images(image_shift,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      num_images_in_memory=self.m_number_of_images_in_memory)
+
+        self.m_image_out_port.add_history_information("Shifted by",
+                                                      str(self.m_shift_vector))
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
+
