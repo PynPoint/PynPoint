@@ -18,4 +18,4 @@ from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
 
 
 from ToolsForPCAstudy import RemoveMeanOrMedianModule, RotateFramesModule, CombineADIModule, \
-    SimpleSpeckleSubtraction
+    SimpleSpeckleSubtraction, ComputeModeModule
