@@ -126,9 +126,6 @@ class PSFdataPreparation(ProcessingModule):
 
         # image normalization
         im_norm = self._im_norm(im_data)
-        self.m_image_out_port.add_attribute("im_norm",
-                                            im_norm,
-                                            static=False)
 
         # image resizing
         if self.m_resize:
@@ -139,6 +136,10 @@ class PSFdataPreparation(ProcessingModule):
 
         self.m_image_out_port.set_all(im_data,
                                       keep_attributes=True)
+
+        self.m_image_out_port.add_attribute("im_norm",
+                                            im_norm,
+                                            static=False)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
