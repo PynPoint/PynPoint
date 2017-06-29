@@ -4,7 +4,7 @@ import numpy as np
 
 from scipy import ndimage
 from sklearn.neighbors import KernelDensity
-from sklearn.model_selection import GridSearchCV
+from sklearn.grid_search import GridSearchCV
 
 
 class RemoveMeanOrMedianModule(ProcessingModule):
