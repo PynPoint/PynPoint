@@ -200,8 +200,6 @@ class ComputeModeModule(ProcessingModule):
             # score_samples() returns the log-likelihood of the samples
             log_pdf = kde_skl.score_samples(self.m_search_space[:, np.newaxis])
 
-            print np.array([self.m_search_space[np.argsort(log_pdf)[-1]]])
-
             return np.array([self.m_search_space[np.argsort(log_pdf)[-1]]])
 
         self.apply_function_to_line_in_time_multi_processing(calculate_mode_line,
