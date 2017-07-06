@@ -1,4 +1,4 @@
-from PynPoint import Pypeline
+from PynPoint2 import Pypeline
 
 __author__ = 'Arianna'
 from skimage.transform import rescale
@@ -8,12 +8,12 @@ import os
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.ndimage.interpolation import rotate,zoom
-from PynPoint import Pypeline
-from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
-from PynPoint.core.Processing import ProcessingModule, PypelineModule
-from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile, Hdf5Reading
+
+from PynPoint2.processing_modules.PSFsubPreparation import PSFdataPreparation
+from PynPoint2.core.Processing import ProcessingModule, PypelineModule
+from PynPoint2.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile, Hdf5Reading
 #from DatabaseAccess import DatabaseAccessModule
-from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
+from PynPoint2.processing_modules import BadPixelCleaningSigmaFilterModule, \
 DarkSubtractionModule, FlatSubtractionModule, CutTopTwoLinesModule, \
 AngleCalculationModule, SimpleBackgroundSubtractionModule, \
 StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
