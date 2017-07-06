@@ -9,7 +9,7 @@ class PeakDetection(object):
                  data_in,
                  resolution=5):
         self.m_data = data_in
-        if min(data_in) > -10 || max(data_in) < 10:
+        if min(data_in) > -10 or max(data_in) < 10:
             self.m_grid = np.linspace(-10, 10,
                                       20 * resolution)
             print "hit"
