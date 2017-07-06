@@ -9,8 +9,13 @@ class PeakDetection(object):
                  data_in,
                  resolution=5):
         self.m_data = data_in
-        self.m_grid = np.linspace(min(data_in), max(data_in),
-                                  np.abs(max(data_in) - min(data_in))*resolution)
+        if min(data_in) > -10 || max(data_in) < 10:
+            self.m_grid = np.linspace(-10, 10,
+                                      20 * resolution)
+            print "hit"
+        else:
+            self.m_grid = np.linspace(min(data_in), max(data_in),
+                                      np.abs(max(data_in) - min(data_in))*resolution)
         self.m_resolution = 1./resolution
 
         self.m_pdf = []
@@ -28,10 +33,7 @@ class PeakDetection(object):
 
     def calc_pdf(self,
                  bandwidth_in=4.0):
-        print bandwidth_in
-        print self.m_data
-        print self.m_data.shape
-        
+
         self.m_pdf = self._kde_sklearn(self.m_data,
                                        self.m_grid,
                                        bandwidth=bandwidth_in)
