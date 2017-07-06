@@ -245,6 +245,14 @@ class ComputeModeModule2(ProcessingModule):
             peak_detection.detect_peaks(bandwidth_space=self.m_bandwidth_space)
             peak_detection.calc_peak_support()
 
+            print np.array([peak_detection.get_lowest_peak_mean(),
+                             peak_detection.get_lowest_peak_mode(),
+                             peak_detection.get_highest_peak_mean(),
+                             peak_detection.get_highest_peak_mode(),
+                             peak_detection.get_best_peak_mean(),
+                             peak_detection.get_best_peak_mode(),
+                             peak_detection.get_peak_accuray()])
+
             return np.array([peak_detection.get_lowest_peak_mean(),
                              peak_detection.get_lowest_peak_mode(),
                              peak_detection.get_highest_peak_mean(),
@@ -253,11 +261,17 @@ class ComputeModeModule2(ProcessingModule):
                              peak_detection.get_best_peak_mode(),
                              peak_detection.get_peak_accuray()])
 
+        self.apply_function_to_line_in_time(calculate_mode_line,
+                                            self.m_image_in_port,
+                                            self.m_image_out_port)
+
+        '''
+
         self.apply_function_to_line_in_time_multi_processing(calculate_mode_line,
                                                              self.m_image_in_port,
                                                              self.m_image_out_port,
                                                              num_rows_in_memory=
-                                                             self.m_number_of_rows_in_memory)
+                                                             self.m_number_of_rows_in_memory)'''
 
         self.m_image_out_port.add_history_information("Mode Estimate", " using KDE")
 
