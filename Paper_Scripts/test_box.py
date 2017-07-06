@@ -1,22 +1,26 @@
-import SNR.fpf_calculator
+import os
+import sys
+module_path = os.path.abspath(os.path.join('../'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+import fpf_calculator
 import glob, os
 import numpy as np
 import operator
 
-folder_list = ["no/",
-               "hard/"]
+folder_list = ["wv_hard/mean/"]
 
-#planet_pos = (65, 62) # BP 26
-planet_pos = (65, 61) # BP 29
-# planet_pos = (58.5, 67.5)  # HR8799 e
-# planet_pos = (186.0, 142.0)  # HR8799 e keck
+# planet_pos = (65, 62) # BP 26
+#planet_pos = (65, 61) # BP 29
+planet_pos = (58.5, 67.5)  # HR8799 e
 # planet_pos = (75, 67) # HR8799 d
 # planet_pos = (65, 63) # BP 26
 # planet_pos = (27, 77) # HR8799 c
 
-# shifts = np.linspace(-2.0, 2.0, num= 20) # HR8799 e
+shifts = np.linspace(-2.0, 2.0, num= 20) # HR8799 e
 
-shifts = np.linspace(-1.0, 1.0, num=10)  # BP 29 / BP 26
+#shifts = np.linspace(-1.0, 1.0, num=10)  # BP 29 / BP 26
 
 #planet_pos = (67, 55) # EPS ERI
 
@@ -27,7 +31,7 @@ print "Beta Pic 29"
 for tmploc in folder_list:
     print "------------- " + tmploc + "---------------"
 
-    tmp_location = "/Users/markusbonse/Desktop/Results/" + tmploc
+    tmp_location = "/Users/markusbonse/Desktop/" + tmploc
 
     last_planet_pos = planet_pos
 
@@ -42,7 +46,7 @@ for tmploc in folder_list:
             tmp_result = fpf_calculator.fpf_calculator(tmp_location + str(file),
                                                        filetype="fits",
                                                        planet_position=shift,
-                                                       radius=4.0/2.0,
+                                                       radius=4.5/2.0,
                                                        method="exact",
                                                        plot=False,
                                                        save=False)
@@ -57,9 +61,9 @@ for tmploc in folder_list:
         tmp_result = fpf_calculator.fpf_calculator(tmp_location + str(file),
                                       filetype="fits",
                                       planet_position=planet_pos_list[index],
-                                      radius=4.0 / 2.0,
+                                      radius=4.5 / 2.0,
                                       method="exact",
-                                      plot=True,
+                                      plot=False,
                                       save=False)
 
 

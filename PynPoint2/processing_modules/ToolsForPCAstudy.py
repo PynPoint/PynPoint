@@ -4,7 +4,7 @@ import numpy as np
 
 from scipy import ndimage
 from sklearn.neighbors import KernelDensity
-from sklearn.grid_search import GridSearchCV
+from PynPoint2.util import PeakDetection
 
 
 class RemoveMeanOrMedianModule(ProcessingModule):
@@ -211,6 +211,55 @@ class ComputeModeModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Mode Estimate", "KDE + " \
                                                       + str(self.m_cross_validation_fold) + \
                                                       " fold cross-validation")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
+
+
+class ComputeModeModule2(ProcessingModule):
+
+    def __init__(self,
+                 name_in="mode_calculation_module",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_mode",
+                 bandwidth_space_in=np.linspace(1.0, 20, 50),
+                 resolution_in=5,
+                 number_of_rows_in_memory=100):
+
+        super(ComputeModeModule2, self).__init__(name_in=name_in)
+
+        # Ports
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_number_of_rows_in_memory = number_of_rows_in_memory
+        self.m_bandwidth_space = bandwidth_space_in
+        self.m_resolution = resolution_in
+
+    def run(self):
+
+        def calculate_mode_line(line_in):
+            peak_detection = PeakDetection(line_in, resolution=self.m_resolution)
+
+            peak_detection.detect_peaks(bandwidth_space=self.m_bandwidth_space)
+            peak_detection.calc_peak_support()
+
+            return np.array([peak_detection.get_lowest_peak_mean(),
+                             peak_detection.get_lowest_peak_mode(),
+                             peak_detection.get_highest_peak_mean(),
+                             peak_detection.get_highest_peak_mode(),
+                             peak_detection.get_best_peak_mean(),
+                             peak_detection.get_best_peak_mode(),
+                             peak_detection.get_peak_accuray()])
+
+        self.apply_function_to_line_in_time_multi_processing(calculate_mode_line,
+                                                             self.m_image_in_port,
+                                                             self.m_image_out_port,
+                                                             num_rows_in_memory=
+                                                             self.m_number_of_rows_in_memory)
+
+        self.m_image_out_port.add_history_information("Mode Estimate", " using KDE")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
