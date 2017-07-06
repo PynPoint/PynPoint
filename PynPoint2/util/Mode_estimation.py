@@ -28,6 +28,10 @@ class PeakDetection(object):
 
     def calc_pdf(self,
                  bandwidth_in=4.0):
+        print bandwidth_in
+        print self.m_data
+        print self.m_data.shape
+        
         self.m_pdf = self._kde_sklearn(self.m_data,
                                        self.m_grid,
                                        bandwidth=bandwidth_in)
