@@ -24,7 +24,7 @@ class PSFSubtractionModule(ProcessingModule):
         super(PSFSubtractionModule, self).__init__(name_in)
 
         # additional keywords
-        if "basis_tag" in kwargs:
+        if "basis_out_tag" in kwargs:
             basis_tag = kwargs["basis_out_tag"]
         else:
             basis_tag = "pca_basis_set"
