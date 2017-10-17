@@ -48,8 +48,8 @@ class Hdf5ReadingModule(ReadingModule):
                                will be imported. Their names inside the internal PynPoint database
                                will be changed to *name_of_the_imported_dataset*.
         :type tag_dictionary: dict
-        +        :param list_tags: If True all tags from the Hdf5 file will be printed.
-        +        :type list_tags: bool
+        :param list_tags: If True all tags from the Hdf5 file will be printed.
+        :type list_tags: bool
         """
 
         super(Hdf5ReadingModule, self).__init__(name_in, input_dir)
