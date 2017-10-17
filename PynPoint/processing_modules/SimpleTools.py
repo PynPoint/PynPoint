@@ -31,7 +31,8 @@ class CutAroundCenterModule(ProcessingModule):
 
             x_off = (shape_of_input[0] - shape_in[0]) / 2
             y_off = (shape_of_input[1] - shape_in[1]) / 2
-            return image_in[x_off: shape_in[0] + x_off, y_off:shape_in[1] + y_off]
+
+            return image_in[y_off: shape_in[1] + y_off, x_off: shape_in[0] + x_off]
 
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
@@ -81,7 +82,7 @@ class CutAroundPositionModule(ProcessingModule):
             x_off = center_of_cut_in[0] - (shape_in[0] / 2)
             y_off = center_of_cut_in[1] - (shape_in[1] / 2)
             
-            return image_in[x_off: shape_in[0] + x_off, y_off:shape_in[1] + y_off]
+            return image_in[y_off: shape_in[1] + y_off, x_off: shape_in[0] + x_off]
 
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
