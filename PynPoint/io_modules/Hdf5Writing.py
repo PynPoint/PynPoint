@@ -94,5 +94,3 @@ class Hdf5WritingModule(WritingModule):
                                                 data=tmp_data_attr)
 
         out_file.close()
-
-

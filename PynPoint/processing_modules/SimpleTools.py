@@ -52,7 +52,7 @@ class CutAroundPositionModule(ProcessingModule):
     def __init__(self,
                  new_shape,
                  center_of_cut,
-                 name_in="cut_around_center",
+                 name_in="cut_around_position",
                  image_in_tag="im_arr",
                  image_out_tag="cut_im_arr",
                  number_of_images_in_memory=100):
@@ -74,13 +74,13 @@ class CutAroundPositionModule(ProcessingModule):
                           center_of_cut_in):
 
             shape_of_input = image_in.shape
-
+            
             if shape_in[0] > shape_of_input[0] or shape_in[1] > shape_of_input[1]:
                 raise ValueError("Input frame resolution smaller than target image resolution.")
 
             x_off = center_of_cut_in[0] - (shape_in[0] / 2)
             y_off = center_of_cut_in[1] - (shape_in[1] / 2)
-
+            
             return image_in[x_off: shape_in[0] + x_off, y_off:shape_in[1] + y_off]
 
         self.apply_function_to_images(image_cutting,
