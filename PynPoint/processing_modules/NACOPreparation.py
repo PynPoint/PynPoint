@@ -75,3 +75,64 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,
                                            static=False)
+
+
+class RemoveLastFrameModule(ProcessingModule):
+    """
+    Module for removing every NDIT+1 frame from NACO data obtained in cube mode. This frame contains
+    the average pixel values of the cube.
+    """
+
+    def __init__(self,
+                 name_in="remove_last_frame",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_last"):
+        """
+        Constructor of RemoveLastFrameModule. It requires an input and output tag of the dataset
+
+        :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
+                        dictionary.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*.
+        :type image_out_tag: str
+        :return: None
+        """
+
+        super(RemoveLastFrameModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Removes every NDIT+1 frame and saves the data and attributes.
+
+        :return: None
+        """
+
+        ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
+
+        if self.m_image_out_port.tag == self.m_image_in_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        ndit_tot = 0
+        for i, _ in enumerate(ndit):
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
+            tmp_out = np.delete(tmp_in, ndit[i], axis=0)
+
+            if ndit_tot == 0:
+                self.m_image_out_port.set_all(tmp_out, keep_attributes=True)
+            else:
+                self.m_image_out_port.append(tmp_out)
+
+            ndit_tot += ndit[i]+1
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.add_history_information("NACO preparation",
+                                                      "remove average frame every NDIT+1")
+
+        self.m_image_out_port.close_port()
