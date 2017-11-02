@@ -12,7 +12,7 @@ The PynPoint Pipeline works through two different components:
 
 	1.2 :class:`PynPoint.core.Processing.ProcessingModule` - process the data (e.g. dark-/flat-/background-/PSF-subtraction)
 
-	1.3 :class:`PynPoint.core.Processing.WritingModule` - exports or displaies the results of previous ProcessingModules
+	1.3 :class:`PynPoint.core.Processing.WritingModule` - exports or displays the results of previous ProcessingModules
 
 2. The actual pipeline :class:`PynPoint.core.Pypeline` - capsules a list of pipeline modules
 
@@ -200,7 +200,7 @@ The first time you use fits files as inputs, PynPoint will create a HDF5 databas
 
 The code above will read all .fits files form the `input_place_in` and `some/own/location` and stores them into the Pypeline HDF5 database. The chosen tags are important for other pipeline steps in order to let them access data directly from this database.
 
-If you what to restore data from a Pypeline database which is located in a folder `some/folder/on/drive` you just need to create a Pypeline instance with a `working_place_in`=`some/folder/on/drive` like: ::
+If you want to restore data from a Pypeline database which is located in a folder `some/folder/on/drive` you just need to create a Pypeline instance with a `working_place_in`=`some/folder/on/drive` like: ::
 
 	pipeline = Pypeline(some/folder/on/drive,
 				input_place_in,

@@ -69,7 +69,7 @@ That is it! If this worked, you should have a picture like the one in the sectio
 
 .. |beta_pic| raw:: html
 
-   <a href="http://en.wikipedia.org/wiki/Beta_Pictoris" target="_blank">beta-pic b</a>
+   <a href="http://en.wikipedia.org/wiki/Beta_Pictoris_b" target="_blank">beta-pic b</a>
 
 
 You are now ready to go. As you use PynPoint for your exciting discoveries, **please cite the two PynPoint papers** that describe the method and the package: 
@@ -82,8 +82,7 @@ You are now ready to go. As you use PynPoint for your exciting discoveries, **pl
    
 .. |Amara_Quanz2| raw:: html
 
-   <a href="http://www.sciencedirect.com/science/article/pii/S2213133715000049" target="_blank">Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing vol. 10 (2015)</a>
-
+   <a href="http://adsabs.harvard.edu/abs/2015A%26C....10..107A" target="_blank">Amara, A., Quanz, S. P. and Akeret J., Astronomy and Computing vol. 10 (2015)</a>
 
 
 
