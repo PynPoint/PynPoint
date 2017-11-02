@@ -126,8 +126,6 @@ class TestImages(object):
     def test_images_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_images_hdf5.h5'))
 
-        print temp_file
-
         self.images3.save(temp_file)
 
         temp_images = PynPoint.images.create_restore(temp_file)
@@ -157,11 +155,6 @@ class TestImages(object):
         im_temp =  self.images3.mk_psf_realisation(1,full=False)
         assert im_temp.shape  == (146, 146)
 
-        print im_temp.mean()
-        print im_temp.min()
-        print im_temp.max()
-        print im_temp.var()
-
         assert np.allclose(im_temp.mean() , 0.000274016013066,rtol=limit1)
         assert np.allclose(im_temp.min() , -0.00159553949981,rtol=limit1)
         assert np.allclose(im_temp.max() , 0.00425071210256,rtol=limit1)
@@ -173,10 +166,6 @@ class TestImages(object):
         im_temp =  self.images3.mk_psf_realisation(1,full=True)
         assert im_temp.shape  == (146, 146)
 
-        print im_temp.mean()
-        print im_temp.min()
-        print im_temp.max()
-        print im_temp.var()
         assert np.allclose(im_temp.mean() , 0.00141957914019,rtol=limit1)
         assert np.allclose(im_temp.min() , -0.00159553949981,rtol=limit1)
         assert np.allclose(im_temp.max() , 0.127411745859,rtol=limit1)
@@ -189,8 +178,6 @@ class TestImages(object):
 
         images_temp = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=3,recent=False)
-
-        print(images_temp.im_arr.shape)
 
         assert images2.im_arr.shape == (2, 146, 146)
 

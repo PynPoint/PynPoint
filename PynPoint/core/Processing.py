@@ -7,9 +7,6 @@ import os
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import multiprocessing
-import time
-
-import matplotlib.pyplot as plt
 
 from PynPoint.core.DataIO import OutputPort, InputPort
 

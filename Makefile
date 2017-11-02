@@ -34,13 +34,13 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint2 -m py.test --ignore=test/old_tests/
+	coverage run --source PynPoint -m py.test --ignore=test/old_tests/
 	coverage report -m --omit=PynPoint/old_version/*
 	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html
 
 coverage_file:
-	coverage run --source PynPoint2 -m py.test ${File}
+	coverage run --source PynPoint -m py.test ${File}
 	coverage report -m --omit=PynPoint/old_version/*
 	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html

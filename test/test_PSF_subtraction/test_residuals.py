@@ -47,16 +47,6 @@ class TestResidual(object):
     def test_res_rot_mean(self):
 
         assert self.res.res_arr(1).shape == (self.num_files,146,146)
-        print self.res.res_arr(1).mean()
-        print self.res.res_arr(1).var()
-
-        print self.res.res_rot(1).mean()
-
-        print self.res.res_rot_mean(1).mean()
-
-        print self.res.res_rot_var(1).mean()
-
-        print self.res._psf_im(1).mean()
 
         assert np.allclose(self.res.res_arr(1).mean() , -6.99879052984e-21,rtol=limit1)
         assert np.allclose(self.res.res_arr(1).var() , 6.04791954677e-08,rtol=limit1)
