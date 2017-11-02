@@ -20,7 +20,7 @@ Tests for `Residual` module.
 
 import os
 import numpy as np
-import PynPoint2 as PynPoint
+import PynPoint as PynPoint
 
 limit0 = 1e-20
 limit1 = 1e-10
