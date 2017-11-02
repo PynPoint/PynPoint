@@ -133,5 +133,5 @@ class Hdf5ReadingModule(ReadingModule):
                     files.append(tmp_dir + str(tmp_file))
 
         for tmp_file in files:
-            print "Reading" + str(tmp_file)
+            print "Reading " + str(tmp_file)
             self._read_single_hdf5(tmp_file)
