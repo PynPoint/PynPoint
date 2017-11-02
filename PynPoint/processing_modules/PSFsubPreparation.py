@@ -47,7 +47,6 @@ class PSFdataPreparation(ProcessingModule):
     @staticmethod
     def _im_norm(im_data_in):
 
-        # (im_data_in.sum(axis=1)).sum(axis=1)
         im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
 
         for i in range(0, len(im_data_in[:, 0, 0])):
