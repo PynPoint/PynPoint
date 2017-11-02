@@ -24,8 +24,7 @@ class Hdf5ReadingModule(ReadingModule):
                  name_in="hdf5_reading",
                  input_filename=None,
                  input_dir=None,
-                 tag_dictionary=None,
-                 list_tags=False):
+                 tag_dictionary=None):
         """
         Constructor of a Hdf5ReadingModule instance.
 
@@ -48,8 +47,6 @@ class Hdf5ReadingModule(ReadingModule):
                                will be imported. Their names inside the internal PynPoint database
                                will be changed to *name_of_the_imported_dataset*.
         :type tag_dictionary: dict
-        :param list_tags: If True all tags from the Hdf5 file will be printed.
-        :type list_tags: bool
         """
 
         super(Hdf5ReadingModule, self).__init__(name_in, input_dir)
@@ -62,7 +59,6 @@ class Hdf5ReadingModule(ReadingModule):
 
         self.m_filename = input_filename
         self._m_tag_dictionary = tag_dictionary
-        self.m_list_tags = list_tags
 
     def _read_single_hdf5(self,
                           file_in):
@@ -74,9 +70,6 @@ class Hdf5ReadingModule(ReadingModule):
         :return: None
         """
         hdf5_file = h5py.File(file_in, mode='a')
-
-        if self.m_list_tags:
-            print "Available tags in", file_in, ":", ', '.join(hdf5_file.keys())
 
         for entry in hdf5_file.keys():
             # do not read header information groups
