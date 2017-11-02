@@ -286,9 +286,6 @@ class BadPixelMapCreationModule(ProcessingModule):
                 if flat[i, j] < max_val_flat * self.m_flat_threshold:
                     bpmap[i, j] = 0
 
-        #  plt.imshow(bpmap, interpolation="none")
-        #  plt.show()
-
         self.m_bp_map_out_port.set_all(bpmap)
 
         self.m_bp_map_out_port.close_port()
