@@ -78,7 +78,7 @@ class WritingModule(PypelineModule):
     The abstract class WritingModule is a interface for processing steps in the pipeline which do
     not change the content of the internal DataStorage. They only have reading access to the central
     data base. WritingModules can be used to export save or plot data from the .hdf5 data base by
-    using a different file format. WritingModules know directory on the hard drive where the output
+    using a different file format. WritingModules know the directory on the hard drive where the output
     of the module can be saved. If no output directory is given the default Pypline output directory
     is used. WritingModules have a dictionary of inputports (self._m_input_ports) but no output ports.
     """
@@ -597,7 +597,7 @@ class ProcessingModule(PypelineModule):
         :type image_in_port: InputPort
         :param image_out_port: OutputPort which is linked to the result place
         :type image_out_port: OutputPort
-        :param func_args: Additional arguments which are needed by the  function *func*
+        :param func_args: Additional arguments which are needed by the function *func*
         :type func_args: tuple
         :param num_images_in_memory: Maximum number of frames which will be loaded to the memory. If
                                      None all frames will be load at once. (This is probably the
