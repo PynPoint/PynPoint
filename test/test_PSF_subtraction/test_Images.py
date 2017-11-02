@@ -21,8 +21,8 @@ import os
 import pytest
 import numpy as np
 
-import PynPoint2 as PynPoint
-import PynPoint2.old_version
+import PynPoint as PynPoint
+import PynPoint.old_version
 
 limit0 = 1e-20
 limit1 = 1e-10
