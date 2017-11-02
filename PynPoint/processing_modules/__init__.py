@@ -4,7 +4,7 @@ from BackgroundSubtraction import SimpleBackgroundSubtractionModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
     BadPixelMapCreationModule, BadPixelInterpolationRefinementModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
-from NACOPreparation import AngleCalculationModule, CutTopTwoLinesModule
+from NACOPreparation import AngleCalculationModule, CutTopLinesModule, RemoveLastFrameModule
 from PSFSubtraction import PSFSubtractionModule
 from StackingAndSubsampling import StackAndSubsetModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule

@@ -3,19 +3,41 @@ import numpy as np
 from PynPoint.core.Processing import ProcessingModule
 
 
-class CutTopTwoLinesModule(ProcessingModule):
+class CutTopLinesModule(ProcessingModule):
+    """
+    Module to equalize the number of pixels in horizontal and vertical direction by
+    removing several rows of pixels at the top of each frame.
+    """
 
     def __init__(self,
                  name_in="NACO_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
+                 num_lines=2,
                  num_images_in_memory=100):
+        """
+        Constructor of CutTopLinesModule. It requires an input and output tag of the dataset
 
-        super(CutTopTwoLinesModule, self).__init__(name_in)
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag* unless *number_of_images_in_memory*
+                              is set to *None*
+        :type image_out_tag: str
+        :param num_lines: Number of top rows to delete from each frame.
+        :type num_lines: int
+        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
+        :type num_image_in_memory: int
+        :return: None
+        """
+
+        super(CutTopLinesModule, self).__init__(name_in)
 
         if image_in_tag == image_out_tag and num_images_in_memory is not None:
             raise ValueError("Input and output tags need to be different since the "
-                             "CutTopTwoLinesModule changes the size of the frames. The database can"
+                             "CutTopLinesModule changes the size of the frames. The database can"
                              " not update existing frames with smaller new frames. The only way to "
                              "use the same input and output tags is to update all frames at once"
                              "(i.e. loading all frames to the memory). Set number_of_images_in_"
@@ -26,19 +48,25 @@ class CutTopTwoLinesModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_num_images_in_memory = num_images_in_memory
+        self.m_num_lines = num_lines
 
     def run(self):
+        """
+        Run method of the module. Removes the top *num_lines* lines from each frame.
 
-        def cut_top_two_lines(image_in):
-            return image_in[:-2, :]
+        :return: None
+        """
 
-        self.apply_function_to_images(cut_top_two_lines,
+        def cut_top_lines(image_in):
+            return image_in[:-int(self.m_num_lines), :]
+
+        self.apply_function_to_images(cut_top_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("NACO_preparation",
-                                                      "cut top two lines")
+                                                      "cut top lines")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -75,3 +103,64 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,
                                            static=False)
+
+
+class RemoveLastFrameModule(ProcessingModule):
+    """
+    Module for removing every NDIT+1 frame from NACO data obtained in cube mode. This frame contains
+    the average pixel values of the cube.
+    """
+
+    def __init__(self,
+                 name_in="remove_last_frame",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_last"):
+        """
+        Constructor of RemoveLastFrameModule. It requires an input and output tag of the dataset
+
+        :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
+                        dictionary.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*.
+        :type image_out_tag: str
+        :return: None
+        """
+
+        super(RemoveLastFrameModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Removes every NDIT+1 frame and saves the data and attributes.
+
+        :return: None
+        """
+
+        ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
+
+        if self.m_image_out_port.tag == self.m_image_in_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        ndit_tot = 0
+        for i, _ in enumerate(ndit):
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
+            tmp_out = np.delete(tmp_in, ndit[i], axis=0)
+
+            if ndit_tot == 0:
+                self.m_image_out_port.set_all(tmp_out, keep_attributes=True)
+            else:
+                self.m_image_out_port.append(tmp_out)
+
+            ndit_tot += ndit[i]+1
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.add_history_information("NACO preparation",
+                                                      "remove average frame every NDIT+1")
+
+        self.m_image_out_port.close_port()
