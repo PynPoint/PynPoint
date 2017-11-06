@@ -21,7 +21,7 @@ import os
 import pytest
 import numpy as np
 
-import PynPoint
+import PynPoint as PynPoint
 import PynPoint.old_version
 
 limit0 = 1e-20
@@ -80,10 +80,10 @@ class TestImages(object):
         assert self.images3.cent_remove is True
         assert self.images3.cent_size == 0.2
         assert self.images3.im_arr.shape == (4,146,146) 
-        assert np.allclose(self.images3.im_arr.min(), -5.7673052651807666e-05,rtol=limit1)
-        assert np.allclose(self.images3.im_arr.max(), 0.00016471423441544175,rtol=limit1)
-        assert np.allclose(self.images3.im_arr.var(), 3.149548727488477e-10,rtol=limit1)
-        assert np.allclose(self.images3.im_norm , np.array([ 2339855.10735457,  2484443.10731339 ,  2576155.10408142,  2167391.10663852]),rtol=limit1)
+        assert np.allclose(self.images3.im_arr.min(), -0.0018710878410451591,rtol=limit1)
+        assert np.allclose(self.images3.im_arr.max(), 0.0053438268740249742,rtol=limit1)
+        assert np.allclose(self.images3.im_arr.var(), 3.0953862425934607e-07,rtol=limit1)
+        assert np.allclose(self.images3.im_norm , np.array([ 79863.82548531,  82103.89026117,  76156.65271824,  66806.05648646]),rtol=limit1)
         assert np.array_equal(self.images3.para , np.array([-17.3261, -17.172 , -17.0143, -16.6004]))
         assert self.images3.cent_mask.shape == (146,146) 
         assert self.images3.cent_mask.min() == 0.0 
@@ -91,9 +91,9 @@ class TestImages(object):
         assert np.allclose(self.images3.cent_mask.var() , 0.22491619287271775 ,rtol=limit1)
 
         assert np.array_equal(self.images3.im_arr_mask.shape , (4,146,146))
-        assert np.allclose(self.images3.im_arr_mask.min() , -6.9235109549481422e-05,rtol=limit1)
-        assert np.allclose(self.images3.im_arr_mask.max() , 0.0044742124155163765,rtol=limit1)
-        assert np.allclose(self.images3.im_arr_mask.var() , 4.604643923044455e-08 ,rtol=limit1)
+        assert np.allclose(self.images3.im_arr_mask.min() , -0.0020284527946860184,rtol=limit1)
+        assert np.allclose(self.images3.im_arr_mask.max() ,0.13108563152819708,rtol=limit1)
+        assert np.allclose(self.images3.im_arr_mask.var() , 4.5119275320392779e-05 ,rtol=limit1)
 
     def test_overall_images1(self):
         images = self.images1
@@ -106,9 +106,9 @@ class TestImages(object):
         assert np.array_equal(images.im_norm , images_base.im_norm)
 
         assert images.im_arr.shape == (4,146,146) 
-        assert np.allclose(images.im_arr.min(), -6.9235109549481422e-05,rtol=limit1)
-        assert np.allclose(images.im_arr.max() , 0.0044742124155163765,rtol=limit1)
-        assert np.allclose(images.im_arr.var() , 4.5663498111183116e-08 ,rtol=limit1)
+        assert np.allclose(images.im_arr.min(), -0.0020284527946860184,rtol=limit1)
+        assert np.allclose(images.im_arr.max() , 0.13108563152819708,rtol=limit1)
+        assert np.allclose(images.im_arr.var() , 4.4735294551387646e-05 ,rtol=limit1)
         assert images.cent_remove is False
         assert np.array_equal(images.cent_mask , np.ones(shape=(146,146)))
                  
@@ -126,8 +126,6 @@ class TestImages(object):
     def test_images_save_restore(self,tmpdir):
         temp_file = str(tmpdir.join('tmp_images_hdf5.h5'))
 
-        print temp_file
-
         self.images3.save(temp_file)
 
         temp_images = PynPoint.images.create_restore(temp_file)
@@ -138,16 +136,17 @@ class TestImages(object):
         basis = self.basis
         self.images3.mk_psfmodel(basis,3)#,mask=None)
         # assert self.images3._have_psf_coeffs == True
+
         assert self.images3._psf_coeff.shape == (4,4)
         assert np.allclose(self.images3._psf_coeff.mean() ,-9.1344831261194862e-20,rtol=limit1)
-        assert np.allclose(self.images3._psf_coeff.min() , -0.0015266346011625687,rtol=limit1)
-        assert np.allclose(self.images3._psf_coeff.max() , 0.00094515408517407723,rtol=limit1)
-        assert np.allclose(self.images3._psf_coeff.var() , 5.1543928939621446e-07,rtol=limit1)
+        assert np.allclose(self.images3._psf_coeff.min() , -0.045193361270144991,rtol=limit1)
+        assert np.allclose(self.images3._psf_coeff.max() , 0.0348221927176,rtol=limit1)
+        assert np.allclose(self.images3._psf_coeff.var() , 0.000506169218776,rtol=limit1)
         assert self.images3.psf_im_arr.shape == (4, 146, 146)
-        assert np.allclose(self.images3.psf_im_arr.mean() , 9.269862414087591e-06,rtol=limit1)
-        assert np.allclose(self.images3.psf_im_arr.min() , -5.7673052651807639e-05,rtol=limit1)
-        assert np.allclose(self.images3.psf_im_arr.max() , 0.00016471423441544178,rtol=limit1)
-        assert np.allclose(self.images3.psf_im_arr.var() , 3.1495487274884796e-10,rtol=limit1)
+        assert np.allclose(self.images3.psf_im_arr.mean() , 0.000293242276843,rtol=limit1)
+        assert np.allclose(self.images3.psf_im_arr.min() , -0.00187108784105,rtol=limit1)
+        assert np.allclose(self.images3.psf_im_arr.max() , 0.00534382687402,rtol=limit1)
+        assert np.allclose(self.images3.psf_im_arr.var() , 3.09538624259e-07,rtol=limit1)
         
     
     def test_mk_psf_realisation(self):
@@ -155,20 +154,22 @@ class TestImages(object):
         self.images3.mk_psfmodel(basis,3)#,mask=None)
         im_temp =  self.images3.mk_psf_realisation(1,full=False)
         assert im_temp.shape  == (146, 146)
-        assert np.allclose(im_temp.mean() , 9.0554680538744472e-06,rtol=limit1)
-        assert np.allclose(im_temp.min() , -5.2728148148162236e-05,rtol=limit1)
-        assert np.allclose(im_temp.max() , 0.00014047422155272216,rtol=limit1)
-        assert np.allclose(im_temp.var() , 3.3434705799034875e-10,rtol=limit1)
+
+        assert np.allclose(im_temp.mean() , 0.000274016013066,rtol=limit1)
+        assert np.allclose(im_temp.min() , -0.00159553949981,rtol=limit1)
+        assert np.allclose(im_temp.max() , 0.00425071210256,rtol=limit1)
+        assert np.allclose(im_temp.var() , 3.06145293065e-07,rtol=limit1)
         
     def test_mk_psf_realisation2(self):
         basis = self.basis
         self.images3.mk_psfmodel(basis,3)#,mask=None)
         im_temp =  self.images3.mk_psf_realisation(1,full=True)
         assert im_temp.shape  == (146, 146)
-        assert np.allclose(im_temp.mean() , 4.6913116907487437e-05,rtol=limit1)
-        assert np.allclose(im_temp.min() , -5.2728148148162236e-05,rtol=limit1)
-        assert np.allclose(im_temp.max() , 0.0042106015505874173,rtol=limit1)
-        assert np.allclose(im_temp.var() , 4.9033794533516369e-08,rtol=limit1)
+
+        assert np.allclose(im_temp.mean() , 0.00141957914019,rtol=limit1)
+        assert np.allclose(im_temp.min() , -0.00159553949981,rtol=limit1)
+        assert np.allclose(im_temp.max() , 0.127411745859,rtol=limit1)
+        assert np.allclose(im_temp.var() , 4.48979119722e-05,rtol=limit1)
 
 
     def test_random_subsample(self):
@@ -177,8 +178,6 @@ class TestImages(object):
 
         images_temp = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=False,ran_sub=3,recent=False)
-
-        print(images_temp.im_arr.shape)
 
         assert images2.im_arr.shape == (2, 146, 146)
 

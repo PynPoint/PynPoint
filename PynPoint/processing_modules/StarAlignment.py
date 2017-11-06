@@ -15,6 +15,7 @@ class StarExtractionModule(ProcessingModule):
                  name_in="star_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
+                 pos_out_tag="star_positions",
                  psf_size=3,
                  psf_size_as_pixel_resolution=False,
                  num_images_in_memory=100,
@@ -26,6 +27,7 @@ class StarExtractionModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+        self.m_pos_out_port = self.add_output_port(pos_out_tag)
 
         self.m_psf_size = psf_size
         self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
@@ -39,6 +41,8 @@ class StarExtractionModule(ProcessingModule):
         else:
             pixel_scale = self.m_image_in_port.get_attribute('ESO INS PIXSCALE')
             psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
+
+        star_positions = []
 
         def cut_psf(current_image):
 
@@ -54,7 +58,10 @@ class StarExtractionModule(ProcessingModule):
             # cut the image by maximum
             argmax = np.unravel_index(search_image.argmax(), search_image.shape)
 
-            if argmax[0] <= psf_radius or argmax[1] <= psf_radius:
+            if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
+                    or argmax[0] + psf_radius > current_image.shape[0] \
+                    or argmax[1] + psf_radius > current_image.shape[1]:
+
                 raise ValueError('Highest value is near the border. PSF size is too '
                                  'large to be cut')
 
@@ -62,12 +69,16 @@ class StarExtractionModule(ProcessingModule):
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
+            star_positions.append(argmax)
+
             return cut_image
 
         self.apply_function_to_images(cut_psf,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       num_images_in_memory=self.m_num_images_in_memory)
+
+        self.m_pos_out_port.set_all(np.array(star_positions))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_history_information("PSF extract",
@@ -85,6 +96,7 @@ class StarAlignmentModule(ProcessingModule):
                  interpolation="spline",
                  accuracy=10,
                  resize=1,
+                 num_references=10,
                  num_images_in_memory=100):
 
         super(StarAlignmentModule, self).__init__(name_in)
@@ -104,40 +116,48 @@ class StarAlignmentModule(ProcessingModule):
         self.m_accuracy = accuracy
         self.m_num_images_in_memory = num_images_in_memory
         self.m_resize = resize
+        self.m_num_references = num_references
 
     def run(self):
 
         # get ref image
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
-                ref_image = np.asarray(self.m_ref_image_in_port[0, :, :],
-                                       dtype=np.float64)
+                ref_images = np.asarray(self.m_ref_image_in_port.get_all(),
+                                        dtype=np.float64)
             elif len(self.m_ref_image_in_port.get_shape()) == 2:
-                ref_image = self.m_ref_image_in_port.get_all()
+                ref_images = np.array([self.m_ref_image_in_port.get_all(),])
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
         else:
-            ref_image = self.m_image_in_port[0]
+            ref_images = self.m_image_in_port[np.sort(
+                np.random.choice(self.m_image_in_port.get_shape()[0],
+                                 self.m_num_references,
+                                 replace=False)), :, :]
 
         def align_image(image_in):
 
-            offset, _, _ = register_translation(ref_image,
-                                                image_in,
-                                                self.m_accuracy)
+            offset = np.array([0.0, 0.0])
+            for i in range(self.m_num_references):
+                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
+                                                        image_in,
+                                                        self.m_accuracy)
+                offset += tmp_offset
 
+            offset /= float(self.m_num_references)
             offset *= self.m_resize
 
             if self.m_resize is not 1:
                 # the rescale function normalizes all values to [0 ... 1]. We want to keep the total
                 # flux of the images and rescale the images afterwards
-                sum_before = sum(image_in)
+                sum_before = np.sum(image_in)
                 tmp_image = rescale(image=np.asarray(image_in,
                                                      dtype=np.float64),
                                     scale=(self.m_resize,
                                            self.m_resize),
                                     order=5,
                                     mode="reflect")
-                sum_after = sum(tmp_image)
+                sum_after = np.sum(tmp_image)
                 tmp_image = tmp_image*(sum_before/sum_after)
             else:
                 tmp_image = image_in

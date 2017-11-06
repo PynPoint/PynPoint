@@ -1,4 +1,7 @@
 from PynPoint.core import ProcessingModule
+from skimage.transform import rescale
+from scipy.ndimage import shift
+import numpy as np
 
 
 class CutAroundCenterModule(ProcessingModule):
@@ -96,3 +99,89 @@ class CutAroundPositionModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
+
+
+class ScaleFramesModule(ProcessingModule):
+
+    def __init__(self,
+                 scaling_factor,
+                 name_in="scaling",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_scaled",
+                 number_of_images_in_memory=100):
+
+        super(ScaleFramesModule, self).__init__(name_in=name_in)
+
+        # Ports
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_number_of_images_in_memory = number_of_images_in_memory
+        self.m_scaling = scaling_factor
+
+    def run(self):
+
+        def image_scaling(image_in,
+                          scaling):
+
+            sum_before = np.sum(image_in)
+            tmp_image = rescale(image=np.asarray(image_in,
+                                                 dtype=np.float64),
+                                scale=(scaling,
+                                       scaling),
+                                order=5,
+                                mode="reflect")
+
+            sum_after = np.sum(tmp_image)
+            return tmp_image * (sum_before / sum_after)
+
+        self.apply_function_to_images(image_scaling,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      func_args=(self.m_scaling,),
+                                      num_images_in_memory=self.m_number_of_images_in_memory)
+
+        self.m_image_out_port.add_history_information("Scaled by a factor of",
+                                                      str(self.m_scaling))
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
+
+
+class ShiftForCenteringModule(ProcessingModule):
+
+    def __init__(self,
+                 shift_vector,
+                 name_in="shift",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_shifted",
+                 number_of_images_in_memory=100):
+
+        super(ShiftForCenteringModule, self).__init__(name_in=name_in)
+
+        # Ports
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_number_of_images_in_memory = number_of_images_in_memory
+        self.m_shift_vector = shift_vector
+
+    def run(self):
+
+        def image_shift(image_in):
+
+            return shift(image_in, self.m_shift_vector, order=5)
+
+        self.apply_function_to_images(image_shift,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      num_images_in_memory=self.m_number_of_images_in_memory)
+
+        self.m_image_out_port.add_history_information("Shifted by",
+                                                      str(self.m_shift_vector))
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
+

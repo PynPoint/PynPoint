@@ -18,7 +18,7 @@ Tests for `base_pynpoint` module.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import PynPoint
+import PynPoint as PynPoint
 
 class TestBasePynpoint(object):
 

@@ -20,7 +20,7 @@ Tests for `Basis` module.
 import os
 import numpy as np
 
-import PynPoint
+import PynPoint as PynPoint
 import PynPoint.old_version
 
 limit0 = 1e-20
@@ -98,22 +98,23 @@ class TestBasis(object):
         assert self.basis3.num_files == len(self.basis3.files) 
         assert np.array_equal(self.basis3.im_size , (146,146))
         assert self.basis3.cent_remove is True
-        assert self.basis3.im_arr.shape == (4,146,146) 
-        assert np.allclose(self.basis3.im_arr.min() , -5.4805099807708757e-05,rtol=limit1)
-        assert np.allclose(self.basis3.im_arr.max() , 6.2541826537199086e-05,rtol=limit1)
-        assert np.allclose(self.basis3.im_arr.var() , 9.6723454568628155e-11 ,rtol=limit1)
-        assert np.allclose(self.basis3.im_norm , np.array([ 2339855.10735457,  2484443.10731339 ,  2576155.10408142,  2167391.10663852]),rtol=limit1)
-        assert np.array_equal(self.basis3.para , np.array([-17.3261, -17.172 , -17.0143, -16.6004]))
+        assert self.basis3.im_arr.shape == (4,146,146)
+        assert np.allclose(self.basis3.im_arr.min() , -0.00171494746241,rtol=limit1)
+        assert np.allclose(self.basis3.im_arr.max() , 0.00177186490054,rtol=limit1)
+        assert np.allclose(self.basis3.im_arr.var() , 9.49839029417e-08 ,rtol=limit1)
+
+        assert np.allclose(self.basis3.im_norm , np.array([ 79863.82548531,  82103.89026117,  76156.65271824,  66806.05648646]),rtol=limit1)
+        assert np.array_equal(self.basis3.para , np.array([-17.3261, -17.172,  -17.0143, -16.6004]))
         assert self.basis3.cent_mask.shape == (146,146) 
         assert self.basis3.cent_mask.min() == 0.0 
         assert self.basis3.cent_mask.max() == 1.0
-        assert np.allclose(self.basis3.cent_mask.var() , 0.22491619287271775,rtol=limit1) 
+        assert np.allclose(self.basis3.cent_mask.var() , 0.224916192873,rtol=limit1)
         assert self.basis3.psf_basis.shape == (4,146,146) 
-        assert np.allclose(self.basis3.psf_basis.var() , 4.6846490796021234e-05,rtol=limit1)
+        assert np.allclose(self.basis3.psf_basis.var() , 4.67531937699e-05,rtol=limit1)
         assert self.basis3.im_ave.shape == (146,146)
-        assert np.allclose(self.basis3.im_ave.min() , -2.4491993372066645e-05 ,rtol=limit1)
-        assert np.allclose(self.basis3.im_ave.max() , 0.00013430662147584371,rtol=limit1)
-        assert np.allclose(self.basis3.im_ave.var() , 2.1823141818009155e-10,rtol=limit1)
+        assert np.allclose(self.basis3.im_ave.min() , -0.000763643189976 ,rtol=limit1)
+        assert np.allclose(self.basis3.im_ave.max() , 0.0042338920493,rtol=limit1)
+        assert np.allclose(self.basis3.im_ave.var() , 2.14554721318e-07,rtol=limit1)
         
     def test_overall_basis1(self):
         basis = self.basis1
@@ -125,14 +126,15 @@ class TestBasis(object):
         assert np.array_equal(basis.im_norm , basis_base.im_norm)
 
         assert np.array_equal(basis.im_arr.shape , (4,146,146) )
-        assert np.allclose(basis.im_arr.min() , -0.00058314422494731843,rtol=limit1)
-        assert np.allclose(basis.im_arr.max() , 0.00099531450541689992,rtol=limit1)
-        assert np.allclose(basis.im_arr.var() , 9.0390377244261668e-10 ,rtol=limit1)
+        assert np.allclose(basis.im_arr.min() , -0.0201545461598,rtol=limit1)
+        assert np.allclose(basis.im_arr.max() , 0.0278516903399,rtol=limit1)
+        assert np.allclose(basis.im_arr.var() , 7.24677588909e-07 ,rtol=limit1)
         assert basis.cent_remove is False
         assert np.array_equal(basis.cent_mask , np.ones(shape=(146,146)))  
         
         assert np.array_equal(basis.psf_basis.shape , (4,146,146) )
-        assert np.allclose(basis.psf_basis.var() , 4.6912928533908474e-05,rtol=limit1)
+
+        assert np.allclose(basis.psf_basis.var() , 4.69117947893e-05,rtol=limit1)
         
 
     def func4test_overall_same(self,basis,basis_base):
@@ -155,7 +157,7 @@ class TestBasis(object):
     def test_mk_psfmodel(self):
         basis = self.basis3
         basis.mk_psfmodel(20)
-        assert np.allclose(basis.psf_im_arr.mean() , 9.3969370160939641e-06,rtol=limit1)
+        assert np.allclose(basis.psf_im_arr.mean() , 0.000274004663716341,rtol=limit1)
 
     def teardown(self):
         if os.path.isfile(self.test_data_dir + "PynPoint_database.hdf5"):
