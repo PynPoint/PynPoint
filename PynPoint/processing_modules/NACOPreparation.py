@@ -1,3 +1,7 @@
+"""
+Modules for pre-processing of NACO data sets.
+"""
+
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
@@ -74,10 +78,29 @@ class CutTopLinesModule(ProcessingModule):
 
 
 class AngleCalculationModule(ProcessingModule):
+    """
+    Module for calculating the parallactic angle values by interpolating between the begin and end
+    value of a data cube.
+    """
 
     def __init__(self,
                  name_in="angle_calculation",
-                 data_tag="im_arr"):
+                 data_tag="im_arr",
+                 exclude_frames=None):
+        """
+        Constructor of AngleCalculationModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param data_tag: Tag of the database entry for which the parallactic angles are written as
+                         attributes.
+        :type data_tag: str
+        :param exclude_frames: A tuple with the frame numbers for which the angle calculation should
+                               be ignored. Python indexing starts at 0. A tuple with a single
+                               element should be provided in a format similar to (10,).
+        :type exclude_frames: tuple, int
+        """
+
 
         super(AngleCalculationModule, self).__init__(name_in)
 
@@ -85,7 +108,17 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
 
+        self.m_exclude_frames = exclude_frames
+
     def run(self):
+        """
+        Run method of the module. Calculates the parallactic angles of each frame by linearly
+        interpolating between the start and end values of the data cubes. The values are written
+        as attributes to *data_tag*. Frames specified as *exclude_frames*, for example when a frame
+        selection has been applied, are ignored.
+
+        :return: None
+        """
 
         input_angles_start = self.m_data_in_port.get_attribute("ESO TEL PARANG START")
         input_angles_end = self.m_data_in_port.get_attribute("ESO TEL PARANG END")
@@ -94,11 +127,17 @@ class AngleCalculationModule(ProcessingModule):
 
         new_angles = []
 
+        frame_count = 0
         for i in range(0, len(input_angles_start)):
-            new_angles = np.append(new_angles,
-                                   np.linspace(input_angles_start[i],
-                                               input_angles_end[i],
-                                               num=steps))
+            if i not in self.m_exclude_frames:
+                new_angles = np.append(new_angles,
+                                       np.linspace(input_angles_start[i],
+                                                   input_angles_end[i],
+                                                   num=steps))
+            else:
+                continue
+
+            frame_count += 1
 
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,
@@ -116,7 +155,7 @@ class RemoveLastFrameModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_last"):
         """
-        Constructor of RemoveLastFrameModule. It requires an input and output tag of the dataset
+        Constructor of RemoveLastFrameModule.
 
         :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
                         dictionary.
