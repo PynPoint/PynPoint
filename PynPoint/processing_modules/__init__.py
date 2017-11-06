@@ -11,7 +11,7 @@ from StarAlignment import StarAlignmentModule, StarExtractionModule
 from SkyScienceDataModules import ReadFitsSkyDirectory, MeanSkyCubes, SkySubtraction,\
     AlignmentSkyAndScienceDataModule
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule, \
-    ShiftForCenteringModule
+    ShiftForCenteringModule, RemoveFrameModule
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
