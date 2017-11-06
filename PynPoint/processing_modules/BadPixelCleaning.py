@@ -273,18 +273,15 @@ class BadPixelMapCreationModule(ProcessingModule):
         if flat.ndim == 3:
             flat = np.mean(flat, axis=0)
 
-        assert dark.shape == flat.shape
+        if not dark.shape == flat.shape:
+            raise ValueError("Dark and Flat need to have the same resolution")
 
         max_val_dark = np.max(dark)
         max_val_flat = np.max(flat)
-        bpmap = np.ones(dark.shape)
 
-        for i in range(dark.shape[0]):
-            for j in range(dark.shape[1]):
-                if dark[i, j] > max_val_dark * self.m_dark_threshold:
-                    bpmap[i, j] = 0
-                if flat[i, j] < max_val_flat * self.m_flat_threshold:
-                    bpmap[i, j] = 0
+        bpmap = np.ones(dark.shape)
+        bpmap[np.where(dark > max_val_dark * self.m_dark_threshold)] = 0
+        bpmap[np.where(flat < max_val_flat * self.m_flat_threshold)] = 0
 
         self.m_bp_map_out_port.set_all(bpmap)
 
@@ -298,7 +295,7 @@ class BadPixelInterpolationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  bad_pixel_map_tag="bp_map",
                  image_out_tag="im_arr_bp_clean",
-                 iterations=5000,
+                 iterations=1000,
                  number_of_images_in_memory=100):
 
         super(BadPixelInterpolationModule, self).__init__(name_in)
