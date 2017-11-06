@@ -25,7 +25,8 @@ class WriteAsSingleFitsFile(WritingModule):
                  file_name,
                  name_in="fits_writing",
                  output_dir=None,
-                 data_tag="im_arr"):
+                 data_tag="im_arr",
+                 data_range=None):
         """
         Constructor of the WriteAsSingleFitsFile module. It needs the name of the output file as
         well as the dataset tag which has to exported into that file. See class documentation for
@@ -42,6 +43,10 @@ class WriteAsSingleFitsFile(WritingModule):
         :type output_dir: str
         :param data_tag: Tag of the data base entry the module has to export as .fits file.
         :type data_tag: str
+        :param data_range: A two element tuple which specifies a begin and end frame of the export.
+                           This can be used to save a subsets of huge dataset. If None the whole
+                           dataset will be exported.
+        :type data_range: tuple
         :return: None
         """
         super(WriteAsSingleFitsFile, self).__init__(name_in=name_in,
@@ -54,6 +59,7 @@ class WriteAsSingleFitsFile(WritingModule):
 
         self.m_file_name = file_name
         self.m_data_port = self.add_input_port(data_tag)
+        self.m_range = data_range
 
     def run(self):
         """
@@ -82,8 +88,12 @@ class WriteAsSingleFitsFile(WritingModule):
                 prihdr[attr] = attributes[attr]
 
         # Data
-        hdu = fits.PrimaryHDU(self.m_data_port.get_all(),
-                              header=prihdr)
+        if self.m_range is None:
+            hdu = fits.PrimaryHDU(self.m_data_port.get_all(),
+                                  header=prihdr)
+        else:
+            hdu = fits.PrimaryHDU(self.m_data_port[self.m_range[0]: self.m_range[1], :, :],
+                                  header=prihdr)
         hdulist = fits.HDUList([hdu])
         hdulist.writeto(out_name)
 
