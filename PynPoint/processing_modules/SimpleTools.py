@@ -296,7 +296,8 @@ class RemoveFrameModule(ProcessingModule):
                  frame_number,
                  name_in="remove_frame",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_remove"):
+                 image_out_tag="im_arr_remove",
+                 num_image_in_memory=100):
         """
         Constructor of RemoveFrameModule.
 
@@ -309,6 +310,8 @@ class RemoveFrameModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
+        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
+        :type num_image_in_memory: int
         :return: None
         """
 
@@ -318,6 +321,7 @@ class RemoveFrameModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_frame_number = frame_number
+        self.m_image_memory = num_image_in_memory
 
     def run(self):
         """
@@ -329,10 +333,24 @@ class RemoveFrameModule(ProcessingModule):
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        im_in = self.m_image_in_port[:, :, :]
-        im_out = np.delete(im_in, self.m_frame_number, axis=0)
+        subset_size = int(self.m_image_in_port.get_shape()[0]/self.m_image_memory)
 
-        self.m_image_out_port.set_all(im_out, keep_attributes=True)
+        for i in range(subset_size):
+            tmp_im = self.m_image_in_port[i*self.m_image_memory:(i+1)*self.m_image_memory, :, :]
+
+            if self.m_frame_number > i*self.m_image_memory and \
+                                   self.m_frame_number < (i+1)*self.m_image_memory:
+                tmp_im = np.delete(tmp_im, self.m_frame_number%self.m_image_memory, axis=0)
+
+            if i == 0:
+                self.m_image_out_port.set_all(tmp_im, keep_attributes=True)
+            else:
+                self.m_image_out_port.append(tmp_im)
+
+        tmp_im = self.m_image_in_port[subset_size*self.m_image_memory: \
+                                      self.m_image_in_port.get_shape()[0], :, :]
+
+        self.m_image_out_port.append(tmp_im)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
