@@ -123,21 +123,20 @@ class AngleCalculationModule(ProcessingModule):
         input_angles_start = self.m_data_in_port.get_attribute("ESO TEL PARANG START")
         input_angles_end = self.m_data_in_port.get_attribute("ESO TEL PARANG END")
 
-        steps = self.m_data_in_port.get_attribute("NAXIS3")
+        steps = self.m_data_in_port.get_attribute("ESO DET NDIT")
 
         new_angles = []
 
-        frame_count = 0
         for i in range(0, len(input_angles_start)):
-            if i not in self.m_exclude_frames:
-                new_angles = np.append(new_angles,
-                                       np.linspace(input_angles_start[i],
-                                                   input_angles_end[i],
-                                                   num=steps))
-            else:
-                continue
+            new_angles = np.append(new_angles,
+                                   np.linspace(input_angles_start[i],
+                                               input_angles_end[i],
+                                               num=steps[i]))
 
-            frame_count += 1
+        if self.m_exclude_frames is not None:
+            new_angles = np.delete(new_angles,
+                                   self.m_exclude_frames,
+                                   axis=0)
 
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,

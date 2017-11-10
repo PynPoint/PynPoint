@@ -333,23 +333,26 @@ class RemoveFrameModule(ProcessingModule):
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        subset_size = int(self.m_image_in_port.get_shape()[0]/self.m_image_memory)
+        num_subsets = int(self.m_image_in_port.get_shape()[0]/self.m_image_memory)
 
-        for i in range(subset_size):
+        for i in range(num_subsets):
+
             tmp_im = self.m_image_in_port[i*self.m_image_memory:(i+1)*self.m_image_memory, :, :]
 
             if self.m_frame_number > i*self.m_image_memory and \
                                    self.m_frame_number < (i+1)*self.m_image_memory:
-                tmp_im = np.delete(tmp_im, self.m_frame_number%self.m_image_memory, axis=0)
+                tmp_im = np.delete(tmp_im,
+                                   self.m_frame_number%self.m_image_memory,
+                                   axis=0)
 
             if i == 0:
                 self.m_image_out_port.set_all(tmp_im, keep_attributes=True)
             else:
                 self.m_image_out_port.append(tmp_im)
-
-        tmp_im = self.m_image_in_port[subset_size*self.m_image_memory: \
+            
+        tmp_im = self.m_image_in_port[num_subsets*self.m_image_memory: \
                                       self.m_image_in_port.get_shape()[0], :, :]
-
+        
         self.m_image_out_port.append(tmp_im)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
