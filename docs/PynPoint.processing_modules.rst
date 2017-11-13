@@ -84,6 +84,14 @@ PynPoint\.processing\_modules\.StarAlignment module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.processing\_modules\.TimeDenoising module
+---------------------------------------------------
+
+.. automodule:: PynPoint.processing_modules.TimeDenoising
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------
