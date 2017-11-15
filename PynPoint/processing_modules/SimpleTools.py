@@ -500,3 +500,16 @@ class CombineResArrsModule(ProcessingModule):
         self.m_res_median_port.set_all(tmp_res_rot_median)
         self.m_res_var_port.set_all(tmp_res_rot_var)
         self.m_res_rot_mean_clip_port.set_all(res_rot_mean_clip)
+
+        out_ports = [self.m_res_arr_rot_out_port,
+                     self.m_res_mean_port,
+                     self.m_res_median_port,
+                     self.m_res_var_port,
+                     self.m_res_rot_mean_clip_port]
+
+        history = "Tags used: " + str(self.m_res_arr_in_port_list)
+        for port in out_ports:
+            port.copy_attributes_from_input_port(self.m_res_arr_in_port_list[0])
+            port.add_history_information("Combine Res Arrs",
+                                         history)
+            port.close_port()
