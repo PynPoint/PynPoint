@@ -448,7 +448,7 @@ class CombineResArrsModule(ProcessingModule):
             # get position angle of this residual array
             posang_attr = in_port.get_attribute('ESO ADA POSANG')
             posang_unique = np.unique(posang_attr)
-            if posang_unique == 1:  # if each residual array only has one position angle, as expected for pseudoADI data
+            if len(posang_unique) == 1:  # if each residual array only has one position angle, as expected for pseudoADI data
                 posang_rot = posang_unique[0]
             else:
                 raise ValueError('Position angle varies in residual array in %s data tag: this is not supported by this module.'
