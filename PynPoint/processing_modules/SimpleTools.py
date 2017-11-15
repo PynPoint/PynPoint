@@ -6,6 +6,7 @@ from PynPoint.core import ProcessingModule
 from skimage.transform import rescale
 from scipy.ndimage import shift
 import numpy as np
+from scipy import ndimage
 
 
 class CutAroundCenterModule(ProcessingModule):
@@ -361,3 +362,141 @@ class RemoveFrameModule(ProcessingModule):
                                                       str(self.m_frame_number))
 
         self.m_image_out_port.close_port()
+
+
+class CombineResArrsModule(ProcessingModule):
+    '''
+    Module to combine residual arrays produced by the PSFSubtractionModule after rotating by their position angles.
+    This module is useful for pseudoADI data, in which the star is observed at two distinct position angles,
+    as opposed to using pupil tracking mode.
+    '''
+
+    def __init__(self,
+                 res_arr_in_tag_list,
+                 name_in="combine_res_arrs",
+                 res_arr_rot_out_tag="res_rot",
+                 res_mean_tag="res_mean",
+                 res_median_tag="res_median",
+                 res_var_tag="res_var",
+                 res_rot_mean_clip_tag="res_rot_mean_clip",
+                 num_image_in_memory=100):
+        """
+        Constructor of RemoveFrameModule.
+
+        :param res_arr_in_tag_list: List of input database tags, each corresponding to a residual array produced by the PSFSubtractionModule.
+        :type frame_number: list of str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param res_arr_rot_out_tag: Tag of the database entry that is written as output of the rotated residual array.
+        :type res_arr_rot_out_tag: str
+        :param res_mean_tag: Tag of the database entry that is written as output of the mean of the rotated residual array.
+        :type res_mean_tag: str
+        :param res_median_tag: Tag of the database entry that is written as output of the median of the rotated residual array.
+        :type res_median_tag: str
+        :param res_var_tag: Tag of the database entry that is written as output of the variance of the rotated residual array.
+        :type res_var_tag: str
+        :param res_rot_mean_clip_tag: Tag of the database entry that is written as output of the clipped mean of the rotated residual array.
+        :type res_rot_mean_clip_tag: str
+        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
+        :type num_image_in_memory: int
+        :return: None
+        """
+
+        super(CombineResArrsModule, self).__init__(name_in)
+
+        # Inputs
+        self.m_res_arr_in_port_list = [self.add_input_port(res_arr_in_tag)  for res_arr_in_tag in res_arr_in_tag_list]
+
+        # Outputs
+        self.m_res_arr_rot_out_port = self.add_output_port(res_arr_rot_out_tag)
+        self.m_res_mean_port = self.add_output_port(res_mean_tag)
+        self.m_res_median_port = self.add_output_port(res_median_tag)
+        self.m_res_var_port = self.add_output_port(res_var_tag)
+        self.m_res_rot_mean_clip_port = self.add_output_port(res_rot_mean_clip_tag)
+
+        self.m_image_memory = num_image_in_memory
+
+    def run(self):
+        """
+        Run method of the module. Gets the position angles of each residual array, rotates the residuals,
+        and finally combines the frames.
+
+        :return: None
+        """
+
+        # get information for first res_arr
+        shape_of_first = self.m_res_arr_in_port_list[0].get_shape()
+        num_frames = [shape_of_first[0]]
+
+
+        # loop over rest of input ports
+        for r in range(1, len(self.m_res_arr_in_port_list)):
+            #get number of frames
+            tmp_shape = self.m_res_arr_in_port_list[r].get_shape()
+            num_frames.append(tmp_shape[0])
+
+            # check that all input ports have same shape in axis 1 and 2 as first port
+            if tmp_shape[1:3] != shape_of_first[1:3]:
+                raise ValueError('Input ports given in res_arr_in_tag_list do not have same shape in axes 1 and 2.')
+
+
+        # rotate the input residual arrays
+        res_rot = np.zeros((sum(num_frames),self.m_res_arr_in_port_list[0].get_shape()[1],
+                            self.m_res_arr_in_port_list[0].get_shape()[2]))   # assumes all res_arrs have same shape
+        for i, in_port in enumerate(self.m_res_arr_in_port_list):
+
+            # get position angle of this residual array
+            posang_attr = in_port.get_attribute('ESO ADA POSANG')
+            posang_unique = np.unique(posang_attr)
+            if posang_unique == 1:  # if each residual array only has one position angle, as expected for pseudoADI data
+                posang_rot = posang_unique[0]
+            else:
+                raise ValueError('Position angle varies in residual array in %s data tag: this is not supported by this module.'
+                                 % (in_port.tag))
+
+            # check of posang is static or not
+            tmp_res_arr = in_port.get_all()
+
+            tmp_res_rot_arr = ndimage.rotate(tmp_res_arr,
+                                         posang_rot,
+                                         axes=(2,1),
+                                         reshape=False)
+
+            res_rot[sum(num_frames[0:i]):sum(num_frames[0:i+1]),:,:] = tmp_res_rot_arr
+
+        # combined rotated residual arrays
+        # create mean
+        tmp_res_rot_mean = np.mean(res_rot,
+                                   axis=0)
+
+        # create median
+        tmp_res_rot_median = np.median(res_rot,
+                                       axis=0)
+
+        # create variance
+        res_rot_temp = res_rot.copy()
+        for i in range(0,
+                       res_rot_temp.shape[0]):
+
+            res_rot_temp[i, ] -= - tmp_res_rot_mean
+        res_rot_var = (res_rot_temp**2.).sum(axis=0)
+        tmp_res_rot_var = res_rot_var
+
+        # create mean clip
+        res_rot_mean_clip = np.zeros(self.m_res_arr_in_port_list[0].get_shape())
+
+        for i in range(0, res_rot_mean_clip.shape[0]):
+            for j in range(0, res_rot_mean_clip.shape[1]):
+                temp = res_rot[:, i, j]
+                if temp.var() > 0.0:
+                    a = temp - temp.mean()
+                    b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
+                    b2 = b1.compress((b1 > (-1.0)*3.0*np.sqrt(a.var())).flat)
+                    res_rot_mean_clip[i, j] = temp.mean() + b2.mean()
+
+        # save results
+        self.m_res_arr_rot_out_port.set_all(res_rot)
+        self.m_res_mean_port.set_all(tmp_res_rot_mean)
+        self.m_res_median_port.set_all(tmp_res_rot_median)
+        self.m_res_var_port.set_all(tmp_res_rot_var)
+        self.m_res_rot_mean_clip_port.set_all(res_rot_mean_clip)
