@@ -5,6 +5,7 @@ Modules for pre-processing of NACO data sets.
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
+from PynPoint.processing_modules.FrameSelection import RemoveFramesModule
 
 
 class CutTopLinesModule(ProcessingModule):
@@ -20,7 +21,7 @@ class CutTopLinesModule(ProcessingModule):
                  num_lines=2,
                  num_images_in_memory=100):
         """
-        Constructor of CutTopLinesModule. It requires an input and output tag of the dataset
+        Constructor of CutTopLinesModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -28,7 +29,7 @@ class CutTopLinesModule(ProcessingModule):
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag* unless *number_of_images_in_memory*
-                              is set to *None*
+                              is set to *None*.
         :type image_out_tag: str
         :param num_lines: Number of top rows to delete from each frame.
         :type num_lines: int
@@ -47,7 +48,6 @@ class CutTopLinesModule(ProcessingModule):
                              "(i.e. loading all frames to the memory). Set number_of_images_in_"
                              "memory to None to do this (Note this needs a lot of memory).")
 
-        # add Ports
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
@@ -85,8 +85,7 @@ class AngleCalculationModule(ProcessingModule):
 
     def __init__(self,
                  name_in="angle_calculation",
-                 data_tag="im_arr",
-                 exclude_frames=None):
+                 data_tag="im_arr"):
         """
         Constructor of AngleCalculationModule.
 
@@ -95,27 +94,18 @@ class AngleCalculationModule(ProcessingModule):
         :param data_tag: Tag of the database entry for which the parallactic angles are written as
                          attributes.
         :type data_tag: str
-        :param exclude_frames: A tuple with the frame numbers for which the angle calculation should
-                               be ignored. Python indexing starts at 0. A tuple with a single
-                               element should be provided in a format similar to (10,).
-        :type exclude_frames: tuple, int
         """
-
 
         super(AngleCalculationModule, self).__init__(name_in)
 
-        # Ports
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
-
-        self.m_exclude_frames = exclude_frames
 
     def run(self):
         """
         Run method of the module. Calculates the parallactic angles of each frame by linearly
         interpolating between the start and end values of the data cubes. The values are written
-        as attributes to *data_tag*. Frames specified as *exclude_frames*, for example when a frame
-        selection has been applied, are ignored.
+        as attributes to *data_tag*.
 
         :return: None
         """
@@ -123,8 +113,15 @@ class AngleCalculationModule(ProcessingModule):
         input_angles_start = self.m_data_in_port.get_attribute("ESO TEL PARANG START")
         input_angles_end = self.m_data_in_port.get_attribute("ESO TEL PARANG END")
 
-        steps = self.m_data_in_port.get_attribute("ESO DET NDIT")
+        steps = self.m_data_in_port.get_attribute("NAXIS3")
+        ndit = self.m_data_in_port.get_attribute("ESO DET NDIT")
 
+        if False in (ndit == steps):
+            raise ValueError("Parallactic angles should be calculated when NAXIS3 is equal to NDIT. "
+                             "This implies for NACO cube data that the last frame (NDIT+1) from each "
+                             "cube should have been removed while additional frame selection should "
+                             "be applied after the parallactic angles have been calculated.")
+            
         new_angles = []
 
         for i in range(0, len(input_angles_start)):
@@ -132,11 +129,6 @@ class AngleCalculationModule(ProcessingModule):
                                    np.linspace(input_angles_start[i],
                                                input_angles_end[i],
                                                num=steps[i]))
-
-        if self.m_exclude_frames is not None:
-            new_angles = np.delete(new_angles,
-                                   self.m_exclude_frames,
-                                   axis=0)
 
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,
@@ -179,10 +171,14 @@ class RemoveLastFrameModule(ProcessingModule):
         :return: None
         """
 
-        ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
-
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
+
+        ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
+        size = self.m_image_in_port.get_attribute("NAXIS3")
+        
+        if False in (size == ndit+1):
+            raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
@@ -198,7 +194,13 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
+        size_in = self.m_image_in_port.get_attribute("NAXIS3")
+        size_out = size_in - 1
+
+        self.m_image_out_port.del_attribute("NAXIS3")
+        self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
+
         self.m_image_out_port.add_history_information("NACO preparation",
-                                                      "remove average frame every NDIT+1")
+                                                      "remove every NDIT+1 frame")
 
         self.m_image_out_port.close_port()
