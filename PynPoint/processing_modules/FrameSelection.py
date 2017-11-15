@@ -93,7 +93,6 @@ class RemoveFramesModule(ProcessingModule):
         par_out = np.delete(par_in,
                             self.m_frame_indices)
 
-        self.m_image_out_port.del_attribute("NEW_PARA")
         self.m_image_out_port.add_attribute("NEW_PARA", par_out, static=False)
 
         # Update cube sizes
@@ -110,7 +109,6 @@ class RemoveFramesModule(ProcessingModule):
 
             num_frames += frames
 
-        self.m_image_out_port.del_attribute("NAXIS3")
         self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
 
         self.m_image_out_port.add_history_information("Removed frame indices",
