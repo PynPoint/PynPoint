@@ -5,7 +5,6 @@ Modules for pre-processing of NACO data sets.
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
-from PynPoint.processing_modules.FrameSelection import RemoveFramesModule
 
 
 class CutTopLinesModule(ProcessingModule):
@@ -117,11 +116,12 @@ class AngleCalculationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute("ESO DET NDIT")
 
         if False in (ndit == steps):
-            raise ValueError("Parallactic angles should be calculated when NAXIS3 is equal to NDIT. "
-                             "This implies for NACO cube data that the last frame (NDIT+1) from each "
-                             "cube should have been removed while additional frame selection should "
-                             "be applied after the parallactic angles have been calculated.")
-            
+            raise ValueError("Parallactic angles should be calculated when NAXIS3 is equal to "
+                             "NDIT. This implies for NACO cube data that the last frame (NDIT+1) "
+                             "from each cube should have been removed while additional frame "
+                             "selection should be applied after the parallactic angles have been "
+                             "calculated.")
+
         new_angles = []
 
         for i in range(0, len(input_angles_start)):
@@ -176,7 +176,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
         size = self.m_image_in_port.get_attribute("NAXIS3")
-        
+
         if False in (size == ndit+1):
             raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
 
@@ -197,7 +197,6 @@ class RemoveLastFrameModule(ProcessingModule):
         size_in = self.m_image_in_port.get_attribute("NAXIS3")
         size_out = size_in - 1
 
-        self.m_image_out_port.del_attribute("NAXIS3")
         self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
 
         self.m_image_out_port.add_history_information("NACO preparation",
