@@ -85,7 +85,7 @@ class SkySubtraction(ProcessingModule):
         if mode in ["next", "previous", "both"]:
             self.m_mode = mode
         else:
-            self.m_mode = "next"
+            raise ValueError("Mode needs to be next, previous or both.")
 
     def _create_time_stamp_list(self):
 
