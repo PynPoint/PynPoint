@@ -19,6 +19,7 @@ class PSFSubtractionModule(ProcessingModule):
                  res_var_tag="res_var",
                  res_rot_mean_clip_tag="res_rot_mean_clip",
                  extra_rot=0.0,
+                 pupil_tracking=True,
                  **kwargs):
 
         super(PSFSubtractionModule, self).__init__(name_in)
@@ -120,7 +121,8 @@ class PSFSubtractionModule(ProcessingModule):
                                   res_median_tag=res_median_tag,
                                   res_var_tag=res_var_tag,
                                   res_rot_mean_clip_tag=res_rot_mean_clip_tag,
-                                  extra_rot=extra_rot)
+                                  extra_rot=extra_rot,
+                                  pupil_tracking=pupil_tracking)
 
     def get_all_input_tags(self):
         return self._m_preparation_images.get_all_input_tags() +\
@@ -192,6 +194,7 @@ class CreateResidualsModule(ProcessingModule):
                  res_median_tag="res_median",
                  res_var_tag="res_var",
                  res_rot_mean_clip_tag="res_rot_mean_clip",
+                 pupil_tracking=True,
                  extra_rot=0.0):
 
         super(CreateResidualsModule, self).__init__(name_in)
@@ -204,6 +207,7 @@ class CreateResidualsModule(ProcessingModule):
 
         self.m_im_arr_in_port = self.add_input_port(im_arr_in_tag)
         self._m_psf_im_port = self.add_input_port(psf_im_in_tag)
+        self.m_pupil_tracking = pupil_tracking
 
         # Outputs
         self.m_res_arr_out_port = self.add_output_port(res_arr_out_tag)
@@ -231,16 +235,19 @@ class CreateResidualsModule(ProcessingModule):
                        len(res_arr[:, 0, 0])):
             res_arr[i, ] -= (psf_im[i, ] * cent_mask)
 
-        # rotate result array
-        para_angles = self.m_im_arr_in_port.get_attribute("NEW_PARA")
-        delta_para = - para_angles
-        res_rot = np.zeros(shape=im_data.shape)
-        for i in range(0, len(delta_para)):
-            res_temp = res_arr[i, ]
+        if self.m_pupil_tracking:
+            # rotate result array
+            para_angles = self.m_im_arr_in_port.get_attribute("NEW_PARA")
+            delta_para = - para_angles
+            res_rot = np.zeros(shape=im_data.shape)
+            for i in range(0, len(delta_para)):
+                res_temp = res_arr[i, ]
 
-            res_rot[i, ] = ndimage.rotate(res_temp,
-                                          delta_para[i]+self.m_extra_rot,
-                                          reshape=False)
+                res_rot[i, ] = ndimage.rotate(res_temp,
+                                              delta_para[i]+self.m_extra_rot,
+                                              reshape=False)
+        else:
+            res_rot = res_arr
 
         # create mean
         tmp_res_rot_mean = np.mean(res_rot,
