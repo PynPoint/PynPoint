@@ -20,6 +20,7 @@ class StackAndSubsetModule(ProcessingModule):
                  stacking=None):
         """
         Constructor of StackAndSubsetModule.
+
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -74,6 +75,7 @@ class StackAndSubsetModule(ProcessingModule):
             raise ValueError("No images are present, NAXIS3 is empty.")
 
         if self.m_stacking not in (False, None):
+            # Stack subsets of frames
             num_new = int(np.floor(float(tmp_data_shape[0])/float(self.m_stacking)))
             tmp_parang = np.zeros(num_new)
             tmp_data = np.zeros([num_new, tmp_data_shape[1], tmp_data_shape[2]])
@@ -90,14 +92,22 @@ class StackAndSubsetModule(ProcessingModule):
             tmp_parang = np.copy(para_angles)
 
         if self.m_subset not in (None, False):
+            # Random selection of frames
             tmp_choice = np.random.choice(tmp_data_shape[0],
                                           self.m_subset,
                                           replace=False)
 
             tmp_choice = np.sort(tmp_choice)
-            tmp_data = self.m_image_in_port[tmp_choice, :, :]
             tmp_parang = tmp_parang[tmp_choice]
 
+            if self.m_stacking is None:
+                # This will cause memory problems for large values of random_subset
+                tmp_data = self.m_image_in_port[tmp_choice, :, :]
+            else:
+                # Possibly also here depending on the stacking value
+                tmp_data = tmp_data[tmp_choice, ]
+
+            # Check which files are used
             frames_cumulative = np.zeros(np.size(num_images))
             for i, item in enumerate(num_images):
                 if i == 0:
@@ -107,7 +117,7 @@ class StackAndSubsetModule(ProcessingModule):
 
             files_out = []
             for i, item in enumerate(frames_cumulative):
-                if self.m_stacking in (None, False):
+                if self.m_stacking is None:
                     if i == 0:
                         index_check = np.logical_and(tmp_choice >= 0,
                                                      tmp_choice < frames_cumulative[i])
@@ -115,8 +125,8 @@ class StackAndSubsetModule(ProcessingModule):
                         index_check = np.logical_and(tmp_choice >= frames_cumulative[i-1],
                                                      tmp_choice < frames_cumulative[i])
 
-                elif self.m_stacking not in (None, False):
-                    # Only the first frame of a stacked subset is used for Used_Files
+                elif self.m_stacking is not None:
+                    # Only the first frame of a stacked subset is considered for Used_Files
                     if i == 0:
                         index_check = np.logical_and(tmp_choice*self.m_stacking >= 0, \
                                       tmp_choice*self.m_stacking < frames_cumulative[i])
