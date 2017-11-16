@@ -1,39 +1,36 @@
+"""
+Modules for subtraction of the sky background.
+"""
+
 import numpy as np
 from skimage.feature import register_translation
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 
-from PynPoint.io_modules import ReadFitsCubesDirectory
 from PynPoint.core import ProcessingModule
 
 
-class ReadFitsSkyDirectory(ReadFitsCubesDirectory):
-
-    def __init__(self,
-                 name_in="sky_reading",
-                 input_dir=None,
-                 sky_tag="sky_raw_arr",
-                 force_overwrite_in_databank=True,
-                 **kwargs):
-
-        super(ReadFitsSkyDirectory, self).__init__(name_in=name_in,
-                                                   input_dir=input_dir,
-                                                   image_tag=sky_tag,
-                                                   force_overwrite_in_databank=
-                                                   force_overwrite_in_databank,
-                                                   **kwargs)
-
-        # the number of frames per sky file can change
-        self.m_static_keys.remove("NAXIS3")
-        self.m_non_static_keys.append("NAXIS3")
-
-
 class MeanSkyCubes(ProcessingModule):
+    """
+    Module for calculating the mean sky background for each data cube of sky frames.
+    """
 
     def __init__(self,
                  name_in="mean_sky_frames",
                  sky_in_tag="sky_raw_arr",
                  sky_out_tag="sky_arr"):
+        """
+        Constructor of MeanSkyCubes.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param sky_in_tag: Tag of the database entry with sky frames that is read as input.
+        :type sky_in_tag: str
+        :param sky_out_tag: Tag of the database entry with the mean sky frames that is written
+                            as output. Should be different from *sky_in_tag*.
+        :type sky_out_tag: str
+        :return: None
+        """
 
         super(MeanSkyCubes, self).__init__(name_in=name_in)
 
@@ -41,8 +38,16 @@ class MeanSkyCubes(ProcessingModule):
         self.m_sky_out_port = self.add_output_port(sky_out_tag)
 
     def run(self):
+        """
+        Run method of the module. Selects the frames of each cube of sky images, calculates the
+        corresponding mean sky background, and saves the data and attributes.
 
-        # calculate mean sky images
+        :return: None
+        """
+
+        if self.m_sky_out_port.tag == self.m_sky_in_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
         list_of_frame_numbers = self.m_sky_in_port.get_attribute("NAXIS3")
 
         self.m_sky_out_port.del_all_data()
@@ -65,6 +70,9 @@ class MeanSkyCubes(ProcessingModule):
 
 
 class SkySubtraction(ProcessingModule):
+    """
+    Module for sky subtraction.
+    """
 
     def __init__(self,
                  name_in="sky_subtraction",
@@ -72,12 +80,25 @@ class SkySubtraction(ProcessingModule):
                  science_data_in_tag="im_arr",
                  science_data_out_tag="im_arr",
                  mode="next"):
+        """
+        Constructor of SkySubtraction.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param sky_in_tag: Tag of the database entry with sky frames that is read as input.
+        :type sky_in_tag: str
+        :param science_data_in_tag: Tag of the database entry with science frames that is read
+                                    as input.
+        :type science_data_in_tag: str
+        :param science_data_out_tag: Tag of the database entry that is written as output.
+        :type science_data_out_tag: str
+        :return: None
+        """
 
         super(SkySubtraction, self).__init__(name_in=name_in)
 
         self.m_sky_in_port = self.add_input_port(sky_in_tag)
         self.m_science_in_port = self.add_input_port(science_data_in_tag)
-
         self.m_science_out_port = self.add_output_port(science_data_out_tag)
 
         self.m_time_stamps = []
@@ -88,6 +109,10 @@ class SkySubtraction(ProcessingModule):
             raise ValueError("Mode needs to be next, previous or both.")
 
     def _create_time_stamp_list(self):
+        """
+        Internal method for assigning a time stamp, based on the exposure number ID, to each cube
+        of sky and science frames.
+        """
 
         class TimeStamp:
             def __init__(self,
@@ -106,25 +131,31 @@ class SkySubtraction(ProcessingModule):
         # add time stamps of Sky data
         dates = self.m_sky_in_port.get_attribute("ESO DET EXP NO")
 
-        for i in range(len(dates)):
-            self.m_time_stamps.append(TimeStamp(dates[i],
-                                         "SKY",
-                                         i))
+        for i, item in enumerate(dates):
+            self.m_time_stamps.append(TimeStamp(item,
+                                                "SKY",
+                                                i))
 
         # add time stamps of Science data
         dates = self.m_science_in_port.get_attribute("ESO DET EXP NO")
-        number_of_frames_per_cube = self.m_science_in_port.get_attribute("NAXIS3")
+        num_frames = self.m_science_in_port.get_attribute("NAXIS3")
 
-        for i in range(len(dates)):
-            self.m_time_stamps.append(TimeStamp(dates[i],
-                                         "SCIENCE",
-                                         slice(i*number_of_frames_per_cube,
-                                               (i+1)*number_of_frames_per_cube)))
+        frames_count = 0
+        for i, item in enumerate(dates):
+            self.m_time_stamps.append(TimeStamp(item,
+                                                "SCIENCE",
+                                                slice(frames_count, frames_count+num_frames[i])))
+            frames_count += num_frames[i]
 
         self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
 
     def calc_sky_frame(self,
                        index_of_science_data):
+        """
+        Method for finding the required sky frame (next, previous, or the mean of next and
+        previous) by comparing the time stamp of the science frame with preceding and following
+        sky frames.
+        """
 
         # check if there is at least one SKY in the database
         if not any(x.m_sky_or_science == "SKY" for x in self.m_time_stamps):
@@ -158,20 +189,31 @@ class SkySubtraction(ProcessingModule):
             return (previous_sky + next_sky)/2.0
 
     def run(self):
+        """
+        Run method of the module. Create time stamp list, get sky and science frames, and subtract
+        the sky background from the science frames.
+
+        :return: None
+        """
 
         self._create_time_stamp_list()
 
         self.m_science_out_port.del_all_data()
         self.m_science_out_port.del_all_attributes()
 
-        for i in range(len(self.m_time_stamps)):
+        # Number of slices with science frames
+        num_science = sum(s.m_sky_or_science == "SCIENCE" for s in self.m_time_stamps)
 
-            time_entry = self.m_time_stamps[i]
+        sky_count = 0
 
-            print "Subtract background from file " + str(i+1) + " of " + \
-                  str(len(self.m_time_stamps)) + " files..."
+        for i, time_entry in enumerate(self.m_time_stamps):
 
-            if time_entry.m_sky_or_science == "SKY":
+            if time_entry.m_sky_or_science == "SCIENCE":
+                print "Subtract background from file " + str(i+1-sky_count) + " of " + \
+                      str(num_science) + " files..."
+
+            elif time_entry.m_sky_or_science == "SKY":
+                sky_count += 1
                 continue
 
             # get sky image

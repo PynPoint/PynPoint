@@ -28,6 +28,14 @@ PynPoint\.processing\_modules\.DarkAndFlatSubtraction module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.processing\_modules\.FrameSelection module
+----------------------------------------------------
+
+.. automodule:: PynPoint.processing_modules.FrameSelection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint\.processing\_modules\.NACOPreparation module
 -----------------------------------------------------
 
