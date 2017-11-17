@@ -53,7 +53,7 @@ class RemoveFramesModule(ProcessingModule):
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        if np.size(np.where(self.m_frame_indices > self.m_image_in_port.get_shape()[0]-1)) > 0:
+        if np.size(np.where(self.m_frame_indices >= self.m_image_in_port.get_shape()[0])) > 0:
             raise ValueError("Some values in frame_indices are larger than the total number of "
                              "available frames, %s." % str(self.m_image_in_port.get_shape()[0]))
 
@@ -62,6 +62,8 @@ class RemoveFramesModule(ProcessingModule):
                              "provided for all frames before any frames can be removed.")
 
         num_subsets = int(self.m_image_in_port.get_shape()[0]/self.m_image_memory)
+
+        # Reading subsets of num_image_in_memory frames and remove frame_indices
 
         for i in range(num_subsets):
 
@@ -80,8 +82,16 @@ class RemoveFramesModule(ProcessingModule):
             else:
                 self.m_image_out_port.append(tmp_im)
 
+        # Adding the leftover frames that do not fit in an integer amount of num_image_in_memory
+        
+        index_del = np.where(self.m_frame_indices >= num_subsets*self.m_image_memory)
+        
         tmp_im = self.m_image_in_port[num_subsets*self.m_image_memory: \
                                       self.m_image_in_port.get_shape()[0], :, :]
+
+        tmp_im = np.delete(tmp_im,
+                           self.m_frame_indices[index_del]%self.m_image_memory,
+                           axis=0)
 
         self.m_image_out_port.append(tmp_im)
 
