@@ -10,7 +10,7 @@ help:
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "sdist - package"
 
-clean: clean-build clean-pyc
+clean: clean-build clean-pyc clean-test
 
 clean-build:
 	rm -fr build/
@@ -22,6 +22,10 @@ clean-pyc:
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -rf {} +
+
+clean-test:
+	rm -f test/test_processing/PynPoint_database.hdf5
+	rm -rf .cache/
 
 lint:
 	flake8 PynPoint test
@@ -44,7 +48,6 @@ coverage_file:
 	coverage report -m --omit=PynPoint/old_version/*
 	coverage html --omit=PynPoint/old_version/*
 	open htmlcov/index.html
-
 
 docs:
 	rm -f docs/modules.rst
