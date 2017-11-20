@@ -14,7 +14,8 @@ from PynPoint.processing_modules import RemoveLastFrameModule, PSFSubtractionMod
                                         AngleCalculationModule, CutTopLinesModule, \
                                         SimpleBackgroundSubtractionModule, \
                                         BadPixelCleaningSigmaFilterModule, StarExtractionModule, \
-                                        StarAlignmentModule, StackAndSubsetModule
+                                        StarAlignmentModule, StackAndSubsetModule, \
+                                        RemoveFramesModule
 
 class TestEndToEnd(object):
 
@@ -95,6 +96,7 @@ class TestEndToEnd(object):
         assert data.shape == (80, 100, 100)
 
         storage.close_connection()
+
 
     def test_background(self):
         background = SimpleBackgroundSubtractionModule(star_pos_shift=None,
@@ -182,11 +184,31 @@ class TestEndToEnd(object):
 
         storage.close_connection()
 
+    def test_remove_frames(self):
+        remove_frames = RemoveFramesModule((0,15,45,66),
+                                           name_in="remove_frames",
+                                           image_in_tag="im_center",
+                                           image_out_tag="im_remove",
+                                           num_image_in_memory=10)
+
+        self.pipeline.add_module(remove_frames)
+        self.pipeline.run_module("remove_frames")
+
+        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
+        storage.open_connection()
+        data = storage.m_data_bank["im_remove"]
+
+        assert data[0, 0, 0] == -4.4430129997558912e-06
+        assert np.mean(data) == 2.5237510765069405e-05
+        assert data.shape == (76, 200, 200)
+
+        storage.close_connection()
+
     def test_subset(self):
         subset = StackAndSubsetModule(name_in="subset",
-                                      image_in_tag="im_center",
+                                      image_in_tag="im_remove",
                                       image_out_tag="im_subset",
-                                      random_subset=40,
+                                      random_subset=38,
                                       stacking=2)
 
         self.pipeline.add_module(subset)
@@ -196,9 +218,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_subset"]
 
-        assert data[0, 0, 0] == 3.235714128542374e-06
-        assert np.mean(data) == 2.5241315793246029e-05
-        assert data.shape == (40, 200, 200)
+        assert data[0, 0, 0] == -3.7292781033177694e-06
+        assert np.mean(data) == 2.5237510765069422e-05
+        assert data.shape == (38, 200, 200)
 
         storage.close_connection()
 
@@ -223,8 +245,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert data[154, 99] == 0.0004159093180692715
-        assert np.mean(data) == -2.123405390142951e-09
+        assert data[154, 99] == 0.00040031762652066881
+        assert np.mean(data) == -2.5211263028847862e-09
         assert data.shape == (200, 200)
 
         # hdu = fits.PrimaryHDU(data)
