@@ -178,14 +178,17 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_center"]
 
-        assert data[0, 0, 0] == 1.0914441256840639e-05
+        assert data[1, 0, 0] == -4.4430129997558912e-06
+        assert data[16, 0, 0] == 8.7817404755351051e-06
+        assert data[50, 0, 0] == -6.4845509409875088e-07
+        assert data[67, 0, 0] == -1.4822231831114345e-05
         assert np.mean(data) == 2.5241315793246019e-05
         assert data.shape == (80, 200, 200)
 
         storage.close_connection()
 
     def test_remove_frames(self):
-        remove_frames = RemoveFramesModule((0,15,45,66),
+        remove_frames = RemoveFramesModule((0,15,49,66),
                                            name_in="remove_frames",
                                            image_in_tag="im_center",
                                            image_out_tag="im_remove",
@@ -199,7 +202,10 @@ class TestEndToEnd(object):
         data = storage.m_data_bank["im_remove"]
 
         assert data[0, 0, 0] == -4.4430129997558912e-06
-        assert np.mean(data) == 2.5237510765069405e-05
+        assert data[14, 0, 0] == 8.7817404755351051e-06
+        assert data[47, 0, 0] == -6.4845509409875088e-07
+        assert data[63, 0, 0] == -1.4822231831114345e-05
+        assert np.mean(data) == 2.5232812938721546e-05
         assert data.shape == (76, 200, 200)
 
         storage.close_connection()
@@ -219,7 +225,7 @@ class TestEndToEnd(object):
         data = storage.m_data_bank["im_subset"]
 
         assert data[0, 0, 0] == -3.7292781033177694e-06
-        assert np.mean(data) == 2.5237510765069422e-05
+        assert np.mean(data) == 2.523281293872157e-05
         assert data.shape == (38, 200, 200)
 
         storage.close_connection()
@@ -245,8 +251,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert data[154, 99] == 0.00040031762652066881
-        assert np.mean(data) == -2.5211263028847862e-09
+        assert data[154, 99] == 0.00039942774004053791
+        assert np.mean(data) == -2.0095833481799994e-09
         assert data.shape == (200, 200)
 
         # hdu = fits.PrimaryHDU(data)
