@@ -20,12 +20,11 @@ from PynPoint.processing_modules import RemoveLastFrameModule, PSFSubtractionMod
 class TestEndToEnd(object):
 
     def setup(self):
-        self.pipeline = Pypeline(".", "test_data/", ".")
         self.test_dir = os.path.dirname(__file__)
+        self.pipeline = Pypeline(self.test_dir, self.test_dir+"/test_data/", self.test_dir)
 
     def test_read(self):
         read_fits = ReadFitsCubesDirectory(name_in="read_fits",
-                                           input_dir="test_data",
                                            image_tag="im",
                                            force_overwrite_in_databank=True)
 
@@ -71,7 +70,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == 'test_data/data01.fits'
+        assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/data01.fits'
         assert port.get_attribute("NEW_PARA")[1] == 1.1904761904761905
 
         port.close_port()
