@@ -648,7 +648,7 @@ class ProcessingModule(PypelineModule):
                 except TypeError:
                     raise ValueError("Input and output port have the same tag while %s is changing "
                                      "the image shape. This is only possible for "
-                                     "num_images_in_memory == None. Change num_images_in_memory"
+                                     "num_images_in_memory == None. Change num_images_in_memory "
                                      "or choose different port tags." % func)
             elif first_time:
                 # The first time we have to reset the eventually existing data

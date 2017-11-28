@@ -2,10 +2,19 @@
 Modules with background subtraction routines.
 """
 
-import numpy as np
+# import copy
 import warnings
 import sys
+
 from PynPoint.core.Processing import ProcessingModule
+from PynPoint.processing_modules.SimpleTools import LocateStarModule
+
+import numpy as np
+from photutils import aperture_photometry, CircularAperture
+from scipy.sparse.linalg import svds
+from scipy.optimize import curve_fit
+
+from astropy.io import fits
 
 
 class MeanBackgroundSubtractionModule(ProcessingModule):
@@ -144,7 +153,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             tmp_mean = np.mean(tmp_data, axis=0)
             tmp_data = tmp_data - tmp_mean
             self.m_image_out_port.append(tmp_data)
-            
+
         else:
             # the last and the one before will be performed afterwards
             top = int(np.ceil(number_of_frames /
@@ -291,11 +300,12 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
                         # not guarentee to give a correct background frame.
                         if j == 0 and i < np.size(self.m_star_prs_shift)-1 and \
                                   self.m_star_prs_shift[i+1] > naxis_three:
-                            warnings.warn("A small number (e.g., 2) of dither positions may give incorrect"
-                                          "results when NAXIS3 is changing.")
+                            warnings.warn("A small number (e.g., 2) of dither positions may give "
+                                          "incorrect results when NAXIS3 is changing.")
 
                         tmp_res = self.m_image_in_port[frame_count] - \
-                                  self.m_image_in_port[(frame_count + naxis_three) % number_of_frames]
+                                  self.m_image_in_port[(frame_count + naxis_three) \
+                                  % number_of_frames]
 
                     frame_count += 1
 
@@ -322,3 +332,428 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
                                                       "simple subtraction")
 
         self.m_image_out_port.close_port()
+
+
+class PCABackgroundPreparationModule(ProcessingModule):
+    """
+    Module for preparing the PCA background subtraction.
+    """
+
+    def __init__(self,
+                 position=None,
+                 radius=5.,
+                 threshold=0.75,
+                 name_in="separate_star",
+                 image_in_tag="im_arr",
+                 star_out_tag="im_arr_star",
+                 background_out_tag="im_arr_background"):
+        """
+        Constructor of PCABackgroundPreparationModule.
+
+        :param position: Tuple (x0, y0) with the aperture position. The center of the frame is used
+                         when set to *None*.
+        :type position: tuple, int
+        :param radius: Aperture radius (pix).
+        :type radius: float
+        :param threshold: Fractional threshold for determining if the star is present.
+        :type threshold: float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param star_out_tag: Tag of the database entry with frames that include the star. Should be
+                             different from *image_in_tag*.
+        :type star_out_tag: str
+        :param background_out_tag: Tag of the the database entry with frames that contain only
+                                   background and no star. Should be different from *image_in_tag*.
+        :type background_out_tag: str
+        :return: None
+        """
+
+        super(PCABackgroundPreparationModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_star_out_port = self.add_output_port(star_out_tag)
+        self.m_background_out_port = self.add_output_port(background_out_tag)
+
+        self.m_position = position
+        self.m_radius = radius
+        self.m_threshold = threshold
+        self.m_star_out_tag = star_out_tag
+
+    def run(self):
+        """
+        Run method of the module. Performs aperture photometry on the median of each stack,
+        separates the star and background frames by selecting photometric values larger than
+        threshold times the maximum photometry, subtract the mean background from both the
+        star and background frames, write the star and background data separately, and locate
+        the star in each frame (required for the masking in the PCA background module).
+
+        :return: None
+        """
+
+        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
+            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
+                             "provided for all frames before PCA background subtraction.")
+
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        naxis_three = self.m_image_in_port.get_attribute("NAXIS3")
+
+        if self.m_position is None:
+            self.m_position = (int(self.m_image_in_port.get_shape()[2]), \
+                               int(self.m_image_in_port.get_shape()[1]))
+
+        phot = np.zeros(naxis_three.shape[0])
+        cube_mean = np.zeros((naxis_three.shape[0], self.m_image_in_port.get_shape()[2], \
+                             self.m_image_in_port.get_shape()[1]))
+        bg_frames = np.zeros(naxis_three.shape[0], dtype=bool)
+
+        aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
+
+        # Aperture photometry on the mean of each cube
+        count = 0
+        for i, item in enumerate(naxis_three):
+            cube_mean[i,] = np.median(self.m_image_in_port[count:count+item,], axis=0)
+            phot_table = aperture_photometry(cube_mean[i,], aperture, method='exact')
+            phot[i] = phot_table['aperture_sum'][0]
+            count += item
+
+        # Find star and background cubes
+        for i, _ in enumerate(phot):
+            if phot[i] < self.m_threshold*np.amax(phot):
+                bg_frames[i] = True
+
+        bg_indices = np.nonzero(bg_frames)[0]
+
+        if np.size(bg_indices) == 0:
+            raise ValueError("No background cubes found. Try increasing the threshold and/or "
+                             "changing the aperture radius.")
+
+        elif np.size(bg_indices) == phot.shape[0]:
+            raise ValueError("No star cubes found. Try decreasing the threshold and/or changing "
+                             "the aperture radius.")
+
+        star_init = False
+        background_init = False
+
+        star_parang = np.empty(0)
+        star_naxis_three = np.empty(0)
+
+        background_parang = np.empty(0)
+        background_naxis_three = np.empty(0)
+
+        # Separate star and background cubes, and subtract mean background
+        count = 0
+        for i, item in enumerate(naxis_three):
+            print "processed image "+str(count+1)+" of "+str(self.m_image_in_port.get_shape()[0])+" images"
+
+            im_tmp = self.m_image_in_port[count:count+item,]
+
+            # Background frames
+            if bg_frames[i]:
+                # Mean background of the cube
+                background = cube_mean[i]
+
+                # Subtract mean background, save data, and select corresponding NEW_PARA and NAXIS3
+                if background_init:
+                    self.m_background_out_port.append(im_tmp-background)
+
+                    background_parang = np.append(background_parang, parang[count:count+item])
+                    background_naxis_three = np.append(background_naxis_three, naxis_three[i])
+
+                else:
+                    self.m_background_out_port.set_all(im_tmp-background)
+
+                    background_parang = parang[count:count+item]
+                    background_naxis_three = naxis_three[i]
+
+                    background_init = True
+
+            # Star frames
+            else:
+                # Previous background cube
+                if np.size(bg_indices[bg_indices < i]) > 0:
+                    index_prev = np.amax(bg_indices[bg_indices < i])
+                    bg_prev = cube_mean[index_prev,]
+
+                else:
+                    bg_prev = None
+
+                # Next background cube
+                if np.size(bg_indices[bg_indices > i]) > 0:
+                    index_next = np.amin(bg_indices[bg_indices > i])
+                    bg_next = cube_mean[index_next,]
+
+                else:
+                    bg_next = None
+
+                # Select background: previous, next, or mean of previous and next
+                if not isinstance(bg_prev, np.ndarray) and not isinstance(bg_next, np.ndarray):
+                    raise ValueError("Background frames are missing.")
+
+                elif not isinstance(bg_prev, np.ndarray):
+                    background = bg_next
+
+                elif not isinstance(bg_next, np.ndarray):
+                    background = bg_prev
+
+                else:
+                    background = (bg_prev+bg_next)/2.
+
+
+                # Subtract mean background, save data, and select corresponding NEW_PARA and NAXIS3
+                if star_init:
+                    self.m_star_out_port.append(im_tmp-background)
+
+                    star_parang = np.append(star_parang, parang[count:count+item])
+                    star_naxis_three = np.append(star_naxis_three, naxis_three[i])
+
+                else:
+                    self.m_star_out_port.set_all(im_tmp-background)
+
+                    star_parang = parang[count:count+item]
+                    star_naxis_three = naxis_three[i]
+
+                    star_init = True
+
+            count += item
+
+        # Star - Update attribute
+
+        self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_star_out_port.add_attribute("NEW_PARA", star_parang, static=False)
+        self.m_star_out_port.add_attribute("NAXIS3", star_naxis_three, static=False)
+
+        self.m_star_out_port.add_history_information("Star frames separated",
+                                                     str(len(star_parang))+"/"+ \
+                                                     str(len(parang))+" cubes")
+
+        # Background - Update attributes
+
+        self.m_background_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_background_out_port.add_attribute("NEW_PARA", background_parang, static=False)
+        self.m_background_out_port.add_attribute("NAXIS3", background_naxis_three, static=False)
+
+        self.m_background_out_port.add_history_information("Background frames separated",
+                                                           str(len(background_parang))+"/"+ \
+                                                           str(len(parang))+" cubes")
+
+        # Close ports
+
+        self.m_star_out_port.close_port()
+        self.m_background_out_port.close_port()
+
+        # Locate the position of the star
+
+        locate_star = LocateStarModule(data_tag=self.m_star_out_tag,
+                                       gaussian_fwhm=7)
+
+        locate_star.connect_database(self._m_data_base)
+        locate_star.run()
+
+
+class PCABackgroundSubtractionModule(ProcessingModule):
+    """
+    Module for PCA background subtraction.
+    """
+
+    def __init__(self,
+                 pca_number=10,
+                 mask_radius=None,
+                 mask_position="mean",
+                 name_in="pca_background",
+                 star_in_tag="im_star",
+                 background_in_tag="im_background",
+                 subtracted_out_tag="background_subtracted",
+                 residuals_out_tag="background_residuals"):
+        """
+        Constructor of PCABackgroundSubtractionModule.
+
+        :param pca_number: Number of principle components.
+        :type pca_number: int
+        :param mask_radius: Radius of the mask (pix).
+        :type mask_radius: float
+        :param mask_position: Position of the mask uses a single value ("mean") for all frames
+                              or an value ("exact") for each frame separately.
+        :type mask_position: str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param star_in_tag: Tag of the input database entry with star frames.
+        :type star_in_tag: str
+        :param background_in_tag: Tag of the input database entry with the background frames.
+        :type background_in_tag: str
+        :param subtracted_out_tag: Tag of the output database entry with the background
+                                   subtracted star frames.
+        :type subtracted_out_tag: str
+        :param residuals_out_tag: Tag of the output database entry with the residuals of the
+                                  background subtraction.
+        :type residuals_out_tag: str
+        :return: None
+        """
+
+        super(PCABackgroundSubtractionModule, self).__init__(name_in)
+
+        self.m_star_in_port = self.add_input_port(star_in_tag)
+        self.m_background_in_port = self.add_input_port(background_in_tag)
+        self.m_subtracted_out_port = self.add_output_port(subtracted_out_tag)
+        self.m_residuals_out_port = self.add_output_port(residuals_out_tag)
+
+        self.m_pca_number = pca_number
+        self.m_mask_radius = mask_radius
+        self.m_mask_position = mask_position
+
+    def create_mask(self, mask_radius=25):
+        """
+        Method for creating a circular mask at the star position.
+        """
+
+        x = np.arange(0, self.im_star.shape[1], 1)
+        y = np.arange(0, self.im_star.shape[2], 1)
+
+        xx, yy = np.meshgrid(x, y)
+
+        if self.m_mask_position == "mean":
+
+            mask = np.ones(self.im_star[0,].shape)
+
+            cent = [int(np.mean(self.star_position, axis=0)[0]), \
+                    int(np.mean(self.star_position, axis=0)[1])]
+
+            rr = np.sqrt((xx - cent[0])**2 + (yy - cent[1])**2)
+
+            mask[rr < mask_radius] = 0.
+
+        elif self.m_mask_position == "exact":
+
+            mask = np.ones(self.im_star.shape)
+
+            cent = [self.star_position[0], self.star_position[1]]
+            cent = np.asarray(cent)
+
+            for i in range(mask.shape[0]):
+                rr = np.sqrt((xx - cent[0, i])**2 + (yy - cent[1, i])**2)
+                mask[i, ][rr < mask_radius] = 0.
+            
+        self.mask = mask
+
+    def mask_star(self):
+        """
+        Method for masking the central region around the star.
+        """
+
+        naxis_three = self.m_star_in_port.get_attribute("NAXIS3")
+
+        # im_temp_star = copy.deepcopy(self.im_star)
+        im_temp_star = np.copy(self.im_star)
+
+        if self.m_mask_position == "mean":
+            im_temp_star = im_temp_star[:,]*self.mask
+
+        elif self.m_mask_position == "exact":
+            count = 0
+            for i, item in enumerate(naxis_three):
+                im_temp_star[count:count+item,] = im_temp_star[count:count+item,]*self.mask[i,]
+                count += item
+
+        # hdunew = fits.HDUList()
+        # hdunew.append(fits.ImageHDU(im_temp_star))
+        # hdunew.writeto('image.fits', overwrite=True)
+
+        return im_temp_star
+
+    def create_basis(self, im_arr):
+        """
+        Method for creating a set of principle components for a stack of images.
+        """
+
+        _, _, V = svds(im_arr.reshape(im_arr.shape[0],
+                                      im_arr.shape[1]*im_arr.shape[2]),
+                       k=self.m_pca_number)
+
+        # V = V[::-1,]
+
+        pca_basis = V.reshape(V.shape[0],
+                              im_arr.shape[1],
+                              im_arr.shape[2])
+
+        return pca_basis
+
+    def model_background(self, im_arr, basis):
+        """
+        Method for creating a model of the background.
+        """
+
+        def dot_product(x, *p):
+            return np.dot(p, x)
+
+        sys.exit(0)
+
+        basis_reshaped = basis.reshape(basis.shape[0], -1)
+        basis_reshaped_masked = (basis*self.mask).reshape(basis.shape[0], -1)
+
+        fit_im_chi = np.zeros(im_arr.shape)
+        fit_coeff_chi = np.zeros((im_arr.shape[0], basis.shape[0]))
+
+        for i in xrange(im_arr.shape[0]):
+            data_to_fit = im_arr[i,]
+
+            init = np.ones(basis_reshaped_masked.shape[0])
+
+            fitted = curve_fit(dot_product,
+                               basis_reshaped_masked,
+                               data_to_fit.reshape(-1),
+                               init)
+
+            fit_im = np.dot(fitted[0], basis_reshaped)
+            fit_im = fit_im.reshape(data_to_fit.shape[0], data_to_fit.shape[1])
+
+            fit_im_chi[i,] = fit_im
+            # fit_coeff_chi[i,] = fitted[0]
+
+        return fit_im_chi
+
+    def run(self):
+        """
+        Run method of the module.
+
+        :return: None
+        """
+
+        self.star_position = [self.m_star_in_port.get_attribute("STAR_POSITION_X"),
+                              self.m_star_in_port.get_attribute("STAR_POSITION_Y")]
+
+        self.im_star = self.m_star_in_port.get_all()
+        self.im_background = self.m_background_in_port.get_all()
+
+        # Mask the PSF
+        self.create_mask(mask_radius=self.m_mask_radius)
+
+        # Create basis set of principal components from the background frames
+        basis_pca = self.create_basis(self.im_background)
+
+        # Fit the star frames with self.m_pca_number principal components
+        fit_im = self.model_background(self.mask_star(), basis_pca)
+
+        # PCA background subtracted
+
+        self.m_subtracted_out_port.set_all(self.im_star[:,] - fit_im[:,])
+
+        self.m_subtracted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+
+        self.m_subtracted_out_port.add_history_information("Background",
+                                                           "PCA subtraction")
+
+        self.m_subtracted_out_port.close_port()
+
+        # PCA background residuals
+
+        self.m_residuals_out_port.set_all(fit_im[:,])
+
+        self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+
+        self.m_residuals_out_port.add_history_information("Background",
+                                                          "PCA residuals")
+
+        self.m_residuals_out_port.close_port()

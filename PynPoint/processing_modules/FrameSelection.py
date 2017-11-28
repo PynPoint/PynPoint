@@ -83,9 +83,9 @@ class RemoveFramesModule(ProcessingModule):
                 self.m_image_out_port.append(tmp_im)
 
         # Adding the leftover frames that do not fit in an integer amount of num_image_in_memory
-        
+
         index_del = np.where(self.m_frame_indices >= num_subsets*self.m_image_memory)
-        
+
         tmp_im = self.m_image_in_port[num_subsets*self.m_image_memory: \
                                       self.m_image_in_port.get_shape()[0], :, :]
 
@@ -121,7 +121,18 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
 
-        self.m_image_out_port.add_history_information("Removed frame indices",
-                                                      str(self.m_frame_indices))
+        self.m_image_out_port.add_history_information("Removed frames",
+                                                      str(np.size(self.m_frame_indices)))
+
+        # Update star position (if present)
+
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+
+            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION")
+            starpos_out = np.delete(starpos_in,
+                                    self.m_frame_indices,
+                                    axis=0)
+
+            self.m_image_out_port.add_attribute("STAR_POSITION", starpos_out, static=False)
 
         self.m_image_out_port.close_port()

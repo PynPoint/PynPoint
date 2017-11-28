@@ -653,7 +653,7 @@ class OutputPort(Port):
         :param data_dim: number of desired dimensions. If None the dimension of the first_data is
                          used.
         :type data_dim: int
-        :param keep_attributes: If True all attributes of a old dataset which will be replaced
+        :param keep_attributes: If True all attributes of an old dataset which will be replaced
                                 remain the same.
         :type keep_attributes: bool
         :return: None

@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import math
 
 from skimage.feature import register_translation
 from scipy.ndimage import fourier_shift
@@ -33,6 +34,7 @@ class StarExtractionModule(ProcessingModule):
         self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
         self.m_num_images_in_memory = num_images_in_memory
         self.m_fwhm_star = fwhm_star # needed for the best gaussian blur 7 is good for L-band data
+        self.count = 0
 
     def run(self):
 
@@ -46,9 +48,7 @@ class StarExtractionModule(ProcessingModule):
 
         def cut_psf(current_image):
 
-            # see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
-            sigma = self.m_fwhm_star/2.335
-
+            sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
             kernel_size = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
 
             search_image = cv2.GaussianBlur(current_image,
@@ -63,13 +63,15 @@ class StarExtractionModule(ProcessingModule):
                     or argmax[1] + psf_radius > current_image.shape[1]:
 
                 raise ValueError('Highest value is near the border. PSF size is too '
-                                 'large to be cut')
+                                 'large to be cut (frame index = '+str(self.count)+').')
 
             # cut the image
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
             star_positions.append(argmax)
+            
+            self.count += 1
 
             return cut_image
 

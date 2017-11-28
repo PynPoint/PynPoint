@@ -2,9 +2,13 @@
 Modules with simple pre-processing tools.
 """
 
+import math
+
 from PynPoint.core import ProcessingModule
+
 from skimage.transform import rescale
 from scipy.ndimage import shift
+from scipy.ndimage.filters import gaussian_filter
 import numpy as np
 
 
@@ -285,3 +289,60 @@ class ShiftForCenteringModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
+
+class LocateStarModule(ProcessingModule):
+    """
+    Module for locating the position of the star.
+    """
+
+    def __init__(self,
+                 name_in="locate_star",
+                 data_tag="im_arr",
+                 gaussian_fwhm=7):
+        """
+        Constructor of LocateStarModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param data_tag: Tag of the database entry for which the star positions are written as
+                         attributes.
+        :type data_tag: str
+        :param gaussian_fwhm: Full width at half maximum (pix) of the Gaussian kernel that is used
+                              to smooth the image before the star is located.
+        :type gaussian_fwhm: float
+        :return: None
+        """
+
+        super(LocateStarModule, self).__init__(name_in)
+
+        self.m_data_in_port = self.add_input_port(data_tag)
+        self.m_data_out_port = self.add_output_port(data_tag)
+
+        self.m_gaussian_fwhm = gaussian_fwhm
+
+    def run(self):
+        """
+        Run method of the module. Smooths the image with a Gaussian kernel, finds the largest
+        pixel value, and writes the STAR_POSITION attribute.
+
+        :return: None
+        """
+
+        sigma = self.m_gaussian_fwhm/math.sqrt(8.*math.log(2.))
+
+        star_position = np.zeros((self.m_data_in_port.get_shape()[0], 2))
+
+        for i in range(self.m_data_in_port.get_shape()[0]):
+            im_smooth = gaussian_filter(self.m_data_in_port[i],
+                                        sigma,
+                                        truncate=4.)
+
+            star_position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
+
+        self.m_data_out_port.add_attribute("STAR_POSITION_X",
+                                           star_position[:, 1],
+                                           static=False)
+
+        self.m_data_out_port.add_attribute("STAR_POSITION_Y",
+                                           star_position[:, 0],
+                                           static=False)
