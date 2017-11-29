@@ -28,6 +28,7 @@ pip-log.txt
 nosetests.xml
 *junit-*
 htmlcov
+test/test_core/test_data/init/PynPoint_database.hdf5
 
 # Translations
 *.mo
