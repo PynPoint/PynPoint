@@ -340,9 +340,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
     """
 
     def __init__(self,
-                 position=None,
-                 radius=5.,
-                 threshold=0.75,
+                 select,
                  name_in="separate_star",
                  image_in_tag="im_arr",
                  star_out_tag="im_arr_star",
@@ -350,13 +348,21 @@ class PCABackgroundPreparationModule(ProcessingModule):
         """
         Constructor of PCABackgroundPreparationModule.
 
-        :param position: Tuple (x0, y0) with the aperture position. The center of the frame is used
-                         when set to *None*.
-        :type position: tuple, int
-        :param radius: Aperture radius (pix).
-        :type radius: float
-        :param threshold: Fractional threshold for determining if the star is present.
-        :type threshold: float
+        select_star = dither positions, cubes_per_position, first_star_cube
+        select_aperture = position, radius, threshold
+
+        :param select: Tuple with the method ("dither" or "aperture") and parameters for separating
+                       the star and background frames. The first is specified as ("dither",
+                       dither_positions, cubes_per_position, first_star_cube), with
+                       *dither_positions* the number of unique dither locations on the detector,
+                       *cubes_per_position* the number of consecutive cubes per dither position, and
+                       *first_star_cube* the index value of the first cube which contains the star
+                       (Python indexing starts at zero). The second is specified as ("aperture,
+                       (position_x, position_y), radius, threshold), with the position a two
+                       element tuple of the aperture center, radius (pix) the aperture radius, and
+                       threshold the fractional photometry threshold that is used to select the
+                       star frames.
+        :type select: tuple
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -375,10 +381,23 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_star_out_port = self.add_output_port(star_out_tag)
         self.m_background_out_port = self.add_output_port(background_out_tag)
+        
+        self.m_select = select
 
-        self.m_position = position
-        self.m_radius = radius
-        self.m_threshold = threshold
+        if self.m_select[0] is not "dither" and self.m_select[0] is not "aperture":
+           raise ValueError("The first element of the 'select' tuple should be either 'dither' or 'aperture'.")
+
+        elif self.m_select[0] is "dither":
+            self.m_dither_positions = self.m_select[1]
+            self.m_cubes_per_position = self.m_select[2]
+            self.m_first_star_cube = self.m_select[3]
+
+        elif self.m_select[0] is "aperture":
+            
+            self.m_position = self.m_select[1]
+            self.m_radius = self.m_select[2]
+            self.m_threshold = self.m_select[3]
+
         self.m_star_out_tag = star_out_tag
 
     def run(self):
@@ -399,39 +418,75 @@ class PCABackgroundPreparationModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("NEW_PARA")
         naxis_three = self.m_image_in_port.get_attribute("NAXIS3")
 
-        if self.m_position is None:
+        if self.m_select[0] is "aperture" and self.m_position is None:
             self.m_position = (int(self.m_image_in_port.get_shape()[2]), \
                                int(self.m_image_in_port.get_shape()[1]))
 
-        phot = np.zeros(naxis_three.shape[0])
         cube_mean = np.zeros((naxis_three.shape[0], self.m_image_in_port.get_shape()[2], \
                              self.m_image_in_port.get_shape()[1]))
-        bg_frames = np.zeros(naxis_three.shape[0], dtype=bool)
 
-        aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
+        if self.m_select[0] is "dither":
 
-        # Aperture photometry on the mean of each cube
+            bg_frames = np.ones(naxis_three.shape[0], dtype=bool)
+
+            # Mean of each cube
+            count = 0
+            for i, item in enumerate(naxis_three):
+                cube_mean[i,] = np.median(self.m_image_in_port[count:count+item,], axis=0)
+                count += item
+
+            # Flag star and background cubes
+            for i in range(self.m_first_star_cube, np.size(naxis_three), \
+                           self.m_cubes_per_position*self.m_dither_positions):
+                bg_frames[i:i+self.m_cubes_per_position] = False
+
+            bg_indices = np.nonzero(bg_frames)[0]
+
+        elif self.m_select[0] is "aperture":
+
+            bg_frames = np.zeros(naxis_three.shape[0], dtype=bool)
+
+            phot = np.zeros(naxis_three.shape[0])
+
+            aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
+
+            # Aperture photometry on the mean of each cube
+            count = 0
+            for i, item in enumerate(naxis_three):
+                cube_mean[i,] = np.median(self.m_image_in_port[count:count+item,], axis=0)
+                phot_table = aperture_photometry(cube_mean[i,], aperture, method='exact')
+                phot[i] = phot_table['aperture_sum'][0]
+                count += item
+
+            # Find star and background cubes
+            for i, _ in enumerate(phot):
+                if phot[i] < self.m_threshold*np.amax(phot):
+                    bg_frames[i] = True
+
+            bg_indices = np.nonzero(bg_frames)[0]
+
+            if np.size(bg_indices) == 0:
+                raise ValueError("No background cubes found. Try increasing the threshold and/or "
+                                 "changing the aperture radius.")
+
+            elif np.size(bg_indices) == phot.shape[0]:
+                raise ValueError("No star cubes found. Try decreasing the threshold and/or changing "
+                                 "the aperture radius.")
+
+        bg_mean = np.zeros((self.m_image_in_port.get_shape()[2], self.m_image_in_port.get_shape()[1]))
         count = 0
+        mean_count = 0
         for i, item in enumerate(naxis_three):
-            cube_mean[i,] = np.median(self.m_image_in_port[count:count+item,], axis=0)
-            phot_table = aperture_photometry(cube_mean[i,], aperture, method='exact')
-            phot[i] = phot_table['aperture_sum'][0]
+            if bg_frames[i]:
+                bg_mean += np.mean(self.m_image_in_port[count:count+item,], axis=0)
+                mean_count += 1
             count += item
 
-        # Find star and background cubes
-        for i, _ in enumerate(phot):
-            if phot[i] < self.m_threshold*np.amax(phot):
-                bg_frames[i] = True
-
-        bg_indices = np.nonzero(bg_frames)[0]
-
-        if np.size(bg_indices) == 0:
-            raise ValueError("No background cubes found. Try increasing the threshold and/or "
-                             "changing the aperture radius.")
-
-        elif np.size(bg_indices) == phot.shape[0]:
-            raise ValueError("No star cubes found. Try decreasing the threshold and/or changing "
-                             "the aperture radius.")
+        bg_mean /= float(mean_count)
+        
+        # hdunew = fits.HDUList()
+        # hdunew.append(fits.ImageHDU(bg_mean))
+        # hdunew.writeto('image.fits', overwrite=True)
 
         star_init = False
         background_init = False
@@ -452,7 +507,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
             # Background frames
             if bg_frames[i]:
                 # Mean background of the cube
-                background = cube_mean[i]
+                # background = cube_mean[i]
+                background = bg_mean
 
                 # Subtract mean background, save data, and select corresponding NEW_PARA and NAXIS3
                 if background_init:
@@ -471,35 +527,26 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
             # Star frames
             else:
+                
                 # Previous background cube
                 if np.size(bg_indices[bg_indices < i]) > 0:
                     index_prev = np.amax(bg_indices[bg_indices < i])
                     bg_prev = cube_mean[index_prev,]
-
-                else:
-                    bg_prev = None
 
                 # Next background cube
                 if np.size(bg_indices[bg_indices > i]) > 0:
                     index_next = np.amin(bg_indices[bg_indices > i])
                     bg_next = cube_mean[index_next,]
 
-                else:
-                    bg_next = None
-
                 # Select background: previous, next, or mean of previous and next
-                if not isinstance(bg_prev, np.ndarray) and not isinstance(bg_next, np.ndarray):
-                    raise ValueError("Background frames are missing.")
-
-                elif not isinstance(bg_prev, np.ndarray):
+                if i == 0:
                     background = bg_next
 
-                elif not isinstance(bg_next, np.ndarray):
+                elif i == np.size(naxis_three):
                     background = bg_prev
-
+                    
                 else:
                     background = (bg_prev+bg_next)/2.
-
 
                 # Subtract mean background, save data, and select corresponding NEW_PARA and NAXIS3
                 if star_init:
@@ -560,8 +607,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
     """
 
     def __init__(self,
-                 pca_number=10,
-                 mask_radius=None,
+                 pca_number=20,
+                 mask_radius=25,
                  mask_position="mean",
                  name_in="pca_background",
                  star_in_tag="im_star",
@@ -657,10 +704,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 im_temp_star[count:count+item,] = im_temp_star[count:count+item,]*self.mask[i,]
                 count += item
 
-        # hdunew = fits.HDUList()
-        # hdunew.append(fits.ImageHDU(im_temp_star))
-        # hdunew.writeto('image.fits', overwrite=True)
-
         return im_temp_star
 
     def create_basis(self, im_arr):
@@ -687,8 +730,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         def dot_product(x, *p):
             return np.dot(p, x)
-
-        sys.exit(0)
 
         basis_reshaped = basis.reshape(basis.shape[0], -1)
         basis_reshaped_masked = (basis*self.mask).reshape(basis.shape[0], -1)
@@ -749,7 +790,11 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         # PCA background residuals
 
-        self.m_residuals_out_port.set_all(fit_im[:,])
+        hdunew = fits.HDUList()
+        hdunew.append(fits.ImageHDU(fit_im))
+        hdunew.writeto('image.fits', overwrite=True)
+
+        self.m_residuals_out_port.set_all(fit_im)
 
         self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
 
