@@ -188,6 +188,11 @@ class ReadFitsCubesDirectory(ReadingModule):
             elif key is not "":
                 warnings.warn('Unknown Header "%s" key found' %str(key))
 
+        # Add NAXIS3=1 for 2D cubes, required in some of the processing modules
+        if tmp_header['NAXIS'] == 2:
+            self.m_image_out_port.append_attribute_data('NAXIS3',
+                                                        1)
+
         hdulist.close()
 
         # append used file to header information
