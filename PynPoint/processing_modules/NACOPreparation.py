@@ -2,6 +2,7 @@
 Modules for pre-processing of NACO data sets.
 """
 
+import warnings
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
@@ -116,11 +117,10 @@ class AngleCalculationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute("ESO DET NDIT")
 
         if False in (ndit == steps):
-            raise ValueError("Parallactic angles should be calculated when NAXIS3 is equal to "
-                             "NDIT. This implies for NACO cube data that the last frame (NDIT+1) "
-                             "from each cube should have been removed while additional frame "
-                             "selection should be applied after the parallactic angles have been "
-                             "calculated.")
+            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
+                          "angles are calculated with a linear interpolation by using NAXIS3 steps. "
+                          "A frame selection should be applied after the parallactic angles are "
+                          "calculated.")
 
         new_angles = []
 
