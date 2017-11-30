@@ -620,7 +620,7 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
         while i < number_of_images:
-            print "processed image " + str(i+1) + " of " + str(number_of_images) + " images"
+            print "Processing image " + str(i+1) + " of " + str(number_of_images) + " images..."
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:

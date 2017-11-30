@@ -240,7 +240,7 @@ class Pypeline(object):
 
         if name in self._m_modules:
 
-            print "validating module..."
+            print "Validating module..."
             validation = self.validate_pipeline_module(name)
             if not validation[0]:
                 raise AttributeError(
@@ -250,7 +250,7 @@ class Pypeline(object):
 
             print "Start running module..."
             self._m_modules[name].run()
-            print "finished running module..."
+            print "Finished running module..."
         else:
             warnings.warn('Module not found')
 
