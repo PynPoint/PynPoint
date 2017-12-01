@@ -532,7 +532,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 if i == 0:
                     background = bg_next
 
-                elif i == np.size(naxis_three):
+                elif i == np.size(naxis_three)-1:
                     background = bg_prev
                     
                 else:
