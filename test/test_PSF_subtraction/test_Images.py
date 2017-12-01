@@ -83,7 +83,7 @@ class TestImages(object):
         assert np.allclose(self.images3.im_arr.min(), -0.0018710878410451591,rtol=limit1)
         assert np.allclose(self.images3.im_arr.max(), 0.0053438268740249742,rtol=limit1)
         assert np.allclose(self.images3.im_arr.var(), 3.0953862425934607e-07,rtol=limit1)
-        assert np.allclose(self.images3.im_norm , np.array([ 79863.82548531,  82103.89026117,  76156.65271824,  66806.05648646]),rtol=limit1)
+        assert np.allclose(self.images3.im_norm , np.array([79863.8203125,  82103.890625 ,  76156.6484375,  66806.0546875]),rtol=limit1)
         assert np.array_equal(self.images3.para , np.array([-17.3261, -17.172 , -17.0143, -16.6004]))
         assert self.images3.cent_mask.shape == (146,146) 
         assert self.images3.cent_mask.min() == 0.0 
