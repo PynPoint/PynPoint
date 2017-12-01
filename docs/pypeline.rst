@@ -39,7 +39,7 @@ Pipeline modules
 
 A pipeline module is like a task which can be added to the pipeline internal task queue. This task can read and write specific data from and to the pipeline database. You can think about a pipeline module as a block with input and output connections to that central database. For an illustration have a look at the PSF-subtraction module below:
 
-.. image:: images/Pipeline_module.pdf
+.. image:: images/Pipeline_module.jpg
 
 On the left you can see that the PSF-subtraction module needs two input tags which means it has two internal input ports to the central database. The first port imports the data which will be processed. The second port imports reference data which is used to calculate the PSF model using PCA. 
 
