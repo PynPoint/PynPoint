@@ -24,7 +24,6 @@ class PSFdataPreparation(ProcessingModule):
                  resize=False,
                  cent_remove=True,
                  F_final=2.0,
-                 para_sort=True,
                  cent_size=0.05,
                  edge_size=1.0):
 
@@ -34,7 +33,6 @@ class PSFdataPreparation(ProcessingModule):
         self.m_resize = resize
         self.m_cent_remove = cent_remove
         self.m_f_final = F_final
-        self.m_para_sort = para_sort
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
 
@@ -145,7 +143,6 @@ class PSFdataPreparation(ProcessingModule):
         # save attributes
         attributes = {"cent_remove": self.m_cent_remove,
                       "resize": self.m_resize,
-                      "para_sort": self.m_para_sort,
                       "F_final": float(self.m_f_final),
                       "cent_size": float(self.m_cent_size),
                       "edge_size": float(self.m_edge_size)}
