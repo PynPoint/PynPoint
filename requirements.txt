@@ -1,6 +1,18 @@
-mock==1.0.1
 astropy
 numba
 statsmodels
 scipy
 mlpy
+numpy
+h5py
+matplotlib
+PyWavelets
+opencv-python
+scikit-image
+pytest
+
+# old_version
+pyfits
+
+# old_tests
+mock==1.0.1
