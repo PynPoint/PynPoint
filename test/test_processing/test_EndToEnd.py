@@ -4,8 +4,6 @@ Test cases for end-to-end data reduction.
 
 import os
 import numpy as np
-import pytest
-# from astropy.io import fits
 
 from PynPoint import Pypeline
 from PynPoint.core.DataIO import DataStorage, InputPort
@@ -21,7 +19,7 @@ class TestEndToEnd(object):
 
     def setup(self):
         self.test_dir = os.path.dirname(__file__)
-        self.pipeline = Pypeline(self.test_dir, self.test_dir+"/test_data/", self.test_dir)
+        self.pipeline = Pypeline(self.test_dir, self.test_dir+"/test_data/adi/", self.test_dir)
 
     def test_read(self):
         read_fits = ReadFitsCubesDirectory(name_in="read_fits",
@@ -70,7 +68,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/data01.fits'
+        assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/adi/data01.fits'
         assert port.get_attribute("NEW_PARA")[1] == 1.1904761904761905
 
         port.close_port()
@@ -96,13 +94,12 @@ class TestEndToEnd(object):
 
         storage.close_connection()
 
-
     def test_background(self):
         background = MeanBackgroundSubtractionModule(star_pos_shift=None,
                                                      cubes_per_position=1,
                                                      name_in="background",
                                                      image_in_tag="im_cut",
-                                                      image_out_tag="im_bg")
+                                                     image_out_tag="im_bg")
 
         self.pipeline.add_module(background)
         self.pipeline.run_module("background")
@@ -133,8 +130,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_bp"]
 
-        assert data[0, 0, 0] == pytest.approx(-0.00022134946)
-        assert np.mean(data) == pytest.approx(1.3911253e-07)
+        assert data[0, 0, 0] == -0.00022134946299066599
+        assert np.mean(data) == 1.3911238380798353e-07
         assert data.shape == (80, 100, 100)
 
         storage.close_connection()
@@ -155,8 +152,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_star"]
 
-        assert data[0, 0, 0] == pytest.approx(-7.4294323e-05)
-        assert np.mean(data) == pytest.approx(0.00063168188)
+        assert data[0, 0, 0] == -7.4294323405466921e-05
+        assert np.mean(data) == 0.00063168185861750764
         assert data.shape == (80, 40, 40)
 
         storage.close_connection()
@@ -178,17 +175,17 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_center"]
 
-        assert data[1, 0, 0] == -7.72846498557603e-06
-        assert data[16, 0, 0] == 6.5481928396102544e-06
-        assert data[50, 0, 0] == -1.8830979413737828e-06
-        assert data[67, 0, 0] == -5.7283610092069399e-06
-        assert np.mean(data) == 2.5267274156212828e-05
+        assert data[1, 0, 0] == -7.7284646607979651e-06
+        assert data[16, 0, 0] == 6.5481930420497295e-06
+        assert data[50, 0, 0] == -1.8830981620448768e-06
+        assert data[67, 0, 0] == -5.7283610498600854e-06
+        assert np.mean(data) == 2.5267274344700309e-05
         assert data.shape == (80, 200, 200)
 
         storage.close_connection()
 
     def test_remove_frames(self):
-        remove_frames = RemoveFramesModule((0,15,49,66),
+        remove_frames = RemoveFramesModule((0, 15, 49, 66),
                                            name_in="remove_frames",
                                            image_in_tag="im_center",
                                            image_out_tag="im_remove",
@@ -201,11 +198,11 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_remove"]
 
-        assert data[0, 0, 0] == -7.72846498557603e-06
-        assert data[14, 0, 0] == 6.5481928396102544e-06
-        assert data[47, 0, 0] == -1.8830979413737828e-06
-        assert data[63, 0, 0] == -5.7283610092069399e-06
-        assert np.mean(data) == 2.5268782479198368e-05
+        assert data[0, 0, 0] == -7.7284646607979651e-06
+        assert data[14, 0, 0] == 6.5481930420497295e-06
+        assert data[47, 0, 0] == -1.8830981620448768e-06
+        assert data[63, 0, 0] == -5.7283610498600854e-06
+        assert np.mean(data) == 2.5268782670694567e-05
         assert data.shape == (76, 200, 200)
 
         storage.close_connection()
@@ -224,8 +221,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_subset"]
 
-        assert data[0, 0, 0] == -6.14903445951423e-06
-        assert np.mean(data) == 2.5268782479198355e-05
+        assert data[0, 0, 0] == -6.1490341969019138e-06
+        assert np.mean(data) == 2.5268782670694567e-05
         assert data.shape == (38, 200, 200)
 
         storage.close_connection()
@@ -251,13 +248,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert data[154, 99] == 0.00040503841875711588
-        assert np.mean(data) == -3.5359608446354063e-09
+        assert data[154, 99] == 0.00040503841890726107
+        assert np.mean(data) == -3.5359607872233667e-09
         assert data.shape == (200, 200)
-
-        # hdu = fits.PrimaryHDU(data)
-        # hdulist = fits.HDUList([hdu])
-        # hdulist.writeto('planet.fits', overwrite=True)
-        # hdulist.close()
 
         storage.close_connection()

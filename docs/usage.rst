@@ -37,117 +37,129 @@ the pipeline modules for reading and writing .fits data ::
 and all pipeline modules (pipeline steps) we want to execute: ::
 
 	from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
-	DarkSubtractionModule, FlatSubtractionModule, CutTopTwoLinesModule, \
-	AngleCalculationModule, SimpleBackgroundSubtractionModule, \ 
+	DarkSubtractionModule, FlatSubtractionModule, CutTopLinesModule, \
+	AngleCalculationModule, MeanBackgroundSubtractionModule, \ 
 	StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
-	StackAndSubsetModule
+	StackAndSubsetModule, RemoveLastFrameModule
 
 In order to be able to handle the different processing steps we need to create an instance of the :class:`PynPoint.core.Pypeline` ::
 
 	pipeline = Pypeline(working_place_in,
-				input_place_in,
-				output_place_in)
+                        input_place_in,
+                        output_place_in)
 
 Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. According to |Amara_Quanz2| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
 
 1. Read the raw data: ::
 
 	reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
-	                                      image_tag="im_arr")
+                                          image_tag="im_arr")
 	pipeline.add_module(reading_data)
 
 2. Import the dark current from the directory `dark_dir`: ::
 
 	reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                      	  input_dir= dark_dir,
+                                      	  input_dir=dark_dir,
                                       	  image_tag="dark_arr")
 	pipeline.add_module(reading_dark)
 
 3. Read the flat-field exposure from the directory `flat_dir`: ::
 
 	reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      	  input_dir= flat_dir,
-                                      	  image_tag=“flat_arr")
+                                      	  input_dir=flat_dir,
+                                      	  image_tag="flat_arr")
 	pipeline.add_module(reading_flat)
 
-4. Cut the top two lines of the input frames (Needed for NACO Data): ::
+4. Remove the last (NDIT+1) frame from each cube: ::
 
-	cutting = CutTopTwoLinesModule(name_in="NACO_cutting",
-						image_in_tag="im_arr",
-                               	      image_out_tag="im_arr_cut")
+    remove_last = RemoveLastFrameModule(name_in="last_frame",
+                                        image_in_tag="im_arr",
+                                        image_out_tag="im_arr_last")
+
+    pipeline.add_module(remove_last)
+
+5. Cut the top two lines of the input frames (Needed for NACO Data): ::
+
+	cutting = CutTopLinesModule(name_in="NACO_cutting",
+                                image_in_tag="im_arr",
+                                image_out_tag="im_arr_cut",
+                                num_lines=2)
 	pipeline.add_module(cutting)
 
-5. Dark- and flat-subtraction: ::
+6. Dark- and flat-subtraction: ::
 
 	dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
-                           		image_in_tag="im_arr_cut",
-                           		dark_in_tag="dark_arr",
-                           		image_out_tag="dark_sub_arr")
+                                     image_in_tag="im_arr_cut",
+                                     dark_in_tag="dark_arr",
+                                     image_out_tag="dark_sub_arr")
 
 	flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
-                           		image_in_tag="dark_sub_arr",
-                           		flat_in_tag="flat_arr",
-                           		image_out_tag="flat_sub_arr")
+                                     image_in_tag="dark_sub_arr",
+                                     flat_in_tag="flat_arr",
+                                     image_out_tag="flat_sub_arr")
 
 	pipeline.add_module(dark_sub)
 	pipeline.add_module(flat_sub)
 
-6. Bad pixel cleaning: ::
+7. Background subtraction: ::
+
+    bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=None,
+                                                     cubes_per_position=1,
+                                                     name_in="background_subtraction",
+                                                     image_in_tag="flat_sub_arr",
+                                                     image_out_tag="bg_cleaned_arr")
+
+    pipeline.add_module(bg_subtraction)
+
+8. Bad pixel cleaning: ::
 
 	bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="sigma_filtering",
 	                                                image_in_tag="flat_sub_arr",
-	                                                image_out_tag="im_arr_bp_clean")
+	                                                image_out_tag="bp_cleaned_arr")
 	pipeline.add_module(bp_cleaning)
 
-7. Background subtraction: ::
-
-	bg_subtraction = SimpleBackgroundSubtractionModule(name_in="background_subtraction",
-							star_pos_shift=602,
-                                                   	image_in_tag="im_arr_bp_clean",
-                                                   	image_out_tag="bg_cleaned_arr")
-	pipeline.add_module(bg_subtraction)
-
-8. Star extraction and alignment: ::
+9. Star extraction and alignment: ::
 
 	extraction = StarExtractionModule(name_in="star_cutting",
 	                                  image_in_tag="bg_cleaned_arr",
-	                                  image_out_tag="im_arr_cut",
-	                                  psf_size=4,
-	                                  fwhm_star=7)
+	                                  image_out_tag="im_arr_extract",
+	                                  psf_size=40,
+                                      psf_size_as_pixel_resolution=True
+	                                  fwhm_star=4)
 
 	alignment = StarAlignmentModule(name_in="star_align",
-	                                image_in_tag="im_arr_cut",
+	                                image_in_tag="im_arr_extract",
 	                                image_out_tag="im_arr_aligned",
 	                                accuracy=100,
 	                                resize=2)
 	pipeline.add_module(extraction)
 	pipeline.add_module(alignment)
 
-9. Calculate the parallactic angle: ::
+10. Calculate the parallactic angle: ::
 
 	angle_calc = AngleCalculationModule(name_in="angle_calculation",
 	                                    data_tag="im_arr_aligned")
 	pipeline.add_module(angle_calc)
 
-10. Subsample the data using stacking: ::
+101. Subsample the data using stacking: ::
 
 	subset = StackAndSubsetModule(name_in="stacking_subset",
 	                              image_in_tag="im_arr_aligned",
-	                              image_out_tag="im_stacked",
+	                              image_out_tag="im_arr_stacked",
 	                              random_subset=None,
-	                              stacking=20)
+	                              stacking=4)
 	pipeline.add_module(subset)
 
-11. Subtract the stars PSF using PCA: ::
+12. Subtract the stars PSF using PCA: ::
 
 	psf_sub = PSFSubtractionModule(pca_number=10,
 	                               name_in="PSF_subtraction",
-	                               images_in_tag="im_stacked",
-	                               reference_in_tag="im_stacked",
+	                               images_in_tag="im_arr_stacked",
+	                               reference_in_tag="im_arr_stacked",
 	                               res_mean_tag="res_mean")
 	pipeline.add_module(psf_sub)
 
-12. Write out the result of the last step: ::
+13. Write out the result of the last step: ::
 
 	writing = WriteAsSingleFitsFile(name_in="Fits_writing",
 	                                file_name="test.fits",

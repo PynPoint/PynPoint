@@ -194,26 +194,17 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
                 # copy algorithm from http://idlastro.gsfc.nasa.gov/ftp/pro/image/sigma_filter.pro
 
                 source_image = copy.deepcopy(image_in)
-                source_image = np.array(source_image, dtype=np.float32)
 
                 mean_image = (cv2.blur(copy.deepcopy(source_image),
                                        (box, box)) * box2 - source_image) / (box2 - 1)
-                mean_image = np.array(mean_image,
-                                      dtype=np.float32)
 
                 dev_image = (mean_image - source_image) ** 2
-                dev_image = np.array(dev_image,
-                                     dtype=np.float32)
 
                 fact = float(sigma ** 2) / (box2 - 2)
                 var_image = fact * (cv2.blur(copy.deepcopy(dev_image),
                                              (box, box)) * box2 - dev_image)
-                var_image = np.array(var_image,
-                                     dtype=np.float32)
 
                 out_image = image_in
-                out_image = np.array(out_image,
-                                     dtype=np.float32)
 
                 self.__sigma_filter(dev_image,
                                     var_image,
@@ -402,25 +393,18 @@ class BadPixelInterpolationRefinementModule(ProcessingModule):
 
             # sigma detection
             source_image = copy.deepcopy(image_in)
-            source_image = np.array(source_image, dtype=np.float32)
 
             mean_image = (cv2.blur(copy.deepcopy(source_image),
                                    (self.m_box_size,
                                     self.m_box_size)) * self.m_box_size**2 - source_image) / \
                          (self.m_box_size**2 - 1)
-            mean_image = np.array(mean_image,
-                                  dtype=np.float32)
 
             dev_image = (mean_image - source_image) ** 2
-            dev_image = np.array(dev_image,
-                                 dtype=np.float32)
 
             fact = float(self.m_sigma ** 2) / (self.m_box_size**2 - 2)
             var_image = fact * (cv2.blur(copy.deepcopy(dev_image),
                                          (self.m_box_size,
                                           self.m_box_size)) * self.m_box_size**2 - dev_image)
-            var_image = np.array(var_image,
-                                 dtype=np.float32)
 
             out_image = np.ones(image_in.shape)
 

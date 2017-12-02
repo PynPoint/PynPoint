@@ -123,8 +123,7 @@ class StarAlignmentModule(ProcessingModule):
         # get ref image
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
-                ref_images = np.asarray(self.m_ref_image_in_port.get_all(),
-                                        dtype=np.float64)
+                ref_images = np.asarray(self.m_ref_image_in_port.get_all())
             elif len(self.m_ref_image_in_port.get_shape()) == 2:
                 ref_images = np.array([self.m_ref_image_in_port.get_all(),])
             else:
@@ -151,8 +150,7 @@ class StarAlignmentModule(ProcessingModule):
                 # the rescale function normalizes all values to [0 ... 1]. We want to keep the total
                 # flux of the images and rescale the images afterwards
                 sum_before = np.sum(image_in)
-                tmp_image = rescale(image=np.asarray(image_in,
-                                                     dtype=np.float64),
+                tmp_image = rescale(image=np.asarray(image_in),
                                     scale=(self.m_resize,
                                            self.m_resize),
                                     order=5,
