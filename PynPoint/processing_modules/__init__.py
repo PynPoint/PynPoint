@@ -10,7 +10,7 @@ from StackingAndSubsampling import StackAndSubsetModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule
 from SkyScienceDataModules import MeanSkyCubes, SkySubtraction, AlignmentSkyAndScienceDataModule
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule, \
-    ShiftForCenteringModule, LocateStarModule
+    ShiftForCenteringModule, LocateStarModule, CombineTagsModule
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule

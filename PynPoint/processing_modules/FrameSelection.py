@@ -126,13 +126,22 @@ class RemoveFramesModule(ProcessingModule):
 
         # Update star position (if present)
 
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+        if "STAR_POSITION_X" in self.m_image_in_port.get_all_non_static_attributes():
 
-            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION")
+            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION_X")
             starpos_out = np.delete(starpos_in,
                                     self.m_frame_indices,
                                     axis=0)
 
-            self.m_image_out_port.add_attribute("STAR_POSITION", starpos_out, static=False)
+            self.m_image_out_port.add_attribute("STAR_POSITION_X", starpos_out, static=False)
+
+        if "STAR_POSITION_Y" in self.m_image_in_port.get_all_non_static_attributes():
+
+            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION_Y")
+            starpos_out = np.delete(starpos_in,
+                                    self.m_frame_indices,
+                                    axis=0)
+
+            self.m_image_out_port.add_attribute("STAR_POSITION_Y", starpos_out, static=False)
 
         self.m_image_out_port.close_port()

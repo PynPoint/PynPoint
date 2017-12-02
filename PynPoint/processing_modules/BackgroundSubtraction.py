@@ -510,7 +510,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                     self.m_background_out_port.set_all(im_tmp-background)
 
                     background_parang = parang[count:count+item]
-                    background_naxis_three = np.empty(1)
+                    background_naxis_three = np.zeros(1, dtype=np.int64)
                     background_naxis_three[0] = naxis_three[i]
                     
                     background_init = True
@@ -549,7 +549,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                     self.m_star_out_port.set_all(im_tmp-background)
 
                     star_parang = parang[count:count+item]
-                    star_naxis_three = np.empty(1)
+                    star_naxis_three = np.zeros(1, dtype=np.int64)
                     star_naxis_three[0] = naxis_three[i]
 
                     star_init = True

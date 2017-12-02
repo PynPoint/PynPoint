@@ -3,13 +3,14 @@ Modules with simple pre-processing tools.
 """
 
 import math
+import warnings
+import numpy as np
 
 from PynPoint.core import ProcessingModule
 
 from skimage.transform import rescale
 from scipy.ndimage import shift
 from scipy.ndimage.filters import gaussian_filter
-import numpy as np
 
 
 class CutAroundCenterModule(ProcessingModule):
@@ -330,7 +331,7 @@ class LocateStarModule(ProcessingModule):
 
         sigma = self.m_gaussian_fwhm/math.sqrt(8.*math.log(2.))
 
-        star_position = np.zeros((self.m_data_in_port.get_shape()[0], 2))
+        star_position = np.zeros((self.m_data_in_port.get_shape()[0], 2), dtype=np.int64)
 
         for i in range(self.m_data_in_port.get_shape()[0]):
             im_smooth = gaussian_filter(self.m_data_in_port[i],
@@ -346,3 +347,120 @@ class LocateStarModule(ProcessingModule):
         self.m_data_out_port.add_attribute("STAR_POSITION_Y",
                                            star_position[:, 0],
                                            static=False)
+
+
+class CombineTagsModule(ProcessingModule):
+    """
+    Module for combining tags from multiple database entries into a single tag.
+    """
+
+    def __init__(self,
+                 image_in_tags,
+                 name_in="combine_tags",
+                 image_out_tag="im_arr_combined",
+                 num_images_in_memory=100):
+        """
+        Constructor of CombineTagsModule.
+
+        :param image_in_tags: Tags of the database entries that are combined.
+        :type image_in_tags: tuple, str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should not be
+                              present in *image_in_tags*.
+        :type image_out_tag: str
+        :param num_images_in_memory: Number of frames that are simultaneously loaded into the
+                                     memory.
+        :type num_images_in_memory: int
+        :return: None
+        """
+
+        super(CombineTagsModule, self).__init__(name_in=name_in)
+
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        if image_out_tag in image_in_tags:
+            raise ValueError("The name of image_out_tag can not be present in image_in_tags.")
+
+        self.m_image_in_tags = image_in_tags
+        self.m_image_memory = num_images_in_memory
+
+    def run(self):
+        """
+        Run method of the module. Combines the frames of multiple tags into a single output tag
+        and adds the static and non-static attributes. The values of the attributes are compared
+        between the input tags to make sure that the input tags decent from the same data set.
+
+        :return: None
+        """
+
+        if len(self.m_image_in_tags) < 2:
+            raise ValueError("The tuple of image_in_tags should contain at least two tags.")
+
+        self.m_image_out_port.del_all_attributes()
+
+        for i, item in enumerate(self.m_image_in_tags):
+            self.m_image_in_port = self.add_input_port(item)
+
+            num_frames = self.m_image_in_port.get_shape()[0]
+            num_stacks = int(float(num_frames)/float(self.m_image_memory))
+
+            for j in range(num_stacks):
+                frame_start = j*self.m_image_memory
+                frame_end = j*self.m_image_memory+self.m_image_memory
+
+                im_tmp = self.m_image_in_port[frame_start:frame_end,]
+
+                if i == 0 and j == 0:
+                    self.m_image_out_port.set_all(im_tmp)
+                else:
+                    self.m_image_out_port.append(im_tmp)
+
+            if num_frames%self.m_image_memory > 0:
+                frame_start = num_stacks*self.m_image_memory
+                frame_end = num_frames
+
+                im_tmp = self.m_image_in_port[frame_start:frame_end,]
+
+                if num_stacks == 0:
+                    self.m_image_out_port.set_all(im_tmp)
+                else:
+                    self.m_image_out_port.append(im_tmp)
+
+            static_attr = self.m_image_in_port.get_all_static_attributes()
+            non_static_attr = self.m_image_in_port.get_all_non_static_attributes()
+
+            for key in static_attr:
+                status = self.m_image_out_port.check_static_attribute(key, static_attr[key])
+
+                if status == 1:
+                    self.m_image_out_port.add_attribute(key, static_attr[key], static=True)
+
+                elif status == -1:
+                    warnings.warn('The static keyword %s is already used but with a different '
+                                  'value. It is advisable to only combine tags that descend from '
+                                  'the same data set.' % key)
+
+            for key in non_static_attr:
+                values = self.m_image_in_port.get_attribute(key)
+
+                if key == "NAXIS3" or key == "NEW_PARA" or key == "STAR_POSITION_X" or \
+                   key == "STAR_POSITION_Y":
+                    for j in values:
+                        self.m_image_out_port.append_attribute_data(key, j)
+
+                else:
+                    status = self.m_image_out_port.check_non_static_attribute(key, values)
+
+                    if status == 1:
+                        self.m_image_out_port.add_attribute(key, values, static=False)
+
+                    elif status == -1:
+                        warnings.warn('The non-static keyword %s is already used but with '
+                                      'different values. It is advisable to only combine tags '
+                                      'that descend from the same data set.' % key)
+
+        self.m_image_out_port.add_history_information("Database entries combined",
+                                                      str(np.size(self.m_image_in_tags)))
+
+        self.m_image_out_port.close_port()

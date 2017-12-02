@@ -68,7 +68,7 @@ class CutTopLinesModule(ProcessingModule):
                                       self.m_image_out_port,
                                       num_images_in_memory=self.m_num_images_in_memory)
 
-        self.m_image_out_port.add_history_information("NACO_preparation",
+        self.m_image_out_port.add_history_information("NACO preparation",
                                                       "cut top lines")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -182,7 +182,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
-            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
 
             if ndit_tot == 0:
@@ -194,10 +194,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        size_in = self.m_image_in_port.get_attribute("NAXIS3")
-        size_out = size_in - 1
-
-        self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
+        self.m_image_out_port.add_attribute("NAXIS3", size-1, static=False)
 
         self.m_image_out_port.add_history_information("NACO preparation",
                                                       "remove every NDIT+1 frame")
