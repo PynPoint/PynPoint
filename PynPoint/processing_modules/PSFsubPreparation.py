@@ -1,8 +1,5 @@
 """
-Module for data Preparation before PSF Subtraction. Includes:
-    - Resizing
-    - Masking
-    - Image normalization
+Modules for preparing the PSF subtraction.
 """
 
 from __future__ import division
@@ -14,6 +11,10 @@ from PynPoint.core.Processing import ProcessingModule
 
 
 class PSFdataPreparation(ProcessingModule):
+    """
+    Module to prepare the data for PSF subtraction with PCA. The preparation steps include
+    resizing, masking, and image normalization.
+    """
 
     def __init__(self,
                  name_in=None,
@@ -28,7 +29,44 @@ class PSFdataPreparation(ProcessingModule):
                  cent_size=0.05,
                  edge_size=1.0):
 
+        """
+        Constructor of PSFdataPreparation.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with images that is written as output.
+        :type image_out_tag: str
+        :param image_mask_out_tag: Tag of the database entry with the mask that is written as
+                                   output.
+        :type image_mask_out_tag: str
+        :param mask_out_tag: Tag of the database entry with the mask that is written as output.
+        :type mask_out_tag: str
+        :param resize: Resize the data by a factor F_final.
+        :type resize: bool
+        :param cent_remove: Mask the central region of the data with a fractional mask radius of
+                            cent_size.
+        :type cent_remove: bool
+        :param F_final: Factor by which the data is resized. F_final=2. will upsample the data by a
+                        factor of two.
+        :type F_final: float
+        :param para_sort: Dummy argument.
+        :type para_sort: bool
+        :param cent_size: Fractional radius of the central mask relative to the image size.
+        :type cent_size: float
+        :param edge_size: Fractional outer radius relative to the image size. The images are
+                          masked beyond this radius. Currently this parameter is not used.
+        :type edge_size: float
+        :return: None
+        """
+
         super(PSFdataPreparation, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
+        self.m_mask_out_port = self.add_output_port(mask_out_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
         # Note recentering is not longer supported
         self.m_resize = resize
@@ -38,14 +76,11 @@ class PSFdataPreparation(ProcessingModule):
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
 
-        # create Ports
-        self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
-        self.m_mask_out_port = self.add_output_port(mask_out_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
     @staticmethod
     def _im_norm(im_data_in):
+        """
+        Static method which normalizes the input data with its Frobenius norm.
+        """
 
         im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
 
@@ -56,22 +91,31 @@ class PSFdataPreparation(ProcessingModule):
 
     def _im_resizing(self,
                      im_data_in):
-        x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_f_final),\
-                                        int(im_data_in.shape[2] * self.m_f_final)
+        """
+        Internal method which resamples the data with a factor F_final, using a spline
+        interpolation of the fifth order.
+        """
+
+        x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_f_final), \
+                                   int(im_data_in.shape[2] * self.m_f_final)
+
         im_arr_res = np.zeros([im_data_in.shape[0], x_num_final, y_num_final])
 
         for i in range(0, im_data_in.shape[0]):
             im_tmp = im_data_in[i]
-            im_tmp = ndimage.interpolation.zoom(im_tmp,
-                                                [self.m_f_final,
-                                                 self.m_f_final],
-                                                order=5)
+            im_tmp = ndimage.interpolation.zoom(im_tmp, \
+                                                [self.m_f_final, \
+                                                 self.m_f_final], \
+                                                 order=5)
             im_arr_res[i,] = im_tmp
 
         return im_arr_res
 
     def _im_masking(self,
                     im_data_in):
+        """
+        Internal method which masks the central and outer parts of the images.
+        """
 
         def mk_circle_func(center_x, center_y):
             """sets up a function for calculating the radius to x,y (after having been initialised
@@ -89,6 +133,7 @@ class PSFdataPreparation(ProcessingModule):
 
         im_size = im_data_in[0, ].shape
 
+        # TODO add edge_size as outer radius for the mask
         if self.m_cent_remove:
 
             mask_c = mk_circle(im_size[0],
@@ -120,6 +165,11 @@ class PSFdataPreparation(ProcessingModule):
         return im_data_in
 
     def run(self):
+        """
+        Run method of the module. Normalizes, resizes and masks the images.
+
+        :return: None
+        """
 
         im_data = self.m_image_in_port.get_all()
 
