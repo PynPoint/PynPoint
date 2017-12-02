@@ -25,6 +25,7 @@ clean-pyc:
 
 clean-test:
 	rm -f test/test_processing/PynPoint_database.hdf5
+	rm -f test/test_processing/test.fits
 	rm -rf .cache/
 
 lint:
