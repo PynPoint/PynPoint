@@ -256,7 +256,9 @@ class InputPort(Port):
     def get_all(self):
         """
         Returns the whole dataset stored in the data bank under the tag of the Port. Be careful
-        using this function for loading huge datasets!
+        using this function for loading huge datasets! The data type is inferred from the data
+        by numpy.asarray. A 32 bit array will be returned in case the input data is a combination
+        of float32 and float64 arrays.
 
         :return: The data of the dataset as numpy array. None if the data does not exist.
         :rtype: numpy array
@@ -265,8 +267,7 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...],
-                          dtype=np.float64)
+        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
 
     def get_attribute(self,
                       name):
