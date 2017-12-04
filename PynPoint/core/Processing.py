@@ -1,17 +1,14 @@
 """
 Different interfaces for Pypeline Modules.
 """
-
-# external modules
 import os
+import warnings
 from abc import ABCMeta, abstractmethod
-import numpy as np
 import multiprocessing
 
+import numpy as np
+
 from PynPoint.core.DataIO import OutputPort, InputPort
-
-import warnings
-
 
 class PypelineModule:
     """
@@ -336,7 +333,7 @@ class ProcessingModule(PypelineModule):
 
                     # lock Mutex and read data
                     with self.m_data_mutex:
-                        print "reading lines from " + str(i) + " to " + str(j)
+                        print "Reading lines from " + str(i) + " to " + str(j)
                         tmp_data = self.m_data_in_port[:, i:j, :]
 
                     self.m_task_queue.put(TaskData(tmp_data, (i, j)))
@@ -384,8 +381,8 @@ class ProcessingModule(PypelineModule):
                     print "Process " + proc_name + " got data for row " + str(
                         next_task.m_position) + " and starts processing..."
 
-                    result_arr = np.zeros((length_of_processed_data,
-                                          next_task.m_data_array.shape[1],
+                    result_arr = np.zeros((length_of_processed_data, \
+                                          next_task.m_data_array.shape[1], \
                                           next_task.m_data_array.shape[2]))
                     for i in range(next_task.m_data_array.shape[1]):
                         for j in range(next_task.m_data_array.shape[2]):
@@ -419,7 +416,7 @@ class ProcessingModule(PypelineModule):
                     next_result = self.m_result_queue.get()
 
                     if next_result is None:
-                        print "shutting down writer..."
+                        print "Shutting down writer..."
                         self.m_result_queue.task_done()
                         break
 
@@ -434,8 +431,8 @@ class ProcessingModule(PypelineModule):
         print "Preparing database for analysis ..."
 
         # TODO: try to create without stalling huge memory
-        image_out_port.set_all(np.zeros((length_of_processed_data,
-                                        image_in_port.get_shape()[1],
+        image_out_port.set_all(np.zeros((length_of_processed_data, \
+                                        image_in_port.get_shape()[1], \
                                         image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
@@ -537,9 +534,9 @@ class ProcessingModule(PypelineModule):
                 "the length of the signal. Use different input and output ports "
                 "instead. " % func)
 
-        image_out_port.set_all(np.zeros((length_of_processed_data,
-                                        image_in_port.get_shape()[1],
-                                        image_in_port.get_shape()[2])),
+        image_out_port.set_all(np.zeros((length_of_processed_data, \
+                                        image_in_port.get_shape()[1], \
+                                        image_in_port.get_shape()[2])), \
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
@@ -753,6 +750,28 @@ class ReadingModule(PypelineModule):
             tmp_port.set_database_connection(self._m_data_base)
 
         self._m_output_ports[tag] = tmp_port
+
+        return tmp_port
+
+    def add_config_port(self):
+        """
+        Method which creates a new InputPort and append it to the internal InputPort dictionary.
+        This function should be used by classes inheriting from Processing Module to make sure that
+        only InputPort with unique tags are added. The new port can be used by: ::
+
+             Port = self._m_input_ports[tag]
+
+        or by using the returned Port.
+
+        :param tag: Tag of the new input port.
+        :type tag: str
+        :return: The new InputPort
+        :rtype: InputPort
+        """
+
+        tmp_port = InputPort("config")
+
+        tmp_port.set_database_connection(self._m_data_base)
 
         return tmp_port
 
