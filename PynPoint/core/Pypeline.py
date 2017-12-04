@@ -1,17 +1,16 @@
 """
 Module which capsules different pipeline processing steps.
 """
-# external modules
 import collections
 import os
-import atexit
-
-import numpy as np
-from PynPoint.core.DataIO import DataStorage
-
-from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
-
 import warnings
+import configparser
+
+import h5py
+import numpy as np
+
+from PynPoint.core.DataIO import DataStorage
+from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
 
 class Pypeline(object):
@@ -52,6 +51,8 @@ class Pypeline(object):
         self._m_output_place = output_place_in
         self._m_modules = collections.OrderedDict()
         self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
+
+        self._config_init()
 
     def __setattr__(self, key, value):
         """
@@ -102,6 +103,66 @@ class Pypeline(object):
             return False, None
 
         return True, None
+
+    def _config_init(self):
+        """
+        Internal function which initializes the configuration file.
+
+        :return: None
+        """
+
+        config_dict = {'nframes': 'NAXIS3',
+                       'pixscale': 'ESO INS PIXSCALE',
+                       'exp_no': 'ESO DET EXP NO',
+                       'ndit': 'ESO DET NDIT',
+                       'parang_start': 'ESO TEL PARANG START',
+                       'parang_end': 'ESO TEL PARANG END'}
+
+        config_file = self._m_working_place+"/PynPoint_config.ini"
+
+        if os.path.isfile(config_file):
+            config = configparser.ConfigParser()
+            config.read_file(open(config_file))
+
+            if config.has_option('header', 'nframes'):
+                config_dict['nframes'] = str(config.get('header', 'nframes'))
+
+            if config.has_option('header', 'pixscale'):
+                config_dict['pixscale'] = str(config.get('header', 'pixscale'))
+
+            if config.has_option('header', 'exp_no'):
+                config_dict['exp_no'] = str(config.get('header', 'exp_no'))
+
+            if config.has_option('header', 'ndit'):
+                config_dict['ndit'] = str(config.get('header', 'ndit'))
+
+            if config.has_option('header', 'parang_start'):
+                config_dict['parang_start'] = str(config.get('header', 'parang_start'))
+
+            if config.has_option('header', 'parang_end'):
+                config_dict['parang_end'] = str(config.get('header', 'parang_end'))
+
+        else:
+            warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
+                          "default values.")
+
+            f = open(config_file, 'w')
+            f.write('[header]\n\n')
+            f.write('nframes: NAXIS3\n')
+            f.write('pixscale: ESO INS PIXSCALE\n')
+            f.write('exp_no: ESO DET EXP NO\n')
+            f.write('ndit: ESO DET NDIT\n')
+            f.write('parang_start: ESO TEL PARANG START\n')
+            f.write('parang_end: ESO TEL PARANG END\n')
+            f.close()
+
+        hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
+        if "config" in hdf:
+            del hdf["config"]
+        config = hdf.create_group("config")
+        for i in config_dict:
+            config.attrs[i] = config_dict[i]
+        hdf.close()
 
     def add_module(self,
                    pipeline_module):
@@ -215,7 +276,7 @@ class Pypeline(object):
         :return: None
         """
 
-        print "validating Pipeline..."
+        print "Validating Pypeline..."
         validation = self.validate_pipeline()
         if not validation[0]:
             raise AttributeError('Pipeline module %s is looking for data under a tag which is not '
@@ -240,7 +301,7 @@ class Pypeline(object):
 
         if name in self._m_modules:
 
-            print "validating module..."
+            print "Validating module..."
             validation = self.validate_pipeline_module(name)
             if not validation[0]:
                 raise AttributeError(
@@ -250,7 +311,7 @@ class Pypeline(object):
 
             print "Start running module..."
             self._m_modules[name].run()
-            print "finished running module..."
+            print "Finished running module..."
         else:
             warnings.warn('Module not found')
 

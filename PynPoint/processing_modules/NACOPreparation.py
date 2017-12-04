@@ -171,6 +171,10 @@ class RemoveLastFrameModule(ProcessingModule):
         :return: None
         """
 
+        print self.m_image_in_port.get_attribute("nframes")
+
+        sys.exit(0)
+
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
