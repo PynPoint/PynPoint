@@ -1,11 +1,12 @@
 """
 Modules to save and load data from a central DataStorage (.hdf5).
 """
-from abc import ABCMeta, abstractmethod
 import warnings
+import os
+from abc import ABCMeta, abstractmethod
+
 import h5py
 import numpy as np
-import os
 
 
 class DataStorage(object):
