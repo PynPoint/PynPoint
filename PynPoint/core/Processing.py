@@ -2,13 +2,14 @@
 Different interfaces for Pypeline Modules.
 """
 import os
+import sys
 import warnings
 from abc import ABCMeta, abstractmethod
 import multiprocessing
 
 import numpy as np
 
-from PynPoint.core.DataIO import OutputPort, InputPort
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 class PypelineModule:
     """
@@ -718,13 +719,14 @@ class ReadingModule(PypelineModule):
                                        '- input requested: %s' % input_dir
         self.m_input_location = input_dir
         self._m_output_ports = {}
+        self._m_config_port = None
 
     def add_output_port(self,
                         tag,
                         default_activation=True):
         """
         Method which creates a new OutputPort and append it to the internal OutputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
+        This function should be used by classes inheriting from ReadingModule to make sure that
         only OutputPort with unique tags are added. The new port can be used by: ::
 
              Port = self._m_output_ports[tag]
@@ -755,9 +757,9 @@ class ReadingModule(PypelineModule):
 
     def add_config_port(self):
         """
-        Method which creates a new InputPort and append it to the internal InputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
-        only InputPort with unique tags are added. The new port can be used by: ::
+        TODO
+        Method which creates a ConfigPort.
+        The new port can be used by: ::
 
              Port = self._m_input_ports[tag]
 
@@ -769,9 +771,15 @@ class ReadingModule(PypelineModule):
         :rtype: InputPort
         """
 
-        tmp_port = InputPort("config")
+        tmp_port = ConfigPort("config")
 
-        tmp_port.set_database_connection(self._m_data_base)
+        if self._m_config_port:
+            warnings.warn('Config tag already used. Updating..')
+        else:
+            self._m_config_port = tmp_port
+
+        if self._m_data_base is not None:
+            tmp_port.set_database_connection(self._m_data_base)
 
         return tmp_port
 
@@ -788,6 +796,9 @@ class ReadingModule(PypelineModule):
 
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
+           
+        if self._m_config_port is not None:
+            self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
 
