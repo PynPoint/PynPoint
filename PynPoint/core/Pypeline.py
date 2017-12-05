@@ -111,12 +111,12 @@ class Pypeline(object):
         :return: None
         """
 
-        config_dict = {'nframes': 'NAXIS3',
-                       'pixscale': 'ESO INS PIXSCALE',
-                       'exp_no': 'ESO DET EXP NO',
-                       'ndit': 'ESO DET NDIT',
-                       'parang_start': 'ESO TEL PARANG START',
-                       'parang_end': 'ESO TEL PARANG END'}
+        config_dict = {'NFRAMES': 'NAXIS3',
+                       'PIXSCALE': 'ESO INS PIXSCALE',
+                       'EXP_NO': 'ESO DET EXP NO',
+                       'NDIT': 'ESO DET NDIT',
+                       'PARANG_START': 'ESO TEL PARANG START',
+                       'PARANG_END': 'ESO TEL PARANG END'}
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
@@ -124,23 +124,23 @@ class Pypeline(object):
             config = configparser.ConfigParser()
             config.read_file(open(config_file))
 
-            if config.has_option('header', 'nframes'):
-                config_dict['nframes'] = str(config.get('header', 'nframes'))
+            if config.has_option('header', 'NFRAMES'):
+                config_dict['NFRAMES'] = str(config.get('header', 'NFRAMES'))
 
-            if config.has_option('header', 'pixscale'):
-                config_dict['pixscale'] = str(config.get('header', 'pixscale'))
+            if config.has_option('header', 'PIXSCALE'):
+                config_dict['PIXSCALE'] = str(config.get('header', 'PIXSCALE'))
 
-            if config.has_option('header', 'exp_no'):
-                config_dict['exp_no'] = str(config.get('header', 'exp_no'))
+            if config.has_option('header', 'EXP_NO'):
+                config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
 
-            if config.has_option('header', 'ndit'):
-                config_dict['ndit'] = str(config.get('header', 'ndit'))
+            if config.has_option('header', 'NDIT'):
+                config_dict['NDIT'] = str(config.get('header', 'NDIT'))
 
-            if config.has_option('header', 'parang_start'):
-                config_dict['parang_start'] = str(config.get('header', 'parang_start'))
+            if config.has_option('header', 'PARANG_START'):
+                config_dict['PARANG_START'] = str(config.get('header', 'PARANG_START'))
 
-            if config.has_option('header', 'parang_end'):
-                config_dict['parang_end'] = str(config.get('header', 'parang_end'))
+            if config.has_option('header', 'PARANG_END'):
+                config_dict['PARANG_END'] = str(config.get('header', 'PARANG_END'))
 
         else:
             warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
@@ -148,12 +148,12 @@ class Pypeline(object):
 
             f = open(config_file, 'w')
             f.write('[header]\n\n')
-            f.write('nframes: NAXIS3\n')
-            f.write('pixscale: ESO INS PIXSCALE\n')
-            f.write('exp_no: ESO DET EXP NO\n')
-            f.write('ndit: ESO DET NDIT\n')
-            f.write('parang_start: ESO TEL PARANG START\n')
-            f.write('parang_end: ESO TEL PARANG END\n')
+            f.write('NFRAMES: NAXIS3\n')
+            f.write('PIXSCALE: ESO INS PIXSCALE\n')
+            f.write('EXP_NO: ESO DET EXP NO\n')
+            f.write('NDIT: ESO DET NDIT\n')
+            f.write('PARANG_START: ESO TEL PARANG START\n')
+            f.write('PARANG_END: ESO TEL PARANG END\n')
             f.close()
 
         hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
@@ -283,7 +283,7 @@ class Pypeline(object):
                                  'created by a previous module or does not exist in the database.'
                                  % validation[1])
 
-        print "Start running Pypeline ..."
+        print "Start running Pypeline..."
         for key in self._m_modules:
             print "Start running " + key + "..."
             self._m_modules[key].run()

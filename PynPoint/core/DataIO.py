@@ -3,6 +3,7 @@ Modules to save and load data from a central DataStorage (.hdf5).
 """
 import warnings
 import os
+import sys
 from abc import ABCMeta, abstractmethod
 
 import h5py
@@ -133,6 +134,120 @@ class Port:
         :return: None
         """
         self._m_data_storage = data_base_in
+
+
+class ConfigPort(Port):
+    """
+    TODO
+    InputPorts can be used to read datasets with a specific tag from a (.hdf5) database. You can use
+    an InputPort instance to access:
+
+        * the complete dataset using the get_all() method.
+        * a single attribute of the dataset using get_attribute().
+        * all attributes of the dataset using get_all_static_attributes() and
+          get_all_non_static_attributes().
+        * a part of the dataset using slicing. For example:
+
+        .. code-block:: python
+
+            tmp_in_port = InputPort("Some_tag")
+            data = tmp_in_port[0,:,:] # returns the first 2D image of a 3D image stack.
+
+    (More information about how 1D 2D and 3D data is organized in the documentation of Output
+    Port (:func:`PynPoint.core.DataIO.OutputPort.append` and
+    :func:`PynPoint.core.DataIO.OutputPort.set_all`)
+
+    InputPorts can load two different types of Attributes which give additional information about
+    the data set the port is linked to:
+
+        * static attributes: Contain global information about a dataset which is not changing
+          through the data. (e.g. The name of the instrument used for the observation)
+        * non-static attributes: Contain small datasets with information about the actual dataset
+          which is different for parts of the dataset (e.g. the airmass which is changing during the
+          observation).
+    """
+
+    def __init__(self,
+                 tag,
+                 data_storage_in=None):
+        """
+        TODO
+        Constructor of the InputPort class which creates an input port instance which can read data
+        stored in the central database under the tag `tag`. If you write a PypelineModule you should
+        not create instances manually! Use the add_input_port() function instead.
+
+        :param tag: The tag of the port. The port can be used in order to get data from the dataset
+                    with the key `tag`.
+        :type tag: str
+        :param data_storage_in: It is possible to give the constructor of an InputPort a DataStorage
+                                instance which will link the port to that DataStorage. Usually the
+                                DataStorage is set later by calling set_database_connection().
+        :type data_storage_in: DataStorage
+        :return: None
+        """
+        super(ConfigPort, self).__init__(tag, data_storage_in)
+
+    def _check_status_and_activate(self):
+        """
+        Internal function which checks if the port is ready to use and open it.
+
+        :return: Returns True if the Port can be used, False if not.
+        :rtype: bool
+        """
+        
+        if self._m_data_storage is None:
+            warnings.warn("Port can not load data unless a database is connected")
+            return False
+
+        if not self._m_data_base_active:
+            self.open_port()
+
+        return True
+
+    def _check_if_data_exists(self):
+        """
+        Internal function which checks if data exists for the Port specific tag.
+
+        :return: True if data exists, False if not
+        :rtype: bool
+        """
+
+        return self._m_tag in self._m_data_storage.m_data_bank
+
+    def _check_error_cases(self):
+
+        if not self._check_status_and_activate():
+            return False
+
+        if self._check_if_data_exists() is False:
+            warnings.warn("No data under the tag which is linked by the InputPort")
+            return False
+
+        return True
+
+    def get_attribute(self,
+                      name):
+        """
+        Returns an attribute which is connected to the dataset of the port. The function can return
+        static and non-static attributes (But it is first looking for static attributes). See class
+        documentation for more information about static and non-static attributes.
+        (:class:`PynPoint.core.DataIO.InputPort`)
+
+        :param name: The name of the attribute to be returned
+        :type name: str
+        :return: The attribute value. Returns None if the attribute does not exist.
+        :rtype: numpy array for non-static attributes and simple types for static attributes.
+        """
+
+        if not self._check_error_cases():
+            return
+
+        if name in self._m_data_storage.m_data_bank["config"].attrs:
+            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
+        else:
+            warnings.warn('No attribute found - requested: %s' % name)
+            return None
 
 
 class InputPort(Port):
