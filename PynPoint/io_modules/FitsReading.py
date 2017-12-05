@@ -3,6 +3,7 @@ Module for reading different kinds of .fits data
 """
 # external modules
 import os
+import sys
 
 from astropy.io import fits
 
@@ -82,51 +83,19 @@ class ReadFitsCubesDirectory(ReadingModule):
         super(ReadFitsCubesDirectory, self).__init__(name_in,
                                                      input_dir)
 
-        self.m_image_out_port = self.add_output_port(image_tag,
-                                                     True)
-        self.m_image_tag = image_tag
+        self.m_config_port = self.add_config_port()
+        self.m_image_out_port = self.add_output_port(image_tag)
 
+        self.m_image_tag = image_tag
         self._m_overwrite = force_overwrite_in_databank
         
-        self.m_static_keys = ['pixscale']
+        self.m_static_keys = ['PIXSCALE']
 
-        self.m_non_static_keys = ['nframes',
-                                  'exp_no',
-                                  'ndit',
-                                  'parang_start',
-                                  'parang_end']
-
-        # get location of the Reading module
-        # script_dir = os.path.dirname(__file__)
-
-        # read NACO static and non static keys
-        # static_keys_file = open(script_dir + "/config/NACO_static_header_keys.txt", "r")
-        # self.m_static_keys = static_keys_file.read().split(",\n")
-        # static_keys_file.close()
-        #
-        # non_static_keys_file = open(script_dir + "/config/NACO_non_static_header_keys.txt", "r")
-        # self.m_non_static_keys = non_static_keys_file.read().split(",\n")
-        # non_static_keys_file.close()
-
-        # add additional keys
-        # if 'new_static' in kwargs:
-        #     assert (os.path.isfile(kwargs['new_static'])), 'Error: Input file for static header ' \
-        #                                                    'keywords not found - input requested:' \
-        #                                                    ' %s' % kwargs['new_static']
-        #
-        #     static_keys_file = open(kwargs['new_static'], "r")
-        #     self.m_static_keys.extend(static_keys_file.read().split(",\n"))
-        #     static_keys_file.close()
-        #
-        # if 'new_non_static' in kwargs:
-        #     assert (os.path.isfile(kwargs['new_non_static'])), 'Error: Input file for non static ' \
-        #                                                        'header keywords not found - input' \
-        #                                                        ' requested: %s' \
-        #                                                        % kwargs['new_non_static']
-        #
-        #     non_static_keys_file = open(kwargs['new_non_static'], "r")
-        #     self.m_non_static_keys.extend(non_static_keys_file.read().split(",\n"))
-        #     non_static_keys_file.close()
+        self.m_non_static_keys = ['NFRAMES',
+                                  'EXP_NO',
+                                  'NDIT',
+                                  'PARANG_START',
+                                  'PARANG_END']
 
     def _read_single_file(self,
                           fits_file,
@@ -150,9 +119,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         :return: None
         """
 
-        print "Reading " + str(fits_file)
-
-        # print self.m_config_port.get_attribute('pixscale')
+        print "Reading " + str(fits_file) + "..."
 
         hdulist = fits.open(tmp_location + fits_file)
 
@@ -182,41 +149,45 @@ class ReadFitsCubesDirectory(ReadingModule):
                     self.m_image_out_port.add_attribute(item,
                                                         value,
                                                         static=True)
+
                 if status == -1:
-                    warnings.warn('Static keyword %s has changed. Probably the current '
+                    warnings.warn('Static attribute %s has changed. Probably the current '
                                   'file %s does not belong to the data set "%s" of the PynPoint'
-                                  ' database. Updating Keyword...' \
+                                  ' database. Updating attribute...' \
                                   % (fitskey, fits_file, self.m_image_tag))
+
                 elif status == 0:
                     # Attribute is known and is still the same
                     pass
                 
             else:
-                # TODO
-                warnings.warn('TODO')
+                warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
+                              % (item, fitskey))
 
         # non-static attributes
         for item in self.m_non_static_keys:
             fitskey = self.m_config_port.get_attribute(item)
-
+            
             if fitskey in tmp_header:
                 value = tmp_header[fitskey]
                 self.m_image_out_port.append_attribute_data(item,
                                                             value)
-            elif tmp_header['NAXIS'] == 2 and item == 'nframes':
+
+            elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
                 self.m_image_out_port.append_attribute_data(item,
                                                             1)
+
             else:
-                # TODO
-                warnings.warn('TODO')
+                warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
+                              % (item, fitskey))
                 self.m_image_out_port.append_attribute_data(item,
                                                             -1)
 
         hdulist.close()
 
-        # append used file to header information
         self.m_image_out_port.append_attribute_data("Used_Files",
                                                     tmp_location + fits_file)
+
         self.m_image_out_port.flush()
 
     def run(self):
@@ -229,8 +200,6 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         :return: None
         """
-
-        self.m_config_port = self.add_config_port()
         
         if not self.m_input_location.endswith('/'):
             tmp_location = self.m_input_location + '/'
