@@ -24,6 +24,7 @@ clean-pyc:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 clean-test:
+	find . -name 'PynPoint_config.ini' -exec rm -f {} +
 	rm -f test/test_processing/PynPoint_database.hdf5
 	rm -rf .cache/
 
