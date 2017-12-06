@@ -2,10 +2,9 @@
 Different interfaces for Pypeline Modules.
 """
 import os
-import sys
 import warnings
-from abc import ABCMeta, abstractmethod
 import multiprocessing
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
@@ -74,11 +73,12 @@ class PypelineModule:
 class WritingModule(PypelineModule):
     """
     The abstract class WritingModule is a interface for processing steps in the pipeline which do
-    not change the content of the internal DataStorage. They only have reading access to the central
-    data base. WritingModules can be used to export save or plot data from the .hdf5 data base by
-    using a different file format. WritingModules know the directory on the hard drive where the output
-    of the module can be saved. If no output directory is given the default Pypline output directory
-    is used. WritingModules have a dictionary of inputports (self._m_input_ports) but no output ports.
+    not change the content of the internal DataStorage. They only have reading access to the
+    central data base. WritingModules can be used to export save or plot data from the .hdf5 data
+    base by using a different file format. WritingModules know the directory on the hard drive
+    where the output of the module can be saved. If no output directory is given the default
+    Pypline output directory is used. WritingModules have a dictionary of input ports
+    (self._m_input_ports) but no output ports.
     """
     __metaclass__ = ABCMeta
 
@@ -758,11 +758,11 @@ class ReadingModule(PypelineModule):
     def add_config_port(self):
         """
         Method which creates the ConfigPort. The port can be created as: ::
-        
+
              self.m_config_port = self.add_config_port()
 
         after which attributes are read as: ::
-        
+
              nframes = self.m_config_port.get_attribute('NFRAMES')
 
         :return: The ConfigPort
@@ -770,7 +770,7 @@ class ReadingModule(PypelineModule):
         """
 
         tmp_port = ConfigPort("config")
-        
+
         if self._m_config_port:
             warnings.warn('Config tag already used. Updating..')
         else:
@@ -794,7 +794,7 @@ class ReadingModule(PypelineModule):
 
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
-           
+
         if self._m_config_port is not None:
             self._m_config_port.set_database_connection(data_base_in)
 
