@@ -137,7 +137,7 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         # store header info
         tmp_header = hdulist[0].header
-        
+
         # static attributes
         for item in self.m_static_keys:
             fitskey = self.m_config_port.get_attribute(item)
