@@ -106,7 +106,9 @@ class Pypeline(object):
 
     def _config_init(self):
         """
-        Internal function which initializes the configuration file.
+        Internal function which initializes the configuration file. It create the
+        PynPoint_config.ini file with the default (NACO) settings in case the file is not
+        present in the working directory.
 
         :return: None
         """
