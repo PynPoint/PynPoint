@@ -272,6 +272,10 @@ class InputPort(Port):
         """
         super(InputPort, self).__init__(tag, data_storage_in)
 
+        if tag == "config":
+            raise ValueError("The tag name 'config' is reserved for the central configuration "
+                             "of PynPoint.")
+
     def _check_status_and_activate(self):
         """
         Internal function which checks if the port is ready to use and open it.
@@ -487,6 +491,10 @@ class OutputPort(Port):
 
         super(OutputPort, self).__init__(tag, data_storage_in)
         self.m_activate = activate_init
+
+        if tag == "config":
+            raise ValueError("The tag name 'config' is reserved for the central configuration "
+                             "of PynPoint.")
 
     # internal functions
     def _check_status_and_activate(self):
