@@ -95,7 +95,8 @@ class ReadFitsCubesDirectory(ReadingModule):
                                   'EXP_NO',
                                   'NDIT',
                                   'PARANG_START',
-                                  'PARANG_END']
+                                  'PARANG_END',
+                                  'NEW_PARA']
 
     def _read_single_file(self,
                           fits_file,
@@ -166,7 +167,11 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         # non-static attributes
         for item in self.m_non_static_keys:
-            fitskey = self.m_config_port.get_attribute(item)
+            if item == 'NEW_PARA':
+                fitskey = 'NEW_PARA'
+
+            else:
+                fitskey = self.m_config_port.get_attribute(item)
             
             if fitskey in tmp_header:
                 value = tmp_header[fitskey]
@@ -176,6 +181,9 @@ class ReadFitsCubesDirectory(ReadingModule):
             elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
                 self.m_image_out_port.append_attribute_data(item,
                                                             1)
+
+            elif item == 'NEW_PARA':
+                continue
 
             else:
                 warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
