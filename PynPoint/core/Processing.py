@@ -757,22 +757,20 @@ class ReadingModule(PypelineModule):
 
     def add_config_port(self):
         """
-        TODO
-        Method which creates a ConfigPort.
-        The new port can be used by: ::
+        Method which creates the ConfigPort. The port can be created as: ::
+        
+             self.m_config_port = self.add_config_port()
 
-             Port = self._m_input_ports[tag]
+        after which attributes are read as: ::
+        
+             nframes = self.m_config_port.get_attribute('NFRAMES')
 
-        or by using the returned Port.
-
-        :param tag: Tag of the new input port.
-        :type tag: str
-        :return: The new InputPort
-        :rtype: InputPort
+        :return: The ConfigPort
+        :rtype: ConfigPort
         """
 
         tmp_port = ConfigPort("config")
-
+        
         if self._m_config_port:
             warnings.warn('Config tag already used. Updating..')
         else:
