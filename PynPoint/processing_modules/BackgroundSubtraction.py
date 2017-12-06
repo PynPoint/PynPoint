@@ -56,7 +56,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         # Use NAXIS3 values if star_pos_shift is None
         if self.m_star_prs_shift is None:
-            self.m_star_prs_shift = self.m_image_in_port.get_attribute("NAXIS3")
+            self.m_star_prs_shift = self.m_image_in_port.get_attribute("NFRAMES")
 
         number_of_frames = self.m_image_in_port.get_shape()[0]
 

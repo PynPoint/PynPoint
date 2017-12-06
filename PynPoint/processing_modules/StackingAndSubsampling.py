@@ -65,7 +65,7 @@ class StackAndSubsetModule(ProcessingModule):
                              "number of images in the stacked source.")
 
         tmp_files = self.m_image_in_port.get_attribute("Used_Files")
-        num_images = self.m_image_in_port.get_attribute("NAXIS3")
+        num_images = self.m_image_in_port.get_attribute("NFRAMES")
         para_angles = self.m_image_in_port.get_attribute("NEW_PARA")
 
         if tmp_files is None:
