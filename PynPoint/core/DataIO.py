@@ -3,7 +3,7 @@ Modules to save and load data from a central DataStorage (.hdf5).
 """
 import warnings
 import os
-import sys
+
 from abc import ABCMeta, abstractmethod
 
 import h5py
@@ -146,7 +146,7 @@ class ConfigPort(Port):
     def __init__(self,
                  data_storage_in=None):
         """
-        Constructor of the ConfigPort class which creates the config port instance which can read 
+        Constructor of the ConfigPort class which creates the config port instance which can read
         the settings stored in the central database under the tag `config`. If you write a
         PypelineModule you should not create instances manually! Use the add_config_port()
         function instead.
@@ -167,7 +167,7 @@ class ConfigPort(Port):
         :return: Returns True if the Port can be used, False if not.
         :rtype: bool
         """
-        
+
         if self._m_data_storage is None:
             warnings.warn("Port can not load data unless a database is connected")
             return False
