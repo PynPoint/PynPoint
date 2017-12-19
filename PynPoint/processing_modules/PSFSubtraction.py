@@ -80,7 +80,6 @@ class PSFSubtractionModule(ProcessingModule):
                                                         image_mask_out_tag="not_needed",
                                                         mask_out_tag=cent_mask_tag,
                                                         cent_remove=cent_remove,
-                                                        para_sort=False,
                                                         cent_size=cent_size,
                                                         edge_size=edge_size)
 
@@ -92,7 +91,6 @@ class PSFSubtractionModule(ProcessingModule):
                                                            image_mask_out_tag="not_needed",
                                                            mask_out_tag=cent_mask_tag,
                                                            cent_remove=cent_remove,
-                                                           para_sort=False,
                                                            cent_size=cent_size,
                                                            edge_size=edge_size)
 
