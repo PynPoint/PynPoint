@@ -5,10 +5,14 @@ Installation
 Through pip
 -----------
 
-At the command line you can install using pip::
+At the command line you can install PynPoint using pip::
 
-    $ pip install PynPoint-exoplanet --user
-	
+   $ pip install PynPoint-exoplanet --user
+
+The required Python packages can be installed within the PynPoint folder as::
+
+   $ pip install -r requirements.txt
+
 For background information on pip, see our |install_help| pages.
 
 You can also join the PynPoint mailing list by sending an email to pynpoint-join@lists.phys.ethz.ch (you can leave the subject line and body of the email blank).
