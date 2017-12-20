@@ -28,6 +28,14 @@ PynPoint\.processing\_modules\.DarkAndFlatSubtraction module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.processing\_modules\.DetectionLimits module
+-----------------------------------------------------
+
+.. automodule:: PynPoint.processing_modules.DetectionLimits
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint\.processing\_modules\.FrameSelection module
 ----------------------------------------------------
 

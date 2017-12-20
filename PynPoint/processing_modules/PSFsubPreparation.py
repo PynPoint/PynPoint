@@ -50,8 +50,6 @@ class PSFdataPreparation(ProcessingModule):
         :param F_final: Factor by which the data is resized. F_final=2. will upsample the data by a
                         factor of two.
         :type F_final: float
-        :param para_sort: Dummy argument.
-        :type para_sort: bool
         :param cent_size: Fractional radius of the central mask relative to the image size.
         :type cent_size: float
         :param edge_size: Fractional outer radius relative to the image size. The images are
