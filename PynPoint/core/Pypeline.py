@@ -114,11 +114,12 @@ class Pypeline(object):
         """
 
         config_dict = {'NFRAMES': 'NAXIS3',
-                       'PIXSCALE': 'ESO INS PIXSCALE',
                        'EXP_NO': 'ESO DET EXP NO',
                        'NDIT': 'ESO DET NDIT',
                        'PARANG_START': 'ESO TEL PARANG START',
-                       'PARANG_END': 'ESO TEL PARANG END'}
+                       'PARANG_END': 'ESO TEL PARANG END',
+                       'PIXSCALE': 0.027,
+                       'MEMORY': 100}
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
@@ -128,9 +129,6 @@ class Pypeline(object):
 
             if config.has_option('header', 'NFRAMES'):
                 config_dict['NFRAMES'] = str(config.get('header', 'NFRAMES'))
-
-            if config.has_option('header', 'PIXSCALE'):
-                config_dict['PIXSCALE'] = str(config.get('header', 'PIXSCALE'))
 
             if config.has_option('header', 'EXP_NO'):
                 config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
@@ -144,6 +142,12 @@ class Pypeline(object):
             if config.has_option('header', 'PARANG_END'):
                 config_dict['PARANG_END'] = str(config.get('header', 'PARANG_END'))
 
+            if config.has_option('settings', 'PIXSCALE'):
+                config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
+
+            if config.has_option('settings', 'MEMORY'):
+                config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
+
         else:
             warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
                           "default values.")
@@ -151,11 +155,13 @@ class Pypeline(object):
             f = open(config_file, 'w')
             f.write('[header]\n\n')
             f.write('NFRAMES: NAXIS3\n')
-            f.write('PIXSCALE: ESO INS PIXSCALE\n')
             f.write('EXP_NO: ESO DET EXP NO\n')
             f.write('NDIT: ESO DET NDIT\n')
             f.write('PARANG_START: ESO TEL PARANG START\n')
-            f.write('PARANG_END: ESO TEL PARANG END\n')
+            f.write('PARANG_END: ESO TEL PARANG END\n\n')
+            f.write('[settings]\n\n')
+            f.write('PIXSCALE: 0.027\n')
+            f.write('MEMORY: 100\n')
             f.close()
 
         hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')

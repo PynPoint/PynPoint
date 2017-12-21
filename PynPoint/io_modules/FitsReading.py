@@ -1,15 +1,12 @@
 """
 Module for reading different kinds of .fits data
 """
-# external modules
 import os
-import sys
+import warnings
 
 from astropy.io import fits
 
 from PynPoint.core.Processing import ReadingModule
-
-import warnings
 
 
 class ReadFitsCubesDirectory(ReadingModule):
@@ -83,13 +80,12 @@ class ReadFitsCubesDirectory(ReadingModule):
         super(ReadFitsCubesDirectory, self).__init__(name_in,
                                                      input_dir)
 
-        self.m_config_port = self.add_config_port()
         self.m_image_out_port = self.add_output_port(image_tag)
 
         self.m_image_tag = image_tag
         self._m_overwrite = force_overwrite_in_databank
-        
-        self.m_static_keys = ['PIXSCALE']
+
+        self.m_static_keys = []
 
         self.m_non_static_keys = ['NFRAMES',
                                   'EXP_NO',
@@ -140,7 +136,7 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         # static attributes
         for item in self.m_static_keys:
-            fitskey = self.m_config_port.get_attribute(item)
+            fitskey = self._m_config_port.get_attribute(item)
 
             if fitskey in tmp_header:
                 value = tmp_header[fitskey]
@@ -160,7 +156,7 @@ class ReadFitsCubesDirectory(ReadingModule):
                 elif status == 0:
                     # Attribute is known and is still the same
                     pass
-                
+
             else:
                 warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
                               % (item, fitskey))
@@ -171,8 +167,8 @@ class ReadFitsCubesDirectory(ReadingModule):
                 fitskey = 'NEW_PARA'
 
             else:
-                fitskey = self.m_config_port.get_attribute(item)
-            
+                fitskey = self._m_config_port.get_attribute(item)
+
             if fitskey in tmp_header:
                 value = tmp_header[fitskey]
                 self.m_image_out_port.append_attribute_data(item,
@@ -191,10 +187,23 @@ class ReadFitsCubesDirectory(ReadingModule):
                 self.m_image_out_port.append_attribute_data(item,
                                                             -1)
 
+        self.m_header_out_port = self.add_output_port('fits_header/'+fits_file)
+
+        fits_header = []
+        for key in tmp_header:
+            if key:
+                fits_header.append(str(key)+" = "+str(tmp_header[key]))
+
+        self.m_header_out_port.set_all(fits_header)
+
         hdulist.close()
 
         self.m_image_out_port.append_attribute_data("Used_Files",
                                                     tmp_location + fits_file)
+
+        self.m_image_out_port.add_attribute("PIXSCALE",
+                                            float(self._m_config_port.get_attribute('PIXSCALE')),
+                                            static=True)
 
         self.m_image_out_port.flush()
 
@@ -208,7 +217,7 @@ class ReadFitsCubesDirectory(ReadingModule):
 
         :return: None
         """
-        
+
         if not self.m_input_location.endswith('/'):
             tmp_location = self.m_input_location + '/'
         else:
@@ -221,7 +230,7 @@ class ReadFitsCubesDirectory(ReadingModule):
                 files.append(tmp_file)
         files.sort()
 
-        assert(len(files) > 0), 'Error no .fits files found in %s' % self.m_input_location
+        assert(files), 'Error no .fits files found in %s' % self.m_input_location
 
         # overwrite_keys save the database keys which were updated. Used for overwriting only
         overwrite_keys = []

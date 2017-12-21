@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 
 from skimage.feature import register_translation
+from skimage.transform import rescale
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
-from skimage.transform import rescale
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -39,7 +39,7 @@ class StarExtractionModule(ProcessingModule):
         if self.m_psf_size_as_pixel_resolution:
             psf_radius = np.floor(self.m_psf_size / 2.0)
         else:
-            pixel_scale = self.m_image_in_port.get_attribute('PIXSCALE')
+            pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
             psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
 
         star_positions = []

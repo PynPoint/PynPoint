@@ -118,9 +118,9 @@ class AngleCalculationModule(ProcessingModule):
 
         if False in (ndit == steps):
             warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
-                          "angles are calculated with a linear interpolation by using NAXIS3 steps. "
-                          "A frame selection should be applied after the parallactic angles are "
-                          "calculated.")
+                          "angles are calculated with a linear interpolation by using NAXIS3 "
+                          "steps. A frame selection should be applied after the parallactic "
+                          "angles are calculated.")
 
         new_angles = []
 
@@ -182,6 +182,8 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
+            print "Processing image "+str(ndit_tot+1)+" of "+ str(np.sum(size))+" images..."
+
             tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
 
