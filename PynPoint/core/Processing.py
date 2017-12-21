@@ -36,6 +36,7 @@ class PypelineModule:
         assert (isinstance(name_in, str)), "Error: Name needs to be a String"
         self._m_name = name_in
         self._m_data_base = None
+        self._m_config_port = ConfigPort("config")
 
     @property
     def name(self):
@@ -151,6 +152,8 @@ class WritingModule(PypelineModule):
 
         for port in self._m_input_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
 
@@ -278,6 +281,8 @@ class ProcessingModule(PypelineModule):
             port.set_database_connection(data_base_in)
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
 
@@ -719,7 +724,6 @@ class ReadingModule(PypelineModule):
                                        '- input requested: %s' % input_dir
         self.m_input_location = input_dir
         self._m_output_ports = {}
-        self._m_config_port = None
 
     def add_output_port(self,
                         tag,
@@ -755,32 +759,6 @@ class ReadingModule(PypelineModule):
 
         return tmp_port
 
-    def add_config_port(self):
-        """
-        Method which creates the ConfigPort. The port can be created as: ::
-
-             self.m_config_port = self.add_config_port()
-
-        after which attributes are read as: ::
-
-             nframes = self.m_config_port.get_attribute('NFRAMES')
-
-        :return: The ConfigPort
-        :rtype: ConfigPort
-        """
-
-        tmp_port = ConfigPort("config")
-
-        if self._m_config_port:
-            warnings.warn('Config tag already used. Updating..')
-        else:
-            self._m_config_port = tmp_port
-
-        if self._m_data_base is not None:
-            tmp_port.set_database_connection(self._m_data_base)
-
-        return tmp_port
-
     def connect_database(self,
                          data_base_in):
         """
@@ -795,10 +773,10 @@ class ReadingModule(PypelineModule):
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
 
-        if self._m_config_port is not None:
-            self._m_config_port.set_database_connection(data_base_in)
+        self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
+
 
     def get_all_output_tags(self):
         """
