@@ -144,13 +144,21 @@ class ConfigPort(Port):
     """
 
     def __init__(self,
+                 tag,
                  data_storage_in=None):
         """
         Constructor of the ConfigPort class which creates the config port instance which can read
-        the settings stored in the central database under the tag `config`. If you write a
-        PypelineModule you should not create instances manually! Use the add_config_port()
-        function instead.
+        the settings stored in the central database under the tag `config`. An instance of the
+        ConfigPort is created in the constructor of PypelineModule such that the attributes in
+        the ConfigPort can be accessed from within all type of modules. For example:
+        
+        .. code-block:: python
 
+            num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
+        :param tag: The tag of the port. The port can be used in order to get data from the dataset
+                    with the key `config`.
+        :type tag: str
         :param data_storage_in: It is possible to give the constructor of an ConfigPort a
                                 DataStorage instance which will link the port to that DataStorage.
                                 Usually the DataStorage is set later by calling
@@ -158,7 +166,7 @@ class ConfigPort(Port):
         :type data_storage_in: DataStorage
         :return: None
         """
-        super(ConfigPort, self).__init__(data_storage_in)
+        super(ConfigPort, self).__init__(tag, data_storage_in)
 
     def _check_status_and_activate(self):
         """
@@ -275,6 +283,10 @@ class InputPort(Port):
         if tag == "config":
             raise ValueError("The tag name 'config' is reserved for the central configuration "
                              "of PynPoint.")
+
+        if tag == "fits_header":
+            raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
+                             "headers.")
 
     def _check_status_and_activate(self):
         """
@@ -495,6 +507,10 @@ class OutputPort(Port):
         if tag == "config":
             raise ValueError("The tag name 'config' is reserved for the central configuration "
                              "of PynPoint.")
+
+        if tag == "fits_header":
+            raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
+                             "headers.")
 
     # internal functions
     def _check_status_and_activate(self):
@@ -722,7 +738,7 @@ class OutputPort(Port):
             * (#dimension of the first input data#, #desired data_dim#)
             * (1, 1) 1D input or single value will be stored as list in .hdf5
             * (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
-            * (2, 2) 2D input (single image)and 2D array stored inside (i.e. a list of lists with a
+            * (2, 2) 2D input (single image) and 2D array stored inside (i.e. a list of lists with a
               fixed size).
             * (2, 3) 2D input (single image) but 3D array stored inside (i.e. a stack of images with
               a fixed size).
