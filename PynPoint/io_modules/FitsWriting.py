@@ -1,14 +1,13 @@
 """
 Module for writing data as .fits file.
 """
-# external modules
+
 import os
+import warnings
 
 from astropy.io import fits
 
 from PynPoint.core.Processing import WritingModule
-
-import warnings
 
 
 class WriteAsSingleFitsFile(WritingModule):
