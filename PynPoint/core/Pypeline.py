@@ -113,7 +113,8 @@ class Pypeline(object):
         :return: None
         """
 
-        config_dict = {'NFRAMES': 'NAXIS3',
+        config_dict = {'INSTRUMENT': 'INSTRUME',
+                       'NFRAMES': 'NAXIS3',
                        'EXP_NO': 'ESO DET EXP NO',
                        'NDIT': 'ESO DET NDIT',
                        'PARANG_START': 'ESO TEL PARANG START',
@@ -126,6 +127,9 @@ class Pypeline(object):
         if os.path.isfile(config_file):
             config = configparser.ConfigParser()
             config.read_file(open(config_file))
+
+            if config.has_option('header', 'INSTRUMENT'):
+                config_dict['INSTRUMENT'] = str(config.get('header', 'INSTRUMENT'))
 
             if config.has_option('header', 'NFRAMES'):
                 config_dict['NFRAMES'] = str(config.get('header', 'NFRAMES'))
@@ -154,6 +158,7 @@ class Pypeline(object):
 
             f = open(config_file, 'w')
             f.write('[header]\n\n')
+            f.write('INSTRUMENT: INSTRUME\n')
             f.write('NFRAMES: NAXIS3\n')
             f.write('EXP_NO: ESO DET EXP NO\n')
             f.write('NDIT: ESO DET NDIT\n')
