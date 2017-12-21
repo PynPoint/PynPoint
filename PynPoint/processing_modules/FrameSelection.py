@@ -121,7 +121,7 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
 
-        self.m_image_out_port.add_history_information("Removed frame indices",
-                                                      str(self.m_frame_indices))
+        self.m_image_out_port.add_history_information("Removed frames",
+                                                      str(np.size(self.m_frame_indices)))
 
         self.m_image_out_port.close_port()
