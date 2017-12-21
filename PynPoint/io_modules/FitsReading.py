@@ -85,7 +85,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         self.m_image_tag = image_tag
         self._m_overwrite = force_overwrite_in_databank
 
-        self.m_static_keys = []
+        self.m_static_keys = ['INSTRUMENT']
 
         self.m_non_static_keys = ['NFRAMES',
                                   'EXP_NO',
