@@ -117,8 +117,8 @@ class Pypeline(object):
                        'NFRAMES': 'NAXIS3',
                        'EXP_NO': 'ESO DET EXP NO',
                        'NDIT': 'ESO DET NDIT',
-                       'PARANG_START': 'ESO TEL PARANG START',
-                       'PARANG_END': 'ESO TEL PARANG END',
+                       'PARANG_START': 'ESO ADA POSANG',
+                       'PARANG_END': 'ESO ADA POSANG END',
                        'PIXSCALE': 0.027,
                        'MEMORY': 100}
 
@@ -162,8 +162,8 @@ class Pypeline(object):
             f.write('NFRAMES: NAXIS3\n')
             f.write('EXP_NO: ESO DET EXP NO\n')
             f.write('NDIT: ESO DET NDIT\n')
-            f.write('PARANG_START: ESO TEL PARANG START\n')
-            f.write('PARANG_END: ESO TEL PARANG END\n\n')
+            f.write('PARANG_START: ESO ADA POSANG\n')
+            f.write('PARANG_END: ESO ADA POSANG END\n\n')
             f.write('[settings]\n\n')
             f.write('PIXSCALE: 0.027\n')
             f.write('MEMORY: 100\n')
