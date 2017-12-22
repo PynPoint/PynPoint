@@ -148,8 +148,7 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
                  image_out_tag="im_arr_bp_clean",
                  box=9,
                  sigma=5,
-                 iterate=1,
-                 number_of_images_in_memory=100):
+                 iterate=1):
 
         super(BadPixelCleaningSigmaFilterModule, self).__init__(name_in)
 
@@ -162,8 +161,6 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
         self.m_box = box
         self.m_sigma = sigma
         self.m_iterate = iterate
-
-        self.m_number_of_images_in_memory = number_of_images_in_memory
 
     def run(self):
 
@@ -215,13 +212,15 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
 
             return out_image
 
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
         self.apply_function_to_images(bad_pixel_clean_sigmafilter_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(self.m_box,
                                                  self.m_sigma,
                                                  self.m_iterate),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         history = "Sigma filtering with Sigma = " + str(self.m_sigma)
         self.m_image_out_port.add_history_information("bp_cleaning",
@@ -286,8 +285,7 @@ class BadPixelInterpolationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  bad_pixel_map_tag="bp_map",
                  image_out_tag="im_arr_bp_clean",
-                 iterations=1000,
-                 number_of_images_in_memory=100):
+                 iterations=1000):
 
         super(BadPixelInterpolationModule, self).__init__(name_in)
 
@@ -300,9 +298,10 @@ class BadPixelInterpolationModule(ProcessingModule):
         # Properties
         self.m_iterations = iterations
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
-
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
         # load bad pixel map
         bad_pixel_map = self.m_bp_map_in_port.get_all()
 
@@ -327,7 +326,7 @@ class BadPixelInterpolationModule(ProcessingModule):
         self.apply_function_to_images(bad_pixel_interpolation_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         history = "Iterations = " + str(self.m_iterations)
         self.m_image_out_port.add_history_information("Bad Pixel Interpolation",
@@ -347,8 +346,7 @@ class BadPixelInterpolationRefinementModule(ProcessingModule):
                  image_out_tag="im_arr_bp_ref",
                  box_size=5,
                  sigma=4.,
-                 iterations=5000,
-                 number_of_images_in_memory=100):
+                 iterations=5000):
 
         super(BadPixelInterpolationRefinementModule, self).__init__(name_in)
 
@@ -362,11 +360,13 @@ class BadPixelInterpolationRefinementModule(ProcessingModule):
         # Properties
         self.m_iterations = iterations
         self.m_current_pos = 0  # TODO fix this for multi threading
-        self.m_number_of_images_in_memory = number_of_images_in_memory
         self.m_box_size = box_size
         self.m_sigma = sigma
 
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
         # load bad pixel map
         bad_pixel_map = self.m_bp_map_in_port.get_all()
         new_bp_shape = (self.m_image_in_port.get_shape()[1], self.m_image_in_port.get_shape()[2])
@@ -422,7 +422,7 @@ class BadPixelInterpolationRefinementModule(ProcessingModule):
         self.apply_function_to_images(bad_pixel_int_ref_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         history = "Iterations = " + str(self.m_iterations)
         self.m_image_out_port.add_history_information("Bad Pixel Interpolation Refinement",

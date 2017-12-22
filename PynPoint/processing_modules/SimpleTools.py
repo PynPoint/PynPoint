@@ -17,8 +17,7 @@ class CutAroundCenterModule(ProcessingModule):
                  new_shape,
                  name_in="cut_around_center",
                  image_in_tag="im_arr",
-                 image_out_tag="cut_im_arr",
-                 number_of_images_in_memory=100):
+                 image_out_tag="cut_im_arr"):
         """
         Constructor of CutAroundCenterModule.
 
@@ -31,8 +30,7 @@ class CutAroundCenterModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
@@ -41,7 +39,6 @@ class CutAroundCenterModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
         self.m_shape = new_shape
 
     def run(self):
@@ -51,6 +48,8 @@ class CutAroundCenterModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
                           shape_in):
@@ -69,7 +68,7 @@ class CutAroundCenterModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(self.m_shape,),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Cropped image size to",
                                                       str(self.m_shape))
@@ -89,8 +88,7 @@ class CutAroundPositionModule(ProcessingModule):
                  center_of_cut,
                  name_in="cut_around_position",
                  image_in_tag="im_arr",
-                 image_out_tag="cut_im_arr",
-                 number_of_images_in_memory=100):
+                 image_out_tag="cut_im_arr"):
         """
         Constructor of CutAroundPositionModule.
 
@@ -105,8 +103,7 @@ class CutAroundPositionModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
@@ -115,7 +112,6 @@ class CutAroundPositionModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
         self.m_shape = new_shape
         self.m_center_of_cut = center_of_cut
 
@@ -125,6 +121,8 @@ class CutAroundPositionModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
                           shape_in,
@@ -144,7 +142,7 @@ class CutAroundPositionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(self.m_shape, self.m_center_of_cut),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Cropped image size to",
                                                       str(self.m_shape))
@@ -163,8 +161,7 @@ class ScaleFramesModule(ProcessingModule):
                  scaling_factor,
                  name_in="scaling",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_scaled",
-                 number_of_images_in_memory=100):
+                 image_out_tag="im_arr_scaled"):
         """
         Constructor of ScaleFramesModule.
 
@@ -178,8 +175,7 @@ class ScaleFramesModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
@@ -188,7 +184,6 @@ class ScaleFramesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
         self.m_scaling = scaling_factor
 
     def run(self):
@@ -198,6 +193,8 @@ class ScaleFramesModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_scaling(image_in,
                           scaling):
@@ -217,7 +214,7 @@ class ScaleFramesModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(self.m_scaling,),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Scaled by a factor of",
                                                       str(self.m_scaling))
@@ -236,8 +233,7 @@ class ShiftForCenteringModule(ProcessingModule):
                  shift_vector,
                  name_in="shift",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_shifted",
-                 number_of_images_in_memory=100):
+                 image_out_tag="im_arr_shifted"):
         """
         Constructor of ShiftForCenteringModule.
 
@@ -250,8 +246,7 @@ class ShiftForCenteringModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
@@ -260,7 +255,6 @@ class ShiftForCenteringModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
         self.m_shift_vector = shift_vector
 
     def run(self):
@@ -270,6 +264,8 @@ class ShiftForCenteringModule(ProcessingModule):
         :return: None
         """
 
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
         def image_shift(image_in):
 
             return shift(image_in, self.m_shift_vector, order=5)
@@ -277,7 +273,7 @@ class ShiftForCenteringModule(ProcessingModule):
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Shifted by",
                                                       str(self.m_shift_vector))
