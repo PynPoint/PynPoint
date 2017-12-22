@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 
 from skimage.feature import register_translation
+from skimage.transform import rescale
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
-from skimage.transform import rescale
 
 from PynPoint.core.Processing import ProcessingModule
 
@@ -39,7 +39,7 @@ class StarExtractionModule(ProcessingModule):
         if self.m_psf_size_as_pixel_resolution:
             psf_radius = np.floor(self.m_psf_size / 2.0)
         else:
-            pixel_scale = self.m_image_in_port.get_attribute('ESO INS PIXSCALE')
+            pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
             psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
 
         star_positions = []
@@ -183,10 +183,10 @@ class StarAlignmentModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         # Change pix to mas scale corresponding to the reshaping
-        tmp_pixscale = self.m_image_in_port.get_attribute("ESO INS PIXSCALE")
+        tmp_pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         tmp_pixscale /= self.m_resize
-        self.m_image_out_port.add_attribute("ESO INS PIXSCALE", tmp_pixscale)
+        self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
         self.m_image_out_port.add_history_information("PSF align",
