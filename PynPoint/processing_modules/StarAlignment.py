@@ -218,7 +218,7 @@ class StarAlignmentModule(ProcessingModule):
                                     order=5,
                                     mode="reflect")
                 sum_after = np.sum(tmp_image)
-                # Flux should be conserved before and after rescaling
+                # Conserve flux because the rescale function normalizes all values to [0:1].
                 tmp_image = tmp_image*(sum_before/sum_after)
             else:
                 tmp_image = image_in
