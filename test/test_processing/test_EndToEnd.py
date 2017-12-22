@@ -78,8 +78,7 @@ class TestEndToEnd(object):
         cut_lines = CutTopLinesModule(name_in="cut_lines",
                                       image_in_tag="im_last",
                                       image_out_tag="im_cut",
-                                      num_lines=2,
-                                      num_images_in_memory=10)
+                                      num_lines=2)
 
         self.pipeline.add_module(cut_lines)
         self.pipeline.run_module("cut_lines")
@@ -120,8 +119,7 @@ class TestEndToEnd(object):
                                                       image_out_tag="im_bp",
                                                       box=9,
                                                       sigma=8,
-                                                      iterate=3,
-                                                      number_of_images_in_memory=10)
+                                                      iterate=3)
 
         self.pipeline.add_module(bad_pixel)
         self.pipeline.run_module("bad_pixel")
@@ -142,7 +140,6 @@ class TestEndToEnd(object):
                                     image_out_tag="im_star",
                                     psf_size=40,
                                     psf_size_as_pixel_resolution=True,
-                                    num_images_in_memory=10,
                                     fwhm_star=4)
 
         self.pipeline.add_module(star)
@@ -165,8 +162,7 @@ class TestEndToEnd(object):
                                      image_out_tag="im_center",
                                      interpolation="spline",
                                      accuracy=10,
-                                     resize=5,
-                                     num_images_in_memory=10)
+                                     resize=5)
 
         self.pipeline.add_module(center)
         self.pipeline.run_module("center")
@@ -188,8 +184,7 @@ class TestEndToEnd(object):
         remove_frames = RemoveFramesModule((0, 15, 49, 66),
                                            name_in="remove_frames",
                                            image_in_tag="im_center",
-                                           image_out_tag="im_remove",
-                                           num_image_in_memory=10)
+                                           image_out_tag="im_remove")
 
         self.pipeline.add_module(remove_frames)
         self.pipeline.run_module("remove_frames")

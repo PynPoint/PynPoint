@@ -18,7 +18,6 @@ class StarExtractionModule(ProcessingModule):
                  pos_out_tag="star_positions",
                  psf_size=3,
                  psf_size_as_pixel_resolution=False,
-                 num_images_in_memory=100,
                  fwhm_star=7):
 
         super(StarExtractionModule, self).__init__(name_in)
@@ -31,10 +30,11 @@ class StarExtractionModule(ProcessingModule):
 
         self.m_psf_size = psf_size
         self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
-        self.m_num_images_in_memory = num_images_in_memory
         self.m_fwhm_star = fwhm_star # needed for the best gaussian blur 7 is good for L-band data
 
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_psf_size_as_pixel_resolution:
             psf_radius = np.floor(self.m_psf_size / 2.0)
@@ -96,8 +96,7 @@ class StarAlignmentModule(ProcessingModule):
                  interpolation="spline",
                  accuracy=10,
                  resize=1,
-                 num_references=10,
-                 num_images_in_memory=100):
+                 num_references=10):
 
         super(StarAlignmentModule, self).__init__(name_in)
 
@@ -114,11 +113,12 @@ class StarAlignmentModule(ProcessingModule):
         # Parameter
         self.m_interpolation = interpolation
         self.m_accuracy = accuracy
-        self.m_num_images_in_memory = num_images_in_memory
         self.m_resize = resize
         self.m_num_references = num_references
 
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         # get ref image
         if self.m_ref_image_in_port is not None:
