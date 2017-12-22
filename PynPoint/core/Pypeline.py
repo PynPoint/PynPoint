@@ -1,17 +1,16 @@
 """
 Module which capsules different pipeline processing steps.
 """
-# external modules
 import collections
 import os
-import atexit
-
-import numpy as np
-from PynPoint.core.DataIO import DataStorage
-
-from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
-
 import warnings
+import configparser
+
+import h5py
+import numpy as np
+
+from PynPoint.core.DataIO import DataStorage
+from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
 
 class Pypeline(object):
@@ -52,6 +51,8 @@ class Pypeline(object):
         self._m_output_place = output_place_in
         self._m_modules = collections.OrderedDict()
         self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
+
+        self._config_init()
 
     def __setattr__(self, key, value):
         """
@@ -102,6 +103,79 @@ class Pypeline(object):
             return False, None
 
         return True, None
+
+    def _config_init(self):
+        """
+        Internal function which initializes the configuration file. It create the
+        PynPoint_config.ini file with the default (NACO) settings in case the file is not
+        present in the working directory.
+
+        :return: None
+        """
+
+        config_dict = {'INSTRUMENT': 'INSTRUME',
+                       'NFRAMES': 'NAXIS3',
+                       'EXP_NO': 'ESO DET EXP NO',
+                       'NDIT': 'ESO DET NDIT',
+                       'PARANG_START': 'ESO TEL PARANG START',
+                       'PARANG_END': 'ESO TEL PARANG END',
+                       'PIXSCALE': 0.027,
+                       'MEMORY': 100}
+
+        config_file = self._m_working_place+"/PynPoint_config.ini"
+
+        if os.path.isfile(config_file):
+            config = configparser.ConfigParser()
+            config.read_file(open(config_file))
+
+            if config.has_option('header', 'INSTRUMENT'):
+                config_dict['INSTRUMENT'] = str(config.get('header', 'INSTRUMENT'))
+
+            if config.has_option('header', 'NFRAMES'):
+                config_dict['NFRAMES'] = str(config.get('header', 'NFRAMES'))
+
+            if config.has_option('header', 'EXP_NO'):
+                config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
+
+            if config.has_option('header', 'NDIT'):
+                config_dict['NDIT'] = str(config.get('header', 'NDIT'))
+
+            if config.has_option('header', 'PARANG_START'):
+                config_dict['PARANG_START'] = str(config.get('header', 'PARANG_START'))
+
+            if config.has_option('header', 'PARANG_END'):
+                config_dict['PARANG_END'] = str(config.get('header', 'PARANG_END'))
+
+            if config.has_option('settings', 'PIXSCALE'):
+                config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
+
+            if config.has_option('settings', 'MEMORY'):
+                config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
+
+        else:
+            warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
+                          "default values.")
+
+            f = open(config_file, 'w')
+            f.write('[header]\n\n')
+            f.write('INSTRUMENT: INSTRUME\n')
+            f.write('NFRAMES: NAXIS3\n')
+            f.write('EXP_NO: ESO DET EXP NO\n')
+            f.write('NDIT: ESO DET NDIT\n')
+            f.write('PARANG_START: ESO TEL PARANG START\n')
+            f.write('PARANG_END: ESO TEL PARANG END\n\n')
+            f.write('[settings]\n\n')
+            f.write('PIXSCALE: 0.027\n')
+            f.write('MEMORY: 100\n')
+            f.close()
+
+        hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
+        if "config" in hdf:
+            del hdf["config"]
+        config = hdf.create_group("config")
+        for i in config_dict:
+            config.attrs[i] = config_dict[i]
+        hdf.close()
 
     def add_module(self,
                    pipeline_module):
@@ -215,14 +289,14 @@ class Pypeline(object):
         :return: None
         """
 
-        print "validating Pipeline..."
+        print "Validating Pypeline..."
         validation = self.validate_pipeline()
         if not validation[0]:
             raise AttributeError('Pipeline module %s is looking for data under a tag which is not '
                                  'created by a previous module or does not exist in the database.'
                                  % validation[1])
 
-        print "Start running Pypeline ..."
+        print "Start running Pypeline..."
         for key in self._m_modules:
             print "Start running " + key + "..."
             self._m_modules[key].run()
@@ -240,7 +314,7 @@ class Pypeline(object):
 
         if name in self._m_modules:
 
-            print "validating module..."
+            print "Validating module..."
             validation = self.validate_pipeline_module(name)
             if not validation[0]:
                 raise AttributeError(
@@ -250,7 +324,7 @@ class Pypeline(object):
 
             print "Start running module..."
             self._m_modules[name].run()
-            print "finished running module..."
+            print "Finished running module..."
         else:
             warnings.warn('Module not found')
 

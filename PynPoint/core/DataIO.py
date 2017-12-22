@@ -1,11 +1,13 @@
 """
 Modules to save and load data from a central DataStorage (.hdf5).
 """
-from abc import ABCMeta, abstractmethod
 import warnings
+import os
+
+from abc import ABCMeta, abstractmethod
+
 import h5py
 import numpy as np
-import os
 
 
 class DataStorage(object):
@@ -134,6 +136,101 @@ class Port:
         self._m_data_storage = data_base_in
 
 
+class ConfigPort(Port):
+    """
+    ConfigPort can be used to read the "config" tag from a (.hdf5) database. This tag contains
+    the central settings used by PynPoint, as well as the relevant FITS header keywords. You can
+    use a ConfigPort instance to access a single attribute of the dataset using get_attribute().
+    """
+
+    def __init__(self,
+                 tag,
+                 data_storage_in=None):
+        """
+        Constructor of the ConfigPort class which creates the config port instance which can read
+        the settings stored in the central database under the tag `config`. An instance of the
+        ConfigPort is created in the constructor of PypelineModule such that the attributes in
+        the ConfigPort can be accessed from within all type of modules. For example:
+        
+        .. code-block:: python
+
+            num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+
+        :param tag: The tag of the port. The port can be used in order to get data from the dataset
+                    with the key `config`.
+        :type tag: str
+        :param data_storage_in: It is possible to give the constructor of an ConfigPort a
+                                DataStorage instance which will link the port to that DataStorage.
+                                Usually the DataStorage is set later by calling
+                                set_database_connection().
+        :type data_storage_in: DataStorage
+        :return: None
+        """
+        super(ConfigPort, self).__init__(tag, data_storage_in)
+
+    def _check_status_and_activate(self):
+        """
+        Internal function which checks if the port is ready to use and open it.
+
+        :return: Returns True if the Port can be used, False if not.
+        :rtype: bool
+        """
+
+        if self._m_data_storage is None:
+            warnings.warn("Port can not load data unless a database is connected")
+            return False
+
+        if not self._m_data_base_active:
+            self.open_port()
+
+        return True
+
+    def _check_if_data_exists(self):
+        """
+        Internal function which checks if data exists for the "config" tag.
+
+        :return: True if data exists, False if not
+        :rtype: bool
+        """
+
+        return "config" in self._m_data_storage.m_data_bank
+
+    def _check_error_cases(self):
+        """"
+        Internal function which checks the error cases.
+        """
+
+        if not self._check_status_and_activate():
+            return False
+
+        if self._check_if_data_exists() is False:
+            warnings.warn("No data under the tag which is linked by the InputPort")
+            return False
+
+        return True
+
+    def get_attribute(self,
+                      name):
+        """
+        Returns a (static) attribute which is connected to the dataset of the config port.
+
+        :param name: The name of the attribute to be returned.
+        :type name: str
+        :return: The attribute value. Returns None if the attribute does not exist.
+        :rtype: str, float, int
+        """
+
+        if not self._check_error_cases():
+            return
+
+        if name in self._m_data_storage.m_data_bank["config"].attrs:
+            return self._m_data_storage.m_data_bank["config"].attrs[name]
+
+        else:
+            warnings.warn('No attribute found - requested: %s' % name)
+            return None
+
+
 class InputPort(Port):
     """
     InputPorts can be used to read datasets with a specific tag from a (.hdf5) database. You can use
@@ -182,6 +279,14 @@ class InputPort(Port):
         :return: None
         """
         super(InputPort, self).__init__(tag, data_storage_in)
+
+        if tag == "config":
+            raise ValueError("The tag name 'config' is reserved for the central configuration "
+                             "of PynPoint.")
+
+        if tag == "fits_header":
+            raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
+                             "headers.")
 
     def _check_status_and_activate(self):
         """
@@ -398,6 +503,14 @@ class OutputPort(Port):
 
         super(OutputPort, self).__init__(tag, data_storage_in)
         self.m_activate = activate_init
+
+        if tag == "config":
+            raise ValueError("The tag name 'config' is reserved for the central configuration "
+                             "of PynPoint.")
+
+        if tag == "fits_header":
+            raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
+                             "headers.")
 
     # internal functions
     def _check_status_and_activate(self):
@@ -625,7 +738,7 @@ class OutputPort(Port):
             * (#dimension of the first input data#, #desired data_dim#)
             * (1, 1) 1D input or single value will be stored as list in .hdf5
             * (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
-            * (2, 2) 2D input (single image)and 2D array stored inside (i.e. a list of lists with a
+            * (2, 2) 2D input (single image) and 2D array stored inside (i.e. a list of lists with a
               fixed size).
             * (2, 3) 2D input (single image) but 3D array stored inside (i.e. a stack of images with
               a fixed size).

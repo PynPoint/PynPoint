@@ -107,7 +107,7 @@ class RemoveFramesModule(ProcessingModule):
 
         # Update cube sizes
 
-        size_in = self.m_image_in_port.get_attribute("NAXIS3")
+        size_in = self.m_image_in_port.get_attribute("NFRAMES")
         size_out = np.copy(size_in)
 
         num_frames = 0
@@ -119,9 +119,9 @@ class RemoveFramesModule(ProcessingModule):
 
             num_frames += frames
 
-        self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
 
-        self.m_image_out_port.add_history_information("Removed frame indices",
-                                                      str(self.m_frame_indices))
+        self.m_image_out_port.add_history_information("Removed frames",
+                                                      str(np.size(self.m_frame_indices)))
 
         self.m_image_out_port.close_port()
