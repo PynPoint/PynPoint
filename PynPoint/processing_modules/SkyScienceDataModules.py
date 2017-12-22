@@ -48,7 +48,7 @@ class MeanSkyCubes(ProcessingModule):
         if self.m_sky_out_port.tag == self.m_sky_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        list_of_frame_numbers = self.m_sky_in_port.get_attribute("NAXIS3")
+        list_of_frame_numbers = self.m_sky_in_port.get_attribute("NFRAMES")
 
         self.m_sky_out_port.del_all_data()
         self.m_sky_out_port.del_all_attributes()
@@ -129,7 +129,7 @@ class SkySubtraction(ProcessingModule):
                              self.m_index))
 
         # add time stamps of Sky data
-        dates = self.m_sky_in_port.get_attribute("ESO DET EXP NO")
+        dates = self.m_sky_in_port.get_attribute("EXP_NO")
 
         for i, item in enumerate(dates):
             self.m_time_stamps.append(TimeStamp(item,
@@ -137,8 +137,8 @@ class SkySubtraction(ProcessingModule):
                                                 i))
 
         # add time stamps of Science data
-        dates = self.m_science_in_port.get_attribute("ESO DET EXP NO")
-        num_frames = self.m_science_in_port.get_attribute("NAXIS3")
+        dates = self.m_science_in_port.get_attribute("EXP_NO")
+        num_frames = self.m_science_in_port.get_attribute("NFRAMES")
 
         frames_count = 0
         for i, item in enumerate(dates):

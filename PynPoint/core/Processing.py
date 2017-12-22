@@ -1,17 +1,14 @@
 """
 Different interfaces for Pypeline Modules.
 """
-
-# external modules
 import os
-from abc import ABCMeta, abstractmethod
-import numpy as np
-import multiprocessing
-
-from PynPoint.core.DataIO import OutputPort, InputPort
-
 import warnings
+import multiprocessing
+from abc import ABCMeta, abstractmethod
 
+import numpy as np
+
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 class PypelineModule:
     """
@@ -39,6 +36,7 @@ class PypelineModule:
         assert (isinstance(name_in, str)), "Error: Name needs to be a String"
         self._m_name = name_in
         self._m_data_base = None
+        self._m_config_port = ConfigPort("config")
 
     @property
     def name(self):
@@ -76,11 +74,12 @@ class PypelineModule:
 class WritingModule(PypelineModule):
     """
     The abstract class WritingModule is a interface for processing steps in the pipeline which do
-    not change the content of the internal DataStorage. They only have reading access to the central
-    data base. WritingModules can be used to export save or plot data from the .hdf5 data base by
-    using a different file format. WritingModules know the directory on the hard drive where the output
-    of the module can be saved. If no output directory is given the default Pypline output directory
-    is used. WritingModules have a dictionary of inputports (self._m_input_ports) but no output ports.
+    not change the content of the internal DataStorage. They only have reading access to the
+    central data base. WritingModules can be used to export save or plot data from the .hdf5 data
+    base by using a different file format. WritingModules know the directory on the hard drive
+    where the output of the module can be saved. If no output directory is given the default
+    Pypline output directory is used. WritingModules have a dictionary of input ports
+    (self._m_input_ports) but no output ports.
     """
     __metaclass__ = ABCMeta
 
@@ -153,6 +152,8 @@ class WritingModule(PypelineModule):
 
         for port in self._m_input_ports.itervalues():
             port.set_database_connection(data_base_in)
+
+        self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
 
@@ -281,6 +282,8 @@ class ProcessingModule(PypelineModule):
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
 
+        self._m_config_port.set_database_connection(data_base_in)
+
         self._m_data_base = data_base_in
 
     @staticmethod
@@ -336,7 +339,7 @@ class ProcessingModule(PypelineModule):
 
                     # lock Mutex and read data
                     with self.m_data_mutex:
-                        print "reading lines from " + str(i) + " to " + str(j)
+                        print "Reading lines from " + str(i) + " to " + str(j)
                         tmp_data = self.m_data_in_port[:, i:j, :]
 
                     self.m_task_queue.put(TaskData(tmp_data, (i, j)))
@@ -384,8 +387,8 @@ class ProcessingModule(PypelineModule):
                     print "Process " + proc_name + " got data for row " + str(
                         next_task.m_position) + " and starts processing..."
 
-                    result_arr = np.zeros((length_of_processed_data,
-                                          next_task.m_data_array.shape[1],
+                    result_arr = np.zeros((length_of_processed_data, \
+                                          next_task.m_data_array.shape[1], \
                                           next_task.m_data_array.shape[2]))
                     for i in range(next_task.m_data_array.shape[1]):
                         for j in range(next_task.m_data_array.shape[2]):
@@ -419,7 +422,7 @@ class ProcessingModule(PypelineModule):
                     next_result = self.m_result_queue.get()
 
                     if next_result is None:
-                        print "shutting down writer..."
+                        print "Shutting down writer..."
                         self.m_result_queue.task_done()
                         break
 
@@ -434,8 +437,8 @@ class ProcessingModule(PypelineModule):
         print "Preparing database for analysis ..."
 
         # TODO: try to create without stalling huge memory
-        image_out_port.set_all(np.zeros((length_of_processed_data,
-                                        image_in_port.get_shape()[1],
+        image_out_port.set_all(np.zeros((length_of_processed_data, \
+                                        image_in_port.get_shape()[1], \
                                         image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
@@ -537,9 +540,9 @@ class ProcessingModule(PypelineModule):
                 "the length of the signal. Use different input and output ports "
                 "instead. " % func)
 
-        image_out_port.set_all(np.zeros((length_of_processed_data,
-                                        image_in_port.get_shape()[1],
-                                        image_in_port.get_shape()[2])),
+        image_out_port.set_all(np.zeros((length_of_processed_data, \
+                                        image_in_port.get_shape()[1], \
+                                        image_in_port.get_shape()[2])), \
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
@@ -727,7 +730,7 @@ class ReadingModule(PypelineModule):
                         default_activation=True):
         """
         Method which creates a new OutputPort and append it to the internal OutputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
+        This function should be used by classes inheriting from ReadingModule to make sure that
         only OutputPort with unique tags are added. The new port can be used by: ::
 
              Port = self._m_output_ports[tag]
@@ -770,7 +773,10 @@ class ReadingModule(PypelineModule):
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
 
+        self._m_config_port.set_database_connection(data_base_in)
+
         self._m_data_base = data_base_in
+
 
     def get_all_output_tags(self):
         """

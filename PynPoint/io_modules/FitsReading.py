@@ -1,14 +1,12 @@
 """
 Module for reading different kinds of .fits data
 """
-# external modules
 import os
+import warnings
 
 from astropy.io import fits
 
 from PynPoint.core.Processing import ReadingModule
-
-import warnings
 
 
 class ReadFitsCubesDirectory(ReadingModule):
@@ -82,43 +80,19 @@ class ReadFitsCubesDirectory(ReadingModule):
         super(ReadFitsCubesDirectory, self).__init__(name_in,
                                                      input_dir)
 
-        self.m_image_out_port = self.add_output_port(image_tag,
-                                                     True)
-        self.m_image_tag = image_tag
+        self.m_image_out_port = self.add_output_port(image_tag)
 
+        self.m_image_tag = image_tag
         self._m_overwrite = force_overwrite_in_databank
 
-        # get location of the Reading module
-        script_dir = os.path.dirname(__file__)
+        self.m_static_keys = ['INSTRUMENT']
 
-        # read NACO static and non static keys
-        static_keys_file = open(script_dir + "/config/NACO_static_header_keys.txt", "r")
-        self.m_static_keys = static_keys_file.read().split(",\n")
-        static_keys_file.close()
-
-        non_static_keys_file = open(script_dir + "/config/NACO_non_static_header_keys.txt", "r")
-        self.m_non_static_keys = non_static_keys_file.read().split(",\n")
-        non_static_keys_file.close()
-
-        # add additional keys
-        if 'new_static' in kwargs:
-            assert (os.path.isfile(kwargs['new_static'])), 'Error: Input file for static header ' \
-                                                           'keywords not found - input requested:' \
-                                                           ' %s' % kwargs['new_static']
-
-            static_keys_file = open(kwargs['new_static'], "r")
-            self.m_static_keys.extend(static_keys_file.read().split(",\n"))
-            static_keys_file.close()
-
-        if 'new_non_static' in kwargs:
-            assert (os.path.isfile(kwargs['new_non_static'])), 'Error: Input file for non static ' \
-                                                               'header keywords not found - input' \
-                                                               ' requested: %s' \
-                                                               % kwargs['new_non_static']
-
-            non_static_keys_file = open(kwargs['new_non_static'], "r")
-            self.m_non_static_keys.extend(non_static_keys_file.read().split(",\n"))
-            non_static_keys_file.close()
+        self.m_non_static_keys = ['NFRAMES',
+                                  'EXP_NO',
+                                  'NDIT',
+                                  'PARANG_START',
+                                  'PARANG_END',
+                                  'NEW_PARA']
 
     def _read_single_file(self,
                           fits_file,
@@ -142,7 +116,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         :return: None
         """
 
-        print "Reading " + str(fits_file)
+        print "Reading " + str(fits_file) + "..."
 
         hdulist = fits.open(tmp_location + fits_file)
 
@@ -160,44 +134,77 @@ class ReadFitsCubesDirectory(ReadingModule):
         # store header info
         tmp_header = hdulist[0].header
 
-        # store static header information (e.g. Instrument name) as attributes
-        # and non static using Ports
-        # Use the NACO / VLT specific header tags
-        for key in tmp_header:
-            if key in self.m_static_keys:
-                check = self.m_image_out_port.check_static_attribute(key,
-                                                                     tmp_header[key])
-                if check == -1:
-                    warnings.warn('Static keyword %s has changed. Probably the current '
-                                  'file %s does not belong to the data set "%s" of the PynPoint'
-                                  ' database. Updating Keyword...' \
-                                  % (key, fits_file, self.m_image_tag))
-                elif check == 0:
-                    # Attribute is known and is still the same
-                    pass
-                else:
-                    # Attribute is new -> add
-                    self.m_image_out_port.add_attribute(key,
-                                                        tmp_header[key],
+        # static attributes
+        for item in self.m_static_keys:
+            fitskey = self._m_config_port.get_attribute(item)
+
+            if fitskey in tmp_header:
+                value = tmp_header[fitskey]
+                status = self.m_image_out_port.check_static_attribute(item, value)
+
+                if status == 1:
+                    self.m_image_out_port.add_attribute(item,
+                                                        value,
                                                         static=True)
 
-            elif key in self.m_non_static_keys:
-                self.m_image_out_port.append_attribute_data(key,
-                                                            tmp_header[key])
+                if status == -1:
+                    warnings.warn('Static attribute %s has changed. Probably the current '
+                                  'file %s does not belong to the data set "%s" of the PynPoint'
+                                  ' database. Updating attribute...' \
+                                  % (fitskey, fits_file, self.m_image_tag))
 
-            elif key is not "":
-                warnings.warn('Unknown Header "%s" key found' %str(key))
+                elif status == 0:
+                    # Attribute is known and is still the same
+                    pass
 
-        # Add NAXIS3=1 for 2D cubes, required in some of the processing modules
-        if tmp_header['NAXIS'] == 2:
-            self.m_image_out_port.append_attribute_data('NAXIS3',
-                                                        1)
+            else:
+                warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
+                              % (item, fitskey))
+
+        # non-static attributes
+        for item in self.m_non_static_keys:
+            if item == 'NEW_PARA':
+                fitskey = 'NEW_PARA'
+
+            else:
+                fitskey = self._m_config_port.get_attribute(item)
+
+            if fitskey in tmp_header:
+                value = tmp_header[fitskey]
+                self.m_image_out_port.append_attribute_data(item,
+                                                            value)
+
+            elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
+                self.m_image_out_port.append_attribute_data(item,
+                                                            1)
+
+            elif item == 'NEW_PARA':
+                continue
+
+            else:
+                warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
+                              % (item, fitskey))
+                self.m_image_out_port.append_attribute_data(item,
+                                                            -1)
+
+        self.m_header_out_port = self.add_output_port('fits_header/'+fits_file)
+
+        fits_header = []
+        for key in tmp_header:
+            if key:
+                fits_header.append(str(key)+" = "+str(tmp_header[key]))
+
+        self.m_header_out_port.set_all(fits_header)
 
         hdulist.close()
 
-        # append used file to header information
         self.m_image_out_port.append_attribute_data("Used_Files",
                                                     tmp_location + fits_file)
+
+        self.m_image_out_port.add_attribute("PIXSCALE",
+                                            float(self._m_config_port.get_attribute('PIXSCALE')),
+                                            static=True)
+
         self.m_image_out_port.flush()
 
     def run(self):
@@ -223,7 +230,7 @@ class ReadFitsCubesDirectory(ReadingModule):
                 files.append(tmp_file)
         files.sort()
 
-        assert(len(files) > 0), 'Error no .fits files found in %s' % self.m_input_location
+        assert(files), 'Error no .fits files found in %s' % self.m_input_location
 
         # overwrite_keys save the database keys which were updated. Used for overwriting only
         overwrite_keys = []

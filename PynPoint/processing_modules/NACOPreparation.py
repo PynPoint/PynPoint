@@ -110,17 +110,17 @@ class AngleCalculationModule(ProcessingModule):
         :return: None
         """
 
-        input_angles_start = self.m_data_in_port.get_attribute("ESO TEL PARANG START")
-        input_angles_end = self.m_data_in_port.get_attribute("ESO TEL PARANG END")
+        input_angles_start = self.m_data_in_port.get_attribute("PARANG_START")
+        input_angles_end = self.m_data_in_port.get_attribute("PARANG_END")
 
-        steps = self.m_data_in_port.get_attribute("NAXIS3")
-        ndit = self.m_data_in_port.get_attribute("ESO DET NDIT")
+        steps = self.m_data_in_port.get_attribute("NFRAMES")
+        ndit = self.m_data_in_port.get_attribute("NDIT")
 
         if False in (ndit == steps):
             warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
-                          "angles are calculated with a linear interpolation by using NAXIS3 steps. "
-                          "A frame selection should be applied after the parallactic angles are "
-                          "calculated.")
+                          "angles are calculated with a linear interpolation by using NAXIS3 "
+                          "steps. A frame selection should be applied after the parallactic "
+                          "angles are calculated.")
 
         new_angles = []
 
@@ -174,14 +174,16 @@ class RemoveLastFrameModule(ProcessingModule):
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        ndit = self.m_image_in_port.get_attribute("ESO DET NDIT")
-        size = self.m_image_in_port.get_attribute("NAXIS3")
+        ndit = self.m_image_in_port.get_attribute("NDIT")
+        size = self.m_image_in_port.get_attribute("NFRAMES")
 
         if False in (size == ndit+1):
             raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
+            print "Processing image "+str(ndit_tot+1)+" of "+ str(np.sum(size))+" images..."
+
             tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
 
@@ -194,10 +196,10 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        size_in = self.m_image_in_port.get_attribute("NAXIS3")
+        size_in = self.m_image_in_port.get_attribute("NFRAMES")
         size_out = size_in - 1
 
-        self.m_image_out_port.add_attribute("NAXIS3", size_out, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
 
         self.m_image_out_port.add_history_information("NACO preparation",
                                                       "remove every NDIT+1 frame")
