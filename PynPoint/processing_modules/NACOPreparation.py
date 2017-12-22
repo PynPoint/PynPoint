@@ -3,6 +3,7 @@ Modules for pre-processing of NACO data sets.
 """
 
 import warnings
+
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
