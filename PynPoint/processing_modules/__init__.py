@@ -15,3 +15,4 @@ from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule
+from FluxAndPosition import FakePlanetModule, HessianMatrixModule
