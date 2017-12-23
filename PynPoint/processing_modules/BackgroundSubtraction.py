@@ -34,6 +34,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
+
         :return: None
         """
 
@@ -234,7 +235,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
         :type image_out_tag: str
-                 
+
         :return: None
         """
 
