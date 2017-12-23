@@ -51,9 +51,9 @@ class CutTopLinesModule(ProcessingModule):
 
         :return: None
         """
-        
+
         self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
-        
+
         if self.m_image_in_tag == self.m_image_out_tag and self.m_num_images_in_memory is not None:
             raise ValueError("Input and output tags need to be different since the "
                              "CutTopLinesModule changes the size of the frames. The database can"
@@ -95,6 +95,8 @@ class AngleCalculationModule(ProcessingModule):
         :param data_tag: Tag of the database entry for which the parallactic angles are written as
                          attributes.
         :type data_tag: str
+
+        :return: None
         """
 
         super(AngleCalculationModule, self).__init__(name_in)
@@ -117,7 +119,7 @@ class AngleCalculationModule(ProcessingModule):
         steps = self.m_data_in_port.get_attribute("NFRAMES")
         ndit = self.m_data_in_port.get_attribute("NDIT")
 
-        if False in (ndit == steps):
+        if False in ndit == steps:
             warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
                           "angles are calculated with a linear interpolation by using NAXIS3 "
                           "steps. A frame selection should be applied after the parallactic "
@@ -157,6 +159,7 @@ class RemoveLastFrameModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
+
         :return: None
         """
 
@@ -178,7 +181,7 @@ class RemoveLastFrameModule(ProcessingModule):
         ndit = self.m_image_in_port.get_attribute("NDIT")
         size = self.m_image_in_port.get_attribute("NFRAMES")
 
-        if False in (size == ndit+1):
+        if False in size == ndit+1:
             raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
 
         ndit_tot = 0

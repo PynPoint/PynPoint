@@ -3,6 +3,7 @@ Test cases for end-to-end data reduction.
 """
 
 import os
+
 import numpy as np
 
 from PynPoint import Pypeline
@@ -33,9 +34,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im"]
 
-        assert data[0, 0, 0] == -0.00018744786341144191
-        assert np.mean(data) == 9.4480170917766312e-05
-        assert data.shape == (84, 102, 100)
+        assert data[0, 0, 0] == 0.00032486907273264834
+        assert np.mean(data) == 9.4518306864680034e-05
+        assert data.shape == (82, 102, 100)
 
         storage.close_connection()
 
@@ -51,9 +52,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_last"]
 
-        assert data[0, 0, 0] == -0.00018744786341144191
-        assert np.mean(data) == 9.9204179463654638e-05
-        assert data.shape == (80, 102, 100)
+        assert data[0, 0, 0] == 0.00032486907273264834
+        assert np.mean(data) == 9.9365399524407205e-05
+        assert data.shape == (78, 102, 100)
 
         storage.close_connection()
 
@@ -68,7 +69,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/adi/data01.fits'
+        assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/adi/adi01.fits'
         assert port.get_attribute("NEW_PARA")[1] == 1.1904761904761905
 
         port.close_port()
@@ -87,9 +88,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_cut"]
 
-        assert data[0, 0, 0] == -0.00018744786341144191
-        assert np.mean(data) == 0.00010118826305292773
-        assert data.shape == (80, 100, 100)
+        assert data[0, 0, 0] == 0.00032486907273264834
+        assert np.mean(data) == 0.00010141595132969683
+        assert data.shape == (78, 100, 100)
 
         storage.close_connection()
 
@@ -107,9 +108,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_bg"]
 
-        assert data[0, 0, 0] == -0.00022134946299066599
-        assert np.mean(data) == 1.3911238380798353e-07
-        assert data.shape == (80, 100, 100)
+        assert data[0, 0, 0] == 0.00037132392435389595
+        assert np.mean(data) == 2.3675404363850964e-07
+        assert data.shape == (78, 100, 100)
 
         storage.close_connection()
 
@@ -128,9 +129,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_bp"]
 
-        assert data[0, 0, 0] == -0.00022134946299066599
-        assert np.mean(data) == 1.3911238380798353e-07
-        assert data.shape == (80, 100, 100)
+        assert data[0, 0, 0] == 0.00037132392435389595
+        assert np.mean(data) == 2.3675404363850964e-07
+        assert data.shape == (78, 100, 100)
 
         storage.close_connection()
 
@@ -138,9 +139,8 @@ class TestEndToEnd(object):
         star = StarExtractionModule(name_in="star",
                                     image_in_tag="im_bp",
                                     image_out_tag="im_star",
-                                    psf_size=40,
-                                    psf_size_as_pixel_resolution=True,
-                                    fwhm_star=4)
+                                    image_size=1.08,
+                                    fwhm_star=0.0108)
 
         self.pipeline.add_module(star)
         self.pipeline.run_module("star")
@@ -149,9 +149,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_star"]
 
-        assert data[0, 0, 0] == -7.4294323405466921e-05
-        assert np.mean(data) == 0.00063168185861750764
-        assert data.shape == (80, 40, 40)
+        assert data[0, 0, 0] == 0.00018025424208141221
+        assert np.mean(data) == 0.00063151691905138636
+        assert data.shape == (78, 40, 40)
 
         storage.close_connection()
 
@@ -171,12 +171,12 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_center"]
 
-        assert data[1, 0, 0] == -7.7284646607979651e-06
-        assert data[16, 0, 0] == 6.5481930420497295e-06
-        assert data[50, 0, 0] == -1.8830981620448768e-06
-        assert data[67, 0, 0] == -5.7283610498600854e-06
-        assert np.mean(data) == 2.5267274344700309e-05
-        assert data.shape == (80, 200, 200)
+        assert data[1, 0, 0] == 1.2113798549047296e-06
+        assert data[16, 0, 0] == 1.0022456564129139e-05
+        assert data[50, 0, 0] == 1.7024977291686637e-06
+        assert data[67, 0, 0] == 7.8143774182171561e-07
+        assert np.mean(data) == 2.5260676762055473e-05
+        assert data.shape == (78, 200, 200)
 
         storage.close_connection()
 
@@ -193,12 +193,12 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_remove"]
 
-        assert data[0, 0, 0] == -7.7284646607979651e-06
-        assert data[14, 0, 0] == 6.5481930420497295e-06
-        assert data[47, 0, 0] == -1.8830981620448768e-06
-        assert data[63, 0, 0] == -5.7283610498600854e-06
-        assert np.mean(data) == 2.5268782670694567e-05
-        assert data.shape == (76, 200, 200)
+        assert data[0, 0, 0] == 1.2113798549047296e-06
+        assert data[14, 0, 0] == 1.0022456564129139e-05
+        assert data[47, 0, 0] == 1.7024977291686637e-06
+        assert data[63, 0, 0] == 7.8143774182171561e-07
+        assert np.mean(data) == 2.5255308248050269e-05
+        assert data.shape == (74, 200, 200)
 
         storage.close_connection()
 
@@ -206,7 +206,7 @@ class TestEndToEnd(object):
         subset = StackAndSubsetModule(name_in="subset",
                                       image_in_tag="im_remove",
                                       image_out_tag="im_subset",
-                                      random_subset=38,
+                                      random_subset=37,
                                       stacking=2)
 
         self.pipeline.add_module(subset)
@@ -216,9 +216,9 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_subset"]
 
-        assert data[0, 0, 0] == -6.1490341969019138e-06
-        assert np.mean(data) == 2.5268782670694567e-05
-        assert data.shape == (38, 200, 200)
+        assert data[0, 0, 0] == -1.9081971570461925e-06
+        assert np.mean(data) == 2.5255308248050275e-05
+        assert data.shape == (37, 200, 200)
 
         storage.close_connection()
 
@@ -243,8 +243,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert data[154, 99] == 0.00040503841890726107
-        assert np.mean(data) == -3.5359607872233667e-09
+        assert data[154, 99] == 0.00043144351678910169
+        assert np.mean(data) == -1.9270808587607946e-09
         assert data.shape == (200, 200)
 
         storage.close_connection()

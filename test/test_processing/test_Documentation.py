@@ -1,8 +1,9 @@
 """
-Test cases for end-to-end data reduction.
+Test cases for examples in the documentation.
 """
 
 import os
+
 import numpy as np
 
 from PynPoint import Pypeline
@@ -13,6 +14,7 @@ from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
      AngleCalculationModule, MeanBackgroundSubtractionModule, \
      StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
      StackAndSubsetModule, RemoveLastFrameModule
+
 
 class TestDocumentation(object):
 
@@ -83,17 +85,15 @@ class TestDocumentation(object):
         extraction = StarExtractionModule(name_in="star_cutting",
                                           image_in_tag="bp_cleaned_arr",
                                           image_out_tag="im_arr_extract",
-                                          psf_size=40,
-                                          psf_size_as_pixel_resolution=True,
-                                          fwhm_star=4)
+                                          image_size=1.,
+                                          fwhm_star=0.1)
 
         # Required for ref_image_in_tag in StarAlignmentModule, otherwise a random frame is used
         ref_extract = StarExtractionModule(name_in="star_cut_ref",
                                            image_in_tag="bp_cleaned_arr",
                                            image_out_tag="im_arr_ref",
-                                           psf_size=40,
-                                           psf_size_as_pixel_resolution=True,
-                                           fwhm_star=4)
+                                           image_size=1.,
+                                           fwhm_star=0.1)
 
         alignment = StarAlignmentModule(name_in="star_align",
                                         image_in_tag="im_arr_extract",
@@ -119,7 +119,7 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(subset)
 
-        psf_sub = PSFSubtractionModule(pca_number=10,
+        psf_sub = PSFSubtractionModule(pca_number=5,
                                        name_in="PSF_subtraction",
                                        images_in_tag="im_arr_stacked",
                                        reference_in_tag="im_arr_stacked",
@@ -139,44 +139,44 @@ class TestDocumentation(object):
         storage.open_connection()
 
         data = storage.m_data_bank["im_arr"]
-        assert data[0, 61, 39] == -8.4709963206256554e-05
+        assert data[0, 61, 39] == -0.00022889163546536875
 
         data = storage.m_data_bank["dark_arr"]
-        assert data[0, 61, 39] == -0.011343079108758591
+        assert data[0, 61, 39] == 2.368170995592123e-05
 
         data = storage.m_data_bank["flat_arr"]
-        assert data[0, 61, 39] == 0.9821210034761314
-
-        data = storage.m_data_bank["dark_sub_arr"]
-        assert data[0, 61, 39] == 0.0011542508589292128
-
-        data = storage.m_data_bank["flat_sub_arr"]
-        assert data[0, 61, 39] == 0.0011575338143708261
+        assert data[0, 61, 39] == 0.98703416941301647
 
         data = storage.m_data_bank["im_arr_last"]
-        assert data[0, 61, 39] == -8.4709963206256554e-05
+        assert data[0, 61, 39] == -0.00022889163546536875
 
         data = storage.m_data_bank["im_arr_cut"]
-        assert data[0, 61, 39] == -8.4709963206256554e-05
+        assert data[0, 61, 39] == -0.00022889163546536875
+
+        data = storage.m_data_bank["dark_sub_arr"]
+        assert data[0, 61, 39] == -0.00021601281733413911
+
+        data = storage.m_data_bank["flat_sub_arr"]
+        assert data[0, 61, 39] == -0.00021553814660050282
 
         data = storage.m_data_bank["bg_cleaned_arr"]
-        assert data[0, 61, 39] == -0.0001631681220048769
+        assert data[0, 61, 39] == -0.00013038694003957227
 
         data = storage.m_data_bank["bp_cleaned_arr"]
-        assert data[0, 61, 39] == -0.0001631681220048769
+        assert data[0, 61, 39] == -0.00013038694003957227
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert data[0, 31, 20] == 0.00078882940840793291
+        assert data[0, 31, 20] == -3.9392607130869333e-05
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 61, 39] == 0.00026433562156750383
+        assert data[0, 61, 39] == 0.00021600121168847015
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 61, 39] == 0.00019585582317662004
+        assert data[0, 61, 39] == 8.2429659114370023e-05
 
         data = storage.m_data_bank["res_mean"]
-        assert data[61, 39] == 0.00014714422619563442
-        assert np.mean(data) == -6.3801658273229914e-08
-        assert data.shape == (80, 80)
+        assert data[61, 39] == -4.4710338563281608e-05
+        assert np.mean(data) == 5.196570975891392e-08
+        assert data.shape == (72, 72)
 
         storage.close_connection()

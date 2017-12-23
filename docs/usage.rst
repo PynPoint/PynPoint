@@ -54,6 +54,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 
 	reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
                                           image_tag="im_arr")
+
 	pipeline.add_module(reading_data)
 
 2. Import the dark current from the directory `dark_dir`: ::
@@ -61,6 +62,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
                                       	  input_dir=dark_dir,
                                       	  image_tag="dark_arr")
+
 	pipeline.add_module(reading_dark)
 
 3. Read the flat-field exposure from the directory `flat_dir`: ::
@@ -68,6 +70,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
                                       	  input_dir=flat_dir,
                                       	  image_tag="flat_arr")
+
 	pipeline.add_module(reading_flat)
 
 4. Remove the last (NDIT+1) frame from each cube: ::
@@ -84,6 +87,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
                                 image_in_tag="im_arr",
                                 image_out_tag="im_arr_cut",
                                 num_lines=2)
+
 	pipeline.add_module(cutting)
 
 6. Dark- and flat-subtraction: ::
@@ -116,6 +120,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="sigma_filtering",
 	                                                image_in_tag="flat_sub_arr",
 	                                                image_out_tag="bp_cleaned_arr")
+
 	pipeline.add_module(bp_cleaning)
 
 9. Star extraction and alignment: ::
@@ -123,15 +128,15 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	extraction = StarExtractionModule(name_in="star_cutting",
 	                                  image_in_tag="bg_cleaned_arr",
 	                                  image_out_tag="im_arr_extract",
-	                                  psf_size=40,
-                                      psf_size_as_pixel_resolution=True
-	                                  fwhm_star=4)
+	                                  image_size=1.0,
+	                                  fwhm_star=0.1)
 
 	alignment = StarAlignmentModule(name_in="star_align",
 	                                image_in_tag="im_arr_extract",
 	                                image_out_tag="im_arr_aligned",
 	                                accuracy=100,
 	                                resize=2)
+
 	pipeline.add_module(extraction)
 	pipeline.add_module(alignment)
 
@@ -139,6 +144,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 
 	angle_calc = AngleCalculationModule(name_in="angle_calculation",
 	                                    data_tag="im_arr_aligned")
+
 	pipeline.add_module(angle_calc)
 
 101. Subsample the data using stacking: ::
@@ -148,6 +154,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	                              image_out_tag="im_arr_stacked",
 	                              random_subset=None,
 	                              stacking=4)
+
 	pipeline.add_module(subset)
 
 12. Subtract the stars PSF using PCA: ::
@@ -157,6 +164,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	                               images_in_tag="im_arr_stacked",
 	                               reference_in_tag="im_arr_stacked",
 	                               res_mean_tag="res_mean")
+
 	pipeline.add_module(psf_sub)
 
 13. Write out the result of the last step: ::
@@ -164,6 +172,7 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 	writing = WriteAsSingleFitsFile(name_in="Fits_writing",
 	                                file_name="test.fits",
 	                                data_tag="res_mean")
+
 	pipeline.add_module(writing)
 
 **And finally run the pipeline:** ::
