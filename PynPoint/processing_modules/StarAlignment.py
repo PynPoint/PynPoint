@@ -1,3 +1,7 @@
+"""
+Modules for locating and aligning of the star.
+"""
+
 import numpy as np
 import cv2
 
@@ -10,37 +14,67 @@ from PynPoint.core.Processing import ProcessingModule
 
 
 class StarExtractionModule(ProcessingModule):
+    """
+    Module to locate the position of the star in each image.
+    """
 
     def __init__(self,
                  name_in="star_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
                  pos_out_tag="star_positions",
-                 psf_size=3,
-                 psf_size_as_pixel_resolution=False,
-                 fwhm_star=7):
+                 image_size=2.,
+                 num_images_in_memory=100,
+                 fwhm_star=0.2):
+        """
+        Constructor of StarExtractionModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with the images that are written as
+                              output. Should be different from *image_in_tag*.
+        :type image_out_tag: str
+        :param pos_out_tag: Tag of the database entry with the star positions that are written
+                            as output.
+        :type pos_out_tag: str
+        :param image_size: Cropped size (arcsec) of the images.
+        :type image_size: float
+        :param fwhm_star: Full width at half maximum (arcsec) of the Gaussian kernel that is used
+                          to convolve the images.
+        :type fwhm_star: float
+
+        :return: None
+        """
 
         super(StarExtractionModule, self).__init__(name_in)
-
-        # Ports
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
         self.m_pos_out_port = self.add_output_port(pos_out_tag)
-
-        self.m_psf_size = psf_size
-        self.m_psf_size_as_pixel_resolution = psf_size_as_pixel_resolution
-        self.m_fwhm_star = fwhm_star # needed for the best gaussian blur 7 is good for L-band data
+        self.m_image_size = image_size
+        self.m_num_images_in_memory = num_images_in_memory
+        self.m_fwhm_star = fwhm_star # 7 pix / 0.2 arcsec is good for L-band data
 
     def run(self):
+        """
+        Run method of the module. Locates the position of the star (only pixel precision) through
+        the largest pixel value. A Gaussian kernel with a FWHM similar to the PSF is used to
+        smooth away the contribution of bad pixels which may have higher values than the peak
+        of the PSF. Images are cropped and written to an output port, as well as the position
+        values of the star.
+
+        :return: None
+        """
 
         self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
-        if self.m_psf_size_as_pixel_resolution:
-            psf_radius = np.floor(self.m_psf_size / 2.0)
-        else:
-            pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
-            psf_radius = np.floor((self.m_psf_size / 2.0) / pixel_scale)
+        pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
+        psf_radius = int((self.m_image_size / 2.0) / pixel_scale)
+
+        self.m_fwhm_star /= pixel_scale
+        self.m_fwhm_star = int(self.m_fwhm_star)
 
         star_positions = []
 
@@ -55,7 +89,6 @@ class StarExtractionModule(ProcessingModule):
                                             kernel_size,
                                             sigma)
 
-            # cut the image by maximum
             argmax = np.unravel_index(search_image.argmax(), search_image.shape)
 
             if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
@@ -65,7 +98,6 @@ class StarExtractionModule(ProcessingModule):
                 raise ValueError('Highest value is near the border. PSF size is too '
                                  'large to be cut')
 
-            # cut the image
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
@@ -87,6 +119,9 @@ class StarExtractionModule(ProcessingModule):
 
 
 class StarAlignmentModule(ProcessingModule):
+    """
+    Module to align the images with a cross-correlation in Fourier space.
+    """
 
     def __init__(self,
                  name_in="star_align",
@@ -97,10 +132,35 @@ class StarAlignmentModule(ProcessingModule):
                  accuracy=10,
                  resize=1,
                  num_references=10):
+        """
+        Constructor of StarAlignmentModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with the stack of images that is read as
+                             input.
+        :type image_in_tag: str
+        :param ref_image_in_tag: Tag of the database entry with the reference image(s) that are
+                                 read as input.
+        :type ref_image_in_tag: str
+        :param image_out_tag: Tag of the database entry with the images that are written as
+                              output.
+        :type image_out_tag: str
+        :param interpolation: Type of interpolation that is used for shifting the images (spline,
+                              bilinear, or fft).
+        :type interpolation: str
+        :param accuracy: Upsampling factor for the cross-correlation. Images will be registered
+                         to within 1/accuracy of a pixel.
+        :type accuracy: float
+        :param resize: Scaling factor for the up/down-sampling before the images are shifted.
+        :type resize: float
+        :param num_references: Number of reference images for the cross-correlation.
+        :type num_references: int
+
+        :return: None
+        """
 
         super(StarAlignmentModule, self).__init__(name_in)
-
-        # Ports
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -110,17 +170,22 @@ class StarAlignmentModule(ProcessingModule):
         else:
             self.m_ref_image_in_port = None
 
-        # Parameter
         self.m_interpolation = interpolation
         self.m_accuracy = accuracy
         self.m_resize = resize
         self.m_num_references = num_references
 
     def run(self):
+        """
+        Run method of the module. Applies a cross-correlation of the input images with respect to
+        a stack of reference images, rescales the image dimensions, and shifts the images to a
+        common center.
+
+        :return: None
+        """
 
         self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
-        # get ref image
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
                 ref_images = np.asarray(self.m_ref_image_in_port.get_all())
@@ -140,15 +205,13 @@ class StarAlignmentModule(ProcessingModule):
             for i in range(self.m_num_references):
                 tmp_offset, _, _ = register_translation(ref_images[i, :, :],
                                                         image_in,
-                                                        self.m_accuracy)
+                                                        upsample_factor=self.m_accuracy)
                 offset += tmp_offset
 
             offset /= float(self.m_num_references)
             offset *= self.m_resize
 
             if self.m_resize is not 1:
-                # the rescale function normalizes all values to [0 ... 1]. We want to keep the total
-                # flux of the images and rescale the images afterwards
                 sum_before = np.sum(image_in)
                 tmp_image = rescale(image=np.asarray(image_in),
                                     scale=(self.m_resize,
@@ -156,6 +219,7 @@ class StarAlignmentModule(ProcessingModule):
                                     order=5,
                                     mode="reflect")
                 sum_after = np.sum(tmp_image)
+                # Conserve flux because the rescale function normalizes all values to [0:1].
                 tmp_image = tmp_image*(sum_before/sum_after)
             else:
                 tmp_image = image_in
@@ -182,13 +246,12 @@ class StarAlignmentModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        # Change pix to mas scale corresponding to the reshaping
         tmp_pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         tmp_pixscale /= self.m_resize
         self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
-        self.m_image_out_port.add_history_information("PSF align",
+        self.m_image_out_port.add_history_information("PSF alignment",
                                                       history)
         self.m_image_out_port.close_port()
