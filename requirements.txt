@@ -9,7 +9,8 @@ matplotlib
 PyWavelets
 opencv-python
 scikit-image
-pytest
+pytest,
+sklearn
 
 # old_version
 pyfits
