@@ -67,8 +67,7 @@ class DarkSubtractionModule(ProcessingModule):
                  name_in="dark_subtraction",
                  image_in_tag="im_arr",
                  dark_in_tag="dark_arr",
-                 image_out_tag="dark_sub_arr",
-                 number_of_images_in_memory=100):
+                 image_out_tag="dark_sub_arr"):
         """
         Constructor of DarkSubtractionModule.
 
@@ -80,9 +79,7 @@ class DarkSubtractionModule(ProcessingModule):
         :type dark_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
         :type image_out_tag: str
-        :param number_of_images_in_memory: Number of frames that are simultaneously loaded into
-                                           the memory.
-        :type number_of_images_in_memory: int
+
         :return: None
         """
 
@@ -92,8 +89,6 @@ class DarkSubtractionModule(ProcessingModule):
         self.m_dark_in_port = self.add_input_port(dark_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
-
     def run(self):
         """
         Run method of the module. Creates a master dark with the same dimensions as the science
@@ -101,6 +96,8 @@ class DarkSubtractionModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def dark_subtraction_image(image_in,
                                    dark_in):
@@ -115,7 +112,7 @@ class DarkSubtractionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(tmp_dark,),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Dark subtraction",
                                                       "simple")
@@ -134,8 +131,7 @@ class FlatSubtractionModule(ProcessingModule):
                  name_in="flat_subtraction",
                  image_in_tag="dark_sub_arr",
                  flat_in_tag="flat_arr",
-                 image_out_tag="flat_sub_arr",
-                 number_of_images_in_memory=100):
+                 image_out_tag="flat_sub_arr"):
         """
         Constructor of FlatSubtractionModule.
 
@@ -147,9 +143,7 @@ class FlatSubtractionModule(ProcessingModule):
         :type dark_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
         :type image_out_tag: str
-        :param number_of_images_in_memory: Number of frames that are simultaneously loaded into
-                                           the memory.
-        :type number_of_images_in_memory: int
+
         :return: None
         """
 
@@ -159,8 +153,6 @@ class FlatSubtractionModule(ProcessingModule):
         self.m_flat_in_port = self.add_input_port(flat_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
-
     def run(self):
         """
         Run method of the module. Creates a master flat with the same dimensions as the science
@@ -168,6 +160,8 @@ class FlatSubtractionModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def flat_subtraction_image(image_in,
                                    flat_in):
@@ -198,7 +192,7 @@ class FlatSubtractionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       func_args=(tmp_flat, ),
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Flat correction",
                                                       "simple")

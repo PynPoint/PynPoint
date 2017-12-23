@@ -15,8 +15,7 @@ class RemoveFramesModule(ProcessingModule):
                  frame_indices,
                  name_in="remove_frames",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_remove",
-                 num_image_in_memory=100):
+                 image_out_tag="im_arr_remove"):
         """
         Constructor of RemoveFramesModule.
 
@@ -29,8 +28,7 @@ class RemoveFramesModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
@@ -40,7 +38,6 @@ class RemoveFramesModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_frame_indices = np.asarray(frame_indices)
-        self.m_image_memory = num_image_in_memory
 
     def run(self):
         """
@@ -49,6 +46,8 @@ class RemoveFramesModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_image_memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
