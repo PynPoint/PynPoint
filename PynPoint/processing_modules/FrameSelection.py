@@ -82,9 +82,9 @@ class RemoveFramesModule(ProcessingModule):
                 self.m_image_out_port.append(tmp_im)
 
         # Adding the leftover frames that do not fit in an integer amount of num_image_in_memory
-        
+
         index_del = np.where(self.m_frame_indices >= num_subsets*self.m_image_memory)
-        
+
         tmp_im = self.m_image_in_port[num_subsets*self.m_image_memory: \
                                       self.m_image_in_port.get_shape()[0], :, :]
 
