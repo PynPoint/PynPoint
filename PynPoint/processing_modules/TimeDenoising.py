@@ -245,8 +245,7 @@ class TimeNormalizationModule(ProcessingModule):
     def __init__(self,
                  name_in="normalization",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_normalized",
-                 number_of_images_in_memory=100):
+                 image_out_tag="im_arr_normalized"):
 
         super(TimeNormalizationModule, self).__init__(name_in=name_in)
 
@@ -254,9 +253,9 @@ class TimeNormalizationModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_number_of_images_in_memory = number_of_images_in_memory
-
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_normalization(image_in):
 
@@ -268,7 +267,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(image_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      num_images_in_memory=self.m_number_of_images_in_memory)
+                                      num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Frame normalization",
                                                       "using median")

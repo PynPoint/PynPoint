@@ -19,8 +19,7 @@ class CutTopLinesModule(ProcessingModule):
                  name_in="NACO_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
-                 num_lines=2,
-                 num_images_in_memory=100):
+                 num_lines=2):
         """
         Constructor of CutTopLinesModule.
 
@@ -29,30 +28,21 @@ class CutTopLinesModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag* unless *number_of_images_in_memory*
-                              is set to *None*.
+                              different from *image_in_tag* unless *MEMORY* is set to *None*.
         :type image_out_tag: str
         :param num_lines: Number of top rows to delete from each frame.
         :type num_lines: int
-        :param num_image_in_memory: Number of frames that are simultaneously loaded into the memory.
-        :type num_image_in_memory: int
+
         :return: None
         """
 
         super(CutTopLinesModule, self).__init__(name_in)
 
-        if image_in_tag == image_out_tag and num_images_in_memory is not None:
-            raise ValueError("Input and output tags need to be different since the "
-                             "CutTopLinesModule changes the size of the frames. The database can"
-                             " not update existing frames with smaller new frames. The only way to "
-                             "use the same input and output tags is to update all frames at once"
-                             "(i.e. loading all frames to the memory). Set number_of_images_in_"
-                             "memory to None to do this (Note this needs a lot of memory).")
-
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_num_images_in_memory = num_images_in_memory
+        self.m_image_in_tag = image_in_tag
+        self.m_image_out_tag = image_out_tag
         self.m_num_lines = num_lines
 
     def run(self):
@@ -61,6 +51,16 @@ class CutTopLinesModule(ProcessingModule):
 
         :return: None
         """
+        
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        
+        if self.m_image_in_tag == self.m_image_out_tag and self.m_num_images_in_memory is not None:
+            raise ValueError("Input and output tags need to be different since the "
+                             "CutTopLinesModule changes the size of the frames. The database can"
+                             " not update existing frames with smaller new frames. The only way to "
+                             "use the same input and output tags is to update all frames at once"
+                             "(i.e. loading all frames to the memory). Set MEMORY to None to do"
+                             "this (Note this needs a lot of memory).")
 
         def cut_top_lines(image_in):
             return image_in[:-int(self.m_num_lines), :]

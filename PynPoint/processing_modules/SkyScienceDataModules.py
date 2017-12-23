@@ -242,8 +242,7 @@ class AlignmentSkyAndScienceDataModule(ProcessingModule):
                  sky_out_tag="sky_arr",
                  interpolation="spline",
                  size_of_center=(100, 100),
-                 accuracy=10,
-                 num_images_in_memory=100):
+                 accuracy=10):
 
         super(AlignmentSkyAndScienceDataModule, self).__init__(name_in)
 
@@ -258,13 +257,14 @@ class AlignmentSkyAndScienceDataModule(ProcessingModule):
         # Parameter
         self.m_interpolation = interpolation
         self.m_accuracy = accuracy
-        self.m_num_images_in_memory = num_images_in_memory
         self.m_center_size = size_of_center
         self.m_center_position = position_of_center
         self.m_x_off = self.m_center_position[0] - (self.m_center_size[0] / 2)
         self.m_y_off = self.m_center_position[1] - (self.m_center_size[1] / 2)
 
     def run(self):
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def cut_image_around_position(image_in):
             return image_in[self.m_x_off: self.m_center_size[0] + self.m_x_off,

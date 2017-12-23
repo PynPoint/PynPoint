@@ -53,7 +53,6 @@ class StarExtractionModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
         self.m_pos_out_port = self.add_output_port(pos_out_tag)
-
         self.m_image_size = image_size
         self.m_num_images_in_memory = num_images_in_memory
         self.m_fwhm_star = fwhm_star # 7 pix / 0.2 arcsec is good for L-band data
@@ -68,6 +67,8 @@ class StarExtractionModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
         psf_radius = int((self.m_image_size / 2.0) / pixel_scale)
@@ -130,8 +131,7 @@ class StarAlignmentModule(ProcessingModule):
                  interpolation="spline",
                  accuracy=10,
                  resize=1,
-                 num_references=10,
-                 num_images_in_memory=100):
+                 num_references=10):
         """
         Constructor of StarAlignmentModule.
 
@@ -172,7 +172,6 @@ class StarAlignmentModule(ProcessingModule):
 
         self.m_interpolation = interpolation
         self.m_accuracy = accuracy
-        self.m_num_images_in_memory = num_images_in_memory
         self.m_resize = resize
         self.m_num_references = num_references
 
@@ -184,6 +183,8 @@ class StarAlignmentModule(ProcessingModule):
 
         :return: None
         """
+
+        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:

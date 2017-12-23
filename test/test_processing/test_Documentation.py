@@ -148,10 +148,10 @@ class TestDocumentation(object):
         assert data[0, 61, 39] == 0.9821210034761314
 
         data = storage.m_data_bank["dark_sub_arr"]
-        assert data[0, 61, 39] == 0.011258369145552335
+        assert data[0, 61, 39] == 0.0011542508589292128
 
         data = storage.m_data_bank["flat_sub_arr"]
-        assert data[0, 61, 39] == 0.011042215821569208
+        assert data[0, 61, 39] == 0.0011575338143708261
 
         data = storage.m_data_bank["im_arr_last"]
         assert data[0, 61, 39] == -8.4709963206256554e-05
@@ -160,23 +160,23 @@ class TestDocumentation(object):
         assert data[0, 61, 39] == -8.4709963206256554e-05
 
         data = storage.m_data_bank["bg_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00015958151418145675
+        assert data[0, 61, 39] == -0.0001631681220048769
 
         data = storage.m_data_bank["bp_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00015958151418145675
+        assert data[0, 61, 39] == -0.0001631681220048769
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert data[0, 31, 20] == 0.00079088809921467468
+        assert data[0, 31, 20] == 0.00078882940840793291
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 61, 39] == 0.00026185085350950628
+        assert data[0, 61, 39] == 0.00026433562156750383
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 61, 39] == 0.000194312745651406
+        assert data[0, 61, 39] == 0.00019585582317662004
 
         data = storage.m_data_bank["res_mean"]
-        assert data[61, 39] == 0.00015892783130056349
-        assert np.mean(data) == -5.9875233730063107e-08
+        assert data[61, 39] == 0.00014714422619563442
+        assert np.mean(data) == -6.3801658273229914e-08
         assert data.shape == (80, 80)
 
         storage.close_connection()
