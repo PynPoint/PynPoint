@@ -31,28 +31,33 @@ class PSFSubtractionPCA(ProcessingModule):
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
         self.m_star_in_port = self.add_input_port(images_in_tag)
 
-        # create output Ports (cast to string for None case) loop over pca numbers
+        # create output if none create special not used port
         self.m_res_mean_out_port = self.add_output_port(str(res_mean_tag))
-        self.m_res_median_out_port = self.add_output_port(str(res_median_tag))
-        self.m_res_rot_mean_clip_out_port = self.add_output_port(str(res_rot_mean_clip_tag))
 
+        # None check
+        if res_median_tag is None:
+            self.m_res_median_out_port = self.add_output_port(str("no median"))
+            self.m_res_median_out_port.deactivate()
+        else:
+            self.m_res_median_out_port = self.add_output_port(str(res_median_tag))
+
+        if res_rot_mean_clip_tag is None:
+            self.m_res_rot_mean_clip_out_port = self.add_output_port(str("no clip"))
+            self.m_res_rot_mean_clip_out_port.deactivate()
+        else:
+            self.m_res_rot_mean_clip_out_port = self.add_output_port(str(res_rot_mean_clip_tag))
+
+        # use a dict to store output ports for the non-stacked residuals
         self.m_res_arr_out_ports = {}
         self.m_res_arr_required = True
 
         for pca_number in self.m_components:
+            # (cast to string for None case)
+            # if res_arr_out_tag is None we still get different Tag names like None02
             self.m_res_arr_out_ports[pca_number] = self.add_output_port(str(res_arr_out_tag)
                                                                         + str(pca_number))
 
         # deactivate not needed array out ports
-        if res_mean_tag is None:
-            self.m_res_mean_out_port.deactivate()
-
-        if res_median_tag is None:
-            self.m_res_median_out_port.deactivate()
-
-        if res_rot_mean_clip_tag is None:
-            self.m_res_rot_mean_clip_out_port.deactivate()
-
         if res_arr_out_tag is None:
             self.m_res_arr_required = False
             for port in self.m_res_arr_out_ports.itervalues():
@@ -74,22 +79,30 @@ class PSFSubtractionPCA(ProcessingModule):
 
         # Fit the PCA model
         print("Start fitting the PCA model ...")
-        self.m_pca.fit(ref_star_data)
+        ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
+                                              ref_star_data.shape[1] * ref_star_data.shape[2]))
+        self.m_pca.fit(ref_star_sklearn)
 
         # prepare the data for sklearns PCA
         star_sklearn = star_data.reshape((star_data.shape[0],
                                           star_data.shape[1] * star_data.shape[2]))
 
         # do the fit and write out the result
+        # clear all result ports
+        self.m_res_mean_out_port.del_all_data()
+        self.m_res_median_out_port.del_all_data()
+        self.m_res_rot_mean_clip_out_port.del_all_data()
+
         print("Start calculating PSF models")
-        history = "PCA with " + str(self.m_components) + " PCA-components"
+        history = "Using PCAs"
         for pca_number in self.m_components:
             tmp_pca_representation = np.matmul(self.m_pca.components_[:pca_number],
                                                star_sklearn.T)
+
             tmp_pca_representation = np.vstack((tmp_pca_representation,
                                                 np.zeros((self.m_max_PCAs - pca_number,
-                                                          star_data.shape[1] * star_data.shape[2])
-                                                         ))).T
+                                                          star_data.shape[0])))).T
+
             tmp_psf_images = self.m_pca.inverse_transform(tmp_pca_representation)
             tmp_psf_images = tmp_psf_images.reshape((star_data.shape[0],
                                                      star_data.shape[1],
@@ -102,7 +115,7 @@ class PSFSubtractionPCA(ProcessingModule):
             delta_para = - self.m_star_in_port.get_attribute("NEW_PARA")
             res_array = np.zeros(shape=tmp_without_psf.shape)
             for i in range(0, len(delta_para)):
-                res_temp = res_array[i, ]
+                res_temp = tmp_without_psf[i, ]
                 res_array[i, ] = ndimage.rotate(res_temp,
                                                 delta_para[i] + self.m_extra_rot,
                                                 reshape=False)
@@ -119,6 +132,7 @@ class PSFSubtractionPCA(ProcessingModule):
             # 2.) mean
             tmp_res_rot_mean = np.mean(res_array,
                                        axis=0)
+
             self.m_res_mean_out_port.append(tmp_res_rot_mean, data_dim=3)
 
             # 3.) median
