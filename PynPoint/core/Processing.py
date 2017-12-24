@@ -10,6 +10,7 @@ import numpy as np
 
 from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
+
 class PypelineModule:
     """
     Abstract interface for the different pipeline Modules:
@@ -178,6 +179,7 @@ class TaskData(object):
                  position):
         self.m_data_array = data_array
         self.m_position = position
+
 
 class ProcessingModule(PypelineModule):
     """
@@ -776,7 +778,6 @@ class ReadingModule(PypelineModule):
         self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
-
 
     def get_all_output_tags(self):
         """
