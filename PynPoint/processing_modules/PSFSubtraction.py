@@ -71,6 +71,11 @@ class PSFSubtractionModule(ProcessingModule):
         else:
             prep_tag = "data_prep"
 
+        if "verbose" in kwargs:
+            self.m_verbose = kwargs["verbose"]
+        else:
+            self.m_verbose = True
+
         self.m_num_components = pca_number
 
         self._m_preparation_images = PSFdataPreparation(name_in="prep_im",
@@ -144,19 +149,24 @@ class PSFSubtractionModule(ProcessingModule):
 
     def run(self):
 
-        print "Preparing data..."
+        if self.m_verbose:
+            print "Preparing data..."
         self._m_preparation_images.run()
         self._m_preparation_reference.run()
-        print "Finished preparing data..."
-        print "Creating PCA-basis set..."
+        if self.m_verbose:
+            print "Finished preparing data..."
+            print "Creating PCA-basis set..."
         self._m_make_pca_basis.run()
-        print "Finished creating PCA-basis set..."
-        print "Calculating PSF-Model..."
+        if self.m_verbose:
+            print "Finished creating PCA-basis set..."
+            print "Calculating PSF-Model..."
         self._m_make_psf_model.run()
-        print "Finished calculating PSF-model..."
-        print "Creating residuals..."
+        if self.m_verbose:
+            print "Finished calculating PSF-model..."
+            print "Creating residuals..."
         self._m_residuals_module.run()
-        print "Finished creating residuals..."
+        if self.m_verbose:
+            print "Finished creating residuals..."
 
         # Take Header Information
         input_port = self._m_residuals_module.m_im_arr_in_port
