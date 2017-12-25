@@ -128,6 +128,8 @@ class TaskWriter(multiprocessing.Process):
         while True:
             next_result = self.m_result_queue.get()
 
+            print self.m_result_queue.empty()
+
             # Poison Pill
             if next_result is None:
                 # check if no results are after the poison pill
@@ -135,6 +137,7 @@ class TaskWriter(multiprocessing.Process):
                     print "Shutting down writer..."
                     self.m_result_queue.task_done()
                 else:
+                    print "hey"
                     # put pack the Poison pill for the moment
                     self.m_result_queue.put(None)
                     self.m_result_queue.task_done()
