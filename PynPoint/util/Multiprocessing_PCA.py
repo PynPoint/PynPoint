@@ -2,6 +2,7 @@ from Multiprocessing import *
 import numpy as np
 from sklearn.decomposition import PCA
 from scipy import ndimage
+from copy import deepcopy
 
 class PcaTaskCreator(TaskCreator):
 
@@ -85,7 +86,6 @@ class PcaTaskProcessor(TaskProcessor):
                                             self.m_angles[i],
                                             reshape=False)
 
-        print res_array.shape
         # create residuals
         res_length = 3
 
@@ -95,10 +95,7 @@ class PcaTaskProcessor(TaskProcessor):
         residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
 
         # 1.) mean
-        tmp_res_rot_mean = np.mean(res_array,
-                                   axis=0)
-
-        print tmp_res_rot_mean.shape
+        tmp_res_rot_mean = res_array[20]
 
         residual_output[0, :, :] = tmp_res_rot_mean
 
