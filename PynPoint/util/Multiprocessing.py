@@ -133,22 +133,20 @@ class TaskWriter(multiprocessing.Process):
                 return 1
             else:
                 # put pack the Poison pill for the moment
+                print self.m_result_queue.qsize()
                 print "put back poison pill"
                 self.m_result_queue.put(None)
                 self.m_result_queue.task_done()
                 print "new pill"
+                print self.m_result_queue.qsize()
                 return 2
 
         else:
             return 0
 
-    def print_i(self):
-        print "hey"
-
     def run(self):
 
         while True:
-            self.print_i()
             next_result = self.m_result_queue.get()
 
             # Poison Pill
