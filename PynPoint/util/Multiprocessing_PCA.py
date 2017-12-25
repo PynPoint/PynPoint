@@ -126,7 +126,7 @@ class PcaTaskProcessor(TaskProcessor):
 
         print("Created Residual with " + str(pca_number) + " components")
 
-        return TaskResult(res_array, tmp_task.m_job_parameter[0])
+        return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 
 
 class PcaTaskWriter(TaskWriter):
