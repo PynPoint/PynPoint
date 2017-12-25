@@ -139,11 +139,16 @@ class TaskWriter(multiprocessing.Process):
                 print "new pill"
                 return 2
 
-        return 0
+        else:
+            return 0
+
+    def print_i(self):
+        print "hey"
 
     def run(self):
 
         while True:
+            self.print_i()
             next_result = self.m_result_queue.get()
 
             # Poison Pill
