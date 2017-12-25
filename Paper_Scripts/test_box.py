@@ -32,7 +32,7 @@ pipeline.run_module("time_denoising")'''
 
 from PynPoint.processing_modules import PSFSubtractionPCAmulit
 
-psf_subtraction = PSFSubtractionPCAmulit(range(100),
+psf_subtraction = PSFSubtractionPCAmulit(range(1),
                                          name_in="PSF_subtraction",
                                          images_in_tag="10_stacked",
                                          reference_in_tag="10_stacked")
