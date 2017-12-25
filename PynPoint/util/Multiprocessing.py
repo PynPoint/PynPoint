@@ -134,6 +134,7 @@ class TaskWriter(multiprocessing.Process):
                 print "put back poison pill"
                 self.m_result_queue.task_done()
                 self.m_result_queue.put(None)
+                print "new pill"
                 return False
 
             return True
