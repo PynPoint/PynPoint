@@ -39,3 +39,11 @@ psf_subtraction = PSFSubtractionPCAmulit(range(100),
 pipeline.add_module(psf_subtraction)
 
 pipeline.run_module("PSF_subtraction")
+
+from PynPoint.io_modules import WriteAsSingleFitsFile
+
+write = WriteAsSingleFitsFile("PCA_result.fits",
+                              name_in="wr",
+                              data_tag="res_mean")
+pipeline.add_module(write)
+pipeline.run_module("wr")

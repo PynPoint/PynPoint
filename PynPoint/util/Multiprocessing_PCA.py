@@ -56,8 +56,6 @@ class PcaTaskProcessor(TaskProcessor):
 
     def run_job(self, tmp_task):
 
-        print 1
-
         star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
                                                 self.m_star_arr.shape[1] * self.m_star_arr.shape[2]))
 
@@ -70,23 +68,14 @@ class PcaTaskProcessor(TaskProcessor):
                                             np.zeros((self.m_pca_model.n_components - pca_number,
                                                       self.m_star_arr.shape[0])))).T
 
-        print 2
-
-        #tmp_psf_images = np.matmul(tmp_pca_representation[0:200, :], self.m_pca_model.components_[:,0:200])
-
         tmp_psf_images = self.m_pca_model.inverse_transform(tmp_pca_representation)
-
-        print 3.1
 
         tmp_psf_images = tmp_psf_images.reshape((self.m_star_arr.shape[0],
                                                  self.m_star_arr.shape[1],
                                                  self.m_star_arr.shape[2]))
-        print 3.2
 
         # subtract the psf model of the star
         tmp_without_psf = self.m_star_arr - tmp_psf_images
-
-        print 3
 
         # inverse rotation
         res_array = np.zeros(shape=tmp_without_psf.shape)
