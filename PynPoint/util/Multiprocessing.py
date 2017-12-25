@@ -156,7 +156,6 @@ class TaskWriter(multiprocessing.Process):
                 break
             if poison_pill_case == 2:
                 continue
-            self.check_poison_pill(next_result)
 
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
