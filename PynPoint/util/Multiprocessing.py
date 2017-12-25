@@ -131,8 +131,9 @@ class TaskWriter(multiprocessing.Process):
                 self.m_result_queue.task_done()
             else:
                 # put pack the Poison pill for the moment
-                self.m_result_queue.put(None)
+                print "put back poison pill"
                 self.m_result_queue.task_done()
+                self.m_result_queue.put(None)
                 return False
 
             return True
@@ -149,6 +150,7 @@ class TaskWriter(multiprocessing.Process):
             if self.check_poison_pill(next_result):
                 break
 
+            print "writing"
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
 
