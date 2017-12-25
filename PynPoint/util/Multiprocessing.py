@@ -20,17 +20,12 @@ class TaskResult(object):
 
 
 class TaskInput(object):
-    __metaclass__ = ABCMeta
 
     def __init__(self,
                  input_data,
                  job_parameter):
         self.m_input_data = input_data
         self.m_job_parameter = job_parameter
-
-    @abstractmethod
-    def run_job(self):
-        pass
 
 
 class TaskCreator(multiprocessing.Process):
@@ -68,6 +63,7 @@ class TaskCreator(multiprocessing.Process):
 
 
 class TaskProcessor(multiprocessing.Process):
+    __metaclass__ = ABCMeta
 
     def __init__(self,
                  tasks_queue_in,
@@ -95,7 +91,7 @@ class TaskProcessor(multiprocessing.Process):
             self.m_task_queue.task_done()
             return True
 
-        print "Process " + process_name + " got data for " + str(next_task.m_position) \
+        print "Process " + process_name + " got data for " + str(next_task.m_job_parameter) \
               + " and starts processing..."
 
         return False
@@ -109,12 +105,16 @@ class TaskProcessor(multiprocessing.Process):
             if self.check_poison_pill(next_task=next_task):
                 break
 
-            result = next_task.run_job()
+            result = self.run_job(next_task)
 
             self.m_task_queue.task_done()
             self.m_result_queue.put(result)
 
             print "Process " + self.name + " finished processing!"
+
+    @abstractmethod
+    def run_job(self, tmp_task):
+        pass
 
 
 class TaskWriter(multiprocessing.Process):
@@ -142,12 +142,13 @@ class TaskWriter(multiprocessing.Process):
             print "Start writing row " + str(next_result.m_position)
 
             with self.m_data_mutex:
-                self.m_data_out_port[next_result.m_position] = next_result.m_data_array
+                self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
 
             self.m_result_queue.task_done()
 
-# ------ Mulitprocessing Calsule -------
-class MulitporcessingCapluse(object):
+
+# ------ Multiprocessing Capsule -------
+class MultiprocessingCapsule(object):
     __metaclass__ = ABCMeta
 
     def __init__(self,
@@ -166,14 +167,18 @@ class MulitporcessingCapluse(object):
         self.m_creator = self.init_creator(image_in_port)
 
         # Start consumers
-        self.m_task_processors = [TaskProcessor(tasks_queue_in=self.m_tasks_queue,
-                                                result_queue_in=self.m_result_queue)
-                                  for i in xrange(num_processors)]
+        self.m_task_processors = self.create_processors()
 
         # create writer
         self.m_writer = TaskWriter(self.m_result_queue,
-                                           image_out_port,
-                                           self.m_data_mutex)
+                                   image_out_port,
+                                   self.m_data_mutex)
+
+    def create_processors(self):
+        tmp_processors = [TaskProcessor(tasks_queue_in=self.m_tasks_queue,
+                                        result_queue_in=self.m_result_queue)
+                                  for i in xrange(self.m_num_processors)]
+        return tmp_processors
 
     @abstractmethod
     def init_creator(self, image_in_port):
@@ -210,37 +215,45 @@ def apply_function(tmp_data, func, func_args):
         return np.array(func(tmp_data, *func_args))
 
 
+def to_slice(tuple_slice):
+    """
+    this function is needed for pickling slices
+    :param tuple_slice:
+    :return:
+    """
+    return (slice(tuple_slice[0][0], tuple_slice[0][1], tuple_slice[0][2]),
+            slice(tuple_slice[1][0], tuple_slice[1][1], tuple_slice[1][2]),
+            slice(tuple_slice[2][0], tuple_slice[2][1], tuple_slice[2][2]))
+
+
 # ----- Multiprocessing on lines ------
-class LineTaskInput(TaskInput):
+class LineTaskProcessor(TaskProcessor):
 
     def __init__(self,
-                 input_data,
-                 job_parameter,
-                 result_slice):
-        # TODO Better documentation
-        """
+                 tasks_queue_in,
+                 result_queue_in,
+                 function,
+                 function_args):
+        super(LineTaskProcessor, self).__init__(tasks_queue_in,
+                                                result_queue_in)
+        self.m_function = function
+        self.m_function_args = function_args
 
-        :param input_data:
-        :param job_parameter: tuple (func, func_args)
-        :param result_slice:
-        """
-        super(LineTaskInput, self).__init__(input_data, job_parameter)
-        self.m_result_slice = result_slice
+    def run_job(self, tmp_task):
+        result_arr = np.zeros((tmp_task.m_job_parameter[0],
+                               tmp_task.m_input_data.shape[1],
+                               tmp_task.m_input_data.shape[2]))
 
-    def run_job(self):
-        result_arr = np.zeros((length_of_processed_data,
-                               self.m_input_data.shape[1],
-                               self.m_input_data.shape[2]))
+        for i in range(tmp_task.m_input_data.shape[1]):
+            for j in range(tmp_task.m_input_data.shape[2]):
+                tmp_line = tmp_task.m_input_data[:, i, j]
 
-        for i in range(self.m_input_data.shape[1]):
-            for j in range(self.m_input_data.shape[2]):
-                tmp_line = self.m_input_data[:, i, j]
                 result_arr[:, i, j] = apply_function(tmp_line,
-                                                     self.m_job_parameter[0],
-                                                     self.m_job_parameter[1])
+                                                     self.m_function,
+                                                     self.m_function_args)
 
         result = TaskResult(result_arr,
-                            self.m_result_slice)
+                            tmp_task.m_job_parameter[1])
 
         return result
 
@@ -252,14 +265,13 @@ class LineReader(TaskCreator):
                  tasks_queue_in,
                  data_mutex_in,
                  number_of_processors,
-                 func,
-                 func_args):
+                 length_of_processed_data):
         super(LineReader, self).__init__(data_port_in,
                                          tasks_queue_in,
                                          data_mutex_in,
                                          number_of_processors)
-        self.m_function = func
-        self.m_function_args = func_args
+
+        self.m_length_of_processed_data = length_of_processed_data
 
     def run(self):
 
@@ -277,68 +289,44 @@ class LineReader(TaskCreator):
                 print "Reading lines from " + str(i) + " to " + str(j)
                 tmp_data = self.m_data_in_port[:, i:j, :]
 
-            self.m_task_queue.put(LineTaskInput(tmp_data,
-                                                (self.m_function, self.m_function_args),
-                                                (slice(None, None, None),
-                                                 slice(i, j, None),
-                                                 slice(None, None, None))))
+            self.m_task_queue.put(TaskInput(tmp_data,
+                                            (self.m_length_of_processed_data,
+                                             ((None, None, None),
+                                              (i, j, None),
+                                              (None, None, None)))))
             i = j
 
         self.create_poison_pills()
 
 
-class LineProcessingCapsule(MulitporcessingCapluse):
+class LineProcessingCapsule(MultiprocessingCapsule):
 
     def __init__(self,
                  image_in_port,
                  image_out_port,
                  num_processors,
                  function,
-                 function_args):
-        super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_processors)
+                 function_args,
+                 length_of_processed_data):
         self.m_function = function
         self.m_function_args = function_args
+        self.m_length_of_processed_data = length_of_processed_data
+
+        super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_processors)
+
+    def create_processors(self):
+        tmp_processors = [LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
+                                            result_queue_in=self.m_result_queue,
+                                            function=self.m_function,
+                                            function_args=self.m_function_args)
+                          for i in xrange(self.m_num_processors)]
+        return tmp_processors
 
     def init_creator(self, image_in_port):
         reader = LineReader(image_in_port,
                             self.m_tasks_queue,
                             self.m_data_mutex,
                             self.m_num_processors,
-                            self.m_function,
-                            self.m_function_args)
+                            self.m_length_of_processed_data)
         return reader
-
-
-
-'''
-
-# get first line in time
-init_line = image_in_port[:, 0, 0]
-length_of_processed_data = apply_function(init_line).shape[0]
-
-# we want to replace old values or create a new data set if True
-# if not we want to update the frames
-update = image_out_port.tag == image_in_port.tag
-if update and length_of_processed_data != image_in_port.get_shape()[0]:
-    raise ValueError(
-        "Input and output port have the same tag while %s is changing "
-        "the length of the signal. Use different input and output ports "
-        "instead. " % func)
-
-
-print "Preparing database for analysis ..."
-
-image_out_port.set_all(np.zeros((length_of_processed_data, \
-                                 image_in_port.get_shape()[1], \
-                                 image_in_port.get_shape()[2])),
-                       data_dim=3,
-                       keep_attributes=False)  # overwrite old existing attributes
-
-num_processors = multiprocessing.cpu_count()
-
-print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
-
-# Establish communication queues'''
-
-
 
