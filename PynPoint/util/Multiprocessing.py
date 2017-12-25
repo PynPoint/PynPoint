@@ -137,7 +137,7 @@ class TaskWriter(multiprocessing.Process):
                 print self.m_result_queue.qsize()
                 print "put back poison pill"
                 self.m_result_queue.put(None)
-                #self.m_result_queue.task_done()
+                self.m_result_queue.task_done()
                 print "new pill"
                 print self.m_result_queue.qsize()
                 return 2
@@ -153,10 +153,10 @@ class TaskWriter(multiprocessing.Process):
             # Poison Pill
             poison_pill_case = self.check_poison_pill(next_result)
             if poison_pill_case == 1:
-                continue
+                break
             if poison_pill_case == 2:
-                self.check_poison_pill(next_result)
                 continue
+            self.check_poison_pill(next_result)
 
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
