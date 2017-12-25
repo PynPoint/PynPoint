@@ -95,7 +95,7 @@ class PcaTaskProcessor(TaskProcessor):
         residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
 
         # 1.) mean
-        tmp_res_rot_mean = res_array[20]
+        tmp_res_rot_mean = res_array[0]
 
         residual_output[0, :, :] = tmp_res_rot_mean
 
