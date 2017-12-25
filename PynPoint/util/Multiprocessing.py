@@ -129,15 +129,14 @@ class TaskWriter(multiprocessing.Process):
             if self.m_result_queue.empty():
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
+                return True
             else:
                 # put pack the Poison pill for the moment
                 print "put back poison pill"
                 self.m_result_queue.task_done()
                 self.m_result_queue.put(None)
                 print "new pill"
-                return False
 
-            return True
         return False
 
     def run(self):
