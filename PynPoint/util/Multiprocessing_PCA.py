@@ -158,6 +158,8 @@ class PcaTaskWriter(TaskWriter):
 
             print "Start writing row " + str(next_result.m_position)
 
+            print next_result.m_data_array.shape
+
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = \
                     next_result.m_data_array[0, :, :]
