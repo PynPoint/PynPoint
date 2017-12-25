@@ -85,6 +85,7 @@ class TaskProcessor(multiprocessing.Process):
 
         if next_task is None:
             # got final Poison pill
+
             self.m_result_queue.put(None)  # shut down writer process
 
             print '%s: Exiting' % process_name
@@ -154,6 +155,7 @@ class TaskWriter(multiprocessing.Process):
             if poison_pill_case == 1:
                 break
             if poison_pill_case == 2:
+                self.check_poison_pill(next_result)
                 continue
 
             with self.m_data_mutex:
