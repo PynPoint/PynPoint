@@ -27,7 +27,7 @@ class PSFSubtractionPCA(ProcessingModule):
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
         self.m_extra_rot = extra_rot
 
-        self.m_pca = PCA(n_components=self.m_max_PCAs)
+        self.m_pca = PCA(n_components=self.m_max_PCAs, svd_solver="arpack")
 
         # add input Ports
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
@@ -92,7 +92,7 @@ class PSFSubtractionPCA(ProcessingModule):
                                                 result_requirements=(False, False, False))
         pca_capsule.run()
 
-    def _run_single_processing(self, star_sklearn):
+    def _run_single_processing(self, star_sklearn, star_data):
         # do the fit and write out the result
         # clear all result ports
         self.m_res_mean_out_port.del_all_data()
@@ -186,7 +186,7 @@ class PSFSubtractionPCA(ProcessingModule):
 
         # multiprocessing crashed on Mac in combination with numpy
         if platform == "darwin":
-            self._run_single_processing(star_sklearn)
+            self._run_single_processing(star_sklearn, star_data)
         else:
             self._run_multi_processing(star_data)
 
