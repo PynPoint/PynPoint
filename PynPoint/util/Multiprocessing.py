@@ -129,28 +129,29 @@ class TaskWriter(multiprocessing.Process):
             if self.m_result_queue.empty():
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
-                return True
+                return 1
             else:
                 # put pack the Poison pill for the moment
                 print "put back poison pill"
                 self.m_result_queue.task_done()
                 self.m_result_queue.put(None)
                 print "new pill"
+                return 2
 
-        return False
+        return 0
 
     def run(self):
 
         while True:
             next_result = self.m_result_queue.get()
 
-            print self.m_result_queue.empty()
-
             # Poison Pill
-            if self.check_poison_pill(next_result):
+            poison_pill_case = self.check_poison_pill(next_result)
+            if poison_pill_case == 1:
                 break
+            if poison_pill_case == 2:
+                continue
 
-            print "writing"
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
 
