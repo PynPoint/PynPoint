@@ -135,8 +135,8 @@ class TaskWriter(multiprocessing.Process):
                 # put pack the Poison pill for the moment
                 print self.m_result_queue.qsize()
                 print "put back poison pill"
-                #self.m_result_queue.put(None)
-                self.m_result_queue.task_done()
+                self.m_result_queue.put(None)
+                #self.m_result_queue.task_done()
                 print "new pill"
                 print self.m_result_queue.qsize()
                 return 2
