@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.decomposition import PCA
 from scipy import ndimage
 
-
 class PcaTaskCreator(TaskCreator):
 
     def __init__(self,
@@ -57,6 +56,8 @@ class PcaTaskProcessor(TaskProcessor):
 
     def run_job(self, tmp_task):
 
+        print 1
+
         pca_number = tmp_task.m_input_data
 
         tmp_pca_representation = np.matmul(self.m_pca_model.components_[:pca_number],
@@ -66,21 +67,30 @@ class PcaTaskProcessor(TaskProcessor):
                                             np.zeros((self.m_pca_model.n_components - pca_number,
                                                       self.m_star_arr.shape[0])))).T
 
+        print 2
+
+        #tmp_psf_images = np.matmul(tmp_pca_representation[0:200, :], self.m_pca_model.components_[:,0:200])
+
         tmp_psf_images = self.m_pca_model.inverse_transform(tmp_pca_representation)
+
+        print 3.1
+
         tmp_psf_images = tmp_psf_images.reshape((self.m_star_arr.shape[0],
                                                  self.m_star_arr.shape[1],
                                                  self.m_star_arr.shape[2]))
+        print 3.2
 
         # subtract the psf model of the star
         tmp_without_psf = self.m_star_arr - tmp_psf_images
 
+        print 3
+
         # inverse rotation
-        delta_para = - self.m_angles
         res_array = np.zeros(shape=tmp_without_psf.shape)
-        for i in range(0, len(delta_para)):
+        for i in range(0, len(self.m_angles)):
             res_temp = tmp_without_psf[i, ]
             res_array[i, ] = ndimage.rotate(res_temp,
-                                            delta_para[i],
+                                            self.m_angles[i],
                                             reshape=False)
         # create residuals
         res_length = 3
@@ -173,7 +183,6 @@ class PcaTaskWriter(TaskWriter):
 class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
     def __init__(self,
-                 image_in_port,
                  mean_out_port,
                  median_out_port,
                  clip_out_port,
@@ -182,11 +191,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_model,
                  star_arr,
                  rotations,
-                 result_requirements = (False, False, False)):
-
-        super(PcaMultiprocessingCapsule, self).__init__(image_in_port,
-                                                        None,
-                                                        num_processors)
+                 result_requirements=(False, False, False)):
 
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
@@ -196,6 +201,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_pca_model = pca_model
         self.m_star_arr = star_arr
         self.m_rotations = rotations
+
+        super(PcaMultiprocessingCapsule, self).__init__(None,
+                                                        None,
+                                                        num_processors)
 
     def create_writer(self, image_out_port):
         tmp_writer = PcaTaskWriter(self.m_result_queue,

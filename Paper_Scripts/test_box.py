@@ -10,6 +10,8 @@ pipeline = Pypeline("/Users/markusbonse/Desktop/BetaPic",
                     "/Users/markusbonse/Desktop/BetaPic",
                     "/Users/markusbonse/Desktop/Results")
 
+
+'''
 wv = CwtWaveletConfiguration(wavelet="dog",
                              wavelet_order=2,
                              keep_mean=False,
@@ -26,4 +28,14 @@ time_denoising = WaveletTimeDenoisingModule(wv,
 
 pipeline.add_module(time_denoising)
 
-pipeline.run_module("time_denoising")
+pipeline.run_module("time_denoising")'''
+
+from PynPoint.processing_modules import PSFSubtractionPCAmulit
+
+psf_subtraction = PSFSubtractionPCAmulit(range(10),
+                                         name_in="PSF_subtraction",
+                                         images_in_tag="10_stacked",
+                                         reference_in_tag="10_stacked")
+pipeline.add_module(psf_subtraction)
+
+pipeline.run_module("PSF_subtraction")

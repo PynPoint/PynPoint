@@ -15,4 +15,4 @@ from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule
-from PSFSubtractionPCA import PSFSubtractionPCA
+from PSFSubtractionPCA import PSFSubtractionPCA, PSFSubtractionPCAmulit
