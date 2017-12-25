@@ -152,10 +152,7 @@ class PcaTaskWriter(TaskWriter):
             next_result = self.m_result_queue.get()
 
             # Poison Pill
-            if next_result is None:
-                print "Shutting down writer..."
-                self.m_result_queue.task_done()
-                print "Finished Multiprocessing task"
+            if self.check_poison_pill(next_result):
                 break
 
             with self.m_data_mutex:

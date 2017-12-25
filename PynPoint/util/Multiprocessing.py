@@ -123,6 +123,21 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_mutex = data_mutex_in
         self.m_data_out_port = data_out_port_in
 
+    def check_poison_pill(self, next_result):
+        if next_result is None:
+            # check if no results are after the poison pill
+            if self.m_result_queue.empty():
+                print "Shutting down writer..."
+                self.m_result_queue.task_done()
+            else:
+                # put pack the Poison pill for the moment
+                self.m_result_queue.put(None)
+                self.m_result_queue.task_done()
+                return False
+
+            return True
+        return False
+
     def run(self):
 
         while True:
@@ -131,18 +146,7 @@ class TaskWriter(multiprocessing.Process):
             print self.m_result_queue.empty()
 
             # Poison Pill
-            if next_result is None:
-                # check if no results are after the poison pill
-                if self.m_result_queue.empty():
-                    print "Shutting down writer..."
-                    self.m_result_queue.task_done()
-                else:
-                    print "hey"
-                    # put pack the Poison pill for the moment
-                    self.m_result_queue.put(None)
-                    self.m_result_queue.task_done()
-                    continue
-
+            if self.check_poison_pill(next_result):
                 break
 
             with self.m_data_mutex:
