@@ -61,8 +61,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  denoising_threshold=1.0,
                  padding="zero",
                  median_filter=True,
-                 threshold_function="soft",
-                 num_rows_in_memory=40):
+                 threshold_function="soft"):
         """
         :type image_in_tag: list and str
         :type denoising_threshold: list and float
@@ -93,8 +92,6 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         else:
             raise ValueError("image_in_tag needs to be a list or a string.")
-
-        self.m_num_rows_in_memory = num_rows_in_memory
 
         # Parameters
         self.m_wavelet_configuration = wavelet_configuration
@@ -198,9 +195,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             # Calculate Results
             self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
                                                                  self.m_image_in_port,
-                                                                 self.m_tmp_data_port_denoising,
-                                                                 num_rows_in_memory=
-                                                                 self.m_num_rows_in_memory)
+                                                                 self.m_tmp_data_port_denoising)
             print "Finished analyzing. Start splitting ..."
 
             tmp_num_elements_per_threshold = self.m_image_in_port.get_shape()[0]
@@ -228,9 +223,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         else:
             self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
                                                                  self.m_image_in_port,
-                                                                 self.m_image_out_port,
-                                                                 num_rows_in_memory=
-                                                                 self.m_num_rows_in_memory)
+                                                                 self.m_image_out_port)
 
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Wavelet time denoising",
