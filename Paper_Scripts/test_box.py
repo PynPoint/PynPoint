@@ -6,9 +6,9 @@ if module_path not in sys.path:
 from PynPoint import Pypeline
 from PynPoint.processing_modules import WaveletTimeDenoisingModule, CwtWaveletConfiguration
 
-pipeline = Pypeline("/scratch/user/mbonse/FastPca",
-                    "/scratch/user/mbonse/FastPca",
-                    "/scratch/user/mbonse/FastPca")
+pipeline = Pypeline("/Users/markusbonse/Desktop/BetaPic",
+                    "/Users/markusbonse/Desktop/BetaPic",
+                    "/Users/markusbonse/Desktop/Results")
 
 from PynPoint.processing_modules import PSFSubtractionPCA
 

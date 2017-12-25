@@ -155,6 +155,7 @@ class PcaTaskWriter(TaskWriter):
             if next_result is None:
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
+                print "Finished Multiprocessing task"
                 break
 
             with self.m_data_mutex:
