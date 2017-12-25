@@ -91,9 +91,6 @@ class TaskProcessor(multiprocessing.Process):
             self.m_task_queue.task_done()
             return True
 
-        print "Process " + process_name + " got data for " + str(next_task.m_job_parameter) \
-              + " and starts processing..."
-
         return False
 
     def run(self):
@@ -109,8 +106,6 @@ class TaskProcessor(multiprocessing.Process):
 
             self.m_task_queue.task_done()
             self.m_result_queue.put(result)
-
-            print "Process " + self.name + " finished processing!"
 
     @abstractmethod
     def run_job(self, tmp_task):
@@ -138,8 +133,6 @@ class TaskWriter(multiprocessing.Process):
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
                 break
-
-            print "Start writing row " + str(next_result.m_position)
 
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
