@@ -30,12 +30,12 @@ pipeline.add_module(time_denoising)
 
 pipeline.run_module("time_denoising")'''
 
-from PynPoint.processing_modules import PSFSubtractionPCAmulit
+from PynPoint.processing_modules import PSFSubtractionPCA
 
-psf_subtraction = PSFSubtractionPCAmulit(range(1),
-                                         name_in="PSF_subtraction",
-                                         images_in_tag="10_stacked",
-                                         reference_in_tag="10_stacked")
+psf_subtraction = PSFSubtractionPCA(range(1),
+                                    name_in="PSF_subtraction",
+                                    images_in_tag="10_stacked",
+                                    reference_in_tag="10_stacked")
 pipeline.add_module(psf_subtraction)
 
 pipeline.run_module("PSF_subtraction")
