@@ -289,8 +289,8 @@ class ProcessingModule(PypelineModule):
 
         self._m_data_base = data_base_in
 
-    @staticmethod
-    def apply_function_to_line_in_time_multi_processing(func,
+    def apply_function_to_line_in_time_multi_processing(self,
+                                                        func,
                                                         image_in_port,
                                                         image_out_port,
                                                         func_args=None):
@@ -314,8 +314,7 @@ class ProcessingModule(PypelineModule):
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        # TODO replace this hyper parameter in config file
-        num_processors = multiprocessing.cpu_count()
+        num_processors = self._m_config_port.get_attribute("CPU_COUNT")
 
         print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
 

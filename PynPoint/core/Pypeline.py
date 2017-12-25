@@ -5,6 +5,7 @@ import collections
 import os
 import warnings
 import configparser
+import multiprocessing
 
 import h5py
 import numpy as np
@@ -113,6 +114,8 @@ class Pypeline(object):
         :return: None
         """
 
+        max_cpu_count = multiprocessing.cpu_count()
+
         config_dict = {'INSTRUMENT': 'INSTRUME',
                        'NFRAMES': 'NAXIS3',
                        'EXP_NO': 'ESO DET EXP NO',
@@ -120,7 +123,8 @@ class Pypeline(object):
                        'PARANG_START': 'ESO ADA POSANG',
                        'PARANG_END': 'ESO ADA POSANG END',
                        'PIXSCALE': 0.027,
-                       'MEMORY': 100}
+                       'MEMORY': 1000,
+                       'CPU_COUNT': max_cpu_count}
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 

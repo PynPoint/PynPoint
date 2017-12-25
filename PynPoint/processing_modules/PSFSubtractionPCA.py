@@ -76,7 +76,8 @@ class PSFSubtractionPCA(ProcessingModule):
         self.m_res_median_out_port.set_all(tmp_output, keep_attributes=False)
         self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        print("Start calculating PSF models")
+        cpu_count = self._m_config_port.get_attribute("CPU_COUNT")
+        print("Start calculating PSF models with " + str(cpu_count) + " processes")
 
         rotations = - self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
@@ -84,7 +85,7 @@ class PSFSubtractionPCA(ProcessingModule):
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
                                                 self.m_res_rot_mean_clip_out_port,
-                                                10,
+                                                cpu_count,
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
                                                 deepcopy(star_data),
