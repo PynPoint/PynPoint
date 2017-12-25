@@ -170,9 +170,13 @@ class MultiprocessingCapsule(object):
         self.m_task_processors = self.create_processors()
 
         # create writer
-        self.m_writer = TaskWriter(self.m_result_queue,
-                                   image_out_port,
-                                   self.m_data_mutex)
+        self.m_writer = self.create_writer(image_out_port)
+
+    def create_writer(self, image_out_port):
+        tmp_writer = TaskWriter(self.m_result_queue,
+                                image_out_port,
+                                self.m_data_mutex)
+        return tmp_writer
 
     def create_processors(self):
         tmp_processors = [TaskProcessor(tasks_queue_in=self.m_tasks_queue,
