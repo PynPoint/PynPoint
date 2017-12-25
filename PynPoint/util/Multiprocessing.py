@@ -191,15 +191,23 @@ class MultiprocessingCapsule(object):
         self.m_writer.start()
 
         # Wait for all of the tasks to finish
+        print 1
         self.m_tasks_queue.join()
         self.m_result_queue.join()
+
+        print 2
 
         # Clean up Processes
         for processor in self.m_task_processors:
             processor.join()
 
+        print 3
+
         self.m_writer.join()
+        print 4
         self.m_creator.join()
+
+        print 5
 
 
 # ----- Handler to apply a function ------
