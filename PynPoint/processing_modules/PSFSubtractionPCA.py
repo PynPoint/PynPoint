@@ -102,7 +102,7 @@ class PSFSubtractionPCAmulit(ProcessingModule):
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
                                                 self.m_res_rot_mean_clip_out_port,
-                                                1,
+                                                10,
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
                                                 deepcopy(star_data),
