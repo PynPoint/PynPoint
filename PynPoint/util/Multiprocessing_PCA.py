@@ -79,12 +79,13 @@ class PcaTaskProcessor(TaskProcessor):
 
         # inverse rotation
         res_array = np.zeros(shape=tmp_without_psf.shape)
-        print self.m_angles
         for i in range(0, len(self.m_angles)):
             res_temp = tmp_without_psf[i, ]
             res_array[i, ] = ndimage.rotate(res_temp,
-                                            0,
+                                            self.m_angles[i],
                                             reshape=False)
+
+        print res_array.shape
         # create residuals
         res_length = 3
 
@@ -96,6 +97,8 @@ class PcaTaskProcessor(TaskProcessor):
         # 1.) mean
         tmp_res_rot_mean = np.mean(res_array,
                                    axis=0)
+
+        print tmp_res_rot_mean.shape
 
         residual_output[0, :, :] = tmp_res_rot_mean
 
