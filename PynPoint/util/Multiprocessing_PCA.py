@@ -23,7 +23,7 @@ class PcaTaskCreator(TaskCreator):
         for pca_number in self.m_pca_numbers:
 
             self.m_task_queue.put(TaskInput(pca_number,
-                                            (((tmp_result_position, None, None),
+                                            (((tmp_result_position, tmp_result_position+1, None),
                                              (None, None, None),
                                              (None, None, None)),))
                                   )
