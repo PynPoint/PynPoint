@@ -124,9 +124,9 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_out_port = data_out_port_in
 
     def check_poison_pill(self, next_result):
+        print self.m_result_queue.empty()
         if next_result is None:
             # check if no results are after the poison pill
-            print self.m_result_queue.empty()
             if self.m_result_queue.empty():
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
