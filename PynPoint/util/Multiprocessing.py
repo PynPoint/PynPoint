@@ -153,7 +153,7 @@ class TaskWriter(multiprocessing.Process):
             # Poison Pill
             poison_pill_case = self.check_poison_pill(next_result)
             if poison_pill_case == 1:
-                break
+                continue
             if poison_pill_case == 2:
                 self.check_poison_pill(next_result)
                 continue
