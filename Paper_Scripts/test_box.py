@@ -10,16 +10,6 @@ pipeline = Pypeline("/scratch/user/mbonse/FastPca",
                     "/scratch/user/mbonse/FastPca",
                     "/scratch/user/mbonse/FastPca")
 
-from PynPoint.processing_modules import StackAndSubsetModule
-
-stack = StackAndSubsetModule(name_in="stacking",
-                             image_in_tag="psf_normalized",
-                             image_out_tag="10_stacked",
-                             stacking=10)
-
-pipeline.add_module(stack)
-pipeline.run_module("stacking")
-
 
 '''
 wv = CwtWaveletConfiguration(wavelet="dog",
