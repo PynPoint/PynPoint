@@ -193,6 +193,7 @@ class MultiprocessingCapsule(object):
         # Wait for all of the tasks to finish
         print 1
         self.m_tasks_queue.join()
+        print 1.1
         self.m_result_queue.join()
 
         print 2
