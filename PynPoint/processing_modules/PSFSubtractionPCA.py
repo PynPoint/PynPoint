@@ -84,10 +84,6 @@ class PSFSubtractionPCAmulit(ProcessingModule):
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
 
-        # prepare the data for sklearns PCA
-        star_sklearn = star_data.reshape((star_data.shape[0],
-                                          star_data.shape[1] * star_data.shape[2]))
-
         # do the fit and write out the result
         # clear all result ports
         tmp_output = np.zeros((len(self.m_components),
@@ -109,7 +105,7 @@ class PSFSubtractionPCAmulit(ProcessingModule):
                                                 1,
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
-                                                deepcopy(star_sklearn),
+                                                deepcopy(star_data),
                                                 deepcopy(rotations),
                                                 result_requirements=(False, False, False))
         pca_capsule.run()

@@ -58,10 +58,13 @@ class PcaTaskProcessor(TaskProcessor):
 
         print 1
 
+        star_sklearn = star_data.reshape((self.m_star_arr.shape[0],
+                                          self.m_star_arr.shape[1] * self.m_star_arr.shape[2]))
+
         pca_number = tmp_task.m_input_data
 
         tmp_pca_representation = np.matmul(self.m_pca_model.components_[:pca_number],
-                                           self.m_star_arr.T)
+                                           star_sklearn.T)
 
         tmp_pca_representation = np.vstack((tmp_pca_representation,
                                             np.zeros((self.m_pca_model.n_components - pca_number,
