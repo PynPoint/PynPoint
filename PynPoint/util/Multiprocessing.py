@@ -125,7 +125,6 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_out_port = data_out_port_in
 
     def check_poison_pill(self, next_result):
-        print self.m_result_queue.empty()
         if next_result is None:
             # check if no results are after the poison pill
             if self.m_result_queue.empty():
@@ -134,12 +133,9 @@ class TaskWriter(multiprocessing.Process):
                 return 1
             else:
                 # put pack the Poison pill for the moment
-                print self.m_result_queue.qsize()
                 print "put back poison pill"
                 self.m_result_queue.put(None)
                 self.m_result_queue.task_done()
-                print "new pill"
-                print self.m_result_queue.qsize()
                 return 2
 
         else:
@@ -214,24 +210,15 @@ class MultiprocessingCapsule(object):
         self.m_writer.start()
 
         # Wait for all of the tasks to finish
-        print 1
         self.m_tasks_queue.join()
-        print 1.1
         self.m_result_queue.join()
-
-        print 2
 
         # Clean up Processes
         for processor in self.m_task_processors:
             processor.join()
 
-        print 3
-
         self.m_writer.join()
-        print 4
         self.m_creator.join()
-
-        print 5
 
 
 # ----- Handler to apply a function ------
