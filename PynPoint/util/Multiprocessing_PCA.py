@@ -58,8 +58,8 @@ class PcaTaskProcessor(TaskProcessor):
 
         print 1
 
-        star_sklearn = star_data.reshape((self.m_star_arr.shape[0],
-                                          self.m_star_arr.shape[1] * self.m_star_arr.shape[2]))
+        star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
+                                                self.m_star_arr.shape[1] * self.m_star_arr.shape[2]))
 
         pca_number = tmp_task.m_input_data
 
