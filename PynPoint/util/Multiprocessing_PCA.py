@@ -83,7 +83,7 @@ class PcaTaskProcessor(TaskProcessor):
         for i in range(0, len(self.m_angles)):
             res_temp = tmp_without_psf[i, ]
             res_array[i, ] = ndimage.rotate(res_temp,
-                                            -self.m_angles[i],
+                                            0,
                                             reshape=False)
         # create residuals
         res_length = 3
