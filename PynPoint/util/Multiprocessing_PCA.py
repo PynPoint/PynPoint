@@ -2,7 +2,7 @@ from Multiprocessing import *
 import numpy as np
 from sklearn.decomposition import PCA
 from scipy import ndimage
-from copy import deepcopy
+
 
 class PcaTaskCreator(TaskCreator):
 
@@ -21,13 +21,13 @@ class PcaTaskCreator(TaskCreator):
 
         tmp_result_position = 0
         for pca_number in self.m_pca_numbers:
-            tmp_result_position += 1
 
             self.m_task_queue.put(TaskInput(pca_number,
                                             (((tmp_result_position, None, None),
                                              (None, None, None),
                                              (None, None, None)),))
                                   )
+            tmp_result_position += 1
         self.create_poison_pills()
 
 
@@ -156,10 +156,6 @@ class PcaTaskWriter(TaskWriter):
                 print "Shutting down writer..."
                 self.m_result_queue.task_done()
                 break
-
-            print "Start writing row " + str(next_result.m_position)
-
-            print next_result.m_data_array.shape
 
             with self.m_data_mutex:
                 self.m_data_out_port[to_slice(next_result.m_position)] = \
