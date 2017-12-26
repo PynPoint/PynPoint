@@ -1,10 +1,21 @@
-from Multiprocessing import *
+"""
+Multiprocessing for PCA PSF Subtraction. It is penalization to run multiple pca component
+configurations at the same time. The PCA basis is required as input. Note due to missing
+functionality in numpy this does not run on Mac.
+"""
+
+from PynPoint.util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter,\
+    MultiprocessingCapsule, to_slice, TaskInput, TaskResult
 import numpy as np
-from sklearn.decomposition import PCA
 from scipy import ndimage
 
 
 class PcaTaskCreator(TaskCreator):
+    """
+    Task Creator of the PCA multiprocessing. This Creator does not need an input port since the data
+    is directly given to the Task Processors. It creates one task for each pca component number
+    required.
+    """
 
     def __init__(self,
                  tasks_queue_in,
@@ -24,14 +35,25 @@ class PcaTaskCreator(TaskCreator):
 
             self.m_task_queue.put(TaskInput(pca_number,
                                             (((tmp_result_position, tmp_result_position+1, None),
-                                             (None, None, None),
-                                             (None, None, None)),))
-                                  )
+                                              (None, None, None),
+                                              (None, None, None)),)))
             tmp_result_position += 1
         self.create_poison_pills()
 
 
 class PcaTaskProcessor(TaskProcessor):
+    """
+    The Task Processor of the PCA multiprocessing is the core of the parallization. One instance
+    of this class will calculate one forward and backward PCA transformation given the pretrained
+    sklearn PCA model. It does not get data from the Task Creator but uses its own copy of the
+    star data, which is the same independent of the task. Finally it will create the residual:
+
+    * The mean residual: my default
+    * The median if result_requirements[0]  = True
+    * The clipped mean if result_requirements[1]  = True
+    * The non stacked result frames if result_requirements[2]  = True
+    (not implemented for multiprocessing yet)
+    """
 
     def __init__(self,
                  tasks_queue_in,
@@ -58,7 +80,8 @@ class PcaTaskProcessor(TaskProcessor):
     def run_job(self, tmp_task):
 
         star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
-                                                self.m_star_arr.shape[1] * self.m_star_arr.shape[2]))
+                                                self.m_star_arr.shape[1] *
+                                                self.m_star_arr.shape[2]))
 
         pca_number = tmp_task.m_input_data
 
@@ -114,10 +137,10 @@ class PcaTaskProcessor(TaskProcessor):
                 for j in range(0, res_rot_mean_clip.shape[1]):
                     temp = res_array[:, i, j]
                     if temp.var() > 0.0:
-                        a = temp - temp.mean()
-                        b1 = a.compress((a < 3.0*np.sqrt(a.var())).flat)
-                        b2 = b1.compress((b1 > (-1.0)*3.0*np.sqrt(a.var())).flat)
-                        res_rot_mean_clip[i, j] = temp.mean() + b2.mean()
+                        no_mean = temp - temp.mean()
+                        part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
+                        part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
+                        res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
 
             residual_output[2, :, :] = res_rot_mean_clip
 
@@ -125,12 +148,16 @@ class PcaTaskProcessor(TaskProcessor):
         if self.m_result_requirements[2]:
             residual_output[3:, :, :] = res_array
 
-        print("Created Residual with " + str(pca_number) + " components")
+        print "Created Residual with " + str(pca_number) + " components"
 
         return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 
 
 class PcaTaskWriter(TaskWriter):
+    """
+    The Writer of the PCA palatalization uses three different ports to save the results of the
+    Task Processors (mean, median, clipped). If they are not reburied they can be None.
+    """
 
     def __init__(self,
                  result_queue_in,
@@ -174,6 +201,9 @@ class PcaTaskWriter(TaskWriter):
 
 
 class PcaMultiprocessingCapsule(MultiprocessingCapsule):
+    """
+    Capsule for PCA multiprocess using the poison pill pattern.
+    """
 
     def __init__(self,
                  mean_out_port,
@@ -221,5 +251,5 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                                            self.m_rotations,
                                            self.m_pca_model,
                                            self.m_result_requirements)
-                          for i in xrange(self.m_num_processors)]
+                          for _ in xrange(self.m_num_processors)]
         return tmp_processors

@@ -186,7 +186,7 @@ class PSFSubtractionPCA(ProcessingModule):
                                           star_data.shape[1] * star_data.shape[2]))
 
         # multiprocessing crashed on Mac in combination with numpy
-        if platform == "darwin":
+        if platform == "darwin" or self.m_res_arr_required:
             self._run_single_processing(star_sklearn, star_data)
         else:
             self._run_multi_processing(star_data)
