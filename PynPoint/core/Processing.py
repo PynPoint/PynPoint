@@ -3,13 +3,11 @@ Different interfaces for Pypeline Modules.
 """
 import os
 import warnings
-import multiprocessing
-from abc import ABCMeta, abstractmethod
-from PynPoint.util.Multiprocessing import *
+from abc import abstractmethod, ABCMeta
+from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 import numpy as np
-
-from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 
 class PypelineModule:
@@ -174,14 +172,6 @@ class WritingModule(PypelineModule):
         pass
 
 
-class TaskData(object):
-    def __init__(self,
-                 data_array,
-                 position):
-        self.m_data_array = data_array
-        self.m_position = position
-
-
 class ProcessingModule(PypelineModule):
     """
     The abstract class ProcessingModule is an interface for all processing steps in the pipeline
@@ -294,6 +284,14 @@ class ProcessingModule(PypelineModule):
                                                         image_in_port,
                                                         image_out_port,
                                                         func_args=None):
+        """
+        Applies a given function to all lines in time.
+        :param func: The function to be applied
+        :param image_in_port: Input Port where the data to be processed is located
+        :param image_out_port: Input Port where the results will be stored
+        :param func_args: addition arguments needed for the function (can be None)
+        :return: None
+        """
 
         # get first line in time
         init_line = image_in_port[:, 0, 0]
@@ -309,8 +307,8 @@ class ProcessingModule(PypelineModule):
                 "instead. " % func)
 
         image_out_port.set_all(np.zeros((length_of_processed_data,
-                                        image_in_port.get_shape()[1],
-                                        image_in_port.get_shape()[2])),
+                                         image_in_port.get_shape()[1],
+                                         image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
