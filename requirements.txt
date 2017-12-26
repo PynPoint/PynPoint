@@ -11,6 +11,7 @@ opencv-python
 scikit-image
 pytest
 numdifftools
+sphinx
 
 # old_version
 pyfits
