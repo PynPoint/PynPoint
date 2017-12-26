@@ -44,7 +44,8 @@ class PSFSubtractionPCA(ProcessingModule):
         multiple tags will be created in the central database. (if None results will not be
         calculated)
         :param res_rot_mean_clip_tag: Tag for the clipped mean residual output (if None results will
-         not be calculated)
+         not be
+        calculated)
         :param extra_rot: Extra rotation angle which will be added to the NEW_PARA values
         """
 
