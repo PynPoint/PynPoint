@@ -4,6 +4,7 @@ Modules for photometry and astrometry.
 
 import math
 import warnings
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,7 +54,7 @@ class FakePlanetModule(ProcessingModule):
                            as fake planet. Can be either a single image (2D) or a cube (3D) with
                            the dimensions equal to *image_in_tag*.
         :type psf_in_tag: str
-        :param image_out_tag: Tag of the database entry with images that is written as output.
+        :param image_out_tag: Tag of the database entry with images that are written as output.
         :type image_out_tag: str
 
         :return: None
@@ -76,53 +77,98 @@ class FakePlanetModule(ProcessingModule):
         """
         Run method of the module. Shifts the reference PSF to the location of the fake planet
         with an additional correction for the parallactic angle and writes the stack with images
-        with the injected fake planet.
+        with the injected planet signal.
 
         :return: None
         """
 
-        pixscale = self._m_config_port.get_attribute("PIXSCALE")
-
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         parang = self.m_image_in_port.get_attribute("NEW_PARA")
         parang *= math.pi/180.
-
-        # TODO use MEMORY in order to not load all data at once
-        image = self.m_image_in_port.get_all()
-        psf = self.m_psf_in_port.get_all()
-
-        if psf.ndim == 3 and psf.shape[0] != image.shape[0]:
-            psf = np.mean(psf, axis=0)
 
         radial = self.m_position[0]/pixscale
         theta = self.m_position[1]*math.pi/180. + math.pi/2.
 
         flux_ratio = 10.**(-self.m_magnitude/2.5)
 
-        for i in range(np.size(image, 0)):
-            x_shift = radial*math.cos(theta-parang[i])
-            y_shift = radial*math.sin(theta-parang[i])
+        ndim_image = np.size(self.m_image_in_port.get_shape())
+        ndim_psf = np.size(self.m_psf_in_port.get_shape())
 
-            psf_tmp = np.copy(psf)
+        if ndim_image == 3:
+            n_image = self.m_image_in_port.get_shape()[0]
+            n_stack_im = int(float(n_image)/float(memory))
+            im_size = (self.m_image_in_port.get_shape()[1],
+                       self.m_image_in_port.get_shape()[2])
 
-            if psf_tmp.ndim == 2:
-                psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=5, mode='reflect')
+        else:
+            raise ValueError("The image_in_tag should contain a cube of images.")
 
-            elif psf_tmp.ndim == 3:
-                if psf_tmp.shape[0] == image.shape[0]:
-                    psf_tmp = shift(psf_tmp[i,],
-                                    (y_shift, x_shift),
-                                    order=5,
-                                    mode='reflect')
+        if ndim_psf == 2:
+            n_psf = 1
+            psf_size = (self.m_image_in_port.get_shape()[0],
+                        self.m_image_in_port.get_shape()[1])
 
-                else:
-                    psf_tmp = shift(psf_tmp,
-                                    (y_shift, x_shift),
-                                    order=5,
-                                    mode='reflect')
+        elif ndim_psf == 3:
+            n_psf = self.m_psf_in_port.get_shape()[0]
+            psf_size = (self.m_image_in_port.get_shape()[1],
+                        self.m_image_in_port.get_shape()[2])
 
-            image[i,] += self.m_scaling*flux_ratio*psf_tmp
+        if psf_size != im_size:
+            raise ValueError("The images in image_in_tag "+str(im_size)+" should have the same "
+                             "dimensions as the image(s) in psf_in_tag "+str(psf_size)+".")
 
-        self.m_image_out_port.set_all(image)
+        n_stack_psf = int(float(n_psf)/float(memory))
+
+        im_stacks = np.zeros(1, dtype=np.int)
+        for i in range(n_stack_im):
+            im_stacks = np.append(im_stacks, im_stacks[i]+memory)
+        if n_stack_im*memory != n_image:
+            im_stacks = np.append(im_stacks, n_image)
+
+        if ndim_psf == 2:
+            psf = self.m_psf_in_port.get_all()
+
+        if ndim_psf == 3 and n_image != n_psf:
+            warnings.warn("The number of images in psf_in_tag does not match with image_in_tag. "
+                          "Calculating the mean of psf_in_tag...")
+
+            psf = np.zeros((self.m_image_in_port.get_shape()[1],
+                            self.m_image_in_port.get_shape()[2]))
+
+            for i in range(n_stack_psf):
+                psf += np.sum(self.m_psf_in_port[i*memory:(i+1)*memory], axis=0)
+
+            if n_stack_psf*memory != n_psf:
+                psf += np.sum(self.m_psf_in_port[n_stack_psf*memory:n_psf], axis=0)
+
+            psf /= float(n_psf)
+
+        for j, _ in enumerate(im_stacks[:-1]):
+            image = self.m_psf_in_port[im_stacks[j]:im_stacks[j+1]]
+
+            for i in range(image.shape[0]):
+                x_shift = radial*math.cos(theta-parang[j*memory+i])
+                y_shift = radial*math.sin(theta-parang[j*memory+i])
+
+                if ndim_psf == 2 or (ndim_psf == 3 and n_psf != n_image):
+
+                    psf_tmp = np.copy(psf)
+
+                elif ndim_psf == 3 and n_psf == n_image:
+                    psf_tmp = self.m_psf_in_port[j*memory+i]
+
+                psf_tmp = shift(psf_tmp,
+                                (y_shift, x_shift),
+                                order=5,
+                                mode='reflect')
+
+                image[i,] += self.m_scaling*flux_ratio*psf_tmp
+
+            if j == 0:
+                self.m_image_out_port.set_all(image)
+            else:
+                self.m_image_out_port.append(image)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -137,7 +183,8 @@ class FakePlanetModule(ProcessingModule):
 
 class HessianMatrixModule(ProcessingModule):
     """
-    Module to
+    Module to measure the flux and position of a planet signal by injecting negative fake planets
+    and minimizing the curvature at the planet location.
     """
 
     def __init__(self,
@@ -148,11 +195,11 @@ class HessianMatrixModule(ProcessingModule):
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
                  image_out_tag="im_hessian",
-                 subpix=10.,
+                 subpix=5.,
                  tolerance=0.1,
                  sigma=1.,
                  crop_size=10,
-                 num_pos=100,
+                 num_pos=10,
                  pca_number=20,
                  mask=0.1):
         """
@@ -174,8 +221,10 @@ class HessianMatrixModule(ProcessingModule):
                            planet. Can be either a single image (2D) or a cube (3D) with the
                            dimensions equal to *image_in_tag*.
         :type psf_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output with the
-                              best-fit negative planet injected.
+        :param image_out_tag: Tag of the database entry that is written as output. Contains the
+                              results from the PSF subtraction during the minimization of the
+                              image curvature. The last image contains the image with the
+                              best-fit curvature.
         :type image_out_tag: str
         :param subpix: Subpixel precision (1/subpix) for the optimization of the astrometry
                        (and photometry?).
@@ -186,8 +235,8 @@ class HessianMatrixModule(ProcessingModule):
         :type sigma: float
         :param crop_size: Size of the cropped image on which the Hessian matrix is calculated.
         :type crop_size: int
-        :param num_pos: Sampling of the cropped image. The curvature at *num_pos x num_pos*
-                        equally spaced positions is sampled.
+        :param num_pos: Sampling of the cropped image. The curvature is sampled at
+                        *num_pos x num_pos* equally spaced positions.
         :type num_pos: int
         :param pca_number: Number of principle components used for the PSF subtraction
         :type pca_number: int
@@ -204,6 +253,7 @@ class HessianMatrixModule(ProcessingModule):
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_position = position
         self.m_magnitude = magnitude
@@ -221,7 +271,10 @@ class HessianMatrixModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module.
+        Run method of the module. The position and flux of a planet are measured by injecting
+        negative fake companions and applying a Nelder-Mead method minimization of the curvature
+        of the image at the planet location. The curvature is calculated as the sum of the
+        absolute values of the determinant of the Hessian matrix.
 
         :return: None
         """
@@ -233,10 +286,10 @@ class HessianMatrixModule(ProcessingModule):
 
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)*pixscale
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
-            
+
             if ang < 360.:
                 ang += 360.
-            
+
             print "Trying separation [arcsec] = " + "{0:.3f}".format(sep) + \
                   ", PA [deg] = " + "{0:.2f}".format(ang) + \
                   ", contrast [mag] = " + "{0:.2f}".format(mag) + " ..."
@@ -245,7 +298,7 @@ class HessianMatrixModule(ProcessingModule):
                                            magnitude=mag,
                                            scaling=self.m_scaling,
                                            name_in="fake_planet",
-                                           image_in_tag=self.m_psf_in_tag,
+                                           image_in_tag=self.m_image_in_tag,
                                            psf_in_tag=self.m_psf_in_tag,
                                            image_out_tag="hessian_fake")
 
@@ -275,63 +328,76 @@ class HessianMatrixModule(ProcessingModule):
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()
 
-            self.m_res_input_port = self.add_input_port("hessian_res_mean")
-
-            im_res = self.m_res_input_port.get_all()
+            res_input_port = self.add_input_port("hessian_res_mean")
+            im_res = res_input_port.get_all()
             im_smooth = gaussian_filter(im_res, sigma=self.m_sigma)
 
             im_crop = Cutout2D(data=im_smooth,
                                position=(pos_x, pos_y),
                                size=(self.m_crop_size, self.m_crop_size)).data
 
+            self.m_image_out_port.append(im_res, data_dim=3)
+
             xx = np.arange(self.m_crop_size)
             yy = np.arange(self.m_crop_size)
             im_interp = interp2d(xx, yy, im_crop, kind='cubic')
 
-            sum_det = 0.
+            hessian = Hessian(lambda z: im_interp(z[0], z[1]))
+
+            det = 0.
             for i in np.linspace(0, self.m_crop_size, self.m_num_pos):
                 for j in np.linspace(0, self.m_crop_size, self.m_num_pos):
-                    hessian = Hessian(lambda z: im_interp(z[0], z[1]))
-                    det = np.linalg.det(hessian(np.array([i, j])))
-                    sum_det += np.abs(det)
+                    det += np.abs(np.linalg.det(hessian((i, j))))
 
-            return sum_det
+            return det
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        # TODO This is not needed
-        image = self.m_image_in_port.get_all()
-        psf = self.m_psf_in_port.get_all()
+        ndim_image = np.size(self.m_image_in_port.get_shape())
+        ndim_psf = np.size(self.m_psf_in_port.get_shape())
 
-        if psf.ndim == 3 and psf.shape[0] != image.shape[0]:
-            warnings.warn('The number of frames in psf_in_tag does not match with the number of '
-                          'frames in image_in_tag. Using the mean of psf_in_tag as fake planet.')
+        if ndim_image == 3:
+            im_size = (self.m_image_in_port.get_shape()[1],
+                       self.m_image_in_port.get_shape()[2])
 
-        if psf.ndim == 2:
-            center = (np.size(image, 0)/2., np.size(image, 1)/2.)
-        elif psf.ndim == 3:
-            center = (np.size(image, 1)/2., np.size(image, 2)/2.)
+        else:
+            raise ValueError("The image_in_tag should contain a cube of images.")
 
-        self.m_mask /= (pixscale*image.shape[1]/2.)
+        if ndim_psf == 2:
+            psf_size = (self.m_image_in_port.get_shape()[0],
+                        self.m_image_in_port.get_shape()[1])
+
+        elif ndim_psf == 3:
+            psf_size = (self.m_image_in_port.get_shape()[1],
+                        self.m_image_in_port.get_shape()[2])
+
+        center = (psf_size[0]/2., psf_size[0]/2.)
+
+        self.m_mask /= (pixscale*im_size[1]/2.)
 
         result = minimize(fun=_hessian,
                           x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
                           method="Nelder-Mead",
                           tol=self.m_tolerance)
 
-        # TODO Why is this needed?
         position = (np.round(result.x[0]*self.m_subpix)/self.m_subpix, \
                     np.round(result.x[1]*self.m_subpix)/self.m_subpix)
-        # position = (result.x[0], result.x[1])
+
         mag = result.x[2]
         sep = math.sqrt((position[0]-center[0])**2+(position[1]-center[1])**2)*pixscale
         ang = math.atan2(position[1]-center[1], position[0]-center[0])*180./math.pi - 90.
+
+        if ang < 0.:
+            ang += 360.
 
         fake_planet = FakePlanetModule(position=(sep, ang),
                                        magnitude=mag,
                                        scaling=self.m_scaling,
                                        name_in="fake_planet",
-                                       image_in_tag=self.m_psf_in_tag,
+                                       image_in_tag=self.m_image_in_tag,
                                        psf_in_tag=self.m_psf_in_tag,
                                        image_out_tag="hessian_fake")
 
@@ -344,7 +410,7 @@ class HessianMatrixModule(ProcessingModule):
                                        reference_in_tag="hessian_fake",
                                        res_arr_out_tag="hessian_res_arr_out",
                                        res_arr_rot_out_tag="hessian_res_arr_rot_out",
-                                       res_mean_tag=self.m_image_out_tag,
+                                       res_mean_tag="hessian_res_mean",
                                        res_median_tag="hessian_res_median",
                                        res_var_tag="hessian_res_var",
                                        res_rot_mean_clip_tag="hessian_res_rot_mean_clip",
@@ -361,39 +427,42 @@ class HessianMatrixModule(ProcessingModule):
         psf_sub.connect_database(self._m_data_base)
         psf_sub.run()
 
-        pos_x_err = np.sqrt((1./self.m_subpix)**2 + self.m_tolerance**2)
-        pos_y_err = np.sqrt((1./self.m_subpix)**2 + self.m_tolerance**2)
+        res_input_port = self.add_input_port("hessian_res_mean")
+        im_res = res_input_port.get_all()
+        self.m_image_out_port.append(im_res, data_dim=3)
 
-        sep = pixscale * np.sqrt((position[0]-center[0])**2+(position[1]-center[1])**2)
-        sep_err = (np.sqrt((pixscale**2*1./sep*(position[0]-center[0])*pos_x_err)**2+ \
-                  (pixscale**2*1./sep*(position[1]-center[1])*pos_y_err)**2))
+        pos_err = np.sqrt((1./self.m_subpix)**2 + self.m_tolerance**2)
 
-        pa = math.atan2(position[1]-center[1], position[0]-center[0])*180./math.pi - 90.
-        if pa < 360.:
-            pa += 360.
-        pa_err = np.sqrt((pos_y_err*((position[0]-center[0]) / \
-                 ((position[0]-center[0])**2+(position[1]-center[1])**2)))**2 + \
-                 (pos_x_err*((position[1]-center[1])/((position[0]-center[0])**2 + \
-                 (position[1]-center[1])**2)))**2) * 180./math.pi
+        sep_err = (np.sqrt((pixscale**2*1./sep*(position[0]-center[0])*pos_err)**2+ \
+                  (pixscale**2*1./sep*(position[1]-center[1])*pos_err)**2))
+
+        ang_err = np.sqrt((pos_err*((position[0]-center[0]) / \
+                  ((position[0]-center[0])**2+(position[1]-center[1])**2)))**2 + \
+                  (pos_err*((position[1]-center[1])/((position[0]-center[0])**2 + \
+                  (position[1]-center[1])**2)))**2) * 180./math.pi
+
+        self.m_image_out_port.add_history_information("Flux and position",
+                                                      "Hessian matrix")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
 
         # TODO output should go to database
 
         print "Position = "+str(position)
         print "Separation [arcsec] = "+"{0:.3f}".format(sep)+" +/- "+"{0:.3f}".format(sep_err)
-        print "Position angle [deg] = "+"{0:.2f}".format(pa)+" +/- "+"{0:.2f}".format(pa_err)
+        print "Position angle [deg] = "+"{0:.2f}".format(ang)+" +/- "+"{0:.2f}".format(ang_err)
         print "Contrast [mag] = "+"{0:.2f}".format(mag)
 
-        res_in_port_f = self.add_input_port(self.m_image_out_tag)
-        im_res_f = res_in_port_f.get_all()
-
-        im_res_cut_f_before = Cutout2D(data=im_res_f,
+        im_res_cut_f_before = Cutout2D(data=im_res,
                                        position=position,
                                        size=(self.m_crop_size, self.m_crop_size)).data
 
         vmax = np.max(im_res_cut_f_before)
         vmin = np.min(im_res_cut_f_before)
 
-        im_res_smooth_f = gaussian_filter(im_res_f, sigma=self.m_sigma)
+        im_res_smooth_f = gaussian_filter(im_res, sigma=self.m_sigma)
 
         im_res_cut_f_after = Cutout2D(data=im_res_smooth_f,
                                       position=position,
@@ -413,5 +482,3 @@ class HessianMatrixModule(ProcessingModule):
         after.set_title('After Convolution')
 
         surface.savefig('pixelmap.png')
-
-        self.m_image_in_port.close_port()
