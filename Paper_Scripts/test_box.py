@@ -12,10 +12,10 @@ pipeline = Pypeline("/scratch/user/mbonse/FastPca",
 
 from PynPoint.processing_modules import PSFSubtractionPCA
 
-psf_subtraction = PSFSubtractionPCA(20,
+psf_subtraction = PSFSubtractionPCA(range(40),
                                     name_in="PSF_subtraction",
-                                    images_in_tag="10_stacked",
-                                    reference_in_tag="10_stacked")
+                                    images_in_tag="psf_normalized",
+                                    reference_in_tag="psf_normalized")
 pipeline.add_module(psf_subtraction)
 
 pipeline.run_module("PSF_subtraction")
