@@ -280,6 +280,11 @@ class MultiprocessingCapsule(object):
         self.m_writer = self.create_writer(image_out_port)
 
     def create_writer(self, image_out_port):
+        """
+        Called from the constructor to create the writer object.
+        :param image_out_port: Output port for the creator.
+        :return: Writer object
+        """
         tmp_writer = TaskWriter(self.m_result_queue,
                                 image_out_port,
                                 self.m_data_mutex)
@@ -287,15 +292,28 @@ class MultiprocessingCapsule(object):
 
     @abstractmethod
     def create_processors(self):
+        """
+        Called from the constructor to create a list of Task Processors.
+        """
         # loop to create Task Processors
         tmp_processors = []
         return tmp_processors
 
     @abstractmethod
     def init_creator(self, image_in_port):
+        """
+        Called from the constructor to create a creator object.
+        :param image_in_port: Input port for the creator.
+        :return: Creator object
+        """
         return None
 
     def run(self):
+        """
+        The run method starts the Creator, all Task Processors and the Writer Process. Finally it
+        will shut down them again after all tasks are done.
+        :return: None
+        """
         # start all processes
         self.m_creator.start()
 
@@ -343,6 +361,10 @@ def to_slice(tuple_slice):
 
 # ----- Multiprocessing on lines ------
 class LineTaskProcessor(TaskProcessor):
+    """
+    Line Task Processors are part of the parallel line processing. They take a row of lines in time
+    and apply a function to them.
+    """
 
     def __init__(self,
                  tasks_queue_in,
@@ -374,6 +396,10 @@ class LineTaskProcessor(TaskProcessor):
 
 
 class LineReader(TaskCreator):
+    """
+    Line Reader are part of the parallel line processing. They continuously read all rows of a data
+    set and puts them into a task queue.
+    """
 
     def __init__(self,
                  data_port_in,
@@ -415,6 +441,10 @@ class LineReader(TaskCreator):
 
 
 class LineProcessingCapsule(MultiprocessingCapsule):
+    """
+    The central processing class for parallel line processing. Use this class to apply a function
+    in time in parallel.
+    """
 
     def __init__(self,
                  image_in_port,
