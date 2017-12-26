@@ -1,13 +1,21 @@
+"""
+Module for fast PCA Background subtraction. The fast multi processing implementation is only
+supported for Linux and Windows. Mac is only runs in single processing due to a bug in the
+numpy package.
+"""
+from copy import deepcopy
+from sys import platform
 from PynPoint.core.Processing import ProcessingModule
+from PynPoint.util import PcaMultiprocessingCapsule
 import numpy as np
 from sklearn.decomposition import PCA
 from scipy import ndimage
-from copy import deepcopy
-from PynPoint.util import PcaMultiprocessingCapsule
-from sys import platform
 
 
 class PSFSubtractionPCA(ProcessingModule):
+    """
+    Module for fast PCA subtraction.
+    """
 
     def __init__(self,
                  pca_numbers,
@@ -19,15 +27,35 @@ class PSFSubtractionPCA(ProcessingModule):
                  res_arr_out_tag=None,
                  res_rot_mean_clip_tag=None,
                  extra_rot=0.0):
+        """
+        Constructor of the fast pca module.
+        :param pca_numbers: Number of PCA components used for the PSF model. Can ether be a single
+        value or a list of integers. A list of PCAs will be processed (if supported) using multi
+        processing.
+        :param name_in: Name of the module.
+        :type name_in: str
+        :param images_in_tag: Tag to the central database where the star frames are located.
+        :param reference_in_tag: Tag to the central database where the star reference frames are
+        located.
+        :param res_mean_tag: Tag for the mean residual output
+        :param res_median_tag: Tag for the median residual output. (if None results will not be
+        calculated)
+        :param res_arr_out_tag: Tag for the not stacked residual frames. If a list of PCAs is set
+        multiple tags will be created in the central database. (if None results will not be
+        calculated)
+        :param res_rot_mean_clip_tag: Tag for the clipped mean residual output (if None results will
+         not be calculated)
+        :param extra_rot: Extra rotation angle which will be added to the NEW_PARA values
+        """
 
         super(PSFSubtractionPCA, self).__init__(name_in)
 
         # look for the maximum number of components
-        self.m_max_PCAs = np.max(pca_numbers)
+        self.m_max_pacs = np.max(pca_numbers)
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
         self.m_extra_rot = extra_rot
 
-        self.m_pca = PCA(n_components=self.m_max_PCAs, svd_solver="arpack")
+        self.m_pca = PCA(n_components=self.m_max_pacs, svd_solver="arpack")
 
         # add input Ports
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
@@ -77,7 +105,7 @@ class PSFSubtractionPCA(ProcessingModule):
         self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
         cpu_count = self._m_config_port.get_attribute("CPU_COUNT")
-        print("Start calculating PSF models with " + str(cpu_count) + " processes")
+        print "Start calculating PSF models with " + str(cpu_count) + " processes"
 
         rotations = - self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
@@ -100,14 +128,14 @@ class PSFSubtractionPCA(ProcessingModule):
         self.m_res_median_out_port.del_all_data()
         self.m_res_rot_mean_clip_out_port.del_all_data()
 
-        print("Start calculating PSF models")
+        print "Start calculating PSF models"
         history = "Using PCAs"
         for pca_number in self.m_components:
             tmp_pca_representation = np.matmul(self.m_pca.components_[:pca_number],
                                                star_sklearn.T)
 
             tmp_pca_representation = np.vstack((tmp_pca_representation,
-                                                np.zeros((self.m_max_PCAs - pca_number,
+                                                np.zeros((self.m_max_pacs - pca_number,
                                                           star_data.shape[0])))).T
 
             tmp_psf_images = self.m_pca.inverse_transform(tmp_pca_representation)
@@ -159,7 +187,7 @@ class PSFSubtractionPCA(ProcessingModule):
 
                 self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
 
-            print("Created Residual with " + str(pca_number) + " components")
+            print "Created Residual with " + str(pca_number) + " components"
 
     def run(self):
         # get all data and subtract the mean
@@ -176,7 +204,7 @@ class PSFSubtractionPCA(ProcessingModule):
             ref_star_data -= mean_ref_star
 
         # Fit the PCA model
-        print("Start fitting the PCA model ...")
+        print "Start fitting the PCA model ..."
         ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
