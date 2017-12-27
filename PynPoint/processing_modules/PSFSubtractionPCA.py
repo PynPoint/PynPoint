@@ -111,6 +111,9 @@ class PSFSubtractionPCA(ProcessingModule):
         rotations = - self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
 
+        print rotations.shape
+        print star_data.shape
+
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
                                                 self.m_res_rot_mean_clip_out_port,
