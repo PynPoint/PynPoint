@@ -118,7 +118,7 @@ class PSFSubtractionPCA(ProcessingModule):
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
                                                 deepcopy(star_data),
-                                                deepcopy(rotations[:-2]),
+                                                deepcopy(rotations),
                                                 result_requirements=(False, False, False))
         pca_capsule.run()
 
