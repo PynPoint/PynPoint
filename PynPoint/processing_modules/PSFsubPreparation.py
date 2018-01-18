@@ -23,7 +23,6 @@ class PSFdataPreparation(ProcessingModule):
                  image_mask_out_tag="im_mask_arr",
                  mask_out_tag="mask_arr",
                  resize=False,
-                 cent_remove=True,
                  F_final=2.0,
                  cent_size=0.05,
                  edge_size=1.0):
@@ -44,9 +43,6 @@ class PSFdataPreparation(ProcessingModule):
         :type mask_out_tag: str
         :param resize: Resize the data by a factor F_final.
         :type resize: bool
-        :param cent_remove: Mask the central region of the data with a fractional mask radius of
-                            cent_size.
-        :type cent_remove: bool
         :param F_final: Factor by which the data is resized. F_final=2. will upsample the data by a
                         factor of two.
         :type F_final: float
@@ -69,7 +65,6 @@ class PSFdataPreparation(ProcessingModule):
 
         # Note recentering is not longer supported
         self.m_resize = resize
-        self.m_cent_remove = cent_remove
         self.m_f_final = F_final
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
@@ -132,7 +127,7 @@ class PSFdataPreparation(ProcessingModule):
         im_size = im_data_in[0, ].shape
 
         # TODO add edge_size as outer radius for the mask
-        if self.m_cent_remove:
+        if self.m_cent_size > 0.:
 
             mask_c = mk_circle(im_size[0],
                                im_size[1],
@@ -191,8 +186,7 @@ class PSFdataPreparation(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         # save attributes
-        attributes = {"cent_remove": self.m_cent_remove,
-                      "resize": self.m_resize,
+        attributes = {"resize": self.m_resize,
                       "F_final": float(self.m_f_final),
                       "cent_size": float(self.m_cent_size),
                       "edge_size": float(self.m_edge_size)}
