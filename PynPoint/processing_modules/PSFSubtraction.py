@@ -44,20 +44,13 @@ class PSFSubtractionModule(ProcessingModule):
         else:
             cent_mask_tag = "cent_mask_tag"
 
-        if "cent_remove" in kwargs:
-            cent_remove = kwargs["cent_remove"]
-        else:
-            cent_remove = False
-
         if "cent_size" in kwargs:
             cent_size = kwargs["cent_size"]
-            cent_remove = True
         else:
-            cent_size = 0.05
+            cent_size = 0.
 
         if "edge_size" in kwargs:
             edge_size = kwargs["edge_size"]
-            cent_remove = True
         else:
             edge_size = 1.0
 
@@ -78,7 +71,6 @@ class PSFSubtractionModule(ProcessingModule):
                                                         image_out_tag=prep_tag,
                                                         image_mask_out_tag="not_needed",
                                                         mask_out_tag=cent_mask_tag,
-                                                        cent_remove=cent_remove,
                                                         cent_size=cent_size,
                                                         edge_size=edge_size)
 
@@ -89,7 +81,6 @@ class PSFSubtractionModule(ProcessingModule):
                                                            image_out_tag=ref_prep_tag,
                                                            image_mask_out_tag="not_needed",
                                                            mask_out_tag=cent_mask_tag,
-                                                           cent_remove=cent_remove,
                                                            cent_size=cent_size,
                                                            edge_size=edge_size)
 
