@@ -190,9 +190,11 @@ class HessianMatrixModule(ProcessingModule):
                  name_in="hessian_matrix",
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
-                 image_out_tag="im_hessian",
-                 res_out_tag="flux_position",
+                 res_out_tag="hessian_res",
+                 hessian_out_tag="hessian_det",
+                 flux_position_tag="flux_position",
                  radius=0.1,
+                 sigma=1.,
                  tolerance=0.1,
                  pca_number=20,
                  mask=0.1,
@@ -216,20 +218,37 @@ class HessianMatrixModule(ProcessingModule):
                            planet. Can be either a single image (2D) or a cube (3D) with the
                            dimensions equal to *image_in_tag*.
         :type psf_in_tag: str
-        :param image_out_tag: Tag of the database entry with the images that are written as
-                              output. Contains the results from the PSF subtraction during the
-                              minimization of the image curvature. The last image is the image
-                              with the best-fit curvature.
-        :type image_out_tag: str
-        :param res_out_tag: Tag of the database entry with flux and position results that are
-                            written as output. Each step of the minimization saves the
-                            separation (arcsec), angle (deg), and contrast (mag).
-                            The last row of values correspond to the best-fit results.
+        :param res_out_tag: Tag of the database entry with the image residuals that are written
+                            as output. Contains the results from the PSF subtraction during the
+                            minimization of the image curvature. The last image is the image
+                            with the best-fit curvature.
         :type res_out_tag: str
+        :param hessian_out_tag: Tag of the database entry with the values of the determinant of
+                                the Hessian matrix that are written as output. The last image
+                                contains the values from the the best-fit curvature.
+        :type hessian_out_tag: str
+        :param flux_position_tag: Tag of the database entry with flux and position results that are
+                                  written as output. Each step of the minimization saves the
+                                  x position (pix), y position (pix), separation (arcsec),
+                                  angle (deg), contrast (mag), and the sum of the absolute values
+                                  of the determinant of the hessian matrix (which is minimized).
+                                  The last row of values contain the best-fit results.
+        :type flux_position_tag: str
         :param radius: Radius (arcsec) of the selected region on which the determinant of the
                        Hessian matrix is calculated.
         :type radius: float
-        :param tolerance: Tolerance for termination of the minimization.
+        :param sigma: Standard deviation (arcsec) used for the Gaussian kernel, which is used the
+                      smooth the images (to reduce small pixel-to-pixel variations) before the
+                      Hessian matrix is calculated. Highest astrometric and photometric precision
+                      is achieved when sigma is optimized (TODO recommendation in terms of
+                      lambda/D).
+        :type sigma: float
+        :param tolerance: Absolute error on the input parameters, position (pix) and
+                          contrast (mag), that is used as acceptance level for convergence. Note
+                          that only a single value can be specified which is used for both the
+                          position and flux so tolerance=0.1 will give a precision of 0.1 mag
+                          and 0.1 pix. The tolerance on the output, sum(abs(det(hessian))),
+                          is set to np.inf so the condition is always met.
         :type tolerance: float
         :param pca_number: Number of principle components used for the PSF subtraction
         :type pca_number: int
@@ -248,13 +267,15 @@ class HessianMatrixModule(ProcessingModule):
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
         self.m_res_out_port = self.add_output_port(res_out_tag)
+        self.m_hessian_out_port = self.add_output_port(hessian_out_tag)
+        self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
         self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_radius = radius
+        self.m_sigma = sigma
         self.m_tolerance = tolerance
         self.m_pca_number = pca_number
         self.m_mask = mask
@@ -265,9 +286,9 @@ class HessianMatrixModule(ProcessingModule):
     def run(self):
         """
         Run method of the module. The position and flux of a planet are measured by injecting
-        negative fake companions and applying a Nelder-Mead simplex minimization of the curvature
-        of the image at the planet location. The curvature is calculated as the sum of the
-        absolute values of the determinant of the Hessian matrix.
+        negative fake companions and applying a simplex method (Nelder-Mead) for minimization
+        of the curvature of the image at the planet location. The curvature is calculated as
+        the sum of the absolute values of the determinant of the Hessian matrix.
 
         :return: None
         """
@@ -325,13 +346,21 @@ class HessianMatrixModule(ProcessingModule):
 
             res_input_port = self.add_input_port("hessian_res_mean")
             im_res = res_input_port.get_all()
-            self.m_image_out_port.append(im_res, data_dim=3)
+
+            self.m_res_out_port.append(im_res, data_dim=3)
 
             im_crop = Cutout2D(data=im_res,
                                position=_rotate(center, self.m_position, -self.m_extra_rot),
                                size=2*self.m_radius).data
 
-            npix = im_crop.shape[0]
+            hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
+                                                                sigma=self.m_sigma,
+                                                                mode='constant',
+                                                                cval=0.,
+                                                                order='rc')
+
+            hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+            npix = hes_det.shape[0]
 
             if npix%2 == 0:
                 x = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
@@ -343,31 +372,40 @@ class HessianMatrixModule(ProcessingModule):
             xv, yv = np.meshgrid(x, y)
             rr = np.sqrt(xv*xv+yv*yv)
 
-            im_crop[rr > self.m_radius] = 0.
+            hes_det[rr > self.m_radius] = 0.
 
-            hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
-                                                                sigma=1,
-                                                                mode='reflect',
-                                                                order='rc')
-
-            hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
             det_sum = np.sum(np.abs(hes_det))
 
-            res = np.asarray((sep, (ang-self.m_extra_rot)%360., mag))
-            self.m_res_out_port.append(res, data_dim=2)
+            self.m_hessian_out_port.append(hes_det, data_dim=3)
+
+            position = _rotate(center, (pos_x, pos_y), -self.m_extra_rot)
+
+            res = np.asarray((position[0],
+                              position[1],
+                              sep,
+                              (ang-self.m_extra_rot)%360.,
+                              mag,
+                              det_sum))
+
+            self.m_flux_position_port.append(res, data_dim=2)
 
             return det_sum
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         self.m_res_out_port.del_all_data()
         self.m_res_out_port.del_all_attributes()
+
+        self.m_hessian_out_port.del_all_data()
+        self.m_hessian_out_port.del_all_attributes()
+
+        self.m_flux_position_port.del_all_data()
+        self.m_flux_position_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_radius /= pixscale
         self.m_radius = int(math.ceil(self.m_radius))
+
+        self.m_sigma /= pixscale
 
         ndim_image = np.size(self.m_image_in_port.get_shape())
         ndim_psf = np.size(self.m_psf_in_port.get_shape())
@@ -387,23 +425,26 @@ class HessianMatrixModule(ProcessingModule):
             psf_size = (self.m_image_in_port.get_shape()[1],
                         self.m_image_in_port.get_shape()[2])
 
-        center = (psf_size[0]/2., psf_size[0]/2.)
+        center = (psf_size[0]/2., psf_size[1]/2.)
 
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
-        self.m_mask /= (pixscale*im_size[1]/2.)
+        self.m_mask /= (pixscale*im_size[1])
 
         minimize(fun=_hessian,
                  x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
                  method="Nelder-Mead",
-                 tol=self.m_tolerance)
-
-        self.m_image_out_port.add_history_information("Flux and position",
-                                                      "Minimization Hessian matrix")
+                 tol=None,
+                 options={'xatol': self.m_tolerance, 'fatol': float("inf")})
 
         self.m_res_out_port.add_history_information("Flux and position",
                                                     "Minimization Hessian matrix")
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_hessian_out_port.add_history_information("Flux and position",
+                                                        "Minimization Hessian matrix")
 
-        self.m_image_out_port.close_port()
+        self.m_flux_position_port.add_history_information("Flux and position",
+                                                          "Minimization Hessian matrix")
+
+        self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_hessian_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
