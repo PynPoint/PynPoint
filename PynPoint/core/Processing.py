@@ -215,9 +215,8 @@ class ProcessingModule(PypelineModule):
         """
 
         tmp_port = InputPort(tag)
-        if tag in self._m_input_ports and tag != "hessian_res_mean":
-            print tag
-            warnings.warn('Tag already used. Updating..')
+        if tag in self._m_input_ports and tag != "hessian_res_mean" and tag != "hessian_fake":
+            warnings.warn('Tag '+tag+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
