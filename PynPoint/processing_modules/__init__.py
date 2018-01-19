@@ -5,7 +5,7 @@ from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpol
     BadPixelMapCreationModule, BadPixelInterpolationRefinementModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from NACOPreparation import AngleCalculationModule, CutTopLinesModule, RemoveLastFrameModule
-from PSFSubtraction import PSFSubtractionModule
+from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule
 from SkyScienceDataModules import MeanSkyCubes, SkySubtraction, AlignmentSkyAndScienceDataModule
@@ -15,4 +15,3 @@ from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule
-from PSFSubtractionPCA import PSFSubtractionPCA
