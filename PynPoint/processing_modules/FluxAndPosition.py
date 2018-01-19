@@ -13,7 +13,7 @@ from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
 
 from PynPoint.core.Processing import ProcessingModule
-from PynPoint.processing_modules import PSFSubtractionModule
+from PynPoint.processing_modules import PSFSubtractionModule, FastPCAModule
 
 
 class FakePlanetModule(ProcessingModule):
@@ -196,6 +196,7 @@ class HessianMatrixModule(ProcessingModule):
                  radius=0.1,
                  sigma=1.,
                  tolerance=0.1,
+                 pca_module='PSFSubtractionModule',
                  pca_number=20,
                  mask=0.1,
                  extra_rot=0.):
@@ -277,6 +278,7 @@ class HessianMatrixModule(ProcessingModule):
         self.m_radius = radius
         self.m_sigma = sigma
         self.m_tolerance = tolerance
+        self.m_pca_module = pca_module
         self.m_pca_number = pca_number
         self.m_mask = mask
         self.m_extra_rot = extra_rot
@@ -321,31 +323,59 @@ class HessianMatrixModule(ProcessingModule):
             fake_planet.connect_database(self._m_data_base)
             fake_planet.run()
 
-            psf_sub = PSFSubtractionModule(name_in="pca_hessian",
-                                           pca_number=self.m_pca_number,
-                                           images_in_tag="hessian_fake",
-                                           reference_in_tag="hessian_fake",
-                                           res_arr_out_tag="hessian_res_arr_out",
-                                           res_arr_rot_out_tag="hessian_res_arr_rot_out",
-                                           res_mean_tag="hessian_res_mean",
-                                           res_median_tag="hessian_res_median",
-                                           res_var_tag="hessian_res_var",
-                                           res_rot_mean_clip_tag="hessian_res_rot_mean_clip",
-                                           basis_out_tag="hessian_basis_out",
-                                           image_ave_tag="hessian_image_ave",
-                                           psf_model_tag="hessian_psf_model",
-                                           ref_prep_tag="hessian_ref_prep",
-                                           prep_tag="hessian_prep",
-                                           extra_rot=self.m_extra_rot,
-                                           cent_size=self.m_mask,
-                                           cent_mask_tag="hessian_cent_mask",
-                                           verbose=False)
+            if self.m_pca_module is "PSFSubtractionModule":
+
+                psf_sub = PSFSubtractionModule(name_in="pca_hessian",
+                                               pca_number=self.m_pca_number,
+                                               images_in_tag="hessian_fake",
+                                               reference_in_tag="hessian_fake",
+                                               res_arr_out_tag="hessian_res_arr_out",
+                                               res_arr_rot_out_tag="hessian_res_arr_rot_out",
+                                               res_mean_tag="hessian_res_mean",
+                                               res_median_tag="hessian_res_median",
+                                               res_var_tag="hessian_res_var",
+                                               res_rot_mean_clip_tag="hessian_res_rot_mean_clip",
+                                               basis_out_tag="hessian_basis_out",
+                                               image_ave_tag="hessian_image_ave",
+                                               psf_model_tag="hessian_psf_model",
+                                               ref_prep_tag="hessian_ref_prep",
+                                               prep_tag="hessian_prep",
+                                               extra_rot=self.m_extra_rot,
+                                               cent_size=self.m_mask,
+                                               cent_mask_tag="hessian_cent_mask",
+                                               verbose=False)
+
+            elif self.m_pca_module is "FastPCAModule":
+
+                if self.m_mask > 0.:
+                    warnings.warn("The central mask is not implemented in FastPCAModule.")
+
+                psf_sub = FastPCAModule(name_in="pca_hessian",
+                                        pca_numbers=self.m_pca_number,
+                                        images_in_tag="hessian_fake",
+                                        reference_in_tag="hessian_fake",
+                                        res_mean_tag="hessian_res_mean",
+                                        res_median_tag=None,
+                                        res_arr_out_tag=None,
+                                        res_rot_mean_clip_tag=None,
+                                        extra_rot=self.m_extra_rot)
+
+            else:
+                
+                raise ValueError("The pca_module should be either PSFSubtractionModule or "
+                                 "FastPCAModule.")
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()
 
             res_input_port = self.add_input_port("hessian_res_mean")
             im_res = res_input_port.get_all()
+
+            if len(im_res.shape) == 3:
+                if im_res.shape[0] == 1:
+                    im_res = np.squeeze(im_res, axis=0)
+                else:
+                    raise ValueError("Multiple residual images found, expecting only one.")
 
             self.m_res_out_port.append(im_res, data_dim=3)
 
