@@ -10,7 +10,7 @@ PyWavelets
 opencv-python
 scikit-image
 pytest
-numdifftools
+sklearn
 sphinx
 
 # old_version
