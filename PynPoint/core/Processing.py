@@ -130,7 +130,7 @@ class WritingModule(PypelineModule):
 
         tmp_port = InputPort(tag)
         if tag in self._m_input_ports:
-            warnings.warn('Tag already used. Updating..')
+            warnings.warn('Tag '+str(tag)+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -222,8 +222,8 @@ class ProcessingModule(PypelineModule):
         """
 
         tmp_port = InputPort(tag)
-        if tag in self._m_input_ports:
-            warnings.warn('Tag already used. Updating..')
+        if tag in self._m_input_ports and tag != "contrast_res_median" and tag != "contrast_res_mean":
+            warnings.warn('Tag '+str(tag)+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -257,7 +257,7 @@ class ProcessingModule(PypelineModule):
                               activate_init=default_activation)
 
         if tag in self._m_output_ports:
-            warnings.warn('Tag already used. Updating..')
+            warnings.warn('Tag '+str(tag)+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -623,7 +623,7 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
         while i < number_of_images:
-            print "processed image " + str(i+1) + " of " + str(number_of_images) + " images"
+            print "Processing image " + str(i+1) + " of " + str(number_of_images) + " images..."
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:
@@ -651,7 +651,7 @@ class ProcessingModule(PypelineModule):
                 except TypeError:
                     raise ValueError("Input and output port have the same tag while %s is changing "
                                      "the image shape. This is only possible for "
-                                     "num_images_in_memory == None. Change num_images_in_memory"
+                                     "num_images_in_memory == None. Change num_images_in_memory "
                                      "or choose different port tags." % func)
             elif first_time:
                 # The first time we have to reset the eventually existing data
@@ -750,7 +750,7 @@ class ReadingModule(PypelineModule):
                               activate_init=default_activation)
 
         if tag in self._m_output_ports:
-            warnings.warn('Tag already used. Updating..')
+            warnings.warn('Tag '+str(tag)+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
