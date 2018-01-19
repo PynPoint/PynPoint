@@ -939,6 +939,9 @@ class OutputPort(Port):
         if input_port.tag == self._m_tag:
             return
 
+        if not self._check_status_and_activate():
+            return
+
         # link non-static attributes
         if "header_" + input_port.tag + "/" in self._m_data_storage.m_data_bank:
             for attr_name, attr_data in self._m_data_storage\

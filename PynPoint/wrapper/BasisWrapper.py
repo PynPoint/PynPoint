@@ -1,6 +1,6 @@
 from PynPoint.wrapper.WrapperUtils import BasePynpointWrapper
 from PynPoint.core.DataIO import InputPort
-from PynPoint.processing_modules.PSFSubtraction import MakePCABasisModule
+from PynPoint.processing_modules.PSFSubtractionPCA import MakePCABasisModule
 
 
 class BasisWrapper(BasePynpointWrapper):

@@ -3,12 +3,12 @@ Different interfaces for Pypeline Modules.
 """
 import os
 import warnings
-import multiprocessing
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABCMeta
+from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 import numpy as np
 
-from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 class PypelineModule:
     """
@@ -172,13 +172,6 @@ class WritingModule(PypelineModule):
         pass
 
 
-class TaskData(object):
-    def __init__(self,
-                 data_array,
-                 position):
-        self.m_data_array = data_array
-        self.m_position = position
-
 class ProcessingModule(PypelineModule):
     """
     The abstract class ProcessingModule is an interface for all processing steps in the pipeline
@@ -287,24 +280,23 @@ class ProcessingModule(PypelineModule):
 
         self._m_data_base = data_base_in
 
-    @staticmethod
-    def apply_function_to_line_in_time_multi_processing(func,
+    def apply_function_to_line_in_time_multi_processing(self,
+                                                        func,
                                                         image_in_port,
                                                         image_out_port,
-                                                        func_args=None,
-                                                        num_rows_in_memory=40):
-
-        def apply_function(tmp_line_in):
-            # process line
-            # check if additional arguments are given
-            if func_args is None:
-                return np.array(func(tmp_line_in))
-            else:
-                return np.array(func(tmp_line_in, *func_args))
+                                                        func_args=None):
+        """
+        Applies a given function to all lines in time.
+        :param func: The function to be applied
+        :param image_in_port: Input Port where the data to be processed is located
+        :param image_out_port: Input Port where the results will be stored
+        :param func_args: addition arguments needed for the function (can be None)
+        :return: None
+        """
 
         # get first line in time
         init_line = image_in_port[:, 0, 0]
-        length_of_processed_data = apply_function(init_line).shape[0]
+        length_of_processed_data = apply_function(init_line, func, func_args).shape[0]
 
         # we want to replace old values or create a new data set if True
         # if not we want to update the frames
@@ -315,255 +307,23 @@ class ProcessingModule(PypelineModule):
                 "the length of the signal. Use different input and output ports "
                 "instead. " % func)
 
-        class Reader(multiprocessing.Process):
-            def __init__(self,
-                         data_in_port_in,
-                         data_mutex_in,
-                         total_number_of_rows,
-                         tasks_queue_in,
-                         number_of_processors,
-                         num_rows_in_memory_in):
-                multiprocessing.Process.__init__(self)
-                self.m_total_number_of_rows = total_number_of_rows
-                self.m_data_mutex = data_mutex_in
-                self.m_task_queue = tasks_queue_in
-                self.m_data_in_port = data_in_port_in
-                self.m_number_of_processors = number_of_processors
-                self.m_number_of_rows_in_memory = num_rows_in_memory_in
-
-            def run(self):
-
-                i = 0
-                while i < self.m_total_number_of_rows:
-                    # read rows from i to j
-                    j = min((i + self.m_number_of_rows_in_memory), self.m_total_number_of_rows)
-
-                    # lock Mutex and read data
-                    with self.m_data_mutex:
-                        print "Reading lines from " + str(i) + " to " + str(j)
-                        tmp_data = self.m_data_in_port[:, i:j, :]
-
-                    self.m_task_queue.put(TaskData(tmp_data, (i, j)))
-                    i = j
-
-                for i in range(self.m_number_of_processors - 1):
-                    # poison pills
-                    self.m_task_queue.put(1)
-
-                # Final poison pill
-                self.m_task_queue.put(None)
-
-                return
-
-        class LineProcessor(multiprocessing.Process):
-
-            def __init__(self,
-                         tasks_queue_in,
-                         result_queue_in):
-
-                multiprocessing.Process.__init__(self)
-                self.m_task_queue = tasks_queue_in
-                self.m_result_queue = result_queue_in
-
-            def run(self):
-                proc_name = self.name
-
-                while True:
-                    next_task = self.m_task_queue.get()
-
-                    if next_task is 1:
-                        # Poison pill means shutdown
-                        print '%s: Exiting' % proc_name
-                        self.m_task_queue.task_done()
-                        break
-
-                    if next_task is None:
-                        # got final Poison pill
-                        self.m_result_queue.put(None)  # shut down writer process
-
-                        print '%s: Exiting' % proc_name
-                        self.m_task_queue.task_done()
-                        break
-
-                    print "Process " + proc_name + " got data for row " + str(
-                        next_task.m_position) + " and starts processing..."
-
-                    result_arr = np.zeros((length_of_processed_data, \
-                                          next_task.m_data_array.shape[1], \
-                                          next_task.m_data_array.shape[2]))
-                    for i in range(next_task.m_data_array.shape[1]):
-                        for j in range(next_task.m_data_array.shape[2]):
-                            tmp_line = next_task.m_data_array[:, i, j]
-                            result_arr[:, i, j] = apply_function(tmp_line)
-
-                    result = TaskData(result_arr,
-                                      next_task.m_position)
-
-                    self.m_task_queue.task_done()
-
-                    self.m_result_queue.put(result)
-                    print "Process " + proc_name + " finished processing!"
-
-                return
-
-        class Writer(multiprocessing.Process):
-
-            def __init__(self,
-                         result_queue_in,
-                         data_out_port_in,
-                         data_mutex_in):
-                multiprocessing.Process.__init__(self)
-                self.m_result_queue = result_queue_in
-                self.m_data_mutex = data_mutex_in
-                self.m_data_out_port = data_out_port_in
-
-            def run(self):
-
-                while True:
-                    next_result = self.m_result_queue.get()
-
-                    if next_result is None:
-                        print "Shutting down writer..."
-                        self.m_result_queue.task_done()
-                        break
-
-                    print "Start writing row " + str(next_result.m_position)
-
-                    with self.m_data_mutex:
-                        self.m_data_out_port[:,
-                                             next_result.m_position[0] : next_result.m_position[1],
-                                             :] = next_result.m_data_array
-                    self.m_result_queue.task_done()
-
-        print "Preparing database for analysis ..."
-
-        # TODO: try to create without stalling huge memory
-        image_out_port.set_all(np.zeros((length_of_processed_data, \
-                                        image_in_port.get_shape()[1], \
-                                        image_in_port.get_shape()[2])),
+        image_out_port.set_all(np.zeros((length_of_processed_data,
+                                         image_in_port.get_shape()[1],
+                                         image_in_port.get_shape()[2])),
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        num_processors = multiprocessing.cpu_count()
-
-        number_of_rows = image_in_port.get_shape()[1]
-        if num_rows_in_memory is None:
-            num_rows_in_memory = int(np.ceil(image_in_port.get_shape()[1]/float(num_processors)))
-        else:
-            num_rows_in_memory = int(np.ceil(num_rows_in_memory/float(num_processors)))
+        num_processors = self._m_config_port.get_attribute("CPU_COUNT")
 
         print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
 
-        # Establish communication queues
-
-        # buffer twice the data as processes are available
-        tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
-        result_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
-
-        # data base mutex
-        data_mutex = multiprocessing.Lock()
-
-        # create reader
-        reader = Reader(data_in_port_in=image_in_port,
-                        data_mutex_in=data_mutex,
-                        total_number_of_rows=number_of_rows,
-                        tasks_queue_in=tasks_queue,
-                        number_of_processors=num_processors,
-                        num_rows_in_memory_in=num_rows_in_memory)
-
-        # Start consumers
-        line_processors = [LineProcessor(tasks_queue_in=tasks_queue,
-                                         result_queue_in=result_queue)
-                           for i in xrange(num_processors)]
-
-        # create writer
-        writer = Writer(result_queue_in=result_queue,
-                        data_out_port_in=image_out_port,
-                        data_mutex_in=data_mutex)
-
-        # start all processes
-        reader.start()
-
-        for processor in line_processors:
-            processor.start()
-
-        writer.start()
-
-        # Wait for all of the tasks to finish
-        tasks_queue.join()
-        result_queue.join()
-
-        for processor in line_processors:
-            processor.join()
-
-        writer.join()
-        reader.join()
-
-    @staticmethod
-    def apply_function_to_line_in_time(func,
-                                       image_in_port,
-                                       image_out_port,
-                                       func_args=None):
-        """
-
-        :param func:
-        :param image_in_port:
-        :type image_in_port: InputPort
-        :param image_out_port:
-        :type image_out_port: OutputPort
-        :param func_args:
-        :return:
-        """
-
-        # TODO test and documentation
-
-        number_of_lines_i = image_in_port.get_shape()[1]
-        number_of_lines_j = image_in_port.get_shape()[2]
-
-        def apply_function(tmp_line_in):
-            # process line
-            # check if additional arguments are given
-            if func_args is None:
-                return np.array(func(tmp_line_in))
-            else:
-                return np.array(func(tmp_line_in, *func_args))
-
-        # get first line in time
-        init_line = image_in_port[:, 0, 0]
-        length_of_processed_data = apply_function(init_line).shape[0]
-
-        # we want to replace old values or create a new data set if True
-        # if not we want to update the frames
-        update = image_out_port.tag == image_in_port.tag
-        if update and length_of_processed_data != image_in_port.get_shape()[0]:
-            raise ValueError(
-                "Input and output port have the same tag while %s is changing "
-                "the length of the signal. Use different input and output ports "
-                "instead. " % func)
-
-        image_out_port.set_all(np.zeros((length_of_processed_data, \
-                                        image_in_port.get_shape()[1], \
-                                        image_in_port.get_shape()[2])), \
-                               data_dim=3,
-                               keep_attributes=False)  # overwrite old existing attributes
-
-        for i in range(0, number_of_lines_i):
-            print "processed line nr. " + str(i+1) + " of " + str(number_of_lines_i) + " lines."
-            for j in range(0, number_of_lines_j):
-
-                tmp_line = image_in_port[:, i, j]
-                tmp_res = apply_function(tmp_line)
-
-                if tmp_res.shape[0] != length_of_processed_data:
-                    # The processed line has the wrong size -> raise error
-                    raise ValueError(
-                        "The function %s produces results with different length. This is not "
-                        "supported." % func)
-
-                else:
-                    image_out_port[:, i, j] = tmp_res
-
-        return
+        line_processor = LineProcessingCapsule(image_in_port,
+                                               image_out_port,
+                                               num_processors,
+                                               func,
+                                               func_args,
+                                               length_of_processed_data)
+        line_processor.run()
 
     @staticmethod
     def apply_function_to_images(func,
@@ -777,7 +537,6 @@ class ReadingModule(PypelineModule):
         self._m_config_port.set_database_connection(data_base_in)
 
         self._m_data_base = data_base_in
-
 
     def get_all_output_tags(self):
         """
