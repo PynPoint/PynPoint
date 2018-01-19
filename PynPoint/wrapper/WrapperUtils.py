@@ -10,7 +10,7 @@ from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetMod
 
 from PynPoint.core.Pypeline import Pypeline
 from PynPoint.io_modules.FitsReading import ReadFitsCubesDirectory
-from PynPoint.processing_modules.PSFSubtraction import MakePSFModelModule
+from PynPoint.processing_modules.PSFSubtractionPCA import MakePSFModelModule
 
 warnings.simplefilter("always")
 
