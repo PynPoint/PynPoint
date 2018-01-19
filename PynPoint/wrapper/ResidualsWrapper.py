@@ -3,7 +3,7 @@ import numpy as np
 from PynPoint.wrapper.BasisWrapper import BasisWrapper
 from PynPoint.wrapper.ImageWrapper import ImageWrapper
 from PynPoint.core.DataIO import InputPort
-from PynPoint.processing_modules.PSFSubtraction import CreateResidualsModule
+from PynPoint.processing_modules.PSFSubtractionPCA import CreateResidualsModule
 
 
 class ResidualsWrapper(object):
