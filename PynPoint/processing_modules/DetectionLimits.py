@@ -80,7 +80,8 @@ class ContrastModule(ProcessingModule):
         :param aperture: Aperture radius (arcsec) for the calculation of the false positive
                          fraction.
         :type aperture: float
-        :param pca_module: TODO
+        :param pca_module: Name of the processing module for the PSF subtraction
+                           (PSFSubtractionModule or FastPCAModule).
         :type pca_module: str
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
@@ -166,8 +167,6 @@ class ContrastModule(ProcessingModule):
         :return: None
         """
 
-        #TODO extra_rot
-
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -186,8 +185,8 @@ class ContrastModule(ProcessingModule):
                           self.m_separation[1]/pixscale,
                           self.m_separation[2]/pixscale)
 
-        pos_t = np.arange(self.m_angle[0],
-                          self.m_angle[1],
+        pos_t = np.arange(self.m_angle[0]+self.m_extra_rot,
+                          self.m_angle[1]+self.m_extra_rot,
                           self.m_angle[2])
 
         index_del = np.argwhere(pos_r-self.m_aperture < self.m_mask*images.shape[1])
@@ -208,8 +207,8 @@ class ContrastModule(ProcessingModule):
                 print "Processing position " + str(count) + " out of " + \
                       str(np.size(fake_mag)) + "..."
 
-                x_fake = center[0] + sep*math.cos(np.radians(ang+90.))
-                y_fake = center[1] + sep*math.sin(np.radians(ang+90.))
+                x_fake = center[0] + sep*math.cos(np.radians(ang+90.-self.m_extra_rot))
+                y_fake = center[1] + sep*math.sin(np.radians(ang+90.-self.m_extra_rot))
 
                 mag_step = self.m_magnitude[1]
 
@@ -291,9 +290,7 @@ class ContrastModule(ProcessingModule):
                     else:
                         self.m_pca_out_port.append(im_res, data_dim=3)
 
-                    fpf = self._false_alarm(im_res, x_fake, y_fake, self.m_aperture)
-
-                    list_fpf.append(fpf)
+                    list_fpf.append(self._false_alarm(im_res, x_fake, y_fake, self.m_aperture))
 
                     if abs(fpf_threshold-list_fpf[-1]) < self.m_tolerance*fpf_threshold:
                         if len(list_fpf) > 1:
