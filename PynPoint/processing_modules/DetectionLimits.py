@@ -1,8 +1,9 @@
 """
-Modules for calculating detection limits.
+Modules for determining detection limits.
 """
 
 import math
+import sys
 import warnings
 
 import numpy as np
@@ -17,7 +18,8 @@ from PynPoint.processing_modules import PSFSubtractionModule, FastPCAModule, Fak
 
 class ContrastModule(ProcessingModule):
     """
-    Module to calculate contrast limits with a correction for small sample statistics.
+    Module to calculate contrast limits by iterating towards a threshold for the false positive
+    fraction, with a correction for small sample statistics.
     """
 
     def __init__(self,
@@ -28,9 +30,9 @@ class ContrastModule(ProcessingModule):
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
                  angle=(0., 360., 60.),
-                 magnitude=(10., 2.),
+                 magnitude=(7.5, 1.),
                  sigma=5.,
-                 tolerance=1e-1,
+                 accuracy=1e-1,
                  psf_scaling=1.,
                  aperture=0.05,
                  pca_module='PSFSubtractionModule',
@@ -70,10 +72,10 @@ class ContrastModule(ProcessingModule):
         :param sigma: Detection threshold in units of sigma. Note that as sigma is fixed, the
                       confidence level (and false positive fraction) change with separation.
         :type sigma: float
-        :param tolerance: Fractional tolerance of the false positive fraction. When the
-                          tolerance condition is met, the final magnitude is calculated with a
-                          linear interpolation.
-        :type tolerance: float
+        :param accuracy: Fractional accuracy of the false positive fraction. When the
+                         accuracy condition is met, the final magnitude is calculated with a
+                         linear interpolation.
+        :type accuracy: float
         :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
                             neutral density filter). Should have a positive value.
         :type psf_scaling: float
@@ -110,7 +112,7 @@ class ContrastModule(ProcessingModule):
         self.m_separation = separation
         self.m_angle = angle
         self.m_sigma = sigma
-        self.m_tolerance = tolerance
+        self.m_accuracy = accuracy
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_aperture = aperture
@@ -129,10 +131,8 @@ class ContrastModule(ProcessingModule):
         radius = math.sqrt((center[0]-y_pos)**2.+(center[1]-x_pos)**2.)
         num_ap = int(2.*math.pi*radius/size)
 
-        theta_step = 2.*math.pi/float(num_ap)
-
         ap_phot = np.zeros(num_ap)
-        ap_theta = np.arange(0, 2.*math.pi, theta_step)
+        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
 
         for i, theta in enumerate(ap_theta):
             x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
@@ -147,9 +147,7 @@ class ContrastModule(ProcessingModule):
         t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / \
                  (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
 
-        fpf = 1. - t.cdf(t_test, num_ap-2)
-
-        return fpf
+        return 1. - t.cdf(t_test, num_ap-2)
 
     @staticmethod
     def _student_fpf(sigma,
@@ -160,12 +158,67 @@ class ContrastModule(ProcessingModule):
 
         return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
 
+    def _noise(self,
+               sep,
+               size):
+
+        psf_sub = FastPCAModule(name_in="pca_contrast",
+                                pca_numbers=self.m_pca_number,
+                                images_in_tag=self.m_image_in_tag,
+                                reference_in_tag=self.m_image_in_tag,
+                                res_mean_tag="contrast_res_mean",
+                                res_median_tag=None,
+                                res_arr_out_tag=None,
+                                res_rot_mean_clip_tag=None,
+                                extra_rot=self.m_extra_rot,
+                                verbose=False)
+
+        psf_sub.connect_database(self._m_data_base)
+        psf_sub.run()
+
+        res_input_port = self.add_input_port("contrast_res_mean")
+        im_res = res_input_port.get_all()
+        im_res = np.squeeze(im_res, axis=0)
+
+        center = (np.size(im_res, 0)/2., np.size(im_res, 1)/2.)
+
+        num_ap = 2.*math.pi*sep/size
+        num_ap = num_ap.astype(int)
+
+        noise = np.zeros(np.size(sep))
+
+        for j, radius in enumerate(sep):
+            ap_theta = np.linspace(0, 2.*math.pi, num_ap[j], endpoint=False)
+            ap_phot = np.zeros(num_ap[j])
+
+            for i, theta in enumerate(ap_theta):
+                x_tmp = center[1] + radius*math.cos(theta)
+                y_tmp = center[0] + radius*math.sin(theta)
+
+                aperture = CircularAperture((x_tmp, y_tmp), size)
+                phot_table = aperture_photometry(im_res, aperture, method='exact')
+                ap_phot[i] = phot_table['aperture_sum']
+
+            noise[j] = np.std(ap_phot)
+
+        return noise
+
     def run(self):
         """
-        Run method of the module.
+        Run method of the module. Fake positive companions are injected for a range of separations
+        and angles. The magnitude of the contrast is changed stepwise and lowered by a factor 2 if
+        needed. Once the fractional accuracy of the false positive fraction threshold is met, a
+        linear interpolation is used to determine the final contrast. Note that the sigma level
+        is fixed therefore the false positive fraction changes with separation, following the
+        Student's t-distribution (Mawet et al. 2014).
 
         :return: None
         """
+
+        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
+           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
+            raise ValueError("The angular positions of the fake planets should lie between "
+                             "0 deg and 360 deg.")
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
@@ -189,11 +242,13 @@ class ContrastModule(ProcessingModule):
                           self.m_angle[1]+self.m_extra_rot,
                           self.m_angle[2])
 
-        index_del = np.argwhere(pos_r-self.m_aperture < self.m_mask*images.shape[1])
+        index_del = np.argwhere(pos_r-self.m_aperture <= self.m_mask*images.shape[1])
         pos_r = np.delete(pos_r, index_del)
 
-        index_del = np.argwhere(pos_r+self.m_aperture > images.shape[1]/2.)
+        index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
         pos_r = np.delete(pos_r, index_del)
+
+        # noise = self._noise(pos_r, self.m_aperture)
 
         fake_mag = np.zeros((len(pos_r), len(pos_t)))
         fake_fpf = np.zeros((len(pos_r)))
@@ -202,22 +257,38 @@ class ContrastModule(ProcessingModule):
 
         for m, sep in enumerate(pos_r):
             fpf_threshold = self._student_fpf(self.m_sigma, sep, self.m_aperture)
+            fake_fpf[m] = fpf_threshold
 
             for n, ang in enumerate(pos_t):
-                print "Processing position " + str(count) + " out of " + \
-                      str(np.size(fake_mag)) + "..."
+                sys.stdout.write("Processing position " + str(count) + " out of " + \
+                      str(np.size(fake_mag))+" ")
+                sys.stdout.flush()
 
                 x_fake = center[0] + sep*math.cos(np.radians(ang+90.-self.m_extra_rot))
                 y_fake = center[1] + sep*math.sin(np.radians(ang+90.-self.m_extra_rot))
 
-                mag_step = self.m_magnitude[1]
+                if n == 0:
+                    list_mag = [self.m_magnitude[0]]
+                    mag_step = self.m_magnitude[1]
 
-                list_mag = [self.m_magnitude[0]]
+                else:
+                    list_mag = [np.mean(fake_mag[m, 0:n])]
+
+                    if n == 1:
+                        mag_step = self.m_magnitude[1]
+                    else:
+                        mag_step = np.std(fake_mag[m, 0:n])
+                        if mag_step > 1.:
+                            mag_step = 0.2
+
                 list_fpf = []
 
                 iteration = 1
 
                 while True:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
+
                     mag = list_mag[-1]
 
                     fake_planet = FakePlanetModule(position=(sep*pixscale, ang),
@@ -231,7 +302,7 @@ class ContrastModule(ProcessingModule):
                     fake_planet.connect_database(self._m_data_base)
                     fake_planet.run()
 
-                    if self.m_pca_module is "PSFSubtractionModule":
+                    if self.m_pca_module == "PSFSubtractionModule":
 
                         psf_sub = PSFSubtractionModule(name_in="pca_contrast",
                                                        pca_number=self.m_pca_number,
@@ -253,7 +324,7 @@ class ContrastModule(ProcessingModule):
                                                        cent_mask_tag="contrast_cent_mask",
                                                        verbose=False)
 
-                    elif self.m_pca_module is "FastPCAModule":
+                    elif self.m_pca_module == "FastPCAModule":
 
                         if self.m_mask > 0.:
                             warnings.warn("The central mask is not implemented in FastPCAModule.")
@@ -266,10 +337,10 @@ class ContrastModule(ProcessingModule):
                                                 res_median_tag=None,
                                                 res_arr_out_tag=None,
                                                 res_rot_mean_clip_tag=None,
-                                                extra_rot=self.m_extra_rot)
+                                                extra_rot=self.m_extra_rot,
+                                                verbose=False)
 
                     else:
-                
                         raise ValueError("The pca_module should be either PSFSubtractionModule or "
                                          "FastPCAModule.")
 
@@ -292,7 +363,7 @@ class ContrastModule(ProcessingModule):
 
                     list_fpf.append(self._false_alarm(im_res, x_fake, y_fake, self.m_aperture))
 
-                    if abs(fpf_threshold-list_fpf[-1]) < self.m_tolerance*fpf_threshold:
+                    if abs(fpf_threshold-list_fpf[-1]) < self.m_accuracy*fpf_threshold:
                         if len(list_fpf) > 1:
                             if (fpf_threshold > list_fpf[-2] and fpf_threshold < list_fpf[-1]) or \
                                (fpf_threshold < list_fpf[-2] and fpf_threshold > list_fpf[-1]):
@@ -300,9 +371,7 @@ class ContrastModule(ProcessingModule):
                                 fpf_interp = interp1d(list_fpf[-2:], list_mag[-2:], 'linear')
                                 fake_mag[m, n] = fpf_interp(fpf_threshold)
 
-                                if n == 0:
-                                    fake_fpf[m] = fpf_threshold
-
+                                print
                                 break
 
                     if list_fpf[-1] < fpf_threshold:
@@ -317,9 +386,8 @@ class ContrastModule(ProcessingModule):
                            list_fpf[-1] > list_fpf[-2] and list_fpf[-2] < list_fpf[-3]:
 
                             warnings.warn("Magnitude decreases but false positive fraction "
-                                          "increases. This should not happen, try optimizing "
-                                          "the aperture radius. Adjusting magnitude to 7.5 and "
-                                          "step size to 0.1 ...")
+                                          "increases. Adjusting magnitude to 7.5 and step "
+                                          "size to 0.1 ...")
 
                             list_mag[-1] = 7.5
                             mag_step = 0.1
@@ -332,19 +400,24 @@ class ContrastModule(ProcessingModule):
 
                     if list_mag[-1] <= 0.:
                         warnings.warn("The relative magnitude has become smaller or equal to "
-                                      "zero. Try changing the aperture and magnitude parameters. "
-                                      "Adjusting magnitude to 7.5 and step size to 0.1 ...")
+                                      "zero. Adjusting magnitude to 7.5 and step size to 0.1 ...")
 
                         list_mag[-1] = 7.5
                         mag_step = 0.1
 
                     iteration += 1
 
+                    if iteration == 50:
+                        fake_mag[m, n] = np.nan
+
+                        print
+                        break
+
                 count += 1
 
         contrast = np.transpose(np.column_stack((pos_r*pixscale,
-                                                 np.mean(fake_mag, axis=1),
-                                                 np.var(fake_mag, axis=1),
+                                                 np.nanmean(fake_mag, axis=1),
+                                                 np.nanvar(fake_mag, axis=1),
                                                  fake_fpf)))
 
         self.m_contrast_out_port.set_all(contrast, data_dim=2)
