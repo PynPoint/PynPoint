@@ -28,6 +28,14 @@ PynPoint\.processing\_modules\.DarkAndFlatSubtraction module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.processing\_modules\.DetectionLimits module
+-----------------------------------------------------
+
+.. automodule:: PynPoint.processing_modules.DetectionLimits
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint\.processing\_modules\.FluxAndPosition module
 -----------------------------------------------------
 
@@ -52,10 +60,10 @@ PynPoint\.processing\_modules\.NACOPreparation module
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.PSFSubtraction module
-----------------------------------------------------
+PynPoint\.processing\_modules\.PSFSubtractionPCA module
+-------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.PSFSubtraction
+.. automodule:: PynPoint.processing_modules.PSFSubtractionPCA
     :members:
     :undoc-members:
     :show-inheritance:
