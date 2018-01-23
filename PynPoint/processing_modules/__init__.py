@@ -16,3 +16,4 @@ from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule
 from FluxAndPosition import FakePlanetModule, HessianMatrixModule
+from DetectionLimits import ContrastModule
