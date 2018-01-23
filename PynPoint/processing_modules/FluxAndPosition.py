@@ -251,6 +251,9 @@ class HessianMatrixModule(ProcessingModule):
                           and 0.1 pix. The tolerance on the output, sum(abs(det(hessian))),
                           is set to np.inf so the condition is always met.
         :type tolerance: float
+        :param pca_module: Name of the processing module for the PSF subtraction
+                           (PSFSubtractionModule or FastPCAModule).
+        :type pca_module: str
         :param pca_number: Number of principle components used for the PSF subtraction
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.

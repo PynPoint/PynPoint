@@ -428,30 +428,46 @@ class FastPCAModule(ProcessingModule):
                  res_median_tag=None,
                  res_arr_out_tag=None,
                  res_rot_mean_clip_tag=None,
-                 extra_rot=0.0):
+                 extra_rot=0.0,
+                 **kwargs):
         """
-        Constructor of the fast pca module.
+        Constructor of the fast PCA module.
+
         :param pca_numbers: Number of PCA components used for the PSF model. Can ether be a single
-        value or a list of integers. A list of PCAs will be processed (if supported) using multi
-        processing.
+                            value or a list of integers. A list of PCAs will be processed (if
+                            supported) using multi processing.
+        :type pca_numbers: int
         :param name_in: Name of the module.
         :type name_in: str
         :param images_in_tag: Tag to the central database where the star frames are located.
+        :type images_in_tag: str
         :param reference_in_tag: Tag to the central database where the star reference frames are
-        located.
+                                 located.
+        :type reference_in_tag: str
         :param res_mean_tag: Tag for the mean residual output
+        :type res_mean_tag: str
         :param res_median_tag: Tag for the median residual output. (if None results will not be
-        calculated)
+                               calculated)
+        :type res_median_tag: str
         :param res_arr_out_tag: Tag for the not stacked residual frames. If a list of PCAs is set
-        multiple tags will be created in the central database. (if None results will not be
-        calculated)
-        :param res_rot_mean_clip_tag: Tag for the clipped mean residual output (if None results will
-         not be
-        calculated)
+                                multiple tags will be created in the central database. (if None
+                                results will not be calculated)
+        :type res_arr_out_tag: str
+        :param res_rot_mean_clip_tag: Tag for the clipped mean residual output (if None results
+                                      will not be calculated)
+        :type res_rot_mean_clip_tag: str
         :param extra_rot: Extra rotation angle which will be added to the NEW_PARA values
+        :type extra_rot: float
+
+        :return: None
         """
 
         super(FastPCAModule, self).__init__(name_in)
+
+        if "verbose" in kwargs:
+            self.m_verbose = kwargs["verbose"]
+        else:
+            self.m_verbose = True
 
         # look for the maximum number of components
         self.m_max_pacs = np.max(pca_numbers)
@@ -508,7 +524,8 @@ class FastPCAModule(ProcessingModule):
         self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
         cpu_count = self._m_config_port.get_attribute("CPU_COUNT")
-        print "Start calculating PSF models with " + str(cpu_count) + " processes"
+        if self.m_verbose:
+            print "Start calculating PSF models with " + str(cpu_count) + " processes"
 
         rotations = - self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
@@ -531,7 +548,8 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.del_all_data()
         self.m_res_rot_mean_clip_out_port.del_all_data()
 
-        print "Start calculating PSF models"
+        if self.m_verbose:
+            print "Start calculating PSF models"
         history = "Using PCAs"
         for pca_number in self.m_components:
             tmp_pca_representation = np.matmul(self.m_pca.components_[:pca_number],
@@ -590,7 +608,8 @@ class FastPCAModule(ProcessingModule):
 
                 self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
 
-            print "Created Residual with " + str(pca_number) + " components"
+            if self.m_verbose:
+                print "Created Residual with " + str(pca_number) + " components"
 
     def run(self):
         # get all data and subtract the mean
@@ -607,7 +626,8 @@ class FastPCAModule(ProcessingModule):
             ref_star_data -= mean_ref_star
 
         # Fit the PCA model
-        print "Start fitting the PCA model ..."
+        if self.m_verbose:
+            print "Start fitting the PCA model ..."
         ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
