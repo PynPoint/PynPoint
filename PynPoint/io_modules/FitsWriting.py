@@ -67,7 +67,7 @@ class WriteAsSingleFitsFile(WritingModule):
         :return: None
         """
 
-        out_name = os.path.join(self.m_output_location, '') + self.m_file_name
+        out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         # remove old file if exists
         if os.path.isfile(out_name):
