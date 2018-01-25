@@ -3,6 +3,7 @@ Modules for photometry and astrometry.
 """
 
 import math
+import sys
 import warnings
 
 import numpy as np
@@ -194,7 +195,7 @@ class HessianMatrixModule(ProcessingModule):
                  hessian_out_tag="hessian_det",
                  flux_position_tag="flux_position",
                  radius=0.1,
-                 sigma=1.,
+                 sigma=0.01,
                  tolerance=0.1,
                  pca_module='PSFSubtractionModule',
                  pca_number=20,
@@ -305,6 +306,9 @@ class HessianMatrixModule(ProcessingModule):
             return (center[0]+pos_x, center[1]+pos_y)
 
         def _hessian(arg):
+            sys.stdout.write('.')
+            sys.stdout.flush()
+
             pos_x = arg[0]
             pos_y = arg[1]
             mag = arg[2]
@@ -460,11 +464,16 @@ class HessianMatrixModule(ProcessingModule):
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
+        sys.stdout.write("Running simplex minimization ")
+        sys.stdout.flush()
+
         minimize(fun=_hessian,
                  x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
                  method="Nelder-Mead",
                  tol=None,
                  options={'xatol': self.m_tolerance, 'fatol': float("inf")})
+
+        print
 
         self.m_res_out_port.add_history_information("Flux and position",
                                                     "Minimization Hessian matrix")
