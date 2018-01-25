@@ -22,7 +22,7 @@ class TextWritingModule(WritingModule):
                  name_in="text_writing",
                  output_dir=None,
                  data_tag="im_arr",
-                 header=None):
+                 header=''):
         """
         Constructor of the TextWritingModule module.
 
