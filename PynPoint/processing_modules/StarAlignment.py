@@ -2,6 +2,8 @@
 Modules for locating and aligning of the star.
 """
 
+import math
+
 import numpy as np
 import cv2
 
@@ -24,7 +26,6 @@ class StarExtractionModule(ProcessingModule):
                  image_out_tag="im_arr_cut",
                  pos_out_tag="star_positions",
                  image_size=2.,
-                 num_images_in_memory=100,
                  fwhm_star=0.2):
         """
         Constructor of StarExtractionModule.
@@ -54,8 +55,8 @@ class StarExtractionModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
         self.m_pos_out_port = self.add_output_port(pos_out_tag)
         self.m_image_size = image_size
-        self.m_num_images_in_memory = num_images_in_memory
         self.m_fwhm_star = fwhm_star # 7 pix / 0.2 arcsec is good for L-band data
+        self.count = 0
 
     def run(self):
         """
@@ -80,8 +81,7 @@ class StarExtractionModule(ProcessingModule):
 
         def cut_psf(current_image):
 
-            # see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
-            sigma = self.m_fwhm_star/2.335
+            sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
 
             kernel_size = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
 
@@ -96,12 +96,14 @@ class StarExtractionModule(ProcessingModule):
                     or argmax[1] + psf_radius > current_image.shape[1]:
 
                 raise ValueError('Highest value is near the border. PSF size is too '
-                                 'large to be cut')
+                                 'large to be cut (frame index = '+str(self.count)+').')
 
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
             star_positions.append(argmax)
+
+            self.count += 1
 
             return cut_image
 
@@ -109,6 +111,8 @@ class StarExtractionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       num_images_in_memory=self.m_num_images_in_memory)
+
+        star = np.array(star_positions)
 
         self.m_pos_out_port.set_all(np.array(star_positions))
 
