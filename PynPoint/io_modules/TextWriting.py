@@ -57,7 +57,7 @@ class TextWritingModule(WritingModule):
         :return: None
         """
 
-        out_name = os.path.join(self.m_output_location, '') + self.m_file_name
+        out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         data = self.m_data_port.get_all()
 

@@ -61,8 +61,7 @@ class Hdf5WritingModule(WritingModule):
         """
 
         # create new .hdf5 file
-        out_name = os.path.join(self.m_output_location, '') + self.m_file_name
-        out_file = h5py.File(out_name, mode='a')
+        out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
 
         for in_tag, out_tag in self.m_tag_dictionary.iteritems():
 
