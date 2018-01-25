@@ -365,10 +365,11 @@ class HessianMatrixModule(ProcessingModule):
                                         res_median_tag=None,
                                         res_arr_out_tag=None,
                                         res_rot_mean_clip_tag=None,
-                                        extra_rot=self.m_extra_rot)
+                                        extra_rot=self.m_extra_rot,
+                                        verbose=False)
 
             else:
-                
+
                 raise ValueError("The pca_module should be either PSFSubtractionModule or "
                                  "FastPCAModule.")
 
