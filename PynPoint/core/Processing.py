@@ -1,13 +1,16 @@
 """
 Different interfaces for Pypeline Modules.
 """
+
 import os
 import warnings
+
 from abc import abstractmethod, ABCMeta
-from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
-from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 import numpy as np
+
+from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 
 class PypelineModule:
@@ -384,7 +387,7 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
         while i < number_of_images:
-            print "Procesing image " + str(i+1) + " of " + str(number_of_images) + " images..."
+            print "Processing image " + str(i+1) + " of " + str(number_of_images) + " images..."
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:
