@@ -218,10 +218,7 @@ class ReadFitsCubesDirectory(ReadingModule):
         :return: None
         """
 
-        if not self.m_input_location.endswith('/'):
-            tmp_location = self.m_input_location + '/'
-        else:
-            tmp_location = self.m_input_location
+        tmp_location = os.path.join(self.m_input_location, '')
 
         # search for fits files
         files = []
