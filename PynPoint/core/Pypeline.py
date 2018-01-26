@@ -326,11 +326,11 @@ class Pypeline(object):
                     ' exist in the database.'
                     % validation[1])
 
-            print "Start running module..."
+            print "Start running "+name+"..."
             self._m_modules[name].run()
-            print "Finished running module..."
+            print "Finished running "+name+"..."
         else:
-            warnings.warn('Module not found')
+            warnings.warn('Module '+name+' not found')
 
     def get_data(self,
                  tag):
