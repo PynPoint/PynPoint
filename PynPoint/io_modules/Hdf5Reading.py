@@ -111,10 +111,7 @@ class Hdf5ReadingModule(ReadingModule):
         # create list of files to be read
         files = []
 
-        if self.m_input_location.endswith("/"):
-            tmp_dir = str(self.m_input_location)
-        else:
-            tmp_dir = str(self.m_input_location) + "/"
+        tmp_dir = os.path.join(self.m_input_location, '')
 
         # check if a single input file is given
         if self.m_filename is not None:
