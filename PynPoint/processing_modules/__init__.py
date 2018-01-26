@@ -1,5 +1,6 @@
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgroundSubtractionModule, \
-                                  PCABackgroundPreparationModule, PCABackgroundSubtractionModule
+                                  PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
+                                  PCABackgroundDitherModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
     BadPixelMapCreationModule, BadPixelInterpolationRefinementModule

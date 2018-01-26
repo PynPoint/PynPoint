@@ -2,6 +2,8 @@
 Module for Writing a list of tags from the database to a separated .hdf5 file
 """
 
+import os
+
 import h5py
 
 from PynPoint.core.Processing import WritingModule
