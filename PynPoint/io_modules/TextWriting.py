@@ -3,6 +3,7 @@ Module for writing data as text file.
 """
 
 import os
+import sys
 
 import numpy as np
 
@@ -13,8 +14,8 @@ class TextWritingModule(WritingModule):
     """
     Module for writing a 1D or 2D data set from the central .hdf5 database as text file.
     TextWritingModule is a WritingModule and supports to use the Pypeline default output
-    directory as well as a own location. (see :class:`PynPoint.core.Processing.WritingModule`
-    for more information)
+    directory as well as an own location. See :class:`PynPoint.core.Processing.WritingModule`
+    for more information.
     """
 
     def __init__(self,
@@ -24,7 +25,7 @@ class TextWritingModule(WritingModule):
                  data_tag="im_arr",
                  header=''):
         """
-        Constructor of the TextWritingModule module.
+        Constructor of TextWritingModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -57,6 +58,9 @@ class TextWritingModule(WritingModule):
         :return: None
         """
 
+        sys.stdout.write("Running TextWritingModule...")
+        sys.stdout.flush()
+
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         data = self.m_data_port.get_all()
@@ -65,5 +69,8 @@ class TextWritingModule(WritingModule):
             raise ValueError("Only 1D or 2D arrays can be written to a text file.")
 
         np.savetxt(out_name, data, header=self.m_header, comments='# ')
+
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
 
         self.m_data_port.close_port()

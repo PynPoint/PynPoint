@@ -1,5 +1,5 @@
 from copy import deepcopy
-from sys import platform
+from sys import platform, stdout
 
 import numpy as np
 
@@ -156,23 +156,27 @@ class PSFSubtractionModule(ProcessingModule):
     def run(self):
 
         if self.m_verbose:
-            print "Preparing data..."
+            stdout.write("Preparing data...")
+            stdout.flush()
         self._m_preparation_images.run()
         self._m_preparation_reference.run()
         if self.m_verbose:
-            print "Finished preparing data..."
-            print "Creating PCA-basis set..."
+            stdout.write(" [DONE]\n")
+            stdout.write("Creating PCA-basis set...")
+            stdout.flush()
         self._m_make_pca_basis.run()
         if self.m_verbose:
-            print "Finished creating PCA-basis set..."
-            print "Calculating PSF-Model..."
+            stdout.write(" [DONE]\n")
+            stdout.write("Calculating PSF model...")
+            stdout.flush()
         self._m_make_psf_model.run()
         if self.m_verbose:
-            print "Finished calculating PSF-model..."
-            print "Creating residuals..."
+            stdout.write(" [DONE]\n")
+            stdout.write("Creating residuals...")
+            stdout.flush()
         self._m_residuals_module.run()
         if self.m_verbose:
-            print "Finished creating residuals..."
+            stdout.write(" [DONE]\n")
 
         # Take Header Information
         input_port = self._m_residuals_module.m_im_arr_in_port
@@ -184,11 +188,10 @@ class PSFSubtractionModule(ProcessingModule):
                      self._m_residuals_module.m_res_var_port,
                      self._m_residuals_module.m_res_rot_mean_clip_port]
 
-        history = "PCA with " + str(self.m_num_components) + " PCA-components"
         for port in out_ports:
             port.copy_attributes_from_input_port(input_port)
-            port.add_history_information("PSF_subtraction",
-                                         history)
+            port.add_history_information("PSF subtraction",
+                                         "PCA with "+str(self.m_num_components)+"components")
 
         out_ports[0].flush()
 
@@ -524,8 +527,6 @@ class FastPCAModule(ProcessingModule):
         self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
         cpu_count = self._m_config_port.get_attribute("CPU_COUNT")
-        if self.m_verbose:
-            print "Start calculating PSF models with " + str(cpu_count) + " processes"
 
         rotations = - self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
@@ -548,9 +549,6 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.del_all_data()
         self.m_res_rot_mean_clip_out_port.del_all_data()
 
-        if self.m_verbose:
-            print "Start calculating PSF models"
-        history = "Using PCAs"
         for pca_number in self.m_components:
             tmp_pca_representation = np.matmul(self.m_pca.components_[:pca_number],
                                                star_sklearn.T)
@@ -582,8 +580,8 @@ class FastPCAModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].set_all(res_array)
                 self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
                     self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history_information("PSF_subtraction",
-                                                                             history)
+                self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
+                                                                             "Fast PCA")
 
             # 2.) mean
             tmp_res_rot_mean = np.mean(res_array,
@@ -608,9 +606,6 @@ class FastPCAModule(ProcessingModule):
 
                 self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
 
-            if self.m_verbose:
-                print "Created Residual with " + str(pca_number) + " components"
-
     def run(self):
         # get all data and subtract the mean
         star_data = self.m_star_in_port.get_all()
@@ -627,10 +622,16 @@ class FastPCAModule(ProcessingModule):
 
         # Fit the PCA model
         if self.m_verbose:
-            print "Start fitting the PCA model ..."
+            stdout.write("Calculating PSF model...")
+            stdout.flush()
         ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
+
+        if self.m_verbose:
+            stdout.write(" [DONE]\n")
+            stdout.write("Creating residuals...")
+            stdout.flush()
 
         # prepare the data for sklearns PCA
         star_sklearn = star_data.reshape((star_data.shape[0],
@@ -642,13 +643,16 @@ class FastPCAModule(ProcessingModule):
         else:
             self._run_multi_processing(star_data)
 
+        if self.m_verbose:
+            stdout.write(" [DONE]\n")
+
         # save history for all other ports
         self.m_res_mean_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
 
-        self.m_res_mean_out_port.add_history_information("PSF_subtraction", "Using PCAs")
-        self.m_res_median_out_port.add_history_information("PSF_subtraction", "Using PCAs")
-        self.m_res_rot_mean_clip_out_port.add_history_information("PSF_subtraction", "Using PCAs")
+        self.m_res_mean_out_port.add_history_information("PSF subtraction", "Fast PCA")
+        self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
+        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
 
         self.m_res_mean_out_port.close_port()
