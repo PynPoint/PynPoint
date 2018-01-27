@@ -108,6 +108,7 @@ class StarExtractionModule(ProcessingModule):
         self.apply_function_to_images(cut_psf,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running StarExtractionModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_pos_out_port.set_all(np.array(star_positions))
@@ -242,6 +243,7 @@ class StarAlignmentModule(ProcessingModule):
         self.apply_function_to_images(align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running StarAlignmentModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)

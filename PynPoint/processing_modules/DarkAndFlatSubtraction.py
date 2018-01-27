@@ -111,6 +111,7 @@ class DarkSubtractionModule(ProcessingModule):
         self.apply_function_to_images(dark_subtraction_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running DarkSubtractionModule...",
                                       func_args=(tmp_dark,),
                                       num_images_in_memory=self.m_num_images_in_memory)
 
@@ -191,6 +192,7 @@ class FlatSubtractionModule(ProcessingModule):
         self.apply_function_to_images(flat_subtraction_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running FlatSubtractionModule...",
                                       func_args=(tmp_flat, ),
                                       num_images_in_memory=self.m_num_images_in_memory)
 

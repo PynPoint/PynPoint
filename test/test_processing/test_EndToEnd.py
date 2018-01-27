@@ -8,7 +8,7 @@ import numpy as np
 
 from PynPoint import Pypeline
 from PynPoint.core.DataIO import DataStorage, InputPort
-from PynPoint.io_modules import ReadFitsCubesDirectory
+from PynPoint.io_modules import FitsReadingModule
 from PynPoint.processing_modules import RemoveLastFrameModule, PSFSubtractionModule, \
                                         AngleCalculationModule, CutTopLinesModule, \
                                         MeanBackgroundSubtractionModule, RemoveFramesModule, \
@@ -23,9 +23,9 @@ class TestEndToEnd(object):
         self.pipeline = Pypeline(self.test_dir, self.test_dir+"/test_data/adi/", self.test_dir)
 
     def test_read(self):
-        read_fits = ReadFitsCubesDirectory(name_in="read_fits",
-                                           image_tag="im",
-                                           force_overwrite_in_databank=True)
+        read_fits = FitsReadingModule(name_in="read_fits",
+                                      image_tag="im",
+                                      overwrite=True)
 
         self.pipeline.add_module(read_fits)
         self.pipeline.run_module("read_fits")
