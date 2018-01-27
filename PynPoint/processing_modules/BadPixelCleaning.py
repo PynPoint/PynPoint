@@ -217,6 +217,7 @@ class BadPixelCleaningSigmaFilterModule(ProcessingModule):
         self.apply_function_to_images(bad_pixel_clean_sigmafilter_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running BadPixelCleaningSigmaFilterModule...",
                                       func_args=(self.m_box,
                                                  self.m_sigma,
                                                  self.m_iterate),
@@ -326,6 +327,7 @@ class BadPixelInterpolationModule(ProcessingModule):
         self.apply_function_to_images(bad_pixel_interpolation_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running BadPixelInterpolationModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         history = "Iterations = " + str(self.m_iterations)
@@ -422,11 +424,12 @@ class BadPixelInterpolationRefinementModule(ProcessingModule):
         self.apply_function_to_images(bad_pixel_int_ref_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running BadPixelInterpolationRefinementModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
-        history = "Iterations = " + str(self.m_iterations)
         self.m_image_out_port.add_history_information("Bad Pixel Interpolation Refinement",
-                                                      history)
+                                                      "Iterations = "+str(self.m_iterations))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.close_port()

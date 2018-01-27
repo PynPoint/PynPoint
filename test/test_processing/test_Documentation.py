@@ -8,7 +8,7 @@ import numpy as np
 
 from PynPoint import Pypeline
 from PynPoint.core.DataIO import DataStorage
-from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
+from PynPoint.io_modules import FitsReadingModule, FitsWritingModule
 from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
      DarkSubtractionModule, FlatSubtractionModule, CutTopLinesModule, \
      AngleCalculationModule, MeanBackgroundSubtractionModule, \
@@ -24,20 +24,20 @@ class TestDocumentation(object):
 
     def test_docs(self):
 
-        reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
-                                              image_tag="im_arr")
+        reading_data = FitsReadingModule(name_in="Fits_reading",
+                                         image_tag="im_arr")
 
         self.pipeline.add_module(reading_data)
 
-        reading_dark = ReadFitsCubesDirectory(name_in="Dark_reading",
-                                              input_dir=self.test_dir+"/test_data/dark",
-                                              image_tag="dark_arr")
+        reading_dark = FitsReadingModule(name_in="Dark_reading",
+                                         input_dir=self.test_dir+"/test_data/dark",
+                                         image_tag="dark_arr")
 
         self.pipeline.add_module(reading_dark)
 
-        reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                              input_dir=self.test_dir+"/test_data/flat",
-                                              image_tag="flat_arr")
+        reading_flat = FitsReadingModule(name_in="Flat_reading",
+                                         input_dir=self.test_dir+"/test_data/flat",
+                                         image_tag="flat_arr")
 
         self.pipeline.add_module(reading_flat)
 
@@ -127,9 +127,9 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(psf_sub)
 
-        writing = WriteAsSingleFitsFile(name_in="Fits_writing",
-                                        file_name="test.fits",
-                                        data_tag="res_mean")
+        writing = FitsWritingModule(name_in="Fits_writing",
+                                    file_name="test.fits",
+                                    data_tag="res_mean")
 
         self.pipeline.add_module(writing)
 

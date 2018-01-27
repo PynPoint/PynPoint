@@ -36,6 +36,14 @@ PynPoint\.io\_modules\.Hdf5Writing module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.io\_modules\.TextWriting module
+-----------------------------------------
+
+.. automodule:: PynPoint.io_modules.TextWriting
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

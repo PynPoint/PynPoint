@@ -1,13 +1,18 @@
 """
 Different interfaces for Pypeline Modules.
 """
+
 import os
+import sys
 import warnings
+
 from abc import abstractmethod, ABCMeta
-from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
-from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
 
 import numpy as np
+
+from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
+from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
+from PynPoint.util.Progress import progress
 
 
 class PypelineModule:
@@ -329,6 +334,7 @@ class ProcessingModule(PypelineModule):
     def apply_function_to_images(func,
                                  image_in_port,
                                  image_out_port,
+                                 message,
                                  func_args=None,
                                  num_images_in_memory=100):
         """
@@ -361,6 +367,8 @@ class ProcessingModule(PypelineModule):
         :type image_in_port: InputPort
         :param image_out_port: OutputPort which is linked to the result place
         :type image_out_port: OutputPort
+        :param message: Message for the standard output.
+        :type message: str
         :param func_args: Additional arguments which are needed by the function *func*
         :type func_args: tuple
         :param num_images_in_memory: Maximum number of frames which will be loaded to the memory. If
@@ -383,8 +391,8 @@ class ProcessingModule(PypelineModule):
 
         i = 0
         first_time = True
+
         while i < number_of_images:
-            print "processed image " + str(i+1) + " of " + str(number_of_images) + " images"
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:
@@ -422,6 +430,11 @@ class ProcessingModule(PypelineModule):
                 image_out_port.append(np.array(tmp_res))
 
             i = j
+
+            progress(i+1, number_of_images, message)
+
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
     def get_all_input_tags(self):
         """

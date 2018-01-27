@@ -9,7 +9,7 @@ from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
 from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
 
 from PynPoint.core.Pypeline import Pypeline
-from PynPoint.io_modules.FitsReading import ReadFitsCubesDirectory
+from PynPoint.io_modules.FitsReading import FitsReadingModule
 from PynPoint.processing_modules.PSFSubtractionPCA import MakePSFModelModule
 
 warnings.simplefilter("always")
@@ -94,9 +94,10 @@ class BasePynpointWrapper(object):
 
         obj._save_kwargs(**kwargs)
 
-        reading = ReadFitsCubesDirectory(name_in="reading_mod",
-                                         input_dir=dir_in,
-                                         image_tag=obj._m_image_data_tag)
+        reading = FitsReadingModule(name_in="reading_mod",
+                                    input_dir=dir_in,
+                                    image_tag=obj._m_image_data_tag)
+
         obj._pypeline.add_module(reading)
         obj._pypeline.run_module("reading_mod")
         obj._prepare_data()
