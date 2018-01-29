@@ -138,8 +138,8 @@ class Hdf5ReadingModule(ReadingModule):
                     files.append(tmp_dir + str(tmp_file))
 
         for i, tmp_file in enumerate(files):
-            progress(i+1, len(files), "Running Hdf5ReadingModule...")
+            progress(i, len(files), "Running Hdf5ReadingModule...")
             self._read_single_hdf5(tmp_file)
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write("Running Hdf5ReadingModule... [DONE]\n")
         sys.stdout.flush()
