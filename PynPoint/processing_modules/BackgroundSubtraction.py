@@ -2,15 +2,18 @@
 Modules with background subtraction routines.
 """
 
+import sys
+
 import numpy as np
 
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
+from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
-from PynPoint.processing_modules.SimpleTools import CutAroundPositionModule, LocateStarModule, \
-                                                    CombineTagsModule
+from PynPoint.processing_modules.SimpleTools import CutAroundPositionModule, CombineTagsModule
+from PynPoint.processing_modules.StarAlignment import LocateStarModule
 
 
 class MeanBackgroundSubtractionModule(ProcessingModule):
@@ -388,7 +391,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         # Separate star and background cubes, and subtract mean background
         count = 0
         for i, item in enumerate(nframes):
-            print "Processing image "+str(count+1)+" of "+ str(num_frames)+" images..."
+            progress(i, len(nframes), "Running PCABackgroundPreparationModule...")
 
             im_tmp = self.m_image_in_port[count:count+item,]
 
@@ -453,6 +456,9 @@ class PCABackgroundPreparationModule(ProcessingModule):
                     star_init = True
 
             count += item
+
+        sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
+        sys.stdout.flush()
 
         # Star - Update attribute
 
@@ -642,22 +648,23 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         im_background = self.m_background_in_port.get_all()
 
-        print "Creating PCA-basis set..."
+        sys.stdout.write("Creating PCA basis set...")
+        sys.stdout.flush()
         basis_pca = self._create_basis(im_background)
-        print "Finished creating PCA-basis set..."
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
 
         num_frames = self.m_star_in_port.get_shape()[0]
         num_stacks = int(float(num_frames)/float(image_memory))
 
-        print "Calculating background model..."
         if self.m_mask_position == "mean":
             mask = self._create_mask(self.m_mask_radius, star_position, num_frames)
 
         for i in range(num_stacks):
+            progress(i, num_stacks, "Calculating background model...")
+
             frame_start = i*image_memory
             frame_end = i*image_memory+image_memory
-
-            print "Processing image "+str(frame_start+1)+" of "+ str(num_frames)+" images..."
 
             im_star = self.m_star_in_port[frame_start:frame_end,]
 
@@ -679,11 +686,12 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 if self.m_residuals_out_tag is not None:
                     self.m_residuals_out_port.append(fit_im)
 
+        sys.stdout.write("Calculating background model... [DONE]\n")
+        sys.stdout.flush()
+
         if num_frames%image_memory > 0:
             frame_start = num_stacks*image_memory
             frame_end = num_frames
-
-            print "Processing image "+str(frame_start+1)+" of "+ str(num_frames)+" images..."
 
             im_star = self.m_star_in_port[frame_start:frame_end,]
 
@@ -697,8 +705,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             self.m_subtracted_out_port.append(im_star-fit_im)
             if self.m_residuals_out_tag is not None:
                 self.m_residuals_out_port.append(fit_im)
-
-        print "Finished calculating background model..."
 
         self.m_subtracted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_subtracted_out_port.add_history_information("Background",
@@ -809,7 +815,7 @@ class PCABackgroundDitheringModule(ProcessingModule):
         tags = []
 
         for i, position in enumerate(self.m_center):
-            print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+" ..."
+            print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
 
             cut = CutAroundPositionModule(new_shape=self.m_shape,
                                           center_of_cut=position,

@@ -297,7 +297,8 @@ class ContrastModule(ProcessingModule):
                                                    name_in="fake_planet",
                                                    image_in_tag=self.m_image_in_tag,
                                                    psf_in_tag=self.m_psf_in_tag,
-                                                   image_out_tag="contrast_fake")
+                                                   image_out_tag="contrast_fake",
+                                                   verbose=False)
 
                     fake_planet.connect_database(self._m_data_base)
                     fake_planet.run()
