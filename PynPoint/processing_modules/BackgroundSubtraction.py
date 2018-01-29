@@ -4,12 +4,18 @@ Modules with background subtraction routines.
 
 import numpy as np
 
+from scipy.sparse.linalg import svds
+from scipy.optimize import curve_fit
+
 from PynPoint.core.Processing import ProcessingModule
+from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.processing_modules.SimpleTools import CutAroundPositionModule, LocateStarModule, \
+                                                    CombineTagsModule
 
 
 class MeanBackgroundSubtractionModule(ProcessingModule):
     """
-    Module for mean background subtraction, only applicable for dithered data.
+    Module for mean background subtraction, only applicable on data with dithering.
     """
 
     def __init__(self,
@@ -23,10 +29,10 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         :param star_pos_shift: Frame index offset for the background subtraction. Typically equal
                                to the number of frames per dither location. If set to *None*, the
-                               (non-static) NAXIS3 values from the FITS headers will be used.
+                               (non-static) NFRAMES attributes will be used.
         :type star_pos_shift: int
-        :param cube_per_position: Number of consecutive cubes per dithering position.
-        :type cube_per_position: int
+        :param cubes_per_position: Number of consecutive cubes per dither position.
+        :type cubes_per_position: int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -49,13 +55,13 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
     def run(self):
         """
         Run method of the module. Mean background subtraction which uses either a constant index
-        offset or the (non-static) NAXIS3 values for the headers. The mean background is calculated
-        from the cubes before and after the science cube(s).
+        offset or the (non-static) NFRAMES values. The mean background is calculated from the
+        cubes before and after the science cube(s).
 
         :return: None
         """
 
-        # Use NAXIS3 values if star_pos_shift is None
+        # Use NFRAMES values if star_pos_shift is None
         if self.m_star_prs_shift is None:
             self.m_star_prs_shift = self.m_image_in_port.get_attribute("NFRAMES")
 
@@ -282,3 +288,679 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
                                                       "simple subtraction")
 
         self.m_image_out_port.close_port()
+
+
+class PCABackgroundPreparationModule(ProcessingModule):
+    """
+    Module for preparing the PCA background subtraction.
+    """
+
+    def __init__(self,
+                 dither,
+                 name_in="separate_star",
+                 image_in_tag="im_arr",
+                 star_out_tag="im_arr_star",
+                 background_out_tag="im_arr_background"):
+        """
+        Constructor of PCABackgroundPreparationModule.
+
+        :param dither: Tuple with the parameters for separating the star and background frames.
+                       The tuple should contain three values (dither_positions, cubes_per_position,
+                       first_star_cube) with *dither_positions* the number of unique dither
+                       locations on the detector, *cubes_per_position* the number of consecutive
+                       cubes per dither position, and *first_star_cube* the index value of the
+                       first cube which contains the star (Python indexing starts at zero).
+        :type select: tuple
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param star_out_tag: Tag of the database entry with frames that include the star. Should be
+                             different from *image_in_tag*.
+        :type star_out_tag: str
+        :param background_out_tag: Tag of the the database entry with frames that contain only
+                                   background and no star. Should be different from *image_in_tag*.
+        :type background_out_tag: str
+
+        :return: None
+        """
+
+        super(PCABackgroundPreparationModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_star_out_port = self.add_output_port(star_out_tag)
+        self.m_background_out_port = self.add_output_port(background_out_tag)
+
+        if len(dither) != 3:
+            raise ValueError("The 'dither' tuple should contain three integer values.")
+
+        self.m_dither_positions = dither[0]
+        self.m_cubes_per_position = dither[1]
+        self.m_first_star_cube = dither[2]
+
+        self.m_star_out_tag = star_out_tag
+
+    def run(self):
+        """
+        Run method of the module. Separates the star and background frames, subtracts the mean
+        background from both the star and background frames, writes the star and background
+        frames separately, and locates the star in each frame (required for the masking in the
+        PCA background module).
+
+        :return: None
+        """
+
+        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
+            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
+                             "provided for all frames before PCA background subtraction.")
+
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        cube_mean = np.zeros((nframes.shape[0], self.m_image_in_port.get_shape()[2], \
+                             self.m_image_in_port.get_shape()[1]))
+
+        # Mean of each cube
+        count = 0
+        for i, item in enumerate(nframes):
+            cube_mean[i,] = np.mean(self.m_image_in_port[count:count+item,], axis=0)
+            count += item
+
+        # Flag star and background cubes
+        bg_frames = np.ones(nframes.shape[0], dtype=bool)
+        for i in range(self.m_first_star_cube, np.size(nframes), \
+                       self.m_cubes_per_position*self.m_dither_positions):
+            bg_frames[i:i+self.m_cubes_per_position] = False
+
+        bg_indices = np.nonzero(bg_frames)[0]
+
+        star_init = False
+        background_init = False
+
+        star_parang = np.empty(0)
+        star_nframes = np.empty(0)
+
+        background_parang = np.empty(0)
+        background_nframes = np.empty(0)
+
+        num_frames = self.m_image_in_port.get_shape()[0]
+
+        # Separate star and background cubes, and subtract mean background
+        count = 0
+        for i, item in enumerate(nframes):
+            print "Processing image "+str(count+1)+" of "+ str(num_frames)+" images..."
+
+            im_tmp = self.m_image_in_port[count:count+item,]
+
+            # Background frames
+            if bg_frames[i]:
+                # Mean background of the cube
+                background = cube_mean[i,]
+
+                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
+                if background_init:
+                    self.m_background_out_port.append(im_tmp-background)
+
+                    background_parang = np.append(background_parang, parang[count:count+item])
+                    background_nframes = np.append(background_nframes, nframes[i])
+
+                else:
+                    self.m_background_out_port.set_all(im_tmp-background)
+
+                    background_parang = parang[count:count+item]
+                    background_nframes = np.zeros(1, dtype=np.int64)
+                    background_nframes[0] = nframes[i]
+
+                    background_init = True
+
+            # Star frames
+            else:
+
+                # Previous background cube
+                if np.size(bg_indices[bg_indices < i]) > 0:
+                    index_prev = np.amax(bg_indices[bg_indices < i])
+                    bg_prev = cube_mean[index_prev,]
+
+                # Next background cube
+                if np.size(bg_indices[bg_indices > i]) > 0:
+                    index_next = np.amin(bg_indices[bg_indices > i])
+                    bg_next = cube_mean[index_next,]
+
+                # Select background: previous, next, or mean of previous and next
+                if i == 0:
+                    background = bg_next
+
+                elif i == np.size(nframes)-1:
+                    background = bg_prev
+
+                else:
+                    background = (bg_prev+bg_next)/2.
+
+                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
+                if star_init:
+                    self.m_star_out_port.append(im_tmp-background)
+
+                    star_parang = np.append(star_parang, parang[count:count+item])
+                    star_nframes = np.append(star_nframes, nframes[i])
+
+                else:
+                    self.m_star_out_port.set_all(im_tmp-background)
+
+                    star_parang = parang[count:count+item]
+                    star_nframes = np.zeros(1, dtype=np.int64)
+                    star_nframes[0] = nframes[i]
+
+                    star_init = True
+
+            count += item
+
+        # Star - Update attribute
+
+        self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_star_out_port.add_attribute("NEW_PARA", star_parang, static=False)
+        self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
+
+        self.m_star_out_port.add_history_information("Star frames separated",
+                                                     str(len(star_parang))+"/"+ \
+                                                     str(len(parang))+" cubes")
+
+        # Background - Update attributes
+
+        self.m_background_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_background_out_port.add_attribute("NEW_PARA", background_parang, static=False)
+        self.m_background_out_port.add_attribute("NFRAMES", background_nframes, static=False)
+
+        self.m_background_out_port.add_history_information("Background frames separated",
+                                                           str(len(background_parang))+"/"+ \
+                                                           str(len(parang))+" cubes")
+
+        # Close database
+
+        self.m_star_out_port.close_port()
+
+
+class PCABackgroundSubtractionModule(ProcessingModule):
+    """
+    Module for PCA background subtraction.
+    """
+
+    def __init__(self,
+                 pca_number=60,
+                 mask_radius=0.7,
+                 mask_position="mean",
+                 name_in="pca_background",
+                 star_in_tag="im_star",
+                 background_in_tag="im_background",
+                 subtracted_out_tag="background_subtracted",
+                 residuals_out_tag=None):
+        """
+        Constructor of PCABackgroundSubtractionModule.
+
+        :param pca_number: Number of principle components.
+        :type pca_number: int
+        :param mask_radius: Radius of the mask (arcsec).
+        :type mask_radius: float
+        :param mask_position: Position of the mask uses a single value ("mean") for all frames
+                              or an value ("exact") for each frame separately.
+        :type mask_position: str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param star_in_tag: Tag of the input database entry with star frames.
+        :type star_in_tag: str
+        :param background_in_tag: Tag of the input database entry with the background frames.
+        :type background_in_tag: str
+        :param subtracted_out_tag: Tag of the output database entry with the background
+                                   subtracted star frames.
+        :type subtracted_out_tag: str
+        :param residuals_out_tag: Tag of the output database entry with the residuals of the
+                                  background subtraction.
+        :type residuals_out_tag: str
+
+        :return: None
+        """
+
+        super(PCABackgroundSubtractionModule, self).__init__(name_in)
+
+        self.m_star_in_port = self.add_input_port(star_in_tag)
+        self.m_background_in_port = self.add_input_port(background_in_tag)
+        self.m_subtracted_out_port = self.add_output_port(subtracted_out_tag)
+        if residuals_out_tag is not None:
+            self.m_residuals_out_port = self.add_output_port(residuals_out_tag)
+
+        self.m_pca_number = pca_number
+        self.m_mask_radius = mask_radius
+        self.m_mask_position = mask_position
+        self.m_residuals_out_tag = residuals_out_tag
+
+    def _create_mask(self, mask_radius, star_position, num_frames):
+        """
+        Method for creating a circular mask at the star position.
+        """
+
+        im_dim = self.m_star_in_port[0,].shape
+
+        x_grid = np.arange(0, im_dim[0], 1)
+        y_grid = np.arange(0, im_dim[1], 1)
+
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+        if self.m_mask_position == "mean":
+            mask = np.ones(im_dim)
+
+            cent_x = int(np.mean(star_position[0]))
+            cent_y = int(np.mean(star_position[1]))
+
+            rr_grid = np.sqrt((xx_grid - cent_x)**2 + (yy_grid - cent_y)**2)
+
+            mask[rr_grid < mask_radius] = 0.
+
+        elif self.m_mask_position == "exact":
+            mask = np.ones((num_frames, im_dim[0], im_dim[1]))
+
+            cent_x = star_position[:, 0]
+            cent_y = star_position[:, 1]
+
+            for i in range(num_frames):
+                rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
+                mask[i, ][rr_grid < mask_radius] = 0.
+
+        return mask
+
+    def _create_basis(self, im_arr):
+        """
+        Method for creating a set of principle components for a stack of images.
+        """
+
+        _, _, V = svds(im_arr.reshape(im_arr.shape[0],
+                                      im_arr.shape[1]*im_arr.shape[2]),
+                       k=self.m_pca_number)
+
+        # V = V[::-1,]
+
+        pca_basis = V.reshape(V.shape[0],
+                              im_arr.shape[1],
+                              im_arr.shape[2])
+
+        return pca_basis
+
+    def _model_background(self, basis, im_arr, mask):
+        """
+        Method for creating a model of the background.
+        """
+
+        def _dot_product(x, *p):
+            return np.dot(p, x)
+
+        fit_im_chi = np.zeros(im_arr.shape)
+        # fit_coeff_chi = np.zeros((im_arr.shape[0], basis.shape[0]))
+
+        basis_reshaped = basis.reshape(basis.shape[0], -1)
+
+        if self.m_mask_position == "mean":
+            basis_reshaped_masked = (basis*mask).reshape(basis.shape[0], -1)
+
+        for i in xrange(im_arr.shape[0]):
+            if self.m_mask_position == "exact":
+                basis_reshaped_masked = (basis*mask[i]).reshape(basis.shape[0], -1)
+
+            data_to_fit = im_arr[i,]
+
+            init = np.ones(basis_reshaped_masked.shape[0])
+
+            fitted = curve_fit(_dot_product,
+                               basis_reshaped_masked,
+                               data_to_fit.reshape(-1),
+                               init)
+
+            fit_im = np.dot(fitted[0], basis_reshaped)
+            fit_im = fit_im.reshape(data_to_fit.shape[0], data_to_fit.shape[1])
+
+            fit_im_chi[i,] = fit_im
+            # fit_coeff_chi[i,] = fitted[0]
+
+        return fit_im_chi
+
+    def run(self):
+        """
+        Run method of the module. Creates a PCA basis set of the background frames, masks the PSF
+        in the star frames, fits the star frames with a linear combination of the principle
+        components, and writes the background subtracted star frames and the background residuals
+        that are subtracted.
+
+        :return: None
+        """
+
+        image_memory = self._m_config_port.get_attribute("MEMORY")
+
+        pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
+
+        star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
+
+        self.m_mask_radius /= pixscale
+
+        im_background = self.m_background_in_port.get_all()
+
+        print "Creating PCA-basis set..."
+        basis_pca = self._create_basis(im_background)
+        print "Finished creating PCA-basis set..."
+
+        num_frames = self.m_star_in_port.get_shape()[0]
+        num_stacks = int(float(num_frames)/float(image_memory))
+
+        print "Calculating background model..."
+        if self.m_mask_position == "mean":
+            mask = self._create_mask(self.m_mask_radius, star_position, num_frames)
+
+        for i in range(num_stacks):
+            frame_start = i*image_memory
+            frame_end = i*image_memory+image_memory
+
+            print "Processing image "+str(frame_start+1)+" of "+ str(num_frames)+" images..."
+
+            im_star = self.m_star_in_port[frame_start:frame_end,]
+
+            if self.m_mask_position == "exact":
+                mask = self._create_mask(self.m_mask_radius,
+                                         star_position[frame_start:frame_end, :],
+                                         frame_end-frame_start)
+
+            im_star_mask = im_star*mask
+            fit_im = self._model_background(basis_pca, im_star_mask, mask)
+
+            if i == 0:
+                self.m_subtracted_out_port.set_all(im_star-fit_im)
+                if self.m_residuals_out_tag is not None:
+                    self.m_residuals_out_port.set_all(fit_im)
+
+            else:
+                self.m_subtracted_out_port.append(im_star-fit_im)
+                if self.m_residuals_out_tag is not None:
+                    self.m_residuals_out_port.append(fit_im)
+
+        if num_frames%image_memory > 0:
+            frame_start = num_stacks*image_memory
+            frame_end = num_frames
+
+            print "Processing image "+str(frame_start+1)+" of "+ str(num_frames)+" images..."
+
+            im_star = self.m_star_in_port[frame_start:frame_end,]
+
+            mask = self._create_mask(self.m_mask_radius,
+                                     star_position[frame_start:frame_end, :],
+                                     frame_end-frame_start)
+
+            im_star_mask = im_star*mask
+            fit_im = self._model_background(basis_pca, im_star_mask, mask)
+
+            self.m_subtracted_out_port.append(im_star-fit_im)
+            if self.m_residuals_out_tag is not None:
+                self.m_residuals_out_port.append(fit_im)
+
+        print "Finished calculating background model..."
+
+        self.m_subtracted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+        self.m_subtracted_out_port.add_history_information("Background",
+                                                           "PCA subtraction")
+
+        if self.m_residuals_out_tag is not None:
+            self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+            self.m_residuals_out_port.add_history_information("Background",
+                                                              "PCA residuals")
+
+        self.m_subtracted_out_port.close_port()
+
+
+class PCABackgroundDitheringModule(ProcessingModule):
+    """
+    Module for PCA-based background subtraction of data with dithering. This is a wrapper that
+    applies the processing modules required for the PCA background subtraction.
+    """
+
+    def __init__(self,
+                 center,
+                 name_in='pca_dither',
+                 image_in_tag="im_arr",
+                 image_out_tag="im_pca_bg",
+                 shape=(100, 100),
+                 cubes_per_position=1,
+                 gaussian=0.15,
+                 pca_number=60,
+                 mask_radius=0.7,
+                 **kwargs):
+        """
+        Constructor of PCABackgroundDitheringModule.
+
+        :param center: Tuple with centers of the dither positions. The format should be similar
+                       to ((x0,y0), (x1,y1)) but not restricted to two dither positions. The
+                       order of the coordinates should correspond to the order in which the star is
+                       present at that specific dither position. So (x0,y0) corresponds with the
+                       dither position where the star appears first.
+        :type center: tuple, int
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output.
+        :type image_out_tag: str
+        :param shape: Tuple (delta_x, delta_y) with the image size that is cropped at the
+                      specified dither positions.
+        :type shape: tuple, int
+        :param cubes_per_position: Number of consecutive cubes per dither position.
+        :type cubes_per_position: int
+        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
+                         to smooth the image before the star is located.
+        :type gaussian: float
+        :param pca_number: Number of principle components.
+        :type pca_number: int
+        :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
+        :type mask_radius: float
+
+        :return: None
+        """
+
+        if "bad_pixel_box" in kwargs:
+            self.m_bp_box = kwargs["bad_pixel_box"]
+        else:
+            self.m_bp_box = 9
+
+        if "bad_pixel_sigma" in kwargs:
+            self.m_bp_sigma = kwargs["bad_pixel_sigma"]
+        else:
+            self.m_bp_sigma = 5
+
+        if "bad_pixel_iterate" in kwargs:
+            self.m_bp_iterate = kwargs["bad_pixel_iterate"]
+        else:
+            self.m_bp_iterate = 1
+
+        if "mask_position" in kwargs:
+            self.m_mask_pos = kwargs["mask_position"]
+        else:
+            self.m_mask_pos = "exact"
+
+        super(PCABackgroundDitheringModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+
+        self.m_center = center
+        self.m_shape = shape
+        self.m_cubes_per_position = cubes_per_position
+        self.m_gaussian = gaussian
+        self.m_pca_number = pca_number
+        self.m_mask_radius = mask_radius
+
+        self.m_image_in_tag = image_in_tag
+        self.m_image_out_tag = image_out_tag
+
+    def run(self):
+        """
+        Run method of the module. Cuts out the detector sections at the different dither positions,
+        prepares the PCA background subtraction, applies a bad pixel correction, locates the star
+        in each image, runs the PCA background subtraction, combines the output from the different
+        dither positions is written to a single database tag.
+
+        :return: None
+        """
+
+        n_dither = np.size(self.m_center, 0)
+        star_pos = np.arange(0, n_dither, 1)
+        tags = []
+
+        for i, position in enumerate(self.m_center):
+            print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+" ..."
+
+            cut = CutAroundPositionModule(new_shape=self.m_shape,
+                                          center_of_cut=position,
+                                          name_in="cut"+str(i),
+                                          image_in_tag=self.m_image_in_tag,
+                                          image_out_tag="dither"+str(i+1))
+
+            cut.connect_database(self._m_data_base)
+            cut.run()
+
+            prepare = PCABackgroundPreparationModule(dither=(n_dither,
+                                                             self.m_cubes_per_position,
+                                                             star_pos[i]),
+                                                     name_in="prepare"+str(i),
+                                                     image_in_tag="dither"+str(i+1),
+                                                     star_out_tag="star"+str(i+1),
+                                                     background_out_tag="background"+str(i+1))
+
+            prepare.connect_database(self._m_data_base)
+            prepare.run()
+
+            bp_star = BadPixelCleaningSigmaFilterModule(name_in="bp_star"+str(i),
+                                                        image_in_tag="star"+str(i+1),
+                                                        image_out_tag="star_bp"+str(i+1),
+                                                        box=self.m_bp_box,
+                                                        sigma=self.m_bp_sigma,
+                                                        iterate=self.m_bp_iterate)
+
+            bp_star.connect_database(self._m_data_base)
+            bp_star.run()
+
+            bp_bg = BadPixelCleaningSigmaFilterModule(name_in="bp_background"+str(i),
+                                                      image_in_tag="background"+str(i+1),
+                                                      image_out_tag="background_bp"+str(i+1),
+                                                      box=self.m_bp_box,
+                                                      sigma=self.m_bp_sigma,
+                                                      iterate=self.m_bp_iterate)
+
+            bp_bg.connect_database(self._m_data_base)
+            bp_bg.run()
+
+            star = LocateStarModule(name_in="star"+str(i),
+                                    data_tag="star_bp"+str(i+1),
+                                    gaussian_fwhm=self.m_gaussian)
+
+            star.connect_database(self._m_data_base)
+            star.run()
+
+            pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
+                                                 mask_radius=self.m_mask_radius,
+                                                 mask_position=self.m_mask_pos,
+                                                 name_in="pca_background"+str(i),
+                                                 star_in_tag="star_bp"+str(i+1),
+                                                 background_in_tag="background_bp"+str(i+1),
+                                                 subtracted_out_tag="pca_bg_sub"+str(i+1),
+                                                 residuals_out_tag=None)
+
+            pca.connect_database(self._m_data_base)
+            pca.run()
+
+            tags.append("pca_bg_sub"+str(i+1))
+
+        combine = CombineTagsModule(name_in="combine",
+                                    image_in_tags=tags,
+                                    image_out_tag=self.m_image_out_tag)
+
+        combine.connect_database(self._m_data_base)
+        combine.run()
+
+
+class PCABackgroundNoddingModule(ProcessingModule):
+    """
+    Module for PCA-based background subtraction of data with nodding (e.g., NACO AGPM data). This
+    is a wrapper that applies the processing modules required for the PCA background subtraction.
+    """
+
+    def __init__(self,
+                 name_in='pca_dither',
+                 star_in_tag="im_star",
+                 background_in_tag="im_background",
+                 image_out_tag="im_pca_bg",
+                 gaussian=0.15,
+                 pca_number=60,
+                 mask_radius=0.7,
+                 **kwargs):
+        """
+        Constructor of PCABackgroundNoddingModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param star_in_tag: Tag of the database entry with the images containing the star that are
+                            read as input.
+        :type star_in_tag: str
+        :param background_in_tag: Tag of the database with the images containing the background
+                                  that are read as input.
+        :type background_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output.
+        :type image_out_tag: str
+        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
+                         to smooth the image before the star is located.
+        :type gaussian: float
+        :param pca_number: Number of principle components.
+        :type pca_number: int
+        :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
+        :type mask_radius: float
+
+        :return: None
+        """
+
+        if "mask_position" in kwargs:
+            self.m_mask_pos = kwargs["mask_position"]
+        else:
+            self.m_mask_pos = "exact"
+
+        super(PCABackgroundNoddingModule, self).__init__(name_in)
+
+        self.m_star_in_port = self.add_input_port(star_in_tag)
+        self.m_background_in_port = self.add_input_port(background_in_tag)
+
+        self.m_gaussian = gaussian
+        self.m_pca_number = pca_number
+        self.m_mask_radius = mask_radius
+
+        self.m_star_in_tag = star_in_tag
+        self.m_background_in_tag = background_in_tag
+        self.m_image_out_tag = image_out_tag
+
+    def run(self):
+        """
+        Run method of the module. Locates the star in each image, runs the PCA background
+        subtraction, combines the output from the different dither positions is written to
+        a single database tag.
+
+        :return: None
+        """
+
+        star = LocateStarModule(name_in="star",
+                                data_tag=self.m_star_in_tag,
+                                gaussian_fwhm=self.m_gaussian)
+
+        star.connect_database(self._m_data_base)
+        star.run()
+
+        pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
+                                             mask_radius=self.m_mask_radius,
+                                             mask_position=self.m_mask_pos,
+                                             name_in="pca_background",
+                                             star_in_tag=self.m_star_in_tag,
+                                             background_in_tag=self.m_background_in_tag,
+                                             subtracted_out_tag=self.m_image_out_tag,
+                                             residuals_out_tag=None)
+
+        pca.connect_database(self._m_data_base)
+        pca.run()

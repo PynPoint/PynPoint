@@ -195,7 +195,7 @@ class RemoveLastFrameModule(ProcessingModule):
         for i, _ in enumerate(ndit):
             progress(i+1, len(ndit), "Running RemoveLastFrameModule...")
 
-            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
 
             if ndit_tot == 0:
