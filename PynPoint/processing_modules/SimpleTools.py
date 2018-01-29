@@ -2,10 +2,16 @@
 Modules with simple pre-processing tools.
 """
 
-from PynPoint.core import ProcessingModule
-from skimage.transform import rescale
-from scipy.ndimage import shift
+import math
+import warnings
+
 import numpy as np
+
+from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import shift
+from skimage.transform import rescale
+
+from PynPoint.core import ProcessingModule
 
 
 class CutAroundCenterModule(ProcessingModule):
@@ -49,7 +55,7 @@ class CutAroundCenterModule(ProcessingModule):
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
                           shape_in):
@@ -69,7 +75,7 @@ class CutAroundCenterModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running CutAroundCenterModule...",
                                       func_args=(self.m_shape,),
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Cropped image size to",
                                                       str(self.m_shape))
@@ -123,7 +129,7 @@ class CutAroundPositionModule(ProcessingModule):
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
                           shape_in,
@@ -144,7 +150,7 @@ class CutAroundPositionModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running CutAroundPositionModule...",
                                       func_args=(self.m_shape, self.m_center_of_cut),
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Cropped image size to",
                                                       str(self.m_shape))
@@ -196,7 +202,7 @@ class ScaleFramesModule(ProcessingModule):
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_scaling(image_in,
                           scaling):
@@ -217,7 +223,7 @@ class ScaleFramesModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running ScaleFramesModule...",
                                       func_args=(self.m_scaling,),
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Scaled by a factor of",
                                                       str(self.m_scaling))
@@ -267,7 +273,7 @@ class ShiftForCenteringModule(ProcessingModule):
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_shift(image_in):
 
@@ -277,11 +283,186 @@ class ShiftForCenteringModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ShiftForCenteringModule...",
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Shifted by",
                                                       str(self.m_shift_vector))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
+
+
+class LocateStarModule(ProcessingModule):
+    """
+    Module for locating the position of the star.
+    """
+
+    def __init__(self,
+                 name_in="locate_star",
+                 data_tag="im_arr",
+                 gaussian_fwhm=7):
+        """
+        Constructor of LocateStarModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param data_tag: Tag of the database entry for which the star positions are written as
+                         attributes.
+        :type data_tag: str
+        :param gaussian_fwhm: Full width at half maximum (arcsec) of the Gaussian kernel that is
+                              used to smooth the image before the star is located.
+        :type gaussian_fwhm: float
+        :return: None
+        """
+
+        super(LocateStarModule, self).__init__(name_in)
+
+        self.m_data_in_port = self.add_input_port(data_tag)
+        self.m_data_out_port = self.add_output_port(data_tag)
+
+        self.m_gaussian_fwhm = gaussian_fwhm
+
+    def run(self):
+        """
+        Run method of the module. Smooths the image with a Gaussian kernel, finds the largest
+        pixel value, and writes the STAR_POSITION attribute.
+
+        :return: None
+        """
+
+        pixscale = self.m_data_in_port.get_attribute("PIXSCALE")
+        self.m_gaussian_fwhm /= pixscale
+
+        sigma = self.m_gaussian_fwhm/math.sqrt(8.*math.log(2.))
+
+        star_position = np.zeros((self.m_data_in_port.get_shape()[0], 2), dtype=np.int64)
+
+        for i in range(self.m_data_in_port.get_shape()[0]):
+            im_smooth = gaussian_filter(self.m_data_in_port[i],
+                                        sigma,
+                                        truncate=4.)
+
+            star_position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
+
+        self.m_data_out_port.add_attribute("STAR_POSITION",
+                                           star_position,
+                                           static=False)
+
+        self.m_data_out_port.close_port()
+
+
+class CombineTagsModule(ProcessingModule):
+    """
+    Module for combining tags from multiple database entries into a single tag.
+    """
+
+    def __init__(self,
+                 image_in_tags,
+                 name_in="combine_tags",
+                 image_out_tag="im_arr_combined"):
+        """
+        Constructor of CombineTagsModule.
+
+        :param image_in_tags: Tags of the database entries that are combined.
+        :type image_in_tags: tuple, str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should not be
+                              present in *image_in_tags*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(CombineTagsModule, self).__init__(name_in=name_in)
+
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        if image_out_tag in image_in_tags:
+            raise ValueError("The name of image_out_tag can not be present in image_in_tags.")
+
+        self.m_image_in_tags = image_in_tags
+
+    def run(self):
+        """
+        Run method of the module. Combines the frames of multiple tags into a single output tag
+        and adds the static and non-static attributes. The values of the attributes are compared
+        between the input tags to make sure that the input tags decent from the same data set.
+
+        :return: None
+        """
+
+        if len(self.m_image_in_tags) < 2:
+            raise ValueError("The tuple of image_in_tags should contain at least two tags.")
+
+        image_memory = self._m_config_port.get_attribute("MEMORY")
+
+        self.m_image_out_port.del_all_attributes()
+
+        for i, item in enumerate(self.m_image_in_tags):
+            image_in_port = self.add_input_port(item)
+
+            num_frames = image_in_port.get_shape()[0]
+            num_stacks = int(float(num_frames)/float(image_memory))
+
+            for j in range(num_stacks):
+                frame_start = j*image_memory
+                frame_end = j*image_memory+image_memory
+
+                im_tmp = image_in_port[frame_start:frame_end,]
+
+                if i == 0 and j == 0:
+                    self.m_image_out_port.set_all(im_tmp)
+                else:
+                    self.m_image_out_port.append(im_tmp)
+
+            if num_frames%image_memory > 0:
+                frame_start = num_stacks*image_memory
+                frame_end = num_frames
+
+                im_tmp = image_in_port[frame_start:frame_end,]
+
+                if num_stacks == 0:
+                    self.m_image_out_port.set_all(im_tmp)
+                else:
+                    self.m_image_out_port.append(im_tmp)
+
+            static_attr = image_in_port.get_all_static_attributes()
+            non_static_attr = image_in_port.get_all_non_static_attributes()
+
+            for key in static_attr:
+                status = self.m_image_out_port.check_static_attribute(key, static_attr[key])
+
+                if status == 1:
+                    self.m_image_out_port.add_attribute(key, static_attr[key], static=True)
+
+                elif status == -1:
+                    warnings.warn('The static keyword %s is already used but with a different '
+                                  'value. It is advisable to only combine tags that descend from '
+                                  'the same data set.' % key)
+
+            for key in non_static_attr:
+                values = image_in_port.get_attribute(key)
+                status = self.m_image_out_port.check_non_static_attribute(key, values)
+
+                if key == "NFRAMES" or key == "NEW_PARA" or key == "STAR_POSITION":
+                    if status == 1:
+                        self.m_image_out_port.add_attribute(key, values, static=False)
+                    else:
+                        for j in values:
+                            self.m_image_out_port.append_attribute_data(key, j)
+
+                else:
+                    if status == 1:
+                        self.m_image_out_port.add_attribute(key, values, static=False)
+
+                    elif status == -1:
+                        warnings.warn('The non-static keyword %s is already used but with '
+                                      'different values. It is advisable to only combine tags '
+                                      'that descend from the same data set.' % key)
+
+        self.m_image_out_port.add_history_information("Database entries combined",
+                                                      str(np.size(self.m_image_in_tags)))
 
         self.m_image_out_port.close_port()
