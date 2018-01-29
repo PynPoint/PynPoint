@@ -541,10 +541,10 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         im_dim = self.m_star_in_port[0,].shape
 
-        x = np.arange(0, im_dim[0], 1)
-        y = np.arange(0, im_dim[1], 1)
+        x_grid = np.arange(0, im_dim[0], 1)
+        y_grid = np.arange(0, im_dim[1], 1)
 
-        xx, yy = np.meshgrid(x, y)
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
 
         if self.m_mask_position == "mean":
             mask = np.ones(im_dim)
@@ -552,9 +552,9 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             cent_x = int(np.mean(star_position[0]))
             cent_y = int(np.mean(star_position[1]))
 
-            rr = np.sqrt((xx - cent_x)**2 + (yy - cent_y)**2)
+            rr_grid = np.sqrt((xx_grid - cent_x)**2 + (yy_grid - cent_y)**2)
 
-            mask[rr < mask_radius] = 0.
+            mask[rr_grid < mask_radius] = 0.
 
         elif self.m_mask_position == "exact":
             mask = np.ones((num_frames, im_dim[0], im_dim[1]))
@@ -563,8 +563,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             cent_y = star_position[:, 1]
 
             for i in range(num_frames):
-                rr = np.sqrt((xx - cent_x[i])**2 + (yy - cent_y[i])**2)
-                mask[i, ][rr < mask_radius] = 0.
+                rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
+                mask[i, ][rr_grid < mask_radius] = 0.
 
         return mask
 
@@ -712,7 +712,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         self.m_subtracted_out_port.close_port()
 
 
-class PCABackgroundDitherModule(ProcessingModule):
+class PCABackgroundDitheringModule(ProcessingModule):
     """
     Module for PCA-based background subtraction of data with dithering. This is a wrapper that
     applies the processing modules required for the PCA background subtraction.
@@ -730,7 +730,7 @@ class PCABackgroundDitherModule(ProcessingModule):
                  mask_radius=0.7,
                  **kwargs):
         """
-        Constructor of PCABackgroundDitherModule.
+        Constructor of PCABackgroundDitheringModule.
 
         :param center: Tuple with centers of the dither positions. The format should be similar
                        to ((x0,y0), (x1,y1)) but not restricted to two dither positions. The
@@ -775,7 +775,12 @@ class PCABackgroundDitherModule(ProcessingModule):
         else:
             self.m_bp_iterate = 1
 
-        super(PCABackgroundDitherModule, self).__init__(name_in)
+        if "mask_position" in kwargs:
+            self.m_mask_pos = kwargs["mask_position"]
+        else:
+            self.m_mask_pos = "exact"
+
+        super(PCABackgroundDitheringModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -855,7 +860,7 @@ class PCABackgroundDitherModule(ProcessingModule):
 
             pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                  mask_radius=self.m_mask_radius,
-                                                 mask_position="exact",
+                                                 mask_position=self.m_mask_pos,
                                                  name_in="pca_background"+str(i),
                                                  star_in_tag="star_bp"+str(i+1),
                                                  background_in_tag="background_bp"+str(i+1),
@@ -873,3 +878,89 @@ class PCABackgroundDitherModule(ProcessingModule):
 
         combine.connect_database(self._m_data_base)
         combine.run()
+
+
+class PCABackgroundNoddingModule(ProcessingModule):
+    """
+    Module for PCA-based background subtraction of data with nodding (e.g., NACO AGPM data). This
+    is a wrapper that applies the processing modules required for the PCA background subtraction.
+    """
+
+    def __init__(self,
+                 name_in='pca_dither',
+                 star_in_tag="im_star",
+                 background_in_tag="im_background",
+                 image_out_tag="im_pca_bg",
+                 gaussian=0.15,
+                 pca_number=60,
+                 mask_radius=0.7,
+                 **kwargs):
+        """
+        Constructor of PCABackgroundNoddingModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param star_in_tag: Tag of the database entry with the images containing the star that are
+                            read as input.
+        :type star_in_tag: str
+        :param background_in_tag: Tag of the database with the images containing the background
+                                  that are read as input.
+        :type background_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output.
+        :type image_out_tag: str
+        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
+                         to smooth the image before the star is located.
+        :type gaussian: float
+        :param pca_number: Number of principle components.
+        :type pca_number: int
+        :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
+        :type mask_radius: float
+
+        :return: None
+        """
+
+        if "mask_position" in kwargs:
+            self.m_mask_pos = kwargs["mask_position"]
+        else:
+            self.m_mask_pos = "exact"
+
+        super(PCABackgroundNoddingModule, self).__init__(name_in)
+
+        self.m_star_in_port = self.add_input_port(star_in_tag)
+        self.m_background_in_port = self.add_input_port(background_in_tag)
+
+        self.m_gaussian = gaussian
+        self.m_pca_number = pca_number
+        self.m_mask_radius = mask_radius
+
+        self.m_star_in_tag = star_in_tag
+        self.m_background_in_tag = background_in_tag
+        self.m_image_out_tag = image_out_tag
+
+    def run(self):
+        """
+        Run method of the module. Locates the star in each image, runs the PCA background
+        subtraction, combines the output from the different dither positions is written to
+        a single database tag.
+
+        :return: None
+        """
+
+        star = LocateStarModule(name_in="star",
+                                data_tag=self.m_star_in_tag,
+                                gaussian_fwhm=self.m_gaussian)
+
+        star.connect_database(self._m_data_base)
+        star.run()
+
+        pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
+                                             mask_radius=self.m_mask_radius,
+                                             mask_position=self.m_mask_pos,
+                                             name_in="pca_background",
+                                             star_in_tag=self.m_star_in_tag,
+                                             background_in_tag=self.m_background_in_tag,
+                                             subtracted_out_tag=self.m_image_out_tag,
+                                             residuals_out_tag=None)
+
+        pca.connect_database(self._m_data_base)
+        pca.run()
