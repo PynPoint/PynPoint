@@ -16,5 +16,5 @@ from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule
-from FluxAndPosition import FakePlanetModule, HessianMatrixModule
+from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule
 from DetectionLimits import ContrastModule
