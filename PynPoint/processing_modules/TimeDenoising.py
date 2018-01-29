@@ -260,6 +260,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(image_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running TimeNormalizationModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Frame normalization",
