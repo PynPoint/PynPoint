@@ -371,7 +371,9 @@ class ContrastModule(ProcessingModule):
                                 fpf_interp = interp1d(list_fpf[-2:], list_mag[-2:], 'linear')
                                 fake_mag[m, n] = fpf_interp(fpf_threshold)
 
-                                print
+                                sys.stdout.write("\n")
+                                sys.stdout.flush()
+
                                 break
 
                     if list_fpf[-1] < fpf_threshold:
@@ -410,7 +412,9 @@ class ContrastModule(ProcessingModule):
                     if iteration == 50:
                         fake_mag[m, n] = np.nan
 
-                        print
+                        sys.stdout.write("\n")
+                        sys.stdout.flush()
+
                         break
 
                 count += 1

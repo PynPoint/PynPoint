@@ -298,24 +298,24 @@ class AlignmentSkyAndScienceDataModule(ProcessingModule):
         self.apply_function_to_images(align_single_image,
                                       self.m_science_in_port,
                                       self.m_science_out_port,
+                                      "Running AlignmentSkyAndScienceDataModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_science_out_port.copy_attributes_from_input_port(self.m_science_in_port)
 
-        history = "cross-correlation"
         self.m_science_out_port.add_history_information("Sky-Science alignment",
-                                                        history)
+                                                        "cross-correlation")
 
         # align all Sky data
         self.apply_function_to_images(align_single_image,
                                       self.m_sky_in_port,
                                       self.m_sky_out_port,
+                                      "Running AlignmentSkyAndScienceDataModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
         self.m_sky_out_port.copy_attributes_from_input_port(self.m_sky_in_port)
 
-        history = "cross-correlation"
         self.m_sky_out_port.add_history_information("Sky-Science alignment",
-                                                    history)
+                                                    "cross-correlation")
 
         self.m_sky_out_port.close_port()

@@ -2,11 +2,13 @@
 Modules for pre-processing of NACO data sets.
 """
 
+import sys
 import warnings
 
 import numpy as np
 
 from PynPoint.core.Processing import ProcessingModule
+from PynPoint.util.Progress import progress
 
 
 class CutTopLinesModule(ProcessingModule):
@@ -68,9 +70,10 @@ class CutTopLinesModule(ProcessingModule):
         self.apply_function_to_images(cut_top_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running CutTopLinesModule...",
                                       num_images_in_memory=self.m_num_images_in_memory)
 
-        self.m_image_out_port.add_history_information("NACO_preparation",
+        self.m_image_out_port.add_history_information("NACO preparation",
                                                       "cut top lines")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -113,8 +116,8 @@ class AngleCalculationModule(ProcessingModule):
         :return: None
         """
 
-        input_angles_start = self.m_data_in_port.get_attribute("PARANG_START")
-        input_angles_end = self.m_data_in_port.get_attribute("PARANG_END")
+        parang_start = self.m_data_in_port.get_attribute("PARANG_START")
+        parang_end = self.m_data_in_port.get_attribute("PARANG_END")
 
         steps = self.m_data_in_port.get_attribute("NFRAMES")
         ndit = self.m_data_in_port.get_attribute("NDIT")
@@ -127,11 +130,15 @@ class AngleCalculationModule(ProcessingModule):
 
         new_angles = []
 
-        for i in range(0, len(input_angles_start)):
+        for i in range(len(parang_start)):
+            progress(i+1, len(parang_start), "Running AngleCalculationModule...")
+
             new_angles = np.append(new_angles,
-                                   np.linspace(input_angles_start[i],
-                                               input_angles_end[i],
+                                   np.linspace(parang_start[i],
+                                               parang_end[i],
                                                num=steps[i]))
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
         self.m_data_out_port.add_attribute("NEW_PARA",
                                            new_angles,
@@ -186,7 +193,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
-            print "Processing image "+str(ndit_tot+1)+" of "+ str(np.sum(size))+" images..."
+            progress(i+1, len(ndit), "Running RemoveLastFrameModule...")
 
             tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
@@ -197,6 +204,9 @@ class RemoveLastFrameModule(ProcessingModule):
                 self.m_image_out_port.append(tmp_out)
 
             ndit_tot += ndit[i]+1
+
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 

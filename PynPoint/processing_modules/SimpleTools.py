@@ -73,6 +73,7 @@ class CutAroundCenterModule(ProcessingModule):
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running CutAroundCenterModule...",
                                       func_args=(self.m_shape,),
                                       num_images_in_memory=num_images_in_memory)
 
@@ -147,6 +148,7 @@ class CutAroundPositionModule(ProcessingModule):
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running CutAroundPositionModule...",
                                       func_args=(self.m_shape, self.m_center_of_cut),
                                       num_images_in_memory=num_images_in_memory)
 
@@ -219,6 +221,7 @@ class ScaleFramesModule(ProcessingModule):
         self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running ScaleFramesModule...",
                                       func_args=(self.m_scaling,),
                                       num_images_in_memory=num_images_in_memory)
 
@@ -279,6 +282,7 @@ class ShiftForCenteringModule(ProcessingModule):
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
+                                      "Running ShiftForCenteringModule...",
                                       num_images_in_memory=num_images_in_memory)
 
         self.m_image_out_port.add_history_information("Shifted by",

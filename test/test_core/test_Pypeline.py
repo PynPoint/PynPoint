@@ -4,7 +4,7 @@ import pytest
 import warnings
 
 from PynPoint.core import Pypeline
-from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
+from PynPoint.io_modules import FitsReadingModule, FitsWritingModule
 from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule
 
 import warnings
@@ -75,12 +75,12 @@ class TestPypeline(object):
 
         # --- Reading Modules ---
         # default location
-        reading = ReadFitsCubesDirectory(name_in="reading")
+        reading = FitsReadingModule(name_in="reading")
 
         # no default location
-        reading2 = ReadFitsCubesDirectory(name_in="reading2",
-                                          input_dir=dir_in,
-                                          image_tag="im_arr2")
+        reading2 = FitsReadingModule(name_in="reading2",
+                                     input_dir=dir_in,
+                                     image_tag="im_arr2")
 
         pipeline.add_module(reading)
         pipeline.add_module(reading2)
@@ -92,15 +92,15 @@ class TestPypeline(object):
 
         # --- Writing Module ---
         # default location
-        write = WriteAsSingleFitsFile(name_in="writing",
-                                      file_name="result.fits",
-                                      data_tag="im_arr")
+        write = FitsWritingModule(name_in="writing",
+                                  file_name="result.fits",
+                                  data_tag="im_arr")
 
         # no default location
-        write2 = WriteAsSingleFitsFile(name_in="writing2",
-                                       file_name="result.fits",
-                                       data_tag="im_arr",
-                                       output_dir=dir_in)
+        write2 = FitsWritingModule(name_in="writing2",
+                                   file_name="result.fits",
+                                   data_tag="im_arr",
+                                   output_dir=dir_in)
 
         pipeline.add_module(write)
 
@@ -133,7 +133,7 @@ class TestPypeline(object):
                             dir_in)
 
         # --- Reading Modules ---
-        reading = ReadFitsCubesDirectory(name_in="reading")
+        reading = FitsReadingModule(name_in="reading")
 
         pipeline.add_module(reading)
 
@@ -144,9 +144,9 @@ class TestPypeline(object):
         pipeline.add_module(process)
 
         # --- Writing Module ---
-        write = WriteAsSingleFitsFile(name_in="writing",
-                                      file_name="result.fits",
-                                      data_tag="im_list")
+        write = FitsWritingModule(name_in="writing",
+                                  file_name="result.fits",
+                                  data_tag="im_list")
 
         pipeline.add_module(write)
 
@@ -182,7 +182,7 @@ class TestPypeline(object):
                             dir_in)
 
         # --- Reading Modules ---
-        reading = ReadFitsCubesDirectory(name_in="reading")
+        reading = FitsReadingModule(name_in="reading")
 
         pipeline.add_module(reading)
 
