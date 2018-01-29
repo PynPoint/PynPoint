@@ -177,31 +177,31 @@ class FakePlanetModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
 
-class HessianMatrixModule(ProcessingModule):
+class SimplexMinimizationModule(ProcessingModule):
     """
-    Module to measure the flux and position of a planet signal by injecting negative fake planets
-    and minimizing the curvature at the planet location.
+    Module to measure the flux and position of a planet by injecting negative fake planets and
+    minimizing a function of merit.
     """
 
     def __init__(self,
                  position,
                  magnitude,
                  psf_scaling=-1.,
-                 name_in="hessian_matrix",
+                 name_in="simplex",
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
-                 res_out_tag="hessian_res",
-                 hessian_out_tag="hessian_det",
+                 res_out_tag="simplex_res",
                  flux_position_tag="flux_position",
+                 merit="hessian",
                  radius=0.1,
-                 sigma=1.,
+                 sigma=0.027,
                  tolerance=0.1,
                  pca_module='PSFSubtractionModule',
                  pca_number=20,
                  mask=0.1,
                  extra_rot=0.):
         """
-        Constructor of HessianMatrixModule.
+        Constructor of SimplexMinimizationModule.
 
         :param position: Approximate position (x, y) of the planet (pix).
         :type position: tuple
@@ -221,40 +221,38 @@ class HessianMatrixModule(ProcessingModule):
         :type psf_in_tag: str
         :param res_out_tag: Tag of the database entry with the image residuals that are written
                             as output. Contains the results from the PSF subtraction during the
-                            minimization of the image curvature. The last image is the image
-                            with the best-fit curvature.
+                            minimization of the function of merit. The last image is the image
+                            with the best-fit residuals.
         :type res_out_tag: str
-        :param hessian_out_tag: Tag of the database entry with the values of the determinant of
-                                the Hessian matrix that are written as output. The last image
-                                contains the values from the the best-fit curvature.
-        :type hessian_out_tag: str
         :param flux_position_tag: Tag of the database entry with flux and position results that are
                                   written as output. Each step of the minimization saves the
                                   x position (pix), y position (pix), separation (arcsec),
-                                  angle (deg), contrast (mag), and the sum of the absolute values
-                                  of the determinant of the hessian matrix (which is minimized).
-                                  The last row of values contain the best-fit results.
+                                  angle (deg), contrast (mag), and the function of merit. The last
+                                  row of values contain the best-fit results.
         :type flux_position_tag: str
-        :param radius: Radius (arcsec) of the selected region on which the determinant of the
-                       Hessian matrix is calculated.
+        :param merit: Function of merit for the minimization. Can be either *hessian*, to minimize
+                      the sum of the absolute values of the determinant of the Hessian matrix, or
+                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017).
+        :type merit: str
+        :param radius: Radius (arcsec) of the selected region, centered on the negative fake
+                       companion, used for the minimization.
         :type radius: float
-        :param sigma: Standard deviation (arcsec) used for the Gaussian kernel, which is used the
-                      smooth the images (to reduce small pixel-to-pixel variations) before the
-                      Hessian matrix is calculated. Highest astrometric and photometric precision
-                      is achieved when sigma is optimized (TODO recommendation in terms of
-                      lambda/D).
+        :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
+                      the images before the function of merit is calculated (in order to reduce
+                      small pixel-to-pixel variations). Highest astrometric and photometric
+                      precision is achieved when sigma is optimized.
         :type sigma: float
         :param tolerance: Absolute error on the input parameters, position (pix) and
                           contrast (mag), that is used as acceptance level for convergence. Note
                           that only a single value can be specified which is used for both the
                           position and flux so tolerance=0.1 will give a precision of 0.1 mag
-                          and 0.1 pix. The tolerance on the output, sum(abs(det(hessian))),
+                          and 0.1 pix. The tolerance on the output (i.e., function of merit)
                           is set to np.inf so the condition is always met.
         :type tolerance: float
         :param pca_module: Name of the processing module for the PSF subtraction
                            (PSFSubtractionModule or FastPCAModule).
         :type pca_module: str
-        :param pca_number: Number of principle components used for the PSF subtraction
+        :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.
         :type mask: float
@@ -264,7 +262,7 @@ class HessianMatrixModule(ProcessingModule):
         :return: None
         """
 
-        super(HessianMatrixModule, self).__init__(name_in)
+        super(SimplexMinimizationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if psf_in_tag == image_in_tag:
@@ -272,12 +270,12 @@ class HessianMatrixModule(ProcessingModule):
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
         self.m_res_out_port = self.add_output_port(res_out_tag)
-        self.m_hessian_out_port = self.add_output_port(hessian_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
         self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
+        self.m_merit = merit
         self.m_radius = radius
         self.m_sigma = sigma
         self.m_tolerance = tolerance
@@ -285,6 +283,7 @@ class HessianMatrixModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_mask = mask
         self.m_extra_rot = extra_rot
+
         self.m_image_in_tag = image_in_tag
         self.m_psf_in_tag = psf_in_tag
 
@@ -292,8 +291,9 @@ class HessianMatrixModule(ProcessingModule):
         """
         Run method of the module. The position and flux of a planet are measured by injecting
         negative fake companions and applying a simplex method (Nelder-Mead) for minimization
-        of the curvature of the image at the planet location. The curvature is calculated as
-        the sum of the absolute values of the determinant of the Hessian matrix.
+        of a function of merit at the planet location. The default function of merit is the
+        image curvature which is calculated as the sum of the absolute values of the
+        determinant of the Hessian matrix.
 
         :return: None
         """
@@ -307,7 +307,7 @@ class HessianMatrixModule(ProcessingModule):
 
             return (center[0]+pos_x, center[1]+pos_y)
 
-        def _hessian(arg):
+        def _objective(arg):
             pos_x = arg[0]
             pos_y = arg[1]
             mag = arg[2]
@@ -321,57 +321,57 @@ class HessianMatrixModule(ProcessingModule):
                                            name_in="fake_planet",
                                            image_in_tag=self.m_image_in_tag,
                                            psf_in_tag=self.m_psf_in_tag,
-                                           image_out_tag="hessian_fake")
+                                           image_out_tag="simplex_fake")
 
             fake_planet.connect_database(self._m_data_base)
             fake_planet.run()
 
-            if self.m_pca_module is "PSFSubtractionModule":
+            if self.m_pca_module == "PSFSubtractionModule":
 
-                psf_sub = PSFSubtractionModule(name_in="pca_hessian",
+                psf_sub = PSFSubtractionModule(name_in="pca_simplex",
                                                pca_number=self.m_pca_number,
-                                               images_in_tag="hessian_fake",
-                                               reference_in_tag="hessian_fake",
-                                               res_arr_out_tag="hessian_res_arr_out",
-                                               res_arr_rot_out_tag="hessian_res_arr_rot_out",
-                                               res_mean_tag="hessian_res_mean",
-                                               res_median_tag="hessian_res_median",
-                                               res_var_tag="hessian_res_var",
-                                               res_rot_mean_clip_tag="hessian_res_rot_mean_clip",
-                                               basis_out_tag="hessian_basis_out",
-                                               image_ave_tag="hessian_image_ave",
-                                               psf_model_tag="hessian_psf_model",
-                                               ref_prep_tag="hessian_ref_prep",
-                                               prep_tag="hessian_prep",
+                                               images_in_tag="simplex_fake",
+                                               reference_in_tag="simplex_fake",
+                                               res_arr_out_tag="simplex_res_arr_out",
+                                               res_arr_rot_out_tag="simplex_res_arr_rot_out",
+                                               res_mean_tag="simplex_res_mean",
+                                               res_median_tag="simplex_res_median",
+                                               res_var_tag="simplex_res_var",
+                                               res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
+                                               basis_out_tag="simplex_basis_out",
+                                               image_ave_tag="simplex_image_ave",
+                                               psf_model_tag="simplex_psf_model",
+                                               ref_prep_tag="simplex_ref_prep",
+                                               prep_tag="simplex_prep",
                                                extra_rot=self.m_extra_rot,
                                                cent_size=self.m_mask,
-                                               cent_mask_tag="hessian_cent_mask",
+                                               cent_mask_tag="simplex_cent_mask",
                                                verbose=False)
 
-            elif self.m_pca_module is "FastPCAModule":
+            elif self.m_pca_module == "FastPCAModule":
 
                 if self.m_mask > 0.:
                     warnings.warn("The central mask is not implemented in FastPCAModule.")
 
-                psf_sub = FastPCAModule(name_in="pca_hessian",
+                psf_sub = FastPCAModule(name_in="pca_simplex",
                                         pca_numbers=self.m_pca_number,
-                                        images_in_tag="hessian_fake",
-                                        reference_in_tag="hessian_fake",
-                                        res_mean_tag="hessian_res_mean",
+                                        images_in_tag="simplex_fake",
+                                        reference_in_tag="simplex_fake",
+                                        res_mean_tag="simplex_res_mean",
                                         res_median_tag=None,
                                         res_arr_out_tag=None,
                                         res_rot_mean_clip_tag=None,
                                         extra_rot=self.m_extra_rot)
 
             else:
-                
+
                 raise ValueError("The pca_module should be either PSFSubtractionModule or "
                                  "FastPCAModule.")
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()
 
-            res_input_port = self.add_input_port("hessian_res_mean")
+            res_input_port = self.add_input_port("simplex_res_mean")
             im_res = res_input_port.get_all()
 
             if len(im_res.shape) == 3:
@@ -386,30 +386,41 @@ class HessianMatrixModule(ProcessingModule):
                                position=_rotate(center, self.m_position, -self.m_extra_rot),
                                size=2*self.m_radius).data
 
-            hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
-                                                                sigma=self.m_sigma,
-                                                                mode='constant',
-                                                                cval=0.,
-                                                                order='rc')
-
-            hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-            npix = hes_det.shape[0]
+            npix = im_crop.shape[0]
 
             if npix%2 == 0:
-                x = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                y = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                x_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
             elif npix%2 == 1:
-                x = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-                y = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+                x_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+                y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
-            xv, yv = np.meshgrid(x, y)
-            rr = np.sqrt(xv*xv+yv*yv)
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+            rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
-            hes_det[rr > self.m_radius] = 0.
+            if self.m_merit == "hessian":
 
-            det_sum = np.sum(np.abs(hes_det))
+                hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
+                                                                    sigma=self.m_sigma,
+                                                                    mode='constant',
+                                                                    cval=0.,
+                                                                    order='rc')
 
-            self.m_hessian_out_port.append(hes_det, data_dim=3)
+                hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+
+                hes_det[rr_grid > self.m_radius] = 0.
+
+                merit = np.sum(np.abs(hes_det))
+
+            elif self.m_merit == "sum":
+
+                im_crop[rr_grid > self.m_radius] = 0.
+
+                merit = np.sum(np.abs(im_crop))
+                # merit = np.sum( im_crop**2 / np.std(im_crop[rr_grid < self.m_radius])**2 )
+
+            else:
+                raise ValueError("Function of merit should be set to hessian or sum.")
 
             position = _rotate(center, (pos_x, pos_y), -self.m_extra_rot)
 
@@ -418,17 +429,14 @@ class HessianMatrixModule(ProcessingModule):
                               sep,
                               (ang-self.m_extra_rot)%360.,
                               mag,
-                              det_sum))
+                              merit))
 
             self.m_flux_position_port.append(res, data_dim=2)
 
-            return det_sum
+            return merit
 
         self.m_res_out_port.del_all_data()
         self.m_res_out_port.del_all_attributes()
-
-        self.m_hessian_out_port.del_all_data()
-        self.m_hessian_out_port.del_all_attributes()
 
         self.m_flux_position_port.del_all_data()
         self.m_flux_position_port.del_all_attributes()
@@ -463,21 +471,19 @@ class HessianMatrixModule(ProcessingModule):
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
-        minimize(fun=_hessian,
+        minimize(fun=_objective,
                  x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
                  method="Nelder-Mead",
                  tol=None,
                  options={'xatol': self.m_tolerance, 'fatol': float("inf")})
 
         self.m_res_out_port.add_history_information("Flux and position",
-                                                    "Minimization Hessian matrix")
-
-        self.m_hessian_out_port.add_history_information("Flux and position",
-                                                        "Minimization Hessian matrix")
+                                                    "Simplex minimization")
 
         self.m_flux_position_port.add_history_information("Flux and position",
-                                                          "Minimization Hessian matrix")
+                                                          "Simplex minimization")
 
         self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_hessian_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_res_out_port.close_port()
