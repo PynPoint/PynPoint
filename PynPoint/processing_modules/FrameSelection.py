@@ -131,4 +131,15 @@ class RemoveFramesModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Removed frames",
                                                       str(np.size(self.m_frame_indices)))
 
+        # Update star position (if present)
+
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+
+            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION")
+            starpos_out = np.delete(starpos_in,
+                                    self.m_frame_indices,
+                                    axis=0)
+
+            self.m_image_out_port.add_attribute("STAR_POSITION", starpos_out, static=False)
+
         self.m_image_out_port.close_port()

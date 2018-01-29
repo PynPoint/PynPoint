@@ -1,6 +1,7 @@
 """
 Modules to save and load data from a central DataStorage (.hdf5).
 """
+
 import warnings
 import os
 
@@ -1026,6 +1027,37 @@ class OutputPort(Port):
                 return 0
             else:
                 return -1
+        else:
+            return 1
+
+    def check_non_static_attribute(self,
+                                   name,
+                                   comparison_value):
+        """
+        Checks if a attribute exists and if it is equal to a comparison value.
+
+        :param name: Name of the attribute
+        :type name: str
+        :param comparison_value: Value for comparison
+        :return:
+                     * 1 if the attribute does not exist
+                     * 0 if the attribute exists and is equal,
+                     * -1 if the attribute exists but is not equal
+        :rtype: int
+        """
+        if not self._check_status_and_activate():
+            return
+
+        group = "header_" + self._m_tag + "/"
+
+        if group in self._m_data_storage.m_data_bank:
+            if name in self._m_data_storage.m_data_bank[group]:
+                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:], comparison_value):
+                    return 0
+                else:
+                    return -1
+            else:
+                return 1
         else:
             return 1
 
