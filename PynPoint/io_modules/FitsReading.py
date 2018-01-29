@@ -205,7 +205,7 @@ class FitsReadingModule(ReadingModule):
 
         # read file and append data to storage
         for i, fits_file in enumerate(files):
-            progress(i+1, len(files), "Running FitsReadingModule...")
+            progress(i, len(files), "Running FitsReadingModule...")
 
             self._read_single_file(fits_file,
                                    tmp_location,
@@ -213,7 +213,7 @@ class FitsReadingModule(ReadingModule):
 
             self.m_image_out_port.flush()
 
-        sys.stdout.write("\n")
+        sys.stdout.write("Running FitsReadingModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.close_port()

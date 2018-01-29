@@ -13,6 +13,7 @@ from scipy.optimize import minimize
 from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
 
+from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.processing_modules import PSFSubtractionModule, FastPCAModule
 
@@ -29,7 +30,8 @@ class FakePlanetModule(ProcessingModule):
                  name_in="fake_planet",
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
-                 image_out_tag="im_fake"):
+                 image_out_tag="im_fake",
+                 **kwargs):
         """
         Constructor of FakePlanetModule.
 
@@ -56,6 +58,11 @@ class FakePlanetModule(ProcessingModule):
 
         :return: None
         """
+
+        if "verbose" in kwargs:
+            self.m_verbose = kwargs["verbose"]
+        else:
+            self.m_verbose = True
 
         super(FakePlanetModule, self).__init__(name_in)
 
@@ -143,6 +150,9 @@ class FakePlanetModule(ProcessingModule):
             psf /= float(n_psf)
 
         for j, _ in enumerate(im_stacks[:-1]):
+            if self.m_verbose:
+                progress(j, len(im_stacks[:-1]), "Running FakePlanetModule...")
+
             image = self.m_psf_in_port[im_stacks[j]:im_stacks[j+1]]
 
             for i in range(image.shape[0]):
@@ -166,6 +176,10 @@ class FakePlanetModule(ProcessingModule):
                 self.m_image_out_port.set_all(image)
             else:
                 self.m_image_out_port.append(image)
+
+        if self.m_verbose:
+            sys.stdout.write("Running FakePlanetModule... [DONE]\n")
+            sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -325,7 +339,8 @@ class SimplexMinimizationModule(ProcessingModule):
                                            name_in="fake_planet",
                                            image_in_tag=self.m_image_in_tag,
                                            psf_in_tag=self.m_psf_in_tag,
-                                           image_out_tag="simplex_fake")
+                                           image_out_tag="simplex_fake",
+                                           verbose=False)
 
             fake_planet.connect_database(self._m_data_base)
             fake_planet.run()
@@ -476,7 +491,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
-        sys.stdout.write("Running simplex minimization ")
+        sys.stdout.write("Running simplex minimization")
         sys.stdout.flush()
 
         minimize(fun=_objective,
@@ -485,7 +500,8 @@ class SimplexMinimizationModule(ProcessingModule):
                  tol=None,
                  options={'xatol': self.m_tolerance, 'fatol': float("inf")})
 
-        print
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
 
         self.m_res_out_port.add_history_information("Flux and position",
                                                     "Simplex minimization")
