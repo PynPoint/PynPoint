@@ -3,6 +3,7 @@ Modules for photometry and astrometry.
 """
 
 import math
+import sys
 import warnings
 
 import numpy as np
@@ -308,6 +309,9 @@ class SimplexMinimizationModule(ProcessingModule):
             return (center[0]+pos_x, center[1]+pos_y)
 
         def _objective(arg):
+            sys.stdout.write('.')
+            sys.stdout.flush()
+
             pos_x = arg[0]
             pos_y = arg[1]
             mag = arg[2]
@@ -361,7 +365,8 @@ class SimplexMinimizationModule(ProcessingModule):
                                         res_median_tag=None,
                                         res_arr_out_tag=None,
                                         res_rot_mean_clip_tag=None,
-                                        extra_rot=self.m_extra_rot)
+                                        extra_rot=self.m_extra_rot,
+                                        verbose=False)
 
             else:
 
@@ -471,11 +476,16 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
+        sys.stdout.write("Running simplex minimization ")
+        sys.stdout.flush()
+
         minimize(fun=_objective,
                  x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
                  method="Nelder-Mead",
                  tol=None,
                  options={'xatol': self.m_tolerance, 'fatol': float("inf")})
+
+        print
 
         self.m_res_out_port.add_history_information("Flux and position",
                                                     "Simplex minimization")
