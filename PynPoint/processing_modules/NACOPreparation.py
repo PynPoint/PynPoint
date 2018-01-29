@@ -188,7 +188,7 @@ class RemoveLastFrameModule(ProcessingModule):
         for i, _ in enumerate(ndit):
             print "Processing image "+str(ndit_tot+1)+" of "+ str(np.sum(size))+" images..."
 
-            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1, :, :]
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
 
             if ndit_tot == 0:
