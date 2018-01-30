@@ -27,7 +27,6 @@ class StarExtractionModule(ProcessingModule):
                  name_in="star_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut",
-                 pos_out_tag="star_positions",
                  image_size=2.,
                  fwhm_star=0.2):
         """
@@ -40,9 +39,6 @@ class StarExtractionModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry with the images that are written as
                               output. Should be different from *image_in_tag*.
         :type image_out_tag: str
-        :param pos_out_tag: Tag of the database entry with the star positions that are written
-                            as output.
-        :type pos_out_tag: str
         :param image_size: Cropped size (arcsec) of the images.
         :type image_size: float
         :param fwhm_star: Full width at half maximum (arcsec) of the Gaussian kernel that is used
@@ -55,29 +51,30 @@ class StarExtractionModule(ProcessingModule):
         super(StarExtractionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_inout_port = self.add_output_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
-        self.m_pos_out_port = self.add_output_port(pos_out_tag)
         self.m_image_size = image_size
         self.m_fwhm_star = fwhm_star # 7 pix / 0.2 arcsec is good for L-band data
         self.count = 0
 
     def run(self):
         """
-        Run method of the module. Locates the position of the star (only pixel precision) through
-        the largest pixel value. A Gaussian kernel with a FWHM similar to the PSF is used to
-        smooth away the contribution of bad pixels which may have higher values than the peak
-        of the PSF. Images are cropped and written to an output port, as well as the position
-        values of the star.
+        Run method of the module. Locates the position of the star (only pixel precision) by
+        selecting the largest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
+        used to smooth away the contribution of bad pixels which may have higher values than the
+        peak of the PSF. Images are cropped and written to an output port. The position of the
+        star is attached as a non-static attribute (STAR_POSITION) to the database tag with the
+        input images.
 
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        images_memory = self._m_config_port.get_attribute("MEMORY")
 
-        pixel_scale = self.m_image_in_port.get_attribute("PIXSCALE")
-        psf_radius = int((self.m_image_size / 2.0) / pixel_scale)
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        psf_radius = int((self.m_image_size / 2.0) / pixscale)
 
-        self.m_fwhm_star /= pixel_scale
+        self.m_fwhm_star /= pixscale
         self.m_fwhm_star = int(self.m_fwhm_star)
 
         star_positions = []
@@ -99,7 +96,7 @@ class StarExtractionModule(ProcessingModule):
                     or argmax[1] + psf_radius > current_image.shape[1]:
 
                 raise ValueError('Highest value is near the border. PSF size is too '
-                                 'large to be cut (frame index = '+str(self.count)+').')
+                                 'large to be cut (image index = '+str(self.count)+').')
 
             cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                       int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
@@ -114,15 +111,17 @@ class StarExtractionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarExtractionModule...",
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=images_memory)
 
-        star = np.array(star_positions)
-
-        self.m_pos_out_port.set_all(np.array(star_positions))
+        self.m_image_inout_port.add_attribute("STAR_POSITION",
+                                              np.asarray(star_positions),
+                                              static=False)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("PSF extract",
-                                                      "Maximum search in gaussian burred input")
+
+        self.m_image_out_port.add_history_information("Star extract",
+                                                      "Maximum in smoothed image")
+
         self.m_image_out_port.close_port()
 
 
@@ -192,7 +191,7 @@ class StarAlignmentModule(ProcessingModule):
         :return: None
         """
 
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        images_memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
@@ -251,7 +250,7 @@ class StarAlignmentModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarAlignmentModule...",
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      num_images_in_memory=images_memory)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
