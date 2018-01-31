@@ -8,6 +8,3 @@ def progress(current, total, message):
 
     sys.stdout.write("%s %s%s \r" % (message, percentage, "%"))
     sys.stdout.flush()
-
-    if percentage == 100.0:
-        sys.stdout.write("%s %s \r" % (message, "[DONE]"))

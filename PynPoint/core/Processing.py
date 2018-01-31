@@ -119,8 +119,8 @@ class WritingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Method which creates a new InputPort and append it to the internal InputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
+        Method which creates a new InputPort and appends it to the internal InputPort dictionary.
+        This function should be used by classes inheriting from WritingModule to make sure that
         only InputPort with unique tags are added. The new port can be used by: ::
 
              Port = self._m_input_ports[tag]
@@ -129,13 +129,12 @@ class WritingModule(PypelineModule):
 
         :param tag: Tag of the new input port.
         :type tag: str
-        :return: The new InputPort
+
+        :return: The new InputPort.
         :rtype: InputPort
         """
 
         tmp_port = InputPort(tag)
-        if tag in self._m_input_ports:
-            warnings.warn('Tag already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -205,8 +204,8 @@ class ProcessingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Method which creates a new InputPort and append it to the internal InputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
+        Method which creates a new InputPort and appends it to the internal InputPort dictionary.
+        This function should be used by classes inheriting from ProcessingModule to make sure that
         only InputPort with unique tags are added. The new port can be used by: ::
 
              Port = self._m_input_ports[tag]
@@ -215,14 +214,12 @@ class ProcessingModule(PypelineModule):
 
         :param tag: Tag of the new input port.
         :type tag: str
-        :return: The new InputPort
+
+        :return: The new InputPort.
         :rtype: InputPort
         """
 
         tmp_port = InputPort(tag)
-        if tag in self._m_input_ports and tag != "hessian_res_mean" and \
-           tag != "hessian_fake" and tag != "contrast_res_mean" and tag != "contrast_fake":
-            warnings.warn('Tag '+tag+' already used. Updating..')
 
         if self._m_data_base is not None:
             tmp_port.set_database_connection(self._m_data_base)
@@ -393,6 +390,8 @@ class ProcessingModule(PypelineModule):
         first_time = True
 
         while i < number_of_images:
+            progress(i, number_of_images, message)
+
             if i + num_images_in_memory > number_of_images:
                 j = number_of_images
             else:
@@ -431,9 +430,7 @@ class ProcessingModule(PypelineModule):
 
             i = j
 
-            progress(i+1, number_of_images, message)
-
-        sys.stdout.write("\n")
+        sys.stdout.write(message+" [DONE]\n")
         sys.stdout.flush()
 
     def get_all_input_tags(self):

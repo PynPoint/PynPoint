@@ -156,13 +156,13 @@ class PSFSubtractionModule(ProcessingModule):
     def run(self):
 
         if self.m_verbose:
-            stdout.write("Preparing data...")
+            stdout.write("Preparing PSF subtraction...")
             stdout.flush()
         self._m_preparation_images.run()
         self._m_preparation_reference.run()
         if self.m_verbose:
             stdout.write(" [DONE]\n")
-            stdout.write("Creating PCA-basis set...")
+            stdout.write("Creating PCA basis set...")
             stdout.flush()
         self._m_make_pca_basis.run()
         if self.m_verbose:
