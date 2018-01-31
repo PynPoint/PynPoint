@@ -8,7 +8,8 @@ from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from NACOPreparation import AngleCalculationModule, CutTopLinesModule, RemoveLastFrameModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule
-from StarAlignment import StarAlignmentModule, StarExtractionModule, LocateStarModule
+from StarAlignment import StarAlignmentModule, StarExtractionModule, LocateStarModule, \
+                          StarCenteringModule
 from SkyScienceDataModules import MeanSkyCubes, SkySubtraction, AlignmentSkyAndScienceDataModule
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule, \
     ShiftForCenteringModule, CombineTagsModule

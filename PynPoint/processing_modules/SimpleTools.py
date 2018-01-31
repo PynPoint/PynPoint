@@ -238,15 +238,15 @@ class ShiftForCenteringModule(ProcessingModule):
     """
 
     def __init__(self,
-                 shift_vector,
+                 shift,
                  name_in="shift",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_shifted"):
         """
         Constructor of ShiftForCenteringModule.
 
-        :param shift_vector: Tuple (delta_y, delta_x) with the shift in both directions.
-        :type new_shape: tuple, float
+        :param shift: Tuple (delta_y, delta_x) with the shift in both directions.
+        :type shift: tuple, float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -263,7 +263,7 @@ class ShiftForCenteringModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shift_vector = shift_vector
+        self.m_shift = shift
 
     def run(self):
         """
@@ -272,20 +272,19 @@ class ShiftForCenteringModule(ProcessingModule):
         :return: None
         """
 
-        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_shift(image_in):
-
-            return shift(image_in, self.m_shift_vector, order=5)
+            return shift(image_in, self.m_shift, order=5)
 
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ShiftForCenteringModule...",
-                                      num_images_in_memory=num_images_in_memory)
+                                      num_images_in_memory=memory)
 
         self.m_image_out_port.add_history_information("Shifted by",
-                                                      str(self.m_shift_vector))
+                                                      str(self.m_shift))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -350,7 +349,7 @@ class CombineTagsModule(ProcessingModule):
                 frame_start = j*image_memory
                 frame_end = j*image_memory+image_memory
 
-                im_tmp = image_in_port[frame_start:frame_end,]
+                im_tmp = image_in_port[frame_start:frame_end, ]
 
                 if i == 0 and j == 0:
                     self.m_image_out_port.set_all(im_tmp)
@@ -361,7 +360,7 @@ class CombineTagsModule(ProcessingModule):
                 frame_start = num_stacks*image_memory
                 frame_end = num_frames
 
-                im_tmp = image_in_port[frame_start:frame_end,]
+                im_tmp = image_in_port[frame_start:frame_end, ]
 
                 if num_stacks == 0:
                     self.m_image_out_port.set_all(im_tmp)
