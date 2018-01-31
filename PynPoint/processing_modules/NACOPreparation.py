@@ -131,13 +131,14 @@ class AngleCalculationModule(ProcessingModule):
         new_angles = []
 
         for i in range(len(parang_start)):
-            progress(i+1, len(parang_start), "Running AngleCalculationModule...")
+            progress(i, len(parang_start), "Running AngleCalculationModule...")
 
             new_angles = np.append(new_angles,
                                    np.linspace(parang_start[i],
                                                parang_end[i],
                                                num=steps[i]))
-        sys.stdout.write("\n")
+
+        sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_data_out_port.add_attribute("NEW_PARA",
@@ -193,7 +194,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit_tot = 0
         for i, _ in enumerate(ndit):
-            progress(i+1, len(ndit), "Running RemoveLastFrameModule...")
+            progress(i, len(ndit), "Running RemoveLastFrameModule...")
 
             tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
             tmp_out = np.delete(tmp_in, ndit[i], axis=0)
@@ -205,7 +206,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
             ndit_tot += ndit[i]+1
 
-        sys.stdout.write("\n")
+        sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
