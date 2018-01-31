@@ -1,7 +1,7 @@
 .. _pipeline-architecture:
 
-The PynPoint Architecture
-=========================
+Architecture
+============
 
 In version 0.3.0 we have redesigned the whole PynPoint architecture in order to make it an end to end data processing tool for ADI data instead of a PSF-subtraction toolkit. Our goal was to create a pipeline which inheres a list of different pipeline-modules, one for each processing step. Moreover we designed the new pipeline to be extendable for new data processing techniques or data types in future. A list of all currently available Pipeline-modules is given in the :ref:`pipeline-modules` section.
 
