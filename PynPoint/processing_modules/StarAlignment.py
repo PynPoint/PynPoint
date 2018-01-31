@@ -13,6 +13,7 @@ from skimage.transform import rescale
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
+from scipy.optimize import curve_fit
 
 from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
@@ -327,3 +328,177 @@ class LocateStarModule(ProcessingModule):
                                            static=False)
 
         self.m_data_out_port.close_port()
+
+
+class StarCenteringModule(ProcessingModule):
+    """
+    Module for centering the star by fitting a 2D Gaussian profile.
+    """
+
+    def __init__(self,
+                 name_in="centering",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_center",
+                 fit_out_tag="center_fit",
+                 method="full",
+                 interpolation="spline",
+                 **kwargs):
+        """
+        Constructor of StarCenteringModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with the centered images that are written
+                              as output. Should be different from *image_in_tag*.
+        :type image_out_tag: str
+        :param fit_out_tag: Tag of the database entry with the best-fit results of the 2D Gaussian
+                            fit and the 1sigma errors. Data is written in the following format:
+                            x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
+                            error (arcsec), FWHM major axis (arcsec), FWHM major axis error
+                            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
+                            (arcsec), amplitude (counts), amplitude error (counts), angle (deg)
+                            measured in counterclockwise direction with respect to the upward
+                            direction (i.e., East of North).
+        :type fit_out_tag: str
+        :param method: Fit and shift all the images individually ("full") or only fit the mean of
+                       the cube and shift all images to that location ("mean"). The "mean" method
+                       could be used after running the StarAlignmentModule.
+        :type method: str
+        :param interpolation: Type of interpolation that is used for shifting the images (fft,
+                              spline, or bilinear).
+        :type interpolation: str
+
+        :return: None
+        """
+
+        if "guess" in kwargs:
+            self.m_guess = kwargs["guess"]
+        else:
+            self.m_guess = (0., 0., 1., 1., 1., 0.)
+
+        super(StarCenteringModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+        self.m_fit_out_port = self.add_output_port(fit_out_tag)
+
+        self.m_method = method
+        self.m_interpolation = interpolation
+
+    def run(self):
+        """
+        Run method of the module. Fits the individual images or the mean of the stack with a 2D
+        Gaussian profile, shift the images with subpixel precision, and writes the centered images
+        and the fitting results.
+
+        :return: None
+        """
+
+        def _2d_gaussian((x_grid, y_grid), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+            x_diff = xx_grid - x_center
+            y_diff = yy_grid - y_center
+
+            sigma_x = fwhm_x/math.sqrt(8.*math.log(2.))
+            sigma_y = fwhm_y/math.sqrt(8.*math.log(2.))
+
+            a_gauss = 0.5 * ((np.cos(theta)/sigma_x)**2 + (np.sin(theta)/sigma_y)**2)
+            b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
+            c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
+
+            gaussian = amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
+
+            return np.ravel(gaussian)
+
+        def _centering(image):
+            im_ravel = np.ravel(image)
+
+            popt, pcov = curve_fit(_2d_gaussian,
+                                   (self.m_x_grid, self.m_y_grid),
+                                   im_ravel,
+                                   p0=self.m_guess,
+                                   sigma=None,
+                                   method='lm')
+
+            perr = np.sqrt(np.diag(pcov))
+
+            if self.m_interpolation == "fft":
+                fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
+                im_center = np.fft.ifftn(fft_shift).real
+
+            elif self.m_interpolation == "spline":
+                im_center = shift(image, (-popt[1], -popt[0]), order=5)
+
+            elif self.m_interpolation == "bilinear":
+                im_center = shift(image, (-popt[1], -popt[0]), order=1)
+
+            res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
+                              popt[1]*pixscale, perr[1]*pixscale,
+                              popt[2]*pixscale, perr[2]*pixscale,
+                              popt[3]*pixscale, perr[3]*pixscale,
+                              popt[4], perr[4],
+                              math.degrees(popt[5])%360., math.degrees(perr[5])))
+
+            self.m_fit_out_port.append(res, data_dim=2)
+
+            return im_center
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        self.m_fit_out_port.del_all_data()
+        self.m_fit_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        nimages = self.m_image_in_port.get_shape()[0]
+        nstacks = int(float(nimages)/float(memory))
+        npix = self.m_image_in_port.get_shape()[1]
+
+        if npix%2 == 0:
+            self.m_x_grid = self.m_y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+        elif npix%2 == 1:
+            self.m_x_grid = self.m_y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+        if self.m_method == "mean":
+            sys.stdout.write("Running StarCenteringModule...")
+            sys.stdout.flush()
+
+            im_mean = np.zeros((npix, npix))
+
+            for i in range(nstacks):
+                im_mean += np.sum(self.m_image_in_port[i*memory:i*memory+memory, ],
+                                  axis=0)
+
+            if nimages%memory > 0:
+                im_mean += np.sum(self.m_image_in_port[nstacks*memory:nimages, ],
+                                  axis=0)
+
+            im_mean /= float(nimages)
+
+            im_center = _centering(im_mean)
+            self.m_image_out_port.set_all(im_center)
+
+            sys.stdout.write(" [DONE]\n")
+            sys.stdout.flush()
+
+        elif self.m_method == "full":
+            self.apply_function_to_images(_centering,
+                                          self.m_image_in_port,
+                                          self.m_image_out_port,
+                                          "Running StarCenteringModule...",
+                                          num_images_in_memory=memory)
+
+        self.m_image_out_port.add_history_information("Centering",
+                                                      "2D Gaussian fit")
+        self.m_fit_out_port.add_history_information("Centering",
+                                                    "2D Gaussian fit")
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.close_port()
