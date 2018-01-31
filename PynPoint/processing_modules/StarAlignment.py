@@ -389,9 +389,9 @@ class StarCenteringModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Fits the individual images or the mean of the stack with a 2D
-        Gaussian profile, shift the images with subpixel precision, and writes the centered images
-        and the fitting results.
+        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
+        the individual images or the mean of the stack with a 2D Gaussian profile, shifts the
+        images with subpixel precision, and writes the centered images and the fitting results.
 
         :return: None
         """
