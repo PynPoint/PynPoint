@@ -413,7 +413,7 @@ class StarCenteringModule(ProcessingModule):
 
             return np.ravel(gaussian)
 
-        def _centering(image):
+        def _least_squares(image):
             im_ravel = np.ravel(image)
 
             popt, pcov = curve_fit(_2d_gaussian,
@@ -425,6 +425,25 @@ class StarCenteringModule(ProcessingModule):
 
             perr = np.sqrt(np.diag(pcov))
 
+            res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
+                              popt[1]*pixscale, perr[1]*pixscale,
+                              popt[2]*pixscale, perr[2]*pixscale,
+                              popt[3]*pixscale, perr[3]*pixscale,
+                              popt[4], perr[4],
+                              math.degrees(popt[5])%360., math.degrees(perr[5])))
+
+            self.m_fit_out_port.append(res, data_dim=2)
+
+            return popt
+
+        def _centering(image):
+
+            if self.m_method == "full":
+                popt = _least_squares(image)
+
+            elif self.m_method == "mean":
+                popt = self.m_popt
+
             if self.m_interpolation == "fft":
                 fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
                 im_center = np.fft.ifftn(fft_shift).real
@@ -434,15 +453,6 @@ class StarCenteringModule(ProcessingModule):
 
             elif self.m_interpolation == "bilinear":
                 im_center = shift(image, (-popt[1], -popt[0]), order=1)
-
-            res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
-                              popt[1]*pixscale, perr[1]*pixscale,
-                              popt[2]*pixscale, perr[2]*pixscale,
-                              popt[3]*pixscale, perr[3]*pixscale,
-                              popt[4], perr[4],
-                              math.degrees(popt[5])%360., math.degrees(perr[5])))
-
-            self.m_fit_out_port.append(res, data_dim=2)
 
             return im_center
 
@@ -480,18 +490,16 @@ class StarCenteringModule(ProcessingModule):
 
             im_mean /= float(nimages)
 
-            im_center = _centering(im_mean)
-            self.m_image_out_port.set_all(im_center)
+            self.m_popt = _least_squares(im_mean)
 
             sys.stdout.write(" [DONE]\n")
             sys.stdout.flush()
 
-        elif self.m_method == "full":
-            self.apply_function_to_images(_centering,
-                                          self.m_image_in_port,
-                                          self.m_image_out_port,
-                                          "Running StarCenteringModule...",
-                                          num_images_in_memory=memory)
+        self.apply_function_to_images(_centering,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      "Running StarCenteringModule...",
+                                      num_images_in_memory=memory)
 
         self.m_image_out_port.add_history_information("Centering",
                                                       "2D Gaussian fit")
