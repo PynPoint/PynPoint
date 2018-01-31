@@ -2,11 +2,14 @@
 Modules with background subtraction routines.
 """
 
+import sys
+
 import numpy as np
 
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
+from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from PynPoint.processing_modules.SimpleTools import CutAroundPositionModule, LocateStarModule, \
@@ -964,3 +967,159 @@ class PCABackgroundNoddingModule(ProcessingModule):
 
         pca.connect_database(self._m_data_base)
         pca.run()
+
+
+class NoddingBackgroundModule(ProcessingModule):
+    """
+    Module for background subtraction of data obtained with nodding (e.g., NACO AGPM data).
+    """
+
+    def __init__(self,
+                 name_in="sky_subtraction",
+                 sky_in_tag="sky_arr",
+                 science_in_tag="im_arr",
+                 image_out_tag="im_arr",
+                 mode="both"):
+        """
+        Constructor of NoddingBackgroundModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param sky_in_tag: Tag of the database entry with sky frames that are read as input.
+        :type sky_in_tag: str
+        :param science_data_in_tag: Tag of the database entry with science frames that are read as
+                                    input.
+        :type science_data_in_tag: str
+        :param image_out_tag: Tag of the database entry with sky subtracted images that are written
+                              as output.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(NoddingBackgroundModule, self).__init__(name_in=name_in)
+
+        self.m_sky_in_port = self.add_input_port(sky_in_tag)
+        self.m_science_in_port = self.add_input_port(science_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_time_stamps = []
+
+        if mode in ["next", "previous", "both"]:
+            self.m_mode = mode
+        else:
+            raise ValueError("Mode needs to be next, previous or both.")
+
+    def _create_time_stamp_list(self):
+        """
+        Internal method for assigning a time stamp, based on the exposure number ID, to each cube
+        of sky and science frames.
+        """
+
+        class TimeStamp:
+            def __init__(self,
+                         time,
+                         sky_or_science,
+                         index):
+                self.m_time = time
+                self.m_sky_or_science = sky_or_science
+                self.m_index = index
+
+            def __repr__(self):
+                return repr((self.m_time,
+                             self.m_sky_or_science,
+                             self.m_index))
+
+        exp_no = self.m_sky_in_port.get_attribute("EXP_NO")
+
+        for i, item in enumerate(exp_no):
+            self.m_time_stamps.append(TimeStamp(item,
+                                                "SKY",
+                                                i))
+
+        exp_no = self.m_science_in_port.get_attribute("EXP_NO")
+        nframes = self.m_science_in_port.get_attribute("NFRAMES")
+
+        current = 0
+        for i, item in enumerate(exp_no):
+            self.m_time_stamps.append(TimeStamp(item,
+                                                "SCIENCE",
+                                                slice(current, current+nframes[i])))
+            current += nframes[i]
+
+        self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
+
+    def calc_sky_frame(self,
+                       index_of_science_data):
+        """
+        Method for finding the required sky frame (next, previous, or the mean of next and
+        previous) by comparing the time stamp of the science frame with preceding and following
+        sky frames.
+        """
+
+        # check if there is at least one SKY in the database
+        if not any(x.m_sky_or_science == "SKY" for x in self.m_time_stamps):
+            raise ValueError('List of time stamps does not contain any SKY frames')
+
+        def search_for_next_sky():
+            for i in range(index_of_science_data, len(self.m_time_stamps)):
+                if self.m_time_stamps[i].m_sky_or_science == "SKY":
+                    return self.m_sky_in_port[self.m_time_stamps[i].m_index, :, :]
+
+            # no next sky found look for previous sky
+            return search_for_previous_sky()
+
+        def search_for_previous_sky():
+            for i in reversed(range(0, index_of_science_data)):
+                if self.m_time_stamps[i].m_sky_or_science == "SKY":
+                    return self.m_sky_in_port[self.m_time_stamps[i].m_index, :, :]
+
+            # no previous sky found look for next sky
+            return search_for_next_sky()
+
+        if self.m_mode == "next":
+            return search_for_next_sky()
+
+        if self.m_mode == "previous":
+            return search_for_previous_sky()
+
+        if self.m_mode == "both":
+            previous_sky = search_for_previous_sky()
+            next_sky = search_for_next_sky()
+            return (previous_sky + next_sky)/2.0
+
+    def run(self):
+        """
+        Run method of the module. Create list of time stamps, get sky and science frames, and
+        subtract the sky background from the science frames.
+
+        :return: None
+        """
+
+        self._create_time_stamp_list()
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        for i, time_entry in enumerate(self.m_time_stamps):
+            progress(i, len(self.m_time_stamps), "Running NoddingBackgroundModule...")
+
+            if time_entry.m_sky_or_science == "SKY":
+                continue
+
+            sky = self.calc_sky_frame(i)
+
+            science = self.m_science_in_port[time_entry.m_index, ]
+
+            self.m_image_out_port.append(science - sky[None, ],
+                                         data_dim=3)
+
+        sys.stdout.write("Running NoddingBackgroundModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_science_in_port)
+
+        self.m_image_out_port.add_history_information("Background",
+                                                      "Nodding sky subtraction")
+
+        self.m_image_out_port.close_port()
