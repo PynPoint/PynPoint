@@ -3,6 +3,7 @@ Modules with simple pre-processing tools.
 """
 
 import math
+import sys
 import warnings
 
 import numpy as np
@@ -10,6 +11,7 @@ import numpy as np
 from scipy.ndimage import shift
 from skimage.transform import rescale
 
+from PynPoint.util.Progress import progress
 from PynPoint.core import ProcessingModule
 
 
@@ -405,4 +407,68 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))
 
+        self.m_image_out_port.close_port()
+
+
+class MeanCubeModule(ProcessingModule):
+    """
+    Module for calculating the mean of each individual cube associated with a database tag.
+    """
+
+    def __init__(self,
+                 name_in="mean_cube",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_mean"):
+        """
+        Constructor of MeanCubeModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with the mean collapsed images that are
+                              written as output. Should be different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(MeanCubeModule, self).__init__(name_in=name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
+        calculates the mean of each cube, and saves the data and attributes.
+
+        :return: None
+        """
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        current = 0
+
+        for i, frames in enumerate(nframes):
+            progress(i, len(nframes), "Running MeanCubeModule...")
+
+            mean_frame = np.mean(self.m_image_in_port[current:current+frames, ],
+                                 axis=0)
+
+            self.m_image_out_port.append(mean_frame,
+                                         data_dim=3)
+
+            current += frames
+
+        sys.stdout.write("Running MeanCubeModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
