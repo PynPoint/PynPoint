@@ -167,6 +167,9 @@ class Pypeline(object):
             if config.has_option('settings', 'MEMORY'):
                 config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
 
+            if config.has_option('settings', 'CPU_COUNT'):
+                config_dict['CPU_COUNT'] = int(config.get('settings', 'CPU_COUNT'))
+
         else:
             warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
                           "default values.")
@@ -181,7 +184,8 @@ class Pypeline(object):
             file_obj.write('PARANG_END: ESO ADA POSANG END\n\n')
             file_obj.write('[settings]\n\n')
             file_obj.write('PIXSCALE: 0.027\n')
-            file_obj.write('MEMORY: 100\n')
+            file_obj.write('MEMORY: 1000\n')
+            file_obj.write('CPU_COUNT: 1')
             file_obj.close()
 
         hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
@@ -233,7 +237,8 @@ class Pypeline(object):
         :param name: The name (key) of the module which has to be removed.
         :type name: str
 
-        :return: None
+        :return: True if module was deleted and False if module does not exist.
+        :rtype: bool
         """
 
         if name in self._m_modules:

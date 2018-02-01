@@ -1,5 +1,5 @@
 """
-Multiprocessing for PCA PSF Subtraction. It is penalization to run multiple pca component
+Multiprocessing for PCA PSF Subtraction. It is penalization to run multiple PCA component
 configurations at the same time. The PCA basis is required as input. Note due to missing
 functionality in numpy this does not run on Mac.
 """
@@ -13,7 +13,7 @@ from scipy import ndimage
 class PcaTaskCreator(TaskCreator):
     """
     Task Creator of the PCA multiprocessing. This Creator does not need an input port since the data
-    is directly given to the Task Processors. It creates one task for each pca component number
+    is directly given to the Task Processors. It creates one task for each PCA component number
     required.
     """
 
@@ -43,16 +43,17 @@ class PcaTaskCreator(TaskCreator):
 
 class PcaTaskProcessor(TaskProcessor):
     """
-    The Task Processor of the PCA multiprocessing is the core of the parallization. One instance
-    of this class will calculate one forward and backward PCA transformation given the pretrained
-    sklearn PCA model. It does not get data from the Task Creator but uses its own copy of the
-    star data, which is the same independent of the task. Finally it will create the residual:
+    The Task Processor of the PCA multiprocessing is the core of the parallelization. One instance
+    of this class will calculate one forward and backward PCA transformation given the pre-trained
+    scikit-learn PCA model. It does not get data from the Task Creator but uses its own copy of
+    the star data, which is the same independent of the task. Finally it will create the residual:
 
     * The mean residual: my default
     * The median if result_requirements[0]  = True
     * The clipped mean if result_requirements[1]  = True
-    * The non stacked result frames if result_requirements[2]  = True
-    (not implemented for multiprocessing yet)
+    * The non stacked result frames if result_requirements[2]  = True (not implemented for
+      multiprocessing yet)
+
     """
 
     def __init__(self,
