@@ -409,11 +409,9 @@ class SimplexMinimizationModule(ProcessingModule):
             npix = im_crop.shape[0]
 
             if npix%2 == 0:
-                x_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
             elif npix%2 == 1:
-                x_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-                y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
             xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
             rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
