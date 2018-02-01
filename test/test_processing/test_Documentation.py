@@ -169,14 +169,14 @@ class TestDocumentation(object):
         assert data[0, 31, 20] == -3.9392607130869333e-05
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 61, 39] == 0.00021600121168847015
+        assert data[0, 61, 39] == 0.00021600121168846993
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 61, 39] == 8.2429659114370023e-05
+        assert data[0, 61, 39] == 8.2430113567504408e-05
 
         data = storage.m_data_bank["res_mean"]
-        assert data[61, 39] == -4.4710338563281608e-05
-        assert np.mean(data) == 5.196570975891392e-08
+        assert data[61, 39] == -4.3970096986442451e-05
+        assert np.mean(data) == 6.4361558939463885e-08
         assert data.shape == (72, 72)
 
         storage.close_connection()
