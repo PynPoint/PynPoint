@@ -234,12 +234,12 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            if self.m_interpolation == "spline":
-                tmp_image = shift(tmp_image, offset, order=5)
-
-            elif self.m_interpolation == "fft":
+            if self.m_interpolation == "fft":
                 tmp_image_spec = fourier_shift(np.fft.fftn(tmp_image), offset)
-                tmp_image = np.fft.ifftn(tmp_image_spec)
+                tmp_image = np.fft.ifftn(tmp_image_spec).real
+
+            elif self.m_interpolation == "spline":
+                tmp_image = shift(tmp_image, offset, order=5)
 
             elif self.m_interpolation == "bilinear":
                 tmp_image = shift(tmp_image, offset, order=1)
