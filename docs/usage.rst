@@ -194,17 +194,17 @@ $ python test_file.py
 Data types
 ----------
 
-PynPoint currently works with two input data types:
+PynPoint works with two types of input data:
 
-* fits files
+* FITS files
 
-* hdf5 files
+* HDF5 files
 
-The first time you use fits files as inputs, PynPoint will create a HDF5 database in the *working_place_in* of the Pypeline. This is because the HDF5 file is much faster to read than small fits files and it provides the possibility to read subsets of huge datasets. To use fits inputs, you will need to put all the fits files in one directory and then pass this directory to the appropriate PynPoint Pypeline (*input_place_in*). Next you need to add a FitsReadingModule. If you do not define a own input directory for this ReadingModule it will look for data in the Pypeline default location *input_place_in*. Setting a own directory makes it possible to to read for example dark currents or flat field exposures from different directories. If you finally run the Pypeline the PynPoint ReadingModule will look for all .fits files in the given folder and imports them into the Pypeline HDF5 database. In *interactive* mode, this can be done by::
+The first time you use FITS files as inputs, PynPoint will create an HDF5 database in the *working_place_in* of the Pypeline. This is because the HDF5 file is much faster to read than small FITS files and it provides the possibility to read subsets of huge datasets. To read FITS files as input, you will need to put all the FITS files in one directory and then pass this directory to the appropriate PynPoint Pypeline (*input_place_in*). Next you need to add a FitsReadingModule. If you do not define an own input directory for this ReadingModule it will look for data in the Pypeline default location *input_place_in*. Setting a own directory makes it possible to to read for example dark frames or flat field exposures from different directories. If you run the PynPoint Pypeline, the FitsReadingModule will look for all FITS files in the given folder and imports them into the Pypeline HDF5 database. In *interactive* mode, this can be done by::
 
 	pipeline = Pypeline(working_place_in,
-				input_place_in,
-				output_place_in)
+                            input_place_in,
+                            output_place_in)
 
 	# takes the default location
 	reading_data = ReadFitsCubesDirectory(name_in="Fits_reading",
@@ -213,22 +213,21 @@ The first time you use fits files as inputs, PynPoint will create a HDF5 databas
 
 	# uses own location 
 	reading_flat = ReadFitsCubesDirectory(name_in="Flat_reading",
-                                      	  input_dir= some/own/location,
-                                      	  image_tag=“flat_arr")
+                                       	      input_dir=some/own/location,
+                                              image_tag="flat_arr")
 	pipeline.add_module(reading_flat)
 	
 	pipeline.run()
 
-The code above will read all .fits files form the `input_place_in` and `some/own/location` and stores them into the Pypeline HDF5 database. The chosen tags are important for other pipeline steps in order to let them access data directly from this database.
+The code above will read all FITS files form the *input_place_in* and *some/own/location* and stores them into the Pypeline HDF5 database. The chosen tags are important for other Pypeline steps in order to let them access data directly from this database.
 
-If you want to restore data from a Pypeline database which is located in a folder `some/folder/on/drive` you just need to create a Pypeline instance with a `working_place_in`=`some/folder/on/drive` like: ::
+If you want to restore data from a Pypeline database which is located in a folder *some/folder/on/drive* you just need to create a Pypeline instance with a *working_place_in*=*some/folder/on/drive* like: ::
 
 	pipeline = Pypeline(some/folder/on/drive,
-				input_place_in,
-				output_place_in)
+                            input_place_in,
+                            output_place_in)
 
-HDF5 files can be an input as well. Using a :class:`PynPoint.io_modules.Hdf5Reading` module you can export data from a Pypeline database. This data can be imported using a :class:`PynPoint.io_modules.Hdf5Writing` module later. For more information have a look at the package documentation.
-
+HDF5 files can be an input as well. Using a :class:`PynPoint.io_modules.Hdf5Writing` module you can export data from a Pypeline database. This data can be imported using a :class:`PynPoint.io_modules.Hdf5Reading` module later. For more information have a look at the package documentation.
 
 Workflow
 --------
@@ -270,21 +269,19 @@ Looking inside HDF5 files
 
 In order to access data from the HDF5 PynPoint database you have three options:
 
-	* Use one of the Writing Modules to export data to a .fits file, as done in the :ref:`interactive` section.
-	* Use the easy access functions of the :class:`PynPoint.core.Pypeline` class: ::
+	* Use the FitsWritingModule to export data to a FITS file, as done in the :ref:`interactive` section.
+	* Use the easy access functions of the :class:`PynPoint.core.Pypeline` class to retrieve data and attributes from the database:
 
-		pipeline.get_data(...)
-	    # and
-		pipeline.get_attribute(..., ...)
+		* pipeline.get_data(...)
 
-	* Use an external tool.
+		* pipeline.get_attribute(..., ...)
 
-We recommend to use for example |HDF5_View|, which can read, edit and visualise HDF5 files. Unfortunately |HDF5_View| gets very slow for huge input files (>100GB). An alternative tool which is still fast for huge datasets is |HDF5_GIT|, however it can not edit the files.
+	* Use an external tool such as |HDFCompass| or |HDFView| to read, inspect, and visualize data and attributes in the HDF5 database. We recommend using HDFCompass because it is easy to use and has a basic plotting functionality allowing the user to quickly inspect images from a particular database tags. In HDFCompass, the static attributes can be opened with the 'Reopen as HDF5 Attributes' option.
 
-.. |HDF5_View| raw:: html
+.. |HDFCompass| raw:: html
 
-   <a href="https://www.hdfgroup.org/products/java/hdfview/" target="_blank">HDFView</a>
+   <a href="https://support.hdfgroup.org/projects/compass/download.html" target="_blank">HDFCompass</a>
 
-.. |HDF5_GIT| raw:: html
+.. |HDFView| raw:: html
 
-   <a href="https://pypi.python.org/pypi/h5pyViewer" target="_blank"> h5pyViewer 0.0.1.6 </a>
+   <a href="https://support.hdfgroup.org/downloads/index.html" target="_blank">HDFView</a>

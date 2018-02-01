@@ -1,6 +1,6 @@
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgroundSubtractionModule, \
                                   PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
-                                  PCABackgroundDitheringModule
+                                  PCABackgroundDitheringModule, NoddingBackgroundModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
     BadPixelMapCreationModule, BadPixelInterpolationRefinementModule
@@ -10,9 +10,8 @@ from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule, LocateStarModule, \
                           StarCenteringModule
-from SkyScienceDataModules import MeanSkyCubes, SkySubtraction, AlignmentSkyAndScienceDataModule
 from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFramesModule, \
-    ShiftForCenteringModule, CombineTagsModule
+    ShiftForCenteringModule, CombineTagsModule, MeanCubeModule
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
