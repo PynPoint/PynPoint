@@ -136,7 +136,7 @@ class StarAlignmentModule(ProcessingModule):
                  image_in_tag="im_arr",
                  ref_image_in_tag=None,
                  image_out_tag="im_arr_aligned",
-                 interpolation="spline",
+                 interpolation="fft",
                  accuracy=10,
                  resize=1,
                  num_references=10):
@@ -227,8 +227,10 @@ class StarAlignmentModule(ProcessingModule):
                                     order=5,
                                     mode="reflect")
                 sum_after = np.sum(tmp_image)
+
                 # Conserve flux because the rescale function normalizes all values to [0:1].
                 tmp_image = tmp_image*(sum_before/sum_after)
+
             else:
                 tmp_image = image_in
 
