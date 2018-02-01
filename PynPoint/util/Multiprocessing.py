@@ -1,6 +1,6 @@
 """
 Utilities for Poison Pill multiprocessing. Provides abstract interfaces as well as an implementation
- needed to processes lines in time as used in the wavelet time de-noising.
+needed to process lines in time as used in the wavelet time de-noising.
 """
 
 import multiprocessing
@@ -48,10 +48,10 @@ class TaskInput(object):
 class TaskCreator(multiprocessing.Process):
     """
     Abstract Interface for all Task Creator classes. A Task creator is supposed to create instances
-     of TaskInputs which can be processed by Task Processors and appends them to a central task
-     queue. In general there is only one Creator task running for a poison pill multiprocessing
-     application. A Task creator needs to communicate to the writer in order to avoid simultaneously
-     access to the central database.
+    of TaskInputs which can be processed by Task Processors and appends them to a central task
+    queue. In general there is only one Creator task running for a poison pill multiprocessing
+    application. A Task creator needs to communicate to the writer in order to avoid simultaneously
+    access to the central database.
     """
     __metaclass__ = ABCMeta
 
