@@ -84,14 +84,6 @@ PynPoint\.processing\_modules\.SimpleTools module
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.SkyScienceDataModules module
------------------------------------------------------------
-
-.. automodule:: PynPoint.processing_modules.SkyScienceDataModules
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 PynPoint\.processing\_modules\.StackingAndSubsampling module
 ------------------------------------------------------------
 
