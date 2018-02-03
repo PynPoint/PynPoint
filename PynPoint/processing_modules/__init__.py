@@ -15,6 +15,6 @@ from SimpleTools import CutAroundCenterModule, CutAroundPositionModule, ScaleFra
 from PSFsubPreparation import PSFdataPreparation
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
     WaveletTimeDenoisingModule, TimeNormalizationModule
-from FrameSelection import RemoveFramesModule
+from FrameSelection import RemoveFramesModule, FrameSelectionModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule
 from DetectionLimits import ContrastModule
