@@ -23,11 +23,10 @@ class PSFdataPreparation(ProcessingModule):
                  image_out_tag="im_arr",
                  image_mask_out_tag="im_mask_arr",
                  mask_out_tag="mask_arr",
+                 resize=-1,
                  cent_remove=True,
-                 F_final=-1,
                  cent_size=0.05,
                  edge_size=1.0):
-
         """
         Constructor of PSFdataPreparation.
 
@@ -42,12 +41,13 @@ class PSFdataPreparation(ProcessingModule):
         :type image_mask_out_tag: str
         :param mask_out_tag: Tag of the database entry with the mask that is written as output.
         :type mask_out_tag: str
+        :param resize: Factor by which the data is resized. For example, if *resize* is 2 then
+                       the data will be upsampled by a factor of two. No resizing is applied
+                       with a negative value.
+        :type resize: float
         :param cent_remove: Mask the central region of the data with a fractional mask radius of
                             cent_size.
         :type cent_remove: bool
-        :param F_final: Factor by which the data is resized. F_final=2. will upsample the data by a
-                        factor of two.
-        :type F_final: float
         :param cent_size: Fractional radius of the central mask relative to the image size.
         :type cent_size: float
         :param edge_size: Fractional outer radius relative to the image size. The images are
@@ -64,8 +64,8 @@ class PSFdataPreparation(ProcessingModule):
         self.m_mask_out_port = self.add_output_port(mask_out_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
+        self.m_resize = resize
         self.m_cent_remove = cent_remove
-        self.m_f_final = F_final
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
 
@@ -89,15 +89,15 @@ class PSFdataPreparation(ProcessingModule):
         interpolation of the fifth order.
         """
 
-        x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_f_final), \
-                                   int(im_data_in.shape[2] * self.m_f_final)
+        x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_resize), \
+                                   int(im_data_in.shape[2] * self.m_resize)
 
         im_arr_res = np.zeros([im_data_in.shape[0], x_num_final, y_num_final])
 
         for i in range(im_data_in.shape[0]):
             im_tmp = im_data_in[i]
             im_tmp = ndimage.interpolation.zoom(im_tmp,
-                                                [self.m_f_final, self.m_f_final],
+                                                [self.m_resize, self.m_resize],
                                                 order=5)
             im_arr_res[i,] = im_tmp
 
@@ -177,7 +177,7 @@ class PSFdataPreparation(ProcessingModule):
         im_data = self.m_image_in_port.get_all()
         im_norm = self._im_norm(im_data)
 
-        if self.m_f_final > 0.:
+        if self.m_resize > 0.:
             im_data = self._im_resizing(im_data)
 
         im_data = self._im_masking(im_data)
@@ -186,8 +186,8 @@ class PSFdataPreparation(ProcessingModule):
         self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        attributes = {"cent_remove": self.m_cent_remove,
-                      "F_final": float(self.m_f_final),
+        attributes = {"resize": float(self.m_resize),
+                      "cent_remove": self.m_cent_remove,
                       "cent_size": float(self.m_cent_size),
                       "edge_size": float(self.m_edge_size)}
 
