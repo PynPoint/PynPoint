@@ -221,19 +221,19 @@ class BasePynpointWrapper(object):
         return obj
 
     def mk_psfmodel(self,
-                     basis,
-                     num):
+                    basis,
+                    num):
 
         tmp_im_arr_in_tag = self._m_image_data_tag
+        tmp_im_ave_in_tag = basis._m_im_average_tag
         tmp_basis_tag = basis._m_basis_tag
-        tmp_basis_average_in_tag = basis._m_im_average_tag
         tmp_psf_basis_out_tag = self._m_psf_image_arr_tag
 
         psf_model_module = MakePSFModelModule(num,
                                               name_in="psf_model_module",
                                               im_arr_in_tag=tmp_im_arr_in_tag,
+                                              im_ave_in_tag=tmp_im_ave_in_tag,
                                               basis_in_tag=tmp_basis_tag,
-                                              basis_average_in_tag=tmp_basis_average_in_tag,
                                               psf_basis_out_tag=tmp_psf_basis_out_tag)
 
         self._pypeline.add_module(psf_model_module)
