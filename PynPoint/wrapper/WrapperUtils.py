@@ -22,12 +22,11 @@ class BasePynpointWrapper(object):
                  working_pypeline):
         self._pypeline = working_pypeline
         self._m_center_remove = True
-        self._m_resize = False
         self._m_ran_sub = None
         self._m_stacking = None
         self._m_cent_size = 0.05
         self._m_edge_size = 1.0
-        self._m_f_final = 2.0
+        self._m_f_final = -1.
 
         # Attributes / Ports set individually by Image and Basis
         self._m_image_data_tag = None
@@ -57,7 +56,6 @@ class BasePynpointWrapper(object):
                              "im_norm" : "im_norm",
                              "para" : "NEW_PARA",
                              "cent_remove" : "cent_remove",
-                             "resize" : "resize",
                              "para_sort" : "para_sort",
                              "F_final" : "F_final",
                              "cent_size" : "cent_size",
@@ -109,9 +107,6 @@ class BasePynpointWrapper(object):
         if "cent_remove" in kwargs:
             self._m_center_remove = kwargs["cent_remove"]
 
-        if "resize" in kwargs:
-            self._m_resize = kwargs["resize"]
-
         if "recent" in kwargs:
             warnings.warn('Recentering is not longer supported in PynPoint preparation')
 
@@ -136,7 +131,6 @@ class BasePynpointWrapper(object):
                                          image_mask_out_tag=self._m_image_data_masked_tag,
                                          mask_out_tag=self._m_mask_tag,
                                          image_out_tag=self._m_image_data_tag,
-                                         resize=self._m_resize,
                                          cent_remove=self._m_center_remove,
                                          F_final=self._m_f_final,
                                          cent_size=self._m_cent_size)
