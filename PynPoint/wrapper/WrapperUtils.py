@@ -55,9 +55,8 @@ class BasePynpointWrapper(object):
                              "files" : "Used_Files",
                              "im_norm" : "im_norm",
                              "para" : "NEW_PARA",
+                             "resize" : "resize",
                              "cent_remove" : "cent_remove",
-                             "para_sort" : "para_sort",
-                             "F_final" : "F_final",
                              "cent_size" : "cent_size",
                              "edge_size" : "edge_size"}
 
@@ -113,8 +112,8 @@ class BasePynpointWrapper(object):
         if "cent_size" in kwargs:
             self._m_cent_size = kwargs["cent_size"]
 
-        if "F_final" in kwargs:
-            self._m_f_final = kwargs["F_final"]
+        if "resize" in kwargs:
+            self._m_resize = kwargs["resize"]
 
         if "edge_size" in kwargs:
             self._m_edge_size = kwargs["edge_size"]
@@ -131,8 +130,8 @@ class BasePynpointWrapper(object):
                                          image_mask_out_tag=self._m_image_data_masked_tag,
                                          mask_out_tag=self._m_mask_tag,
                                          image_out_tag=self._m_image_data_tag,
+                                         resize=self._m_resize,
                                          cent_remove=self._m_center_remove,
-                                         F_final=self._m_f_final,
                                          cent_size=self._m_cent_size)
 
         subsample_module = StackAndSubsetModule(name_in="stacking",

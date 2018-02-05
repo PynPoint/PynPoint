@@ -47,19 +47,19 @@ class TestImages(object):
         self.files_fits_sorted = [self.files_fits[0],self.files_fits[2],self.files_fits[1],self.files_fits[3]]
 
         self.images1 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=False,ran_sub=None,recent=False)
+                                cent_remove=False,resize=-1.,ran_sub=None,recent=False)
 
         self.images2 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=False,ran_sub=2,recent=False)
+                                cent_remove=False,resize=-1.,ran_sub=2,recent=False)
         
         self.images3 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
+                                cent_remove=True,resize=-1.,ran_sub=None,recent=False,cent_size=0.2)
 
         self.images4 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=True,F_int=4.0,F_final=2.0,ran_sub=None,recent=True)
+                                cent_remove=False,F_int=4.0,resize=2.0,ran_sub=None,recent=True)
 
         self.images5 = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=True,ran_sub=None,recent=False)
+                                cent_remove=False,resize=2.,ran_sub=None,recent=False)
                                 
         hdf5file = PynPoint.old_version._Util.filename4mdir(self.test_data_dir)
 
@@ -68,10 +68,10 @@ class TestImages(object):
                                 cent_remove=False,resize=False,ran_sub=None,recent=False)'''
         
         self.basis = PynPoint.basis.create_wdir(self.test_data_dir,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
+                                cent_remove=True,resize=-1.,ran_sub=None,recent=False,cent_size=0.2)
                                 
         self.imagesfits = PynPoint.images.create_wfitsfiles(self.files_fits,
-                                cent_remove=True,resize=False,ran_sub=None,recent=False,cent_size=0.2)
+                                cent_remove=True,resize=-1,ran_sub=None,recent=False,cent_size=0.2)
 
     def test_overall_images3(self):
         assert np.array_equal(self.images3.files , self.files_fits_sorted)
@@ -177,7 +177,7 @@ class TestImages(object):
         images2 = self.images2
 
         images_temp = PynPoint.images.create_wdir(self.test_data_dir,
-                                cent_remove=False,resize=False,ran_sub=3,recent=False)
+                                cent_remove=False,resize=-1,ran_sub=3,recent=False)
 
         assert images2.im_arr.shape == (2, 146, 146)
 
