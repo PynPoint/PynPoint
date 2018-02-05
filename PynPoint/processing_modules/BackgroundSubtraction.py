@@ -639,9 +639,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         """
 
         image_memory = self._m_config_port.get_attribute("MEMORY")
-
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
-
         star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
 
         self.m_mask_radius /= pixscale

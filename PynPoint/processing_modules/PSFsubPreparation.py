@@ -23,9 +23,8 @@ class PSFdataPreparation(ProcessingModule):
                  image_out_tag="im_arr",
                  image_mask_out_tag="im_mask_arr",
                  mask_out_tag="mask_arr",
-                 resize=False,
                  cent_remove=True,
-                 F_final=2.0,
+                 F_final=-1,
                  cent_size=0.05,
                  edge_size=1.0):
 
@@ -43,8 +42,6 @@ class PSFdataPreparation(ProcessingModule):
         :type image_mask_out_tag: str
         :param mask_out_tag: Tag of the database entry with the mask that is written as output.
         :type mask_out_tag: str
-        :param resize: Resize the data by a factor F_final.
-        :type resize: bool
         :param cent_remove: Mask the central region of the data with a fractional mask radius of
                             cent_size.
         :type cent_remove: bool
@@ -67,7 +64,6 @@ class PSFdataPreparation(ProcessingModule):
         self.m_mask_out_port = self.add_output_port(mask_out_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_resize = resize
         self.m_cent_remove = cent_remove
         self.m_f_final = F_final
         self.m_cent_size = cent_size
@@ -181,7 +177,7 @@ class PSFdataPreparation(ProcessingModule):
         im_data = self.m_image_in_port.get_all()
         im_norm = self._im_norm(im_data)
 
-        if self.m_resize:
+        if self.m_f_final > 0.:
             im_data = self._im_resizing(im_data)
 
         im_data = self._im_masking(im_data)
@@ -191,7 +187,6 @@ class PSFdataPreparation(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         attributes = {"cent_remove": self.m_cent_remove,
-                      "resize": self.m_resize,
                       "F_final": float(self.m_f_final),
                       "cent_size": float(self.m_cent_size),
                       "edge_size": float(self.m_edge_size)}
