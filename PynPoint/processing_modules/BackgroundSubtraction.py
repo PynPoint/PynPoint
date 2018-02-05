@@ -469,7 +469,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_star_out_port.add_history_information("Star frames separated",
                                                      str(len(star_parang))+"/"+ \
-                                                     str(len(parang))+" cubes")
+                                                     str(len(parang)))
 
         # Background - Update attributes
 
@@ -480,7 +480,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_background_out_port.add_history_information("Background frames separated",
                                                            str(len(background_parang))+"/"+ \
-                                                           str(len(parang))+" cubes")
+                                                           str(len(parang)))
 
         # Close database
 
