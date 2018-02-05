@@ -60,7 +60,7 @@ class RemoveFramesModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
 
-        if self.m_image_out_port.tag == self.m_image_in_port.tag:
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
         if np.size(np.where(self.m_frame_indices >= self.m_image_in_port.get_shape()[0])) > 0:
@@ -71,12 +71,13 @@ class RemoveFramesModule(ProcessingModule):
             raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
                              "provided for all frames before any frames can be removed.")
 
-        num_subsets = int(self.m_image_in_port.get_shape()[0]/memory)
+        nframes = self.m_image_in_port.get_shape()[0]
+        nstacks = int(float(nframes)/float(memory))
 
         # Reading subsets of 'memory' frames and removes frame_indices
 
-        for i in range(num_subsets):
-            progress(i, num_subsets, "Running RemoveFramesModule...")
+        for i in range(nstacks):
+            progress(i, nstacks, "Running RemoveFramesModule...")
 
             tmp_im = self.m_image_in_port[i*memory:(i+1)*memory, ]
 
@@ -95,58 +96,53 @@ class RemoveFramesModule(ProcessingModule):
 
         # Adding the leftover frames that do not fit in an integer amount of 'memory'
 
-        index_del = np.where(self.m_frame_indices >= num_subsets*memory)
+        index_del = np.where(self.m_frame_indices >= nstacks*memory)[0]
 
-        tmp_im = self.m_image_in_port[num_subsets*memory: \
-                                      self.m_image_in_port.get_shape()[0], ]
+        if np.size(index_del) > 0:
+            tmp_im = self.m_image_in_port[nstacks*memory: \
+                                          self.m_image_in_port.get_shape()[0], ]
 
-        tmp_im = np.delete(tmp_im,
-                           self.m_frame_indices[index_del]%memory,
-                           axis=0)
+            tmp_im = np.delete(tmp_im,
+                               self.m_frame_indices[index_del]%memory,
+                               axis=0)
 
-        self.m_image_out_port.append(tmp_im)
+            self.m_image_out_port.append(tmp_im)
+
+        # Attributes
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        # Update parallactic angles
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
 
-        par_in = self.m_image_in_port.get_attribute("NEW_PARA")
-        par_out = np.delete(par_in,
-                            self.m_frame_indices)
+        self.m_image_out_port.add_attribute("NEW_PARA",
+                                            np.delete(parang, self.m_frame_indices),
+                                            static=False)
 
-        self.m_image_out_port.add_attribute("NEW_PARA", par_out, static=False)
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
 
-        # Update cube sizes
+            position = self.m_image_in_port.get_attribute("STAR_POSITION")
+            self.m_image_out_port.add_attribute("STAR_POSITION",
+                                                np.delete(position, self.m_frame_indices, axis=0),
+                                                static=False)
 
-        size_in = self.m_image_in_port.get_attribute("NFRAMES")
-        size_out = np.copy(size_in)
+        nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
+        nframes_out = np.copy(nframes_in)
 
-        num_frames = 0
-        for i, frames in enumerate(size_in):
-            index_del = np.where(np.logical_and(self.m_frame_indices >= num_frames, \
-                                 self.m_frame_indices < num_frames+frames))
+        total = 0
+        for i, frames in enumerate(nframes_in):
+            index_del = np.where(np.logical_and(self.m_frame_indices >= total, \
+                                 self.m_frame_indices < total+frames))[0]
 
-            size_out[i] -= np.size(index_del)
+            nframes_out[i] -= np.size(index_del)
 
-            num_frames += frames
+            total += frames
 
-        self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
 
         self.m_image_out_port.add_history_information("Removed frames",
                                                       str(np.size(self.m_frame_indices)))
 
-        # Update star position (if present)
-
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
-
-            starpos_in = self.m_image_in_port.get_attribute("STAR_POSITION")
-            starpos_out = np.delete(starpos_in,
-                                    self.m_frame_indices,
-                                    axis=0)
-
-            self.m_image_out_port.add_attribute("STAR_POSITION", starpos_out, static=False)
-
-        self.m_image_out_port.close_port()
+        self.m_image_in_port.close_port()
 
 
 class FrameSelectionModule(ProcessingModule):
@@ -207,6 +203,14 @@ class FrameSelectionModule(ProcessingModule):
         :return: None
         """
 
+        if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
+                self.m_image_in_port.tag == self.m_removed_out_port.tag:
+            raise ValueError("Input and output ports should have a different tag.")
+
+        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
+            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
+                             "provided for all frames before a frame selection can be applied.")
+
         self.m_selected_out_port.del_all_data()
         self.m_selected_out_port.del_all_attributes()
 
@@ -215,6 +219,7 @@ class FrameSelectionModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
 
         self.m_fwhm /= pixscale
         gaussian_sigma = self.m_fwhm/math.sqrt(8.*math.log(2.))
@@ -269,9 +274,38 @@ class FrameSelectionModule(ProcessingModule):
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
 
+        self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_selected_out_port.add_attribute("NEW_PARA",
+                                               parang[np.logical_not(index_rm)],
+                                               static=False)
+
+        self.m_removed_out_port.add_attribute("NEW_PARA",
+                                              parang[index_rm],
+                                              static=False)
+
         self.m_selected_out_port.add_attribute("STAR_POSITION",
                                                position[np.logical_not(index_rm)],
                                                static=False)
+
+        self.m_removed_out_port.add_attribute("STAR_POSITION",
+                                              position[index_rm],
+                                              static=False)
+
+        nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
+
+        nframes_del = np.zeros(np.size(nframes_in), dtype=np.int64)
+        nframes_sel = np.zeros(np.size(nframes_in), dtype=np.int64)
+
+        total = 0
+        for i, frames in enumerate(nframes_in):
+            nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
+            nframes_sel[i] = frames - nframes_del[i]
+            total += frames
+
+        self.m_selected_out_port.add_attribute("NFRAMES", nframes_sel, static=False)
+        self.m_removed_out_port.add_attribute("NFRAMES", nframes_del, static=False)
 
         n_rm = np.size(index_rm[index_rm])
 
@@ -281,7 +315,4 @@ class FrameSelectionModule(ProcessingModule):
         self.m_removed_out_port.add_history_information("Frame selection",
                                                         str(n_rm)+" images removed")
 
-        self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_selected_out_port.close_port()
+        self.m_image_in_port.close_port()
