@@ -70,7 +70,7 @@ class StarExtractionModule(ProcessingModule):
         :return: None
         """
 
-        images_memory = self._m_config_port.get_attribute("MEMORY")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         psf_radius = int((self.m_image_size / 2.0) / pixscale)
@@ -112,7 +112,7 @@ class StarExtractionModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarExtractionModule...",
-                                      num_images_in_memory=images_memory)
+                                      num_images_in_memory=memory)
 
         self.m_image_inout_port.add_attribute("STAR_POSITION",
                                               np.asarray(star_positions),
@@ -192,7 +192,7 @@ class StarAlignmentModule(ProcessingModule):
         :return: None
         """
 
-        images_memory = self._m_config_port.get_attribute("MEMORY")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
@@ -253,7 +253,7 @@ class StarAlignmentModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarAlignmentModule...",
-                                      num_images_in_memory=images_memory)
+                                      num_images_in_memory=memory)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -276,7 +276,7 @@ class LocateStarModule(ProcessingModule):
     def __init__(self,
                  name_in="locate_star",
                  data_tag="im_arr",
-                 gaussian_fwhm=7):
+                 gaussian_fwhm=0.2):
         """
         Constructor of LocateStarModule.
 
