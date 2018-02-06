@@ -583,7 +583,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                                       im_arr.shape[1]*im_arr.shape[2]),
                        k=self.m_pca_number)
 
-        # V = V[::-1,]
+        V = V[::-1, ]
 
         pca_basis = V.reshape(V.shape[0],
                               im_arr.shape[1],
