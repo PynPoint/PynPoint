@@ -23,7 +23,7 @@ class TextWritingModule(WritingModule):
                  name_in="text_writing",
                  output_dir=None,
                  data_tag="im_arr",
-                 header=''):
+                 header=None):
         """
         Constructor of TextWritingModule.
 
@@ -57,6 +57,9 @@ class TextWritingModule(WritingModule):
 
         :return: None
         """
+
+        if self.m_header is None:
+            self.m_header = ""
 
         sys.stdout.write("Running TextWritingModule...")
         sys.stdout.flush()

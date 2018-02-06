@@ -305,25 +305,27 @@ class ContrastModule(ProcessingModule):
 
                     if self.m_pca_module == "PSFSubtractionModule":
 
-                        psf_sub = PSFSubtractionModule(name_in="pca_contrast",
-                                                       pca_number=self.m_pca_number,
-                                                       images_in_tag="contrast_fake",
-                                                       reference_in_tag="contrast_fake",
-                                                       res_arr_out_tag="contrast_res_arr_out",
-                                                       res_arr_rot_out_tag="contrast_res_arr_rot_out",
-                                                       res_mean_tag="contrast_res_mean",
-                                                       res_median_tag="contrast_res_median",
-                                                       res_var_tag="contrast_res_var",
-                                                       res_rot_mean_clip_tag="contrast_res_rot_mean_clip",
-                                                       basis_out_tag="contrast_basis_out",
-                                                       image_ave_tag="contrast_image_ave",
-                                                       psf_model_tag="contrast_psf_model",
-                                                       ref_prep_tag="contrast_ref_prep",
-                                                       prep_tag="contrast_prep",
-                                                       extra_rot=self.m_extra_rot,
-                                                       cent_size=self.m_mask,
-                                                       cent_mask_tag="contrast_cent_mask",
-                                                       verbose=False)
+                        psf_sub = \
+                            PSFSubtractionModule(pca_number=self.m_pca_number,
+                                                 svd="arpack",
+                                                 name_in="pca_contrast",
+                                                 images_in_tag="contrast_fake",
+                                                 reference_in_tag="contrast_fake",
+                                                 res_arr_out_tag="contrast_res_arr_out",
+                                                 res_arr_rot_out_tag="contrast_res_arr_rot_out",
+                                                 res_mean_tag="contrast_res_mean",
+                                                 res_median_tag="contrast_res_median",
+                                                 res_var_tag="contrast_res_var",
+                                                 res_rot_mean_clip_tag="contrast_res_rot_mean_clip",
+                                                 basis_out_tag="contrast_basis_out",
+                                                 image_ave_tag="contrast_image_ave",
+                                                 psf_model_tag="contrast_psf_model",
+                                                 ref_prep_tag="contrast_ref_prep",
+                                                 prep_tag="contrast_prep",
+                                                 extra_rot=self.m_extra_rot,
+                                                 cent_size=self.m_mask,
+                                                 cent_mask_tag="contrast_cent_mask",
+                                                 verbose=False)
 
                     elif self.m_pca_module == "FastPCAModule":
 
@@ -420,12 +422,12 @@ class ContrastModule(ProcessingModule):
 
                 count += 1
 
-        contrast = np.transpose(np.column_stack((pos_r*pixscale,
-                                                 np.nanmean(fake_mag, axis=1),
-                                                 np.nanvar(fake_mag, axis=1),
-                                                 fake_fpf)))
+        result = np.column_stack((pos_r*pixscale,
+                                  np.nanmean(fake_mag, axis=1),
+                                  np.nanvar(fake_mag, axis=1),
+                                  fake_fpf))
 
-        self.m_contrast_out_port.set_all(contrast, data_dim=2)
+        self.m_contrast_out_port.set_all(result, data_dim=2)
 
         self.m_pca_out_port.add_history_information("Contrast limits",
                                                     str(self.m_sigma)+" sigma")
