@@ -107,7 +107,7 @@ class BasisWrapper(BasePynpointWrapper):
 
     def mk_basis_set(self):
 
-        basis_creation = MakePCABasisModule("basis_creation",
+        basis_creation = MakePCABasisModule(name_in="basis_creation",
                                             im_arr_in_tag=self._m_image_data_tag,
                                             im_arr_out_tag=self._m_image_data_tag,
                                             im_average_out_tag=self._m_im_average_tag,

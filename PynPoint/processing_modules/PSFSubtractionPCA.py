@@ -8,7 +8,8 @@ from sys import platform, stdout
 import numpy as np
 
 from sklearn.decomposition import PCA
-from scipy import linalg, ndimage
+from scipy import linalg, ndimage, sparse
+from astropy.io import fits
 
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.util import PcaMultiprocessingCapsule
@@ -24,6 +25,7 @@ class PSFSubtractionModule(ProcessingModule):
 
     def __init__(self,
                  pca_number,
+                 svd="lapack",
                  name_in="PSF_subtraction",
                  images_in_tag="im_arr",
                  reference_in_tag="ref_arr",
@@ -40,6 +42,8 @@ class PSFSubtractionModule(ProcessingModule):
 
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
+        :param svd: Method used for the singular value composition (*lapack* or *arpack*).
+        :type svd: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param images_in_tag: Tag of the database entry with the science images that are read
@@ -147,6 +151,7 @@ class PSFSubtractionModule(ProcessingModule):
             self.m_verbose = True
 
         self.m_pca_number = pca_number
+        self.m_svd = svd
 
         self._m_preparation_images = PSFdataPreparation(name_in="prep_im",
                                                         image_in_tag=images_in_tag,
@@ -170,7 +175,9 @@ class PSFSubtractionModule(ProcessingModule):
 
         self._m_preparation_reference.m_image_mask_out_port.deactivate()
 
-        self._m_make_pca_basis = MakePCABasisModule(im_arr_in_tag=ref_prep_tag,
+        self._m_make_pca_basis = MakePCABasisModule(pca_number=self.m_pca_number,
+                                                    svd=self.m_svd,
+                                                    im_arr_in_tag=ref_prep_tag,
                                                     im_arr_out_tag="not_needed",
                                                     im_average_out_tag=im_average_tag,
                                                     basis_out_tag=basis_tag)
@@ -354,13 +361,12 @@ class CreateResidualsModule(ProcessingModule):
 
         # create result array
         res_arr = im_data.copy()
-        for i in range(0,
-                       len(res_arr[:, 0, 0])):
+        for i in range(res_arr.shape[0]):
             res_arr[i, ] -= (psf_im[i, ] * cent_mask)
 
         # rotate result array
         delta_para = -1.*self.m_im_arr_in_port.get_attribute("NEW_PARA")
-        res_rot = np.zeros(shape=im_data.shape)
+        res_rot = np.zeros(shape=res_arr.shape)
 
         for i in range(0, len(delta_para)):
             res_temp = res_arr[i, ]
@@ -490,10 +496,12 @@ class MakePCABasisModule(ProcessingModule):
     """
 
     def __init__(self,
+                 pca_number=None,
+                 svd="lapack",
                  name_in="make_pca_basis",
                  im_arr_in_tag="im_arr",
                  im_arr_out_tag="im_arr",
-                 im_average_out_tag="im_ave",
+                 im_average_out_tag="im_av",
                  basis_out_tag="basis"):
         """
         Constructor of MakePCABasisModule.
@@ -520,6 +528,9 @@ class MakePCABasisModule(ProcessingModule):
         self.m_im_arr_out_port = self.add_output_port(im_arr_out_tag)
         self._m_im_average_out_port = self.add_output_port(im_average_out_tag)
         self._m_basis_out_port = self.add_output_port(basis_out_tag)
+
+        self.m_pca_number = pca_number
+        self.m_svd = svd
 
     @staticmethod
     def _make_average_sub(im_arr_in):
@@ -549,11 +560,24 @@ class MakePCABasisModule(ProcessingModule):
 
         num_entries = im_data.shape[0]
         im_size = [im_data.shape[1], im_data.shape[2]]
+        
+        if self.m_pca_number == None:
+            self.m_pca_number = num_entries-1
 
         tmp_im_data, tmp_im_ave = self._make_average_sub(im_data)
 
-        _, _, V = linalg.svd(tmp_im_data.reshape(num_entries, im_size[0]*im_size[1]),
-                             full_matrices=False)
+        if self.m_svd == "lapack":
+            _, _, V = linalg.svd(tmp_im_data.reshape(num_entries, im_size[0]*im_size[1]),
+                                 full_matrices=False)
+
+        elif self.m_svd == "arpack":
+            _, _, V = sparse.linalg.svds(tmp_im_data.reshape(num_entries, im_size[0]*im_size[1]),
+                                         k=self.m_pca_number)
+
+            V = V[::-1,]
+
+        else:
+            raise ValueError("The svd argument should be set to either 'lapack' or 'arpack'.")
 
         basis_pca_arr = V.reshape(V.shape[0], im_size[0], im_size[1])
 
@@ -612,11 +636,22 @@ class FastPCAModule(ProcessingModule):
         :type res_rot_mean_clip_tag: str
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
+             * **verbose** (*bool*) -- Print progress to the standard output.
 
         :return: None
         """
 
         super(FastPCAModule, self).__init__(name_in)
+
+        if "basis_out_tag" in kwargs:
+            self.m_basis_tag = kwargs["basis_out_tag"]
+        else:
+            self.m_basis_tag = None
 
         if "verbose" in kwargs:
             self.m_verbose = kwargs["verbose"]
@@ -649,6 +684,9 @@ class FastPCAModule(ProcessingModule):
             self.m_res_rot_mean_clip_out_port.deactivate()
         else:
             self.m_res_rot_mean_clip_out_port = self.add_output_port(str(res_rot_mean_clip_tag))
+
+        if self.m_basis_tag is not None:
+            self.m_basis_out_port = self.add_output_port(self.m_basis_tag)
 
         # use a dict to store output ports for the non-stacked residuals
         self.m_res_arr_out_ports = {}
@@ -778,6 +816,10 @@ class FastPCAModule(ProcessingModule):
         ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
+
+        if self.m_basis_tag is not None:
+            basis = self.m_pca.components_.reshape((self.m_pca.components_.shape[0], star_data.shape[1], star_data.shape[2]))
+            self.m_basis_out_port.set_all(basis)
 
         if self.m_verbose:
             stdout.write(" [DONE]\n")
