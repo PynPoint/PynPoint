@@ -12,6 +12,8 @@ scikit-image
 pytest
 sklearn
 sphinx
+photutils
+configparser
 
 # old_version
 pyfits
