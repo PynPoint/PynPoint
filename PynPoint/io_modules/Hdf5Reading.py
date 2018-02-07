@@ -113,9 +113,6 @@ class Hdf5ReadingModule(ReadingModule):
         :return: None
         """
 
-        sys.stdout.write("Running Hdf5ReadingModule...")
-        sys.stdout.flush()
-
         # create list of files to be read
         files = []
 
