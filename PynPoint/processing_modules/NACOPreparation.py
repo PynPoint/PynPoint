@@ -159,8 +159,7 @@ class RemoveLastFrameModule(ProcessingModule):
         """
         Constructor of RemoveLastFrameModule.
 
-        :param name_in: Name of the module instance. Used as unique identifier in the Pypeline
-                        dictionary.
+        :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
