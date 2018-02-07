@@ -22,12 +22,11 @@ class BasePynpointWrapper(object):
                  working_pypeline):
         self._pypeline = working_pypeline
         self._m_center_remove = True
-        self._m_resize = False
         self._m_ran_sub = None
         self._m_stacking = None
         self._m_cent_size = 0.05
         self._m_edge_size = 1.0
-        self._m_f_final = 2.0
+        self._m_f_final = -1.
 
         # Attributes / Ports set individually by Image and Basis
         self._m_image_data_tag = None
@@ -56,10 +55,8 @@ class BasePynpointWrapper(object):
                              "files" : "Used_Files",
                              "im_norm" : "im_norm",
                              "para" : "NEW_PARA",
-                             "cent_remove" : "cent_remove",
                              "resize" : "resize",
-                             "para_sort" : "para_sort",
-                             "F_final" : "F_final",
+                             "cent_remove" : "cent_remove",
                              "cent_size" : "cent_size",
                              "edge_size" : "edge_size"}
 
@@ -109,17 +106,14 @@ class BasePynpointWrapper(object):
         if "cent_remove" in kwargs:
             self._m_center_remove = kwargs["cent_remove"]
 
-        if "resize" in kwargs:
-            self._m_resize = kwargs["resize"]
-
         if "recent" in kwargs:
             warnings.warn('Recentering is not longer supported in PynPoint preparation')
 
         if "cent_size" in kwargs:
             self._m_cent_size = kwargs["cent_size"]
 
-        if "F_final" in kwargs:
-            self._m_f_final = kwargs["F_final"]
+        if "resize" in kwargs:
+            self._m_resize = kwargs["resize"]
 
         if "edge_size" in kwargs:
             self._m_edge_size = kwargs["edge_size"]
@@ -138,7 +132,6 @@ class BasePynpointWrapper(object):
                                          image_out_tag=self._m_image_data_tag,
                                          resize=self._m_resize,
                                          cent_remove=self._m_center_remove,
-                                         F_final=self._m_f_final,
                                          cent_size=self._m_cent_size)
 
         subsample_module = StackAndSubsetModule(name_in="stacking",

@@ -583,7 +583,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                                       im_arr.shape[1]*im_arr.shape[2]),
                        k=self.m_pca_number)
 
-        # V = V[::-1,]
+        V = V[::-1, ]
 
         pca_basis = V.reshape(V.shape[0],
                               im_arr.shape[1],
@@ -639,9 +639,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         """
 
         image_memory = self._m_config_port.get_attribute("MEMORY")
-
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
-
         star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
 
         self.m_mask_radius /= pixscale
