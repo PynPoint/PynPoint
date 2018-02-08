@@ -9,7 +9,6 @@ import numpy as np
 
 from sklearn.decomposition import PCA
 from scipy import linalg, ndimage, sparse
-from astropy.io import fits
 
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.util import PcaMultiprocessingCapsule
@@ -158,6 +157,7 @@ class PSFSubtractionModule(ProcessingModule):
                                                         image_out_tag=prep_tag,
                                                         image_mask_out_tag="not_needed",
                                                         mask_out_tag=cent_mask_tag,
+                                                        norm=True,
                                                         cent_remove=cent_remove,
                                                         cent_size=cent_size,
                                                         edge_size=edge_size)
@@ -169,6 +169,7 @@ class PSFSubtractionModule(ProcessingModule):
                                                            image_out_tag=ref_prep_tag,
                                                            image_mask_out_tag="not_needed",
                                                            mask_out_tag=cent_mask_tag,
+                                                           norm=True,
                                                            cent_remove=cent_remove,
                                                            cent_size=cent_size,
                                                            edge_size=edge_size)
@@ -560,7 +561,7 @@ class MakePCABasisModule(ProcessingModule):
 
         num_entries = im_data.shape[0]
         im_size = [im_data.shape[1], im_data.shape[2]]
-        
+
         if self.m_pca_number == None:
             self.m_pca_number = num_entries-1
 
@@ -818,7 +819,8 @@ class FastPCAModule(ProcessingModule):
         self.m_pca.fit(ref_star_sklearn)
 
         if self.m_basis_tag is not None:
-            basis = self.m_pca.components_.reshape((self.m_pca.components_.shape[0], star_data.shape[1], star_data.shape[2]))
+            basis = self.m_pca.components_.reshape((self.m_pca.components_.shape[0],
+                                                    star_data.shape[1], star_data.shape[2]))
             self.m_basis_out_port.set_all(basis)
 
         if self.m_verbose:
