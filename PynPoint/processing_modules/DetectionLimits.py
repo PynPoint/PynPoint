@@ -13,7 +13,9 @@ from scipy.interpolate import interp1d
 from scipy.stats import t
 
 from PynPoint.core import ProcessingModule
-from PynPoint.processing_modules import PSFSubtractionModule, FastPCAModule, FakePlanetModule
+from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.processing_modules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
+from PynPoint.processing_modules.FluxAndPosition import FakePlanetModule
 
 
 class ContrastModule(ProcessingModule):
@@ -35,7 +37,7 @@ class ContrastModule(ProcessingModule):
                  accuracy=1e-1,
                  psf_scaling=1.,
                  aperture=0.05,
-                 pca_module='PSFSubtractionModule',
+                 pca_module='FastPCAModule',
                  pca_number=20,
                  mask=0.,
                  extra_rot=0.):
@@ -261,7 +263,7 @@ class ContrastModule(ProcessingModule):
 
             for n, ang in enumerate(pos_t):
                 sys.stdout.write("Processing position " + str(count) + " out of " + \
-                      str(np.size(fake_mag))+" ")
+                      str(np.size(fake_mag)))
                 sys.stdout.flush()
 
                 x_fake = center[0] + sep*math.cos(np.radians(ang+90.-self.m_extra_rot))
@@ -305,7 +307,9 @@ class ContrastModule(ProcessingModule):
 
                     if self.m_pca_module == "PSFSubtractionModule":
 
-                        psf_sub = \
+                        if self.m_mask > 0.:
+
+                            psf_sub = \
                             PSFSubtractionModule(pca_number=self.m_pca_number,
                                                  svd="arpack",
                                                  name_in="pca_contrast",
@@ -322,20 +326,57 @@ class ContrastModule(ProcessingModule):
                                                  psf_model_tag="contrast_psf_model",
                                                  ref_prep_tag="contrast_ref_prep",
                                                  prep_tag="contrast_prep",
-                                                 extra_rot=self.m_extra_rot,
-                                                 cent_size=self.m_mask,
                                                  cent_mask_tag="contrast_cent_mask",
+                                                 extra_rot=self.m_extra_rot,
+                                                 cent_remove=True,
+                                                 cent_size=self.m_mask,
+                                                 verbose=False)
+
+                        else:
+
+                            psf_sub = \
+                            PSFSubtractionModule(pca_number=self.m_pca_number,
+                                                 svd="arpack",
+                                                 name_in="pca_contrast",
+                                                 images_in_tag="contrast_fake",
+                                                 reference_in_tag="contrast_fake",
+                                                 res_arr_out_tag="contrast_res_arr_out",
+                                                 res_arr_rot_out_tag="contrast_res_arr_rot_out",
+                                                 res_mean_tag="contrast_res_mean",
+                                                 res_median_tag="contrast_res_median",
+                                                 res_var_tag="contrast_res_var",
+                                                 res_rot_mean_clip_tag="contrast_res_rot_mean_clip",
+                                                 basis_out_tag="contrast_basis_out",
+                                                 image_ave_tag="contrast_image_ave",
+                                                 psf_model_tag="contrast_psf_model",
+                                                 ref_prep_tag="contrast_ref_prep",
+                                                 prep_tag="contrast_prep",
+                                                 cent_mask_tag="contrast_cent_mask",
+                                                 extra_rot=self.m_extra_rot,
+                                                 cent_remove=False,
                                                  verbose=False)
 
                     elif self.m_pca_module == "FastPCAModule":
 
-                        if self.m_mask > 0.:
-                            warnings.warn("The central mask is not implemented in FastPCAModule.")
+                        cent_remove = bool(self.m_mask > 0.)
+
+                        prep = PSFdataPreparation(name_in="prep",
+                                                  image_in_tag="contrast_fake",
+                                                  image_out_tag="contrast_prep",
+                                                  image_mask_out_tag=None,
+                                                  mask_out_tag=None,
+                                                  norm=True,
+                                                  cent_remove=cent_remove,
+                                                  cent_size=self.m_mask,
+                                                  edge_size=1.)
+
+                        prep.connect_database(self._m_data_base)
+                        prep.run()
 
                         psf_sub = FastPCAModule(name_in="pca_contrast",
                                                 pca_numbers=self.m_pca_number,
-                                                images_in_tag="contrast_fake",
-                                                reference_in_tag="contrast_fake",
+                                                images_in_tag="contrast_prep",
+                                                reference_in_tag="contrast_prep",
                                                 res_mean_tag="contrast_res_mean",
                                                 res_median_tag=None,
                                                 res_arr_out_tag=None,
@@ -344,6 +385,7 @@ class ContrastModule(ProcessingModule):
                                                 verbose=False)
 
                     else:
+
                         raise ValueError("The pca_module should be either PSFSubtractionModule or "
                                          "FastPCAModule.")
 
