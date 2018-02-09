@@ -570,9 +570,10 @@ class SNRModule(ProcessingModule):
         """
         Constructor of SNRModule.
 
-        :param position: Angular separation (arcsec) and position angle (deg) of the fake planet.
-                         Angle is measured in counterclockwise direction with respect to the
-                         upward direction (i.e., East of North).
+        :param position: The x and y position (pix) where the SNR and FPF is calculated. Note that
+                         the bottom left of the image is defined as (0, 0) so there is a -0.5
+                         offset with respect to the DS9 coordinate system. Aperture photometry
+                         corrects for the partial inclusion of pixels at the boundary.
         :type position: tuple
         :param aperture: Aperture radius (arcsec).
         :type aperture: float
@@ -581,8 +582,8 @@ class SNRModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry with images that are read as input.
         :type image_in_tag: str
         :param snr_out_tag: Tag of the database entry that is written as output. The output format
-                            is: (x position [pix], y position [pix], separation [arcsec], position
-                            angle [deg], SNR, FPF). The position angle is measured in
+                            is: (x position (pix), y position (pix), separation (arcsec), position
+                            angle (deg), SNR, FPF). The position angle is measured in
                             counterclockwise direction with respect to the upward direction (i.e.,
                             East of North).
         :type snr_out_tag: str
