@@ -209,10 +209,8 @@ class ScaleFramesModule(ProcessingModule):
                           scaling):
 
             sum_before = np.sum(image_in)
-            tmp_image = rescale(image=np.asarray(image_in,
-                                                 dtype=np.float64),
-                                scale=(scaling,
-                                       scaling),
+            tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
+                                scale=(scaling, scaling),
                                 order=5,
                                 mode="reflect")
 
