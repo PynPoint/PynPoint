@@ -138,7 +138,7 @@ class StarAlignmentModule(ProcessingModule):
                  image_out_tag="im_arr_aligned",
                  interpolation="fft",
                  accuracy=10,
-                 resize=1,
+                 resize=None,
                  num_references=10):
         """
         Constructor of StarAlignmentModule.
@@ -217,13 +217,13 @@ class StarAlignmentModule(ProcessingModule):
                 offset += tmp_offset
 
             offset /= float(self.m_num_references)
-            offset *= self.m_resize
+            if self.m_resize is not None:
+                offset *= self.m_resize
 
-            if self.m_resize is not 1:
+            if self.m_resize is not None:
                 sum_before = np.sum(image_in)
-                tmp_image = rescale(image=np.asarray(image_in),
-                                    scale=(self.m_resize,
-                                           self.m_resize),
+                tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
+                                    scale=(self.m_resize, self.m_resize),
                                     order=5,
                                     mode="reflect")
                 sum_after = np.sum(tmp_image)
@@ -259,7 +259,8 @@ class StarAlignmentModule(ProcessingModule):
 
         tmp_pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        tmp_pixscale /= self.m_resize
+        if self.m_resize is not None:
+            tmp_pixscale /= self.m_resize
         self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
