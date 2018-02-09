@@ -994,11 +994,9 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return
 
-        if not self._m_tag in self._m_data_storage.m_data_bank:
-            return
-
         # static attributes
-        self._m_data_storage.m_data_bank[self._m_tag].attrs.clear()
+        if self._m_tag in self._m_data_storage.m_data_bank:
+            self._m_data_storage.m_data_bank[self._m_tag].attrs.clear()
 
         # non-static attributes
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
