@@ -300,6 +300,7 @@ class CombineTagsModule(ProcessingModule):
 
     def __init__(self,
                  image_in_tags,
+                 check_attr=True,
                  name_in="combine_tags",
                  image_out_tag="im_arr_combined"):
         """
@@ -307,6 +308,9 @@ class CombineTagsModule(ProcessingModule):
 
         :param image_in_tags: Tags of the database entries that are combined.
         :type image_in_tags: tuple, str
+        :param check_attr: Compare non-static attributes between the tags or combine all non-static
+                           attributes into the new database tag.
+        :type check_attr: bool
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_out_tag: Tag of the database entry that is written as output. Should not be
@@ -324,6 +328,7 @@ class CombineTagsModule(ProcessingModule):
             raise ValueError("The name of image_out_tag can not be present in image_in_tags.")
 
         self.m_image_in_tags = image_in_tags
+        self.m_check_attr = check_attr
 
     def run(self):
         """
@@ -334,40 +339,35 @@ class CombineTagsModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         if len(self.m_image_in_tags) < 2:
             raise ValueError("The tuple of image_in_tags should contain at least two tags.")
 
-        image_memory = self._m_config_port.get_attribute("MEMORY")
-
-        self.m_image_out_port.del_all_attributes()
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         for i, item in enumerate(self.m_image_in_tags):
+            progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
+
             image_in_port = self.add_input_port(item)
 
             num_frames = image_in_port.get_shape()[0]
-            num_stacks = int(float(num_frames)/float(image_memory))
+            num_stacks = int(float(num_frames)/float(memory))
 
             for j in range(num_stacks):
-                frame_start = j*image_memory
-                frame_end = j*image_memory+image_memory
+                frame_start = j*memory
+                frame_end = j*memory+memory
 
                 im_tmp = image_in_port[frame_start:frame_end, ]
+                self.m_image_out_port.append(im_tmp)
 
-                if i == 0 and j == 0:
-                    self.m_image_out_port.set_all(im_tmp)
-                else:
-                    self.m_image_out_port.append(im_tmp)
-
-            if num_frames%image_memory > 0:
-                frame_start = num_stacks*image_memory
+            if num_frames%memory > 0:
+                frame_start = num_stacks*memory
                 frame_end = num_frames
 
                 im_tmp = image_in_port[frame_start:frame_end, ]
-
-                if num_stacks == 0:
-                    self.m_image_out_port.set_all(im_tmp)
-                else:
-                    self.m_image_out_port.append(im_tmp)
+                self.m_image_out_port.append(im_tmp)
 
             static_attr = image_in_port.get_all_static_attributes()
             non_static_attr = image_in_port.get_all_non_static_attributes()
@@ -387,21 +387,32 @@ class CombineTagsModule(ProcessingModule):
                 values = image_in_port.get_attribute(key)
                 status = self.m_image_out_port.check_non_static_attribute(key, values)
 
-                if key == "NFRAMES" or key == "NEW_PARA" or key == "STAR_POSITION":
+                if self.m_check_attr:
+                    if key == "NFRAMES" or key == "NEW_PARA" or key == "STAR_POSITION":
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(key, values, static=False)
+                        else:
+                            for j in values:
+                                self.m_image_out_port.append_attribute_data(key, j)
+
+                    else:
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(key, values, static=False)
+
+                        if status == -1:
+                            warnings.warn('The non-static keyword %s is already used but with '
+                                          'different values. It is advisable to only combine tags '
+                                          'that descend from the same data set.' % key)
+
+                else:
                     if status == 1:
                         self.m_image_out_port.add_attribute(key, values, static=False)
                     else:
                         for j in values:
                             self.m_image_out_port.append_attribute_data(key, j)
 
-                else:
-                    if status == 1:
-                        self.m_image_out_port.add_attribute(key, values, static=False)
-
-                    elif status == -1:
-                        warnings.warn('The non-static keyword %s is already used but with '
-                                      'different values. It is advisable to only combine tags '
-                                      'that descend from the same data set.' % key)
+        sys.stdout.write("Running CombineTagsModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))

@@ -71,8 +71,8 @@ class StarExtractionModule(ProcessingModule):
         """
 
         memory = self._m_config_port.get_attribute("MEMORY")
-
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
         psf_radius = int((self.m_image_size / 2.0) / pixscale)
 
         self.m_fwhm_star /= pixscale
