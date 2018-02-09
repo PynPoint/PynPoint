@@ -877,6 +877,7 @@ class PCABackgroundDitheringModule(ProcessingModule):
             tags.append("pca_bg_sub"+str(i+1))
 
         combine = CombineTagsModule(name_in="combine",
+                                    check_attr=True,
                                     image_in_tags=tags,
                                     image_out_tag=self.m_image_out_tag)
 
