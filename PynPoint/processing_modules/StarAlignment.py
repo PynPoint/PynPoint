@@ -477,9 +477,6 @@ class StarCenteringModule(ProcessingModule):
             self.m_x_grid = self.m_y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
         if self.m_method == "mean":
-            sys.stdout.write("Running StarCenteringModule...")
-            sys.stdout.flush()
-
             im_mean = np.zeros((npix, npix))
 
             for i in range(nstacks):
@@ -493,9 +490,6 @@ class StarCenteringModule(ProcessingModule):
             im_mean /= float(nimages)
 
             self.m_popt = _least_squares(im_mean)
-
-            sys.stdout.write(" [DONE]\n")
-            sys.stdout.flush()
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
