@@ -15,7 +15,8 @@ from astropy.nddata import Cutout2D
 
 from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
-from PynPoint.processing_modules import PSFSubtractionModule, FastPCAModule
+from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.processing_modules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 
 
 class FakePlanetModule(ProcessingModule):
@@ -211,9 +212,9 @@ class SimplexMinimizationModule(ProcessingModule):
                  radius=0.1,
                  sigma=0.027,
                  tolerance=0.1,
-                 pca_module='PSFSubtractionModule',
+                 pca_module='FastPCAModule',
                  pca_number=20,
-                 mask=0.1,
+                 mask=0.,
                  extra_rot=0.):
         """
         Constructor of SimplexMinimizationModule.
@@ -347,35 +348,74 @@ class SimplexMinimizationModule(ProcessingModule):
 
             if self.m_pca_module == "PSFSubtractionModule":
 
-                psf_sub = PSFSubtractionModule(name_in="pca_simplex",
-                                               pca_number=self.m_pca_number,
-                                               images_in_tag="simplex_fake",
-                                               reference_in_tag="simplex_fake",
-                                               res_arr_out_tag="simplex_res_arr_out",
-                                               res_arr_rot_out_tag="simplex_res_arr_rot_out",
-                                               res_mean_tag="simplex_res_mean",
-                                               res_median_tag="simplex_res_median",
-                                               res_var_tag="simplex_res_var",
-                                               res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
-                                               basis_out_tag="simplex_basis_out",
-                                               image_ave_tag="simplex_image_ave",
-                                               psf_model_tag="simplex_psf_model",
-                                               ref_prep_tag="simplex_ref_prep",
-                                               prep_tag="simplex_prep",
-                                               extra_rot=self.m_extra_rot,
-                                               cent_size=self.m_mask,
-                                               cent_mask_tag="simplex_cent_mask",
-                                               verbose=False)
+                if self.m_mask > 0.:
+
+                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
+                                                   pca_number=self.m_pca_number,
+                                                   svd="arpack",
+                                                   images_in_tag="simplex_fake",
+                                                   reference_in_tag="simplex_fake",
+                                                   res_arr_out_tag="simplex_res_arr_out",
+                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
+                                                   res_mean_tag="simplex_res_mean",
+                                                   res_median_tag="simplex_res_median",
+                                                   res_var_tag="simplex_res_var",
+                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
+                                                   basis_out_tag="simplex_basis_out",
+                                                   image_ave_tag="simplex_image_ave",
+                                                   psf_model_tag="simplex_psf_model",
+                                                   ref_prep_tag="simplex_ref_prep",
+                                                   prep_tag="simplex_prep",
+                                                   cent_mask_tag="simplex_cent_mask",
+                                                   extra_rot=self.m_extra_rot,
+                                                   cent_remove=True,
+                                                   cent_size=self.m_mask,
+                                                   verbose=False)
+
+                else:
+
+                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
+                                                   pca_number=self.m_pca_number,
+                                                   svd="arpack",
+                                                   images_in_tag="simplex_fake",
+                                                   reference_in_tag="simplex_fake",
+                                                   res_arr_out_tag="simplex_res_arr_out",
+                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
+                                                   res_mean_tag="simplex_res_mean",
+                                                   res_median_tag="simplex_res_median",
+                                                   res_var_tag="simplex_res_var",
+                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
+                                                   basis_out_tag="simplex_basis_out",
+                                                   image_ave_tag="simplex_image_ave",
+                                                   psf_model_tag="simplex_psf_model",
+                                                   ref_prep_tag="simplex_ref_prep",
+                                                   prep_tag="simplex_prep",
+                                                   cent_mask_tag="simplex_cent_mask",
+                                                   extra_rot=self.m_extra_rot,
+                                                   cent_remove=False,
+                                                   verbose=False)
 
             elif self.m_pca_module == "FastPCAModule":
 
-                if self.m_mask > 0.:
-                    warnings.warn("The central mask is not implemented in FastPCAModule.")
+                cent_remove = bool(self.m_mask > 0.)
+
+                prep = PSFdataPreparation(name_in="prep",
+                                          image_in_tag="simplex_fake",
+                                          image_out_tag="simplex_prep",
+                                          image_mask_out_tag=None,
+                                          mask_out_tag=None,
+                                          norm=True,
+                                          cent_remove=cent_remove,
+                                          cent_size=self.m_mask,
+                                          edge_size=1.)
+
+                prep.connect_database(self._m_data_base)
+                prep.run()
 
                 psf_sub = FastPCAModule(name_in="pca_simplex",
                                         pca_numbers=self.m_pca_number,
-                                        images_in_tag="simplex_fake",
-                                        reference_in_tag="simplex_fake",
+                                        images_in_tag="simplex_prep",
+                                        reference_in_tag="simplex_prep",
                                         res_mean_tag="simplex_res_mean",
                                         res_median_tag=None,
                                         res_arr_out_tag=None,

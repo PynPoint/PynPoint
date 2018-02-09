@@ -23,6 +23,7 @@ class PSFdataPreparation(ProcessingModule):
                  image_out_tag="im_arr",
                  image_mask_out_tag="im_mask_arr",
                  mask_out_tag="mask_arr",
+                 norm=True,
                  resize=-1,
                  cent_remove=True,
                  cent_size=0.05,
@@ -41,6 +42,8 @@ class PSFdataPreparation(ProcessingModule):
         :type image_mask_out_tag: str
         :param mask_out_tag: Tag of the database entry with the mask that is written as output.
         :type mask_out_tag: str
+        :param norm: Normalization of each image by its Frobenius norm.
+        :type norm: bool
         :param resize: Factor by which the data is resized. For example, if *resize* is 2 then
                        the data will be upsampled by a factor of two. No resizing is applied
                        with a negative value.
@@ -60,32 +63,41 @@ class PSFdataPreparation(ProcessingModule):
         super(PSFdataPreparation, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
-        self.m_mask_out_port = self.add_output_port(mask_out_tag)
+        if image_mask_out_tag is not None:
+            self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
+        if mask_out_tag is not None:
+            self.m_mask_out_port = self.add_output_port(mask_out_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_image_mask_out_tag = image_mask_out_tag
+        self.m_mask_out_tag = mask_out_tag
 
         self.m_resize = resize
         self.m_cent_remove = cent_remove
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
+        self.m_norm = norm
 
-    @staticmethod
-    def _im_norm(im_data_in):
+    def _im_norm(self,
+                 im_data_in):
         """
         Internal method which normalizes the input data by its Frobenius norm.
         """
 
-        im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
+        if self.m_norm:
+            im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
+            for i in range(im_data_in.shape[0]):
+                im_data_in[i, ] /= im_norm[i]
 
-        for i in range(im_data_in.shape[0]):
-            im_data_in[i, ] /= im_norm[i]
+        else:
+            im_norm = np.ones(im_data_in.shape)
 
         return im_norm
 
     def _im_resizing(self,
                      im_data_in):
         """
-        Internal method which resamples the data with a factor F_final, using a spline
+        Internal method which resamples the data with a factor *resize*, using a spline
         interpolation of the fifth order.
         """
 
@@ -154,8 +166,8 @@ class PSFdataPreparation(ProcessingModule):
             im_arr_i_mask = im_data_in * res_cent_mask
             im_arr_o_mask = im_data_in * cent_mask
 
-            self.m_image_mask_out_port.set_all(im_arr_i_mask)
-            self.m_mask_out_port.set_all(cent_mask)
+            if self.m_image_mask_out_tag is not None:
+                self.m_image_mask_out_port.set_all(im_arr_i_mask)
 
             im_data_out = im_arr_o_mask
 
@@ -163,7 +175,8 @@ class PSFdataPreparation(ProcessingModule):
             cent_mask = np.ones(im_size)
             im_data_out = im_data_in
 
-        self.m_mask_out_port.set_all(cent_mask)
+        if self.m_mask_out_tag is not None:
+            self.m_mask_out_port.set_all(cent_mask)
 
         return im_data_out
 
