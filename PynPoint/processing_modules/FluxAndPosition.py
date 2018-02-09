@@ -10,8 +10,10 @@ import numpy as np
 
 from scipy.ndimage import shift
 from scipy.optimize import minimize
+from scipy.stats import t
 from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
+from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
@@ -551,3 +553,106 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_res_out_port.close_port()
+
+
+class SNRModule(ProcessingModule):
+    """
+    Module to calculate the signal-to-noise ratio (SNR) and false positive fraction (FPF) at a
+    specified location in an image by using the Student's t-test (Mawet et al. 2014).
+    """
+
+    def __init__(self,
+                 position,
+                 aperture=0.1,
+                 name_in="snr",
+                 image_in_tag="im_arr",
+                 snr_out_tag="snr_fpf"):
+        """
+        Constructor of SNRModule.
+
+        :param position: Angular separation (arcsec) and position angle (deg) of the fake planet.
+                         Angle is measured in counterclockwise direction with respect to the
+                         upward direction (i.e., East of North).
+        :type position: tuple
+        :param aperture: Aperture radius (arcsec).
+        :type aperture: float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with images that are read as input.
+        :type image_in_tag: str
+        :param snr_out_tag: Tag of the database entry that is written as output. The output format
+                            is: (x position [pix], y position [pix], separation [arcsec], position
+                            angle [deg], SNR, FPF). The position angle is measured in
+                            counterclockwise direction with respect to the upward direction (i.e.,
+                            East of North).
+        :type snr_out_tag: str
+
+        :return: None
+        """
+
+        super(SNRModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_snr_out_port = self.add_output_port(snr_out_tag)
+
+        self.m_position = position
+        self.m_aperture = aperture
+
+    def run(self):
+        """
+        Run method of the module. Calculates the SNR and FPF for a specified position in a post-
+        processed image with the Student's t-test (Mawet et al. 2014). This approach accounts
+        for small sample statistics.
+
+        :return: None
+        """
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        self.m_aperture /= pixscale
+
+        image = self.m_image_in_port.get_all()
+        npix = image.shape[0]
+        center = npix/2.
+
+        if image.ndim > 2:
+            raise ValueError("The image_in_tag should contain a 2D array.")
+
+        sep = math.sqrt((center-self.m_position[0])**2.+(center-self.m_position[1])**2.)
+        ang = (math.atan2(self.m_position[1]-center,
+                          self.m_position[0]-center)*180./math.pi - 90.)%360.
+
+        num_ap = int(2.*math.pi*sep/self.m_aperture)
+
+        ap_phot = np.zeros(num_ap)
+        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
+
+        for i, theta in enumerate(ap_theta):
+            x_tmp = center + (self.m_position[0]-center)*math.cos(theta) - \
+                             (self.m_position[1]-center)*math.sin(theta)
+            y_tmp = center + (self.m_position[0]-center)*math.sin(theta) + \
+                             (self.m_position[1]-center)*math.cos(theta)
+
+            aperture = CircularAperture((x_tmp, y_tmp), self.m_aperture)
+            phot_table = aperture_photometry(image, aperture, method='exact')
+            ap_phot[i] = phot_table['aperture_sum']
+
+        snr = (ap_phot[0] - np.mean(ap_phot[1:])) / \
+              (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
+
+        fpf = 1. - t.cdf(snr, num_ap-2)
+
+        result = np.column_stack((self.m_position[0],
+                                  self.m_position[1],
+                                  sep*pixscale,
+                                  ang,
+                                  snr,
+                                  fpf))
+
+        self.m_snr_out_port.set_all(result)
+
+        self.m_snr_out_port.add_history_information("Signal-to-noise ratio",
+                                                    "Student's t-test")
+
+        self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_snr_out_port.close_port()
