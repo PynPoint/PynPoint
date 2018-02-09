@@ -211,8 +211,11 @@ class StarAlignmentModule(ProcessingModule):
 
             offset = np.array([0.0, 0.0])
             for i in range(self.m_num_references):
-                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
-                                                        image_in,
+                ref_norm = np.amax(np.abs(ref_images[i, ]))
+                im_norm = np.amax(np.abs(image_in[i, ]))
+
+                tmp_offset, _, _ = register_translation(ref_images[i, ]/ref_norm,
+                                                        image_in/im_norm,
                                                         upsample_factor=self.m_accuracy)
                 offset += tmp_offset
 
