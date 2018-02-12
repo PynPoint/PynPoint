@@ -2,8 +2,11 @@
 Modules for stacking and subsampling.
 """
 
+import sys
+
 import numpy as np
 
+from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 
 
@@ -81,6 +84,8 @@ class StackAndSubsetModule(ProcessingModule):
             tmp_data = np.zeros([num_new, tmp_data_shape[1], tmp_data_shape[2]])
 
             for i in range(num_new):
+                progress(i, num_new, "Running StackAndSubsetModule...")
+
                 tmp_parang[i] = np.mean(para_angles[i*self.m_stacking:(i+1)*self.m_stacking])
                 tmp_data[i, ] = np.mean(self.m_image_in_port[i*self.m_stacking: \
                                         (i+1)*self.m_stacking, ],
@@ -90,6 +95,9 @@ class StackAndSubsetModule(ProcessingModule):
 
         else:
             tmp_parang = np.copy(para_angles)
+
+        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
+        sys.stdout.flush()
 
         if self.m_subset not in (None, False):
             # Random selection of frames
