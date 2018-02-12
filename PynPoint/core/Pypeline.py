@@ -56,8 +56,9 @@ class Pypeline(object):
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
+
         self._m_modules = collections.OrderedDict()
-        self.m_data_storage = DataStorage(working_place_in + '/PynPoint_database.hdf5')
+        self.m_data_storage = DataStorage(os.path.join(working_place_in, 'PynPoint_database.hdf5'))
 
         self._config_init()
 

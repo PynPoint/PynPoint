@@ -10,7 +10,7 @@ PyWavelets
 opencv-python
 scikit-image
 pytest
-sklearn
+scikit-learn
 sphinx
 photutils
 configparser
