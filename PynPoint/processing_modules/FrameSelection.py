@@ -4,6 +4,7 @@ Modules with tools for frame selection.
 
 import sys
 import math
+import warnings
 
 import numpy as np
 
@@ -268,30 +269,13 @@ class FrameSelectionModule(ProcessingModule):
             index = index_rm[i*memory:i*memory+memory, ]
             image = self.m_image_in_port[i*memory:i*memory+memory, ]
 
-            self.m_selected_out_port.append(image[np.logical_not(index)])
-            self.m_removed_out_port.append(image[index])
+            if np.size(image[np.logical_not(index)]) > 0:
+                self.m_selected_out_port.append(image[np.logical_not(index)])
+            if np.size(image[index]) > 0:
+                self.m_removed_out_port.append(image[index])
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
-
-        self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_selected_out_port.add_attribute("NEW_PARA",
-                                               parang[np.logical_not(index_rm)],
-                                               static=False)
-
-        self.m_removed_out_port.add_attribute("NEW_PARA",
-                                              parang[index_rm],
-                                              static=False)
-
-        self.m_selected_out_port.add_attribute("STAR_POSITION",
-                                               position[np.logical_not(index_rm)],
-                                               static=False)
-
-        self.m_removed_out_port.add_attribute("STAR_POSITION",
-                                              position[index_rm],
-                                              static=False)
 
         nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
 
@@ -304,15 +288,45 @@ class FrameSelectionModule(ProcessingModule):
             nframes_sel[i] = frames - nframes_del[i]
             total += frames
 
-        self.m_selected_out_port.add_attribute("NFRAMES", nframes_sel, static=False)
-        self.m_removed_out_port.add_attribute("NFRAMES", nframes_del, static=False)
-
         n_rm = np.size(index_rm[index_rm])
+
+        self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_selected_out_port.add_attribute("NEW_PARA",
+                                               parang[np.logical_not(index_rm)],
+                                               static=False)
+
+        self.m_selected_out_port.add_attribute("STAR_POSITION",
+                                               position[np.logical_not(index_rm)],
+                                               static=False)
+
+        self.m_selected_out_port.add_attribute("NFRAMES",
+                                               nframes_sel,
+                                               static=False)
 
         self.m_selected_out_port.add_history_information("Frame selection",
                                                          str(n_rm)+" images removed")
 
-        self.m_removed_out_port.add_history_information("Frame selection",
-                                                        str(n_rm)+" images removed")
+        if np.size(index_rm[index_rm]) > 0:
+
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+            self.m_removed_out_port.add_attribute("NEW_PARA",
+                                                  parang[index_rm],
+                                                  static=False)
+
+            self.m_removed_out_port.add_attribute("STAR_POSITION",
+                                                  position[index_rm],
+                                                  static=False)
+
+            self.m_removed_out_port.add_attribute("NFRAMES",
+                                                  nframes_del,
+                                                  static=False)
+
+            self.m_removed_out_port.add_history_information("Frame selection",
+                                                            str(n_rm)+" images removed")
+
+        else:
+            warnings.warn("No frames were removed.")
 
         self.m_image_in_port.close_port()

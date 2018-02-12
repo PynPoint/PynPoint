@@ -67,7 +67,7 @@ class PSFSubtractionModule(ProcessingModule):
         :type res_var_tag: str
         :param res_rot_mean_clip_tag: Tag of the database entry of the clipped mean residuals.
         :type res_rot_mean_clip_tag: str
-        :param extra_rot: Additional rotation angle of the images (deg).
+        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
         :param \**kwargs:
             See below.
@@ -319,7 +319,7 @@ class CreateResidualsModule(ProcessingModule):
         :type res_var_tag: str
         :param res_rot_mean_clip_tag: Tag of the database entry of the clipped mean residuals.
         :type res_rot_mean_clip_tag: str
-        :param extra_rot: Additional rotation angle of the images (deg).
+        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
         :return: None
