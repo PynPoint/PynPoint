@@ -344,7 +344,7 @@ class StarCenteringModule(ProcessingModule):
                  image_out_tag="im_center",
                  fit_out_tag="center_fit",
                  method="full",
-                 interpolation="spline",
+                 interpolation="fft",
                  **kwargs):
         """
         Constructor of StarCenteringModule.

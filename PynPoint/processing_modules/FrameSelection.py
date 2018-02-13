@@ -155,8 +155,10 @@ class FrameSelectionModule(ProcessingModule):
                  image_in_tag="im_arr",
                  selected_out_tag="im_arr_selected",
                  removed_out_tag="im_arr_removed",
+                 method="median",
+                 threshold=4.,
                  fwhm=0.2,
-                 threshold=3.):
+                 aperture=0.5):
         """
         Constructor of FrameSelectionModule.
 
@@ -170,16 +172,21 @@ class FrameSelectionModule(ProcessingModule):
         :param removed_out_tag: Tag of the database entry with the removed images that are
                                 written as output. Should be different from *image_in_tag*.
         :type removed_out_tag: str
-        :param fwhm: The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is
-                     used to smooth the images before the brightest pixel is located. Should be
-                     similar in size to the FWHM of the stellar PSF. The *fwhm* is also used as
-                     aperture radius for measuring the photometry around the location of the
-                     brightest pixel.
-        :type fwhm: float
+        :param method: Perform the sigma clipping with respect to the median or maximum aperture
+                       flux by setting the method to *median* or *max*, respectively.
+        :type method: str
         :param threshold: Threshold in units of sigma for the frame selection. All images that
                           are a *threshold* number of sigmas away from the median photometry will
                           be removed.
         :type threshold: float
+        :param fwhm: The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is
+                     used to smooth the images before the brightest pixel is located. Should be
+                     similar in size to the FWHM of the stellar PSF.
+        :type fwhm: float
+        :param aperture: The aperture radius (arcsec) that is used for measuring the photometry
+                         around the location of the brightest pixel. Typically a few times the
+                         stellar FWHM would be recommended.
+        :type aperture: float
 
         :return: None
         """
@@ -190,7 +197,9 @@ class FrameSelectionModule(ProcessingModule):
         self.m_selected_out_port = self.add_output_port(selected_out_tag)
         self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
+        self.m_method = method
         self.m_fwhm = fwhm
+        self.m_aperture = aperture
         self.m_threshold = threshold
 
     def run(self):
@@ -222,6 +231,7 @@ class FrameSelectionModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("NEW_PARA")
 
         self.m_fwhm /= pixscale
+        self.m_aperture /= pixscale
         gaussian_sigma = self.m_fwhm/math.sqrt(8.*math.log(2.))
 
         nframes = self.m_image_in_port.get_shape()[0]
@@ -229,6 +239,8 @@ class FrameSelectionModule(ProcessingModule):
 
         position = np.zeros((nframes, 2), dtype=np.int64)
         phot = np.zeros(nframes)
+
+        rr_check = False
 
         for i in range(nframes):
             progress(i, nframes+nframes, "Running FrameSelectionModule...")
@@ -239,28 +251,46 @@ class FrameSelectionModule(ProcessingModule):
 
             position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
 
-            im_cut = Cutout2D(im_smooth, (position[i, 1], position[i, 0]), size=2.*self.m_fwhm).data
+            check_pos_in = any(np.floor(position[i, :]-self.m_aperture) < 0.)
+            check_pos_out = any(np.ceil(position[i, :]+self.m_aperture) > im_smooth.shape[0])
 
-            if i == 0:
-                npix = im_cut.shape[0]
+            if check_pos_in or check_pos_out:
+                phot[i] = np.nan
 
-                if npix%2 == 0:
-                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                elif npix%2 == 1:
-                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+            else:
+                im_cut = Cutout2D(im_smooth,
+                                  (position[i, 1], position[i, 0]),
+                                  size=2.*self.m_aperture).data
 
-                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+                if not rr_check:
+                    npix = im_cut.shape[0]
 
-            im_cut[rr_grid > self.m_fwhm] = 0.
+                    if npix%2 == 0:
+                        x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                    elif npix%2 == 1:
+                        x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
-            phot[i] = np.sum(im_cut)
+                    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+                    rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+                    rr_check = True
 
-        phot_med = np.median(phot)
-        phot_std = np.std(phot)
+                im_cut[rr_grid >= 5.] = 0.
 
-        index_rm = np.logical_or((phot > phot_med+self.m_threshold*phot_std),
-                                 (phot < phot_med-self.m_threshold*phot_std))
+                phot[i] = np.sum(im_cut)
+
+        if self.m_method == "median":
+            phot_ref = np.nanmedian(phot)
+        elif self.m_method == "max":
+            phot_ref = np.nanmax(phot)
+        else:
+            raise ValueError("The method argument should be set to 'median' or 'max'.")
+
+        phot_std = np.nanstd(phot)
+
+        index_rm = np.logical_or((phot > phot_ref+self.m_threshold*phot_std),
+                                 (phot < phot_ref-self.m_threshold*phot_std))
+
+        index_rm[np.isnan(phot)] = True
 
         for i in range(nstacks):
             progress(nframes+i*nframes/nstacks, nframes+nframes, "Running FrameSelectionModule...")

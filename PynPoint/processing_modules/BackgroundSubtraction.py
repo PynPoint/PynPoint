@@ -430,7 +430,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                     bg_next = cube_mean[index_next,]
 
                 # Select background: previous, next, or mean of previous and next
-                if i == 0:
+                if i < self.m_cubes_per_position:
                     background = bg_next
 
                 elif i == np.size(nframes)-1:
