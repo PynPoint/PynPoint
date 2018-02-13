@@ -531,7 +531,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
-        sys.stdout.write("Running simplex minimization")
+        sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()
 
         minimize(fun=_objective,
