@@ -1,5 +1,5 @@
 """
-Modules for photometry and astrometry.
+Modules for photometric and astrometric measurements of the planet.
 """
 
 import math
@@ -211,7 +211,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  res_out_tag="simplex_res",
                  flux_position_tag="flux_position",
                  merit="hessian",
-                 radius=0.1,
+                 aperture=0.1,
                  sigma=0.027,
                  tolerance=0.1,
                  pca_module='FastPCAModule',
@@ -221,7 +221,9 @@ class SimplexMinimizationModule(ProcessingModule):
         """
         Constructor of SimplexMinimizationModule.
 
-        :param position: Approximate position (x, y) of the planet (pix).
+        :param position: Approximate position (x, y) of the planet (pix). This is also the location
+                         where the function of merit is calculated with an aperture of radius
+                         *aperture*.
         :type position: tuple
         :param magnitude: Approximate magnitude of the planet relative to the star.
         :type magnitude: float
@@ -252,9 +254,9 @@ class SimplexMinimizationModule(ProcessingModule):
                       the sum of the absolute values of the determinant of the Hessian matrix, or
                       *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017).
         :type merit: str
-        :param radius: Radius (arcsec) of the selected region, centered on the negative fake
-                       companion, used for the minimization.
-        :type radius: float
+        :param aperture: Aperture radius (arcsec) of the selected region, centered on the negative
+                         fake companion, used for the minimization.
+        :type aperture: float
         :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
                       the images before the function of merit is calculated (in order to reduce
                       small pixel-to-pixel variations). Highest astrometric and photometric
@@ -274,7 +276,7 @@ class SimplexMinimizationModule(ProcessingModule):
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.
         :type mask: float
-        :param extra_rot: Additional rotation angle of the images (deg).
+        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
         :return: None
@@ -294,7 +296,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
-        self.m_radius = radius
+        self.m_aperture = aperture
         self.m_sigma = sigma
         self.m_tolerance = tolerance
         self.m_pca_module = pca_module
@@ -445,8 +447,8 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_res_out_port.append(im_res, data_dim=3)
 
             im_crop = Cutout2D(data=im_res,
-                               position=_rotate(center, self.m_position, -self.m_extra_rot),
-                               size=2*self.m_radius).data
+                               position=self.m_position,
+                               size=2*self.m_aperture).data
 
             npix = im_crop.shape[0]
 
@@ -468,13 +470,13 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
-                hes_det[rr_grid > self.m_radius] = 0.
+                hes_det[rr_grid > self.m_aperture] = 0.
 
                 merit = np.sum(np.abs(hes_det))
 
             elif self.m_merit == "sum":
 
-                im_crop[rr_grid > self.m_radius] = 0.
+                im_crop[rr_grid > self.m_aperture] = 0.
 
                 merit = np.sum(np.abs(im_crop))
                 # merit = np.sum( im_crop**2 / np.std(im_crop[rr_grid < self.m_radius])**2 )
@@ -503,8 +505,8 @@ class SimplexMinimizationModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_radius /= pixscale
-        self.m_radius = int(math.ceil(self.m_radius))
+        self.m_aperture /= pixscale
+        self.m_aperture = int(math.ceil(self.m_aperture))
 
         self.m_sigma /= pixscale
 
@@ -528,14 +530,15 @@ class SimplexMinimizationModule(ProcessingModule):
 
         center = (psf_size[0]/2., psf_size[1]/2.)
 
-        self.m_position = _rotate(center, self.m_position, self.m_extra_rot)
         self.m_mask /= (pixscale*im_size[1])
 
         sys.stdout.write("Running simplex minimization")
         sys.stdout.flush()
 
+        pos_init = _rotate(center, self.m_position, self.m_extra_rot)
+
         minimize(fun=_objective,
-                 x0=[self.m_position[0], self.m_position[1], self.m_magnitude],
+                 x0=[pos_init[0], pos_init[1], self.m_magnitude],
                  method="Nelder-Mead",
                  tol=None,
                  options={'xatol': self.m_tolerance, 'fatol': float("inf")})
@@ -555,7 +558,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port.close_port()
 
 
-class SNRModule(ProcessingModule):
+class FalsePositiveModule(ProcessingModule):
     """
     Module to calculate the signal-to-noise ratio (SNR) and false positive fraction (FPF) at a
     specified location in an image by using the Student's t-test (Mawet et al. 2014).
@@ -564,11 +567,12 @@ class SNRModule(ProcessingModule):
     def __init__(self,
                  position,
                  aperture=0.1,
+                 ignore=False,
                  name_in="snr",
                  image_in_tag="im_arr",
                  snr_out_tag="snr_fpf"):
         """
-        Constructor of SNRModule.
+        Constructor of FalsePositiveModule.
 
         :param position: The x and y position (pix) where the SNR and FPF is calculated. Note that
                          the bottom left of the image is defined as (0, 0) so there is a -0.5
@@ -577,6 +581,9 @@ class SNRModule(ProcessingModule):
         :type position: tuple
         :param aperture: Aperture radius (arcsec).
         :type aperture: float
+        :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
+                       the planet.
+        :type ignore: bool
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with images that are read as input.
@@ -591,13 +598,14 @@ class SNRModule(ProcessingModule):
         :return: None
         """
 
-        super(SNRModule, self).__init__(name_in)
+        super(FalsePositiveModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_snr_out_port = self.add_output_port(snr_out_tag)
 
         self.m_position = position
         self.m_aperture = aperture
+        self.m_ignore = ignore
 
     def run(self):
         """
@@ -612,6 +620,11 @@ class SNRModule(ProcessingModule):
         self.m_aperture /= pixscale
 
         image = self.m_image_in_port.get_all()
+
+        if len(image.shape) == 3:
+            warnings.warn("Using the first image of "+str(self.m_image_in_port.tag)+".")
+            image = image[0, ]
+
         npix = image.shape[0]
         center = npix/2.
 
@@ -622,11 +635,14 @@ class SNRModule(ProcessingModule):
         ang = (math.atan2(self.m_position[1]-center,
                           self.m_position[0]-center)*180./math.pi - 90.)%360.
 
-        num_ap = int(2.*math.pi*sep/self.m_aperture)
-
-        ap_phot = np.zeros(num_ap)
+        num_ap = int(math.pi*sep/self.m_aperture)
         ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
 
+        if self.m_ignore:
+            num_ap -= 2
+            ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
+
+        ap_phot = np.zeros(num_ap)
         for i, theta in enumerate(ap_theta):
             x_tmp = center + (self.m_position[0]-center)*math.cos(theta) - \
                              (self.m_position[1]-center)*math.sin(theta)
