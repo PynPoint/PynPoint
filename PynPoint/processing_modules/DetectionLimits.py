@@ -144,6 +144,11 @@ class ContrastModule(ProcessingModule):
             num_ap -= 2
             ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
 
+        if num_ap < 3:
+            raise ValueError("Number of apertures (num_ap=%s) is too small to calculate the "
+                             "false positive fraction. Increase the lower limit of the "
+                             "separation argument." % num_ap)
+
         ap_phot = np.zeros(num_ap)
         for i, theta in enumerate(ap_theta):
             x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
@@ -233,10 +238,10 @@ class ContrastModule(ProcessingModule):
                 x_fake = center[0] + sep*math.cos(np.radians(ang+90.-self.m_extra_rot))
                 y_fake = center[1] + sep*math.sin(np.radians(ang+90.-self.m_extra_rot))
 
-                nonzero = np.size(np.nonzero(fake_mag[m, 0:n]))
-                nan = np.size(np.where(np.isnan(fake_mag[m, 0:n])))
+                num_mag = np.size(fake_mag[m, 0:n])
+                num_nan = np.size(np.where(np.isnan(fake_mag[m, 0:n])))
 
-                if n == 0 or nonzero-nan == 0:
+                if n == 0 or num_mag-num_nan == 0:
                     list_mag = [self.m_magnitude[0]]
                     mag_step = self.m_magnitude[1]
 
@@ -403,8 +408,8 @@ class ContrastModule(ProcessingModule):
                            list_fpf[-1] > list_fpf[-2] and list_fpf[-2] < list_fpf[-3]:
 
                             warnings.warn("Magnitude decreases but false positive fraction "
-                                          "increases. Adjusting magnitude to "+str(list_mag[-3])+
-                                          " and step size to "+str(mag_step/2.)+".")
+                                          "increases. Adjusting magnitude to %s and step size "
+                                          "to %s" % (list_mag[-3], mag_step/2.))
 
                             list_fpf = []
                             list_mag = [list_mag[-3]]
@@ -427,7 +432,7 @@ class ContrastModule(ProcessingModule):
 
                     if iteration == 50:
                         warnings.warn("ContrastModule could not converge at the position of "
-                                      +str(sep*pixscale)+" arcsec and "+str(ang)+" deg.")
+                                      "%s arcsec and %s deg." % (sep*pixscale, ang))
 
                         fake_mag[m, n] = np.nan
 
