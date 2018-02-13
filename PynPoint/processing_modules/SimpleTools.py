@@ -56,6 +56,9 @@ class CutAroundCenterModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
         num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
@@ -130,21 +133,26 @@ class CutAroundPositionModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
         num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
-                          shape_in,
-                          center_of_cut_in):
+                          shape,
+                          center):
 
-            shape_of_input = image_in.shape
+            x_in = center[0] - shape[0]/2
+            y_in = center[1] - shape[1]/2
 
-            if shape_in[0] > shape_of_input[0] or shape_in[1] > shape_of_input[1]:
-                raise ValueError("Input frame resolution smaller than target image resolution.")
+            x_out = center[0] + shape[0]/2
+            y_out = center[1] + shape[1]/2
 
-            x_off = center_of_cut_in[0] - (shape_in[0] / 2)
-            y_off = center_of_cut_in[1] - (shape_in[1] / 2)
+            if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
+                raise ValueError("Target image resolution does not fit inside the input frame "
+                                 "resolution.")
 
-            return image_in[y_off: shape_in[1] + y_off, x_off: shape_in[0] + x_off]
+            return image_in[y_in:y_out, x_in:x_out]
 
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
