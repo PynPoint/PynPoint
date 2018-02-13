@@ -18,7 +18,7 @@ class ParangReadingModule(ReadingModule):
 
     def __init__(self,
                  file_name,
-                 name_in="parang_read",
+                 name_in="parang_reading",
                  input_dir=None,
                  data_tag="im_arr",
                  overwrite=False):
