@@ -411,8 +411,7 @@ class ContrastModule(ProcessingModule):
                                           "increases. Adjusting magnitude to %s and step size "
                                           "to %s" % (list_mag[-3], mag_step/2.))
 
-                            list_fpf = []
-                            list_mag = [list_mag[-3]]
+                            list_mag[-1] = list_mag[-3]
                             mag_step /= 2.
 
                         else:
