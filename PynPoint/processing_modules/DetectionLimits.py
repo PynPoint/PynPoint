@@ -334,7 +334,8 @@ class ContrastModule(ProcessingModule):
                                                   norm=True,
                                                   cent_remove=cent_remove,
                                                   cent_size=self.m_mask,
-                                                  edge_size=1.)
+                                                  edge_size=1.,
+                                                  verbose=False)
 
                         prep.connect_database(self._m_data_base)
                         prep.run()
