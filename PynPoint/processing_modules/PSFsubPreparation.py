@@ -29,7 +29,8 @@ class PSFdataPreparation(ProcessingModule):
                  resize=-1,
                  cent_remove=True,
                  cent_size=0.05,
-                 edge_size=1.0):
+                 edge_size=1.0,
+                 **kwargs):
         """
         Constructor of PSFdataPreparation.
 
@@ -59,8 +60,16 @@ class PSFdataPreparation(ProcessingModule):
                           masked beyond this radius. Currently this parameter is not used.
         :type edge_size: float
 
+        :Keyword arguments:
+             * **verbose** (*bool*) -- Print progress to the standard output.
+
         :return: None
         """
+
+        if "verbose" in kwargs:
+            self.m_verbose = kwargs["verbose"]
+        else:
+            self.m_verbose = True
 
         super(PSFdataPreparation, self).__init__(name_in)
 
@@ -189,8 +198,9 @@ class PSFdataPreparation(ProcessingModule):
         :return: None
         """
 
-        sys.stdout.write("Running PSFdataPreparation...")
-        sys.stdout.flush()
+        if self.m_verbose:
+            sys.stdout.write("Running PSFdataPreparation...")
+            sys.stdout.flush()
 
         im_data = self.m_image_in_port.get_all()
         im_norm = self._im_norm(im_data)
@@ -212,5 +222,6 @@ class PSFdataPreparation(ProcessingModule):
         for key, value in attributes.iteritems():
             self.m_image_out_port.add_attribute(key, value, static=True)
 
-        sys.stdout.write(" [DONE]\n")
-        sys.stdout.flush()
+        if self.m_verbose:
+            sys.stdout.write(" [DONE]\n")
+            sys.stdout.flush()
