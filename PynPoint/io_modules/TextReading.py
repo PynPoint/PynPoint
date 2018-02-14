@@ -25,7 +25,8 @@ class ParangReadingModule(ReadingModule):
         """
         Constructor of ParangReadingModule.
 
-        :param file_name: Name of the output file.
+        :param file_name: Name of the input file with a list of parallactic angles (deg). Should
+                          be equal in size to the number of images in *data_tag*.
         :type file_name: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -63,8 +64,8 @@ class ParangReadingModule(ReadingModule):
         parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
 
         if parang.ndim != 1:
-            raise ValueError("The input file "+str(self.m_file_name)+" should contain a 1D data "
-                             "set with the parallactic angles.")
+            raise ValueError("The input file %s should contain a 1D data set with the parallactic "
+                             "angles." % self.m_file_name)
 
         status = self.m_data_port.check_non_static_attribute("NEW_PARA", None)
 
