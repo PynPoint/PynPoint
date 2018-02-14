@@ -160,7 +160,8 @@ class PSFSubtractionModule(ProcessingModule):
                                                         norm=True,
                                                         cent_remove=cent_remove,
                                                         cent_size=cent_size,
-                                                        edge_size=edge_size)
+                                                        edge_size=edge_size,
+                                                        verbose=False)
 
         self._m_preparation_images.m_image_mask_out_port.deactivate()
 
@@ -172,7 +173,8 @@ class PSFSubtractionModule(ProcessingModule):
                                                            norm=True,
                                                            cent_remove=cent_remove,
                                                            cent_size=cent_size,
-                                                           edge_size=edge_size)
+                                                           edge_size=edge_size,
+                                                           verbose=False)
 
         self._m_preparation_reference.m_image_mask_out_port.deactivate()
 
