@@ -4,6 +4,8 @@ Modules to prepare the data for the PSF subtraction.
 
 from __future__ import division
 
+import sys
+
 import numpy as np
 
 from scipy import ndimage
@@ -187,6 +189,9 @@ class PSFdataPreparation(ProcessingModule):
         :return: None
         """
 
+        sys.stdout.write("Running PSFdataPreparation...")
+        sys.stdout.flush()
+
         im_data = self.m_image_in_port.get_all()
         im_norm = self._im_norm(im_data)
 
@@ -206,3 +211,6 @@ class PSFdataPreparation(ProcessingModule):
 
         for key, value in attributes.iteritems():
             self.m_image_out_port.add_attribute(key, value, static=True)
+
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
