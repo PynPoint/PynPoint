@@ -106,15 +106,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         else:
             self.m_image_out_port.set_all(tmp_res, data_dim=3)
 
-        print "Subtracting background from stack-part " + str(1) + " of " + \
-              str(num_stacks) + " stack-parts"
-
         # Mean subtraction of the first stack (minus the first frame)
         if isinstance(self.m_star_prs_shift, np.ndarray):
-            for i in range(1, self.m_cubes_per_position):
-                print "Subtracting background from stack-part " + str(i+1) + " of " + \
-                      str(num_stacks) + " stack-parts"
-
             tmp_data = self.m_image_in_port[1:next_start, ]
             tmp_data = tmp_data - tmp_mean
 
@@ -130,15 +123,13 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         # Processing of the rest of the data
         if isinstance(self.m_star_prs_shift, np.ndarray):
             for i in range(self.m_cubes_per_position, num_stacks, self.m_cubes_per_position):
+                progress(i, num_stacks, "Running MeanBackgroundSubtractionModule...")
+
                 prev_start = np.sum(self.m_star_prs_shift[0:i-self.m_cubes_per_position])
                 prev_end = np.sum(self.m_star_prs_shift[0:i])
 
                 next_start = np.sum(self.m_star_prs_shift[0:i+self.m_cubes_per_position])
                 next_end = np.sum(self.m_star_prs_shift[0:i+2*self.m_cubes_per_position])
-
-                for j in range(self.m_cubes_per_position):
-                    print "Subtracting background from stack-part " + str(i+j+1) + " of " + \
-                          str(num_stacks) + " stack-parts"
 
                 # calc the mean (previous)
                 tmp_data = self.m_image_in_port[prev_start:prev_end, ]
@@ -160,8 +151,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
                               self.m_star_prs_shift)) - 2
 
             for i in range(1, top, 1):
-                print "Subtracting background from stack-part " + str(i+1) + " of " + \
-                      str(num_stacks) + " stack-parts"
+                progress(i, top, "Running MeanBackgroundSubtractionModule...")
+
                 # calc the mean (next)
                 tmp_data = self.m_image_in_port[(i+1) * self.m_star_prs_shift:
                                                 (i+2) * self.m_star_prs_shift,
@@ -181,8 +172,6 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             # last and the one before
             # 1. ------------------------------- one before -------------------
             # calc the mean (previous)
-            print "Subtracting background from stack-part " + str(top+1) + " of " + \
-                  str(num_stacks) + " stack-parts"
             tmp_data = self.m_image_in_port[(top - 1) * self.m_star_prs_shift:
                                             (top + 0) * self.m_star_prs_shift, :, :]
             tmp_mean = np.mean(tmp_data, axis=0)
@@ -201,8 +190,6 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
             # 2. ------------------------------- last -------------------
             # calc the mean (previous)
-            print "Subtracting background from stack-part " + str(top+2) + " of " + \
-                  str(num_stacks) + " stack-parts"
             tmp_data = self.m_image_in_port[(top + 0) * self.m_star_prs_shift:
                                             (top + 1) * self.m_star_prs_shift, :, :]
             tmp_mean = np.mean(tmp_data, axis=0)
@@ -213,6 +200,9 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             tmp_data = tmp_data - tmp_mean
             self.m_image_out_port.append(tmp_data)
             # -----------------------------------------------------------
+
+        sys.stdout.write("Running MeanBackgroundSubtractionModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -277,6 +267,8 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
 
         # process with the rest of the data
         for i in range(1, number_of_frames):
+            progress(i, number_of_frames, "Running SimpleBackgroundSubtractionModule...")
+
             tmp_res = self.m_image_in_port[i] - \
                       self.m_image_in_port[(i + self.m_star_prs_shift) % number_of_frames]
 
@@ -284,6 +276,9 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
                 self.m_image_out_port[i] = tmp_res
             else:
                 self.m_image_out_port.append(tmp_res)
+
+        sys.stdout.write("Running SimpleBackgroundSubtractionModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -371,7 +366,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         # Flag star and background cubes
         bg_frames = np.ones(nframes.shape[0], dtype=bool)
-        for i in range(self.m_first_star_cube, np.size(nframes), \
+        for i in range(self.m_first_star_cube*self.m_cubes_per_position, np.size(nframes), \
                        self.m_cubes_per_position*self.m_dither_positions):
             bg_frames[i:i+self.m_cubes_per_position] = False
 
@@ -433,7 +428,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 if i < self.m_cubes_per_position:
                     background = bg_next
 
-                elif i == np.size(nframes)-1:
+                elif i >= np.size(nframes)-self.m_cubes_per_position:
                     background = bg_prev
 
                 else:
@@ -784,6 +779,11 @@ class PCABackgroundDitheringModule(ProcessingModule):
         else:
             self.m_mask_pos = "exact"
 
+        if "mean_only" in kwargs:
+            self.m_mean_only = kwargs["mean_only"]
+        else:
+            self.m_mean_only = False
+
         super(PCABackgroundDitheringModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
@@ -855,26 +855,32 @@ class PCABackgroundDitheringModule(ProcessingModule):
             bp_bg.connect_database(self._m_data_base)
             bp_bg.run()
 
-            star = LocateStarModule(name_in="star"+str(i),
-                                    data_tag="star_bp"+str(i+1),
-                                    gaussian_fwhm=self.m_gaussian)
+            if self.m_mean_only:
 
-            star.connect_database(self._m_data_base)
-            star.run()
+                tags.append("star_bp"+str(i+1))
 
-            pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
-                                                 mask_radius=self.m_mask_radius,
-                                                 mask_position=self.m_mask_pos,
-                                                 name_in="pca_background"+str(i),
-                                                 star_in_tag="star_bp"+str(i+1),
-                                                 background_in_tag="background_bp"+str(i+1),
-                                                 subtracted_out_tag="pca_bg_sub"+str(i+1),
-                                                 residuals_out_tag=None)
+            elif not self.m_mean_only:
 
-            pca.connect_database(self._m_data_base)
-            pca.run()
+                star = LocateStarModule(name_in="star"+str(i),
+                                        data_tag="star_bp"+str(i+1),
+                                        gaussian_fwhm=self.m_gaussian)
 
-            tags.append("pca_bg_sub"+str(i+1))
+                star.connect_database(self._m_data_base)
+                star.run()
+
+                pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
+                                                     mask_radius=self.m_mask_radius,
+                                                     mask_position=self.m_mask_pos,
+                                                     name_in="pca_background"+str(i),
+                                                     star_in_tag="star_bp"+str(i+1),
+                                                     background_in_tag="background_bp"+str(i+1),
+                                                     subtracted_out_tag="pca_bg_sub"+str(i+1),
+                                                     residuals_out_tag=None)
+
+                pca.connect_database(self._m_data_base)
+                pca.run()
+
+                tags.append("pca_bg_sub"+str(i+1))
 
         combine = CombineTagsModule(name_in="combine",
                                     check_attr=True,

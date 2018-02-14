@@ -371,6 +371,7 @@ class CreateResidualsModule(ProcessingModule):
 
         for i in range(0, len(delta_para)):
             res_temp = res_arr[i, ]
+            # ndimage.rotate rotates in clockwise direction for positive angles
             res_rot[i, ] = ndimage.rotate(res_temp,
                                           delta_para[i]+self.m_extra_rot,
                                           reshape=False)
@@ -760,6 +761,7 @@ class FastPCAModule(ProcessingModule):
             res_array = np.zeros(shape=tmp_without_psf.shape)
             for i in range(0, len(delta_para)):
                 res_temp = tmp_without_psf[i,]
+                # ndimage.rotate rotates in clockwise direction for positive angles
                 res_array[i,] = ndimage.rotate(res_temp,
                                                delta_para[i] + self.m_extra_rot,
                                                reshape=False)
