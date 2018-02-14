@@ -142,11 +142,11 @@ class CutAroundPositionModule(ProcessingModule):
                           shape,
                           center):
 
-            x_in = center[0] - shape[0]/2
-            y_in = center[1] - shape[1]/2
+            x_in = int(center[0] - shape[0]/2)
+            y_in = int(center[1] - shape[1]/2)
 
-            x_out = center[0] + shape[0]/2
-            y_out = center[1] + shape[1]/2
+            x_out = int(center[0] + shape[0]/2)
+            y_out = int(center[1] + shape[1]/2)
 
             if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
                 raise ValueError("Target image resolution does not fit inside the input frame "
