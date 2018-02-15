@@ -91,6 +91,8 @@ class FitsReadingModule(ReadingModule):
         :return: None
         """
 
+        pixscale = self._m_config_port.get_attribute('PIXSCALE')
+
         hdulist = fits.open(tmp_location + fits_file)
 
         if self.m_overwrite and self.m_image_tag not in overwrite_keys:
@@ -116,9 +118,7 @@ class FitsReadingModule(ReadingModule):
                 status = self.m_image_out_port.check_static_attribute(item, value)
 
                 if status == 1:
-                    self.m_image_out_port.add_attribute(item,
-                                                        value,
-                                                        static=True)
+                    self.m_image_out_port.add_attribute(item, value, static=True)
 
                 if status == -1:
                     warnings.warn('Static attribute %s has changed. Probably the current '
@@ -144,12 +144,10 @@ class FitsReadingModule(ReadingModule):
 
             if fitskey in tmp_header:
                 value = tmp_header[fitskey]
-                self.m_image_out_port.append_attribute_data(item,
-                                                            value)
+                self.m_image_out_port.append_attribute_data(item, value)
 
             elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
-                self.m_image_out_port.append_attribute_data(item,
-                                                            1)
+                self.m_image_out_port.append_attribute_data(item, 1)
 
             elif item == 'NEW_PARA':
                 continue
@@ -157,8 +155,7 @@ class FitsReadingModule(ReadingModule):
             else:
                 warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
                               % (item, fitskey))
-                self.m_image_out_port.append_attribute_data(item,
-                                                            -1)
+                self.m_image_out_port.append_attribute_data(item, -1)
 
         fits_header = []
         for key in tmp_header:
@@ -170,13 +167,8 @@ class FitsReadingModule(ReadingModule):
         header_out_port = self.add_output_port('fits_header/'+fits_file)
         header_out_port.set_all(fits_header)
 
-        self.m_image_out_port.append_attribute_data("Used_Files",
-                                                    tmp_location + fits_file)
-
-        self.m_image_out_port.add_attribute("PIXSCALE",
-                                            float(self._m_config_port.get_attribute('PIXSCALE')),
-                                            static=True)
-
+        self.m_image_out_port.append_attribute_data("Used_Files", tmp_location+fits_file)
+        self.m_image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
         self.m_image_out_port.flush()
 
     def run(self):
@@ -207,10 +199,7 @@ class FitsReadingModule(ReadingModule):
         for i, fits_file in enumerate(files):
             progress(i, len(files), "Running FitsReadingModule...")
 
-            self._read_single_file(fits_file,
-                                   tmp_location,
-                                   overwrite_keys)
-
+            self._read_single_file(fits_file, tmp_location, overwrite_keys)
             self.m_image_out_port.flush()
 
         sys.stdout.write("Running FitsReadingModule... [DONE]\n")
@@ -227,5 +216,4 @@ class FitsReadingModule(ReadingModule):
 
         else:
             # appended data
-            self.m_image_out_port.add_value_to_static_attribute("Num_Files",
-                                                                new_files_num)
+            self.m_image_out_port.add_value_to_static_attribute("Num_Files", new_files_num)

@@ -12,7 +12,7 @@ from photutils import aperture_photometry, CircularAperture
 from scipy.interpolate import interp1d
 from scipy.stats import t
 
-from PynPoint.core import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
 from PynPoint.processing_modules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from PynPoint.processing_modules.FluxAndPosition import FakePlanetModule

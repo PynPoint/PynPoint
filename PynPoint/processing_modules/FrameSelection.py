@@ -11,7 +11,7 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from astropy.nddata import Cutout2D
 
-from PynPoint.core import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 from PynPoint.util.Progress import progress
 
 
@@ -140,7 +140,7 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
 
-        self.m_image_out_port.add_history_information("Removed frames",
+        self.m_image_out_port.add_history_information("Frames removed",
                                                       str(np.size(self.m_frame_indices)))
 
         self.m_image_in_port.close_port()
@@ -360,3 +360,78 @@ class FrameSelectionModule(ProcessingModule):
             warnings.warn("No frames were removed.")
 
         self.m_image_in_port.close_port()
+
+
+class RemoveLastFrameModule(ProcessingModule):
+    """
+    Module for removing every NDIT+1 frame from NACO data obtained in cube mode. This frame contains
+    the average pixel values of the cube.
+    """
+
+    def __init__(self,
+                 name_in="remove_last_frame",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_last"):
+        """
+        Constructor of RemoveLastFrameModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(RemoveLastFrameModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Removes every NDIT+1 frame and saves the data and attributes.
+
+        :return: None
+        """
+
+        if self.m_image_out_port.tag == self.m_image_in_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        ndit = self.m_image_in_port.get_attribute("NDIT")
+        size = self.m_image_in_port.get_attribute("NFRAMES")
+
+        if False in size == ndit+1:
+            raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
+
+        ndit_tot = 0
+        for i, _ in enumerate(ndit):
+            progress(i, len(ndit), "Running RemoveLastFrameModule...")
+
+            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
+            tmp_out = np.delete(tmp_in, ndit[i], axis=0)
+
+            if ndit_tot == 0:
+                self.m_image_out_port.set_all(tmp_out, keep_attributes=True)
+            else:
+                self.m_image_out_port.append(tmp_out)
+
+            ndit_tot += ndit[i]+1
+
+        sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        size_in = self.m_image_in_port.get_attribute("NFRAMES")
+        size_out = size_in - 1
+
+        self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
+
+        self.m_image_out_port.add_history_information("Frames removed",
+                                                      "NDIT+1")
+
+        self.m_image_out_port.close_port()
