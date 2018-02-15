@@ -52,10 +52,10 @@ PynPoint\.processing\_modules\.FrameSelection module
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.NACOPreparation module
------------------------------------------------------
+PynPoint\.processing\_modules\.ImageResizing module
+---------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.NACOPreparation
+.. automodule:: PynPoint.processing_modules.ImageResizing
     :members:
     :undoc-members:
     :show-inheritance:
@@ -72,14 +72,6 @@ PynPoint\.processing\_modules\.PSFsubPreparation module
 -------------------------------------------------------
 
 .. automodule:: PynPoint.processing_modules.PSFsubPreparation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-PynPoint\.processing\_modules\.SimpleTools module
--------------------------------------------------
-
-.. automodule:: PynPoint.processing_modules.SimpleTools
     :members:
     :undoc-members:
     :show-inheritance:

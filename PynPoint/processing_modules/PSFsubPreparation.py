@@ -10,6 +10,7 @@ import numpy as np
 
 from scipy import ndimage
 
+from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 
 
@@ -225,3 +226,68 @@ class PSFdataPreparation(ProcessingModule):
         if self.m_verbose:
             sys.stdout.write(" [DONE]\n")
             sys.stdout.flush()
+
+
+class AngleCalculationModule(ProcessingModule):
+    """
+    Module for calculating the parallactic angle values by interpolating between the begin and end
+    value of a data cube.
+    """
+
+    def __init__(self,
+                 name_in="angle_calculation",
+                 data_tag="im_arr"):
+        """
+        Constructor of AngleCalculationModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param data_tag: Tag of the database entry for which the parallactic angles are written as
+                         attributes.
+        :type data_tag: str
+
+        :return: None
+        """
+
+        super(AngleCalculationModule, self).__init__(name_in)
+
+        self.m_data_in_port = self.add_input_port(data_tag)
+        self.m_data_out_port = self.add_output_port(data_tag)
+
+    def run(self):
+        """
+        Run method of the module. Calculates the parallactic angles of each frame by linearly
+        interpolating between the start and end values of the data cubes. The values are written
+        as attributes to *data_tag*.
+
+        :return: None
+        """
+
+        parang_start = self.m_data_in_port.get_attribute("PARANG_START")
+        parang_end = self.m_data_in_port.get_attribute("PARANG_END")
+
+        steps = self.m_data_in_port.get_attribute("NFRAMES")
+        ndit = self.m_data_in_port.get_attribute("NDIT")
+
+        if False in ndit == steps:
+            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
+                          "angles are calculated with a linear interpolation by using NAXIS3 "
+                          "steps. A frame selection should be applied after the parallactic "
+                          "angles are calculated.")
+
+        new_angles = []
+
+        for i in range(len(parang_start)):
+            progress(i, len(parang_start), "Running AngleCalculationModule...")
+
+            new_angles = np.append(new_angles,
+                                   np.linspace(parang_start[i],
+                                               parang_end[i],
+                                               num=steps[i]))
+
+        sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_data_out_port.add_attribute("NEW_PARA",
+                                           new_angles,
+                                           static=False)

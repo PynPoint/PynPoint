@@ -12,8 +12,9 @@ from scipy.optimize import curve_fit
 from PynPoint.util.Progress import progress
 from PynPoint.core.Processing import ProcessingModule
 from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
-from PynPoint.processing_modules.SimpleTools import CutAroundPositionModule, CombineTagsModule
+from PynPoint.processing_modules.ImageResizing import CropImagesModule, CombineTagsModule
 from PynPoint.processing_modules.StarAlignment import LocateStarModule
+
 
 
 class MeanBackgroundSubtractionModule(ProcessingModule):
@@ -815,11 +816,11 @@ class PCABackgroundDitheringModule(ProcessingModule):
         for i, position in enumerate(self.m_center):
             print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
 
-            cut = CutAroundPositionModule(new_shape=self.m_shape,
-                                          center_of_cut=position,
-                                          name_in="cut"+str(i),
-                                          image_in_tag=self.m_image_in_tag,
-                                          image_out_tag="dither"+str(i+1))
+            cut = CropImagesModule(new_shape=self.m_shape,
+                                   center_of_cut=position,
+                                   name_in="cut"+str(i),
+                                   image_in_tag=self.m_image_in_tag,
+                                   image_out_tag="dither"+str(i+1))
 
             cut.connect_database(self._m_data_base)
             cut.run()

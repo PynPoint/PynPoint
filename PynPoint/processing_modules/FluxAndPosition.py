@@ -89,6 +89,9 @@ class FakePlanetModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
@@ -105,7 +108,12 @@ class FakePlanetModule(ProcessingModule):
 
         if ndim_image == 3:
             n_image = self.m_image_in_port.get_shape()[0]
-            n_stack_im = int(float(n_image)/float(memory))
+
+            if memory == -1 or memory >= n_image:
+                n_stack_im = 1
+            else:
+                n_stack_im = int(float(n_image)/float(memory))
+
             im_size = (self.m_image_in_port.get_shape()[1],
                        self.m_image_in_port.get_shape()[2])
 
@@ -114,59 +122,85 @@ class FakePlanetModule(ProcessingModule):
 
         if ndim_psf == 2:
             n_psf = 1
-            psf_size = (self.m_image_in_port.get_shape()[0],
-                        self.m_image_in_port.get_shape()[1])
+            psf_size = (self.m_psf_in_port.get_shape()[0],
+                        self.m_psf_in_port.get_shape()[1])
 
         elif ndim_psf == 3:
             n_psf = self.m_psf_in_port.get_shape()[0]
-            psf_size = (self.m_image_in_port.get_shape()[1],
-                        self.m_image_in_port.get_shape()[2])
+            psf_size = (self.m_psf_in_port.get_shape()[1],
+                        self.m_psf_in_port.get_shape()[2])
 
         if psf_size != im_size:
-            raise ValueError("The images in image_in_tag "+str(im_size)+" should have the same "
-                             "dimensions as the image(s) in psf_in_tag "+str(psf_size)+".")
+            raise ValueError("The images in %s should have the same dimensions as the images "
+                             "images in %s.") % (self.m_image_in_port.tag, self.m_psf_in_port.tag)
 
-        n_stack_psf = int(float(n_psf)/float(memory))
+        if memory == -1 or memory >= n_psf:
+            n_stack_psf = 1
+        else:
+            n_stack_psf = int(float(n_psf)/float(memory))
 
         im_stacks = np.zeros(1, dtype=np.int)
-        for i in range(n_stack_im):
-            im_stacks = np.append(im_stacks, im_stacks[i]+memory)
-        if n_stack_im*memory != n_image:
-            im_stacks = np.append(im_stacks, n_image)
+        if memory == -1 or memory >= n_image:
+            im_stacks = np.append(im_stacks, im_stacks[0]+n_image)
 
-        if ndim_psf == 2:
+        else:
+            for i in range(n_stack_im):
+                im_stacks = np.append(im_stacks, im_stacks[i]+memory)
+            if n_stack_im*memory != n_image:
+                im_stacks = np.append(im_stacks, n_image)
+
+        if ndim_psf == 3 and n_psf == 1:
+            psf = np.squeeze(self.m_psf_in_port.get_all(), axis=0)
+            ndim_psf = psf.ndim
+
+        elif ndim_psf == 2:
             psf = self.m_psf_in_port.get_all()
 
-        if ndim_psf == 3 and n_image != n_psf:
-            warnings.warn("The number of images in psf_in_tag does not match with image_in_tag. "
-                          "Calculating the mean of psf_in_tag...")
+        elif ndim_psf == 3 and n_image != n_psf:
+            warnings.warn("The number of images in %s do not match with %s. Using the mean "
+                          "instead." % (self.m_psf_in_port.tag, self.m_image_in_port.tag))
 
             psf = np.zeros((self.m_image_in_port.get_shape()[1],
                             self.m_image_in_port.get_shape()[2]))
 
-            for i in range(n_stack_psf):
-                psf += np.sum(self.m_psf_in_port[i*memory:(i+1)*memory], axis=0)
+            if memory == -1 or memory >= n_psf:
+                psf = np.mean(self.m_psf_in_port.get_all(), axis=0)
 
-            if n_stack_psf*memory != n_psf:
-                psf += np.sum(self.m_psf_in_port[n_stack_psf*memory:n_psf], axis=0)
+            else:
+                for i in range(n_stack_psf):
+                    psf += np.sum(self.m_psf_in_port[i*memory:(i+1)*memory], axis=0)
 
-            psf /= float(n_psf)
+                if n_stack_psf*memory != n_psf:
+                    psf += np.sum(self.m_psf_in_port[n_stack_psf*memory:n_psf], axis=0)
+
+                psf /= float(n_psf)
+
+            ndim_psf == psf.ndim
 
         for j, _ in enumerate(im_stacks[:-1]):
             if self.m_verbose:
                 progress(j, len(im_stacks[:-1]), "Running FakePlanetModule...")
 
-            image = self.m_psf_in_port[im_stacks[j]:im_stacks[j+1]]
+            image = self.m_image_in_port[im_stacks[j]:im_stacks[j+1]]
 
             for i in range(image.shape[0]):
-                x_shift = radial*math.cos(theta-parang[j*memory+i])
-                y_shift = radial*math.sin(theta-parang[j*memory+i])
+                if memory == -1 or memory >= n_image:
+                    x_shift = radial*math.cos(theta-parang[i])
+                    y_shift = radial*math.sin(theta-parang[i])
 
-                if ndim_psf == 2 or (ndim_psf == 3 and n_psf != n_image):
+                else:
+                    x_shift = radial*math.cos(theta-parang[j*memory+i])
+                    y_shift = radial*math.sin(theta-parang[j*memory+i])
+
+                if ndim_psf == 2:
                     psf_tmp = np.copy(psf)
 
-                elif ndim_psf == 3 and n_psf == n_image:
-                    psf_tmp = self.m_psf_in_port[j*memory+i]
+                elif ndim_psf == 3:
+                    if memory == -1 or memory >= n_psf:
+                        psf_tmp = self.m_psf_in_port[i]
+
+                    else:
+                        psf_tmp = self.m_psf_in_port[j*memory+i]
 
                 psf_tmp = shift(psf_tmp,
                                 (y_shift, x_shift),
@@ -175,10 +209,7 @@ class FakePlanetModule(ProcessingModule):
 
                 image[i,] += self.m_psf_scaling*flux_ratio*psf_tmp
 
-            if j == 0:
-                self.m_image_out_port.set_all(image)
-            else:
-                self.m_image_out_port.append(image)
+            self.m_image_out_port.append(image)
 
         if self.m_verbose:
             sys.stdout.write("Running FakePlanetModule... [DONE]\n")
