@@ -8,12 +8,17 @@ import numpy as np
 
 from PynPoint import Pypeline
 from PynPoint.core.DataIO import DataStorage
-from PynPoint.io_modules import FitsReadingModule, FitsWritingModule
-from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
-     DarkSubtractionModule, FlatSubtractionModule, CutTopLinesModule, \
-     AngleCalculationModule, MeanBackgroundSubtractionModule, \
-     StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
-     StackAndSubsetModule, RemoveLastFrameModule
+from PynPoint.io_modules.FitsReading import FitsReadingModule
+from PynPoint.io_modules.FitsWriting import FitsWritingModule
+from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.processing_modules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
+from PynPoint.processing_modules.ImageResizing import RemoveLinesModule
+from PynPoint.processing_modules.PSFsubPreparation import AngleCalculationModule
+from PynPoint.processing_modules.BackgroundSubtraction import MeanBackgroundSubtractionModule
+from PynPoint.processing_modules.StarAlignment import StarExtractionModule, StarAlignmentModule
+from PynPoint.processing_modules.PSFSubtractionPCA import PSFSubtractionModule
+from PynPoint.processing_modules.FrameSelection import RemoveLastFrameModule
+from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
 
 
 class TestDocumentation(object):
@@ -47,10 +52,10 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(remove_last)
 
-        cutting = CutTopLinesModule(name_in="NACO_cutting",
+        cutting = RemoveLinesModule(lines=(0, 0, 0, 2),
+                                    name_in="cut_lines",
                                     image_in_tag="im_arr_last",
-                                    image_out_tag="im_arr_cut",
-                                    num_lines=2)
+                                    image_out_tag="im_arr_cut")
 
         self.pipeline.add_module(cutting)
 

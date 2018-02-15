@@ -166,7 +166,10 @@ class Pypeline(object):
                 config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
 
             if config.has_option('settings', 'MEMORY'):
-                config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
+                if config.get('settings', 'MEMORY') == "None":
+                    config_dict['MEMORY'] = int(-1)
+                else:
+                    config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
 
             if config.has_option('settings', 'CPU_COUNT'):
                 config_dict['CPU_COUNT'] = int(config.get('settings', 'CPU_COUNT'))
