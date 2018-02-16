@@ -221,13 +221,22 @@ class FrameSelectionModule(ProcessingModule):
 
         if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        else:
+            parang = None
 
         self.m_fwhm /= pixscale
         self.m_aperture /= pixscale
         gaussian_sigma = self.m_fwhm/math.sqrt(8.*math.log(2.))
 
         nframes = self.m_image_in_port.get_shape()[0]
-        nstacks = int(float(nframes)/float(memory))
+        if memory == -1 or memory >= nframes:
+            frames = [0, nframes]
+        else:
+            frames = [0]
+            for i in range(int(float(nframes)/float(memory))):
+                frames.append((i+1)*memory)
+            if frames[-1] != nframes:
+                frames.append(nframes)
 
         position = np.zeros((nframes, 2), dtype=np.int64)
         phot = np.zeros(nframes)
@@ -284,11 +293,11 @@ class FrameSelectionModule(ProcessingModule):
 
         index_rm[np.isnan(phot)] = True
 
-        for i in range(nstacks):
-            progress(nframes+i*nframes/nstacks, nframes+nframes, "Running FrameSelectionModule...")
+        for i, item in enumerate(frames[:-1]):
+            progress(nframes+item, nframes+nframes, "Running FrameSelectionModule...")
 
-            index = index_rm[i*memory:i*memory+memory, ]
-            image = self.m_image_in_port[i*memory:i*memory+memory, ]
+            index = index_rm[frames[i]:frames[i+1], ]
+            image = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             if np.size(image[np.logical_not(index)]) > 0:
                 self.m_selected_out_port.append(image[np.logical_not(index)])
@@ -313,7 +322,7 @@ class FrameSelectionModule(ProcessingModule):
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+        if parang is not None:
             self.m_selected_out_port.add_attribute("NEW_PARA",
                                                    parang[np.logical_not(index_rm)],
                                                    static=False)
@@ -334,7 +343,7 @@ class FrameSelectionModule(ProcessingModule):
 
             self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-            if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+            if parang is not None:
                 self.m_removed_out_port.add_attribute("NEW_PARA",
                                                       parang[index_rm],
                                                       static=False)
