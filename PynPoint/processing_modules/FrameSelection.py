@@ -68,10 +68,6 @@ class RemoveFramesModule(ProcessingModule):
             raise ValueError("Some values in frame_indices are larger than the total number of "
                              "available frames, %s." % str(self.m_image_in_port.get_shape()[0]))
 
-        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
-            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
-                             "provided for all frames before any frames can be removed.")
-
         nframes = self.m_image_in_port.get_shape()[0]
         nstacks = int(float(nframes)/float(memory))
 
@@ -113,14 +109,13 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
-
-        self.m_image_out_port.add_attribute("NEW_PARA",
-                                            np.delete(parang, self.m_frame_indices),
-                                            static=False)
+        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("NEW_PARA")
+            self.m_image_out_port.add_attribute("NEW_PARA",
+                                                np.delete(parang, self.m_frame_indices),
+                                                static=False)
 
         if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
-
             position = self.m_image_in_port.get_attribute("STAR_POSITION")
             self.m_image_out_port.add_attribute("STAR_POSITION",
                                                 np.delete(position, self.m_frame_indices, axis=0),
@@ -139,10 +134,8 @@ class RemoveFramesModule(ProcessingModule):
             total += frames
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
-
         self.m_image_out_port.add_history_information("Frames removed",
                                                       str(np.size(self.m_frame_indices)))
-
         self.m_image_in_port.close_port()
 
 
@@ -217,10 +210,6 @@ class FrameSelectionModule(ProcessingModule):
                 self.m_image_in_port.tag == self.m_removed_out_port.tag:
             raise ValueError("Input and output ports should have a different tag.")
 
-        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
-            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
-                             "provided for all frames before a frame selection can be applied.")
-
         self.m_selected_out_port.del_all_data()
         self.m_selected_out_port.del_all_attributes()
 
@@ -229,7 +218,9 @@ class FrameSelectionModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+
+        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("NEW_PARA")
 
         self.m_fwhm /= pixscale
         self.m_aperture /= pixscale
@@ -322,13 +313,15 @@ class FrameSelectionModule(ProcessingModule):
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_selected_out_port.add_attribute("NEW_PARA",
-                                               parang[np.logical_not(index_rm)],
-                                               static=False)
+        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+            self.m_selected_out_port.add_attribute("NEW_PARA",
+                                                   parang[np.logical_not(index_rm)],
+                                                   static=False)
 
-        self.m_selected_out_port.add_attribute("STAR_POSITION",
-                                               position[np.logical_not(index_rm)],
-                                               static=False)
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            self.m_selected_out_port.add_attribute("STAR_POSITION",
+                                                   position[np.logical_not(index_rm)],
+                                                   static=False)
 
         self.m_selected_out_port.add_attribute("NFRAMES",
                                                nframes_sel,
@@ -341,13 +334,15 @@ class FrameSelectionModule(ProcessingModule):
 
             self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-            self.m_removed_out_port.add_attribute("NEW_PARA",
-                                                  parang[index_rm],
-                                                  static=False)
+            if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+                self.m_removed_out_port.add_attribute("NEW_PARA",
+                                                      parang[index_rm],
+                                                      static=False)
 
-            self.m_removed_out_port.add_attribute("STAR_POSITION",
-                                                  position[index_rm],
-                                                  static=False)
+            if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+                self.m_removed_out_port.add_attribute("STAR_POSITION",
+                                                      position[index_rm],
+                                                      static=False)
 
             self.m_removed_out_port.add_attribute("NFRAMES",
                                                   nframes_del,
@@ -430,8 +425,5 @@ class RemoveLastFrameModule(ProcessingModule):
         size_out = size_in - 1
 
         self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
-
-        self.m_image_out_port.add_history_information("Frames removed",
-                                                      "NDIT+1")
-
+        self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
         self.m_image_out_port.close_port()
