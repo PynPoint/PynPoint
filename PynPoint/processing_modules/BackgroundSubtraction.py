@@ -349,12 +349,11 @@ class PCABackgroundPreparationModule(ProcessingModule):
         :return: None
         """
 
-        if "NEW_PARA" not in self.m_image_in_port.get_all_non_static_attributes():
-            raise ValueError("NEW_PARA not found in header. Parallactic angles should be "
-                             "provided for all frames before PCA background subtraction.")
-
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        else:
+            parang = None
 
         cube_mean = np.zeros((nframes.shape[0], self.m_image_in_port.get_shape()[2], \
                              self.m_image_in_port.get_shape()[1]))
@@ -376,11 +375,12 @@ class PCABackgroundPreparationModule(ProcessingModule):
         star_init = False
         background_init = False
 
-        star_parang = np.empty(0)
         star_nframes = np.empty(0)
-
-        background_parang = np.empty(0)
         background_nframes = np.empty(0)
+
+        if parang is not None:
+            star_parang = np.empty(0)
+            background_parang = np.empty(0)
 
         num_frames = self.m_image_in_port.get_shape()[0]
 
@@ -399,17 +399,16 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
                 if background_init:
                     self.m_background_out_port.append(im_tmp-background)
-
-                    background_parang = np.append(background_parang, parang[count:count+item])
                     background_nframes = np.append(background_nframes, nframes[i])
+                    if parang is not None:
+                        background_parang = np.append(background_parang, parang[count:count+item])
 
                 else:
                     self.m_background_out_port.set_all(im_tmp-background)
-
-                    background_parang = parang[count:count+item]
                     background_nframes = np.zeros(1, dtype=np.int64)
                     background_nframes[0] = nframes[i]
-
+                    if parang is not None:
+                        background_parang = parang[count:count+item]
                     background_init = True
 
             # Star frames
@@ -438,17 +437,16 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
                 if star_init:
                     self.m_star_out_port.append(im_tmp-background)
-
-                    star_parang = np.append(star_parang, parang[count:count+item])
                     star_nframes = np.append(star_nframes, nframes[i])
+                    if parang is not None:
+                        star_parang = np.append(star_parang, parang[count:count+item])
 
                 else:
                     self.m_star_out_port.set_all(im_tmp-background)
-
-                    star_parang = parang[count:count+item]
                     star_nframes = np.zeros(1, dtype=np.int64)
                     star_nframes[0] = nframes[i]
-
+                    if parang is not None:
+                        star_parang = parang[count:count+item]
                     star_init = True
 
             count += item
@@ -456,29 +454,25 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        # Star - Update attribute
-
         self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_star_out_port.add_attribute("NEW_PARA", star_parang, static=False)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
 
-        self.m_star_out_port.add_history_information("Star frames separated",
-                                                     str(len(star_parang))+"/"+ \
-                                                     str(len(parang)))
+        if parang is not None:
+            self.m_star_out_port.add_attribute("NEW_PARA", star_parang, static=False)
 
-        # Background - Update attributes
+        self.m_star_out_port.add_history_information("Star frames separated",
+                                                     str(sum(star_nframes))+"/"+ \
+                                                     str(sum(nframes)))
 
         self.m_background_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_background_out_port.add_attribute("NEW_PARA", background_parang, static=False)
         self.m_background_out_port.add_attribute("NFRAMES", background_nframes, static=False)
 
-        self.m_background_out_port.add_history_information("Background frames separated",
-                                                           str(len(background_parang))+"/"+ \
-                                                           str(len(parang)))
+        if parang is not None:
+            self.m_background_out_port.add_attribute("NEW_PARA", background_parang, static=False)
 
-        # Close database
+        self.m_background_out_port.add_history_information("Background frames separated",
+                                                           str(len(background_nframes))+"/"+ \
+                                                           str(len(nframes)))
 
         self.m_star_out_port.close_port()
 
@@ -816,14 +810,14 @@ class PCABackgroundDitheringModule(ProcessingModule):
         for i, position in enumerate(self.m_center):
             print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
 
-            cut = CropImagesModule(new_shape=self.m_shape,
-                                   center_of_cut=position,
-                                   name_in="cut"+str(i),
-                                   image_in_tag=self.m_image_in_tag,
-                                   image_out_tag="dither"+str(i+1))
+            crop = CropImagesModule(shape=self.m_shape,
+                                    center=position,
+                                    name_in="crop"+str(i),
+                                    image_in_tag=self.m_image_in_tag,
+                                    image_out_tag="dither"+str(i+1))
 
-            cut.connect_database(self._m_data_base)
-            cut.run()
+            crop.connect_database(self._m_data_base)
+            crop.run()
 
             prepare = PCABackgroundPreparationModule(dither=(n_dither,
                                                              self.m_cubes_per_position,
