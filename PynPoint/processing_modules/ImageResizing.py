@@ -2,34 +2,36 @@
 Modules with simple pre-processing tools.
 """
 
-import math
 import sys
 import warnings
 
 import numpy as np
 
-from scipy.ndimage import shift
 from skimage.transform import rescale
 
 from PynPoint.util.Progress import progress
-from PynPoint.core import ProcessingModule
+from PynPoint.core.Processing import ProcessingModule
 
 
-class CutAroundCenterModule(ProcessingModule):
+class CropImagesModule(ProcessingModule):
     """
-    Module for cropping around the center of an image.
+    Module for cropping of images around a given position.
     """
 
     def __init__(self,
-                 new_shape,
-                 name_in="cut_around_center",
+                 shape,
+                 center=None,
+                 name_in="crop_image",
                  image_in_tag="im_arr",
-                 image_out_tag="cut_im_arr"):
+                 image_out_tag="im_arr_cropped"):
         """
-        Constructor of CutAroundCenterModule.
+        Constructor of CropImagesModule.
 
-        :param new_shape: Tuple (delta_x, delta_y) with the new image size.
-        :type new_shape: tuple, int
+        :param shape: Tuple (delta_x, delta_y) with the new image size.
+        :type shape: tuple, int
+        :param center: Tuple (x0, y0) with the new image center. Python indexing starts at 0. The
+                       center of the input images will be used when *center* is set to *None*.
+        :type cent: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -41,90 +43,13 @@ class CutAroundCenterModule(ProcessingModule):
         :return: None
         """
 
-        super(CutAroundCenterModule, self).__init__(name_in=name_in)
+        super(CropImagesModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shape = new_shape
-
-    def run(self):
-        """
-        Run method of the module. Reduces the image size by cropping around the center of the
-        original image.
-
-        :return: None
-        """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
-        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
-
-        def image_cutting(image_in,
-                          shape_in):
-
-            shape_of_input = image_in.shape
-
-            if shape_in[0] > shape_of_input[0] or shape_in[1] > shape_of_input[1]:
-                raise ValueError("Input frame resolution smaller than target image resolution.")
-
-            x_off = (shape_of_input[0] - shape_in[0]) / 2
-            y_off = (shape_of_input[1] - shape_in[1]) / 2
-
-            return image_in[y_off: shape_in[1] + y_off, x_off: shape_in[0] + x_off]
-
-        self.apply_function_to_images(image_cutting,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      "Running CutAroundCenterModule...",
-                                      func_args=(self.m_shape,),
-                                      num_images_in_memory=num_images_in_memory)
-
-        self.m_image_out_port.add_history_information("Cropped image size to",
-                                                      str(self.m_shape))
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_image_out_port.close_port()
-
-
-class CutAroundPositionModule(ProcessingModule):
-    """
-    Module for cropping around a given position of an image.
-    """
-
-    def __init__(self,
-                 new_shape,
-                 center_of_cut,
-                 name_in="cut_around_position",
-                 image_in_tag="im_arr",
-                 image_out_tag="cut_im_arr"):
-        """
-        Constructor of CutAroundPositionModule.
-
-        :param new_shape: Tuple (delta_x, delta_y) with the new image size.
-        :type new_shape: tuple, int
-        :param center_of_cut: Tuple (x0, y0) with the new image center. Python indexing starts at 0.
-        :type center_of_cut: tuple, int
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
-
-        :return: None
-        """
-
-        super(CutAroundPositionModule, self).__init__(name_in=name_in)
-
-        self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
-        self.m_shape = new_shape
-        self.m_center_of_cut = center_of_cut
+        self.m_shape = shape
+        self.m_center = center
 
     def run(self):
         """
@@ -136,55 +61,64 @@ class CutAroundPositionModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
-        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_cutting(image_in,
                           shape,
                           center):
 
-            x_in = int(center[0] - shape[0]/2)
-            y_in = int(center[1] - shape[1]/2)
+            if center is None:
+                x_off = (image_in.shape[0] - shape[0]) / 2
+                y_off = (image_in.shape[1] - shape[1]) / 2
 
-            x_out = int(center[0] + shape[0]/2)
-            y_out = int(center[1] + shape[1]/2)
+                if shape[0] > image_in.shape[0] or shape[1] > image_in.shape[1]:
+                    raise ValueError("Input frame resolution smaller than target image resolution.")
 
-            if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
-                raise ValueError("Target image resolution does not fit inside the input frame "
-                                 "resolution.")
+                image_out = image_in[y_off: y_off+shape[1], x_off:x_off+shape[0]]
 
-            return image_in[y_in:y_out, x_in:x_out]
+            else:
+                x_in = int(center[0] - shape[0]/2)
+                y_in = int(center[1] - shape[1]/2)
+
+                x_out = int(center[0] + shape[0]/2)
+                y_out = int(center[1] + shape[1]/2)
+
+                if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
+                    raise ValueError("Target image resolution does not fit inside the input frame "
+                                     "resolution.")
+
+                image_out = image_in[y_in:y_out, x_in:x_out]
+
+            return image_out
 
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CutAroundPositionModule...",
-                                      func_args=(self.m_shape, self.m_center_of_cut),
-                                      num_images_in_memory=num_images_in_memory)
+                                      "Running CropImageModule...",
+                                      func_args=(self.m_shape, self.m_center),
+                                      num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Cropped image size to",
-                                                      str(self.m_shape))
-
+        self.m_image_out_port.add_history_information("Image cropped", str(self.m_shape))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_image_out_port.close_port()
 
 
-class ScaleFramesModule(ProcessingModule):
+class ScaleImagesModule(ProcessingModule):
     """
     Module for rescaling of an image.
     """
 
     def __init__(self,
-                 scaling_factor,
+                 scaling,
                  name_in="scaling",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_scaled"):
         """
-        Constructor of ScaleFramesModule.
+        Constructor of ScaleImagesModule.
 
-        :param scaling_factor: Scaling factor for upsampling (*scaling_factor* > 1) and downsampling
-                               (0 < *scaling_factor* < 1).
-        :type scaling_factor: float
+        :param scaling: Scaling factor for upsampling (*scaling_factor* > 1) and downsampling
+                        (0 < *scaling_factor* < 1).
+        :type scaling: float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -196,12 +130,12 @@ class ScaleFramesModule(ProcessingModule):
         :return: None
         """
 
-        super(ScaleFramesModule, self).__init__(name_in=name_in)
+        super(ScaleImagesModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_scaling = scaling_factor
+        self.m_scaling = scaling
 
     def run(self):
         """
@@ -211,7 +145,7 @@ class ScaleFramesModule(ProcessingModule):
         :return: None
         """
 
-        num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_scaling(image_in,
                           scaling):
@@ -228,33 +162,104 @@ class ScaleFramesModule(ProcessingModule):
         self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ScaleFramesModule...",
+                                      "Running ScaleImagesModule...",
                                       func_args=(self.m_scaling,),
-                                      num_images_in_memory=num_images_in_memory)
+                                      num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Scaled by a factor of",
-                                                      str(self.m_scaling))
-
+        self.m_image_out_port.add_history_information("Images scaled", str(self.m_scaling))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_image_out_port.close_port()
 
 
-class ShiftForCenteringModule(ProcessingModule):
+class AddLinesModule(ProcessingModule):
     """
-    Module for shifting of an image.
+    Module to add lines of pixels to increase the size of an image.
     """
 
     def __init__(self,
-                 shift,
-                 name_in="shift",
+                 lines,
+                 name_in="add_lines",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_shifted"):
+                 image_out_tag="im_arr_add"):
         """
-        Constructor of ShiftForCenteringModule.
+        Constructor of AddLinesModule.
 
-        :param shift: Tuple (delta_y, delta_x) with the shift in both directions.
-        :type shift: tuple, float
+        :param lines: Tuple with the number of additional lines in left, right, bottom, and top
+                      direction.
+        :type lines: tuple, int
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag* unless *MEMORY* is set to *None*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(AddLinesModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_lines = lines
+
+    def run(self):
+        """
+        Run method of the module. Adds lines of zero-value pixels to increase the size of an image.
+
+        :return: None
+        """
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        shape_in = self.m_image_in_port.get_shape()
+
+        if np.size(shape_in) != 3:
+            raise ValueError("Expecting a 3D array with images.")
+
+        if any(np.asarray(self.m_lines) < 0.):
+            raise ValueError("The lines argument should contain values equal to or larger than "
+                             "zero.")
+
+        shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
+                     shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
+
+        if shape_out[0] != shape_out[1]:
+            warnings.warn("The dimensions of the output images %s are not equal. PynPoint only "
+                          "supports square images." % str(shape_out))
+
+        def add_lines(image_in):
+            image_out = np.zeros(shape_out)
+            image_out[int(self.m_lines[2]):-int(self.m_lines[3]),
+                      int(self.m_lines[0]):-int(self.m_lines[1])] = image_in
+
+            return image_out
+
+        self.apply_function_to_images(add_lines,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      "Running AddLinesModule...",
+                                      num_images_in_memory=memory)
+
+        self.m_image_out_port.add_history_information("Lines added", str(self.m_lines))
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_port()
+
+
+class RemoveLinesModule(ProcessingModule):
+    """
+    Module to decrease the dimensions of an image by removing lines of pixels.
+    """
+
+    def __init__(self,
+                 lines,
+                 name_in="cut_top",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_cut"):
+        """
+        Constructor of RemoveLinesModule.
+
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -262,40 +267,44 @@ class ShiftForCenteringModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
+        :param num_lines: Number of top rows to delete from each frame.
+        :type num_lines: int
 
         :return: None
         """
 
-        super(ShiftForCenteringModule, self).__init__(name_in=name_in)
+        super(RemoveLinesModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shift = shift
+        self.m_lines = lines
 
     def run(self):
         """
-        Run method of the module. Shifts an image with a fifth order spline interpolation.
+        Run method of the module. Removes the top *num_lines* lines from each frame.
 
         :return: None
         """
 
         memory = self._m_config_port.get_attribute("MEMORY")
 
-        def image_shift(image_in):
-            return shift(image_in, self.m_shift, order=5)
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output tags should be different.")
 
-        self.apply_function_to_images(image_shift,
+        def remove_lines(image_in):
+            shape_in = image_in.shape
+            return image_in[int(self.m_lines[2]):shape_in[0]-int(self.m_lines[3]),
+                            int(self.m_lines[0]):shape_in[1]-int(self.m_lines[1])]
+
+        self.apply_function_to_images(remove_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ShiftForCenteringModule...",
+                                      "Running RemoveLinesModule...",
                                       num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Shifted by",
-                                                      str(self.m_shift))
-
+        self.m_image_out_port.add_history_information("Lines removed", str(self.m_lines))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_image_out_port.close_port()
 
 
@@ -423,68 +432,4 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))
 
-        self.m_image_out_port.close_port()
-
-
-class MeanCubeModule(ProcessingModule):
-    """
-    Module for calculating the mean of each individual cube associated with a database tag.
-    """
-
-    def __init__(self,
-                 name_in="mean_cube",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_mean"):
-        """
-        Constructor of MeanCubeModule.
-
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the mean collapsed images that are
-                              written as output. Should be different from *image_in_tag*.
-        :type image_out_tag: str
-
-        :return: None
-        """
-
-        super(MeanCubeModule, self).__init__(name_in=name_in)
-
-        self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
-    def run(self):
-        """
-        Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
-        calculates the mean of each cube, and saves the data and attributes.
-
-        :return: None
-        """
-
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError("Input and output port should have a different tag.")
-
-        nframes = self.m_image_in_port.get_attribute("NFRAMES")
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
-        current = 0
-
-        for i, frames in enumerate(nframes):
-            progress(i, len(nframes), "Running MeanCubeModule...")
-
-            mean_frame = np.mean(self.m_image_in_port[current:current+frames, ],
-                                 axis=0)
-
-            self.m_image_out_port.append(mean_frame,
-                                         data_dim=3)
-
-            current += frames
-
-        sys.stdout.write("Running MeanCubeModule... [DONE]\n")
-        sys.stdout.flush()
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
