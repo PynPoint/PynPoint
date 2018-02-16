@@ -1,12 +1,14 @@
-from statsmodels.robust import mad
-import numpy as np
-import pywt
-from PynPoint.util import WaveletAnalysisCapsule
 from copy import deepcopy
 
-from PynPoint.core.Processing import ProcessingModule
+import pywt
 
 import matplotlib.pyplot as plt
+import numpy as np
+
+from statsmodels.robust import mad
+
+from PynPoint.util import WaveletAnalysisCapsule
+from PynPoint.core.Processing import ProcessingModule
 
 
 class WaveletConfiguration(object):

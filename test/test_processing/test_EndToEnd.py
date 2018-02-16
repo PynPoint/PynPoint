@@ -10,7 +10,7 @@ from PynPoint import Pypeline
 from PynPoint.core.DataIO import DataStorage, InputPort
 from PynPoint.io_modules import FitsReadingModule
 from PynPoint.processing_modules import RemoveLastFrameModule, PSFSubtractionModule, \
-                                        AngleCalculationModule, CutTopLinesModule, \
+                                        AngleCalculationModule, RemoveLinesModule, \
                                         MeanBackgroundSubtractionModule, RemoveFramesModule, \
                                         BadPixelCleaningSigmaFilterModule, StarExtractionModule, \
                                         StarAlignmentModule, StackAndSubsetModule
@@ -76,10 +76,10 @@ class TestEndToEnd(object):
         storage.close_connection()
 
     def test_cut_lines(self):
-        cut_lines = CutTopLinesModule(name_in="cut_lines",
+        cut_lines = RemoveLinesModule(lines=(0, 0, 0, 2),
+                                      name_in="cut_lines",
                                       image_in_tag="im_last",
-                                      image_out_tag="im_cut",
-                                      num_lines=2)
+                                      image_out_tag="im_cut")
 
         self.pipeline.add_module(cut_lines)
         self.pipeline.run_module("cut_lines")
