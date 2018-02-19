@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import warnings
 
-from PynPoint.core import Pypeline
-from PynPoint.io_modules import FitsReadingModule, FitsWritingModule
-from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule
+from PynPoint.Core import Pypeline
+from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule
+from PynPoint.ProcessingModules import BadPixelCleaningSigmaFilterModule
 
 warnings.simplefilter("always")
 

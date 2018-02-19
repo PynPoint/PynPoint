@@ -3,14 +3,14 @@
 import os
 import warnings
 
-from PynPoint.io_modules.Hdf5Reading import Hdf5ReadingModule
-from PynPoint.io_modules.Hdf5Writing import Hdf5WritingModule
-from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
-from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
+from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
+from PynPoint.IOmodules.Hdf5Writing import Hdf5WritingModule
+from PynPoint.ProcessingModules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
-from PynPoint.core.Pypeline import Pypeline
-from PynPoint.io_modules.FitsReading import FitsReadingModule
-from PynPoint.processing_modules.PSFSubtractionPCA import MakePSFModelModule
+from PynPoint.Core.Pypeline import Pypeline
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import MakePSFModelModule
 
 warnings.simplefilter("always")
 
