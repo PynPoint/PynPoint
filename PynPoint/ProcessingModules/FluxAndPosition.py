@@ -17,7 +17,7 @@ from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 
 
@@ -434,16 +434,16 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 cent_remove = bool(self.m_mask > 0.)
 
-                prep = PSFdataPreparation(name_in="prep",
-                                          image_in_tag="simplex_fake",
-                                          image_out_tag="simplex_prep",
-                                          image_mask_out_tag=None,
-                                          mask_out_tag=None,
-                                          norm=True,
-                                          cent_remove=cent_remove,
-                                          cent_size=self.m_mask,
-                                          edge_size=1.,
-                                          verbose=False)
+                prep = PSFpreparationModule(name_in="prep",
+                                            image_in_tag="simplex_fake",
+                                            image_out_tag="simplex_prep",
+                                            image_mask_out_tag=None,
+                                            mask_out_tag=None,
+                                            norm=True,
+                                            cent_remove=cent_remove,
+                                            cent_size=self.m_mask,
+                                            edge_size=1.,
+                                            verbose=False)
 
                 prep.connect_database(self._m_data_base)
                 prep.run()

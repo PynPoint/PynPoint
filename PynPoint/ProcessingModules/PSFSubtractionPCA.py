@@ -12,7 +12,7 @@ from scipy import linalg, ndimage, sparse
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.MultiprocessingPCA import PcaMultiprocessingCapsule
-from PynPoint.ProcessingModules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 
 
 class PSFSubtractionModule(ProcessingModule):
@@ -37,7 +37,7 @@ class PSFSubtractionModule(ProcessingModule):
                  extra_rot=0.,
                  **kwargs):
         """
-        Constructor of PSFdataPreparation.
+        Constructor of PSFpreparationModule.
 
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
@@ -152,29 +152,29 @@ class PSFSubtractionModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_svd = svd
 
-        self._m_preparation_images = PSFdataPreparation(name_in="prep_im",
-                                                        image_in_tag=images_in_tag,
-                                                        image_out_tag=prep_tag,
-                                                        image_mask_out_tag="not_needed",
-                                                        mask_out_tag=cent_mask_tag,
-                                                        norm=True,
-                                                        cent_remove=cent_remove,
-                                                        cent_size=cent_size,
-                                                        edge_size=edge_size,
-                                                        verbose=False)
+        self._m_preparation_images = PSFpreparationModule(name_in="prep_im",
+                                                          image_in_tag=images_in_tag,
+                                                          image_out_tag=prep_tag,
+                                                          image_mask_out_tag="not_needed",
+                                                          mask_out_tag=cent_mask_tag,
+                                                          norm=True,
+                                                          cent_remove=cent_remove,
+                                                          cent_size=cent_size,
+                                                          edge_size=edge_size,
+                                                          verbose=False)
 
         self._m_preparation_images.m_image_mask_out_port.deactivate()
 
-        self._m_preparation_reference = PSFdataPreparation(name_in="prep_ref",
-                                                           image_in_tag=reference_in_tag,
-                                                           image_out_tag=ref_prep_tag,
-                                                           image_mask_out_tag="not_needed",
-                                                           mask_out_tag=cent_mask_tag,
-                                                           norm=True,
-                                                           cent_remove=cent_remove,
-                                                           cent_size=cent_size,
-                                                           edge_size=edge_size,
-                                                           verbose=False)
+        self._m_preparation_reference = PSFpreparationModule(name_in="prep_ref",
+                                                             image_in_tag=reference_in_tag,
+                                                             image_out_tag=ref_prep_tag,
+                                                             image_mask_out_tag="not_needed",
+                                                             mask_out_tag=cent_mask_tag,
+                                                             norm=True,
+                                                             cent_remove=cent_remove,
+                                                             cent_size=cent_size,
+                                                             edge_size=edge_size,
+                                                             verbose=False)
 
         self._m_preparation_reference.m_image_mask_out_port.deactivate()
 
