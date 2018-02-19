@@ -12,8 +12,8 @@ import multiprocessing
 import h5py
 import numpy as np
 
-from PynPoint.core.DataIO import DataStorage
-from PynPoint.core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
+from PynPoint.Core.DataIO import DataStorage
+from PynPoint.Core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
 
 class Pypeline(object):

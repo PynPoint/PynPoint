@@ -7,18 +7,18 @@ import os
 import numpy as np
 
 from PynPoint import Pypeline
-from PynPoint.core.DataIO import DataStorage
-from PynPoint.io_modules.FitsReading import FitsReadingModule
-from PynPoint.io_modules.FitsWriting import FitsWritingModule
-from PynPoint.processing_modules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
-from PynPoint.processing_modules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
-from PynPoint.processing_modules.ImageResizing import RemoveLinesModule
-from PynPoint.processing_modules.PSFsubPreparation import AngleCalculationModule
-from PynPoint.processing_modules.BackgroundSubtraction import MeanBackgroundSubtractionModule
-from PynPoint.processing_modules.StarAlignment import StarExtractionModule, StarAlignmentModule
-from PynPoint.processing_modules.PSFSubtractionPCA import PSFSubtractionModule
-from PynPoint.processing_modules.FrameSelection import RemoveLastFrameModule
-from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
+from PynPoint.Core.DataIO import DataStorage
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
+from PynPoint.IOmodules.FitsWriting import FitsWritingModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.ProcessingModules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
+from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
+from PynPoint.ProcessingModules.PSFsubPreparation import AngleCalculationModule
+from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
+from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
+from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
+from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
 
 class TestDocumentation(object):
