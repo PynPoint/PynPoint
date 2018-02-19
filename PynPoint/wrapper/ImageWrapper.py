@@ -1,6 +1,5 @@
-# own modules
-from PynPoint.wrapper.WrapperUtils import BasePynpointWrapper
-from PynPoint.core.DataIO import InputPort
+from PynPoint.Wrapper.WrapperUtils import BasePynpointWrapper
+from PynPoint.Core.DataIO import InputPort
 
 
 class ImageWrapper(BasePynpointWrapper):
