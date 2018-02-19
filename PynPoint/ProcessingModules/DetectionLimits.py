@@ -13,7 +13,7 @@ from scipy.interpolate import interp1d
 from scipy.stats import t
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule
 
@@ -326,16 +326,16 @@ class ContrastModule(ProcessingModule):
 
                         cent_remove = bool(self.m_mask > 0.)
 
-                        prep = PSFdataPreparation(name_in="prep",
-                                                  image_in_tag="contrast_fake",
-                                                  image_out_tag="contrast_prep",
-                                                  image_mask_out_tag=None,
-                                                  mask_out_tag=None,
-                                                  norm=True,
-                                                  cent_remove=cent_remove,
-                                                  cent_size=self.m_mask,
-                                                  edge_size=1.,
-                                                  verbose=False)
+                        prep = PSFpreparationModule(name_in="prep",
+                                                    image_in_tag="contrast_fake",
+                                                    image_out_tag="contrast_prep",
+                                                    image_mask_out_tag=None,
+                                                    mask_out_tag=None,
+                                                    norm=True,
+                                                    cent_remove=cent_remove,
+                                                    cent_size=self.m_mask,
+                                                    edge_size=1.,
+                                                    verbose=False)
 
                         prep.connect_database(self._m_data_base)
                         prep.run()
