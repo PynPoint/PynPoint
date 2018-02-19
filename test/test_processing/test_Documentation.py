@@ -13,7 +13,7 @@ from PynPoint.IOmodules.FitsWriting import FitsWritingModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
 from PynPoint.ProcessingModules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
-from PynPoint.ProcessingModules.PSFsubPreparation import AngleCalculationModule
+from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule

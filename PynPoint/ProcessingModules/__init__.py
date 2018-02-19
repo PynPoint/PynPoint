@@ -10,7 +10,7 @@ from StarAlignment import StarAlignmentModule, StarExtractionModule, LocateStarM
                           StarCenteringModule, ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule, \
                           CombineTagsModule
-from PSFsubPreparation import PSFdataPreparation, AngleCalculationModule
+from PSFpreparation import PSFpreparationModule, AngleCalculationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule

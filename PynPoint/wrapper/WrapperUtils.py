@@ -5,7 +5,7 @@ import warnings
 
 from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
 from PynPoint.IOmodules.Hdf5Writing import Hdf5WritingModule
-from PynPoint.ProcessingModules.PSFsubPreparation import PSFdataPreparation
+from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -125,14 +125,14 @@ class BasePynpointWrapper(object):
             self._m_stacking = kwargs["stackave"]
 
     def _prepare_data(self):
-        preparation = PSFdataPreparation(name_in="prep",
-                                         image_in_tag=self._m_image_data_tag,
-                                         image_mask_out_tag=self._m_image_data_masked_tag,
-                                         mask_out_tag=self._m_mask_tag,
-                                         image_out_tag=self._m_image_data_tag,
-                                         resize=self._m_resize,
-                                         cent_remove=self._m_center_remove,
-                                         cent_size=self._m_cent_size)
+        preparation = PSFpreparationModule(name_in="prep",
+                                           image_in_tag=self._m_image_data_tag,
+                                           image_mask_out_tag=self._m_image_data_masked_tag,
+                                           mask_out_tag=self._m_mask_tag,
+                                           image_out_tag=self._m_image_data_tag,
+                                           resize=self._m_resize,
+                                           cent_remove=self._m_center_remove,
+                                           cent_size=self._m_cent_size)
 
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,

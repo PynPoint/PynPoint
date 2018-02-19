@@ -14,7 +14,7 @@ from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 
 
-class PSFdataPreparation(ProcessingModule):
+class PSFpreparationModule(ProcessingModule):
     """
     Module to prepare the data for PSF subtraction with PCA. The preparation steps include
     resizing, masking, and image normalization.
@@ -33,7 +33,7 @@ class PSFdataPreparation(ProcessingModule):
                  edge_size=1.0,
                  **kwargs):
         """
-        Constructor of PSFdataPreparation.
+        Constructor of PSFpreparationModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -72,7 +72,7 @@ class PSFdataPreparation(ProcessingModule):
         else:
             self.m_verbose = True
 
-        super(PSFdataPreparation, self).__init__(name_in)
+        super(PSFpreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if image_mask_out_tag is not None:
@@ -200,7 +200,7 @@ class PSFdataPreparation(ProcessingModule):
         """
 
         if self.m_verbose:
-            sys.stdout.write("Running PSFdataPreparation...")
+            sys.stdout.write("Running PSFpreparationModule...")
             sys.stdout.flush()
 
         im_data = self.m_image_in_port.get_all()
