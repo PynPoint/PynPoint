@@ -1,10 +1,11 @@
-"""
-Test cases for examples in the documentation.
-"""
-
 import os
+import math
+import warnings
 
 import numpy as np
+
+from astropy.io import fits
+from scipy.ndimage import shift
 
 from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
@@ -20,31 +21,185 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
+warnings.simplefilter("always")
+
+def setup_module():
+    test_dir = os.path.dirname(__file__) + "/"
+
+    os.makedirs(test_dir + "adi")
+    os.makedirs(test_dir + "dark")
+    os.makedirs(test_dir + "flat")
+
+    # SCIENCE
+
+    fwhm =  [ 3, 3, 3, 3 ]
+    exp_no =  [ 1, 2, 3, 4 ]
+    npix = [ 100, 100, 100, 100 ]
+    ndit = [ 22, 17, 21, 18 ]
+    naxis3 = [ 23, 18, 22, 19 ]
+    x0 = [ 25, 75, 75, 25 ]
+    y0 = [ 75, 75, 25, 25 ]
+    parang_start = [ 0., 25., 50., 75. ]
+    parang_end = [ 25., 50., 75., 100. ]
+    sep = 7
+    contrast = 1e-2
+
+    parang = []
+    for i in range(len(parang_start)):
+        for j in range(ndit[i]):
+            parang.append(parang_start[i]+float(j)*(parang_end[i]-parang_start[i])/float(ndit[i]))
+
+    np.random.seed(1)
+
+    p_count = 0
+    for j in range(len(fwhm)):
+
+        sigma = fwhm[j] / ( 2. * math.sqrt(2.*math.log(2.)) )
+
+        x = np.arange(0., npix[j], 1.)
+        y = np.arange(0., npix[j]+2, 1.)
+        xx, yy = np.meshgrid(x,y)
+    
+        image = np.zeros((naxis3[j], npix[j]+2, npix[j]))
+
+        for i in range(ndit[j]):
+            star = (1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            noise = np.random.normal(loc=0, scale=2e-4, size=(102, 100))
+
+            planet = contrast*(1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            x_shift = sep*math.cos(parang[p_count]*math.pi/180.)
+            y_shift = sep*math.sin(parang[p_count]*math.pi/180.)
+            planet = shift(planet, (x_shift, y_shift), order=5)
+
+            image[i, 0:npix[j]+2, 0:npix[j]] = star+noise+planet
+        
+            p_count += 1
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
+        header['HIERARCH ESO DET NDIT'] = ndit[j]
+        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
+        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
+        hdu.data = image
+        hdu.writeto(test_dir+'adi/adi'+str(j+1).zfill(2)+'.fits')
+
+    # DARK
+
+    exp_no =  [ 1, 2, 3, 4 ]
+    ndit = [ 3, 3, 5, 5 ]
+    naxis3 = ndit
+    parang_start = [ 0., 0., 0., 0. ]
+    parang_end = [ 0., 0., 0., 0. ]
+
+    np.random.seed(2)
+
+    for j, n in enumerate(ndit):
+        image = np.random.normal(loc=0, scale=2e-4, size=(n, 100, 100))
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
+        header['HIERARCH ESO DET NDIT'] = ndit[j]
+        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
+        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
+        hdu.data = image
+        hdu.writeto(test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits')
+
+    # FLAT
+
+    exp_no =  [ 1, 2, 3, 4 ]
+    ndit = [ 3, 3, 5, 5 ]
+    naxis3 = ndit
+    parang_start = [ 0., 0., 0., 0. ]
+    parang_end = [ 0., 0., 0., 0. ]
+
+    np.random.seed(3)
+
+    for j, n in enumerate(ndit):
+        image = np.random.normal(loc=1, scale=1e-2, size=(n, 100, 100))
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
+        header['HIERARCH ESO DET NDIT'] = ndit[j]
+        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
+        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
+        hdu.data = image
+        hdu.writeto(test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits')
+
+    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
+
+    f = open(config_file, 'w')
+    f.write('[header]\n\n')
+    f.write('INSTRUMENT: INSTRUME\n')
+    f.write('NFRAMES: NAXIS3\n')
+    f.write('EXP_NO: ESO DET EXP NO\n')
+    f.write('NDIT: ESO DET NDIT\n')
+    f.write('PARANG_START: ESO ADA POSANG\n')
+    f.write('PARANG_END: ESO ADA POSANG END\n')
+    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+    f.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
+    f.write('[settings]\n\n')
+    f.write('PIXSCALE: 0.027\n')
+    f.write('MEMORY: 100\n')
+    f.write('CPU: 1')
+    f.close()
+
+def teardown_module():
+    test_dir = os.path.dirname(__file__) + "/"
+
+    for i in range(4):
+        file_in = test_dir + 'adi/adi'+str(i+1).zfill(2)+'.fits'
+        dark_in = test_dir + 'dark/dark'+str(i+1).zfill(2)+'.fits'
+        flat_in = test_dir + 'flat/flat'+str(i+1).zfill(2)+'.fits'
+
+        os.remove(file_in)
+        os.remove(dark_in)
+        os.remove(flat_in)
+
+    os.remove(test_dir + 'PynPoint_database.hdf5')
+    os.remove(test_dir + 'test.fits')
+    os.remove(test_dir + 'PynPoint_config.ini')
+
+    os.rmdir(test_dir + 'adi')
+    os.rmdir(test_dir + 'dark')
+    os.rmdir(test_dir + 'flat')
 
 class TestDocumentation(object):
 
     def setup(self):
-        self.test_dir = os.path.dirname(__file__)
-        self.pipeline = Pypeline(self.test_dir, self.test_dir+"/test_data/adi/", self.test_dir)
+        self.test_dir = os.path.dirname(__file__) + "/"
+        self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def test_docs(self):
 
-        reading_data = FitsReadingModule(name_in="Fits_reading",
+        read_science = FitsReadingModule(name_in="read_science",
+                                         input_dir=self.test_dir+"adi/",
                                          image_tag="im_arr")
 
-        self.pipeline.add_module(reading_data)
+        self.pipeline.add_module(read_science)
 
-        reading_dark = FitsReadingModule(name_in="Dark_reading",
-                                         input_dir=self.test_dir+"/test_data/dark",
-                                         image_tag="dark_arr")
+        read_dark = FitsReadingModule(name_in="read_dark",
+                                      input_dir=self.test_dir+"dark/",
+                                      image_tag="dark_arr")
 
-        self.pipeline.add_module(reading_dark)
+        self.pipeline.add_module(read_dark)
 
-        reading_flat = FitsReadingModule(name_in="Flat_reading",
-                                         input_dir=self.test_dir+"/test_data/flat",
-                                         image_tag="flat_arr")
+        read_flat = FitsReadingModule(name_in="read_flat",
+                                      input_dir=self.test_dir+"flat/",
+                                      image_tag="flat_arr")
 
-        self.pipeline.add_module(reading_flat)
+        self.pipeline.add_module(read_flat)
 
         remove_last = RemoveLastFrameModule(name_in="last_frame",
                                             image_in_tag="im_arr",
@@ -90,14 +245,14 @@ class TestDocumentation(object):
         extraction = StarExtractionModule(name_in="star_cutting",
                                           image_in_tag="bp_cleaned_arr",
                                           image_out_tag="im_arr_extract",
-                                          image_size=1.,
+                                          image_size=0.6,
                                           fwhm_star=0.1)
 
         # Required for ref_image_in_tag in StarAlignmentModule, otherwise a random frame is used
         ref_extract = StarExtractionModule(name_in="star_cut_ref",
                                            image_in_tag="bp_cleaned_arr",
                                            image_out_tag="im_arr_ref",
-                                           image_size=1.,
+                                           image_size=0.6,
                                            fwhm_star=0.1)
 
         alignment = StarAlignmentModule(name_in="star_align",
@@ -171,17 +326,17 @@ class TestDocumentation(object):
         assert data[0, 61, 39] == -0.00013038694003957227
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert data[0, 31, 20] == -3.9392607130869333e-05
+        assert data[0, 10, 10] == 0.053192109122463471
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 61, 39] == 0.00021600121168846993
+        assert data[0, 10, 10] == 1.1461552763624375e-05
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 61, 39] == 8.2430113567504408e-05
+        assert data[0, 10, 10] == 2.5664613034485687e-05
 
         data = storage.m_data_bank["res_mean"]
-        assert data[61, 39] == -4.3970096986442451e-05
-        assert np.mean(data) == 6.4361558939463885e-08
-        assert data.shape == (72, 72)
+        assert data[38, 22] == 0.00014649717419019682
+        assert np.mean(data) == -2.2033043765704249e-07
+        assert data.shape == (44, 44)
 
         storage.close_connection()
