@@ -7,13 +7,13 @@ import os
 import numpy as np
 
 from PynPoint import Pypeline
-from PynPoint.core.DataIO import DataStorage, InputPort
-from PynPoint.io_modules import FitsReadingModule
-from PynPoint.processing_modules import RemoveLastFrameModule, PSFSubtractionModule, \
-                                        AngleCalculationModule, RemoveLinesModule, \
-                                        MeanBackgroundSubtractionModule, RemoveFramesModule, \
-                                        BadPixelCleaningSigmaFilterModule, StarExtractionModule, \
-                                        StarAlignmentModule, StackAndSubsetModule
+from PynPoint.Core.DataIO import DataStorage, InputPort
+from PynPoint.IOmodules import FitsReadingModule
+from PynPoint.ProcessingModules import RemoveLastFrameModule, PSFSubtractionModule, \
+                                       AngleCalculationModule, RemoveLinesModule, \
+                                       MeanBackgroundSubtractionModule, RemoveFramesModule, \
+                                       BadPixelCleaningSigmaFilterModule, StarExtractionModule, \
+                                       StarAlignmentModule, StackAndSubsetModule
 
 
 class TestEndToEnd(object):
