@@ -854,4 +854,4 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
         self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
 
-        self.m_res_mean_out_port.close_port()
+        self.m_res_mean_out_port.close_database()
