@@ -904,7 +904,8 @@ class MCMCsamplingModule(ProcessingModule):
                                     res_arr_out_tag=None,
                                     res_rot_mean_clip_tag=None,
                                     extra_rot=self.m_extra_rot,
-                                    verbose=False)
+                                    verbose=False,
+                                    multiprocessing=False)
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()

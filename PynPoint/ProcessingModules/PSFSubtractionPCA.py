@@ -646,6 +646,7 @@ class FastPCAModule(ProcessingModule):
         :Keyword arguments:
              * **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
              * **verbose** (*bool*) -- Print progress to the standard output.
+             * **multiprocessing** (*bool*) -- Turn multiprocessing on or off.
 
         :return: None
         """
@@ -661,6 +662,11 @@ class FastPCAModule(ProcessingModule):
             self.m_verbose = kwargs["verbose"]
         else:
             self.m_verbose = True
+
+        if "multiprocessing" in kwargs:
+            self.m_multiprocessing = kwargs["multiprocessing"]
+        else:
+            self.m_multiprocessing = True
 
         # look for the maximum number of components
         self.m_max_pacs = np.max(pca_numbers)
