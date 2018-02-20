@@ -1,30 +1,35 @@
-=============================
 PynPoint
-=============================
+========
 
-PynPoint is a python package for analysing exo-planet imaging data. When trying to image planets around a nearby star, the basic idea is to take many, typically several thousands, of frames and to process the data using statistical methods. The aim is to remove the light from the star, so as to reveal the companion planet.
+**Python package for processing and analyzing of high-contrast imaging data**
 
-.. image:: images/planet_graphic.jpg
+.. image:: https://img.shields.io/badge/GitHub-PynPoint-blue.svg?style=flat
+    :target: https://github.com/aamara/PynPoint
 
+.. image:: https://img.shields.io/badge/Python-2.7-brightgreen.svg?style=flat
+    :target: https://pypi.python.org/pypi/PynPoint-exoplanet
 
-The PynPoint package has been developed at ETH Zurich as a collaboration between the |SPF_link| and the |Cosmo_link| of the |Astro|. Details of the methodology behind PynPoint can be found in |Method|. The package was further developed, with the support of the |SoftwareLab|, and is now publicly available. Further information on the package can also be found in our code description paper. 
+.. image:: https://img.shields.io/aur/license/yaourt.svg?style=flat
+    :target: https://github.com/aamara/PynPoint/blob/master/LICENSE
 
-.. |SPF_link| raw:: html
+.. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
+    :target: http://arxiv.org/abs/1207.6637
 
-   <a href="http://www.schmid-group.ethz.ch/" target="_blank">Star and Planet Formation Group</a>
+PynPoint is an end-to-end pipeline to process high-contrast data sets in order to detect and analyze self-luminous exoplanets on long-period orbits.
 
-.. |Cosmo_link| raw:: html
+Documentation
+-------------
 
-   <a href="http://www.cosmology.ethz.ch" target="_blank">Cosmology Research Group</a>
+Documentation can be found at `pythonhosted.org/PynPoint-exoplanet <http://pythonhosted.org/PynPoint-exoplanet/>`_.
 
-.. |Astro| raw:: html
-	
-	<a href="http://www.ipa.phys.ethz.ch" target="_blank">ETH Institute of Particle Physics and Astrophysics</a>
+Attribution
+-----------
 
-.. |Method| raw:: html
+Please cite `Amara & Quanz (2012) <https://arxiv.org/abs/1207.6637>`_ when results are published that were obtained with PynPoint.
 
-	<a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">our method paper</a>
-	
-.. |SoftwareLab| raw:: html
+License
+-------
 
-	<a href="http://www.cosmology.ethz.ch/research/software-lab.html" target="_blank">Software Lab of the Cosmology Research Group</a>
+Copyright 2014-2018 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
+
+PynPoint is free software and distributed under the GNU General Public License v3. For details see the LICENSE file.
