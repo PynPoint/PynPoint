@@ -134,9 +134,11 @@ class Pypeline(object):
                        'NDIT': 'ESO DET NDIT',
                        'PARANG_START': 'ESO ADA POSANG',
                        'PARANG_END': 'ESO ADA POSANG END',
+                       'DITHER_X': 'ESO SEQ CUMOFFSETX',
+                       'DITHER_Y': 'ESO SEQ CUMOFFSETY',
                        'PIXSCALE': 0.027,
                        'MEMORY': 1000,
-                       'CPU_COUNT': max_cpu_count}
+                       'CPU': max_cpu_count}
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
@@ -162,6 +164,12 @@ class Pypeline(object):
             if config.has_option('header', 'PARANG_END'):
                 config_dict['PARANG_END'] = str(config.get('header', 'PARANG_END'))
 
+            if config.has_option('header', 'DITHER_X'):
+                config_dict['DITHER_X'] = str(config.get('header', 'DITHER_X'))
+
+            if config.has_option('header', 'DITHER_Y'):
+                config_dict['DITHER_Y'] = str(config.get('header', 'DITHER_Y'))
+
             if config.has_option('settings', 'PIXSCALE'):
                 config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
 
@@ -171,8 +179,8 @@ class Pypeline(object):
                 else:
                     config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
 
-            if config.has_option('settings', 'CPU_COUNT'):
-                config_dict['CPU_COUNT'] = int(config.get('settings', 'CPU_COUNT'))
+            if config.has_option('settings', 'CPU'):
+                config_dict['CPU'] = int(config.get('settings', 'CPU'))
 
         else:
             warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
@@ -185,11 +193,13 @@ class Pypeline(object):
             file_obj.write('EXP_NO: ESO DET EXP NO\n')
             file_obj.write('NDIT: ESO DET NDIT\n')
             file_obj.write('PARANG_START: ESO ADA POSANG\n')
-            file_obj.write('PARANG_END: ESO ADA POSANG END\n\n')
+            file_obj.write('PARANG_END: ESO ADA POSANG END\n')
+            file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
             file_obj.write('[settings]\n\n')
             file_obj.write('PIXSCALE: 0.027\n')
             file_obj.write('MEMORY: 1000\n')
-            file_obj.write('CPU_COUNT: 1')
+            file_obj.write('CPU: '+str(max_cpu_count))
             file_obj.close()
 
         hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
@@ -229,7 +239,8 @@ class Pypeline(object):
         pipeline_module.connect_database(self.m_data_storage)
 
         if pipeline_module.name in self._m_modules:
-            warnings.warn('Processing module names need to be unique. Overwriting the old Module')
+            warnings.warn("Processing module names need to be unique. Overwriting module '%s'."
+                          % pipeline_module.name)
 
         self._m_modules[pipeline_module.name] = pipeline_module
 
