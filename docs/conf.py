@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PynPoint'
-copyright = u'2014, ETH Zurich, Institute for Astronomy'
+copyright = u'2014-2018, ETH Zurich, Institute for Particle Physics and Astrophysics'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -70,8 +70,7 @@ release = PynPoint.__version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', 'PynPoint.Wrapper.rst', 'PynPoint.OldVersion.rst',
-                    'modules.rst', 'license.rst']
+exclude_patterns = ['_build', 'PynPoint.Wrapper.rst', 'PynPoint.OldVersion.rst', 'modules.rst']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -106,6 +105,10 @@ pygments_style = 'sphinx'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
+html_theme_options = {'github': 'aamara/PynPoint',
+                    # 'analytics_id': 'UA-your-number-here',
+                      'logo': 'images/pynpoint.jpg'
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -141,6 +144,7 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
+# html_sidebars = { '**': ['globaltoc.html', 'searchbox.html'], }
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -255,7 +259,8 @@ texinfo_documents = [
 
 sys.path.append(os.path.abspath("_theme"))
 html_theme_path = ["_theme"]
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = 'klink'
 
 def skip(app, what, name, obj, skip, options):
     if name == "__init__":
