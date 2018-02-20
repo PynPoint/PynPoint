@@ -315,7 +315,7 @@ class ProcessingModule(PypelineModule):
                                data_dim=3,
                                keep_attributes=False)  # overwrite old existing attributes
 
-        num_processors = self._m_config_port.get_attribute("CPU_COUNT")
+        num_processors = self._m_config_port.get_attribute("CPU")
 
         print "Database prepared. Starting analysis with " + str(num_processors) + " processes."
 
