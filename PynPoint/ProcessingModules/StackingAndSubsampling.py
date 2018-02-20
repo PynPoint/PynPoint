@@ -180,7 +180,7 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Subset",
                                                       history)
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class MeanCubeModule(ProcessingModule):
@@ -244,4 +244,4 @@ class MeanCubeModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
