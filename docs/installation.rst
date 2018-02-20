@@ -30,8 +30,8 @@ We have provided some useable data as part of the package. To perform your first
 
 	import PynPoint
 	from PynPoint import Pypeline
-	from PynPoint.io_modules.Hdf5Reading import Hdf5ReadingModule
-	from PynPoint.processing_modules import PSFSubtractionModule
+	from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
+	from PynPoint.ProcessingModules import PSFSubtractionModule
 	from matplotlib import pyplot as plt
 
 
