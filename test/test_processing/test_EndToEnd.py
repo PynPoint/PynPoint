@@ -72,7 +72,7 @@ class TestEndToEnd(object):
         assert port.get_attribute("Used_Files")[0] == self.test_dir+'/test_data/adi/adi01.fits'
         assert port.get_attribute("NEW_PARA")[1] == 1.1904761904761905
 
-        port.close_port()
+        port.close_database()
         storage.close_connection()
 
     def test_cut_lines(self):

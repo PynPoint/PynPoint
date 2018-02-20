@@ -210,7 +210,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Background",
                                                       "mean subtraction")
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -286,7 +286,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Background",
                                                       "simple subtraction")
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class PCABackgroundPreparationModule(ProcessingModule):
@@ -474,7 +474,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                                                            str(len(background_nframes))+"/"+ \
                                                            str(len(nframes)))
 
-        self.m_star_out_port.close_port()
+        self.m_star_out_port.close_database()
 
 
 class PCABackgroundSubtractionModule(ProcessingModule):
@@ -703,7 +703,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             self.m_residuals_out_port.add_history_information("Background",
                                                               "PCA residuals")
 
-        self.m_subtracted_out_port.close_port()
+        self.m_subtracted_out_port.close_database()
 
 
 class PCABackgroundDitheringModule(ProcessingModule):
@@ -1125,4 +1125,4 @@ class NoddingBackgroundModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Background",
                                                       "Nodding sky subtraction")
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()

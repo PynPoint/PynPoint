@@ -123,7 +123,7 @@ class StarExtractionModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Star extract",
                                                       "Maximum in smoothed image")
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -266,7 +266,7 @@ class StarAlignmentModule(ProcessingModule):
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
         self.m_image_out_port.add_history_information("PSF alignment",
                                                       history)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class LocateStarModule(ProcessingModule):
@@ -330,7 +330,7 @@ class LocateStarModule(ProcessingModule):
                                            star_position,
                                            static=False)
 
-        self.m_data_out_port.close_port()
+        self.m_data_out_port.close_database()
 
 
 class StarCenteringModule(ProcessingModule):
@@ -506,7 +506,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class ShiftForCenteringModule(ProcessingModule):
@@ -565,4 +565,4 @@ class ShiftForCenteringModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
