@@ -67,7 +67,9 @@ class FitsReadingModule(ReadingModule):
                                   'NDIT',
                                   'PARANG_START',
                                   'PARANG_END',
-                                  'NEW_PARA']
+                                  'NEW_PARA',
+                                  'DITHER_X',
+                                  'DITHER_Y' ]
 
     def _read_single_file(self,
                           fits_file,

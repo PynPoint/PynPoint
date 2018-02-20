@@ -58,6 +58,11 @@ class FakePlanetModule(ProcessingModule):
         :type psf_in_tag: str
         :param image_out_tag: Tag of the database entry with images that are written as output.
         :type image_out_tag: str
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **verbose** (*bool*) -- Print progress.
 
         :return: None
         """
