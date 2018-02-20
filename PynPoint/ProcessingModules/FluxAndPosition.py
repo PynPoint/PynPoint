@@ -7,6 +7,7 @@ import sys
 import warnings
 
 import numpy as np
+import emcee
 
 from scipy.ndimage import shift
 from scipy.optimize import minimize
@@ -162,9 +163,6 @@ class FakePlanetModule(ProcessingModule):
             psf = self.m_psf_in_port.get_all()
 
         elif ndim_psf == 3 and n_image != n_psf:
-            warnings.warn("The number of images in %s do not match with %s. Using the mean "
-                          "instead." % (self.m_psf_in_port.tag, self.m_image_in_port.tag))
-
             psf = np.zeros((self.m_image_in_port.get_shape()[1],
                             self.m_image_in_port.get_shape()[2]))
 
@@ -710,3 +708,289 @@ class FalsePositiveModule(ProcessingModule):
         self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_snr_out_port.close_database()
+
+
+class MCMCsamplingModule(ProcessingModule):
+    """
+    Module to determine the contrast and position of a planet with an affine invariant Markov chain
+    Monte Carlo (MCMC) ensemble sampler.
+    """
+
+    def __init__(self,
+                 param,
+                 bounds,
+                 name_in="mcmc_sampling",
+                 image_in_tag="im_arr",
+                 psf_in_tag="im_arr",
+                 chain_out_tag="chain",
+                 nwalkers=1000,
+                 nsteps=100,
+                 psf_scaling=-1.,
+                 pca_number=20,
+                 aperture=0.1,
+                 mask=0.,
+                 extra_rot=0.,
+                 **kwargs):
+        """
+        Constructor of MCMCsamplingModule.
+
+        :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The
+                      angle is measured in counterclockwise direction with respect to the upward
+                      direction (i.e., East of North).
+        :type param: tuple, float
+        :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
+                       contrast (mag). Each set of boundaries is specified as a tuple.
+        :type bounds: tuple, float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with images that are read as input.
+        :type image_in_tag: str
+        :param psf_in_tag: Tag of the database entry with the reference PSF that is used as fake
+                           planet. Can be either a single image (2D) or a cube (3D) with the
+                           dimensions equal to *image_in_tag*.
+        :type psf_in_tag: str
+        :param chain_out_tag: Tag of the database entry with the Markov chain that is written as
+                              output. The shape of the array is (nwalkers*nsteps, 3).
+        :type chain_out_tag: str
+        :param nwalkers: Number of ensemble members (i.e. chains).
+        :type nwalkers: int
+        :param nsteps: Number of steps to run per walker.
+        :type nsteps: int
+        :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
+                            neutral density filter). Should be negative in order to inject
+                            negative fake planets.
+        :type psf_scaling: float
+        :param pca_number: Number of principle components used for the PSF subtraction.
+        :type pca_number: int
+        :param aperture: Radius (arcsec) of the selected region, centered on the negative fake
+                         companion, used for the likelihood function.
+        :type aperture: float
+        :param mask: Mask radius (arcsec) for the PSF subtraction.
+        :type mask: float
+        :param extra_rot: Additional rotation angle of the images (deg).
+        :type extra_rot: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
+             * **sigma** (*tuple*) -- Tuple with the standard deviations that randomly initializes
+                                      the start positions of the walkers in a small ball around the
+                                      a priori preferred position (*param*). The tuple should
+                                      contain three values (*float*): the separation (arcsec),
+                                      position angle (deg), and contrast (mag).
+
+        :return: None
+        """
+
+        if "scale" in kwargs:
+            self.m_scale = kwargs["scale"]
+        else:
+            self.m_scale = 2.
+
+        if "sigma" in kwargs:
+            self.m_sigma = kwargs["sigma"]
+        else:
+            self.m_sigma = (1e-5, 1e-3, 1e-3)
+
+        super(MCMCsamplingModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        if psf_in_tag == image_in_tag:
+            self.m_psf_in_port = self.m_image_in_port
+        else:
+            self.m_psf_in_port = self.add_input_port(psf_in_tag)
+        self.m_chain_out_port = self.add_output_port(chain_out_tag)
+
+        self.m_param = param
+        self.m_bounds = bounds
+        self.m_nwalkers = nwalkers
+        self.m_nsteps = nsteps
+        self.m_psf_scaling = psf_scaling
+        self.m_pca_number = pca_number
+        self.m_aperture = aperture
+        self.m_mask = mask
+        self.m_extra_rot = extra_rot
+
+        self.m_ndim = 3
+        self.m_ap = None
+
+    def run(self):
+        """
+        Run method of the module. Shifts the reference PSF to the location of the fake planet
+        with an additional correction for the parallactic angle and writes the stack with images
+        with the injected planet signal.
+
+        :return: None
+        """
+
+        def _lnprior(param, bounds):
+            """
+            Internal function for the log prior function.
+
+            :param param: Tuple with the separation (arcsec), angle (deg), and contrast
+                          (mag). The angle is measured in counterclockwise direction with
+                          respect to the upward direction (i.e., East of North).
+            :type param: tuple, float
+            :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
+                           and contrast (mag). Each set of boundaries is specified as a tuple.
+            :type bounds: tuple, float
+
+            :return: Log prior.
+            :rtype float
+            """
+
+            if bounds[0][0] <= param[0] <= bounds[0][1] and \
+               bounds[1][0] <= param[1] <= bounds[1][1] and \
+               bounds[2][0] <= param[2] <= bounds[2][1]:
+
+                lnprior = 0.
+
+            else:
+
+                lnprior = -np.inf
+
+            return lnprior
+
+        def _lnlike(param):
+            """
+            Internal function for the log likelihood function.
+
+            :param param: Tuple with the separation (arcsec), angle (deg), and contrast
+                          (mag). The angle is measured in counterclockwise direction with
+                          respect to the upward direction (i.e., East of North).
+            :type param: tuple, float
+
+            :return: Log likelihood.
+            :rtype float
+            """
+
+            sep, ang, mag = param
+
+            fake_planet = FakePlanetModule(position=(sep, ang),
+                                           magnitude=mag,
+                                           psf_scaling=self.m_psf_scaling,
+                                           name_in="fake_planet",
+                                           image_in_tag=self.m_image_in_port.tag,
+                                           psf_in_tag=self.m_psf_in_port.tag,
+                                           image_out_tag="mcmc_fake",
+                                           verbose=False)
+
+            fake_planet.connect_database(self._m_data_base)
+            fake_planet.run()
+
+            cent_remove = bool(self.m_mask > 0.)
+
+            prep = PSFpreparationModule(name_in="prep",
+                                        image_in_tag="mcmc_fake",
+                                        image_out_tag="mcmc_prep",
+                                        image_mask_out_tag=None,
+                                        mask_out_tag=None,
+                                        norm=True,
+                                        cent_remove=cent_remove,
+                                        cent_size=self.m_mask,
+                                        edge_size=1.,
+                                        verbose=False)
+
+            prep.connect_database(self._m_data_base)
+            prep.run()
+
+            psf_sub = FastPCAModule(name_in="pca_mcmc",
+                                    pca_numbers=self.m_pca_number,
+                                    images_in_tag="mcmc_prep",
+                                    reference_in_tag="mcmc_prep",
+                                    res_mean_tag="mcmc_res_mean",
+                                    res_median_tag=None,
+                                    res_arr_out_tag=None,
+                                    res_rot_mean_clip_tag=None,
+                                    extra_rot=self.m_extra_rot,
+                                    verbose=False)
+
+            psf_sub.connect_database(self._m_data_base)
+            psf_sub.run()
+
+            res_input_port = self.add_input_port("mcmc_res_mean")
+            im_res = res_input_port.get_all()
+            im_res = np.squeeze(im_res, axis=0)
+
+            phot_table = aperture_photometry(np.abs(im_res), self.m_ap, method='exact')
+
+            return -0.5*phot_table['aperture_sum'][0]
+
+        def _lnprob(param, bounds):
+            """
+            Internal function for the log posterior function.
+
+            :param param: Tuple with the separation (arcsec), angle (deg), and contrast
+                          (mag). The angle is measured in counterclockwise direction with
+                          respect to the upward direction (i.e., East of North).
+            :type param: tuple, float
+            :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
+                           and contrast (mag). Each set of boundaries is specified as a tuple.
+            :type bounds: tuple, float
+
+            :return: Log posterior.
+            :rtype float
+            """
+
+            lnprior = _lnprior(param, bounds)
+
+            if math.isinf(lnprior):
+                lnprob = -np.inf
+
+            else:
+                lnprob = lnprior + _lnlike(param)
+
+            return lnprob
+
+        if not isinstance(self.m_param, tuple) or len(self.m_param) != 3:
+            raise TypeError("The param argument should contain a tuple with the approximate "
+                            "separation (arcsec), position angle (deg), and contrast (mag).")
+
+        if not isinstance(self.m_bounds, tuple) or len(self.m_bounds) != 3:
+            raise TypeError("The bounds argument should contain a tuple with three tuples for "
+                            "the boundaries of the separation (arcsec), position angle (deg), and "
+                            "contrast (mag).")
+
+        if not isinstance(self.m_sigma, tuple) or len(self.m_sigma) != 3:
+            raise TypeError("The sigma argument should contain a tuple with the standard "
+                            "deviation of the separation (arcsec), position angle (deg), "
+                            "and contrast (mag) that is used to sample the starting position "
+                            "of the walkers.")
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        self.m_aperture /= pixscale
+
+        center = self.m_image_in_port.get_shape()[1]/2.
+        x_pos = center + self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
+        y_pos = center + self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+
+        self.m_ap = CircularAperture((x_pos, y_pos), self.m_aperture)
+
+        initial = np.zeros((self.m_nwalkers, self.m_ndim))
+
+        initial[:, 0] = self.m_param[0] + np.random.normal(0, self.m_sigma[0], self.m_nwalkers)
+        initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
+        initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
+
+        sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
+                                        dim=self.m_ndim,
+                                        lnpostfn=_lnprob,
+                                        a=self.m_scale,
+                                        args=([self.m_bounds]),
+                                        threads=1)
+
+        for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
+            progress(i, self.m_nsteps, "Running MCMCsamplingModule...")
+
+        sys.stdout.write("Running MCMCsamplingModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_chain_out_port.set_all(sampler.chain)
+        self.m_chain_out_port.add_history_information("Flux and position", "MCMC sampling")
+        self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_chain_out_port.close_port()
+
+        print sampler.acceptance_fraction
+        # print sampler.get_autocorr_time(low=10, high=None, step=1, c=10, fast=False)
+        # print sampler.acor
