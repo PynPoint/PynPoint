@@ -3,14 +3,14 @@
 import os
 import warnings
 
-from PynPoint.io_modules.Hdf5Reading import Hdf5ReadingModule
-from PynPoint.io_modules.Hdf5Writing import Hdf5WritingModule
-from PynPoint.processing_modules.PSFsubPreparation import PSFdataPreparation
-from PynPoint.processing_modules.StackingAndSubsampling import StackAndSubsetModule
+from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
+from PynPoint.IOmodules.Hdf5Writing import Hdf5WritingModule
+from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
+from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
-from PynPoint.core.Pypeline import Pypeline
-from PynPoint.io_modules.FitsReading import FitsReadingModule
-from PynPoint.processing_modules.PSFSubtractionPCA import MakePSFModelModule
+from PynPoint.Core.Pypeline import Pypeline
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import MakePSFModelModule
 
 warnings.simplefilter("always")
 
@@ -125,14 +125,14 @@ class BasePynpointWrapper(object):
             self._m_stacking = kwargs["stackave"]
 
     def _prepare_data(self):
-        preparation = PSFdataPreparation(name_in="prep",
-                                         image_in_tag=self._m_image_data_tag,
-                                         image_mask_out_tag=self._m_image_data_masked_tag,
-                                         mask_out_tag=self._m_mask_tag,
-                                         image_out_tag=self._m_image_data_tag,
-                                         resize=self._m_resize,
-                                         cent_remove=self._m_center_remove,
-                                         cent_size=self._m_cent_size)
+        preparation = PSFpreparationModule(name_in="prep",
+                                           image_in_tag=self._m_image_data_tag,
+                                           image_mask_out_tag=self._m_image_data_masked_tag,
+                                           mask_out_tag=self._m_mask_tag,
+                                           image_out_tag=self._m_image_data_tag,
+                                           resize=self._m_resize,
+                                           cent_remove=self._m_center_remove,
+                                           cent_size=self._m_cent_size)
 
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,

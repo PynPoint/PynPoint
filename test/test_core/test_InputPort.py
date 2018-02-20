@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pytest
 
-from PynPoint.core.DataIO import InputPort, DataStorage
+from PynPoint.Core.DataIO import InputPort, DataStorage
 
 import warnings
 warnings.simplefilter("always")
