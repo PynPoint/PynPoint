@@ -14,7 +14,7 @@ The PynPoint Pipeline works through two different components:
 
 	1.3 :class:`PynPoint.core.Processing.WritingModule` - exports or displays the results of previous ProcessingModules
 
-2. The actual pipeline :class:`PynPoint.core.Pypeline` - capsules a list of pipeline modules
+2. The actual pipeline :class:`PynPoint.Core.Pypeline` - capsules a list of pipeline modules
 
 
 .. _interactive:
@@ -32,17 +32,17 @@ Next we need to import the PynPoint Pypeline module, ::
 
 the pipeline modules for reading and writing .fits data ::
 
-	from PynPoint.io_modules import ReadFitsCubesDirectory, WriteAsSingleFitsFile
+	from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule
 
 and all pipeline modules (pipeline steps) we want to execute: ::
 
-	from PynPoint.processing_modules import BadPixelCleaningSigmaFilterModule, \
+	from PynPoint.ProcessingModules import BadPixelCleaningSigmaFilterModule, \
 	DarkSubtractionModule, FlatSubtractionModule, CutTopLinesModule, \
 	AngleCalculationModule, MeanBackgroundSubtractionModule, \ 
 	StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
 	StackAndSubsetModule, RemoveLastFrameModule
 
-In order to be able to handle the different processing steps we need to create an instance of the :class:`PynPoint.core.Pypeline` ::
+In order to be able to handle the different processing steps we need to create an instance of the :class:`PynPoint.Core.Pypeline` ::
 
 	pipeline = Pypeline(working_place_in,
                         input_place_in,
@@ -227,7 +227,7 @@ If you want to restore data from a Pypeline database which is located in a folde
                             input_place_in,
                             output_place_in)
 
-HDF5 files can be an input as well. Using a :class:`PynPoint.io_modules.Hdf5Writing` module you can export data from a Pypeline database. This data can be imported using a :class:`PynPoint.io_modules.Hdf5Reading` module later. For more information have a look at the package documentation.
+HDF5 files can be an input as well. Using a :class:`PynPoint.IOmodules.Hdf5Writing` module you can export data from a Pypeline database. This data can be imported using a :class:`PynPoint.IOmodules.Hdf5Reading` module later. For more information have a look at the package documentation.
 
 Workflow
 --------
@@ -270,7 +270,7 @@ Looking inside HDF5 files
 In order to access data from the HDF5 PynPoint database you have three options:
 
 	* Use the FitsWritingModule to export data to a FITS file, as done in the :ref:`interactive` section.
-	* Use the easy access functions of the :class:`PynPoint.core.Pypeline` class to retrieve data and attributes from the database:
+	* Use the easy access functions of the :class:`PynPoint.Core.Pypeline` class to retrieve data and attributes from the database:
 
 		* pipeline.get_data(...)
 

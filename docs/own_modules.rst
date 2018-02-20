@@ -73,7 +73,7 @@ You can access attributes (header information) by using: ::
 
         some_attribute_data = self.m_in_port_2.get_attribute("AIRMASS")
 
-For more information about how to import data have a look at the package documentation :class:`PynPoint.core.DataIO.InputPort`. 
+For more information about how to import data have a look at the package documentation :class:`PynPoint.Core.DataIO.InputPort`. 
 
 Next you can implement your algorithm. And finally write out the results using your output ports: ::
 
@@ -94,7 +94,7 @@ Next you can implement your algorithm. And finally write out the results using y
         
         self.m_out_port_2[0:2] = result2
 
-For more information about how to store data have a look at the package documentation :class:`PynPoint.core.DataIO.OutputPort`.
+For more information about how to store data have a look at the package documentation :class:`PynPoint.Core.DataIO.OutputPort`.
 
 After you have saved the data you should always copy the attribute information of the input port and add history information. Do this for all Output Ports: ::
 
@@ -129,7 +129,7 @@ Example
 -------
 The Dummy Module from above: ::
 
-    from PynPoint.core import ProcessingModule
+    from PynPoint.Core import ProcessingModule
 
 
     class DummyModule(ProcessingModule):
@@ -180,7 +180,7 @@ The Dummy Module from above: ::
 
 Additional Functionality
 ------------------------
-Some pipeline processing modules apply a method to each image of the image stack. Hence we have implemented a function, which applies a function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.processing_modules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
+Some pipeline processing modules apply a method to each image of the image stack. Hence we have implemented a function, which applies a function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.Core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.ProcessingModules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
 
 Conventions
 -----------

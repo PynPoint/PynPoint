@@ -1,101 +1,101 @@
-PynPoint\.processing\_modules package
+PynPoint\.ProcessingModules package
 =====================================
 
 Submodules
 ----------
 
-PynPoint\.processing\_modules\.BackgroundSubtraction module
+PynPoint\.ProcessingModules\.BackgroundSubtraction module
 -----------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.BackgroundSubtraction
+.. automodule:: PynPoint.ProcessingModules.BackgroundSubtraction
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.BadPixelCleaning module
+PynPoint\.ProcessingModules\.BadPixelCleaning module
 ------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.BadPixelCleaning
+.. automodule:: PynPoint.ProcessingModules.BadPixelCleaning
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.DarkAndFlatSubtraction module
+PynPoint\.ProcessingModules\.DarkAndFlatSubtraction module
 ------------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.DarkAndFlatSubtraction
+.. automodule:: PynPoint.ProcessingModules.DarkAndFlatSubtraction
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.DetectionLimits module
+PynPoint\.ProcessingModules\.DetectionLimits module
 -----------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.DetectionLimits
+.. automodule:: PynPoint.ProcessingModules.DetectionLimits
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.FluxAndPosition module
+PynPoint\.ProcessingModules\.FluxAndPosition module
 -----------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.FluxAndPosition
+.. automodule:: PynPoint.ProcessingModules.FluxAndPosition
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.FrameSelection module
+PynPoint\.ProcessingModules\.FrameSelection module
 ----------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.FrameSelection
+.. automodule:: PynPoint.ProcessingModules.FrameSelection
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.ImageResizing module
+PynPoint\.ProcessingModules\.ImageResizing module
 ---------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.ImageResizing
+.. automodule:: PynPoint.ProcessingModules.ImageResizing
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.PSFSubtractionPCA module
+PynPoint\.ProcessingModules\.PSFSubtractionPCA module
 -------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.PSFSubtractionPCA
+.. automodule:: PynPoint.ProcessingModules.PSFSubtractionPCA
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.PSFsubPreparation module
+PynPoint\.ProcessingModules\.PSFpreparation module
 -------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.PSFsubPreparation
+.. automodule:: PynPoint.ProcessingModules.PSFpreparation
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.StackingAndSubsampling module
+PynPoint\.ProcessingModules\.StackingAndSubsampling module
 ------------------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.StackingAndSubsampling
+.. automodule:: PynPoint.ProcessingModules.StackingAndSubsampling
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.StarAlignment module
+PynPoint\.ProcessingModules\.StarAlignment module
 ---------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.StarAlignment
+.. automodule:: PynPoint.ProcessingModules.StarAlignment
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.processing\_modules\.TimeDenoising module
+PynPoint\.ProcessingModules\.TimeDenoising module
 ---------------------------------------------------
 
-.. automodule:: PynPoint.processing_modules.TimeDenoising
+.. automodule:: PynPoint.ProcessingModules.TimeDenoising
     :members:
     :undoc-members:
     :show-inheritance:
@@ -104,7 +104,7 @@ PynPoint\.processing\_modules\.TimeDenoising module
 Module contents
 ---------------
 
-.. automodule:: PynPoint.processing_modules
+.. automodule:: PynPoint.ProcessingModules
     :members:
     :undoc-members:
     :show-inheritance:

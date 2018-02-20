@@ -50,18 +50,18 @@ On the right a list of all output tags (internal Output ports) which store the r
 In order to create a valid pipeline you should check that the required input tags are linked to data which was created by a previous pipeline module. In other words there need to be a previous module with the same tag as output.
 
 There are three different types of Pipeline modules:
-	1 :class:`PynPoint.core.Processing.ReadingModule` - A module only with output tags / ports. The perfect interface to read raw data.
+	1 :class:`PynPoint.Core.Processing.ReadingModule` - A module only with output tags / ports. The perfect interface to read raw data.
 
-	1.2 :class:`PynPoint.core.Processing.ProcessingModule` - A module with input and output tags / ports. The typical processing step module.
+	1.2 :class:`PynPoint.Core.Processing.ProcessingModule` - A module with input and output tags / ports. The typical processing step module.
 
-	1.3 :class:`PynPoint.core.Processing.WritingModule` - A module only with input tags / ports which can be used to export data from the internal database.
+	1.3 :class:`PynPoint.Core.Processing.WritingModule` - A module only with input tags / ports which can be used to export data from the internal database.
 
 If you just use pipeline modules the differences between these three module types are not important for you. However, if you are interested in writing own modules you should keep this in mind.
 
 The Pipeline
 ------------
 
-The :class:`PynPoint.core.Pypeline` module is the central component which manages the order and execution of the different pipeline processing steps. From a simple perspective it is just a ordered list of different pipeline modules. Each Pypeline instance has a input directory which is used as the default input location for reading modules, a working directory where the central pipeline database will be stored and a default output directory which can be used by all writing modules. 
+The :class:`PynPoint.Core.Pypeline` module is the central component which manages the order and execution of the different pipeline processing steps. From a simple perspective it is just a ordered list of different pipeline modules. Each Pypeline instance has a input directory which is used as the default input location for reading modules, a working directory where the central pipeline database will be stored and a default output directory which can be used by all writing modules. 
 
 At the moment there is one Pypeline method which can be used to append a pipeline module to the queue of modules: ::
 
