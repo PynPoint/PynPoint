@@ -21,15 +21,15 @@ class RemoveFramesModule(ProcessingModule):
     """
 
     def __init__(self,
-                 frame_indices,
+                 frames,
                  name_in="remove_frames",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_remove"):
         """
         Constructor of RemoveFramesModule.
 
-        :param frame_indices: Frame indices to be removed. Python indexing starts at 0.
-        :type frame_indices: tuple or array, int
+        :param frames: Frame indices to be removed. Python indexing starts at 0.
+        :type frames: tuple or array, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -46,7 +46,7 @@ class RemoveFramesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_frame_indices = np.asarray(frame_indices)
+        self.m_frames = np.asarray(frames)
 
     def run(self):
         """
@@ -64,26 +64,24 @@ class RemoveFramesModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        if np.size(np.where(self.m_frame_indices >= self.m_image_in_port.get_shape()[0])) > 0:
-            raise ValueError("Some values in frame_indices are larger than the total number of "
+        if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
+            raise ValueError("Some values in frames are larger than the total number of "
                              "available frames, %s." % str(self.m_image_in_port.get_shape()[0]))
 
         nframes = self.m_image_in_port.get_shape()[0]
         nstacks = int(float(nframes)/float(memory))
-
-        # Reading subsets of 'memory' frames and removes frame_indices
 
         for i in range(nstacks):
             progress(i, nstacks, "Running RemoveFramesModule...")
 
             tmp_im = self.m_image_in_port[i*memory:(i+1)*memory, ]
 
-            index_del = np.where(np.logical_and(self.m_frame_indices >= i*memory, \
-                                 self.m_frame_indices < (i+1)*memory))
+            index_del = np.where(np.logical_and(self.m_frames >= i*memory, \
+                                 self.m_frames < (i+1)*memory))
 
             if np.size(index_del) > 0:
                 tmp_im = np.delete(tmp_im,
-                                   self.m_frame_indices[index_del]%memory,
+                                   self.m_frames[index_del]%memory,
                                    axis=0)
 
             self.m_image_out_port.append(tmp_im)
@@ -91,34 +89,30 @@ class RemoveFramesModule(ProcessingModule):
         sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
         sys.stdout.flush()
 
-        # Adding the leftover frames that do not fit in an integer amount of 'memory'
-
-        index_del = np.where(self.m_frame_indices >= nstacks*memory)[0]
+        index_del = np.where(self.m_frames >= nstacks*memory)[0]
 
         if np.size(index_del) > 0:
             tmp_im = self.m_image_in_port[nstacks*memory: \
                                           self.m_image_in_port.get_shape()[0], ]
 
             tmp_im = np.delete(tmp_im,
-                               self.m_frame_indices[index_del]%memory,
+                               self.m_frames[index_del]%memory,
                                axis=0)
 
             self.m_image_out_port.append(tmp_im)
-
-        # Attributes
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("NEW_PARA")
             self.m_image_out_port.add_attribute("NEW_PARA",
-                                                np.delete(parang, self.m_frame_indices),
+                                                np.delete(parang, self.m_frames),
                                                 static=False)
 
         if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
             position = self.m_image_in_port.get_attribute("STAR_POSITION")
             self.m_image_out_port.add_attribute("STAR_POSITION",
-                                                np.delete(position, self.m_frame_indices, axis=0),
+                                                np.delete(position, self.m_frames, axis=0),
                                                 static=False)
 
         nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
@@ -126,8 +120,8 @@ class RemoveFramesModule(ProcessingModule):
 
         total = 0
         for i, frames in enumerate(nframes_in):
-            index_del = np.where(np.logical_and(self.m_frame_indices >= total, \
-                                 self.m_frame_indices < total+frames))[0]
+            index_del = np.where(np.logical_and(self.m_frames >= total, \
+                                 self.m_frames < total+frames))[0]
 
             nframes_out[i] -= np.size(index_del)
 
@@ -135,7 +129,7 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
         self.m_image_out_port.add_history_information("Frames removed",
-                                                      str(np.size(self.m_frame_indices)))
+                                                      str(np.size(self.m_frames)))
         self.m_image_in_port.close_database()
 
 

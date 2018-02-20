@@ -372,6 +372,13 @@ class StarCenteringModule(ProcessingModule):
         :param interpolation: Type of interpolation that is used for shifting the images (fft,
                               spline, or bilinear).
         :type interpolation: str
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **guess** (*tuple*) -- Tuple with the initial parameter values for the least
+                                      squares fit: center x (pix), center y (pix), FWHM x (pix),
+                                      FWHM y (pix), amplitude (counts), angle (deg).
 
         :return: None
         """

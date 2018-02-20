@@ -719,7 +719,7 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.set_all(tmp_output, keep_attributes=False)
         self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        cpu_count = self._m_config_port.get_attribute("CPU_COUNT")
+        cpu_count = self._m_config_port.get_attribute("CPU")
 
         rotations = -1.*self.m_star_in_port.get_attribute("NEW_PARA")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot

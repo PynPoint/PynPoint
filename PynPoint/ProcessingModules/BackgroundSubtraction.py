@@ -308,7 +308,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
                        first_star_cube) with *dither_positions* the number of unique dither
                        locations on the detector, *cubes_per_position* the number of consecutive
                        cubes per dither position, and *first_star_cube* the index value of the
-                       first cube which contains the star (Python indexing starts at zero).
+                       first cube which contains the star (Python indexing starts at zero). Sorting
+                       is based on DITHER_X and DITHER_Y when *cubes_per_position* is set to None.
         :type select: tuple
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -333,11 +334,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         if len(dither) != 3:
             raise ValueError("The 'dither' tuple should contain three integer values.")
 
-        self.m_dither_positions = dither[0]
-        self.m_cubes_per_position = dither[1]
-        self.m_first_star_cube = dither[2]
-
-        self.m_star_out_tag = star_out_tag
+        self.m_dither = dither
 
     def run(self):
         """
@@ -349,42 +346,50 @@ class PCABackgroundPreparationModule(ProcessingModule):
         :return: None
         """
 
+        self.m_star_out_port.del_all_data()
+        self.m_star_out_port.del_all_attributes()
+        self.m_background_out_port.del_all_data()
+        self.m_background_out_port.del_all_attributes()
+
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
         if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("NEW_PARA")
         else:
             parang = None
 
+        # Mean of each cube
         cube_mean = np.zeros((nframes.shape[0], self.m_image_in_port.get_shape()[2], \
                              self.m_image_in_port.get_shape()[1]))
 
-        # Mean of each cube
         count = 0
         for i, item in enumerate(nframes):
             cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
             count += item
 
         # Flag star and background cubes
-        bg_frames = np.ones(nframes.shape[0], dtype=bool)
-        for i in range(self.m_first_star_cube*self.m_cubes_per_position, np.size(nframes), \
-                       self.m_cubes_per_position*self.m_dither_positions):
-            bg_frames[i:i+self.m_cubes_per_position] = False
+        if self.m_dither[1] is None:
+            dither_x = self.m_image_in_port.get_attribute("DITHER_X")
+            dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
+
+            star = np.logical_and(dither_x == self.m_dither[2][0], dither_y == self.m_dither[2][1])
+            bg_frames = np.invert(star)
+
+        else:
+            bg_frames = np.ones(nframes.shape[0], dtype=bool)
+            for i in range(self.m_dither[2]*self.m_dither[1], np.size(nframes), \
+                           self.m_dither[1]*self.m_dither[0]):
+                bg_frames[i:i+self.m_dither[1]] = False
 
         bg_indices = np.nonzero(bg_frames)[0]
 
-        star_init = False
-        background_init = False
-
-        star_nframes = np.empty(0)
-        background_nframes = np.empty(0)
+        background_nframes = np.empty(0, dtype=np.int64)
+        star_nframes = np.empty(0, dtype=np.int64)
 
         if parang is not None:
-            star_parang = np.empty(0)
-            background_parang = np.empty(0)
+            background_parang = np.empty(0, dtype=np.float64)
+            star_parang = np.empty(0, dtype=np.float64)
 
-        num_frames = self.m_image_in_port.get_shape()[0]
-
-        # Separate star and background cubes, and subtract mean background
+        # Separate star and background cubes. Subtract mean background.
         count = 0
         for i, item in enumerate(nframes):
             progress(i, len(nframes), "Running PCABackgroundPreparationModule...")
@@ -397,57 +402,47 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 background = cube_mean[i, ]
 
                 # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
-                if background_init:
-                    self.m_background_out_port.append(im_tmp-background)
-                    background_nframes = np.append(background_nframes, nframes[i])
-                    if parang is not None:
-                        background_parang = np.append(background_parang, parang[count:count+item])
-
-                else:
-                    self.m_background_out_port.set_all(im_tmp-background)
-                    background_nframes = np.zeros(1, dtype=np.int64)
-                    background_nframes[0] = nframes[i]
-                    if parang is not None:
-                        background_parang = parang[count:count+item]
-                    background_init = True
+                self.m_background_out_port.append(im_tmp-background)
+                background_nframes = np.append(background_nframes, nframes[i])
+                if parang is not None:
+                    background_parang = np.append(background_parang, parang[count:count+item])
 
             # Star frames
             else:
-
                 # Previous background cube
                 if np.size(bg_indices[bg_indices < i]) > 0:
                     index_prev = np.amax(bg_indices[bg_indices < i])
                     bg_prev = cube_mean[index_prev, ]
+
+                else:
+                    bg_prev = None
 
                 # Next background cube
                 if np.size(bg_indices[bg_indices > i]) > 0:
                     index_next = np.amin(bg_indices[bg_indices > i])
                     bg_next = cube_mean[index_next, ]
 
+                else:
+                    bg_next = None
+
                 # Select background: previous, next, or mean of previous and next
-                if i < self.m_cubes_per_position:
+                if bg_prev is None and bg_next is not None:
                     background = bg_next
 
-                elif i >= np.size(nframes)-self.m_cubes_per_position:
+                elif bg_prev is not None and bg_next is None:
                     background = bg_prev
 
-                else:
+                elif bg_prev is not None and bg_next is not None:
                     background = (bg_prev+bg_next)/2.
 
-                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
-                if star_init:
-                    self.m_star_out_port.append(im_tmp-background)
-                    star_nframes = np.append(star_nframes, nframes[i])
-                    if parang is not None:
-                        star_parang = np.append(star_parang, parang[count:count+item])
-
                 else:
-                    self.m_star_out_port.set_all(im_tmp-background)
-                    star_nframes = np.zeros(1, dtype=np.int64)
-                    star_nframes[0] = nframes[i]
-                    if parang is not None:
-                        star_parang = parang[count:count+item]
-                    star_init = True
+                    raise ValueError("Neither previous nor next background frames found.")
+
+                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
+                self.m_star_out_port.append(im_tmp-background)
+                star_nframes = np.append(star_nframes, nframes[i])
+                if parang is not None:
+                    star_parang = np.append(star_parang, parang[count:count+item])
 
             count += item
 
@@ -713,12 +708,12 @@ class PCABackgroundDitheringModule(ProcessingModule):
     """
 
     def __init__(self,
-                 center,
                  name_in='pca_dither',
                  image_in_tag="im_arr",
                  image_out_tag="im_pca_bg",
+                 center=None,
+                 cubes_per_position=None,
                  shape=(100, 100),
-                 cubes_per_position=1,
                  gaussian=0.15,
                  pca_number=60,
                  mask_radius=0.7,
@@ -730,7 +725,9 @@ class PCABackgroundDitheringModule(ProcessingModule):
                        to ((x0,y0), (x1,y1)) but not restricted to two dither positions. The
                        order of the coordinates should correspond to the order in which the star is
                        present at that specific dither position. So (x0,y0) corresponds with the
-                       dither position where the star appears first.
+                       dither position where the star appears first. Set *center* and
+                       *cubes_per_position* both to None in order to automatically sort and
+                       subtract the background frames, based on DITHER_X and DITHER_Y.
         :type center: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -741,7 +738,10 @@ class PCABackgroundDitheringModule(ProcessingModule):
         :param shape: Tuple (delta_x, delta_y) with the image size that is cropped at the
                       specified dither positions.
         :type shape: tuple, int
-        :param cubes_per_position: Number of consecutive cubes per dither position.
+        :param cubes_per_position: Number of consecutive cubes per dither position. Set *center*
+                                   and *cubes_per_position* both to None in order to automatically
+                                   sort and subtract the background frames, based on DITHER_X
+                                   and DITHER_Y.
         :type cubes_per_position: int
         :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
                          to smooth the image before the star is located.
@@ -750,6 +750,17 @@ class PCABackgroundDitheringModule(ProcessingModule):
         :type pca_number: int
         :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
         :type mask_radius: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **bad_pixel_box** (*int*) -- The size of the sigma filter.
+             * **bad_pixel_sigma** (*float*) -- The sigma threshold.
+             * **bad_pixel_iterate** (*int*) -- Number of iterations.
+             * **mask_position** (*str*) -- Use the *mean* of all image or the *exact* position of
+                                            the star for the placement of the mask.
+             * **mean_only** (*bool*) -- Skip the PCA background subtraction and only subtract the
+                                         mean background.
 
         :return: None
         """
@@ -784,8 +795,8 @@ class PCABackgroundDitheringModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
         self.m_center = center
-        self.m_shape = shape
         self.m_cubes_per_position = cubes_per_position
+        self.m_shape = shape
         self.m_gaussian = gaussian
         self.m_pca_number = pca_number
         self.m_mask_radius = mask_radius
@@ -803,8 +814,29 @@ class PCABackgroundDitheringModule(ProcessingModule):
         :return: None
         """
 
-        n_dither = np.size(self.m_center, 0)
-        star_pos = np.arange(0, n_dither, 1)
+        if self.m_center is None:
+            dither_x = self.m_image_in_port.get_attribute("DITHER_X")
+            dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
+
+            dither_xy = np.zeros((dither_x.shape[0], 2))
+            dither_xy[:, 0] = dither_x
+            dither_xy[:, 1] = dither_y
+
+            npix = self.m_image_in_port.get_shape()[1]
+
+            self.m_center = np.unique(dither_xy, axis=0)
+
+            star_pos = np.copy(self.m_center)
+
+            self.m_center += float(npix)/2.
+            self.m_center = tuple(map(tuple, self.m_center))
+
+            n_dither = np.size(self.m_center, 0)
+
+        else:
+            n_dither = np.size(self.m_center, 0)
+            star_pos = np.arange(0, n_dither, 1)
+
         tags = []
 
         for i, position in enumerate(self.m_center):
@@ -921,6 +953,12 @@ class PCABackgroundNoddingModule(ProcessingModule):
         :type pca_number: int
         :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
         :type mask_radius: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **mask_position** (*str*) -- Use the *mean* of all image or the *exact* position of
+                                            the star for the placement of the mask.
 
         :return: None
         """
