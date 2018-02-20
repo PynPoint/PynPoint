@@ -60,6 +60,8 @@ class PSFpreparationModule(ProcessingModule):
         :param edge_size: Fractional outer radius relative to the image size. The images are
                           masked beyond this radius. Currently this parameter is not used.
         :type edge_size: float
+        :param \**kwargs:
+            See below.
 
         :Keyword arguments:
              * **verbose** (*bool*) -- Print progress to the standard output.

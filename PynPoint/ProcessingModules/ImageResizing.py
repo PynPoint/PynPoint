@@ -260,6 +260,9 @@ class RemoveLinesModule(ProcessingModule):
         """
         Constructor of RemoveLinesModule.
 
+        :param lines: Tuple with the number of lines to be removed in left, right, bottom,
+                      and top direction.
+        :type lines: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -267,8 +270,6 @@ class RemoveLinesModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param num_lines: Number of top rows to delete from each frame.
-        :type num_lines: int
 
         :return: None
         """
