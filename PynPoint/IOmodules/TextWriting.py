@@ -77,7 +77,7 @@ class TextWritingModule(WritingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        self.m_data_port.close_port()
+        self.m_data_port.close_database()
 
 
 class ParangWritingModule(WritingModule):
@@ -142,4 +142,4 @@ class ParangWritingModule(WritingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        self.m_data_port.close_port()
+        self.m_data_port.close_database()

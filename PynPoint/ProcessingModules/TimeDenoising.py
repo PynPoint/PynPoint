@@ -220,7 +220,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             # clean up tmp data port
             self.m_tmp_data_port_denoising.del_all_attributes()
             self.m_tmp_data_port_denoising.del_all_data()
-            self.m_image_in_port.close_port()
+            self.m_image_in_port.close_database()
 
         else:
             self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
@@ -232,7 +232,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                                           "threshold " +
                                                           str(self.m_denoising_threshold))
 
-            self.m_image_out_port.close_port()
+            self.m_image_out_port.close_database()
 
 
 class TimeNormalizationModule(ProcessingModule):
@@ -270,4 +270,4 @@ class TimeNormalizationModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()

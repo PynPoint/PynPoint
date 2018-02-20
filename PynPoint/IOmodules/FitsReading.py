@@ -205,7 +205,7 @@ class FitsReadingModule(ReadingModule):
         sys.stdout.write("Running FitsReadingModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
         # Update number of files used to create the data base entry
         new_files_num = len(files)
