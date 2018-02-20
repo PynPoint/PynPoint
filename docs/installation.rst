@@ -95,7 +95,9 @@ Initial result
 
 If you run the example above, you should see this:
 
-.. image:: images/install_example.*
+.. image:: _static/images/install_example.*
+   :width: 70%
+   :align: center
 	
 The image shows the final results at the end of the PynPoint analysis. The star of the planetary system sits at the center of the image, which is masked here. The prominent red blob to the top-right of center is the planet beta-pic b. The pixel scale for the image is 0.0135" (half of the original data), so the total image is 2"x 2". We see that beta-pic b is roughly 22 pixels from the star (image center), corresponding to roughly 0.3". 
 

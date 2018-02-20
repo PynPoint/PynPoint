@@ -48,7 +48,7 @@ In order to be able to handle the different processing steps we need to create a
                         input_place_in,
                         output_place_in)
 
-Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`pipeline-architecture`. According to |Amara_Quanz2| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
+Now we are ready to add the different pipeline steps. For an explanation about the individual modules check out their documentation in the :ref:`pynpoint-package`. Input- and output-tags/-ports will be explained in :ref:`architecture`. According to |Amara_Quanz2| the following processing steps need to be added for a simple end to end ADI data processing pipeline:
 
 1. Read the raw data: ::
 
