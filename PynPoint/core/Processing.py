@@ -10,9 +10,9 @@ from abc import abstractmethod, ABCMeta
 
 import numpy as np
 
-from PynPoint.core.DataIO import OutputPort, InputPort, ConfigPort
-from PynPoint.util.Multiprocessing import LineProcessingCapsule, apply_function
-from PynPoint.util.Progress import progress
+from PynPoint.Core.DataIO import OutputPort, InputPort, ConfigPort
+from PynPoint.Util.Multiprocessing import LineProcessingCapsule, apply_function
+from PynPoint.Util.Progress import progress
 
 
 class PypelineModule:

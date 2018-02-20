@@ -22,7 +22,7 @@ import pytest
 import numpy as np
 
 import PynPoint as PynPoint
-import PynPoint.old_version
+import PynPoint.OldVersion
 
 limit0 = 1e-20
 limit1 = 1e-10
@@ -59,7 +59,7 @@ class TestImages(object):
         self.images5 = PynPoint.images.create_wdir(self.test_data_dir,
                                 cent_remove=False,resize=2.,ran_sub=None,recent=False)
                                 
-        hdf5file = PynPoint.old_version._Util.filename4mdir(self.test_data_dir)
+        hdf5file = PynPoint.OldVersion._Util.filename4mdir(self.test_data_dir)
 
         # not used
         '''self.images6 = PynPoint.images.create_whdf5input(hdf5file,

@@ -4,7 +4,7 @@ configurations at the same time. The PCA basis is required as input. Note due to
 functionality in numpy this does not run on Mac.
 """
 
-from PynPoint.util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter,\
+from PynPoint.Util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter,\
     MultiprocessingCapsule, to_slice, TaskInput, TaskResult
 import numpy as np
 from scipy import ndimage
