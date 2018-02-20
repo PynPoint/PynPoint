@@ -5,10 +5,10 @@ PynPoint package
 
 .. toctree::
 
-    PynPoint.core
-    PynPoint.io_modules
-    PynPoint.processing_modules
-    PynPoint.util
+    PynPoint.Core
+    PynPoint.IOmodules
+    PynPoint.ProcessingModules
+    PynPoint.Util
 
 Module contents
 ---------------

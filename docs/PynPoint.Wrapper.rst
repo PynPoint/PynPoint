@@ -1,37 +1,37 @@
-PynPoint\.wrapper package
+PynPoint\.Wrapper package
 =========================
 
 Submodules
 ----------
 
-PynPoint\.wrapper\.BasisWrapper module
+PynPoint\.Wrapper\.BasisWrapper module
 --------------------------------------
 
-.. automodule:: PynPoint.wrapper.BasisWrapper
+.. automodule:: PynPoint.Wrapper.BasisWrapper
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.wrapper\.ImageWrapper module
+PynPoint\.Wrapper\.ImageWrapper module
 --------------------------------------
 
-.. automodule:: PynPoint.wrapper.ImageWrapper
+.. automodule:: PynPoint.Wrapper.ImageWrapper
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.wrapper\.ResidualsWrapper module
+PynPoint\.Wrapper\.ResidualsWrapper module
 ------------------------------------------
 
-.. automodule:: PynPoint.wrapper.ResidualsWrapper
+.. automodule:: PynPoint.Wrapper.ResidualsWrapper
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.wrapper\.WrapperUtils module
+PynPoint\.Wrapper\.WrapperUtils module
 --------------------------------------
 
-.. automodule:: PynPoint.wrapper.WrapperUtils
+.. automodule:: PynPoint.Wrapper.WrapperUtils
     :members:
     :undoc-members:
     :show-inheritance:
@@ -40,7 +40,7 @@ PynPoint\.wrapper\.WrapperUtils module
 Module contents
 ---------------
 
-.. automodule:: PynPoint.wrapper
+.. automodule:: PynPoint.Wrapper
     :members:
     :undoc-members:
     :show-inheritance:
