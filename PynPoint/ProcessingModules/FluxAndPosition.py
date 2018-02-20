@@ -223,7 +223,7 @@ class FakePlanetModule(ProcessingModule):
                                                       "{0:.2f}".format(self.m_position[1])+", "+ \
                                                       "{0:.2f}".format(self.m_magnitude)+")")
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class SimplexMinimizationModule(ProcessingModule):
@@ -587,7 +587,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_res_out_port.close_port()
+        self.m_res_out_port.close_database()
 
 
 class FalsePositiveModule(ProcessingModule):
@@ -704,4 +704,4 @@ class FalsePositiveModule(ProcessingModule):
 
         self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_snr_out_port.close_port()
+        self.m_snr_out_port.close_database()

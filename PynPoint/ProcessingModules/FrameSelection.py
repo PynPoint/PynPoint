@@ -136,7 +136,7 @@ class RemoveFramesModule(ProcessingModule):
         self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
         self.m_image_out_port.add_history_information("Frames removed",
                                                       str(np.size(self.m_frame_indices)))
-        self.m_image_in_port.close_port()
+        self.m_image_in_port.close_database()
 
 
 class FrameSelectionModule(ProcessingModule):
@@ -363,7 +363,7 @@ class FrameSelectionModule(ProcessingModule):
         else:
             warnings.warn("No frames were removed.")
 
-        self.m_image_in_port.close_port()
+        self.m_image_in_port.close_database()
 
 
 class RemoveLastFrameModule(ProcessingModule):
@@ -435,4 +435,4 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()

@@ -100,7 +100,7 @@ class CropImagesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Image cropped", str(self.m_shape))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class ScaleImagesModule(ProcessingModule):
@@ -168,7 +168,7 @@ class ScaleImagesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Images scaled", str(self.m_scaling))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class AddLinesModule(ProcessingModule):
@@ -244,7 +244,7 @@ class AddLinesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Lines added", str(self.m_lines))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class RemoveLinesModule(ProcessingModule):
@@ -305,7 +305,7 @@ class RemoveLinesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Lines removed", str(self.m_lines))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
 
 
 class CombineTagsModule(ProcessingModule):
@@ -432,4 +432,4 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))
 
-        self.m_image_out_port.close_port()
+        self.m_image_out_port.close_database()
