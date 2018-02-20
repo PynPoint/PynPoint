@@ -525,7 +525,7 @@ class OutputPort(Port):
             return False
 
         if self._m_data_storage is None:
-            warnings.warn("Port can not store data unless a database is connected")
+            warnings.warn("Port can not store data unless a database is connected.")
             return False
 
         if not self._m_data_base_active:
@@ -551,17 +551,18 @@ class OutputPort(Port):
 
         # check Error cases
         if first_data.ndim > 3 or first_data.ndim < 1:
-            raise ValueError('Output port can only save numpy arrays from 1D to 3D. If you want '
-                             'to save a int, float, string ... use Port attributes instead.')
+            raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
+                             'attributes to save as int, float, or string.')
 
         if data_dim is None:
             data_dim = first_data.ndim
 
         if data_dim > 3 or data_dim < 1:
-            raise ValueError('data_dim needs to be in [1,3].')
+            raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
 
         if data_dim < first_data.ndim:
-            raise ValueError('data_dim needs to have at least the same dim as the input.')
+            raise ValueError('The dimensions of the data should be equal to or larger than the '
+                             'dimensions of the input data.')
 
         if data_dim == 3 and first_data.ndim == 1:
             raise ValueError('Cannot initialize 1D data in 3D data container.')
@@ -918,10 +919,11 @@ class OutputPort(Port):
             return
 
         if not isinstance(value, int) or isinstance(value, float):
-            raise ValueError("Can only add integer and float values to an existing attribute")
+            raise ValueError("Only integer and float values can be added to an existing "
+                             "attribute.")
 
         if name not in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            raise AttributeError("Can not add value to not existing attribute")
+            raise AttributeError("Value can not be added to a not existing attribute.")
 
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
@@ -983,7 +985,7 @@ class OutputPort(Port):
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
         else:
-            warnings.warn("Attribute %s does not exist and could not be deleted." % name)
+            warnings.warn("Attribute '%s' does not exist and could not be deleted." % name)
 
     def del_all_attributes(self):
         """
