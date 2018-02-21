@@ -28,9 +28,6 @@ pip-log.txt
 nosetests.xml
 *junit-*
 htmlcov
-test/test_core/test_data/init/PynPoint_database.hdf5
-test/test_core/test_data/modules/PynPoint_database.hdf5
-test/test_PSF_subtraction/test_data/PynPoint_database.hdf5
 
 # Translations
 *.mo
