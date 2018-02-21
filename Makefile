@@ -2,20 +2,21 @@
 
 help:
 	@echo "clean-build - remove build artifacts"
-	@echo "clean-pyc - remove Python file artifacts"
+	@echo "clean-pyc - remove Python artifacts"
+	@echo "clean-test - remove test and coverage artifacts"
 	@echo "lint - check style with flake8"
-	@echo "test - run tests quickly with the default Python"
-	@echo "test-all - run tests on every Python version with tox"
-	@echo "coverage - check code coverage quickly with the default Python"
-	@echo "docs - generate Sphinx HTML documentation, including API docs"
-	@echo "sdist - package"
+	@echo "test - run test cases"
+	@echo "test-all - run tests with tox"
+	@echo "coverage - check code coverage"
+	@echo "docs - generate Sphinx documentation"
+	@echo "sdist - create a source distribution"
 
 clean: clean-build clean-pyc clean-test
 
 clean-build:
-	rm -rf build/
+	rm -rf PynPoint_exoplanet.egg-info/
 	rm -rf dist/
-	rm -rf *.egg-info
+	rm -rf htmlcov/
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -24,8 +25,12 @@ clean-pyc:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 clean-test:
+	rm -f .coverage
+	rm -f coverage.xml
 	rm -rf .tox/
-	rm -rf htmlcov/
+	rm -rf PynPoint_exoplanet.egg-info/
+	rm -f junit-docs-ci.xml
+	rm -f junit-py27.xml
 
 lint:
 	flake8 PynPoint test
@@ -53,12 +58,11 @@ docs:
 	rm -f docs/PynPoint.IOmodules.rst
 	rm -f docs/PynPoint.OldVersion.rst
 	rm -f docs/PynPoint.ProcessingModules.rst
+	rm -f docs/PynPoint.Util.rst
 	rm -f docs/PynPoint.Wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
 sdist: clean
-#	pip freeze > requirements.rst
 	python setup.py sdist
-	ls -l dist
