@@ -2,19 +2,13 @@
 
 import os
 import sys
+
+from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
-from setuptools import find_packages
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
-
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -27,56 +21,41 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
-
 readme = open('README.rst').read()
-doclink = """
-Documentation
--------------
 
-The full documentation can be generated with Sphinx"""
-
-history = open('HISTORY.rst').read().replace('.. :changelog:', '')
-
-requires = ["numpy",
-            "scipy",
-            "pyfits",
-            "matplotlib",
-            "h5py",
-            "numba"] #during runtime
-tests_require=['pytest>=2.3', 'mock'] #for testing
-
-PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
+packages = ['PynPoint',
+            'PynPoint.Core',
+            'PynPoint.IOmodules',
+            'PynPoint.OldVersion',
+            'PynPoint.ProcessingModules',
+            'PynPoint.Util',
+            'PynPoint.Wrapper']
 
 setup(
     name='PynPoint-exoplanet',
-    version='0.2.0',
-    description='"This is the PynPoint package, which is used to analyse ADI images to find exoplanets"',
-    long_description=readme + '\n\n' + doclink + '\n\n' + history,
-    author='Adam Amara',
-    author_email='adam.amara@phys.ethz.ch',
-    url='"http://pynpoint.ethz.ch"',
-    packages=find_packages(PACKAGE_PATH, "test"),
+    version='1.0.0',
+    description='Python package for processing and analyzing of high-contrast imaging data',
+    long_description=readme,
+    author='Tomas Stolker, Markus Bonse, Adam Amara',
+    author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, adam.amara@phys.ethz.ch',
+    url='http://pynpoint.ethz.ch',
+    packages=packages,
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
-    install_requires=requires,
+    install_requires=['astropy'],
     license='GPLv3',
     zip_safe=False,
     keywords='PynPoint',
-    entry_points={
-    'console_scripts': [
-       'PynPoint = PynPoint._Cli:run',
-       ]
-    },
+    entry_points={'console_scripts': ['PynPoint = PynPoint._Cli:run',]},
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        "Intended Audience :: Science/Research",
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
     ],
-    tests_require=tests_require,
+    tests_require=['pytest>=2.3'],
     cmdclass = {'test': PyTest},
 )
