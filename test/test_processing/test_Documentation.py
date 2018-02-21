@@ -11,7 +11,7 @@ from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.IOmodules.FitsWriting import FitsWritingModule
-from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
@@ -236,9 +236,9 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(bg_subtraction)
 
-        bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="sigma_filtering",
-                                                        image_in_tag="bg_cleaned_arr",
-                                                        image_out_tag="bp_cleaned_arr")
+        bp_cleaning = BadPixelSigmaFilterModule(name_in="sigma_filtering",
+                                                image_in_tag="bg_cleaned_arr",
+                                                image_out_tag="bp_cleaned_arr")
 
         self.pipeline.add_module(bp_cleaning)
 

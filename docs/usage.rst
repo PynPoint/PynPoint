@@ -36,7 +36,7 @@ the pipeline modules for reading and writing .fits data ::
 
 and all pipeline modules (pipeline steps) we want to execute: ::
 
-	from PynPoint.ProcessingModules import BadPixelCleaningSigmaFilterModule, \
+	from PynPoint.ProcessingModules import BadPixelSigmaFilterModule, \
 	DarkSubtractionModule, FlatSubtractionModule, CutTopLinesModule, \
 	AngleCalculationModule, MeanBackgroundSubtractionModule, \ 
 	StarExtractionModule, StarAlignmentModule, PSFSubtractionModule, \
@@ -117,9 +117,9 @@ Now we are ready to add the different pipeline steps. For an explanation about t
 
 8. Bad pixel cleaning: ::
 
-	bp_cleaning = BadPixelCleaningSigmaFilterModule(name_in="sigma_filtering",
-	                                                image_in_tag="flat_sub_arr",
-	                                                image_out_tag="bp_cleaned_arr")
+	bp_cleaning = BadPixelSigmaFilterModule(name_in="sigma_filtering",
+	                                        image_in_tag="flat_sub_arr",
+	                                        image_out_tag="bp_cleaned_arr")
 
 	pipeline.add_module(bp_cleaning)
 
