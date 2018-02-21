@@ -154,8 +154,8 @@ class StarAlignmentModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry with the images that are written as
                               output.
         :type image_out_tag: str
-        :param interpolation: Type of interpolation that is used for shifting the images (spline,
-                              bilinear, or fft).
+        :param interpolation: Type of interpolation that is used for shifting the images (fft,
+                              spline, or bilinear).
         :type interpolation: str
         :param accuracy: Upsampling factor for the cross-correlation. Images will be registered
                          to within 1/accuracy of a pixel.
@@ -245,7 +245,7 @@ class StarAlignmentModule(ProcessingModule):
                 tmp_image = shift(tmp_image, offset, order=1)
 
             else:
-                raise ValueError("Interpolation needs to be spline, bilinear or fft")
+                raise ValueError("Interpolation should be fft, spline, or bilinear.")
 
             return tmp_image
 
