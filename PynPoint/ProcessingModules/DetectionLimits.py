@@ -262,7 +262,7 @@ class ContrastModule(ProcessingModule):
                     fake_planet = FakePlanetModule(position=(sep*pixscale, ang),
                                                    magnitude=mag,
                                                    psf_scaling=self.m_psf_scaling,
-                                                   interpolation="spline",
+                                                   interpolation="fft",
                                                    name_in="fake_planet",
                                                    image_in_tag=self.m_image_in_tag,
                                                    psf_in_tag=self.m_psf_in_tag,
