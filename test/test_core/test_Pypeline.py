@@ -9,7 +9,7 @@ from astropy.io import fits
 
 from PynPoint.Core import Pypeline
 from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule
-from PynPoint.ProcessingModules import BadPixelCleaningSigmaFilterModule
+from PynPoint.ProcessingModules import BadPixelSigmaFilterModule
 
 warnings.simplefilter("always")
 
@@ -123,7 +123,7 @@ class TestPypeline(object):
         pipeline.add_module(reading2)
 
         # --- Processing Module ---
-        process = BadPixelCleaningSigmaFilterModule(image_in_tag="im_arr")
+        process = BadPixelSigmaFilterModule(image_in_tag="im_arr")
 
         pipeline.add_module(process)
 
@@ -182,8 +182,7 @@ class TestPypeline(object):
         pipeline.add_module(reading)
 
         # --- Processing Module ---
-        process = BadPixelCleaningSigmaFilterModule(name_in="filter",
-                                                    image_in_tag="im_list")
+        process = BadPixelSigmaFilterModule(name_in="filter", image_in_tag="im_list")
 
         pipeline.add_module(process)
 
@@ -224,8 +223,7 @@ class TestPypeline(object):
         pipeline.add_module(reading)
 
         # --- Processing Module ---
-        process = BadPixelCleaningSigmaFilterModule(name_in="filter",
-                                                    image_in_tag="im_list")
+        process = BadPixelSigmaFilterModule(name_in="filter", image_in_tag="im_list")
 
         pipeline.add_module(process)
 
