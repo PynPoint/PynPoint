@@ -4,14 +4,6 @@ PynPoint\.Util package
 Submodules
 ----------
 
-PynPoint\.Util\.continous module
---------------------------------
-
-.. automodule:: PynPoint.Util.continous
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 PynPoint\.Util\.CWT module
 --------------------------
 
@@ -35,6 +27,23 @@ PynPoint\.Util\.MultiprocessingPCA module
     :members:
     :undoc-members:
     :show-inheritance:
+
+PynPoint\.Util\.Progress module
+-------------------------------
+
+.. automodule:: PynPoint.Util.Progress
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PynPoint\.Util\.continous module
+--------------------------------
+
+.. automodule:: PynPoint.Util.continous
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

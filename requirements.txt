@@ -14,9 +14,4 @@ scikit-learn
 sphinx
 photutils
 configparser
-
-# old_version
 pyfits
-
-# old_tests
-mock==1.0.1

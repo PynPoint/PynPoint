@@ -36,4 +36,4 @@ License
 
 Copyright 2014-2018 Tomas Stolker, Markus Bonse, Adam Amara, Sascha Quanz, and contributors.
 
-PynPoint is free software and distributed under GNU GPLv3. For the terms and conditions see the LICENSE file.
+PynPoint is free software and distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.

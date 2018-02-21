@@ -41,7 +41,6 @@ Contents:
    PynPoint
    contributing
    mailinglist
-   science
    about
 
 
