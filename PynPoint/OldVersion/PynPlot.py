@@ -22,7 +22,7 @@
 import pylab as pl
 from scipy.ndimage.filters import gaussian_filter
 import numpy as np
-import pyfits
+from astropy.io import fits
 import time
 
 pl.ion()
@@ -61,7 +61,7 @@ def plt_psf_model(res,ind,num_coeff,returnval=False,savefits=False,mask_nan=True
     pl.colorbar()   
 
     if not savefits is False:
-        hdu = pyfits.PrimaryHDU(im)
+        hdu = fits.PrimaryHDU(im)
         hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
@@ -94,7 +94,7 @@ def plt_psf_basis(obj,ind,returnval=False,savefits=False,mask_nan=True):
     pl.title('PCA',size='large')
     pl.colorbar()   
     if not savefits is False:
-        hdu = pyfits.PrimaryHDU(im)
+        hdu = fits.PrimaryHDU(im)
         hdu.writeto(savefits,clobber=True)
 
     if returnval is True:
@@ -129,7 +129,7 @@ def plt_im_arr(obj,ind,returnval=False,savefits=False,mask_nan=True):
     pl.show()
     
     if not savefits is False:
-        hdu = pyfits.PrimaryHDU(im)
+        hdu = fits.PrimaryHDU(im)
         hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
@@ -241,7 +241,7 @@ def plt_res(res,num_coeff,imtype='mean',smooth=None,returnval=False,savefits=Fal
     pl.savefig("test.png")
     
     if not savefits is False:
-        hdu = pyfits.PrimaryHDU(im)
+        hdu = fits.PrimaryHDU(im)
         hdu.writeto(savefits,clobber=True)
     
     if returnval is True:
