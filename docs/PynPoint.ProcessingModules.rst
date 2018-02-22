@@ -1,11 +1,11 @@
 PynPoint\.ProcessingModules package
-=====================================
+===================================
 
 Submodules
 ----------
 
 PynPoint\.ProcessingModules\.BackgroundSubtraction module
------------------------------------------------------------
+---------------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.BackgroundSubtraction
     :members:
@@ -13,7 +13,7 @@ PynPoint\.ProcessingModules\.BackgroundSubtraction module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.BadPixelCleaning module
-------------------------------------------------------
+----------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.BadPixelCleaning
     :members:
@@ -21,7 +21,7 @@ PynPoint\.ProcessingModules\.BadPixelCleaning module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.DarkAndFlatSubtraction module
-------------------------------------------------------------
+----------------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.DarkAndFlatSubtraction
     :members:
@@ -29,7 +29,7 @@ PynPoint\.ProcessingModules\.DarkAndFlatSubtraction module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.DetectionLimits module
------------------------------------------------------
+---------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.DetectionLimits
     :members:
@@ -37,7 +37,7 @@ PynPoint\.ProcessingModules\.DetectionLimits module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.FluxAndPosition module
------------------------------------------------------
+---------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.FluxAndPosition
     :members:
@@ -45,7 +45,7 @@ PynPoint\.ProcessingModules\.FluxAndPosition module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.FrameSelection module
-----------------------------------------------------
+--------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.FrameSelection
     :members:
@@ -53,7 +53,7 @@ PynPoint\.ProcessingModules\.FrameSelection module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.ImageResizing module
----------------------------------------------------
+-------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.ImageResizing
     :members:
@@ -61,7 +61,7 @@ PynPoint\.ProcessingModules\.ImageResizing module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.PSFSubtractionPCA module
--------------------------------------------------------
+-----------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.PSFSubtractionPCA
     :members:
@@ -69,7 +69,7 @@ PynPoint\.ProcessingModules\.PSFSubtractionPCA module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.PSFpreparation module
--------------------------------------------------------
+--------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.PSFpreparation
     :members:
@@ -77,7 +77,7 @@ PynPoint\.ProcessingModules\.PSFpreparation module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.StackingAndSubsampling module
-------------------------------------------------------------
+----------------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.StackingAndSubsampling
     :members:
@@ -85,7 +85,7 @@ PynPoint\.ProcessingModules\.StackingAndSubsampling module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.StarAlignment module
----------------------------------------------------
+-------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.StarAlignment
     :members:
@@ -93,7 +93,7 @@ PynPoint\.ProcessingModules\.StarAlignment module
     :show-inheritance:
 
 PynPoint\.ProcessingModules\.TimeDenoising module
----------------------------------------------------
+-------------------------------------------------
 
 .. automodule:: PynPoint.ProcessingModules.TimeDenoising
     :members:
