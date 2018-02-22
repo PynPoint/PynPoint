@@ -4,7 +4,9 @@
 # Distribution
 PynPoint_exoplanet.egg-info
 dist/
+build/
 htmlcov/
+.eggs/
 
 # Testing
 .coverage
