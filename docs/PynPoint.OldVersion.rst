@@ -1,11 +1,11 @@
 PynPoint\.OldVersion package
-==============================
+============================
 
 Submodules
 ----------
 
 PynPoint\.OldVersion\.Basis module
-------------------------------------
+----------------------------------
 
 .. automodule:: PynPoint.OldVersion.Basis
     :members:
@@ -13,7 +13,7 @@ PynPoint\.OldVersion\.Basis module
     :show-inheritance:
 
 PynPoint\.OldVersion\.Images module
--------------------------------------
+-----------------------------------
 
 .. automodule:: PynPoint.OldVersion.Images
     :members:
@@ -21,7 +21,7 @@ PynPoint\.OldVersion\.Images module
     :show-inheritance:
 
 PynPoint\.OldVersion\.PynPlot module
---------------------------------------
+------------------------------------
 
 .. automodule:: PynPoint.OldVersion.PynPlot
     :members:
@@ -29,7 +29,7 @@ PynPoint\.OldVersion\.PynPlot module
     :show-inheritance:
 
 PynPoint\.OldVersion\.Residuals module
-----------------------------------------
+--------------------------------------
 
 .. automodule:: PynPoint.OldVersion.Residuals
     :members:
@@ -37,7 +37,7 @@ PynPoint\.OldVersion\.Residuals module
     :show-inheritance:
 
 PynPoint\.OldVersion\.Workflow module
----------------------------------------
+-------------------------------------
 
 .. automodule:: PynPoint.OldVersion.Workflow
     :members:

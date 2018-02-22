@@ -1,11 +1,11 @@
 PynPoint\.IOmodules package
-=============================
+===========================
 
 Submodules
 ----------
 
 PynPoint\.IOmodules\.FitsReading module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.FitsReading
     :members:
@@ -13,7 +13,7 @@ PynPoint\.IOmodules\.FitsReading module
     :show-inheritance:
 
 PynPoint\.IOmodules\.FitsWriting module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.FitsWriting
     :members:
@@ -21,7 +21,7 @@ PynPoint\.IOmodules\.FitsWriting module
     :show-inheritance:
 
 PynPoint\.IOmodules\.Hdf5Reading module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.Hdf5Reading
     :members:
@@ -29,7 +29,7 @@ PynPoint\.IOmodules\.Hdf5Reading module
     :show-inheritance:
 
 PynPoint\.IOmodules\.Hdf5Writing module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.Hdf5Writing
     :members:
@@ -37,7 +37,7 @@ PynPoint\.IOmodules\.Hdf5Writing module
     :show-inheritance:
 
 PynPoint\.IOmodules\.TextReading module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.TextReading
     :members:
@@ -45,7 +45,7 @@ PynPoint\.IOmodules\.TextReading module
     :show-inheritance:
 
 PynPoint\.IOmodules\.TextWriting module
------------------------------------------
+---------------------------------------
 
 .. automodule:: PynPoint.IOmodules.TextWriting
     :members:
