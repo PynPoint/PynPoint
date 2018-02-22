@@ -3,23 +3,11 @@
 import os
 import sys
 
-from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
+from setuptools import setup
 
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload')
+    os.system('python setup.py sdist bdist_wheel upload')
     sys.exit()
-
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
 
 readme = open('README.rst').read()
 
@@ -30,6 +18,21 @@ packages = ['PynPoint',
             'PynPoint.ProcessingModules',
             'PynPoint.Util',
             'PynPoint.Wrapper']
+
+requirements = ['configparser',
+                'h5py',
+                'numpy',
+                'numba',
+                'scipy',
+                'astropy',
+                'photutils',
+                'scikit-image',
+                'scikit-learn',
+                'opencv-python',
+                'statsmodels',
+                'PyWavelets',
+                'mlpy',
+                'matplotlib']
 
 setup(
     name='PynPoint-exoplanet',
@@ -42,20 +45,18 @@ setup(
     packages=packages,
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
-    install_requires=['astropy'],
+    install_requires=requirements,
     license='GPLv3',
     zip_safe=False,
     keywords='PynPoint',
-    entry_points={'console_scripts': ['PynPoint = PynPoint._Cli:run',]},
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
+        'Topic :: Scientific/Engineering :: Astronomy'
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
     ],
-    tests_require=['pytest>=2.3'],
-    cmdclass = {'test': PyTest},
+    tests_require=['pytest'],
 )
