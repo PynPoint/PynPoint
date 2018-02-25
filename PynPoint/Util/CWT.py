@@ -232,13 +232,9 @@ class WaveletAnalysisCapsule:
                                                self.__m_spectrum.shape[0],
                                                self.__m_spectrum.shape[0]))
 
-        print self.__m_spectrum.shape
-
         self.__m_spectrum = _fast_zeros_planet_save(self.__m_spectrum,
                                                     uthresh,
                                                     uplanet)
-
-        print self.__m_spectrum.shape
 
 
     def median_filter(self):
