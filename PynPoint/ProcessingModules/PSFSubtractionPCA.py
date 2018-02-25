@@ -9,6 +9,7 @@ import numpy as np
 
 from sklearn.decomposition import PCA
 from scipy import linalg, ndimage, sparse
+from astropy.io import fits
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.MultiprocessingPCA import PcaMultiprocessingCapsule
@@ -668,6 +669,16 @@ class FastPCAModule(ProcessingModule):
         else:
             self.m_multiprocessing = True
 
+        if "images" in kwargs:
+            self.m_images = kwargs["images"]
+        else:
+            self.m_images = None
+
+        if "parang" in kwargs:
+            self.m_parang = kwargs["parang"]
+        else:
+            self.m_parang = None
+
         # look for the maximum number of components
         self.m_max_pacs = np.max(pca_numbers)
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
@@ -676,43 +687,54 @@ class FastPCAModule(ProcessingModule):
         self.m_pca = PCA(n_components=self.m_max_pacs, svd_solver="arpack")
 
         # add input Ports
-        self.m_reference_in_port = self.add_input_port(reference_in_tag)
-        self.m_star_in_port = self.add_input_port(images_in_tag)
+        if images_in_tag is None:
+            self.m_star_in_port = None
+            self.m_reference_in_port = None
 
-        # create output if none create special not used port
-        self.m_res_mean_out_port = self.add_output_port(str(res_mean_tag))
-
-        # None check
-        if res_median_tag is None:
-            self.m_res_median_out_port = self.add_output_port(str("no median"))
-            self.m_res_median_out_port.deactivate()
         else:
-            self.m_res_median_out_port = self.add_output_port(str(res_median_tag))
+            self.m_star_in_port = self.add_input_port(images_in_tag)
+            if images_in_tag == reference_in_tag:
+                self.m_reference_in_port = self.m_star_in_port
+            else:
+                self.m_reference_in_port = self.add_input_port(reference_in_tag)
 
-        if res_rot_mean_clip_tag is None:
-            self.m_res_rot_mean_clip_out_port = self.add_output_port(str("no clip"))
-            self.m_res_rot_mean_clip_out_port.deactivate()
-        else:
-            self.m_res_rot_mean_clip_out_port = self.add_output_port(str(res_rot_mean_clip_tag))
+        # create output ports, if none create special not used port
+        if self.m_star_in_port is not None:
+            self.m_res_mean_out_port = self.add_output_port(str(res_mean_tag))
+            
+            if res_median_tag is None:
+                self.m_res_median_out_port = self.add_output_port(str("no median"))
+                self.m_res_median_out_port.deactivate()
+            else:
+                self.m_res_median_out_port = self.add_output_port(str(res_median_tag))
 
-        if self.m_basis_tag is not None:
-            self.m_basis_out_port = self.add_output_port(self.m_basis_tag)
+            if res_rot_mean_clip_tag is None:
+                self.m_res_rot_mean_clip_out_port = self.add_output_port(str("no clip"))
+                self.m_res_rot_mean_clip_out_port.deactivate()
+            else:
+                self.m_res_rot_mean_clip_out_port = self.add_output_port(str(res_rot_mean_clip_tag))
 
-        # use a dict to store output ports for the non-stacked residuals
-        self.m_res_arr_out_ports = {}
-        self.m_res_arr_required = True
+            if self.m_basis_tag is None:
+                self.m_basis_out_port = self.add_output_port(str("no basis"))
+                self.m_basis_out_port.deactivate()
+            else:
+                self.m_basis_out_port = self.add_output_port(self.m_basis_tag)
 
-        for pca_number in self.m_components:
-            # (cast to string for None case)
-            # if res_arr_out_tag is None we still get different Tag names like None02
-            self.m_res_arr_out_ports[pca_number] = self.add_output_port(str(res_arr_out_tag)
-                                                                        + str(pca_number))
+            # use a dict to store output ports for the non-stacked residuals
+            self.m_res_arr_out_ports = {}
+            self.m_res_arr_required = True
 
-        # deactivate not needed array out ports
-        if res_arr_out_tag is None:
-            self.m_res_arr_required = False
-            for port in self.m_res_arr_out_ports.itervalues():
-                port.deactivate()
+            for pca_number in self.m_components:
+                # (cast to string for None case)
+                # if res_arr_out_tag is None we still get different Tag names like None02
+                self.m_res_arr_out_ports[pca_number] = self.add_output_port(str(res_arr_out_tag)
+                                                                            + str(pca_number))
+
+            # deactivate not needed array out ports
+            if res_arr_out_tag is None:
+                self.m_res_arr_required = False
+                for port in self.m_res_arr_out_ports.itervalues():
+                    port.deactivate()
 
     def _run_multi_processing(self, star_data):
         # do the fit and write out the result
@@ -744,9 +766,12 @@ class FastPCAModule(ProcessingModule):
     def _run_single_processing(self, star_sklearn, star_data):
         # do the fit and write out the result
         # clear all result ports
-        self.m_res_mean_out_port.del_all_data()
-        self.m_res_median_out_port.del_all_data()
-        self.m_res_rot_mean_clip_out_port.del_all_data()
+        if self.m_star_in_port is not None:
+            self.m_res_mean_out_port.del_all_data()
+            self.m_res_median_out_port.del_all_data()
+            self.m_res_rot_mean_clip_out_port.del_all_data()
+
+        # fits.writeto("test.fits", ref_star_data, overwrite=True)
 
         for pca_number in self.m_components:
             tmp_pca_representation = np.matmul(self.m_pca.components_[:pca_number],
@@ -765,65 +790,88 @@ class FastPCAModule(ProcessingModule):
             tmp_without_psf = star_data - tmp_psf_images
 
             # inverse rotation
-            delta_para = -1.*self.m_star_in_port.get_attribute("NEW_PARA")
-            res_array = np.zeros(shape=tmp_without_psf.shape)
-            for i in range(0, len(delta_para)):
-                res_temp = tmp_without_psf[i,]
+            if self.m_star_in_port is None:
+                delta_para = -1.*self.m_parang
+            else:
+                delta_para = -1.*self.m_star_in_port.get_attribute("NEW_PARA")
+
+            res_temp = deepcopy(tmp_without_psf)
+            res_array = np.zeros(tmp_without_psf.shape)
+
+            for i, ang in enumerate(delta_para):
                 # ndimage.rotate rotates in clockwise direction for positive angles
-                res_array[i,] = ndimage.rotate(res_temp,
-                                               delta_para[i] + self.m_extra_rot,
-                                               reshape=False)
+                res_array[i, ] = ndimage.rotate(res_temp[i, ],
+                                                ang+self.m_extra_rot,
+                                                reshape=False)
 
-            # create residuals
-            # 1.) The de-rotated result images
-            if self.m_res_arr_required:
-                self.m_res_arr_out_ports[pca_number].set_all(res_array)
-                self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
-                    self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
-                                                                             "Fast PCA")
+            if self.m_star_in_port is not None:
 
-            # 2.) mean
-            tmp_res_rot_mean = np.mean(res_array,
-                                       axis=0)
+                # create residuals
+                # 1.) The de-rotated result images
+                if self.m_res_arr_required:
+                    self.m_res_arr_out_ports[pca_number].set_all(res_array)
+                    self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
+                        self.m_star_in_port)
+                    self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
+                                                                                 "Fast PCA")
 
-            self.m_res_mean_out_port.append(tmp_res_rot_mean, data_dim=3)
+                # 2.) mean
+                tmp_res_rot_mean = np.mean(res_array,
+                                           axis=0)
 
-            # 3.) median
-            if self.m_res_median_out_port.m_activate:
-                tmp_res_rot_median = np.median(res_array,
-                                               axis=0)
-                self.m_res_median_out_port.append(tmp_res_rot_median, data_dim=3)
+                self.m_res_mean_out_port.append(tmp_res_rot_mean, data_dim=3)
 
-            # 4.) clipped mean
-            if self.m_res_rot_mean_clip_out_port.m_activate:
-                res_rot_temp = res_array.copy()
-                for i in range(0,
-                               res_rot_temp.shape[0]):
-                    res_rot_temp[i,] -= - tmp_res_rot_mean
-                res_rot_var = (res_rot_temp ** 2.).sum(axis=0)
-                tmp_res_rot_var = res_rot_var
+                # 3.) median
+                if self.m_res_median_out_port.m_activate:
+                    tmp_res_rot_median = np.median(res_array,
+                                                   axis=0)
+                    self.m_res_median_out_port.append(tmp_res_rot_median, data_dim=3)
 
-                self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
+                # 4.) clipped mean
+                if self.m_res_rot_mean_clip_out_port.m_activate:
+                    res_rot_temp = res_array.copy()
+                    for i in range(0,
+                                   res_rot_temp.shape[0]):
+                        res_rot_temp[i,] -= - tmp_res_rot_mean
+                    res_rot_var = (res_rot_temp ** 2.).sum(axis=0)
+                    tmp_res_rot_var = res_rot_var
+
+                    self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
+
+        if self.m_star_in_port is None:
+            res_arr = np.mean(res_array, axis=0)
+        else:
+            res_arr = None
+
+        return res_arr
 
     def run(self):
         # get all data and subtract the mean
-        star_data = self.m_star_in_port.get_all()
+        if self.m_star_in_port is None:
+            star_data = self.m_images
+        else:
+            star_data = self.m_star_in_port.get_all()
+
         mean_star = np.mean(star_data, axis=0)
         star_data -= mean_star
 
-        if self.m_reference_in_port.tag == self.m_star_in_port.tag:
+        if self.m_star_in_port is None:
             ref_star_data = deepcopy(star_data)
 
         else:
-            ref_star_data = self.m_reference_in_port.get_all()
-            mean_ref_star = np.mean(ref_star_data, axis=0)
-            ref_star_data -= mean_ref_star
+            if self.m_reference_in_port.tag == self.m_star_in_port.tag:
+                ref_star_data = deepcopy(star_data)
+
+            else:
+                ref_star_data = self.m_reference_in_port.get_all()
+                mean_ref_star = np.mean(ref_star_data, axis=0)
+                ref_star_data -= mean_ref_star
 
         # Fit the PCA model
         if self.m_verbose:
             stdout.write("Constructing PSF model...")
             stdout.flush()
+
         ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
                                               ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
@@ -842,22 +890,28 @@ class FastPCAModule(ProcessingModule):
         star_sklearn = star_data.reshape((star_data.shape[0],
                                           star_data.shape[1] * star_data.shape[2]))
 
-        # multiprocessing crashed on Mac in combination with numpy
-        if (platform == "darwin" or self.m_res_arr_required) or not self.m_multiprocessing:
-            self._run_single_processing(star_sklearn, star_data)
+        # multiprocessing crashes on Mac in combination with numpy
+        if platform == "darwin" or self.m_res_arr_required or not self.m_multiprocessing:
+            res_arr = self._run_single_processing(star_sklearn, star_data)
         else:
             self._run_multi_processing(star_data)
 
         if self.m_verbose:
             stdout.write(" [DONE]\n")
 
-        # save history for all other ports
-        self.m_res_mean_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-        self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-        self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+        if self.m_star_in_port is None:
 
-        self.m_res_mean_out_port.add_history_information("PSF subtraction", "Fast PCA")
-        self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
-        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
+            return res_arr
 
-        self.m_res_mean_out_port.close_database()
+        else:
+
+            # save history for all other ports
+            self.m_res_mean_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+            self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+            self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
+
+            self.m_res_mean_out_port.add_history_information("PSF subtraction", "Fast PCA")
+            self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
+            self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
+
+            self.m_res_mean_out_port.close_database()
