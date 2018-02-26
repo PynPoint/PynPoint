@@ -149,7 +149,7 @@ class PcaTaskProcessor(TaskProcessor):
         if self.m_result_requirements[2]:
             residual_output[3:, :, :] = res_array
 
-        print "Created Residual with " + str(pca_number) + " components"
+        # print "Created Residual with " + str(pca_number) + " components"
 
         return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 
