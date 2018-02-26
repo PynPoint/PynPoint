@@ -1,5 +1,5 @@
 """
-Module for writing a list of tags from the database to a separate .hdf5 file
+Module for writing a list of tags from the database to a separate HDF5 file.
 """
 
 import os
@@ -12,9 +12,9 @@ from PynPoint.Core.Processing import WritingModule
 
 class Hdf5WritingModule(WritingModule):
     """
-    Module which exports a part of the PynPoint internal database to a separate .hdf5 file. The
-    datasets of the database can be chosen using a tag_dictionary. The module will also export the
-    static and non-static attributes.
+    Module which exports a part of the PynPoint internal database to a separate HDF5 file. The
+    datasets of the database can be chosen using the *tag_dictionary*. The module will also export
+    the static and non-static attributes.
     """
 
     def __init__(self,
@@ -30,15 +30,14 @@ class Hdf5WritingModule(WritingModule):
         :type name_in: str
         :param file_name: Name of the file which will be created by the module.
         :type file_name: str
-        :param output_dir: Location where the .hdf5 file will be stored. If no location is given,
-                           the Pypeline default output location is used.
+        :param output_dir: Location where the .hdf5 file will be stored. The Pypeline default
+                           output location is used when no location is given.
         :type output_dir: str
         :param tag_dictionary: Directory containing all tags / keys of the datasets which will be
                                exported from the PynPoint internal database. The datasets will be
                                exported like this:
 
-                                { *tag_of_the_dataset_in_the_PynPoint_database* :
-                                  *name_of_the_exported_dataset* }
+                                { *PynPoint_database_tag* : *output_tag* }
         :type tag_dictionary: dict
         :param keep_attributes: If True all static and non-static attributes will be exported.
         :type keep_attributes: bool
@@ -57,8 +56,8 @@ class Hdf5WritingModule(WritingModule):
 
     def run(self):
         """
-        Run method of the module. Exports all datasets defined in the tag_dictionary to an
-        external .hdf5 file.
+        Run method of the module. Exports all datasets defined in the *tag_dictionary* to an
+        external HDF5 file.
 
         :return: None
         """
@@ -66,19 +65,17 @@ class Hdf5WritingModule(WritingModule):
         sys.stdout.write("Running Hdf5WritingModule...")
         sys.stdout.flush()
 
-        out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
+        out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
 
         for in_tag, out_tag in self.m_tag_dictionary.iteritems():
 
             tmp_port = self.add_input_port(in_tag)
-
             tmp_data = tmp_port.get_all()
 
             if tmp_data is None:
                 continue
 
-            data_set = out_file.create_dataset(out_tag,
-                                               data=tmp_data)
+            data_set = out_file.create_dataset(out_tag, data=tmp_data)
 
             if self.m_keep_attributes:
                 # static attributes
@@ -94,9 +91,8 @@ class Hdf5WritingModule(WritingModule):
                 if non_static_attr_keys is not None:
                     for key in non_static_attr_keys:
                         tmp_data_attr = tmp_port.get_attribute(key)
-
-                        out_file.create_dataset(("header_" + out_tag + "/" + key),
-                                                data=tmp_data_attr)
+                        attr_tag = "header_" + out_tag + "/" + key
+                        out_file.create_dataset(attr_tag, data=tmp_data_attr)
 
             tmp_port.close_database()
 
