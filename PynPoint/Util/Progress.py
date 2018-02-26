@@ -1,7 +1,5 @@
 import sys
 
-__all__ = ["progress"]
-
 def progress(current, total, message):
     fraction = float(current)/float(total)
     percentage = round(fraction*100., 1)
