@@ -1,45 +1,45 @@
-PynPoint\.old\_version package
-==============================
+PynPoint\.OldVersion package
+============================
 
 Submodules
 ----------
 
-PynPoint\.old\_version\.Basis module
+PynPoint\.OldVersion\.Basis module
+----------------------------------
+
+.. automodule:: PynPoint.OldVersion.Basis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PynPoint\.OldVersion\.Images module
+-----------------------------------
+
+.. automodule:: PynPoint.OldVersion.Images
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PynPoint\.OldVersion\.PynPlot module
 ------------------------------------
 
-.. automodule:: PynPoint.old_version.Basis
+.. automodule:: PynPoint.OldVersion.PynPlot
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.old\_version\.Images module
--------------------------------------
-
-.. automodule:: PynPoint.old_version.Images
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-PynPoint\.old\_version\.PynPlot module
+PynPoint\.OldVersion\.Residuals module
 --------------------------------------
 
-.. automodule:: PynPoint.old_version.PynPlot
+.. automodule:: PynPoint.OldVersion.Residuals
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.old\_version\.Residuals module
-----------------------------------------
+PynPoint\.OldVersion\.Workflow module
+-------------------------------------
 
-.. automodule:: PynPoint.old_version.Residuals
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-PynPoint\.old\_version\.Workflow module
----------------------------------------
-
-.. automodule:: PynPoint.old_version.Workflow
+.. automodule:: PynPoint.OldVersion.Workflow
     :members:
     :undoc-members:
     :show-inheritance:
@@ -48,7 +48,7 @@ PynPoint\.old\_version\.Workflow module
 Module contents
 ---------------
 
-.. automodule:: PynPoint.old_version
+.. automodule:: PynPoint.OldVersion
     :members:
     :undoc-members:
     :show-inheritance:

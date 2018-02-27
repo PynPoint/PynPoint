@@ -1,23 +1,15 @@
-astropy
-numba
-statsmodels
-scipy
-mlpy
-numpy
-h5py
-matplotlib
-PyWavelets
-opencv-python
-scikit-image
-pytest
-scikit-learn
-sphinx
-photutils
 configparser
+h5py==2.6.0
+numpy
+numba
+scipy
+astropy
+photutils
+scikit-image
+scikit-learn
+opencv-python
+matplotlib
+statsmodels
+PyWavelets
+mlpy
 emcee
-
-# old_version
-pyfits
-
-# old_tests
-mock==1.0.1

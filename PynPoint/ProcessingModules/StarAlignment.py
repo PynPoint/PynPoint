@@ -136,7 +136,7 @@ class StarAlignmentModule(ProcessingModule):
                  image_in_tag="im_arr",
                  ref_image_in_tag=None,
                  image_out_tag="im_arr_aligned",
-                 interpolation="fft",
+                 interpolation="spline",
                  accuracy=10,
                  resize=None,
                  num_references=10):
@@ -234,18 +234,18 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            if self.m_interpolation == "fft":
-                tmp_image_spec = fourier_shift(np.fft.fftn(tmp_image), offset)
-                tmp_image = np.fft.ifftn(tmp_image_spec).real
-
-            elif self.m_interpolation == "spline":
+            if self.m_interpolation == "spline":
                 tmp_image = shift(tmp_image, offset, order=5)
 
             elif self.m_interpolation == "bilinear":
                 tmp_image = shift(tmp_image, offset, order=1)
 
+            elif self.m_interpolation == "fft":
+                tmp_image_spec = fourier_shift(np.fft.fftn(tmp_image), offset)
+                tmp_image = np.fft.ifftn(tmp_image_spec).real
+
             else:
-                raise ValueError("Interpolation needs to be spline, bilinear or fft")
+                raise ValueError("Interpolation should be spline, bilinear, or fft.")
 
             return tmp_image
 
@@ -344,7 +344,7 @@ class StarCenteringModule(ProcessingModule):
                  image_out_tag="im_center",
                  fit_out_tag="center_fit",
                  method="full",
-                 interpolation="fft",
+                 interpolation="spline",
                  **kwargs):
         """
         Constructor of StarCenteringModule.
@@ -369,8 +369,8 @@ class StarCenteringModule(ProcessingModule):
                        the cube and shift all images to that location ("mean"). The "mean" method
                        could be used after running the StarAlignmentModule.
         :type method: str
-        :param interpolation: Type of interpolation that is used for shifting the images (fft,
-                              spline, or bilinear).
+        :param interpolation: Type of interpolation that is used for shifting the images (spline,
+                              bilinear, or fft).
         :type interpolation: str
         :param \**kwargs:
             See below.
@@ -454,15 +454,15 @@ class StarCenteringModule(ProcessingModule):
             elif self.m_method == "mean":
                 popt = self.m_popt
 
-            if self.m_interpolation == "fft":
-                fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
-                im_center = np.fft.ifftn(fft_shift).real
-
-            elif self.m_interpolation == "spline":
+            if self.m_interpolation == "spline":
                 im_center = shift(image, (-popt[1], -popt[0]), order=5)
 
             elif self.m_interpolation == "bilinear":
                 im_center = shift(image, (-popt[1], -popt[0]), order=1)
+
+            elif self.m_interpolation == "fft":
+                fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
+                im_center = np.fft.ifftn(fft_shift).real
 
             return im_center
 

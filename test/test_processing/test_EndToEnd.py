@@ -15,7 +15,7 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
-from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 
@@ -206,12 +206,12 @@ class TestEndToEnd(object):
         storage.close_connection()
 
     def test_bad_pixel(self):
-        bad_pixel = BadPixelCleaningSigmaFilterModule(name_in="bad_pixel",
-                                                      image_in_tag="im_bg",
-                                                      image_out_tag="im_bp",
-                                                      box=9,
-                                                      sigma=8,
-                                                      iterate=3)
+        bad_pixel = BadPixelSigmaFilterModule(name_in="bad_pixel",
+                                              image_in_tag="im_bg",
+                                              image_out_tag="im_bp",
+                                              box=9,
+                                              sigma=8,
+                                              iterate=3)
 
         self.pipeline.add_module(bad_pixel)
         self.pipeline.run_module("bad_pixel")

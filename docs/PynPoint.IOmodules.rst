@@ -1,53 +1,53 @@
-PynPoint\.io\_modules package
-=============================
+PynPoint\.IOmodules package
+===========================
 
 Submodules
 ----------
 
-PynPoint\.io\_modules\.FitsReading module
------------------------------------------
+PynPoint\.IOmodules\.FitsReading module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.FitsReading
+.. automodule:: PynPoint.IOmodules.FitsReading
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.io\_modules\.FitsWriting module
------------------------------------------
+PynPoint\.IOmodules\.FitsWriting module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.FitsWriting
+.. automodule:: PynPoint.IOmodules.FitsWriting
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.io\_modules\.Hdf5Reading module
------------------------------------------
+PynPoint\.IOmodules\.Hdf5Reading module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.Hdf5Reading
+.. automodule:: PynPoint.IOmodules.Hdf5Reading
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.io\_modules\.Hdf5Writing module
------------------------------------------
+PynPoint\.IOmodules\.Hdf5Writing module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.Hdf5Writing
+.. automodule:: PynPoint.IOmodules.Hdf5Writing
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.io\_modules\.TextReading module
------------------------------------------
+PynPoint\.IOmodules\.TextReading module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.TextReading
+.. automodule:: PynPoint.IOmodules.TextReading
     :members:
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.io\_modules\.TextWriting module
------------------------------------------
+PynPoint\.IOmodules\.TextWriting module
+---------------------------------------
 
-.. automodule:: PynPoint.io_modules.TextWriting
+.. automodule:: PynPoint.IOmodules.TextWriting
     :members:
     :undoc-members:
     :show-inheritance:
@@ -56,7 +56,7 @@ PynPoint\.io\_modules\.TextWriting module
 Module contents
 ---------------
 
-.. automodule:: PynPoint.io_modules
+.. automodule:: PynPoint.IOmodules
     :members:
     :undoc-members:
     :show-inheritance:

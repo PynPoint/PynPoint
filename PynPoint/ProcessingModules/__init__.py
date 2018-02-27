@@ -1,8 +1,8 @@
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgroundSubtractionModule, \
                                   PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
                                   PCABackgroundDitheringModule, NoddingBackgroundModule
-from BadPixelCleaning import BadPixelCleaningSigmaFilterModule, BadPixelInterpolationModule, \
-                             BadPixelMapCreationModule, BadPixelInterpolationRefinementModule
+from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationModule, \
+                             BadPixelMapModule, BadPixelRefinementModule
 from DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule
