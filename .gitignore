@@ -1,48 +1,22 @@
+# Python
 *.py[cod]
 
-# C extensions
-*.so
+# Distribution
+PynPoint_exoplanet.egg-info
+dist/
+build/
+htmlcov/
+.eggs/
 
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-.DS_Store
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
+# Testing
 .coverage
-.tox
-nosetests.xml
-*junit-*
-htmlcov
-test/test_core/test_data/init/PynPoint_database.hdf5
-test/test_core/test_data/modules/PynPoint_database.hdf5
-test/test_PSF_subtraction/test_data/PynPoint_database.hdf5
-
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-# Complexity
-output/*.html
-output/*/index.html
+coverage.xml
+.tox/
+junit-docs-ci.xml
+junit-py27.xml
 
 # Sphinx
 docs/_build
+
+# Mac
+.DS_Store
