@@ -19,10 +19,10 @@ import os
 
 import h5py
 import numpy as np
-import pyfits
 import pylab as pl
 from scipy import linalg
 from scipy import ndimage
+from astropy.io import fits
 
 from PynPoint.OldVersion import _Mask
 
@@ -71,12 +71,12 @@ def rd_fits(obj):#,avesub=True,para_sort=True,inner_pix=False):
     for i in range(0,obj.num_files):
         file_temp = obj.files[i]
 
-        hdu = pyfits.open(file_temp)
+        hdu = fits.open(file_temp)
         para[i] = hdu[0].header['NEW_PARA']
         im_temp = hdu[0].data
         hdu.close()
 
-        #im_temp = pyfits.getdata(obj.files[i],0)
+        #im_temp = fits.getdata(obj.files[i],0)
 
         #print im_temp.shape
         # if inner_pix is not False:

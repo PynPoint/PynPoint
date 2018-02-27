@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 import emcee
 
-from scipy.ndimage import shift, rotate
+from scipy.ndimage import shift, fourier_shift, rotate
 from scipy.optimize import minimize
 from scipy.stats import t
 from sklearn.decomposition import PCA
@@ -33,6 +33,7 @@ class FakePlanetModule(ProcessingModule):
                  position,
                  magnitude,
                  psf_scaling=1.,
+                 interpolation="spline",
                  name_in="fake_planet",
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
@@ -51,6 +52,9 @@ class FakePlanetModule(ProcessingModule):
                             neutral density filter). A negative value will inject a negative
                             planet signal.
         :type psf_scaling: float
+        :param interpolation: Type of interpolation that is used for shifting the images (spline,
+                              bilinear, or fft).
+        :type interpolation: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with images that are read as input.
@@ -87,6 +91,7 @@ class FakePlanetModule(ProcessingModule):
         self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
+        self.m_interpolation = interpolation
 
     def run(self):
         """
@@ -207,10 +212,18 @@ class FakePlanetModule(ProcessingModule):
                     else:
                         psf_tmp = self.m_psf_in_port[j*memory+i]
 
-                psf_tmp = shift(psf_tmp,
-                                (y_shift, x_shift),
-                                order=5,
-                                mode='reflect')
+                if self.m_interpolation == "spline":
+                    psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=5, mode='reflect')
+
+                elif self.m_interpolation == "bilinear":
+                    psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=1, mode='reflect')
+
+                elif self.m_interpolation == "fft":
+                    psf_fft = fourier_shift(np.fft.fftn(psf_tmp), (y_shift, x_shift))
+                    psf_tmp = np.fft.ifftn(psf_fft).real
+
+                else:
+                    raise ValueError("Interpolation should be fft, spline, or bilinear.")
 
                 image[i, ] += self.m_psf_scaling*flux_ratio*psf_tmp
 
@@ -376,6 +389,7 @@ class SimplexMinimizationModule(ProcessingModule):
             fake_planet = FakePlanetModule(position=(sep, ang),
                                            magnitude=mag,
                                            psf_scaling=self.m_psf_scaling,
+                                           interpolation="spline",
                                            name_in="fake_planet",
                                            image_in_tag=self.m_image_in_tag,
                                            psf_in_tag=self.m_psf_in_tag,
