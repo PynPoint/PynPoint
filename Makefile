@@ -31,6 +31,7 @@ clean-test:
 	rm -rf PynPoint_exoplanet.egg-info/
 	rm -f junit-docs-ci.xml
 	rm -f junit-py27.xml
+	rm -rf .pytest_cache/
 
 test:
 	py.test
