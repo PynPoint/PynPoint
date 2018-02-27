@@ -15,7 +15,6 @@ from scipy.stats import t
 from sklearn.decomposition import PCA
 from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
-from astropy.io import fits
 from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Util.Progress import progress
@@ -770,58 +769,19 @@ def _psf_subtraction(images,
                      pca_number,
                      extra_rot):
     """
-    Module for fast (compared to PSFSubtractionModule) PCA subtraction. The multiprocessing
-    implementation is only supported for Linux and Windows. Mac only runs in single processing
-    due to a bug in the numpy package.
-    """
+    Internal function for PSF subtraction with PCA.
 
-    """
-    Constructor of FastPCAModule.
-
-    :param pca_numbers: Number of PCA components used for the PSF model. Can be a single value
-                        or a list of integers. A list of PCAs will be processed (if supported)
-                        using multiprocessing.
-    :type pca_numbers: int
-    :param name_in: Unique name of the module instance.
-    :type name_in: str
-    :param images_in_tag: Tag of the database entry with the science images that are read
-                          as input.
-    :type images_in_tag: str
-    :param reference_in_tag: Tag of the database entry with the reference images that are
-                             read as input.
-    :type reference_in_tag: str
-    :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
-    :type res_mean_tag: str
-    :param res_median_tag: Tag of the database entry with the median collapsed residuals. Not
-                           calculated if set to *None*.
-    :type res_median_tag: str
-    :param res_arr_out_tag: Tag of the database entry with the image residuals from the PSF
-                            subtraction. If a list of PCs is provided in *pca_numbers* then
-                            multiple tags will be created in the central database. Not
-                            calculated if set to *None*.
-    :type res_arr_out_tag: str
-    :param res_rot_mean_clip_tag: Tag of the database entry of the clipped mean residuals. Not
-                                  calculated if set to *None*.
-    :type res_rot_mean_clip_tag: str
+    :param images: Stack of images, also used as reference images.
+    :type images: ndarray
+    :param parang: Angles (deg) for derotation of the images.
+    :type parang: ndarray
+    :param pca_number: Number of PCA components used for the PSF model.
+    :type pca_number: int
     :param extra_rot: Additional rotation angle of the images (deg).
     :type extra_rot: float
-    :param \**kwargs:
-        See below.
 
-    :Keyword arguments:
-         * **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
-         * **verbose** (*bool*) -- Print progress to the standard output.
-
-    :return: None
-    """
-
-    """
-    Run method of the module. Subtracts the mean of the image stack from all images, reshapes
-    the stack of images into a 2D array, uses singular value decomposition to construct the
-    orthogonal basis set, calculates the PCA coefficients for each image, subtracts the PSF
-    model, and writes the residuals as output.
-
-    :return: None
+    :return: Mean residuals of the PSF subtraction.
+    :rtype: ndarray
     """
 
     pca = PCA(n_components=pca_number, svd_solver="arpack")
@@ -841,8 +801,6 @@ def _psf_subtraction(images,
 
     for j, item in enumerate(-1.*parang):
         residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
-
-    # fits.writeto('test.fits', np.mean(residuals, axis=0), overwrite=True)
 
     return np.mean(residuals, axis=0)
 
@@ -928,7 +886,7 @@ def _lnlike(param,
 
     fake = _fake_planet(images,
                         psf,
-                        parang,
+                        parang-extra_rot,
                         (sep, ang),
                         mag,
                         psf_scaling,
@@ -1028,8 +986,8 @@ class MCMCsamplingModule(ProcessingModule):
                  image_in_tag="im_arr",
                  psf_in_tag="im_arr",
                  chain_out_tag="chain",
-                 nwalkers=1000,
-                 nsteps=100,
+                 nwalkers=100,
+                 nsteps=200,
                  psf_scaling=-1.,
                  pca_number=20,
                  aperture=0.1,
