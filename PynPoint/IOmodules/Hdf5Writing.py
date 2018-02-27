@@ -22,7 +22,8 @@ class Hdf5WritingModule(WritingModule):
                  name_in="hdf5_writing",
                  output_dir=None,
                  tag_dictionary=None,
-                 keep_attributes=True):
+                 keep_attributes=True,
+                 overwrite=False):
         """
         Constructor of Hdf5WritingModule.
 
@@ -41,6 +42,8 @@ class Hdf5WritingModule(WritingModule):
         :type tag_dictionary: dict
         :param keep_attributes: If True all static and non-static attributes will be exported.
         :type keep_attributes: bool
+        :param overwrite: Overwrite an existing HDF5 file.
+        :type overwrite: bool
 
         :return: None
         """
@@ -53,6 +56,7 @@ class Hdf5WritingModule(WritingModule):
         self.m_file_name = file_name
         self.m_tag_dictionary = tag_dictionary
         self.m_keep_attributes = keep_attributes
+        self.m_overwrite = overwrite
 
     def run(self):
         """
@@ -65,7 +69,10 @@ class Hdf5WritingModule(WritingModule):
         sys.stdout.write("Running Hdf5WritingModule...")
         sys.stdout.flush()
 
-        out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
+        if self.m_overwrite:
+            out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
+        else:
+            out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
 
         for in_tag, out_tag in self.m_tag_dictionary.iteritems():
 
