@@ -1,5 +1,5 @@
 """
-Modules for photometric and astrometric measurements of the planet.
+Modules for photometric and astrometric measurements of a planet.
 """
 
 import math
@@ -7,11 +7,12 @@ import sys
 import warnings
 
 import numpy as np
+import emcee
 
-from scipy.ndimage import shift
+from scipy.ndimage import shift, fourier_shift, rotate
 from scipy.optimize import minimize
 from scipy.stats import t
-from scipy.ndimage import fourier_shift
+from sklearn.decomposition import PCA
 from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
 from photutils import aperture_photometry, CircularAperture
@@ -142,8 +143,8 @@ class FakePlanetModule(ProcessingModule):
                         self.m_psf_in_port.get_shape()[2])
 
         if psf_size != im_size:
-            raise ValueError("The images in %s should have the same dimensions as the images "
-                             "images in %s.") % (self.m_image_in_port.tag, self.m_psf_in_port.tag)
+            raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
+                             "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
 
         if memory == -1 or memory >= n_psf:
             n_stack_psf = 1
@@ -168,9 +169,6 @@ class FakePlanetModule(ProcessingModule):
             psf = self.m_psf_in_port.get_all()
 
         elif ndim_psf == 3 and n_image != n_psf:
-            warnings.warn("The number of images in %s do not match with %s. Using the mean "
-                          "instead." % (self.m_psf_in_port.tag, self.m_image_in_port.tag))
-
             psf = np.zeros((self.m_image_in_port.get_shape()[1],
                             self.m_image_in_port.get_shape()[2]))
 
@@ -186,13 +184,13 @@ class FakePlanetModule(ProcessingModule):
 
                 psf /= float(n_psf)
 
-            ndim_psf == psf.ndim
+            ndim_psf = psf.ndim
 
         for j, _ in enumerate(im_stacks[:-1]):
             if self.m_verbose:
                 progress(j, len(im_stacks[:-1]), "Running FakePlanetModule...")
 
-            image = self.m_image_in_port[im_stacks[j]:im_stacks[j+1]]
+            image = np.copy(self.m_image_in_port[im_stacks[j]:im_stacks[j+1]])
 
             for i in range(image.shape[0]):
                 if memory == -1 or memory >= n_image:
@@ -226,7 +224,7 @@ class FakePlanetModule(ProcessingModule):
                 else:
                     raise ValueError("Interpolation should be fft, spline, or bilinear.")
 
-                image[i,] += self.m_psf_scaling*flux_ratio*psf_tmp
+                image[i, ] += self.m_psf_scaling*flux_ratio*psf_tmp
 
             self.m_image_out_port.append(image)
 
@@ -304,8 +302,7 @@ class SimplexMinimizationModule(ProcessingModule):
                       the sum of the absolute values of the determinant of the Hessian matrix, or
                       *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017).
         :type merit: str
-        :param aperture: Aperture radius (arcsec) of the selected region, centered on the negative
-                         fake companion, used for the minimization.
+        :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
         :type aperture: float
         :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
                       the images before the function of merit is calculated (in order to reduce
@@ -459,7 +456,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                             image_out_tag="simplex_prep",
                                             image_mask_out_tag=None,
                                             mask_out_tag=None,
-                                            norm=True,
+                                            norm=False,
                                             cent_remove=cent_remove,
                                             cent_size=self.m_mask,
                                             edge_size=1.,
@@ -521,17 +518,13 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                     order='rc')
 
                 hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-
                 hes_det[rr_grid > self.m_aperture] = 0.
-
                 merit = np.sum(np.abs(hes_det))
 
             elif self.m_merit == "sum":
 
                 im_crop[rr_grid > self.m_aperture] = 0.
-
                 merit = np.sum(np.abs(im_crop))
-                # merit = np.sum( im_crop**2 / np.std(im_crop[rr_grid < self.m_radius])**2 )
 
             else:
                 raise ValueError("Function of merit should be set to hessian or sum.")
@@ -668,13 +661,18 @@ class FalsePositiveModule(ProcessingModule):
         :return: None
         """
 
+        sys.stdout.write("Running FalsePositiveModule...")
+        sys.stdout.flush()
+
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_aperture /= pixscale
 
         image = self.m_image_in_port.get_all()
 
-        if len(image.shape) == 3:
-            warnings.warn("Using the first image of "+str(self.m_image_in_port.tag)+".")
+        if image.ndim == 3:
+            if image.shape[0] != 1:
+                warnings.warn("Using the first image of %s." % self.m_image_in_port.tag)
+
             image = image[0, ]
 
         npix = image.shape[0]
@@ -725,3 +723,474 @@ class FalsePositiveModule(ProcessingModule):
         self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_snr_out_port.close_database()
+
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
+
+
+def _fake_planet(science,
+                 psf,
+                 parang,
+                 position,
+                 magnitude,
+                 psf_scaling,
+                 pixscale):
+    """
+    Internal function to inject fake planets into a cube of images. This function is similar to
+    FakePlanetModule but does not require access to the PynPoint database.
+    """
+
+    radial = position[0]/pixscale
+    theta = position[1]*math.pi/180. + math.pi/2.
+    flux_ratio = 10.**(-magnitude/2.5)
+
+    if psf.ndim == 2:
+        psf_size = (psf.shape[0], psf.shape[1])
+    elif psf.ndim == 3:
+        psf_size = (psf.shape[1], psf.shape[2])
+
+    if psf_size != (science.shape[1], science.shape[2]):
+        raise ValueError("The science images should have the same dimensions as the PSF template.")
+
+    if psf.ndim == 3 and psf.shape[0] == 1:
+        psf = np.squeeze(psf, axis=0)
+    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
+        psf = np.mean(psf, axis=0)
+
+    fake = np.copy(science)
+
+    for i in range(fake.shape[0]):
+        x_shift = radial*math.cos(theta-math.radians(parang[i]))
+        y_shift = radial*math.sin(theta-math.radians(parang[i]))
+
+        if psf.ndim == 2:
+            psf_tmp = np.copy(psf)
+        elif psf.ndim == 3:
+            psf_tmp = np.copy(psf[i, ])
+
+        psf_tmp = shift(psf_tmp,
+                        (y_shift, x_shift),
+                        order=5,
+                        mode='reflect')
+
+        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
+
+    return fake
+
+
+def _psf_subtraction(images,
+                     parang,
+                     pca_number,
+                     extra_rot):
+    """
+    Internal function for PSF subtraction with PCA.
+
+    :param images: Stack of images, also used as reference images.
+    :type images: ndarray
+    :param parang: Angles (deg) for derotation of the images.
+    :type parang: ndarray
+    :param pca_number: Number of PCA components used for the PSF model.
+    :type pca_number: int
+    :param extra_rot: Additional rotation angle of the images (deg).
+    :type extra_rot: float
+
+    :return: Mean residuals of the PSF subtraction.
+    :rtype: ndarray
+    """
+
+    pca = PCA(n_components=pca_number, svd_solver="arpack")
+
+    images -= np.mean(images, axis=0)
+    images_reshape = images.reshape((images.shape[0], images.shape[1]*images.shape[2]))
+
+    pca.fit(images_reshape)
+
+    pca_rep = np.matmul(pca.components_[:pca_number], images_reshape.T)
+    pca_rep = np.vstack((pca_rep, np.zeros((0, images.shape[0])))).T
+
+    model = pca.inverse_transform(pca_rep)
+    model = model.reshape(images.shape)
+
+    residuals = images - model
+
+    for j, item in enumerate(-1.*parang):
+        residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
+
+    return np.mean(residuals, axis=0)
+
+
+def _lnprior(param,
+             bounds):
+    """
+    Internal function for the log prior function. Should be placed at the highest level of the
+    Python module in order to be pickled.
+
+    :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The angle
+                  is measured in counterclockwise direction with respect to the upward direction
+                  (i.e., East of North).
+    :type param: tuple, float
+    :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
+                   contrast (mag). Each set of boundaries is specified as a tuple.
+    :type bounds: tuple, float
+
+    :return: Log prior.
+    :rtype float
+    """
+
+    if bounds[0][0] <= param[0] <= bounds[0][1] and \
+       bounds[1][0] <= param[1] <= bounds[1][1] and \
+       bounds[2][0] <= param[2] <= bounds[2][1]:
+
+        lnprior = 0.
+
+    else:
+
+        lnprior = -np.inf
+
+    return lnprior
+
+
+def _lnlike(param,
+            images,
+            psf,
+            mask,
+            parang,
+            psf_scaling,
+            pixscale,
+            pca_number,
+            extra_rot,
+            aperture):
+
+    """
+    Internal function for the log likelihood function. Should be placed at the highest level of the
+    Python module in order to be pickled.
+
+    :param param: Tuple with the separation (arcsec), angle (deg), and contrast
+                  (mag). The angle is measured in counterclockwise direction with
+                  respect to the upward direction (i.e., East of North).
+    :type param: tuple, float
+    :param images: Stack with images.
+    :type images: ndarray
+    :param mask: Array with the circular mask (zeros) of the central and outer regions.
+    :type mask: ndarray
+    :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
+                equal to *image_in_tag*.
+    :type psf: ndarray
+    :param parang: Array with the angles for derotation.
+    :type parang: ndarray
+    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
+                        neutral density filter). Should be negative in order to inject negative
+                        fake planets.
+    :type psf_scaling: float
+    :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
+                     density filter). Should be negative in order to inject negative fake planets.
+    :type pixscale: float
+    :param pca_number: Number of principle components used for the PSF subtraction.
+    :type pca_number: int
+    :param extra_rot: Additional rotation angle of the images (deg).
+    :type extra_rot: float
+    :param aperture: Circular aperture at the position specified in *param*.
+    :type aperture: photutils.CircularAperture
+
+    :return: Log likelihood.
+    :rtype float
+    """
+
+    sep, ang, mag = param
+
+    fake = _fake_planet(images,
+                        psf,
+                        parang-extra_rot,
+                        (sep, ang),
+                        mag,
+                        psf_scaling,
+                        pixscale)
+
+    fake *= mask
+
+    im_res = _psf_subtraction(fake,
+                              parang,
+                              pca_number,
+                              extra_rot)
+
+    phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
+
+    return -0.5*phot_table['aperture_sum'][0]
+
+
+def _lnprob(param,
+            bounds,
+            images,
+            psf,
+            mask,
+            parang,
+            psf_scaling,
+            pixscale,
+            pca_number,
+            extra_rot,
+            aperture):
+    """
+    Internal function for the log posterior function. Should be placed at the highest level of the
+    Python module in order to be pickled.
+
+    :param param: Tuple with the separation (arcsec), angle (deg), and contrast
+                  (mag). The angle is measured in counterclockwise direction with
+                  respect to the upward direction (i.e., East of North).
+    :type param: tuple, float
+    :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
+                   and contrast (mag). Each set of boundaries is specified as a tuple.
+    :type bounds: tuple, float
+    :param images: Stack with images.
+    :type images: ndarray
+    :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
+                equal to *image_in_tag*.
+    :type psf: ndarray
+    :param mask: Array with the circular mask (zeros) of the central and outer regions.
+    :type mask: ndarray
+    :param parang: Array with the angles for derotation.
+    :type parang: ndarray
+    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
+                        neutral density filter). Should be negative in order to inject negative
+                        fake planets.
+    :type psf_scaling: float
+    :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
+                     density filter). Should be negative in order to inject negative fake planets.
+    :type pixscale: float
+    :param pca_number: Number of principle components used for the PSF subtraction.
+    :type pca_number: int
+    :param extra_rot: Additional rotation angle of the images (deg).
+    :type extra_rot: float
+    :param aperture: Circular aperture at the position specified in *param*.
+    :type aperture: photutils.CircularAperture
+
+    :return: Log posterior.
+    :rtype float
+    """
+
+    lnprior = _lnprior(param, bounds)
+
+    if math.isinf(lnprior):
+        lnprob = -np.inf
+
+    else:
+        lnprob = lnprior + _lnlike(param,
+                                   images,
+                                   psf,
+                                   mask,
+                                   parang,
+                                   psf_scaling,
+                                   pixscale,
+                                   pca_number,
+                                   extra_rot,
+                                   aperture)
+
+    return lnprob
+
+
+class MCMCsamplingModule(ProcessingModule):
+    """
+    Module to determine the contrast and position of a planet with an affine invariant Markov chain
+    Monte Carlo (MCMC) ensemble sampler.
+    """
+
+    def __init__(self,
+                 param,
+                 bounds,
+                 name_in="mcmc_sampling",
+                 image_in_tag="im_arr",
+                 psf_in_tag="im_arr",
+                 chain_out_tag="chain",
+                 nwalkers=100,
+                 nsteps=200,
+                 psf_scaling=-1.,
+                 pca_number=20,
+                 aperture=0.1,
+                 mask=0.,
+                 extra_rot=0.,
+                 **kwargs):
+        """
+        Constructor of MCMCsamplingModule.
+
+        :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The
+                      angle is measured in counterclockwise direction with respect to the upward
+                      direction (i.e., East of North). The specified separation and angle are also
+                      used as fixed position for the aperture.
+        :type param: tuple, float
+        :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
+                       contrast (mag). Each set of boundaries is specified as a tuple.
+        :type bounds: tuple, float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with images that are read as input.
+        :type image_in_tag: str
+        :param psf_in_tag: Tag of the database entry with the reference PSF that is used as fake
+                           planet. Can be either a single image (2D) or a cube (3D) with the
+                           dimensions equal to *image_in_tag*.
+        :type psf_in_tag: str
+        :param chain_out_tag: Tag of the database entry with the Markov chain that is written as
+                              output. The shape of the array is (nwalkers*nsteps, 3).
+        :type chain_out_tag: str
+        :param nwalkers: Number of ensemble members (i.e. chains).
+        :type nwalkers: int
+        :param nsteps: Number of steps to run per walker.
+        :type nsteps: int
+        :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
+                            neutral density filter). Should be negative in order to inject
+                            negative fake planets.
+        :type psf_scaling: float
+        :param pca_number: Number of principle components used for the PSF subtraction.
+        :type pca_number: int
+        :param aperture: Aperture radius (arcsec) at the position specified in *param*.
+        :type aperture: float
+        :param mask: Mask radius (arcsec) for the PSF subtraction.
+        :type mask: float
+        :param extra_rot: Additional rotation angle of the images (deg).
+        :type extra_rot: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
+             * **sigma** (*tuple*) -- Tuple with the standard deviations that randomly initializes
+                                      the start positions of the walkers in a small ball around the
+                                      a priori preferred position (*param*). The tuple should
+                                      contain three values (*float*): the separation (arcsec),
+                                      position angle (deg), and contrast (mag).
+
+        :return: None
+        """
+
+        if "scale" in kwargs:
+            self.m_scale = kwargs["scale"]
+        else:
+            self.m_scale = 2.
+
+        if "sigma" in kwargs:
+            self.m_sigma = kwargs["sigma"]
+        else:
+            self.m_sigma = (1e-5, 1e-3, 1e-3)
+
+        super(MCMCsamplingModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        if psf_in_tag == image_in_tag:
+            self.m_psf_in_port = self.m_image_in_port
+        else:
+            self.m_psf_in_port = self.add_input_port(psf_in_tag)
+        self.m_chain_out_port = self.add_output_port(chain_out_tag)
+
+        self.m_param = param
+        self.m_bounds = bounds
+        self.m_nwalkers = nwalkers
+        self.m_nsteps = nsteps
+        self.m_psf_scaling = psf_scaling
+        self.m_pca_number = pca_number
+        self.m_aperture = aperture
+        self.m_mask = mask
+        self.m_extra_rot = extra_rot
+
+    def run(self):
+        """
+        Run method of the module. Shifts the reference PSF to the location of the fake planet
+        with an additional correction for the parallactic angle and writes the stack with images
+        with the injected planet signal.
+
+        :return: None
+        """
+
+        if not isinstance(self.m_param, tuple) or len(self.m_param) != 3:
+            raise TypeError("The param argument should contain a tuple with the approximate "
+                            "separation (arcsec), position angle (deg), and contrast (mag).")
+
+        if not isinstance(self.m_bounds, tuple) or len(self.m_bounds) != 3:
+            raise TypeError("The bounds argument should contain a tuple with three tuples for "
+                            "the boundaries of the separation (arcsec), position angle (deg), and "
+                            "contrast (mag).")
+
+        if not isinstance(self.m_sigma, tuple) or len(self.m_sigma) != 3:
+            raise TypeError("The sigma argument should contain a tuple with the standard "
+                            "deviation of the separation (arcsec), position angle (deg), "
+                            "and contrast (mag) that is used to sample the starting position "
+                            "of the walkers.")
+
+        ndim = 3
+
+        cpu = self._m_config_port.get_attribute("CPU")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+
+        self.m_aperture /= pixscale
+        self.m_mask /= pixscale
+
+        images = self.m_image_in_port.get_all()
+        psf = self.m_psf_in_port.get_all()
+
+        mask = np.ones((images.shape[1], images.shape[2]))
+        npix = images.shape[1]
+
+        if npix%2 == 0:
+            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+        elif npix%2 == 1:
+            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+
+        mask[rr_grid > float(npix)/2.] = 0.
+        mask[rr_grid < self.m_mask] = 0.
+
+        center = self.m_image_in_port.get_shape()[1]/2.
+        x_pos = center+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
+        y_pos = center+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+
+        circ_ap = CircularAperture((x_pos, y_pos), self.m_aperture)
+
+        initial = np.zeros((self.m_nwalkers, ndim))
+
+        initial[:, 0] = self.m_param[0] + np.random.normal(0, self.m_sigma[0], self.m_nwalkers)
+        initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
+        initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
+
+        sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
+                                        dim=ndim,
+                                        lnpostfn=_lnprob,
+                                        a=self.m_scale,
+                                        args=([self.m_bounds,
+                                               images,
+                                               psf,
+                                               mask,
+                                               parang,
+                                               self.m_psf_scaling,
+                                               pixscale,
+                                               self.m_pca_number,
+                                               self.m_extra_rot,
+                                               circ_ap]),
+                                        threads=cpu)
+
+        for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
+            progress(i, self.m_nsteps, "Running MCMCsamplingModule...")
+
+        sys.stdout.write("Running MCMCsamplingModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_chain_out_port.set_all(sampler.chain)
+        self.m_chain_out_port.add_history_information("Flux and position", "MCMC sampling")
+        self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_chain_out_port.close_database()
+
+        print "Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction))
+
+        try:
+            autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
+                                                      low=10,
+                                                      high=None,
+                                                      step=1,
+                                                      c=10,
+                                                      full_output=False,
+                                                      axis=0,
+                                                      fast=False)
+
+            print "Integrated autocorrelation time =", autocorr
+
+        except emcee.autocorr.AutocorrError:
+            print "The chain is too short to reliably estimate the autocorrelation time. [WARNING]"
