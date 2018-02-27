@@ -115,49 +115,54 @@ class FitsReadingModule(ReadingModule):
         for item in self.m_static_keys:
             fitskey = self._m_config_port.get_attribute(item)
 
-            if fitskey in tmp_header:
-                value = tmp_header[fitskey]
-                status = self.m_image_out_port.check_static_attribute(item, value)
+            if fitskey != "None":
 
-                if status == 1:
-                    self.m_image_out_port.add_attribute(item, value, static=True)
+                if fitskey in tmp_header:
+                    value = tmp_header[fitskey]
+                    status = self.m_image_out_port.check_static_attribute(item, value)
 
-                if status == -1:
-                    warnings.warn('Static attribute %s has changed. Probably the current '
-                                  'file %s does not belong to the data set "%s" of the PynPoint'
-                                  ' database. Updating attribute...' \
-                                  % (fitskey, fits_file, self.m_image_tag))
+                    if status == 1:
+                        self.m_image_out_port.add_attribute(item, value, static=True)
 
-                elif status == 0:
-                    # Attribute is known and is still the same
-                    pass
+                    if status == -1:
+                        warnings.warn('Static attribute %s has changed. Probably the current '
+                                      'file %s does not belong to the data set "%s" of the PynPoint'
+                                      ' database. Updating attribute...' \
+                                      % (fitskey, fits_file, self.m_image_tag))
 
-            else:
-                warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
-                              % (item, fitskey))
+                    elif status == 0:
+                        # Attribute is known and is still the same
+                        pass
+
+                else:
+                    warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
+                                  % (item, fitskey))
 
         # non-static attributes
         for item in self.m_non_static_keys:
+
             if item == 'NEW_PARA':
                 fitskey = 'NEW_PARA'
 
             else:
                 fitskey = self._m_config_port.get_attribute(item)
 
-            if fitskey in tmp_header:
-                value = tmp_header[fitskey]
-                self.m_image_out_port.append_attribute_data(item, value)
+            if fitskey != "None":
 
-            elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
-                self.m_image_out_port.append_attribute_data(item, 1)
+                if fitskey in tmp_header:
+                    value = tmp_header[fitskey]
+                    self.m_image_out_port.append_attribute_data(item, value)
 
-            elif item == 'NEW_PARA':
-                continue
+                elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
+                    self.m_image_out_port.append_attribute_data(item, 1)
 
-            else:
-                warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
-                              % (item, fitskey))
-                self.m_image_out_port.append_attribute_data(item, -1)
+                elif item == 'NEW_PARA':
+                    continue
+
+                else:
+                    warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
+                                  % (item, fitskey))
+                    self.m_image_out_port.append_attribute_data(item, -1)
 
         fits_header = []
         for key in tmp_header:
