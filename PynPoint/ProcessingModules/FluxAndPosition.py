@@ -9,11 +9,13 @@ import warnings
 import numpy as np
 import emcee
 
-from scipy.ndimage import shift
+from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
 from scipy.stats import t
+from sklearn.decomposition import PCA
 from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
+from astropy.io import fits
 from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Util.Progress import progress
@@ -713,6 +715,138 @@ class FalsePositiveModule(ProcessingModule):
         sys.stdout.flush()
 
 
+def _fake_planet(science,
+                 psf,
+                 parang,
+                 position,
+                 magnitude,
+                 psf_scaling,
+                 pixscale):
+    """
+    Internal function to inject fake planets into a cube of images. This function is similar to
+    FakePlanetModule but does not require access to the PynPoint database.
+    """
+
+    radial = position[0]/pixscale
+    theta = position[1]*math.pi/180. + math.pi/2.
+    flux_ratio = 10.**(-magnitude/2.5)
+
+    if psf.ndim == 2:
+        psf_size = (psf.shape[0], psf.shape[1])
+    elif psf.ndim == 3:
+        psf_size = (psf.shape[1], psf.shape[2])
+
+    if psf_size != (science.shape[1], science.shape[2]):
+        raise ValueError("The science images should have the same dimensions as the PSF template.")
+
+    if psf.ndim == 3 and psf.shape[0] == 1:
+        psf = np.squeeze(psf, axis=0)
+    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
+        psf = np.mean(psf, axis=0)
+
+    fake = np.copy(science)
+
+    for i in range(fake.shape[0]):
+        x_shift = radial*math.cos(theta-math.radians(parang[i]))
+        y_shift = radial*math.sin(theta-math.radians(parang[i]))
+
+        if psf.ndim == 2:
+            psf_tmp = np.copy(psf)
+        elif psf.ndim == 3:
+            psf_tmp = np.copy(psf[i, ])
+
+        psf_tmp = shift(psf_tmp,
+                        (y_shift, x_shift),
+                        order=5,
+                        mode='reflect')
+
+        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
+
+    return fake
+
+
+def _psf_subtraction(images,
+                     parang,
+                     pca_number,
+                     extra_rot):
+    """
+    Module for fast (compared to PSFSubtractionModule) PCA subtraction. The multiprocessing
+    implementation is only supported for Linux and Windows. Mac only runs in single processing
+    due to a bug in the numpy package.
+    """
+
+    """
+    Constructor of FastPCAModule.
+
+    :param pca_numbers: Number of PCA components used for the PSF model. Can be a single value
+                        or a list of integers. A list of PCAs will be processed (if supported)
+                        using multiprocessing.
+    :type pca_numbers: int
+    :param name_in: Unique name of the module instance.
+    :type name_in: str
+    :param images_in_tag: Tag of the database entry with the science images that are read
+                          as input.
+    :type images_in_tag: str
+    :param reference_in_tag: Tag of the database entry with the reference images that are
+                             read as input.
+    :type reference_in_tag: str
+    :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
+    :type res_mean_tag: str
+    :param res_median_tag: Tag of the database entry with the median collapsed residuals. Not
+                           calculated if set to *None*.
+    :type res_median_tag: str
+    :param res_arr_out_tag: Tag of the database entry with the image residuals from the PSF
+                            subtraction. If a list of PCs is provided in *pca_numbers* then
+                            multiple tags will be created in the central database. Not
+                            calculated if set to *None*.
+    :type res_arr_out_tag: str
+    :param res_rot_mean_clip_tag: Tag of the database entry of the clipped mean residuals. Not
+                                  calculated if set to *None*.
+    :type res_rot_mean_clip_tag: str
+    :param extra_rot: Additional rotation angle of the images (deg).
+    :type extra_rot: float
+    :param \**kwargs:
+        See below.
+
+    :Keyword arguments:
+         * **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
+         * **verbose** (*bool*) -- Print progress to the standard output.
+
+    :return: None
+    """
+
+    """
+    Run method of the module. Subtracts the mean of the image stack from all images, reshapes
+    the stack of images into a 2D array, uses singular value decomposition to construct the
+    orthogonal basis set, calculates the PCA coefficients for each image, subtracts the PSF
+    model, and writes the residuals as output.
+
+    :return: None
+    """
+
+    pca = PCA(n_components=pca_number, svd_solver="arpack")
+
+    images -= np.mean(images, axis=0)
+    images_reshape = images.reshape((images.shape[0], images.shape[1]*images.shape[2]))
+
+    pca.fit(images_reshape)
+
+    pca_rep = np.matmul(pca.components_[:pca_number], images_reshape.T)
+    pca_rep = np.vstack((pca_rep, np.zeros((0, images.shape[0])))).T
+
+    model = pca.inverse_transform(pca_rep)
+    model = model.reshape(images.shape)
+
+    residuals = images - model
+
+    for j, item in enumerate(-1.*parang):
+        residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
+
+    # fits.writeto('test.fits', np.mean(residuals, axis=0), overwrite=True)
+
+    return np.mean(residuals, axis=0)
+
+
 def _lnprior(param,
              bounds):
     """
@@ -802,21 +936,10 @@ def _lnlike(param,
 
     fake *= mask
 
-    psf_sub = FastPCAModule(name_in="pca_mcmc",
-                            pca_numbers=pca_number,
-                            images_in_tag=None,
-                            reference_in_tag=None,
-                            res_mean_tag=None,
-                            res_median_tag=None,
-                            res_arr_out_tag=None,
-                            res_rot_mean_clip_tag=None,
-                            extra_rot=extra_rot,
-                            verbose=False,
-                            multiprocessing=False,
-                            images=fake,
-                            parang=parang)
-
-    im_res = psf_sub.run()
+    im_res = _psf_subtraction(fake,
+                              parang,
+                              pca_number,
+                              extra_rot)
 
     phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
 
@@ -890,45 +1013,6 @@ def _lnprob(param,
                                    aperture)
 
     return lnprob
-
-
-def _fake_planet(science, psf, parang, position, magnitude, psf_scaling, pixscale):
-    radial = position[0]/pixscale
-    theta = position[1]*math.pi/180. + math.pi/2.
-    flux_ratio = 10.**(-magnitude/2.5)
-
-    if psf.ndim == 2:
-        psf_size = (psf.shape[0], psf.shape[1])
-    elif psf.ndim == 3:
-        psf_size = (psf.shape[1], psf.shape[2])
-
-    if psf_size != (science.shape[1], science.shape[2]):
-        raise ValueError("The science images should have the same dimensions as the PSF template.")
-
-    if psf.ndim == 3 and psf.shape[0] == 1:
-        psf = np.squeeze(psf, axis=0)
-    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
-        psf = np.mean(psf, axis=0)
-
-    fake = np.copy(science)
-
-    for i in range(fake.shape[0]):
-        x_shift = radial*math.cos(theta-math.radians(parang[i]))
-        y_shift = radial*math.sin(theta-math.radians(parang[i]))
-
-        if psf.ndim == 2:
-            psf_tmp = np.copy(psf)
-        elif psf.ndim == 3:
-            psf_tmp = np.copy(psf[i, ])
-
-        psf_tmp = shift(psf_tmp,
-                        (y_shift, x_shift),
-                        order=5,
-                        mode='reflect')
-
-        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
-
-    return fake
 
 
 class MCMCsamplingModule(ProcessingModule):
