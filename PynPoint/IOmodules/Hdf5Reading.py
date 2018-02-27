@@ -1,5 +1,5 @@
 """
-Module for reading Hdf5 files that were created using Hdf5WritingModule.
+Module for reading HDF5 files that were created using Hdf5WritingModule.
 """
 
 import os
@@ -17,7 +17,7 @@ class Hdf5ReadingModule(ReadingModule):
     ***This class was made for reading HDF5 files created by Hdf5WritingModule. Other data can
     lead to inconsistencies in the PynPoint database.***
 
-    Reads a .hdf5 files from the given input_dir or the default directory of the Pypeline. A tag
+    Reads an HDF5 files from the given *input_dir* or the default directory of the Pypeline. A tag
     dictionary has to be set in order to choose the datasets which will be imported by the module.
     The module reads static and non-static attributes.
     """
@@ -32,10 +32,10 @@ class Hdf5ReadingModule(ReadingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param input_filename: The input file name. It needs to be a .hdf5 file. If no .hdf5 file is
+        :param input_filename: The input file name. It needs to be an HDF5 file. If no HDF5 file is
                                given all files inside the input location will be imported.
         :type input_filename: str
-        :param input_dir: The directory of the input .hdf5 file. If no location is given, the
+        :param input_dir: The directory of the input HDF5 file. If no location is given, the
                           Pypeline default input location is used.
         :type input_dir: str
         :param tag_dictionary: Directory of all dataset keys / tags which will be imported. The
@@ -44,7 +44,7 @@ class Hdf5ReadingModule(ReadingModule):
                                { *tag_of_the_dataset_in_the_hdf5_file* :
                                  *name_of_the_imported_dataset* }
 
-                               All datasets of the external .hdf5 file which match one of the
+                               All datasets of the external HDF5 file which match one of the
                                *tag_of_the_dataset_in_the_hdf5_file* tags in the tag_dictionary
                                will be imported. Their names inside the internal PynPoint database
                                will be changed to *name_of_the_imported_dataset*.
@@ -67,16 +67,16 @@ class Hdf5ReadingModule(ReadingModule):
     def _read_single_hdf5(self,
                           file_in):
         """
-        Internal function which reads a single .hdf5 file.
+        Internal function which reads a single HDF5 file.
 
-        :param file_in: name of the .hdf5 file.
+        :param file_in: name of the HDF5 file.
         :type file_in: str
 
         :return: None
         """
-        hdf5_file = h5py.File(file_in, mode='a')
+        hdf5_file = h5py.File(file_in, mode='r')
 
-        for i, entry in enumerate(hdf5_file.keys()):
+        for _, entry in enumerate(hdf5_file.keys()):
             # do not read header information groups
             if entry.startswith("header_"):
                 continue
@@ -107,7 +107,7 @@ class Hdf5ReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Looks for all .hdf5 files in the input directory and reads them
+        Run method of the module. Looks for all HDF5 files in the input directory and reads them
         using the internal function _read_single_hdf5().
 
         :return: None
@@ -121,7 +121,6 @@ class Hdf5ReadingModule(ReadingModule):
         # check if a single input file is given
         if self.m_filename is not None:
             # create file path + filename
-
             assert(os.path.isfile((tmp_dir + str(self.m_filename)))), "Error: Input file does not "\
                                                                       "exist. Input requested: %s"\
                                                                       % str(self.m_filename)
@@ -129,7 +128,7 @@ class Hdf5ReadingModule(ReadingModule):
             files.append((tmp_dir + str(self.m_filename)))
 
         else:
-            # look for all .hdf5 files in the directory
+            # look for all HDF5 files in the directory
             for tmp_file in os.listdir(self.m_input_location):
                 if tmp_file.endswith('.hdf5') or tmp_file.endswith('.h5'):
                     files.append(tmp_dir + str(tmp_file))

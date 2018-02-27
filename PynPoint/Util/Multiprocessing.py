@@ -137,16 +137,14 @@ class TaskProcessor(multiprocessing.Process):
 
         if next_task is 1:
             # Poison pill means shutdown
-            print '%s: Exiting' % process_name
+            # print '%s: Exiting' % process_name
             self.m_task_queue.task_done()
             return True
 
         if next_task is None:
             # got final Poison pill
-
             self.m_result_queue.put(None)  # shut down writer process
-
-            print '%s: Exiting' % process_name
+            # print '%s: Exiting' % process_name
             self.m_task_queue.task_done()
             return True
 
@@ -208,12 +206,12 @@ class TaskWriter(multiprocessing.Process):
         if next_result is None:
             # check if no results are after the poison pill
             if self.m_result_queue.empty():
-                print "Shutting down writer..."
+                # print "Shutting down writer..."
                 self.m_result_queue.task_done()
                 return 1
             else:
                 # put pack the Poison pill for the moment
-                print "put back poison pill"
+                # print "put back poison pill"
                 self.m_result_queue.put(None)
                 self.m_result_queue.task_done()
                 return 2
@@ -427,7 +425,7 @@ class LineReader(TaskCreator):
 
             # lock Mutex and read data
             with self.m_data_mutex:
-                print "Reading lines from " + str(i) + " to " + str(j)
+                # print "Reading lines from " + str(i) + " to " + str(j)
                 tmp_data = self.m_data_in_port[:, i:j, :]
 
             self.m_task_queue.put(TaskInput(tmp_data,
