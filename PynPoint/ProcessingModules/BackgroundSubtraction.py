@@ -11,7 +11,7 @@ from scipy.optimize import curve_fit
 
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelCleaningSigmaFilterModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, CombineTagsModule
 from PynPoint.ProcessingModules.StarAlignment import LocateStarModule
 
@@ -862,22 +862,22 @@ class PCABackgroundDitheringModule(ProcessingModule):
             prepare.connect_database(self._m_data_base)
             prepare.run()
 
-            bp_star = BadPixelCleaningSigmaFilterModule(name_in="bp_star"+str(i),
-                                                        image_in_tag="star"+str(i+1),
-                                                        image_out_tag="star_bp"+str(i+1),
-                                                        box=self.m_bp_box,
-                                                        sigma=self.m_bp_sigma,
-                                                        iterate=self.m_bp_iterate)
+            bp_star = BadPixelSigmaFilterModule(name_in="bp_star"+str(i),
+                                                image_in_tag="star"+str(i+1),
+                                                image_out_tag="star_bp"+str(i+1),
+                                                box=self.m_bp_box,
+                                                sigma=self.m_bp_sigma,
+                                                iterate=self.m_bp_iterate)
 
             bp_star.connect_database(self._m_data_base)
             bp_star.run()
 
-            bp_bg = BadPixelCleaningSigmaFilterModule(name_in="bp_background"+str(i),
-                                                      image_in_tag="background"+str(i+1),
-                                                      image_out_tag="background_bp"+str(i+1),
-                                                      box=self.m_bp_box,
-                                                      sigma=self.m_bp_sigma,
-                                                      iterate=self.m_bp_iterate)
+            bp_bg = BadPixelSigmaFilterModule(name_in="bp_background"+str(i),
+                                              image_in_tag="background"+str(i+1),
+                                              image_out_tag="background_bp"+str(i+1),
+                                              box=self.m_bp_box,
+                                              sigma=self.m_bp_sigma,
+                                              iterate=self.m_bp_iterate)
 
             bp_bg.connect_database(self._m_data_base)
             bp_bg.run()

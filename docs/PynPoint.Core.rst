@@ -1,45 +1,45 @@
-PynPoint.core package
+PynPoint.Core package
 =====================
 
 Submodules
 ----------
 
-:py:mod:`PynPoint.core.DataIO`:
+:py:mod:`PynPoint.Core.DataIO`:
 
-    * :py:class:`PynPoint.core.DataIO.DataStorage`
-    * :py:class:`PynPoint.core.DataIO.InputPort`
-    * :py:class:`PynPoint.core.DataIO.OutputPort`
+    * :py:class:`PynPoint.Core.DataIO.DataStorage`
+    * :py:class:`PynPoint.Core.DataIO.InputPort`
+    * :py:class:`PynPoint.Core.DataIO.OutputPort`
 
-:py:mod:`PynPoint.core.Processing`
+:py:mod:`PynPoint.Core.Processing`
 
-    * :py:class:`PynPoint.core.Processing.WritingModule`
-    * :py:class:`PynPoint.core.Processing.ReadingModule`
-    * :py:class:`PynPoint.core.Processing.ProcessingModule`
+    * :py:class:`PynPoint.Core.Processing.WritingModule`
+    * :py:class:`PynPoint.Core.Processing.ReadingModule`
+    * :py:class:`PynPoint.Core.Processing.ProcessingModule`
 
-:py:mod:`PynPoint.core.Pypeline`
+:py:mod:`PynPoint.Core.Pypeline`
 
-PynPoint.core.DataIO module
+PynPoint.Core.DataIO module
 ---------------------------
 
-.. automodule:: PynPoint.core.DataIO
+.. automodule:: PynPoint.Core.DataIO
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-PynPoint.core.Processing module
+PynPoint.Core.Processing module
 -------------------------------
 
-.. automodule:: PynPoint.core.Processing
+.. automodule:: PynPoint.Core.Processing
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-PynPoint.core.Pypeline module
+PynPoint.Core.Pypeline module
 -----------------------------
 
-.. automodule:: PynPoint.core.Pypeline
+.. automodule:: PynPoint.Core.Pypeline
     :members:
     :undoc-members:
     :show-inheritance:

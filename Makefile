@@ -1,67 +1,56 @@
-.PHONY: help clean clean-pyc clean-build list test test-all coverage docs release sdist
+.PHONY: help clean clean-build clean-python clean-test test test-all coverage docs
 
 help:
 	@echo "clean-build - remove build artifacts"
-	@echo "clean-pyc - remove Python file artifacts"
-	@echo "lint - check style with flake8"
-	@echo "test - run tests quickly with the default Python"
-	@echo "test-all - run tests on every Python version with tox"
-	@echo "coverage - check code coverage quickly with the default Python"
-	@echo "docs - generate Sphinx HTML documentation, including API docs"
-	@echo "sdist - package"
+	@echo "clean-python - remove Python artifacts"
+	@echo "clean-test - remove test and coverage artifacts"
+	@echo "test - run test cases"
+	@echo "test-all - run tests with tox"
+	@echo "coverage - check code coverage"
+	@echo "docs - generate Sphinx documentation"
 
-clean: clean-build clean-pyc clean-test
+clean: clean-build clean-python clean-test
 
 clean-build:
-	rm -fr build/
-	rm -fr dist/
-	rm -fr *.egg-info
+	rm -rf PynPoint_exoplanet.egg-info/
+	rm -rf dist/
+	rm -rf build/
+	rm -rf htmlcov/
+	rm -rf .eggs/
 
-clean-pyc:
+clean-python:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -rf {} +
 
 clean-test:
-	find . -name 'PynPoint_config.ini' -exec rm -f {} +
-	rm -f test/test_processing/PynPoint_database.hdf5
-	rm -f test/test_processing/test.fits
-	rm -rf .cache/
-
-lint:
-	flake8 PynPoint test
+	rm -f .coverage
+	rm -f coverage.xml
+	rm -rf .tox/
+	rm -rf PynPoint_exoplanet.egg-info/
+	rm -f junit-docs-ci.xml
+	rm -f junit-py27.xml
 
 test:
-	find . -name 'test/__pycache__' -exec rm -rf {} +
-	py.test --ignore=test/old_tests/
+	py.test
 
 test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint -m py.test --ignore=test/old_tests/
-	coverage report -m --omit=PynPoint/old_version/*
-	coverage html --omit=PynPoint/old_version/*
-	open htmlcov/index.html
-
-coverage_file:
-	coverage run --source PynPoint -m py.test ${File}
-	coverage report -m --omit=PynPoint/old_version/*
-	coverage html --omit=PynPoint/old_version/*
+	coverage run --source PynPoint -m py.test
+	coverage report -m --omit=PynPoint/OldVersion/*
+	coverage html --omit=PynPoint/OldVersion/*
 	open htmlcov/index.html
 
 docs:
 	rm -f docs/modules.rst
-	rm -f docs/PynPoint.io_modules.rst
-	rm -f docs/PynPoint.old_version.rst
-	rm -f docs/PynPoint.processing_modules.rst
-	rm -f docs/PynPoint.wrapper.rst
+	rm -f docs/PynPoint.IOmodules.rst
+	rm -f docs/PynPoint.OldVersion.rst
+	rm -f docs/PynPoint.ProcessingModules.rst
+	rm -f docs/PynPoint.Util.rst
+	rm -f docs/PynPoint.Wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-
-sdist: clean
-#	pip freeze > requirements.rst
-	python setup.py sdist
-	ls -l dist
