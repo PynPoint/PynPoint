@@ -61,6 +61,6 @@ class TestResidual(object):
     def test_residuals_save_restore(self):
         temp_file = os.path.join(self.test_data_dir, 'tmp_res_hdf5.h5')
         self.res.save(temp_file)
-        temp_res = PynPoint.residuals.create_restore(temp_file) 
+        temp_res = PynPoint.residuals.create_restore(temp_file)
         assert np.array_equal(self.res.res_rot_mean(1), temp_res.res_rot_mean(1))
         os.remove(temp_file)
