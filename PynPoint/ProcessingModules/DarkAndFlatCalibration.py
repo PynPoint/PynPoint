@@ -3,6 +3,7 @@ Modules for dark frame and flat field calibrations.
 """
 
 import warnings
+
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
@@ -94,13 +95,13 @@ class DarkCalibrationModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
 
         dark = self.m_dark_in_port.get_all()
-        dark_crop = _master_frame(dark, self.m_image_in_port)
+        master = _master_frame(dark, self.m_image_in_port)
 
         self.apply_function_to_images(dark_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running DarkSubtractionModule...",
-                                      func_args=(dark_crop, ),
+                                      func_args=(master, ),
                                       num_images_in_memory=memory)
 
         self.m_image_out_port.add_history_information("Calibration", "dark")
@@ -153,25 +154,23 @@ class FlatCalibrationModule(ProcessingModule):
             return image_in / flat_in
 
         flat = self.m_flat_in_port.get_all()
-        flat_crop = _master_frame(flat, self.m_image_in_port)
+        master = _master_frame(flat, self.m_image_in_port)
 
-        # shift all values to positive
-        flat_min = np.min(flat_crop)
-
-        # +1 and -1 to prevent division by zero
-        if flat_min < 0:
-            flat_crop -= np.ones(flat_crop.shape) * (flat_min - 1)
-        else:
-            flat_crop -= np.ones(flat_crop.shape) * (flat_min + 1)
+        # shift all values to greater or equal to +1.0
+        flat_min = np.amin(master)
+        master -= flat_min - 1.
 
         # normalization
-        flat_crop /= float(np.median(np.median(flat_crop)))
+        master /= np.median(master)
+
+        if np.median(master) != 1.:
+            raise ValueError("Median of the master flat should be equal to unity.")
 
         self.apply_function_to_images(flat_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running FlatSubtractionModule...",
-                                      func_args=(flat_crop, ),
+                                      func_args=(master, ),
                                       num_images_in_memory=memory)
 
         self.m_image_out_port.add_history_information("Calibration", "flat")
