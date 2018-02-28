@@ -12,7 +12,7 @@ from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.IOmodules.FitsWriting import FitsWritingModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
-from PynPoint.ProcessingModules.DarkAndFlatSubtraction import DarkSubtractionModule, FlatSubtractionModule
+from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
@@ -214,12 +214,12 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(cutting)
 
-        dark_sub = DarkSubtractionModule(name_in="dark_subtraction",
+        dark_sub = DarkCalibrationModule(name_in="dark_subtraction",
                                          image_in_tag="im_arr_cut",
                                          dark_in_tag="dark_arr",
                                          image_out_tag="dark_sub_arr")
 
-        flat_sub = FlatSubtractionModule(name_in="flat_subtraction",
+        flat_sub = FlatCalibrationModule(name_in="flat_subtraction",
                                          image_in_tag="dark_sub_arr",
                                          flat_in_tag="flat_arr",
                                          image_out_tag="flat_sub_arr")
