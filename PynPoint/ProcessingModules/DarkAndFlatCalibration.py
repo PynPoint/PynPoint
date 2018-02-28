@@ -3,6 +3,7 @@ Modules for dark frame and flat field calibrations.
 """
 
 import warnings
+
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
@@ -155,7 +156,7 @@ class FlatCalibrationModule(ProcessingModule):
         flat = self.m_flat_in_port.get_all()
         master = _master_frame(flat, self.m_image_in_port)
 
-        # shift all values to positive greater or equal to one
+        # shift all values to greater or equal to +1.0
         flat_min = np.amin(master)
         master -= flat_min - 1.
 
