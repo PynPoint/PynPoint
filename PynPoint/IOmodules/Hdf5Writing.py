@@ -75,7 +75,6 @@ class Hdf5WritingModule(WritingModule):
             out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
 
         for in_tag, out_tag in self.m_tag_dictionary.iteritems():
-
             tmp_port = self.add_input_port(in_tag)
             tmp_data = tmp_port.get_all()
 
