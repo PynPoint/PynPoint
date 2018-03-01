@@ -317,26 +317,26 @@ class TestDocumentation(object):
         assert data[0, 61, 39] == -0.00021601281733413911
 
         data = storage.m_data_bank["flat_sub_arr"]
-        assert data[0, 61, 39] == -0.00021553814660050282
+        assert data[0, 61, 39] == -0.00021647987125847178
 
         data = storage.m_data_bank["bg_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00013038694003957227
+        assert data[0, 61, 39] == -0.00013095662386792948
 
         data = storage.m_data_bank["bp_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00013038694003957227
+        assert data[0, 61, 39] == -0.00013095662386792948
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert data[0, 10, 10] == 0.053192109122463471
+        assert data[0, 10, 10] == 0.052958146579313935
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 10, 10] == 1.1461552763624318e-05
+        assert data[0, 10, 10] == 1.1307471842831197e-05
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 10, 10] == 2.566579724822762e-05
+        assert data[0, 10, 10] == 2.5529051372679164e-05
 
         data = storage.m_data_bank["res_mean"]
-        assert data[38, 22] == 0.00014540689748814158
-        assert np.mean(data) == -2.0205490383929854e-07
+        assert data[38, 22] == 0.00014894940158150866
+        assert np.mean(data) == -1.8907529204884748e-07
         assert data.shape == (44, 44)
 
         storage.close_connection()

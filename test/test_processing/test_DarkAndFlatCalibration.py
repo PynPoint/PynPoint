@@ -1,8 +1,8 @@
 import os
 import math
-import h5py
 import warnings
 
+import h5py
 import numpy as np
 
 from astropy.io import fits
@@ -36,7 +36,7 @@ def teardown_module():
     os.remove(file_in)
     os.remove(config_file)
 
-class TestDocumentation(object):
+class TestDarkAndFlatCalibration(object):
 
     def setup(self):
         self.test_dir = os.path.dirname(__file__) + "/"
