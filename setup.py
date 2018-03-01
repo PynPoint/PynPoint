@@ -32,12 +32,13 @@ requirements = ['configparser',
                 'statsmodels',
                 'PyWavelets',
                 'mlpy',
-                'matplotlib']
+                'matplotlib',
+                'emcee']
 
 setup(
     name='PynPoint-exoplanet',
     version='1.0.0',
-    description='Python package for processing and analyzing of high-contrast imaging data',
+    description='Python package for processing and analysis of high-contrast imaging data',
     long_description=readme,
     author='Tomas Stolker, Markus Bonse, Adam Amara',
     author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, adam.amara@phys.ethz.ch',

@@ -530,6 +530,13 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         Method for creating a circular mask at the star position.
         """
 
+        self.m_subtracted_out_port.del_all_data()
+        self.m_subtracted_out_port.del_all_attributes()
+
+        if self.m_residuals_out_tag is not None:
+            self.m_residuals_out_port.del_all_data()
+            self.m_residuals_out_port.del_all_attributes()
+
         im_dim = self.m_star_in_port[0, ].shape
 
         x_grid = np.arange(0, im_dim[0], 1)
@@ -925,7 +932,7 @@ class PCABackgroundNoddingModule(ProcessingModule):
     """
 
     def __init__(self,
-                 name_in='pca_dither',
+                 name_in='pca_nodding',
                  star_in_tag="im_star",
                  background_in_tag="im_background",
                  image_out_tag="im_pca_bg",
@@ -1149,18 +1156,15 @@ class NoddingBackgroundModule(ProcessingModule):
                 continue
 
             sky = self.calc_sky_frame(i)
-
             science = self.m_science_in_port[time_entry.m_index, ]
 
-            self.m_image_out_port.append(science - sky[None, ],
-                                         data_dim=3)
+            self.m_image_out_port.append(science - sky[None, ], data_dim=3)
 
         sys.stdout.write("Running NoddingBackgroundModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_science_in_port)
 
-        self.m_image_out_port.add_history_information("Background",
-                                                      "Nodding sky subtraction")
+        self.m_image_out_port.add_history_information("Background", "nodding")
 
         self.m_image_out_port.close_database()

@@ -64,7 +64,7 @@ def teardown_module():
     os.remove(test_dir + 'PynPoint_database.hdf5')
     os.remove(test_dir + 'PynPoint_config.ini')
 
-class TestDocumentation(object):
+class TestStarAlignment(object):
 
     def setup(self):
         self.test_dir = os.path.dirname(__file__) + "/"
