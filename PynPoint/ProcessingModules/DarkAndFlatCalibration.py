@@ -163,8 +163,9 @@ class FlatCalibrationModule(ProcessingModule):
         # normalization
         master /= np.median(master)
 
-        if np.median(master) != 1.:
-            raise ValueError("Median of the master flat should be equal to unity.")
+        if not np.allclose(np.median(master), 1., rtol=1e-10):
+            raise ValueError("Median of the master flat should be equal to unity (value=%s)."
+                             % np.median(master))
 
         self.apply_function_to_images(flat_calibration,
                                       self.m_image_in_port,
