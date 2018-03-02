@@ -530,13 +530,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         Method for creating a circular mask at the star position.
         """
 
-        self.m_subtracted_out_port.del_all_data()
-        self.m_subtracted_out_port.del_all_attributes()
-
-        if self.m_residuals_out_tag is not None:
-            self.m_residuals_out_port.del_all_data()
-            self.m_residuals_out_port.del_all_attributes()
-
         im_dim = self.m_star_in_port[0, ].shape
 
         x_grid = np.arange(0, im_dim[0], 1)
@@ -630,7 +623,14 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         :return: None
         """
 
-        image_memory = self._m_config_port.get_attribute("MEMORY")
+        self.m_subtracted_out_port.del_all_data()
+        self.m_subtracted_out_port.del_all_attributes()
+
+        if self.m_residuals_out_tag is not None:
+            self.m_residuals_out_port.del_all_data()
+            self.m_residuals_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
         star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
 
@@ -644,19 +644,27 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        num_frames = self.m_star_in_port.get_shape()[0]
-        num_stacks = int(float(num_frames)/float(image_memory))
+        n_image = self.m_star_in_port.get_shape()[0]
+        if memory == -1 or memory >= n_image:
+            n_stack = 1
+        else:
+            n_stack = int(float(n_image)/float(memory))
 
         if self.m_mask_position == "mean":
-            mask = self._create_mask(self.m_mask_radius, star_position, num_frames)
+            mask = self._create_mask(self.m_mask_radius, star_position, n_image)
 
-        for i in range(num_stacks):
-            progress(i, num_stacks, "Calculating background model...")
+        for i in range(n_stack):
+            progress(i, n_stack, "Calculating background model...")
 
-            frame_start = i*image_memory
-            frame_end = i*image_memory+image_memory
+            if memory == -1 or memory >= n_image:
+                frame_start = 0
+                frame_end = n_image
+                im_star = self.m_star_in_port.get_all()
 
-            im_star = self.m_star_in_port[frame_start:frame_end, ]
+            else:
+                frame_start = i*memory
+                frame_end = i*memory+memory
+                im_star = self.m_star_in_port[frame_start:frame_end, ]
 
             if self.m_mask_position == "exact":
                 mask = self._create_mask(self.m_mask_radius,
@@ -666,22 +674,16 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             im_star_mask = im_star*mask
             fit_im = self._model_background(basis_pca, im_star_mask, mask)
 
-            if i == 0:
-                self.m_subtracted_out_port.set_all(im_star-fit_im)
-                if self.m_residuals_out_tag is not None:
-                    self.m_residuals_out_port.set_all(fit_im)
-
-            else:
-                self.m_subtracted_out_port.append(im_star-fit_im)
-                if self.m_residuals_out_tag is not None:
-                    self.m_residuals_out_port.append(fit_im)
+            self.m_subtracted_out_port.append(im_star-fit_im)
+            if self.m_residuals_out_tag is not None:
+                self.m_residuals_out_port.append(fit_im)
 
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
 
-        if num_frames%image_memory > 0:
-            frame_start = num_stacks*image_memory
-            frame_end = num_frames
+        if memory <= n_image and n_image%memory > 0:
+            frame_start = n_stack*memory
+            frame_end = n_image
 
             im_star = self.m_star_in_port[frame_start:frame_end, ]
 

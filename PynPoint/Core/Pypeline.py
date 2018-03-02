@@ -332,8 +332,8 @@ class Pypeline(object):
 
         validation = self.validate_pipeline()
         if not validation[0]:
-            raise AttributeError('Pipeline module %s is looking for data under a tag which is not '
-                                 'created by a previous module or does not exist in the database.'
+            raise AttributeError("Pipeline module '%s' is looking for data under a tag which is not "
+                                 "created by a previous module or does not exist in the database."
                                  % validation[1])
 
         sys.stdout.write(" [DONE]\n")
@@ -359,8 +359,8 @@ class Pypeline(object):
             validation = self.validate_pipeline_module(name)
 
             if not validation[0]:
-                raise AttributeError('Pipeline module %s is looking for data under a tag which '
-                                     'does not exist in the database.' % validation[1])
+                raise AttributeError("Pipeline module '%s' is looking for data under a tag which "
+                                     "does not exist in the database." % validation[1])
 
             sys.stdout.write(" [DONE]\n")
             sys.stdout.flush()
