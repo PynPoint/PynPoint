@@ -100,7 +100,7 @@ class DarkCalibrationModule(ProcessingModule):
         self.apply_function_to_images(dark_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running DarkSubtractionModule...",
+                                      "Running DarkCalibrationModule...",
                                       func_args=(master, ),
                                       num_images_in_memory=memory)
 
@@ -163,14 +163,14 @@ class FlatCalibrationModule(ProcessingModule):
         # normalization
         master /= np.median(master)
 
-        if not np.allclose(np.median(master), 1., rtol=1e-10):
+        if not np.allclose(np.median(master), 1., rtol=1e-6):
             raise ValueError("Median of the master flat should be equal to unity (value=%s)."
                              % np.median(master))
 
         self.apply_function_to_images(flat_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running FlatSubtractionModule...",
+                                      "Running FlatCalibrationModule...",
                                       func_args=(master, ),
                                       num_images_in_memory=memory)
 
