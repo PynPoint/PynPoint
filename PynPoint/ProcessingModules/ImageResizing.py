@@ -394,7 +394,7 @@ class CombineTagsModule(ProcessingModule):
                 if status == 1:
                     self.m_image_out_port.add_attribute(key, static_attr[key], static=True)
 
-                elif status == -1:
+                elif status == -1 and key[0:7] != "History":
                     warnings.warn('The static keyword %s is already used but with a different '
                                   'value. It is advisable to only combine tags that descend from '
                                   'the same data set.' % key)
