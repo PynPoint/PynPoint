@@ -674,8 +674,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             im_star_mask = im_star*mask
             fit_im = self._model_background(basis_pca, im_star_mask, mask)
 
-            test = im_star-fit_im
-
             self.m_subtracted_out_port.append(im_star-fit_im)
             if self.m_residuals_out_tag is not None:
                 self.m_residuals_out_port.append(fit_im)
@@ -695,8 +693,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             im_star_mask = im_star*mask
             fit_im = self._model_background(basis_pca, im_star_mask, mask)
-
-            test = im_star-fit_im
 
             self.m_subtracted_out_port.append(im_star-fit_im)
             if self.m_residuals_out_tag is not None:
