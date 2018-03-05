@@ -12,6 +12,7 @@ from scipy.ndimage.filters import gaussian_filter
 from astropy.nddata import Cutout2D
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
 from PynPoint.Util.Progress import progress
 
 
@@ -146,7 +147,8 @@ class FrameSelectionModule(ProcessingModule):
                  method="median",
                  threshold=4.,
                  fwhm=0.2,
-                 aperture=0.5):
+                 aperture=0.5,
+                 position=None):
         """
         Constructor of FrameSelectionModule.
 
@@ -175,6 +177,13 @@ class FrameSelectionModule(ProcessingModule):
                          around the location of the brightest pixel. Typically a few times the
                          stellar FWHM would be recommended.
         :type aperture: float
+        :param position: Subframe that is selected to search for the star. The tuple can contain a
+                         single position and size as (pos_x, pos_y, size), or the position and size
+                         can be defined for each image separately in which case the tuple should be
+                         2D (nframes x 3). Setting *position* to None will use the full image to
+                         search for the star. If position=(None, None, size) then the center of the
+                         image will be used.
+        :type position: tuple, float
 
         :return: None
         """
@@ -189,6 +198,7 @@ class FrameSelectionModule(ProcessingModule):
         self.m_fwhm = fwhm
         self.m_aperture = aperture
         self.m_threshold = threshold
+        self.m_position = position
 
     def run(self):
         """
@@ -235,16 +245,30 @@ class FrameSelectionModule(ProcessingModule):
         position = np.zeros((nframes, 2), dtype=np.int64)
         phot = np.zeros(nframes)
 
-        rr_check = False
+        star = StarExtractionModule(name_in="star",
+                                    image_in_tag=self.m_image_in_port.tag,
+                                    image_out_tag=None,
+                                    image_size=None,
+                                    fwhm_star=self.m_fwhm*pixscale,
+                                    position=self.m_position)
+
+        star.connect_database(self._m_data_base)
+        star.run()
+
+        position = self.m_image_in_port.get_attribute("STAR_POSITION")
+
+        rr_grid = None
 
         for i in range(nframes):
             progress(i, nframes+nframes, "Running FrameSelectionModule...")
 
-            im_smooth = gaussian_filter(self.m_image_in_port[i],
-                                        gaussian_sigma,
-                                        truncate=4.)
+            im_smooth = self.m_image_in_port[i]
 
-            position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
+            # im_smooth = gaussian_filter(self.m_image_in_port[i],
+            #                             gaussian_sigma,
+            #                             truncate=4.)
+            #
+            # position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
 
             check_pos_in = any(np.floor(position[i, :]-self.m_aperture) < 0.)
             check_pos_out = any(np.ceil(position[i, :]+self.m_aperture) > im_smooth.shape[0])
@@ -257,7 +281,7 @@ class FrameSelectionModule(ProcessingModule):
                                   (position[i, 1], position[i, 0]),
                                   size=2.*self.m_aperture).data
 
-                if not rr_check:
+                if rr_grid is None:
                     npix = im_cut.shape[0]
 
                     if npix%2 == 0:
@@ -267,9 +291,8 @@ class FrameSelectionModule(ProcessingModule):
 
                     xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
                     rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-                    rr_check = True
 
-                im_cut[rr_grid >= 5.] = 0.
+                im_cut[rr_grid >= self.m_aperture] = 0.
 
                 phot[i] = np.sum(im_cut)
 
