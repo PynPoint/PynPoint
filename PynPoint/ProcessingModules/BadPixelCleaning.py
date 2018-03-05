@@ -312,7 +312,9 @@ class BadPixelMapModule(ProcessingModule):
         """
         Run method of the module. Collapses a cube of dark frames and flat fields if needed, flags
         bad pixels by comparing the pixel values with the threshold times the maximum value, and
-        writes a bad pixel map to the database.
+        writes a bad pixel map to the database. For the dark frame, pixel values larger than the
+        threshold will be flagged while for the flat frame pixel values smaller than the threshold
+        will be flagged.
 
         :return: None
         """
@@ -333,7 +335,7 @@ class BadPixelMapModule(ProcessingModule):
 
         bpmap = np.ones(dark.shape)
         bpmap[np.where(dark > max_dark * self.m_dark_threshold)] = 0
-        bpmap[np.where(flat > max_flat * self.m_flat_threshold)] = 0
+        bpmap[np.where(flat < max_flat * self.m_flat_threshold)] = 0
 
         self.m_bp_map_out_port.set_all(bpmap)
         self.m_bp_map_out_port.close_database()

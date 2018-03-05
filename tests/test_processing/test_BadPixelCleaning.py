@@ -1,15 +1,11 @@
 import os
-import math
-import h5py
 import warnings
 
+import h5py
 import numpy as np
-
-from astropy.io import fits
 
 from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
-from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelMapModule, \
                                                         BadPixelInterpolationModule, BadPixelRefinementModule
 
@@ -33,9 +29,9 @@ def setup_module():
     dark[:, 10, 10] = 1.
     dark[:, 12, 12] = 1.
     dark[:, 14, 14] = 1.
-    flat[:, 20, 20] = 1.
-    flat[:, 22, 22] = 1.
-    flat[:, 24, 24] = 1.
+    flat[:, 20, 20] = -1.
+    flat[:, 22, 22] = -1.
+    flat[:, 24, 24] = -1.
 
     h5f = h5py.File(file_in, "w")
     h5f.create_dataset("images", data=images)
@@ -105,7 +101,7 @@ class TestBadPixelCleaning(object):
                                    flat_in_tag="flat",
                                    bp_map_out_tag="bp_map",
                                    dark_threshold=0.99,
-                                   flat_threshold=0.99)
+                                   flat_threshold=-0.99)
 
         self.pipeline.add_module(bp_map)
 
@@ -124,7 +120,7 @@ class TestBadPixelCleaning(object):
         assert data[20, 20] == 0.
         assert data[22, 22] == 0.
         assert data[24, 24] == 0.
-        assert np.mean(data) == 0.9994
+        assert np.mean(data) == 0.9993
 
         storage.close_connection()
 
@@ -146,9 +142,9 @@ class TestBadPixelCleaning(object):
         data = storage.m_data_bank["interpolation"]
 
         assert data[0, 0, 0] == 0.00032486907273264834
-        assert data[0, 10, 10] == -2.0996572238644483e-06
-        assert data[0, 20, 20] == -5.634391873243546e-05
-        assert np.mean(data) == 3.0065791509420055e-07
+        assert data[0, 10, 10] == 1.0139222106683477e-05
+        assert data[0, 20, 20] == -4.686852973820094e-05
+        assert np.mean(data) == 3.0499629451215465e-07
 
         storage.close_connection()
 
@@ -172,8 +168,8 @@ class TestBadPixelCleaning(object):
         data = storage.m_data_bank["refinement"]
 
         assert data[0, 0, 0] == 0.00032486907273264834
-        assert data[0, 10, 10] == 8.690175950157586e-06
-        assert data[0, 20, 20] == -8.72447640628821e-05
-        assert np.mean(data) == 2.9593312144792264e-07
+        assert data[0, 10, 10] == 3.4572557271785087e-06
+        assert data[0, 20, 20] == -9.694818774930603e-05
+        assert np.mean(data) == 3.001502328056615e-07
 
         storage.close_connection()
