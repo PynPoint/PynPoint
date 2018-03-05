@@ -6,6 +6,8 @@ import sys
 
 import numpy as np
 
+from scipy.ndimage import rotate
+
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 
@@ -243,5 +245,89 @@ class MeanCubeModule(ProcessingModule):
         sys.stdout.write("Running MeanCubeModule... [DONE]\n")
         sys.stdout.flush()
 
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_database()
+
+
+class RotateAndStackModule(ProcessingModule):
+    """
+    Module for derotating the images and optional stacking.
+    """
+
+    def __init__(self,
+                 name_in="rotate_stack",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_stack",
+                 stack=False,
+                 extra_rot=0.):
+        """
+        Constructor of RotateAndStackModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. The output is
+                              either 2D (*stack=False*) or 3D (*stack=True*).
+        :type image_out_tag: str
+        :param stack: Apply a mean stacking after derotation.
+        :type stack: bool                 
+        :param extra_rot: Additional rotation angle of the images (deg).
+        :type extra_rot: float
+
+        :return: None
+        """
+
+        super(RotateAndStackModule, self).__init__(name_in=name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_extra_rot = extra_rot
+        self.m_stack = stack
+
+    def run(self):
+        """
+        Run method of the module. Uses the NEW_PARA attributes to derotate the images and applies
+        an optional mean stacking afterwards.
+
+        :return: None
+        """
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_stack:
+            stack = np.zeros((self.m_image_in_port.get_shape()[1],
+                              self.m_image_in_port.get_shape()[2]))
+
+        elif not self.m_stack:
+            stack = np.zeros(self.m_image_in_port.get_shape())
+
+        count = 0.
+        for i, ang in enumerate(parang):
+            progress(i, len(parang), "Running RotateAndStackModule...")
+
+            im_rot = rotate(self.m_image_in_port[i, ], -ang+self.m_extra_rot, reshape=False)
+
+            if self.m_stack:
+                stack += im_rot
+            elif not self.m_stack:
+                stack[i, ] = im_rot
+
+            count += 1.
+
+        if self.m_stack:
+            stack /= count
+
+        sys.stdout.write("Running RotateAndStackModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.set_all(stack)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_database()
