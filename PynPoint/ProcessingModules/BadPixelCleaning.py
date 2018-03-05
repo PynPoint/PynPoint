@@ -333,7 +333,7 @@ class BadPixelMapModule(ProcessingModule):
 
         bpmap = np.ones(dark.shape)
         bpmap[np.where(dark > max_dark * self.m_dark_threshold)] = 0
-        bpmap[np.where(flat < max_flat * self.m_flat_threshold)] = 0
+        bpmap[np.where(flat > max_flat * self.m_flat_threshold)] = 0
 
         self.m_bp_map_out_port.set_all(bpmap)
         self.m_bp_map_out_port.close_database()
@@ -457,7 +457,7 @@ class BadPixelRefinementModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_iterations = iterations
-        self.m_current_pos = 0  # TODO fix this for multithreading
+        self.m_current_pos = 0
         self.m_box_size = box_size
         self.m_sigma = sigma
 
@@ -486,8 +486,6 @@ class BadPixelRefinementModule(ProcessingModule):
 
         def _bad_pixel_refinement(image_in):
             current_pos = positions[self.m_current_pos]
-
-            # TODO why is the +1 needed?
             self.m_current_pos += 1
 
             start_x = int(current_pos[0] - bp_shape[0]/2)
