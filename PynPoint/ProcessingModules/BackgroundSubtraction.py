@@ -501,7 +501,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         self.m_mask = mask
         self.m_residuals_out_tag = residuals_out_tag
 
-    def _create_mask(self, mask, star_position, num_frames):
+    def _create_mask(self, mask_radius, star_position, num_frames):
         """
         Method for creating a circular mask at the star position.
         """
@@ -520,7 +520,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         for i in range(num_frames):
             rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
-            mask[i, ][rr_grid < mask] = 0.
+            mask[i, ][rr_grid < mask_radius] = 0.
 
         return mask
 
