@@ -460,7 +460,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
     def __init__(self,
                  pca_number=60,
-                 mask_radius=0.7,
+                 mask=0.7,
                  name_in="pca_background",
                  star_in_tag="im_star",
                  background_in_tag="im_background",
@@ -471,8 +471,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         :param pca_number: Number of principle components.
         :type pca_number: int
-        :param mask_radius: Radius of the mask (arcsec).
-        :type mask_radius: float
+        :param mask: Radius of the mask (arcsec).
+        :type mask: float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param star_in_tag: Tag of the input database entry with star frames.
@@ -498,10 +498,10 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             self.m_residuals_out_port = self.add_output_port(residuals_out_tag)
 
         self.m_pca_number = pca_number
-        self.m_mask_radius = mask_radius
+        self.m_mask = mask
         self.m_residuals_out_tag = residuals_out_tag
 
-    def _create_mask(self, mask_radius, star_position, num_frames):
+    def _create_mask(self, mask, star_position, num_frames):
         """
         Method for creating a circular mask at the star position.
         """
@@ -520,7 +520,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         for i in range(num_frames):
             rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
-            mask[i, ][rr_grid < mask_radius] = 0.
+            mask[i, ][rr_grid < mask] = 0.
 
         return mask
 
@@ -593,7 +593,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
         star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
 
-        self.m_mask_radius /= pixscale
+        self.m_mask /= pixscale
 
         im_background = self.m_background_in_port.get_all()
 
@@ -622,7 +622,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 frame_end = i*memory+memory
                 im_star = self.m_star_in_port[frame_start:frame_end, ]
 
-            mask = self._create_mask(self.m_mask_radius,
+            mask = self._create_mask(self.m_mask,
                                      star_position[frame_start:frame_end, :],
                                      frame_end-frame_start)
 
@@ -642,7 +642,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             im_star = self.m_star_in_port[frame_start:frame_end, ]
 
-            mask = self._create_mask(self.m_mask_radius,
+            mask = self._create_mask(self.m_mask,
                                      star_position[frame_start:frame_end, :],
                                      frame_end-frame_start)
 
@@ -681,7 +681,7 @@ class DitheringBackgroundModule(ProcessingModule):
                  gaussian=0.15,
                  subframe=None,
                  pca_number=60,
-                 mask_radius=0.7,
+                 mask=0.7,
                  **kwargs):
         """
         Constructor of DitheringBackgroundModule.
@@ -711,12 +711,13 @@ class DitheringBackgroundModule(ProcessingModule):
                          to smooth the image before the star is located.
         :type gaussian: float
         :param subframe: Size (pix) of the subframe that is used to search for the star. Cropping
-                         of the subframe is done around the center of the dithering position.
+                         of the subframe is done around the center of the dithering position. If
+                         set to None then the full frame size (*shape*) will be used.
         :type subframe: float
         :param pca_number: Number of principle components.
         :type pca_number: int
-        :param mask_radius: Radius of the mask that is placed at the location of the star (arcsec).
-        :type mask_radius: float
+        :param mask: Radius of the mask that is placed at the location of the star (arcsec).
+        :type mask: float
         :param \**kwargs:
             See below.
 
@@ -764,7 +765,7 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_gaussian = gaussian
         self.m_subframe = subframe
         self.m_pca_number = pca_number
-        self.m_mask_radius = mask_radius
+        self.m_mask = mask
 
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
@@ -859,7 +860,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 star.run()
 
                 pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
-                                                     mask_radius=self.m_mask_radius,
+                                                     mask=self.m_mask,
                                                      name_in="pca_background"+str(i),
                                                      star_in_tag="star"+str(i+1),
                                                      background_in_tag="background"+str(i+1),
