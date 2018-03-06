@@ -1,7 +1,6 @@
 language: python
 os:
-  - osx
-  # - linux
+  - linux
 python:
   - "2.7"
 install:
