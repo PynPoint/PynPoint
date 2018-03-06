@@ -140,7 +140,7 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit)
 
         data = storage.m_data_bank["center"]
-        assert np.allclose(np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit)
         assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=limit)
 
         storage.close_connection()
