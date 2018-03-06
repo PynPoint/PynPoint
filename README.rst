@@ -6,6 +6,9 @@ PynPoint
 .. image:: https://img.shields.io/badge/GitHub-PynPoint-blue.svg?style=flat
     :target: https://github.com/aamara/PynPoint
 
+.. image:: https://travis-ci.com/aamara/PynPoint.svg?token=ywSsnizu1YgWCg5AsDzE&branch=master
+    :target: https://travis-ci.com/aamara/PynPoint
+
 .. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
     :target: https://pypi.python.org/pypi/PynPoint-exoplanet
 
@@ -14,6 +17,7 @@ PynPoint
 
 .. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
     :target: http://arxiv.org/abs/1207.6637
+
 
 PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of self-luminous exoplanets and brown dwarf companions, as well as circumstellar disks in scattered light.
 

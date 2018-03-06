@@ -14,6 +14,8 @@ from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationMod
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
 
@@ -64,13 +66,11 @@ class TestDarkAndFlatCalibration(object):
         storage.open_connection()
 
         data = storage.m_data_bank["dark"]
-        assert data[0, 10, 10] == 3.528694163309295e-05
-        assert np.amax(data) == 0.0008720374039010672
-        assert np.mean(data) == 7.368663496379876e-07
+        assert np.allclose(data[0, 10, 10], 3.528694163309295e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 7.368663496379876e-07, rtol=limit)
 
         data = storage.m_data_bank["flat"]
-        assert data[0, 10, 10] == -0.0004053528990466237
-        assert np.amax(data) == 0.0009061805330671866
-        assert np.mean(data) == -4.056978234798532e-07
+        assert np.allclose(data[0, 10, 10], -0.0004053528990466237, rtol=limit)
+        assert np.allclose(np.mean(data), -4.056978234798532e-07, rtol=limit)
 
         storage.close_connection()
