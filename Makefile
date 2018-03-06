@@ -43,7 +43,6 @@ coverage:
 	coverage run --source PynPoint -m py.test
 	coverage report -m --omit=PynPoint/OldVersion/*
 	coverage html --omit=PynPoint/OldVersion/*
-	open htmlcov/index.html
 
 docs:
 	rm -f docs/modules.rst
