@@ -1,6 +1,4 @@
 language: python
-os:
-  - linux
 python:
   - "2.7"
 install:
@@ -9,7 +7,7 @@ install:
   - pip install coverage
   - pip install sphinx
 script:
-  - pytest
-  - tox
-  - coverage run --source PynPoint -m pytest
-  - sphinx-apidoc -o docs/ PynPoint
+  - make test
+  - make test-all
+  - make coverage
+  - make docs
