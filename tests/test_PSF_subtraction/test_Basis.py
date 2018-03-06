@@ -66,7 +66,6 @@ class TestBasis(object):
     def test_overall_basis1(self):
         basis = self.basis1
         basis_base = self.basis3
-
         assert np.array_equal(basis.files, basis_base.files)
         assert np.array_equal(basis.im_size, basis_base.im_size)
         assert np.array_equal(basis.im_arr.shape  , basis_base.im_arr.shape)
