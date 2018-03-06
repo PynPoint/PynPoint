@@ -9,6 +9,8 @@ from PynPoint.Core.DataIO import InputPort, DataStorage
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
 
@@ -37,11 +39,11 @@ class TestInputPort(object):
     def test_create_instance_access_data(self):
         port = InputPort("images", self.storage)
 
-        assert port[0, 0, 0] == 0.00032486907273264834
-        assert np.mean(port.get_all()) == 1.0506056979365338e-06
+        assert np.allclose(port[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(np.mean(port.get_all()), 1.0506056979365338e-06, rtol=limit)
 
         arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05, -0.00038631277795631806), dtype=np.float64)
-        assert np.array_equal(port[0:3, 0, 0], arr_tmp)
+        assert np.allclose(port[0:3, 0, 0], arr_tmp, rtol=limit)
 
         assert len(port[0:2, 0, 0]) == 2
         assert port.get_shape() == (10, 100, 100)

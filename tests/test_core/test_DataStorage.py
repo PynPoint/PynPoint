@@ -9,6 +9,8 @@ from PynPoint.Core.DataIO import DataStorage
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 class TestDataStorage(object):
 
     def setup(self):
@@ -26,8 +28,8 @@ class TestDataStorage(object):
         storage.open_connection()
         data = storage.m_data_bank["images"]
 
-        assert data[0, 0, 0] == 0.00032486907273264834
-        assert np.mean(data) == 1.0506056979365338e-06
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit)
 
         os.remove(self.test_data)
 
