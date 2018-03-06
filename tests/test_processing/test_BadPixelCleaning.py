@@ -11,6 +11,8 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
     config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
@@ -87,10 +89,10 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["sigma"]
 
-        assert data[0, 0, 0] == 0.00032486907273264834
-        assert data[0, 10, 10] == 0.025022559679385093
-        assert data[0, 20, 20] == 0.024962143884217046
-        assert np.mean(data) == 6.721637736047109e-07
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.025022559679385093, rtol=limit)
+        assert np.allclose(data[0, 20, 20], 0.024962143884217046, rtol=limit)
+        assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit)
 
         storage.close_connection()
 
@@ -141,10 +143,10 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["interpolation"]
 
-        assert data[0, 0, 0] == 0.00032486907273264834
-        assert data[0, 10, 10] == 1.0139222106683477e-05
-        assert data[0, 20, 20] == -4.686852973820094e-05
-        assert np.mean(data) == 3.0499629451215465e-07
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit)
+        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit)
 
         storage.close_connection()
 
@@ -167,9 +169,9 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["refinement"]
 
-        assert data[0, 0, 0] == 0.00032486907273264834
-        assert data[0, 10, 10] == 3.4572557271785087e-06
-        assert data[0, 20, 20] == -9.694818774930603e-05
-        assert np.mean(data) == 3.001502328056615e-07
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 3.4572557271785087e-06, rtol=limit)
+        assert np.allclose(data[0, 20, 20], -9.694818774930603e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 3.001502328056615e-07, rtol=limit)
 
         storage.close_connection()
