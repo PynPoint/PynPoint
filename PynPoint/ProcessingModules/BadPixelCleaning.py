@@ -312,7 +312,9 @@ class BadPixelMapModule(ProcessingModule):
         """
         Run method of the module. Collapses a cube of dark frames and flat fields if needed, flags
         bad pixels by comparing the pixel values with the threshold times the maximum value, and
-        writes a bad pixel map to the database.
+        writes a bad pixel map to the database. For the dark frame, pixel values larger than the
+        threshold will be flagged while for the flat frame pixel values smaller than the threshold
+        will be flagged.
 
         :return: None
         """
@@ -457,7 +459,7 @@ class BadPixelRefinementModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_iterations = iterations
-        self.m_current_pos = 0  # TODO fix this for multithreading
+        self.m_current_pos = 0
         self.m_box_size = box_size
         self.m_sigma = sigma
 
@@ -486,8 +488,6 @@ class BadPixelRefinementModule(ProcessingModule):
 
         def _bad_pixel_refinement(image_in):
             current_pos = positions[self.m_current_pos]
-
-            # TODO why is the +1 needed?
             self.m_current_pos += 1
 
             start_x = int(current_pos[0] - bp_shape[0]/2)

@@ -20,10 +20,10 @@ PynPoint\.ProcessingModules\.BadPixelCleaning module
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.ProcessingModules\.DarkAndFlatSubtraction module
+PynPoint\.ProcessingModules\.DarkAndFlatCalibration module
 ----------------------------------------------------------
 
-.. automodule:: PynPoint.ProcessingModules.DarkAndFlatSubtraction
+.. automodule:: PynPoint.ProcessingModules.DarkAndFlatCalibration
     :members:
     :undoc-members:
     :show-inheritance:
