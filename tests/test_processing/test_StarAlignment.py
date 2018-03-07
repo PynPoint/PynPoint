@@ -15,6 +15,8 @@ from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarA
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
 
@@ -123,26 +125,22 @@ class TestStarAlignment(object):
         storage.open_connection()
 
         data = storage.m_data_bank["read"]
-        assert data[0, 10, 10] == 0.00012958496246258364
-        assert np.amax(data) == 0.09834608207165056
-        assert np.mean(data) == 9.832838021311831e-05
+        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit)
+        assert np.allclose(np.mean(data), 9.832838021311831e-05, rtol=limit)
 
         data = storage.m_data_bank["extract"]
-        assert data[0, 10, 10] == 0.05304008435511765
-        assert np.amax(data) == 0.09834608207165056
-        assert np.mean(data) == 0.0020655767159466613
+        assert np.allclose(data[0, 10, 10], 0.05304008435511765, rtol=limit)
+        assert np.allclose(np.mean(data), 0.0020655767159466613, rtol=limit)
 
         data = storage.m_data_bank["header_extract/STAR_POSITION"]
         assert data[10, 0] ==  data[10, 1] == 75
 
         data = storage.m_data_bank["shift"]
-        assert data[0, 10, 10] == -4.341611534220891e-05
-        assert np.amax(data) == 0.02368281177007351
-        assert np.mean(data) == 0.0005164420068450968
+        assert np.allclose(data[0, 10, 10], -4.341611534220891e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit)
 
         data = storage.m_data_bank["center"]
-        assert data[0, 10, 10] == 4.128859892625027e-05
-        assert np.amax(data) == 0.02368971334413554
-        assert np.mean(data) == 0.0005163769620309259
+        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=limit)
 
         storage.close_connection()
