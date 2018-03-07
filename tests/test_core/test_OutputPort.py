@@ -9,6 +9,8 @@ from PynPoint.Core.DataIO import OutputPort, DataStorage, InputPort
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
 
