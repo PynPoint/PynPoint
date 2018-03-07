@@ -80,8 +80,8 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["simple"]
-        assert data[0, 10, 10] == 0.00016307583939841944
-        assert np.mean(data) == 1.7347234759768072e-23
+        assert np.allclose(data[0, 10, 10], 0.00016307583939841944, rtol=limit)
+        assert np.allclose(np.mean(data), 1.7347234759768072e-23, rtol=limit)
 
         storage.close_connection()
 
@@ -109,12 +109,12 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["mean1"]
-        assert data[0, 10, 10] == 0.0001881700200690493
-        assert np.mean(data) == 6.468177714836324e-08
+        assert np.allclose(data[0, 10, 10], 0.0001881700200690493, rtol=limit)
+        assert np.allclose(np.mean(data), 6.468177714836324e-08, rtol=limit)
 
         data = storage.m_data_bank["mean2"]
-        assert data[0, 10, 10] == 0.0001881700200690493
-        assert np.mean(data) == 6.468177714836324e-08
+        assert np.allclose(data[0, 10, 10], 0.0001881700200690493, rtol=limit)
+        assert np.allclose(np.mean(data), 6.468177714836324e-08, rtol=limit)
 
         storage.close_connection()
 
@@ -144,12 +144,12 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["star"]
-        assert data[0, 10, 10] == 0.0001881700200690493
-        assert np.mean(data) == 3.137393482985464e-07
+        assert np.allclose(data[0, 10, 10], 0.0001881700200690493, rtol=limit)
+        assert np.allclose(np.mean(data), 3.137393482985464e-07, rtol=limit)
 
         data = storage.m_data_bank["background"]
-        assert data[0, 10, 10] == 9.38719992395586e-05
-        assert np.mean(data) == 5.782411586589357e-23
+        assert np.allclose(data[0, 10, 10], 9.38719992395586e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 5.782411586589357e-23, rtol=limit)
 
         data = storage.m_data_bank["subtracted"]
         assert np.allclose(data[0, 10, 10], 0.00017730626029598609, rtol=limit)
@@ -226,15 +226,15 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["images"]
-        assert data[0, 10, 10] == 0.00012958496246258364
-        assert np.mean(data) == 2.9494781737579395e-07
+        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit)
+        assert np.allclose(np.mean(data), 2.9494781737579395e-07, rtol=limit)
 
         data = storage.m_data_bank["sky"]
-        assert data[0, 10, 10] == -3.7305891376589886e-05
-        assert np.mean(data) == 3.829912457736603e-07
+        assert np.allclose(data[0, 10, 10], -3.7305891376589886e-05, rtol=limit)
+        assert np.allclose(np.mean(data), 3.829912457736603e-07, rtol=limit)
 
         data = storage.m_data_bank["nodding"]
-        assert data[0, 10, 10] == 0.00016689085383917351
-        assert np.mean(data) == 9.439443523107406e-07
+        assert np.allclose(data[0, 10, 10], 0.00016689085383917351, rtol=limit)
+        assert np.allclose(np.mean(data), 9.439443523107406e-07, rtol=limit)
 
         storage.close_connection()
