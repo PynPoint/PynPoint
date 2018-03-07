@@ -13,6 +13,8 @@ from PynPoint.ProcessingModules import BadPixelSigmaFilterModule
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     file_in = os.path.dirname(__file__) + "/images.fits"
     config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
@@ -75,8 +77,8 @@ class TestPypeline(object):
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
         data = pipeline.get_data("images")
 
-        assert data[0, 0, 0] == 0.00032486907273264834
-        assert np.mean(data) == 1.0506056979365338e-06
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
+        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit)
         assert pipeline.get_attribute("images", "PIXSCALE") == 0.01
 
         os.remove(self.test_data)

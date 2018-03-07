@@ -23,6 +23,8 @@ from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModu
 
 warnings.simplefilter("always")
 
+limit = 1e-10
+
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
 
@@ -301,44 +303,44 @@ class TestDocumentation(object):
         storage.open_connection()
 
         data = storage.m_data_bank["im_arr"]
-        assert data[0, 61, 39] == -0.00022889163546536875
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
 
         data = storage.m_data_bank["dark_arr"]
-        assert data[0, 61, 39] == 2.368170995592123e-05
+        assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit)
 
         data = storage.m_data_bank["flat_arr"]
-        assert data[0, 61, 39] == 0.98703416941301647
+        assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit)
 
         data = storage.m_data_bank["im_arr_last"]
-        assert data[0, 61, 39] == -0.00022889163546536875
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
 
         data = storage.m_data_bank["im_arr_cut"]
-        assert data[0, 61, 39] == -0.00022889163546536875
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
 
         data = storage.m_data_bank["dark_sub_arr"]
-        assert data[0, 61, 39] == -0.00021601281733413911
+        assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit)
 
         data = storage.m_data_bank["flat_sub_arr"]
-        assert data[0, 61, 39] == -0.00021647987125847178
+        assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit)
 
         data = storage.m_data_bank["bg_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00013095662386792948
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit)
 
         data = storage.m_data_bank["bp_cleaned_arr"]
-        assert data[0, 61, 39] == -0.00013095662386792948
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit)
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert data[0, 10, 10] == 0.052958146579313935
+        assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit)
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert data[0, 10, 10] == 1.1307471842831197e-05
+        assert np.allclose(data[0, 10, 10], 1.1307471842831197e-05, rtol=limit)
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert data[0, 10, 10] == 2.5529051372679164e-05
+        assert np.allclose(data[0, 10, 10], 2.5529051372679164e-05, rtol=limit)
 
         data = storage.m_data_bank["res_mean"]
-        assert data[38, 22] == 0.00014894940158150866
-        assert np.mean(data) == -1.8907529204884748e-07
+        assert np.allclose(data[38, 22], 0.00014894940158150866, rtol=limit)
+        assert np.allclose(np.mean(data), -1.8907529204884748e-07, rtol=limit)
         assert data.shape == (44, 44)
 
         storage.close_connection()
