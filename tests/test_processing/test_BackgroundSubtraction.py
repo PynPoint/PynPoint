@@ -129,7 +129,7 @@ class TestBackgroundSubtraction(object):
         self.pipeline.add_module(pca_prep)
 
         pca_bg = PCABackgroundSubtractionModule(pca_number=5,
-                                                mask_radius=0.3,
+                                                mask=0.3,
                                                 name_in="pca_bg",
                                                 star_in_tag="star",
                                                 background_in_tag="background",
@@ -171,7 +171,7 @@ class TestBackgroundSubtraction(object):
                                                 shape=(80, 80),
                                                 gaussian=0.15,
                                                 pca_number=5,
-                                                mask_radius=0.3,
+                                                mask=0.3,
                                                 crop=True,
                                                 prepare=True,
                                                 pca_background=True,
@@ -187,7 +187,7 @@ class TestBackgroundSubtraction(object):
                                                 shape=(80, 80),
                                                 gaussian=0.15,
                                                 pca_number=5,
-                                                mask_radius=0.3,
+                                                mask=0.3,
                                                 crop=True,
                                                 prepare=True,
                                                 pca_background=True,
