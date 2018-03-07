@@ -474,8 +474,8 @@ class BadPixelRefinementModule(ProcessingModule):
 
         if "STAR_POSITION" not in self.m_image_in_port.get_all_non_static_attributes():
             raise IOError("There is no STAR_POSITION attribute associated with '%s'. The "
-                          "attribute can be obtained with StarExtractionModule or "
-                          "LocateStarModule." % self.m_image_in_port.tag)
+                          "attribute can be obtained with StarExtractionModule."
+                          % self.m_image_in_port.tag)
         else:
             positions = self.m_image_in_port.get_attribute("STAR_POSITION")
 

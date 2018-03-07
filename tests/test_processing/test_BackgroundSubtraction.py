@@ -8,8 +8,7 @@ from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, SimpleBackgroundSubtractionModule, \
                                                              PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
-                                                             PCABackgroundDitheringModule, PCABackgroundNoddingModule, \
-                                                             NoddingBackgroundModule
+                                                             DitheringBackgroundModule, NoddingBackgroundModule
 
 warnings.simplefilter("always")
 
@@ -66,18 +65,38 @@ class TestBackgroundSubtraction(object):
         self.test_dir = os.path.dirname(__file__) + "/"
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
+    def test_simple_background_subraction(self):
+
+        simple = SimpleBackgroundSubtractionModule(shift=1,
+                                                   name_in="simple",
+                                                   image_in_tag="images",
+                                                   image_out_tag="simple")
+
+        self.pipeline.add_module(simple)
+
+        self.pipeline.run()
+
+        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
+        storage.open_connection()
+
+        data = storage.m_data_bank["simple"]
+        assert np.allclose(data[0, 10, 10], 0.00016307583939841944, rtol=limit)
+        assert np.allclose(np.mean(data), 1.7347234759768072e-23, rtol=limit)
+
+        storage.close_connection()
+
     def test_mean_background_subraction(self):
 
-        mean1 = MeanBackgroundSubtractionModule(star_pos_shift=None,
-                                                cubes_per_position=1,
+        mean1 = MeanBackgroundSubtractionModule(shift=None,
+                                                cubes=1,
                                                 name_in="mean1",
                                                 image_in_tag="images",
                                                 image_out_tag="mean1")
 
         self.pipeline.add_module(mean1)
 
-        mean2 = MeanBackgroundSubtractionModule(star_pos_shift=10,
-                                                cubes_per_position=1,
+        mean2 = MeanBackgroundSubtractionModule(shift=10,
+                                                cubes=1,
                                                 name_in="mean2",
                                                 image_in_tag="images",
                                                 image_out_tag="mean2")
@@ -99,26 +118,6 @@ class TestBackgroundSubtraction(object):
 
         storage.close_connection()
 
-    def test_simple_background_subraction(self):
-
-        simple = SimpleBackgroundSubtractionModule(star_pos_shift=1,
-                                                   name_in="simple",
-                                                   image_in_tag="images",
-                                                   image_out_tag="simple")
-
-        self.pipeline.add_module(simple)
-
-        self.pipeline.run()
-
-        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
-        storage.open_connection()
-
-        data = storage.m_data_bank["simple"]
-        assert np.allclose(data[0, 10, 10], 0.00016307583939841944, rtol=limit)
-        assert np.allclose(np.mean(data), 1.7347234759768072e-23, rtol=limit)
-
-        storage.close_connection()
-
     def test_pca_background(self):
 
         pca_prep = PCABackgroundPreparationModule(dither=(4, 1, 0),
@@ -131,7 +130,6 @@ class TestBackgroundSubtraction(object):
 
         pca_bg = PCABackgroundSubtractionModule(pca_number=5,
                                                 mask_radius=0.3,
-                                                mask_position="exact",
                                                 name_in="pca_bg",
                                                 star_in_tag="star",
                                                 background_in_tag="background",
@@ -163,39 +161,37 @@ class TestBackgroundSubtraction(object):
 
         storage.close_connection()
 
-    def test_pca_dithering(self):
+    def test_dithering_background(self):
 
-        pca_dither1 = PCABackgroundDitheringModule(name_in="pca_dither1",
-                                                   image_in_tag="images",
-                                                   image_out_tag="pca_dither1",
-                                                   center=None,
-                                                   cubes_per_position=None,
-                                                   shape=(80, 80),
-                                                   gaussian=0.15,
-                                                   pca_number=5,
-                                                   mask_radius=0.3,
-                                                   bad_pixel_box=9,
-                                                   bad_pixel_sigma=5,
-                                                   bad_pixel_iterate=1,
-                                                   mask_position="exact",
-                                                   mean_only=False)
+        pca_dither1 = DitheringBackgroundModule(name_in="pca_dither1",
+                                                image_in_tag="images",
+                                                image_out_tag="pca_dither1",
+                                                center=None,
+                                                cubes=None,
+                                                shape=(80, 80),
+                                                gaussian=0.15,
+                                                pca_number=5,
+                                                mask_radius=0.3,
+                                                crop=True,
+                                                prepare=True,
+                                                pca_background=True,
+                                                combine="pca")
 
         self.pipeline.add_module(pca_dither1)
 
-        pca_dither2 = PCABackgroundDitheringModule(name_in="pca_dither2",
-                                                   image_in_tag="images",
-                                                   image_out_tag="pca_dither2",
-                                                   center=((55., 55.), (55., 45.), (45., 45.), (45., 55.)),
-                                                   cubes_per_position=1,
-                                                   shape=(80, 80),
-                                                   gaussian=0.15,
-                                                   pca_number=5,
-                                                   mask_radius=0.3,
-                                                   bad_pixel_box=9,
-                                                   bad_pixel_sigma=5,
-                                                   bad_pixel_iterate=1,
-                                                   mask_position="exact",
-                                                   mean_only=False)
+        pca_dither2 = DitheringBackgroundModule(name_in="pca_dither2",
+                                                image_in_tag="images",
+                                                image_out_tag="pca_dither2",
+                                                center=((55., 55.), (55., 45.), (45., 45.), (45., 55.)),
+                                                cubes=1,
+                                                shape=(80, 80),
+                                                gaussian=0.15,
+                                                pca_number=5,
+                                                mask_radius=0.3,
+                                                crop=True,
+                                                prepare=True,
+                                                pca_background=True,
+                                                combine="pca")
 
         self.pipeline.add_module(pca_dither2)
 
@@ -205,36 +201,12 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["pca_dither1"]
-        assert np.allclose(data[0, 10, 10], -3.5301952124341506e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=limit)
         assert np.allclose(np.mean(data), 4.381313106053087e-08, rtol=limit)
 
         data = storage.m_data_bank["pca_dither2"]
-        assert np.allclose(data[0, 10, 10], 4.952760344982439e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 4.909189533975212e-05, rtol=limit)
         assert np.allclose(np.mean(data), 4.381304393943703e-08, rtol=limit)
-
-        storage.close_connection()
-
-    def test_pca_nodding(self):
-
-        pca_nodding = PCABackgroundNoddingModule(name_in="pca_nodding",
-                                                 star_in_tag="images",
-                                                 background_in_tag="sky",
-                                                 image_out_tag="pca_nodding",
-                                                 gaussian=0.15,
-                                                 pca_number=5,
-                                                 mask_radius=0.3,
-                                                 mask_position="exact")
-
-        self.pipeline.add_module(pca_nodding)
-
-        self.pipeline.run()
-
-        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
-        storage.open_connection()
-
-        data = storage.m_data_bank["pca_nodding"]
-        assert np.allclose(data[0, 10, 10], 0.00013062168338274718, rtol=limit)
-        assert np.allclose(np.mean(data), 2.94181464021682e-07, rtol=limit)
 
         storage.close_connection()
 

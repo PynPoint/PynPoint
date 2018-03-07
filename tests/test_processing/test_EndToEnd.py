@@ -188,8 +188,8 @@ class TestEndToEnd(object):
         storage.close_connection()
 
     def test_background(self):
-        background = MeanBackgroundSubtractionModule(star_pos_shift=None,
-                                                     cubes_per_position=1,
+        background = MeanBackgroundSubtractionModule(shift=None,
+                                                     cubes=1,
                                                      name_in="background",
                                                      image_in_tag="im_cut",
                                                      image_out_tag="im_bg")
