@@ -1,13 +1,13 @@
 from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgroundSubtractionModule, \
                                   PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
-                                  PCABackgroundDitheringModule, NoddingBackgroundModule
+                                  DitheringBackgroundModule, NoddingBackgroundModule
 from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationModule, \
                              BadPixelMapModule, BadPixelRefinementModule
 from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
-from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule
-from StarAlignment import StarAlignmentModule, StarExtractionModule, LocateStarModule, \
-                          StarCenteringModule, ShiftForCenteringModule
+from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, RotateAndStackModule
+from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteringModule, \
+                          ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule, \
                           CombineTagsModule
 from PSFpreparation import PSFpreparationModule, AngleCalculationModule

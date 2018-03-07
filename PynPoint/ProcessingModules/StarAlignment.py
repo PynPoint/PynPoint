@@ -3,19 +3,16 @@ Modules for locating, aligning, and centering of the star.
 """
 
 import math
-import sys
 
 import numpy as np
 import cv2
 
 from skimage.feature import register_translation
 from skimage.transform import rescale
-from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 from scipy.optimize import curve_fit
 
-from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 
 
@@ -27,9 +24,10 @@ class StarExtractionModule(ProcessingModule):
     def __init__(self,
                  name_in="star_cutting",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_cut",
+                 image_out_tag="im_arr_crop",
                  image_size=2.,
-                 fwhm_star=0.2):
+                 fwhm_star=0.2,
+                 position=None):
         """
         Constructor of StarExtractionModule.
 
@@ -37,14 +35,25 @@ class StarExtractionModule(ProcessingModule):
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the images that are written as
-                              output. Should be different from *image_in_tag*.
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*. If *image_out_tag* and/or *image_size*
+                              is set to None then only the STAR_POSITION attributes will be written
+                              to *image_in_tag* and *image_out_tag* is not used.
         :type image_out_tag: str
-        :param image_size: Cropped size (arcsec) of the images.
+        :param image_size: Cropped image size (arcsec). If *image_out_tag* and/or *image_size* is
+                           set to None then only the STAR_POSITION attributes will be written to
+                           *image_in_tag* and *image_out_tag* is not used.
         :type image_size: float
         :param fwhm_star: Full width at half maximum (arcsec) of the Gaussian kernel that is used
                           to convolve the images.
         :type fwhm_star: float
+        :param position: Subframe that is selected to search for the star. The tuple can contain a
+                         single position and size as (pos_x, pos_y, size), or the position and size
+                         can be defined for each image separately in which case the tuple should be
+                         2D (nframes x 3). Setting *position* to None will use the full image to
+                         search for the star. If position=(None, None, size) then the center of the
+                         image will be used.
+        :type position: tuple, float
 
         :return: None
         """
@@ -52,16 +61,22 @@ class StarExtractionModule(ProcessingModule):
         super(StarExtractionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_inout_port = self.add_output_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
+        if image_out_tag is None:
+            self.m_image_out_port = None
+        else:
+            self.m_image_out_port = self.add_output_port(image_out_tag)
+        self.m_position_out_port = self.add_output_port(image_in_tag)
+
         self.m_image_size = image_size
-        self.m_fwhm_star = fwhm_star # 7 pix / 0.2 arcsec is good for L-band data
-        self.count = 0
+        self.m_fwhm_star = fwhm_star
+        self.m_position = position
+        self.m_count = 0
+        self.m_image_out_tag = image_out_tag
 
     def run(self):
         """
         Run method of the module. Locates the position of the star (only pixel precision) by
-        selecting the largest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
+        selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
         used to smooth away the contribution of bad pixels which may have higher values than the
         peak of the PSF. Images are cropped and written to an output port. The position of the
         star is attached as a non-static attribute (STAR_POSITION) to the database tag with the
@@ -73,57 +88,84 @@ class StarExtractionModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        psf_radius = int((self.m_image_size / 2.0) / pixscale)
+        if self.m_position is not None:
+            self.m_position = np.asarray(self.m_position)
+
+            if self.m_position.ndim == 2 and \
+                    self.m_position.shape[0] != self.m_image_in_port.get_shape()[0]:
+                raise ValueError("Either a single 'position' should be specified or an array "
+                                 "equal in size to the number of images in 'image_in_tag'.")
+
+            if self.m_position[0] is None and self.m_position[1] is None:
+                npix = self.m_image_in_port.get_shape()[1]
+                self.m_position[0] = npix/2.
+                self.m_position[1] = npix/2.
+
+        if self.m_image_size is not None:
+            psf_radius = int((self.m_image_size/2.)/pixscale)
 
         self.m_fwhm_star /= pixscale
         self.m_fwhm_star = int(self.m_fwhm_star)
 
-        star_positions = []
+        star = []
 
-        def cut_psf(current_image):
-
+        def crop_image(image):
             sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
+            kernel = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
 
-            kernel_size = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
+            if self.m_position is None:
+                subimage = image
 
-            search_image = cv2.GaussianBlur(current_image,
-                                            kernel_size,
-                                            sigma)
+            else:
+                if self.m_position.ndim == 1:
+                    pos_x = self.m_position[0]
+                    pos_y = self.m_position[1]
+                    width = self.m_position[2]
 
-            argmax = np.unravel_index(search_image.argmax(), search_image.shape)
+                elif self.m_position.ndim == 2:
+                    pos_x = self.m_position[self.m_count, 0]
+                    pos_y = self.m_position[self.m_count, 1]
+                    width = self.m_position[self.m_count, 2]
 
-            if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
-                    or argmax[0] + psf_radius > current_image.shape[0] \
-                    or argmax[1] + psf_radius > current_image.shape[1]:
+                subimage = image[int(pos_y-width/2.):int(pos_y+width/2.),
+                                 int(pos_x-width/2.):int(pos_x+width/2.)]
 
-                raise ValueError('Highest value is near the border. PSF size is too '
-                                 'large to be cut (image index = '+str(self.count)+').')
+            im_smooth = cv2.GaussianBlur(subimage, kernel, sigma)
+            argmax = np.asarray(np.unravel_index(im_smooth.argmax(), im_smooth.shape))
 
-            cut_image = current_image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
-                                      int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
+            if self.m_position is not None:
+                argmax[0] += pos_y-width/2.
+                argmax[1] += pos_x-width/2.
 
-            star_positions.append(argmax)
+            if self.m_image_size is not None:
+                if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
+                        or argmax[0] + psf_radius > image.shape[0] \
+                        or argmax[1] + psf_radius > image.shape[1]:
 
-            self.count += 1
+                    raise ValueError('Highest value is near the border. PSF size is too '
+                                     'large to be copped (image index = '+str(self.m_count)+').')
 
-            return cut_image
+                im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
+                                int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
-        self.apply_function_to_images(cut_psf,
+            star.append(argmax)
+            self.m_count += 1
+
+            if self.m_image_size is not None:
+                return im_crop
+
+        self.apply_function_to_images(crop_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarExtractionModule...",
                                       num_images_in_memory=memory)
 
-        self.m_image_inout_port.add_attribute("STAR_POSITION",
-                                              np.asarray(star_positions),
-                                              static=False)
+        self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_image_out_port.add_history_information("Star extract",
-                                                      "Maximum in smoothed image")
-
-        self.m_image_out_port.close_database()
+        if self.m_image_size is not None and self.m_image_out_tag is not None:
+            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_image_out_port.add_history_information("Star extract", "maximum")
+            self.m_image_out_port.close_database()
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -269,70 +311,6 @@ class StarAlignmentModule(ProcessingModule):
         self.m_image_out_port.close_database()
 
 
-class LocateStarModule(ProcessingModule):
-    """
-    Module for locating the position of the star.
-    """
-
-    def __init__(self,
-                 name_in="locate_star",
-                 data_tag="im_arr",
-                 gaussian_fwhm=0.2):
-        """
-        Constructor of LocateStarModule.
-
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param data_tag: Tag of the database entry for which the star positions are written as
-                         attributes.
-        :type data_tag: str
-        :param gaussian_fwhm: Full width at half maximum (arcsec) of the Gaussian kernel that is
-                              used to smooth the image before the star is located.
-        :type gaussian_fwhm: float
-        :return: None
-        """
-
-        super(LocateStarModule, self).__init__(name_in)
-
-        self.m_data_in_port = self.add_input_port(data_tag)
-        self.m_data_out_port = self.add_output_port(data_tag)
-
-        self.m_gaussian_fwhm = gaussian_fwhm
-
-    def run(self):
-        """
-        Run method of the module. Smooths the image with a Gaussian kernel, finds the largest
-        pixel value, and writes the STAR_POSITION attribute.
-
-        :return: None
-        """
-
-        pixscale = self.m_data_in_port.get_attribute("PIXSCALE")
-        self.m_gaussian_fwhm /= pixscale
-
-        sigma = self.m_gaussian_fwhm/math.sqrt(8.*math.log(2.))
-
-        star_position = np.zeros((self.m_data_in_port.get_shape()[0], 2), dtype=np.int64)
-
-        for i in range(self.m_data_in_port.get_shape()[0]):
-            progress(i, self.m_data_in_port.get_shape()[0], "Running LocateStarModule...")
-
-            im_smooth = gaussian_filter(self.m_data_in_port[i],
-                                        sigma,
-                                        truncate=4.)
-
-            star_position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
-
-        sys.stdout.write("Running LocateStarModule... [DONE]\n")
-        sys.stdout.flush()
-
-        self.m_data_out_port.add_attribute("STAR_POSITION",
-                                           star_position,
-                                           static=False)
-
-        self.m_data_out_port.close_database()
-
-
 class StarCenteringModule(ProcessingModule):
     """
     Module for centering the star by fitting a 2D Gaussian profile.
@@ -424,10 +402,17 @@ class StarCenteringModule(ProcessingModule):
             return np.ravel(gaussian)
 
         def _least_squares(image):
+            npix = image.shape[0]
+
+            if npix%2 == 0:
+                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+            elif npix%2 == 1:
+                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
             im_ravel = np.ravel(image)
 
             popt, pcov = curve_fit(_2d_gaussian,
-                                   (self.m_x_grid, self.m_y_grid),
+                                   (x_grid, y_grid),
                                    im_ravel,
                                    p0=self.m_guess,
                                    sigma=None,
@@ -477,23 +462,17 @@ class StarCenteringModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
         nstacks = int(float(nimages)/float(memory))
-        npix = self.m_image_in_port.get_shape()[1]
 
-        if npix%2 == 0:
-            self.m_x_grid = self.m_y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-        elif npix%2 == 1:
-            self.m_x_grid = self.m_y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+        npix = self.m_image_in_port.get_shape()[1]
 
         if self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
             for i in range(nstacks):
-                im_mean += np.sum(self.m_image_in_port[i*memory:i*memory+memory, ],
-                                  axis=0)
+                im_mean += np.sum(self.m_image_in_port[i*memory:i*memory+memory, ], axis=0)
 
             if nimages%memory > 0:
-                im_mean += np.sum(self.m_image_in_port[nstacks*memory:nimages, ],
-                                  axis=0)
+                im_mean += np.sum(self.m_image_in_port[nstacks*memory:nimages, ], axis=0)
 
             im_mean /= float(nimages)
 
@@ -522,15 +501,15 @@ class ShiftForCenteringModule(ProcessingModule):
     """
 
     def __init__(self,
-                 shift,
+                 shift_xy,
                  name_in="shift",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_shifted"):
         """
         Constructor of ShiftForCenteringModule.
 
-        :param shift: Tuple (delta_y, delta_x) with the shift in both directions.
-        :type shift: tuple, float
+        :param shift_xy: Tuple (delta_y, delta_x) with the shift in both directions.
+        :type shift_xy: tuple, float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -547,7 +526,7 @@ class ShiftForCenteringModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shift = shift
+        self.m_shift = shift_xy
 
     def run(self):
         """
@@ -567,9 +546,6 @@ class ShiftForCenteringModule(ProcessingModule):
                                       "Running ShiftForCenteringModule...",
                                       num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Shifted by",
-                                                      str(self.m_shift))
-
+        self.m_image_out_port.add_history_information("Shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_image_out_port.close_database()

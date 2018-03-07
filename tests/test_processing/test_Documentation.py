@@ -229,8 +229,8 @@ class TestDocumentation(object):
         self.pipeline.add_module(dark_sub)
         self.pipeline.add_module(flat_sub)
 
-        bg_subtraction = MeanBackgroundSubtractionModule(star_pos_shift=None,
-                                                         cubes_per_position=1,
+        bg_subtraction = MeanBackgroundSubtractionModule(shift=None,
+                                                         cubes=1,
                                                          name_in="background_subtraction",
                                                          image_in_tag="flat_sub_arr",
                                                          image_out_tag="bg_cleaned_arr")
@@ -248,14 +248,16 @@ class TestDocumentation(object):
                                           image_in_tag="bp_cleaned_arr",
                                           image_out_tag="im_arr_extract",
                                           image_size=0.6,
-                                          fwhm_star=0.1)
+                                          fwhm_star=0.1,
+                                          position=None)
 
         # Required for ref_image_in_tag in StarAlignmentModule, otherwise a random frame is used
         ref_extract = StarExtractionModule(name_in="star_cut_ref",
                                            image_in_tag="bp_cleaned_arr",
                                            image_out_tag="im_arr_ref",
                                            image_size=0.6,
-                                           fwhm_star=0.1)
+                                           fwhm_star=0.1,
+                                           position=None)
 
         alignment = StarAlignmentModule(name_in="star_align",
                                         image_in_tag="im_arr_extract",

@@ -10,8 +10,7 @@ from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule, \
-                                                     LocateStarModule, ShiftForCenteringModule, \
-                                                     StarCenteringModule
+                                                     ShiftForCenteringModule, StarCenteringModule
 
 warnings.simplefilter("always")
 
@@ -83,7 +82,8 @@ class TestStarAlignment(object):
                                           image_in_tag="read",
                                           image_out_tag="extract",
                                           image_size=0.6,
-                                          fwhm_star=0.1)
+                                          fwhm_star=0.1,
+                                          position=None)
 
         self.pipeline.add_module(extraction)
 
@@ -95,12 +95,6 @@ class TestStarAlignment(object):
                                     resize=2)
 
         self.pipeline.add_module(align)
-
-        locate = LocateStarModule(name_in="locate",
-                                  data_tag="align",
-                                  gaussian_fwhm=0.05)
-
-        self.pipeline.add_module(locate)
 
         shift = ShiftForCenteringModule((4., 6.),
                                         name_in="shift",
