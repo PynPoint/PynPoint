@@ -362,7 +362,6 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
 
         if len(self.m_image_in_tags) < 2:
-            print self.m_image_in_tags
             raise ValueError("The tuple of image_in_tags should contain at least two tags.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
