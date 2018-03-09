@@ -8,7 +8,6 @@ import warnings
 
 import numpy as np
 
-from scipy.ndimage.filters import gaussian_filter
 from astropy.nddata import Cutout2D
 
 from PynPoint.Core.Processing import ProcessingModule
@@ -228,9 +227,7 @@ class FrameSelectionModule(ProcessingModule):
         else:
             parang = None
 
-        self.m_fwhm /= pixscale
         self.m_aperture /= pixscale
-        gaussian_sigma = self.m_fwhm/math.sqrt(8.*math.log(2.))
 
         nframes = self.m_image_in_port.get_shape()[0]
         if memory == -1 or memory >= nframes:
@@ -249,7 +246,7 @@ class FrameSelectionModule(ProcessingModule):
                                     image_in_tag=self.m_image_in_port.tag,
                                     image_out_tag=None,
                                     image_size=None,
-                                    fwhm_star=self.m_fwhm*pixscale,
+                                    fwhm_star=self.m_fwhm,
                                     position=self.m_position)
 
         star.connect_database(self._m_data_base)
@@ -263,12 +260,6 @@ class FrameSelectionModule(ProcessingModule):
             progress(i, nframes+nframes, "Running FrameSelectionModule...")
 
             im_smooth = self.m_image_in_port[i]
-
-            # im_smooth = gaussian_filter(self.m_image_in_port[i],
-            #                             gaussian_sigma,
-            #                             truncate=4.)
-            #
-            # position[i, :] = np.unravel_index(im_smooth.argmax(), im_smooth.shape)
 
             check_pos_in = any(np.floor(position[i, :]-self.m_aperture) < 0.)
             check_pos_out = any(np.ceil(position[i, :]+self.m_aperture) > im_smooth.shape[0])
@@ -419,28 +410,26 @@ class RemoveLastFrameModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
         ndit = self.m_image_in_port.get_attribute("NDIT")
-        size = self.m_image_in_port.get_attribute("NFRAMES")
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-        if False in size == ndit+1:
-            raise ValueError("This module should be used when NAXIS3 = NDIT + 1.")
-
-        ndit_tot = 0
-        for i, _ in enumerate(ndit):
+        for i, item in enumerate(ndit):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
 
-            tmp_in = self.m_image_in_port[ndit_tot:ndit_tot+ndit[i]+1,]
-            tmp_out = np.delete(tmp_in, ndit[i], axis=0)
+            if nframes[i] == item+1:
+                im_in = self.m_image_in_port[np.sum(nframes[0:i]):np.sum(nframes[0:i+1]), ]
+                im_out = np.delete(im_in, nframes[i]-1, axis=0)
 
-            if ndit_tot == 0:
-                self.m_image_out_port.set_all(tmp_out, keep_attributes=True)
+                self.m_image_out_port.append(im_out)
+
             else:
-                self.m_image_out_port.append(tmp_out)
-
-            ndit_tot += ndit[i]+1
+                warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
 
         sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()
