@@ -435,10 +435,75 @@ class RemoveLastFrameModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        size_in = self.m_image_in_port.get_attribute("NFRAMES")
-        size_out = size_in - 1
-
-        self.m_image_out_port.add_attribute("NFRAMES", size_out, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes-1, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
+        self.m_image_out_port.close_database()
+
+
+class RemoveFirstFrameModule(ProcessingModule):
+    """
+    Module for removing a fixed number of images at the beginning of each cube. This can be 
+    useful for NACO data in which the background is significantly higher in the first several
+    frames of a data cube.
+    """
+
+    def __init__(self,
+                 frames=1,
+                 name_in="remove_last_frame",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_first"):
+        """
+        Constructor of RemoveFirstFrameModule.
+
+        :param frames: Number of frames that are removed at the beginning of each cube.
+        :type frames: int
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(RemoveFirstFrameModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_frames = frames
+
+    def run(self):
+        """
+        Run method of the module. Removes a constant number of images at the beginning of each cube
+        and saves the data and attributes.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_image_out_port.tag == self.m_image_in_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        for i, item in enumerate(nframes):
+            progress(i, len(nframes), "Running RemoveFirstFrameModule...")
+
+            frame_start = np.sum(nframes[0:i]) + self.m_frames
+            frame_end = np.sum(nframes[0:i+1])
+
+            images = self.m_image_in_port[frame_start:frame_end, ]
+            self.m_image_out_port.append(images)
+
+        sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
+        self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
         self.m_image_out_port.close_database()
