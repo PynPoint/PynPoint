@@ -473,7 +473,7 @@ class RemoveFirstFrameModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_frames = frames
+        self.m_frames = int(frames)
 
     def run(self):
         """
@@ -500,7 +500,7 @@ class RemoveFirstFrameModule(ProcessingModule):
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
 
-        sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
+        sys.stdout.write("Running RemoveFirstFrameModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
