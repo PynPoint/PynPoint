@@ -3,7 +3,6 @@ Modules with tools for frame selection.
 """
 
 import sys
-import math
 import warnings
 
 import numpy as np
@@ -419,30 +418,36 @@ class RemoveLastFrameModule(ProcessingModule):
         ndit = self.m_image_in_port.get_attribute("NDIT")
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
+        nframes_new = []
+
         for i, item in enumerate(ndit):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
 
             if nframes[i] == item+1:
-                im_in = self.m_image_in_port[np.sum(nframes[0:i]):np.sum(nframes[0:i+1]), ]
-                im_out = np.delete(im_in, nframes[i]-1, axis=0)
+                frame_start = np.sum(nframes[0:i])
+                frame_end = np.sum(nframes[0:i+1]) - 1
 
-                self.m_image_out_port.append(im_out)
+                images = self.m_image_in_port[frame_start:frame_end, ]
+                self.m_image_out_port.append(images)
+
+                nframes_new.append(nframes[i]-1)
 
             else:
                 warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
+                nframes_new.append(nframes[i])
 
         sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("NFRAMES", nframes-1, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
         self.m_image_out_port.close_database()
 
 
 class RemoveStartFramesModule(ProcessingModule):
     """
-    Module for removing a fixed number of images at the beginning of each cube. This can be 
+    Module for removing a fixed number of images at the beginning of each cube. This can be
     useful for NACO data in which the background is significantly higher in the first several
     frames of a data cube.
     """
@@ -491,7 +496,7 @@ class RemoveStartFramesModule(ProcessingModule):
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-        for i, item in enumerate(nframes):
+        for i, _ in enumerate(nframes):
             progress(i, len(nframes), "Running RemoveStartFramesModule...")
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
