@@ -13,6 +13,6 @@ from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, R
 from PSFpreparation import PSFpreparationModule, AngleCalculationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
-from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveFirstFrameModule
+from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule, FalsePositiveModule, MCMCsamplingModule
 from DetectionLimits import ContrastModule
