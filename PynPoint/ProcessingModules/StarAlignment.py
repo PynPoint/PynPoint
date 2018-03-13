@@ -318,7 +318,10 @@ class StarAlignmentModule(ProcessingModule):
             tmp_pixscale /= self.m_resize
         self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
-        history = "cross-correlation with up-sampling factor " + str(self.m_resize)
+        if self.m_resize is not None:
+            history = "cross-correlation with up-sampling factor " + str(self.m_resize)
+        else:
+            history = "cross-correlation without up-sampling"
         self.m_image_out_port.add_history_information("PSF alignment",
                                                       history)
         self.m_image_out_port.close_database()
