@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import cv2
+import warnings
 
 from skimage.feature import register_translation
 from skimage.transform import rescale
@@ -18,7 +19,7 @@ from PynPoint.Core.Processing import ProcessingModule
 
 class StarExtractionModule(ProcessingModule):
     """
-    Module to locate the position of the star in each image.
+    Module to locate the position of the star in each image and to crop all the images around this position.
     """
 
     def __init__(self,
@@ -48,11 +49,11 @@ class StarExtractionModule(ProcessingModule):
                           to convolve the images.
         :type fwhm_star: float
         :param position: Subframe that is selected to search for the star. The tuple can contain a
-                         single position and size as (pos_x, pos_y, size), or the position and size
-                         can be defined for each image separately in which case the tuple should be
-                         2D (nframes x 3). Setting *position* to None will use the full image to
-                         search for the star. If position=(None, None, size) then the center of the
-                         image will be used.
+                         single position in pixels and size as (pos_x, pos_y, size), or the position
+                         and size can be defined for each image separately in which case the tuple
+                         should be 2D (nframes x 3). Setting *position* to None will use the full
+                         image to search for the star. If position=(None, None, size) then the center
+                         of the image will be used.
         :type position: tuple, float
 
         :return: None
@@ -121,11 +122,20 @@ class StarExtractionModule(ProcessingModule):
                     pos_x = self.m_position[0]
                     pos_y = self.m_position[1]
                     width = self.m_position[2]
+                
+                    if pos_x > self.m_image_in_port.get_shape()[1] or \
+                            pos_y > self.m_image_in_port.get_shape()[2]:
+                        raise ValueError('The indicated position lays outside the image')
 
                 elif self.m_position.ndim == 2:
                     pos_x = self.m_position[self.m_count, 0]
                     pos_y = self.m_position[self.m_count, 1]
                     width = self.m_position[self.m_count, 2]
+                
+                if pos_y <= width/2. or pos_x <= width/2. \
+                        or pos_y+width/2. >= self.m_image_in_port.get_shape()[2]\
+                        or pos_x+width/2. >= self.m_image_in_port.get_shape()[1]:
+                    warnings.warn("The region for the star extraction exceeds the image")
 
                 subimage = image[int(pos_y-width/2.):int(pos_y+width/2.),
                                  int(pos_x-width/2.):int(pos_x+width/2.)]
@@ -139,11 +149,11 @@ class StarExtractionModule(ProcessingModule):
 
             if self.m_image_size is not None:
                 if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
-                        or argmax[0] + psf_radius > image.shape[0] \
-                        or argmax[1] + psf_radius > image.shape[1]:
+                        or argmax[0] + psf_radius >= image.shape[0] \
+                        or argmax[1] + psf_radius >= image.shape[1]:
 
                     raise ValueError('Highest value is near the border. PSF size is too '
-                                     'large to be copped (image index = '+str(self.m_count)+').')
+                                     'large to be cropped (image index = '+str(self.m_count)+').')
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
