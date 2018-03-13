@@ -54,7 +54,7 @@ class BasePynpointWrapper(object):
         simple_attributes = {"num_files" : "Num_Files",
                              "files" : "Used_Files",
                              "im_norm" : "im_norm",
-                             "para" : "NEW_PARA",
+                             "para" : "PARANG",
                              "resize" : "resize",
                              "cent_remove" : "cent_remove",
                              "cent_size" : "cent_size",

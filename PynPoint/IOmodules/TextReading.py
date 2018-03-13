@@ -33,9 +33,9 @@ class ParangReadingModule(ReadingModule):
         :param input_dir: Input directory where the text file is located. If not specified the
                           Pypeline default directory is used.
         :type input_dir: str
-        :param data_tag: Tag of the database entry to which the NEW_PARA attribute is written.
+        :param data_tag: Tag of the database entry to which the PARANG attribute is written.
         :type data_tag: str
-        :param overwrite: Overwrite if the NEW_PARA attribute already exists.
+        :param overwrite: Overwrite if the PARANG attribute already exists.
         :type overwrite: bool
 
         :return: None
@@ -53,7 +53,7 @@ class ParangReadingModule(ReadingModule):
     def run(self):
         """
         Run method of the module. Reads the parallactic angles from a text file and writes the
-        values as non-static attribute (NEW_PARA) to the database tag.
+        values as non-static attribute (PARANG) to the database tag.
 
         :return: None
         """
@@ -67,21 +67,21 @@ class ParangReadingModule(ReadingModule):
             raise ValueError("The input file %s should contain a 1D data set with the parallactic "
                              "angles." % self.m_file_name)
 
-        status = self.m_data_port.check_non_static_attribute("NEW_PARA", None)
+        status = self.m_data_port.check_non_static_attribute("PARANG", None)
 
         if status == 1:
-            self.m_data_port.add_attribute("NEW_PARA", parang, static=False)
+            self.m_data_port.add_attribute("PARANG", parang, static=False)
 
         elif status == -1 and self.m_overwrite:
-            self.m_data_port.add_attribute("NEW_PARA", parang, static=False)
+            self.m_data_port.add_attribute("PARANG", parang, static=False)
 
         elif status == -1 and not self.m_overwrite:
-            warnings.warn("The NEW_PARA attribute is already present. Set the overwrite argument "
+            warnings.warn("The PARANG attribute is already present. Set the overwrite argument "
                           "to True in order to overwrite the values with "+str(self.m_file_name)+
                           ".")
 
         elif status == 0:
-            warnings.warn("The NEW_PARA attribute is already present and contains the same values "
+            warnings.warn("The PARANG attribute is already present and contains the same values "
                           "as are present in "+str(self.m_file_name)+".")
 
         sys.stdout.write(" [DONE]\n")

@@ -73,7 +73,7 @@ class FitsReadingModule(ReadingModule):
                              'NDIT',
                              'PARANG_START',
                              'PARANG_END',
-                             'NEW_PARA',
+                             'PARANG',
                              'DITHER_X',
                              'DITHER_Y',]
 
@@ -154,8 +154,8 @@ class FitsReadingModule(ReadingModule):
 
             if self.m_attr_check[i]:
 
-                if item == 'NEW_PARA':
-                    fitskey = 'NEW_PARA'
+                if item == 'PARANG':
+                    fitskey = 'PARANG'
 
                 else:
                     fitskey = self._m_config_port.get_attribute(item)
@@ -169,7 +169,7 @@ class FitsReadingModule(ReadingModule):
                     elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
                         self.m_image_out_port.append_attribute_data(item, 1)
 
-                    elif item == 'NEW_PARA':
+                    elif item == 'PARANG':
                         continue
 
                     else:
