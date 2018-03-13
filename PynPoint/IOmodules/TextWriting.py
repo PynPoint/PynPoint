@@ -101,7 +101,7 @@ class ParangWritingModule(WritingModule):
         :param output_dir: Output directory where the text file will be stored. If no folder is
                            specified the Pypeline default is chosen.
         :type output_dir: str
-        :param data_tag: Tag of the database entry from which the NEW_PARA attribute is read.
+        :param data_tag: Tag of the database entry from which the PARANG attribute is read.
         :type data_tag: str
         :param header: Header that is written at the top of the text file.
         :type header: str
@@ -121,7 +121,7 @@ class ParangWritingModule(WritingModule):
 
     def run(self):
         """
-        Run method of the module. Writes the parallactic angles from the NEW_PARA attribute of
+        Run method of the module. Writes the parallactic angles from the PARANG attribute of
         the specified database tag to a a text file.
 
         :return: None
@@ -132,10 +132,10 @@ class ParangWritingModule(WritingModule):
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        if "NEW_PARA" not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError("The NEW_PARA attribute is not present in %s." % self.m_data_port.tag)
+        if "PARANG" not in self.m_data_port.get_all_non_static_attributes():
+            raise ValueError("The PARANG attribute is not present in %s." % self.m_data_port.tag)
 
-        parang = self.m_data_port.get_attribute("NEW_PARA")
+        parang = self.m_data_port.get_attribute("PARANG")
 
         np.savetxt(out_name, parang, header=self.m_header, comments='# ')
 
