@@ -248,14 +248,17 @@ class StarAlignmentModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_ref_image_in_port is not None:
-            if len(self.m_ref_image_in_port.get_shape()) == 3:
+            im_dim = np.size(self.m_ref_image_in_port.get_shape())
+
+            if im_dim == 3:
                 ref_images = np.asarray(self.m_ref_image_in_port.get_all())
                 self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
-            elif len(self.m_ref_image_in_port.get_shape()) == 2:
+            elif im_dim == 2:
                 ref_images = np.array([self.m_ref_image_in_port.get_all(),])
                 self.m_num_references = 1
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
+
         else:
             ref_images = self.m_image_in_port[np.sort(
                 np.random.choice(self.m_image_in_port.get_shape()[0],
@@ -318,10 +321,10 @@ class StarAlignmentModule(ProcessingModule):
             tmp_pixscale /= self.m_resize
         self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
-        if self.m_resize is not None:
-            history = "cross-correlation with up-sampling factor " + str(self.m_resize)
+        if self.m_resize is None:
+            history = "cross-correlation, no upsampling"
         else:
-            history = "cross-correlation without up-sampling"
+            history = "cross-correlation, upsampling factor =" + str(self.m_resize)
         self.m_image_out_port.add_history_information("PSF alignment",
                                                       history)
         self.m_image_out_port.close_database()
