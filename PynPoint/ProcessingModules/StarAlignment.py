@@ -299,15 +299,12 @@ class StarAlignmentModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        tmp_pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
         if self.m_resize is not None:
-            tmp_pixscale /= self.m_resize
-        self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
+            pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
-        self.m_image_out_port.add_history_information("PSF alignment",
-                                                      history)
+        self.m_image_out_port.add_history_information("PSF alignment", history)
         self.m_image_out_port.close_database()
 
 

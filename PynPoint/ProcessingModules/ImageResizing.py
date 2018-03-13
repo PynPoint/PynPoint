@@ -97,7 +97,7 @@ class CropImagesModule(ProcessingModule):
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CropImageModule...",
+                                      "Running CropImagesModule...",
                                       func_args=(self.m_size, self.m_center),
                                       num_images_in_memory=memory)
 
@@ -149,6 +149,7 @@ class ScaleImagesModule(ProcessingModule):
         """
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         def image_scaling(image_in,
                           scaling):
@@ -171,6 +172,7 @@ class ScaleImagesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Images scaled", str(self.m_scaling))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_scaling)
         self.m_image_out_port.close_database()
 
 
