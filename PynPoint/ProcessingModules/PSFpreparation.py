@@ -201,6 +201,8 @@ class PSFpreparationModule(ProcessingModule):
         :return: None
         """
 
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
         if self.m_verbose:
             sys.stdout.write("Running PSFpreparationModule...")
             sys.stdout.flush()
@@ -215,6 +217,8 @@ class PSFpreparationModule(ProcessingModule):
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
         self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
+        if self.m_resize > 0.:
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         attributes = {"resize": float(self.m_resize),

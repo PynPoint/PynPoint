@@ -299,15 +299,12 @@ class StarAlignmentModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        tmp_pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
         if self.m_resize is not None:
-            tmp_pixscale /= self.m_resize
-        self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
+            pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
         history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
-        self.m_image_out_port.add_history_information("PSF alignment",
-                                                      history)
+        self.m_image_out_port.add_history_information("PSF alignment", history)
         self.m_image_out_port.close_database()
 
 
@@ -323,6 +320,7 @@ class StarCenteringModule(ProcessingModule):
                  fit_out_tag="center_fit",
                  method="full",
                  interpolation="spline",
+                 radius=None,
                  **kwargs):
         """
         Constructor of StarCenteringModule.
@@ -350,13 +348,17 @@ class StarCenteringModule(ProcessingModule):
         :param interpolation: Type of interpolation that is used for shifting the images (spline,
                               bilinear, or fft).
         :type interpolation: str
+        :param radius: Radius around the center of the image beyond which pixel values are set to
+                       zero when fitting the 2D Gaussian. The full image is used when set to None.
+        :type radius: float
         :param \**kwargs:
             See below.
 
         :Keyword arguments:
              * **guess** (*tuple*) -- Tuple with the initial parameter values for the least
                                       squares fit: center x (pix), center y (pix), FWHM x (pix),
-                                      FWHM y (pix), amplitude (counts), angle (deg).
+                                      FWHM y (pix), amplitude (counts), angle (deg). Note that the
+                                      center positions are relative to the image center.
 
         :return: None
         """
@@ -374,12 +376,15 @@ class StarCenteringModule(ProcessingModule):
 
         self.m_method = method
         self.m_interpolation = interpolation
+        self.m_radius = radius
+        self.m_count = 0
 
     def run(self):
         """
         Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
         the individual images or the mean of the stack with a 2D Gaussian profile, shifts the
-        images with subpixel precision, and writes the centered images and the fitting results.
+        images with subpixel precision, and writes the centered images and the fitting results. The
+        fitting results contain zeros in case the algorithm could not converge.
 
         :return: None
         """
@@ -409,16 +414,28 @@ class StarCenteringModule(ProcessingModule):
             elif npix%2 == 1:
                 x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+            rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
+
+            if self.m_radius is not None:
+                image[rr_grid > self.m_radius] = 0.
+
             im_ravel = np.ravel(image)
 
-            popt, pcov = curve_fit(_2d_gaussian,
-                                   (x_grid, y_grid),
-                                   im_ravel,
-                                   p0=self.m_guess,
-                                   sigma=None,
-                                   method='lm')
+            try:
+                popt, pcov = curve_fit(_2d_gaussian,
+                                       (x_grid, y_grid),
+                                       im_ravel,
+                                       p0=self.m_guess,
+                                       sigma=None,
+                                       method='lm')
 
-            perr = np.sqrt(np.diag(pcov))
+                perr = np.sqrt(np.diag(pcov))
+
+            except RuntimeError:
+                popt = np.zeros(6)
+                perr = np.zeros(6)
+                self.m_count += 1
 
             res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
                               popt[1]*pixscale, perr[1]*pixscale,
@@ -434,7 +451,7 @@ class StarCenteringModule(ProcessingModule):
         def _centering(image):
 
             if self.m_method == "full":
-                popt = _least_squares(image)
+                popt = _least_squares(np.copy(image))
 
             elif self.m_method == "mean":
                 popt = self.m_popt
@@ -460,6 +477,9 @@ class StarCenteringModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
+        if self.m_radius is not None:
+            self.m_radius /= pixscale
+
         nimages = self.m_image_in_port.get_shape()[0]
         nstacks = int(float(nimages)/float(memory))
 
@@ -484,14 +504,13 @@ class StarCenteringModule(ProcessingModule):
                                       "Running StarCenteringModule...",
                                       num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Centering",
-                                                      "2D Gaussian fit")
-        self.m_fit_out_port.add_history_information("Centering",
-                                                    "2D Gaussian fit")
+        if self.m_count > 0:
+            print "2D Gaussian fit could not converge on %s images. [WARNING]\n" % self.m_count
 
+        self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
+        self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_image_out_port.close_database()
 
 
