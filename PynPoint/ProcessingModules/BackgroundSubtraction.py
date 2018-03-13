@@ -329,8 +329,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
-            parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
         else:
             parang = None
 
@@ -382,7 +382,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 # Mean background of the cube
                 background = cube_mean[i, ]
 
-                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
+                # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
                 self.m_background_out_port.append(im_tmp-background)
                 background_nframes = np.append(background_nframes, nframes[i])
                 if parang is not None:
@@ -419,7 +419,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 else:
                     raise ValueError("Neither previous nor next background frames found.")
 
-                # Subtract mean background, save data, and select corresponding NEW_PARA and NFRAMES
+                # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
                 self.m_star_out_port.append(im_tmp-background)
                 star_nframes = np.append(star_nframes, nframes[i])
                 if parang is not None:
@@ -434,7 +434,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
 
         if parang is not None:
-            self.m_star_out_port.add_attribute("NEW_PARA", star_parang, static=False)
+            self.m_star_out_port.add_attribute("PARANG", star_parang, static=False)
 
         self.m_star_out_port.add_history_information("Star frames separated",
                                                      str(sum(star_nframes))+"/"+ \
@@ -444,7 +444,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_background_out_port.add_attribute("NFRAMES", background_nframes, static=False)
 
         if parang is not None:
-            self.m_background_out_port.add_attribute("NEW_PARA", background_parang, static=False)
+            self.m_background_out_port.add_attribute("PARANG", background_parang, static=False)
 
         self.m_background_out_port.add_history_information("Background frames separated",
                                                            str(len(background_nframes))+"/"+ \

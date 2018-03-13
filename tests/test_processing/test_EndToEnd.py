@@ -163,7 +163,7 @@ class TestEndToEnd(object):
         port = InputPort("im_last", storage)
 
         assert port.get_attribute("Used_Files")[0] == self.test_dir+'adi01.fits'
-        assert port.get_attribute("NEW_PARA")[1] == 1.1904761904761905
+        assert port.get_attribute("PARANG")[1] == 1.1904761904761905
 
         port.close_database()
         storage.close_connection()

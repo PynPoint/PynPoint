@@ -107,7 +107,7 @@ class FakePlanetModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        parang = self.m_image_in_port.get_attribute("PARANG")
         parang *= math.pi/180.
 
         radial = self.m_position[0]/pixscale
@@ -1117,7 +1117,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         cpu = self._m_config_port.get_attribute("CPU")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        parang = self.m_image_in_port.get_attribute("PARANG")
 
         self.m_aperture /= pixscale
         self.m_mask /= pixscale
