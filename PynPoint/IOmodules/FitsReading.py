@@ -6,6 +6,8 @@ import os
 import sys
 import warnings
 
+import numpy as np
+
 from astropy.io import fits
 
 from PynPoint.Core.Processing import ReadingModule
@@ -31,7 +33,8 @@ class FitsReadingModule(ReadingModule):
                  name_in=None,
                  input_dir=None,
                  image_tag="im_arr",
-                 overwrite=True):
+                 overwrite=True,
+                 check=True):
         """
         Constructor of a FitsReadingModule instance. As all Reading Modules it has a name and
         input directory (:class:`PynPoint.core.Processing.ReadingModule`). In addition a image_tag
@@ -46,9 +49,12 @@ class FitsReadingModule(ReadingModule):
                           information is stored with the tag: *header_* + image_tag /
                           #header_entry_name#.
         :type image_tag: str
-        :param overwrite: If True existing data (header and the actual data set) in de .hdf5
+        :param overwrite: If True existing data (header and the actual data set) in the .hdf5
                           data base will be overwritten.
         :type overwrite: bool
+        :param check: Check all the listed non-static attributes or leave out the attributes that
+                      are not always required (e.g. PARANG_START, DITHER_X).
+        :type check: bool
 
         :return: None
         """
@@ -60,16 +66,21 @@ class FitsReadingModule(ReadingModule):
         self.m_image_tag = image_tag
         self.m_overwrite = overwrite
 
-        self.m_static_keys = ['INSTRUMENT']
+        self.m_static = ['INSTRUMENT']
 
-        self.m_non_static_keys = ['NFRAMES',
-                                  'EXP_NO',
-                                  'NDIT',
-                                  'PARANG_START',
-                                  'PARANG_END',
-                                  'PARANG',
-                                  'DITHER_X',
-                                  'DITHER_Y' ]
+        self.m_non_static = ['NFRAMES',
+                             'EXP_NO',
+                             'NDIT',
+                             'PARANG_START',
+                             'PARANG_END',
+                             'PARANG',
+                             'DITHER_X',
+                             'DITHER_Y',]
+
+        self.m_attr_check = np.ones(len(self.m_non_static), dtype=bool)
+
+        if not check:
+            self.m_attr_check[3:8] = False
 
     def _read_single_file(self,
                           fits_file,
@@ -112,7 +123,7 @@ class FitsReadingModule(ReadingModule):
         tmp_header = hdulist[0].header
 
         # static attributes
-        for item in self.m_static_keys:
+        for item in self.m_static:
             fitskey = self._m_config_port.get_attribute(item)
 
             if fitskey != "None":
@@ -139,30 +150,32 @@ class FitsReadingModule(ReadingModule):
                                   % (item, fitskey))
 
         # non-static attributes
-        for item in self.m_non_static_keys:
+        for i, item in enumerate(self.m_non_static):
 
-            if item == 'PARANG':
-                fitskey = 'PARANG'
+            if self.m_attr_check[i]:
 
-            else:
-                fitskey = self._m_config_port.get_attribute(item)
-
-            if fitskey != "None":
-
-                if fitskey in tmp_header:
-                    value = tmp_header[fitskey]
-                    self.m_image_out_port.append_attribute_data(item, value)
-
-                elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
-                    self.m_image_out_port.append_attribute_data(item, 1)
-
-                elif item == 'PARANG':
-                    continue
+                if item == 'PARANG':
+                    fitskey = 'PARANG'
 
                 else:
-                    warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
-                                  % (item, fitskey))
-                    self.m_image_out_port.append_attribute_data(item, -1)
+                    fitskey = self._m_config_port.get_attribute(item)
+
+                if fitskey != "None":
+
+                    if fitskey in tmp_header:
+                        value = tmp_header[fitskey]
+                        self.m_image_out_port.append_attribute_data(item, value)
+
+                    elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
+                        self.m_image_out_port.append_attribute_data(item, 1)
+
+                    elif item == 'PARANG':
+                        continue
+
+                    else:
+                        warnings.warn("Non-static attribute %s (=%s) not found in the FITS header." \
+                                      % (item, fitskey))
+                        self.m_image_out_port.append_attribute_data(item, -1)
 
         fits_header = []
         for key in tmp_header:
@@ -183,7 +196,9 @@ class FitsReadingModule(ReadingModule):
         Run method of the module. Looks for all .fits files in the input directory and reads them
         using the internal function _read_single_file(). Note that if *overwrite* is True old
         database information is overwritten. The module saves the number of files and filenames as
-        attributes.
+        attributes. Note that PynPoint only supports the processing of square images so, in case
+        required, images should be made square (e.g. with CropImagesModule or RemoveLinesModule)
+        after importing the FITS files.
 
         :return: None
         """

@@ -19,7 +19,7 @@ class CropImagesModule(ProcessingModule):
     """
 
     def __init__(self,
-                 shape,
+                 size,
                  center=None,
                  name_in="crop_image",
                  image_in_tag="im_arr",
@@ -27,11 +27,11 @@ class CropImagesModule(ProcessingModule):
         """
         Constructor of CropImagesModule.
 
-        :param shape: Tuple (delta_x, delta_y) with the new image size.
-        :type shape: tuple, int
+        :param size: New image size (arcsec). The same size will be used for both image dimensions.
+        :type size: float
         :param center: Tuple (x0, y0) with the new image center. Python indexing starts at 0. The
                        center of the input images will be used when *center* is set to *None*.
-        :type cent: tuple, int
+        :type center: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -48,7 +48,7 @@ class CropImagesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shape = shape
+        self.m_size = size
         self.m_center = center
 
     def run(self):
@@ -62,26 +62,29 @@ class CropImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        self.m_size = int(self.m_size/pixscale)
 
         def image_cutting(image_in,
-                          shape,
+                          size,
                           center):
 
             if center is None:
-                x_off = (image_in.shape[0] - shape[0]) / 2
-                y_off = (image_in.shape[1] - shape[1]) / 2
+                x_off = (image_in.shape[0] - size) / 2
+                y_off = (image_in.shape[1] - size) / 2
 
-                if shape[0] > image_in.shape[0] or shape[1] > image_in.shape[1]:
+                if size > image_in.shape[0] or size > image_in.shape[1]:
                     raise ValueError("Input frame resolution smaller than target image resolution.")
 
-                image_out = image_in[y_off: y_off+shape[1], x_off:x_off+shape[0]]
+                image_out = image_in[y_off:y_off+size, x_off:x_off+size]
 
             else:
-                x_in = int(center[0] - shape[0]/2)
-                y_in = int(center[1] - shape[1]/2)
+                x_in = int(center[0] - size/2)
+                y_in = int(center[1] - size/2)
 
-                x_out = int(center[0] + shape[0]/2)
-                y_out = int(center[1] + shape[1]/2)
+                x_out = int(center[0] + size/2)
+                y_out = int(center[1] + size/2)
 
                 if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
                     raise ValueError("Target image resolution does not fit inside the input frame "
@@ -94,11 +97,11 @@ class CropImagesModule(ProcessingModule):
         self.apply_function_to_images(image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CropImageModule...",
-                                      func_args=(self.m_shape, self.m_center),
+                                      "Running CropImagesModule...",
+                                      func_args=(self.m_size, self.m_center),
                                       num_images_in_memory=memory)
 
-        self.m_image_out_port.add_history_information("Image cropped", str(self.m_shape))
+        self.m_image_out_port.add_history_information("Image cropped", str(self.m_size))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_database()
 
@@ -146,6 +149,7 @@ class ScaleImagesModule(ProcessingModule):
         """
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         def image_scaling(image_in,
                           scaling):
@@ -168,6 +172,7 @@ class ScaleImagesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Images scaled", str(self.m_scaling))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_scaling)
         self.m_image_out_port.close_database()
 
 
@@ -359,7 +364,6 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
 
         if len(self.m_image_in_tags) < 2:
-            print self.m_image_in_tags
             raise ValueError("The tuple of image_in_tags should contain at least two tags.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
