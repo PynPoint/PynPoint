@@ -677,7 +677,7 @@ class DitheringBackgroundModule(ProcessingModule):
                  image_out_tag="im_bg",
                  center=None,
                  cubes=None,
-                 shape=(100, 100),
+                 size=2.,
                  gaussian=0.15,
                  subframe=None,
                  pca_number=60,
@@ -704,15 +704,14 @@ class DitheringBackgroundModule(ProcessingModule):
                       then sorting and subtracting of the background frames is based on DITHER_X
                       and DITHER_Y.
         :type cubes: int
-        :param shape: Tuple (delta_x, delta_y) with the image size that is cropped at the specified
-                      dither positions.
-        :type shape: tuple, int
+        :param size: Image size (arsec) that is cropped at the specified dither positions.
+        :type size: float
         :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
                          to smooth the image before the star is located.
         :type gaussian: float
         :param subframe: Size (pix) of the subframe that is used to search for the star. Cropping
                          of the subframe is done around the center of the dithering position. If
-                         set to None then the full frame size (*shape*) will be used.
+                         set to None then the full frame size (*size*) will be used.
         :type subframe: float
         :param pca_number: Number of principle components.
         :type pca_number: int
@@ -761,7 +760,7 @@ class DitheringBackgroundModule(ProcessingModule):
 
         self.m_center = center
         self.m_cubes = cubes
-        self.m_shape = shape
+        self.m_size = size
         self.m_gaussian = gaussian
         self.m_subframe = subframe
         self.m_pca_number = pca_number
@@ -821,7 +820,7 @@ class DitheringBackgroundModule(ProcessingModule):
                     print "DITHER_X, DITHER_Y =", tuple(star_pos[i])
 
             if self.m_crop:
-                crop = CropImagesModule(shape=self.m_shape,
+                crop = CropImagesModule(size=self.m_size,
                                         center=position,
                                         name_in="crop"+str(i),
                                         image_in_tag=self.m_image_in_tag,
