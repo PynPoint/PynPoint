@@ -4,9 +4,9 @@ Modules for locating, aligning, and centering of the star.
 
 import math
 
+import warnings
 import numpy as np
 import cv2
-import warnings
 
 from skimage.feature import register_translation
 from skimage.transform import rescale
@@ -19,7 +19,8 @@ from PynPoint.Core.Processing import ProcessingModule
 
 class StarExtractionModule(ProcessingModule):
     """
-    Module to locate the position of the star in each image and to crop all the images around this position.
+    Module to locate the position of the star in each image and to crop all the
+    images around this position.
     """
 
     def __init__(self,
@@ -51,9 +52,9 @@ class StarExtractionModule(ProcessingModule):
         :param position: Subframe that is selected to search for the star. The tuple can contain a
                          single position in pixels and size as (pos_x, pos_y, size), or the position
                          and size can be defined for each image separately in which case the tuple
-                         should be 2D (nframes x 3). Setting *position* to None will use the full
-                         image to search for the star. If position=(None, None, size) then the center
-                         of the image will be used.
+                         should be 2D (nframes x 3). Setting *position* to None will use the
+                         full image to search for the star. If position=(None, None, size) then
+                         the center of the image will be used.
         :type position: tuple, float
 
         :return: None
@@ -122,7 +123,7 @@ class StarExtractionModule(ProcessingModule):
                     pos_x = self.m_position[0]
                     pos_y = self.m_position[1]
                     width = self.m_position[2]
-                
+
                     if pos_x > self.m_image_in_port.get_shape()[1] or \
                             pos_y > self.m_image_in_port.get_shape()[2]:
                         raise ValueError('The indicated position lays outside the image')
@@ -131,7 +132,7 @@ class StarExtractionModule(ProcessingModule):
                     pos_x = self.m_position[self.m_count, 0]
                     pos_y = self.m_position[self.m_count, 1]
                     width = self.m_position[self.m_count, 2]
-                
+
                 if pos_y <= width/2. or pos_x <= width/2. \
                         or pos_y+width/2. >= self.m_image_in_port.get_shape()[2]\
                         or pos_x+width/2. >= self.m_image_in_port.get_shape()[1]:
@@ -200,9 +201,10 @@ class StarAlignmentModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry with the stack of images that is read as
                              input.
         :type image_in_tag: str
-        :param ref_image_in_tag: Tag of the database entry with the reference image(s) that are
-                                 read as input. If it is set to None, a random subsample of *num_references*
-                                 elements of *image_in_tag* is taken as reference image(s)
+        :param ref_image_in_tag: Tag of the database entry with the reference image(s)
+                                 that are read as input. If it is set to None, a random
+                                 subsample of *num_references* elements of *image_in_tag*
+                                 is taken as reference image(s)
         :type ref_image_in_tag: str
         :param image_out_tag: Tag of the database entry with the images that are written as
                               output.
@@ -273,7 +275,7 @@ class StarAlignmentModule(ProcessingModule):
                                                         image_in,
                                                         upsample_factor=self.m_accuracy)
                 offset += tmp_offset
-            
+
             offset /= float(self.m_num_references)
             if self.m_resize is not None:
                 offset *= self.m_resize
