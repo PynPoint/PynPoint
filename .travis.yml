@@ -1,16 +1,17 @@
 language: python
+os: osx
 python:
   - "2.7"
 install:
   - pip install -r requirements.txt
-  - pip install tox
-  - pip install coverage
-  - pip install sphinx
+  # - pip install tox
+  # - pip install coverage
+  # - pip install sphinx
 script:
   - make test
-  - make test-all
-  - make coverage
-  - make docs
+  # - make test-all
+  # - make coverage
+  # - make docs
 notifications:
   email:
     recipients:
