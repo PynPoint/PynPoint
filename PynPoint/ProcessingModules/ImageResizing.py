@@ -405,7 +405,7 @@ class CombineTagsModule(ProcessingModule):
                 status = self.m_image_out_port.check_non_static_attribute(key, values)
 
                 if self.m_check_attr:
-                    if key == "NFRAMES" or key == "NEW_PARA" or key == "STAR_POSITION":
+                    if key == "NFRAMES" or key == "PARANG" or key == "STAR_POSITION":
                         if status == 1:
                             self.m_image_out_port.add_attribute(key, values, static=False)
                         else:
