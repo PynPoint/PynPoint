@@ -11,3 +11,9 @@ script:
   - make test-all
   - make coverage
   - make docs
+notifications:
+  email:
+    recipients:
+      - tomas.stolker@phys.ethz.ch
+    on_success: change
+    on_failure: always
