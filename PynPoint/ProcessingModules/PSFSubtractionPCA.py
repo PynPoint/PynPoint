@@ -56,7 +56,7 @@ class PSFSubtractionModule(ProcessingModule):
                                 subtraction.
         :type res_arr_out_tag: str
         :param res_arr_rot_out_tag: Tag of the database entry with the image residuals from the
-                                    PSF subtraction that are rotated by NEW_PARA to a common
+                                    PSF subtraction that are rotated by PARANG to a common
                                     orientation.
         :type res_arr_rot_out_tag: str
         :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
@@ -310,7 +310,7 @@ class CreateResidualsModule(ProcessingModule):
                                 subtraction.
         :type res_arr_out_tag: str
         :param res_arr_rot_out_tag: Tag of the database entry with the image residuals from the
-                                    PSF subtraction that are rotated by NEW_PARA to a common
+                                    PSF subtraction that are rotated by PARANG to a common
                                     orientation.
         :type res_arr_rot_out_tag: str
         :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
@@ -369,7 +369,7 @@ class CreateResidualsModule(ProcessingModule):
             res_arr[i, ] -= (psf_im[i, ] * cent_mask)
 
         # rotate result array
-        delta_para = -1.*self.m_im_arr_in_port.get_attribute("NEW_PARA")
+        delta_para = -1.*self.m_im_arr_in_port.get_attribute("PARANG")
         res_rot = np.zeros(shape=res_arr.shape)
 
         for i in range(0, len(delta_para)):
@@ -729,7 +729,7 @@ class FastPCAModule(ProcessingModule):
 
         cpu_count = self._m_config_port.get_attribute("CPU")
 
-        rotations = -1.*self.m_star_in_port.get_attribute("NEW_PARA")
+        rotations = -1.*self.m_star_in_port.get_attribute("PARANG")
         rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
 
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
@@ -775,7 +775,7 @@ class FastPCAModule(ProcessingModule):
             tmp_without_psf = star_data - tmp_psf_images
 
             # inverse rotation
-            delta_para = -1.*self.m_star_in_port.get_attribute("NEW_PARA")
+            delta_para = -1.*self.m_star_in_port.get_attribute("PARANG")
             res_array = np.zeros(shape=tmp_without_psf.shape)
             for j, item in enumerate(delta_para):
                 res_temp = tmp_without_psf[j, ]
