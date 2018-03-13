@@ -21,7 +21,7 @@ def setup_module():
     h5f = h5py.File(file_in, "w")
     dset = h5f.create_dataset("images", data=images)
     dset.attrs['PIXSCALE'] = 0.01
-    h5f.create_dataset("header_images/NEW_PARA", data=parang)
+    h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
 def teardown_module():

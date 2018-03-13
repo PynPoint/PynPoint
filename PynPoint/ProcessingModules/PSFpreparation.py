@@ -294,6 +294,6 @@ class AngleCalculationModule(ProcessingModule):
         sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_data_out_port.add_attribute("NEW_PARA",
+        self.m_data_out_port.add_attribute("PARANG",
                                            new_angles,
                                            static=False)

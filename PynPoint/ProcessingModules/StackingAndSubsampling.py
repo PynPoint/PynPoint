@@ -71,7 +71,7 @@ class StackAndSubsetModule(ProcessingModule):
 
         tmp_files = self.m_image_in_port.get_attribute("Used_Files")
         num_images = self.m_image_in_port.get_attribute("NFRAMES")
-        para_angles = self.m_image_in_port.get_attribute("NEW_PARA")
+        para_angles = self.m_image_in_port.get_attribute("PARANG")
 
         if tmp_files is None:
             raise ValueError("No files are listed in Used_Files.")
@@ -156,7 +156,7 @@ class StackAndSubsetModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.add_attribute("NEW_PARA",
+        self.m_image_out_port.add_attribute("PARANG",
                                             tmp_parang,
                                             static=False)
 
@@ -288,7 +288,7 @@ class RotateAndStackModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Uses the NEW_PARA attributes to derotate the images and applies
+        Run method of the module. Uses the PARANG attributes to derotate the images and applies
         an optional mean stacking afterwards.
 
         :return: None
@@ -297,7 +297,7 @@ class RotateAndStackModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        parang = self.m_image_in_port.get_attribute("PARANG")
 
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
