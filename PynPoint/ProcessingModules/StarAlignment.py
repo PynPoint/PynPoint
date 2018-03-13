@@ -201,7 +201,8 @@ class StarAlignmentModule(ProcessingModule):
                              input.
         :type image_in_tag: str
         :param ref_image_in_tag: Tag of the database entry with the reference image(s) that are
-                                 read as input.
+                                 read as input. If it is set to None, a random subsample of *num_references*
+                                 elements of *image_in_tag* is taken as reference image(s)
         :type ref_image_in_tag: str
         :param image_out_tag: Tag of the database entry with the images that are written as
                               output.
@@ -249,8 +250,10 @@ class StarAlignmentModule(ProcessingModule):
         if self.m_ref_image_in_port is not None:
             if len(self.m_ref_image_in_port.get_shape()) == 3:
                 ref_images = np.asarray(self.m_ref_image_in_port.get_all())
+                self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
             elif len(self.m_ref_image_in_port.get_shape()) == 2:
                 ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                self.m_num_references = 1
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
         else:
@@ -267,7 +270,7 @@ class StarAlignmentModule(ProcessingModule):
                                                         image_in,
                                                         upsample_factor=self.m_accuracy)
                 offset += tmp_offset
-
+            
             offset /= float(self.m_num_references)
             if self.m_resize is not None:
                 offset *= self.m_resize
@@ -315,7 +318,7 @@ class StarAlignmentModule(ProcessingModule):
             tmp_pixscale /= self.m_resize
         self.m_image_out_port.add_attribute("PIXSCALE", tmp_pixscale)
 
-        history = "cross-correlation with up-sampling factor " + str(self.m_accuracy)
+        history = "cross-correlation with up-sampling factor " + str(self.m_resize)
         self.m_image_out_port.add_history_information("PSF alignment",
                                                       history)
         self.m_image_out_port.close_database()
