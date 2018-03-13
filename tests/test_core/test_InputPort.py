@@ -21,7 +21,7 @@ def setup_module():
     h5f = h5py.File(file_in, "w")
     dset = h5f.create_dataset("images", data=images)
     dset.attrs['PIXSCALE'] = 0.01
-    h5f.create_dataset("header_images/NEW_PARA", data=parang)
+    h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
 def teardown_module():
@@ -49,7 +49,7 @@ class TestInputPort(object):
         assert port.get_shape() == (10, 100, 100)
 
         assert port.get_attribute("PIXSCALE") == 0.01
-        assert port.get_attribute("NEW_PARA")[0] == 1
+        assert port.get_attribute("PARANG")[0] == 1
 
         with pytest.warns(UserWarning):
             assert port.get_attribute("none") is None
@@ -97,4 +97,4 @@ class TestInputPort(object):
         port = InputPort('images', self.storage)
 
         assert port.get_all_static_attributes() == {'PIXSCALE': 0.01}
-        assert port.get_all_non_static_attributes() == ['NEW_PARA', ]
+        assert port.get_all_non_static_attributes() == ['PARANG', ]

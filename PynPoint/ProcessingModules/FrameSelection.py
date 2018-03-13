@@ -49,7 +49,7 @@ class RemoveFramesModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Removes the frames, removes the associated NEW_PARA values,
+        Run method of the module. Removes the frames, removes the associated PARANG values,
         updates the NAXIS3 value, and saves the data and attributes.
 
         :return: None
@@ -102,9 +102,9 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
-            parang = self.m_image_in_port.get_attribute("NEW_PARA")
-            self.m_image_out_port.add_attribute("NEW_PARA",
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
+            self.m_image_out_port.add_attribute("PARANG",
                                                 np.delete(parang, self.m_frames),
                                                 static=False)
 
@@ -221,8 +221,8 @@ class FrameSelectionModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        if "NEW_PARA" in self.m_image_in_port.get_all_non_static_attributes():
-            parang = self.m_image_in_port.get_attribute("NEW_PARA")
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
         else:
             parang = None
 
@@ -330,7 +330,7 @@ class FrameSelectionModule(ProcessingModule):
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         if parang is not None:
-            self.m_selected_out_port.add_attribute("NEW_PARA",
+            self.m_selected_out_port.add_attribute("PARANG",
                                                    parang[np.logical_not(index_rm)],
                                                    static=False)
 
@@ -351,7 +351,7 @@ class FrameSelectionModule(ProcessingModule):
             self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
             if parang is not None:
-                self.m_removed_out_port.add_attribute("NEW_PARA",
+                self.m_removed_out_port.add_attribute("PARANG",
                                                       parang[index_rm],
                                                       static=False)
 
