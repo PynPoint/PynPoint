@@ -359,7 +359,7 @@ class BadPixelInterpolationModule(ProcessingModule):
         :type name_in: str
         :param image_in_tag: Tag of the database entry with the images that are read as input.
         :type image_in_tag: str
-        :param bad_pixel_map_tag: Tag of the database entry with the bad pixel map that is written
+        :param bad_pixel_map_tag: Tag of the database entry with the bad pixel map that is read
                                   as input.
         :type bad_pixel_map_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
@@ -398,12 +398,12 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError("The shape of the bad pixel map does not match the shape of the "
                              "images.")
 
-        def image_interpolataion(image_in):
+        def image_interpolation(image_in):
             return _bad_pixel_interpolation(image_in,
                                             bad_pixel_map,
                                             self.m_iterations)
 
-        self.apply_function_to_images(image_interpolataion,
+        self.apply_function_to_images(image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running BadPixelInterpolationModule...",
@@ -437,7 +437,7 @@ class BadPixelRefinementModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry with the images that are read as input. The
                              tag should also contain the STAR_POSITION attribute.
         :type image_in_tag: str
-        :param bad_pixel_map_tag: Tag of the database entry with the bad pixel map that is written
+        :param bad_pixel_map_tag: Tag of the database entry with the bad pixel map that is read
                                   as input.
         :type bad_pixel_map_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
