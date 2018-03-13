@@ -336,8 +336,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert np.allclose(data[154, 99], 0.00043144351678910169, rtol=limit)
-        assert np.allclose(np.mean(data), -1.9270808587607946e-09, rtol=limit)
+        assert np.allclose(data[154, 99], 0.0004308570688425797, rtol=limit)
+        assert np.allclose(np.mean(data), 9.372451154992271e-08, rtol=limit)
         assert data.shape == (200, 200)
 
         storage.close_connection()
