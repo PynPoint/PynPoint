@@ -15,5 +15,5 @@ notifications:
   email:
     recipients:
       - tomas.stolker@phys.ethz.ch
-    on_success: change
+    on_success: always
     on_failure: always
