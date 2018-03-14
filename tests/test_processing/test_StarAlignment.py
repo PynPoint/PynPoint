@@ -119,22 +119,22 @@ class TestStarAlignment(object):
         storage.open_connection()
 
         data = storage.m_data_bank["read"]
-        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit)
-        assert np.allclose(np.mean(data), 9.832838021311831e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.832838021311831e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["extract"]
-        assert np.allclose(data[0, 10, 10], 0.05304008435511765, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0020655767159466613, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.05304008435511765, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0020655767159466613, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["header_extract/STAR_POSITION"]
         assert data[10, 0] ==  data[10, 1] == 75
 
         data = storage.m_data_bank["shift"]
-        assert np.allclose(data[0, 10, 10], -4.341611534220891e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit)
+        assert np.allclose(data[0, 10, 10], -4.341611534220891e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["center"]
-        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=limit, atol=0.)
 
         storage.close_connection()

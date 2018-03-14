@@ -77,8 +77,8 @@ class TestPypeline(object):
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
         data = pipeline.get_data("images")
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
         assert pipeline.get_attribute("images", "PIXSCALE") == 0.01
 
         os.remove(self.test_data)
