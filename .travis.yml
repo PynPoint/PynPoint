@@ -6,6 +6,13 @@ install:
   - pip install tox
   - pip install coverage
   - pip install sphinx
+matrix:
+    include:
+        - os: osx
+          language: generic
+          env: TOXENV=py27
+install:
+    - ./.travis/install.sh
 before_script:
   - export OMP_NUM_THREADS=1
 script:
