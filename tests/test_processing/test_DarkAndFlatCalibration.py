@@ -66,11 +66,11 @@ class TestDarkAndFlatCalibration(object):
         storage.open_connection()
 
         data = storage.m_data_bank["dark"]
-        assert np.allclose(data[0, 10, 10], 3.528694163309295e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 7.368663496379876e-07, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 3.528694163309295e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 7.368663496379876e-07, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["flat"]
-        assert np.allclose(data[0, 10, 10], -0.0004053528990466237, rtol=limit)
-        assert np.allclose(np.mean(data), -4.056978234798532e-07, rtol=limit)
+        assert np.allclose(data[0, 10, 10], -0.0004053528990466237, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -4.056978234798532e-07, rtol=limit, atol=0.)
 
         storage.close_connection()

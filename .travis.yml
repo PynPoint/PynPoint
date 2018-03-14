@@ -6,6 +6,8 @@ install:
   - pip install tox
   - pip install coverage
   - pip install sphinx
+before_script:
+  - export OMP_NUM_THREADS=1
 script:
   - make test
   - make test-all
