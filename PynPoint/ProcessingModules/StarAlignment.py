@@ -371,6 +371,8 @@ class StarCenteringModule(ProcessingModule):
         :type interpolation: str
         :param radius: Radius around the center of the image beyond which pixel values are set to
                        zero when fitting the 2D Gaussian. The full image is used when set to None.
+                       The radius is centered on the position specified in *guess*, which is the
+                       center of the image by default.
         :type radius: float
         :param \**kwargs:
             See below.
@@ -432,14 +434,19 @@ class StarCenteringModule(ProcessingModule):
 
             if npix%2 == 0:
                 x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
+                y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
+
             elif npix%2 == 1:
                 x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+                x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
+                y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
 
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-            rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
+            xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
+            rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
             if self.m_radius is not None:
-                image[rr_grid > self.m_radius] = 0.
+                image[rr_ap > self.m_radius] = 0.
 
             im_ravel = np.ravel(image)
 
