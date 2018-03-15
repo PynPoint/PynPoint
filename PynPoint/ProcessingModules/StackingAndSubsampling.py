@@ -37,6 +37,7 @@ class StackAndSubsetModule(ProcessingModule):
         :type random_subset: int
         :param stacking: Number of stacked images per subset.
         :type stacking: int
+        
         :return: None
         """
 
@@ -272,7 +273,7 @@ class RotateAndStackModule(ProcessingModule):
         :type image_out_tag: str
         :param stack: Apply a mean stacking after derotation.
         :type stack: bool                 
-        :param extra_rot: Additional rotation angle of the images (deg).
+        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
         :return: None
