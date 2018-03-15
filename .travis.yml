@@ -14,16 +14,16 @@ before_install:
 install:
   - pip2 install numpy
   - pip2 install -r requirements.txt
-#   - pip install tox
-#   - pip install coverage
-#   - pip install sphinx
-# before_script:
-#   - export OMP_NUM_THREADS=1
-# script:
-#   - make test
-#   - make test-all
-#   - make coverage
-#   - make docs
+  - pip2 install tox
+  - pip2 install coverage
+  - pip2 install sphinx
+before_script:
+  - export OMP_NUM_THREADS=1
+script:
+  - make test
+  - make test-all
+  - make coverage
+  - make docs
 notifications:
   email:
     recipients:
