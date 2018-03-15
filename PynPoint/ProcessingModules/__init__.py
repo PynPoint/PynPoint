@@ -5,7 +5,7 @@ from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationMod
                              BadPixelMapModule, BadPixelRefinementModule
 from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
-from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, RotateAndStackModule
+from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, DerotateAndStackModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteringModule, \
                           ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule, \
