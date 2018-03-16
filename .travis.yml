@@ -17,7 +17,7 @@ install:
   - pip2 install matplotlib
   - mkdir $HOME/.matplotlib
   - touch $HOME/.matplotlib/matplotlibrc
-  - echo backend: Agg >> $HOME/.matplotlib/matplotlibrc
+  - echo backend=Agg >> $HOME/.matplotlib/matplotlibrc
   - pip2 install -r requirements.txt
   - pip2 install tox
   - pip2 install coverage
