@@ -15,7 +15,7 @@ before_install:
 install:
   - pip2 install numpy
   - pip2 install matplotlib
-  - ls -a $HOME/.matplotlib
+  - mkdir $HOME/.matplotlib
   - echo 'backend: Agg' >> $HOME/.matplotlib/matplotlibrc
   - pip2 install -r requirements.txt
   - pip2 install tox
