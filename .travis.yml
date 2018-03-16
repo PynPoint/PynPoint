@@ -10,12 +10,13 @@ before_install:
   - brew update
   - brew install python2 --framework
   - ls -a $HOME
-  - ls -a $HOME/.matplotlib
-  - echo 'backend: Agg' >> $HOME/.matplotlib/matplotlibrc
   - virtualenv venv -p python2
   - source venv/bin/activate
 install:
   - pip2 install numpy
+  - pip2 install matplotlib
+  - ls -a $HOME/.matplotlib
+  - echo 'backend: Agg' >> $HOME/.matplotlib/matplotlibrc
   - pip2 install -r requirements.txt
   - pip2 install tox
   - pip2 install coverage
