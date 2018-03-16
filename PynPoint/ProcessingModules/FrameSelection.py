@@ -314,18 +314,22 @@ class FrameSelectionModule(ProcessingModule):
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
 
-        nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
+        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
+            nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
+        else:
+            nframes_in = None
 
-        nframes_del = np.zeros(np.size(nframes_in), dtype=np.int64)
-        nframes_sel = np.zeros(np.size(nframes_in), dtype=np.int64)
+        if nframes_in is not None:
+            nframes_del = np.zeros(np.size(nframes_in), dtype=np.int64)
+            nframes_sel = np.zeros(np.size(nframes_in), dtype=np.int64)
 
-        total = 0
-        for i, frames in enumerate(nframes_in):
-            nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
-            nframes_sel[i] = frames - nframes_del[i]
-            total += frames
+            total = 0
+            for i, frames in enumerate(nframes_in):
+                nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
+                nframes_sel[i] = frames - nframes_del[i]
+                total += frames
 
-        n_rm = np.size(index_rm[index_rm])
+            n_rm = np.size(index_rm[index_rm])
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -339,9 +343,10 @@ class FrameSelectionModule(ProcessingModule):
                                                    position[np.logical_not(index_rm)],
                                                    static=False)
 
-        self.m_selected_out_port.add_attribute("NFRAMES",
-                                               nframes_sel,
-                                               static=False)
+        if nframes_in is not None:
+            self.m_selected_out_port.add_attribute("NFRAMES",
+                                                   nframes_sel,
+                                                   static=False)
 
         self.m_selected_out_port.add_history_information("Frame selection",
                                                          str(n_rm)+" images removed")
@@ -360,9 +365,10 @@ class FrameSelectionModule(ProcessingModule):
                                                       position[index_rm],
                                                       static=False)
 
-            self.m_removed_out_port.add_attribute("NFRAMES",
-                                                  nframes_del,
-                                                  static=False)
+            if nframes_in is not None:
+                self.m_removed_out_port.add_attribute("NFRAMES",
+                                                      nframes_del,
+                                                      static=False)
 
             self.m_removed_out_port.add_history_information("Frame selection",
                                                             str(n_rm)+" images removed")
