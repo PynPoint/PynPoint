@@ -56,7 +56,7 @@ class StackAndSubsetModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_stacking in (None, False) and self.m_subset in (None, False):
+        if self.m_stacking in (None, False) and self.m_random in (None, False):
             return
 
         tmp_data_shape = self.m_image_in_port.get_shape()

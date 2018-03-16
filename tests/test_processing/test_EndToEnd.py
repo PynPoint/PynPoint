@@ -299,7 +299,7 @@ class TestEndToEnd(object):
         subset = StackAndSubsetModule(name_in="subset",
                                       image_in_tag="im_remove",
                                       image_out_tag="im_subset",
-                                      random_subset=37,
+                                      random=37,
                                       stacking=2)
 
         self.pipeline.add_module(subset)

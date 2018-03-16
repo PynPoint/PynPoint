@@ -278,7 +278,7 @@ class TestDocumentation(object):
         subset = StackAndSubsetModule(name_in="stacking_subset",
                                       image_in_tag="im_arr_aligned",
                                       image_out_tag="im_arr_stacked",
-                                      random_subset=None,
+                                      random=None,
                                       stacking=4)
 
         self.pipeline.add_module(subset)
