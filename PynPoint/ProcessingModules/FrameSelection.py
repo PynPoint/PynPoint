@@ -329,7 +329,7 @@ class FrameSelectionModule(ProcessingModule):
                 nframes_sel[i] = frames - nframes_del[i]
                 total += frames
 
-            n_rm = np.size(index_rm[index_rm])
+        n_rm = np.size(index_rm[index_rm])
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
