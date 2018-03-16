@@ -263,7 +263,7 @@ class TestDocumentation(object):
                                         image_in_tag="im_arr_extract",
                                         ref_image_in_tag="im_arr_ref",
                                         image_out_tag="im_arr_aligned",
-                                        accuracy=100,
+                                        accuracy=10,
                                         resize=2)
 
         self.pipeline.add_module(extraction)
@@ -303,44 +303,44 @@ class TestDocumentation(object):
         storage.open_connection()
 
         data = storage.m_data_bank["im_arr"]
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["dark_arr"]
-        assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit)
+        assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["flat_arr"]
-        assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit)
+        assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["im_arr_last"]
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["im_arr_cut"]
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["dark_sub_arr"]
-        assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["flat_sub_arr"]
-        assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["bg_cleaned_arr"]
-        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["bp_cleaned_arr"]
-        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit)
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["im_arr_extract"]
-        assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["im_arr_aligned"]
-        assert np.allclose(data[0, 10, 10], 1.1307471842831197e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 1.1307471842831197e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["im_arr_stacked"]
-        assert np.allclose(data[0, 10, 10], 2.5529051372679164e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 2.5572805947810986e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["res_mean"]
-        assert np.allclose(data[38, 22], 0.00014894940158150866, rtol=limit)
-        assert np.allclose(np.mean(data), -1.8907529204884748e-07, rtol=limit)
+        assert np.allclose(data[38, 22], 0.00014998109476361662, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.3760203934491141e-07, rtol=limit, atol=0.)
         assert data.shape == (44, 44)
 
         storage.close_connection()
