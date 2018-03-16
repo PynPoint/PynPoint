@@ -132,7 +132,7 @@ class BasePynpointWrapper(object):
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,
                                                 image_out_tag=self._m_image_data_tag,
-                                                random_subset=self._m_ran_sub,
+                                                random=self._m_ran_sub,
                                                 stacking=self._m_stacking)
 
         self._pypeline.add_module(preparation)
