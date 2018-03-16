@@ -11,7 +11,6 @@ before_install:
   - source venv/bin/activate
 install:
   - pip2 install numpy
-  # - pip2 install matplotlib
   - pip2 install -r requirements.txt
   - pip2 install tox
   - pip2 install coverage
@@ -20,7 +19,7 @@ before_script:
   - export OMP_NUM_THREADS=1
   # - mkdir $HOME/.matplotlib
   # - touch $HOME/.matplotlib/matplotlibrc
-  # - echo backend=Agg >> $HOME/.matplotlib/matplotlibrc
+  - echo 'backend= Agg' >> $HOME/.matplotlib/matplotlibrc
 script:
   - make test
   - make test-all
