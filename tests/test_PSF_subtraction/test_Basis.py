@@ -162,7 +162,7 @@ class TestBasis(object):
         assert basis.cent_size == -1.
         assert np.array_equal(basis.cent_mask, np.ones(shape=(146, 146)))
         assert np.array_equal(basis.psf_basis.shape, (4, 146, 146))
-        assert np.allclose(basis.psf_basis.var(), 4.691179875591796e-05, rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_basis.var(), 4.691179875591796e-05, rtol=1e-6, atol=0.)
 
     def test_overall_basis3(self):
         assert np.array_equal(self.basis3.im_size, (146, 146))
@@ -178,7 +178,7 @@ class TestBasis(object):
         assert self.basis3.cent_mask.max() == 1.0
         assert np.allclose(self.basis3.cent_mask.var(), 0.05578190564690256, rtol=limit, atol=0.)
         assert self.basis3.psf_basis.shape == (4, 146, 146)
-        assert np.allclose(self.basis3.psf_basis.var(), 4.6562231691378416e-05, rtol=limit, atol=0.)
+        assert np.allclose(self.basis3.psf_basis.var(), 4.6562231691378416e-05, rtol=1e-4, atol=0.)
         assert self.basis3.im_ave.shape == (146, 146)
         assert np.allclose(self.basis3.im_ave.min(), -0.0007636431899760693, rtol=limit, atol=0.)
         assert np.allclose(self.basis3.im_ave.max(), 0.008679750758241345, rtol=limit, atol=0.)
@@ -201,4 +201,4 @@ class TestBasis(object):
     def test_mk_psfmodel(self):
         basis = self.basis3
         basis.mk_psfmodel(20)
-        assert np.allclose(basis.psf_im_arr.mean(), 0.00043016667279535496, rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_im_arr.mean(), 0.00043016667279535496, rtol=1e-4, atol=0.)
