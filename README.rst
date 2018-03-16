@@ -4,10 +4,10 @@ PynPoint
 **Python package for the processing and analysis of high-contrast imaging data**
 
 .. image:: https://img.shields.io/badge/GitHub-PynPoint-blue.svg?style=flat
-    :target: https://github.com/aamara/PynPoint
+    :target: https://github.com/PynPoint/PynPoint
 
-.. image:: https://travis-ci.com/aamara/PynPoint.svg?token=ywSsnizu1YgWCg5AsDzE&branch=master
-    :target: https://travis-ci.com/aamara/PynPoint
+.. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master
+    :target: https://travis-ci.org/PynPoint/PynPoint
 
 .. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
     :target: https://pypi.python.org/pypi/PynPoint-exoplanet
