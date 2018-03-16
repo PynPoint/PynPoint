@@ -5,6 +5,7 @@ Modules to prepare the data for the PSF subtraction.
 from __future__ import division
 
 import sys
+import warnings
 
 import numpy as np
 
@@ -259,7 +260,7 @@ class AngleCalculationModule(ProcessingModule):
 
         new_angles = []
 
-        for i in range(len(parang_start)):
+        for i, _ in enumerate(parang_start):
             progress(i, len(parang_start), "Running AngleCalculationModule...")
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
@@ -279,3 +280,94 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_out_port.add_attribute("PARANG",
                                            new_angles,
                                            static=False)
+
+
+class SortParangModule(ProcessingModule):
+    """
+    Module to sort the images and non-static attributes with increasing parallactic angle.
+    """
+
+    def __init__(self,
+                 name_in="sort",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_sort"):
+        """
+        Constructor of SortParangModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with images that is written as output.
+                              Should be different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(SortParangModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Sorts the images and relevant non-static attributes.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+
+        parang = self.m_image_in_port.get_attribute("PARANG")
+        parang_new = np.zeros(parang.shape)
+
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            star = self.m_image_in_port.get_attribute("STAR_POSITION")
+            star_new = np.zeros(star.shape)
+
+        index_sort = np.argsort(parang)
+
+        nimage = self.m_image_in_port.get_shape()[0]
+
+        if memory == -1 or memory >= nimage:
+            frames = [0, nimage]
+
+        else:
+            frames = np.linspace(0,
+                                 nimage-nimage%memory,
+                                 int(float(nimage)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimage%memory > 0:
+                frames = np.append(frames, nimage)
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames)-1, "Running SortParangModule...")
+
+            parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
+            star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            self.m_image_out_port.append(images)
+
+        sys.stdout.write("Running SortParangModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
+        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
+            self.m_image_out_port.del_attribute("NFRAMES")
+
+        self.m_image_out_port.add_history_information("Images sorted", "parang")
+        self.m_image_out_port.close_database()

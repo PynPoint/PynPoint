@@ -372,22 +372,23 @@ class CombineTagsModule(ProcessingModule):
             progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
 
             image_in_port = self.add_input_port(item)
+            nimage = image_in_port.get_shape()[0]
 
-            num_frames = image_in_port.get_shape()[0]
-            num_stacks = int(float(num_frames)/float(memory))
+            if memory == -1 or memory >= nimage:
+                frames = [0, nimage]
 
-            for j in range(num_stacks):
-                frame_start = j*memory
-                frame_end = j*memory+memory
+            else:
+                frames = np.linspace(0,
+                                     nimage-nimage%memory,
+                                     int(float(nimage)/float(memory))+1,
+                                     endpoint=True,
+                                     dtype=np.int)
 
-                im_tmp = image_in_port[frame_start:frame_end, ]
-                self.m_image_out_port.append(im_tmp)
+                if nimage%memory > 0:
+                    frames = np.append(frames, nimage)
 
-            if num_frames%memory > 0:
-                frame_start = num_stacks*memory
-                frame_end = num_frames
-
-                im_tmp = image_in_port[frame_start:frame_end, ]
+            for j in range(np.size(frames)-1):
+                im_tmp = image_in_port[frames[j]:frames[j+1], ]
                 self.m_image_out_port.append(im_tmp)
 
             static_attr = image_in_port.get_all_static_attributes()
@@ -409,12 +410,15 @@ class CombineTagsModule(ProcessingModule):
                 status = self.m_image_out_port.check_non_static_attribute(key, values)
 
                 if self.m_check_attr:
-                    if key == "NFRAMES" or key == "PARANG" or key == "STAR_POSITION":
+                    if key == "PARANG" or key == "STAR_POSITION":
                         if status == 1:
                             self.m_image_out_port.add_attribute(key, values, static=False)
                         else:
                             for j in values:
                                 self.m_image_out_port.append_attribute_data(key, j)
+
+                    elif key == "NFRAMES":
+                        continue
 
                     else:
                         if status == 1:

@@ -30,6 +30,7 @@ def setup_module():
     h5f.create_dataset("header_images/DITHER_X", data=[5, 5, -5, -5])
     h5f.create_dataset("header_images/DITHER_Y", data=[5, -5, -5, 5])
     h5f.create_dataset("header_images/STAR_POSITION", data=np.full((10, 2), 40.))
+    h5f.create_dataset("header_images/PARANG", data=np.full(40, 1.))
     dset = h5f.create_dataset("sky", data=sky)
     dset.attrs['PIXSCALE'] = 0.01
     h5f.create_dataset("header_sky/NFRAMES", data=[10, 10, 10, 10])
