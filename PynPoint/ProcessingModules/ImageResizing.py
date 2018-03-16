@@ -197,7 +197,7 @@ class AddLinesModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag* unless *MEMORY* is set to *None*.
+                              different from *image_in_tag*.
         :type image_out_tag: str
 
         :return: None
@@ -288,7 +288,7 @@ class RemoveLinesModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Removes the top *num_lines* lines from each frame.
+        Run method of the module. Removes the lines given by *lines* from each frame.
 
         :return: None
         """
@@ -327,7 +327,7 @@ class CombineTagsModule(ProcessingModule):
         """
         Constructor of CombineTagsModule.
 
-        :param image_in_tags: Tags of the database entries that are combined.
+        :param image_in_tags: Tags of the database entries that are read as input and combined.
         :type image_in_tags: tuple, str
         :param check_attr: Compare non-static attributes between the tags or combine all non-static
                            attributes into the new database tag.
