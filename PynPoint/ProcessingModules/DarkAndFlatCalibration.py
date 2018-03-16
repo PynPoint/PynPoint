@@ -177,3 +177,53 @@ class FlatCalibrationModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Calibration", "flat")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_database()
+
+
+class SubtractImagesModule(ProcessingModule):
+    """
+    Module for subtracting two sets of images.
+    """
+
+    def __init__(self,
+                 image_in_tags,
+                 name_in="subtract_images",
+                 image_out_tag="im_arr_subtract"):
+        """
+        Constructor of SubtractImagesModule.
+
+        :param image_in_tags: Tuple with two tags of the database entry that are read as input.
+        :type image_in_tags: tuple, str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tags*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(SubtractImagesModule, self).__init__(name_in=name_in)
+
+        self.m_image_in1_port = self.add_input_port(image_in_tags[0])
+        self.m_image_in2_port = self.add_input_port(image_in_tags[1])
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Subtracts the images from the second database tag from the images
+        of the first database tag, on a frame-by-frame basis.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        images1 = self.m_image_in1_port.get_all()
+        images2 = self.m_image_in2_port.get_all()
+
+        self.m_image_out_port.set_all(images1-images2)
+
+        self.m_image_out_port.add_history_information("Images subtracted", "")
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
+        self.m_image_out_port.close_database()

@@ -252,13 +252,14 @@ class MeanCubeModule(ProcessingModule):
 
 class DerotateAndStackModule(ProcessingModule):
     """
-    Module for derotating the images and optional stacking.
+    Module for derotating and/or stacking of the images.
     """
 
     def __init__(self,
                  name_in="rotate_stack",
                  image_in_tag="im_arr",
                  image_out_tag="im_stack",
+                 derotate=True,
                  stack=False,
                  extra_rot=0.):
         """
@@ -284,8 +285,9 @@ class DerotateAndStackModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_extra_rot = extra_rot
+        self.m_derotate = derotate
         self.m_stack = stack
+        self.m_extra_rot = extra_rot
 
     def run(self):
         """
@@ -295,13 +297,14 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
+        if self.m_derotate:
+            parang = self.m_image_in_port.get_attribute("PARANG")
 
         if self.m_stack:
             stack = np.zeros((self.m_image_in_port.get_shape()[1],
@@ -310,11 +313,19 @@ class DerotateAndStackModule(ProcessingModule):
         elif not self.m_stack:
             stack = np.zeros(self.m_image_in_port.get_shape())
 
-        count = 0.
-        for i, ang in enumerate(parang):
-            progress(i, len(parang), "Running RotateAndStackModule...")
+        nimage = self.m_image_in_port.get_shape()[0]
 
-            im_rot = rotate(self.m_image_in_port[i, ], -ang+self.m_extra_rot, reshape=False)
+        count = 0.
+        for i in range(nimage):
+            progress(i, nimage, "Running DerotateAndStackModule...")
+
+            if self.m_derotate:
+                im_rot = rotate(self.m_image_in_port[i, ],
+                                -parang[i]+self.m_extra_rot,
+                                reshape=False)
+
+            else:
+                im_rot = self.m_image_in_port[i, ]
 
             if self.m_stack:
                 stack += im_rot
@@ -326,9 +337,11 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_stack:
             stack /= count
 
-        sys.stdout.write("Running RotateAndStackModule... [DONE]\n")
+        sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.set_all(stack)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_database()
+
+
