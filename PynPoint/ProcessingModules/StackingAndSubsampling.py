@@ -37,6 +37,7 @@ class StackAndSubsetModule(ProcessingModule):
         :type random: int
         :param stacking: Number of stacked images per subset.
         :type stacking: int
+
         :return: None
         """
 
@@ -188,7 +189,7 @@ class MeanCubeModule(ProcessingModule):
         self.m_image_out_port.close_database()
 
 
-class RotateAndStackModule(ProcessingModule):
+class DerotateAndStackModule(ProcessingModule):
     """
     Module for derotating the images and optional stacking.
     """
@@ -200,7 +201,7 @@ class RotateAndStackModule(ProcessingModule):
                  stack=False,
                  extra_rot=0.):
         """
-        Constructor of RotateAndStackModule.
+        Constructor of DerotateAndStackModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -210,14 +211,14 @@ class RotateAndStackModule(ProcessingModule):
                               either 2D (*stack=False*) or 3D (*stack=True*).
         :type image_out_tag: str
         :param stack: Apply a mean stacking after derotation.
-        :type stack: bool                 
-        :param extra_rot: Additional rotation angle of the images (deg).
+        :type stack: bool
+        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
         :return: None
         """
 
-        super(RotateAndStackModule, self).__init__(name_in=name_in)
+        super(DerotateAndStackModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

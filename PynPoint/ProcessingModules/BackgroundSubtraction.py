@@ -920,6 +920,10 @@ class NoddingBackgroundModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry with sky subtracted images that are written
                               as output.
         :type image_out_tag: str
+        :param mode: Sky frames that are subtracted, relative to the science frames. Either the next,
+                     previous, or average of the next and previous cubes of sky frames can be used by
+                     choosing *next*, *previous*, or *both*, respectively.
+        :type mode: str
 
         :return: None
         """

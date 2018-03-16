@@ -25,13 +25,11 @@ class PSFpreparationModule(ProcessingModule):
                  name_in=None,
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
-                 image_mask_out_tag="im_mask_arr",
                  mask_out_tag="mask_arr",
                  norm=True,
-                 resize=-1,
-                 cent_remove=True,
-                 cent_size=0.05,
-                 edge_size=1.0,
+                 resize=None,
+                 cent_size=None,
+                 edge_size=None,
                  **kwargs):
         """
         Constructor of PSFpreparationModule.
@@ -42,24 +40,19 @@ class PSFpreparationModule(ProcessingModule):
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry with images that is written as output.
         :type image_out_tag: str
-        :param image_mask_out_tag: Tag of the database entry with the mask that is written as
-                                   output.
-        :type image_mask_out_tag: str
         :param mask_out_tag: Tag of the database entry with the mask that is written as output.
         :type mask_out_tag: str
         :param norm: Normalization of each image by its Frobenius norm.
         :type norm: bool
         :param resize: Factor by which the data is resized. For example, if *resize* is 2 then
                        the data will be upsampled by a factor of two. No resizing is applied
-                       with a negative value.
+                       when set to None.
         :type resize: float
-        :param cent_remove: Mask the central region of the data with a fractional mask radius of
-                            cent_size.
-        :type cent_remove: bool
-        :param cent_size: Fractional radius of the central mask relative to the image size.
+        :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
         :type cent_size: float
-        :param edge_size: Fractional outer radius relative to the image size. The images are
-                          masked beyond this radius. Currently this parameter is not used.
+        :param edge_size: Outer radius (arcsec) beyond which pixels are masked. No outer mask is
+                          used when set to None. If the value is larger than half the image size
+                          then it will be set to half the image size.
         :type edge_size: float
         :param \**kwargs:
             See below.
@@ -78,17 +71,13 @@ class PSFpreparationModule(ProcessingModule):
         super(PSFpreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        if image_mask_out_tag is not None:
-            self.m_image_mask_out_port = self.add_output_port(image_mask_out_tag)
         if mask_out_tag is not None:
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
+        else:
+            self.m_mask_out_port is None
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_image_mask_out_tag = image_mask_out_tag
-        self.m_mask_out_tag = mask_out_tag
-
         self.m_resize = resize
-        self.m_cent_remove = cent_remove
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_norm = norm
@@ -131,69 +120,38 @@ class PSFpreparationModule(ProcessingModule):
         return im_arr_res
 
     def _im_masking(self,
-                    im_data_in):
+                    im_data):
         """
         Internal method which masks the central and outer parts of the images.
         """
 
-        def mk_circle_func(x_center, y_center):
-            """
-            Function for calculating the radius to (x, y) after having been initialized with
-            x_center and y_center.
-            """
+        im_shape = (im_data.shape[1], im_data.shape[2])
 
-            return lambda x, y: np.sqrt((x_center-x)**2 +(y_center-y)**2)
+        mask = np.ones(im_shape)
 
-        def mk_circle(x_num, y_num, x_cent, y_cent, rad_lim):
-            """
-            Function for making a circular aperture.
-            """
+        if self.m_cent_size is not None or self.m_edge_size is not None:
+            npix = im_shape[0]
 
-            y_val, x_val = np.indices([x_num, y_num])
-            rad = mk_circle_func(x_cent, y_cent)(x_val, y_val)
+            if npix%2 == 0:
+                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+            elif npix%2 == 1:
+                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
 
-            i, j = np.where(rad <= rad_lim)
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+            rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
 
-            mask_base = np.ones((x_num, y_num), float)
-            mask_base[i, j] = 0.0
+        if self.m_cent_size is not None:
+            mask[rr_grid < self.m_cent_size] = 0.
 
-            return mask_base
+        if self.m_edge_size is not None:
+            if self.m_edge_size > npix/2.:
+                self.m_edge_size = npix/2.
+            mask[rr_grid > self.m_edge_size] = 0.
 
-        im_size = im_data_in[0, ].shape
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.set_all(mask)
 
-        if self.m_cent_remove:
-
-            mask_c = mk_circle(im_size[0],
-                               im_size[1],
-                               im_size[0]/2.,
-                               im_size[1]/2.,
-                               self.m_cent_size * im_size[0])
-
-            mask_outside = mk_circle(im_size[0],
-                                     im_size[1],
-                                     im_size[0]/2.,
-                                     im_size[1]/2.,
-                                     0.5 * im_size[0])
-
-            cent_mask = mask_c * (1.0 - mask_outside)
-            res_cent_mask = (1.0 - cent_mask)
-
-            im_arr_i_mask = im_data_in * res_cent_mask
-            im_arr_o_mask = im_data_in * cent_mask
-
-            if self.m_image_mask_out_tag is not None:
-                self.m_image_mask_out_port.set_all(im_arr_i_mask)
-
-            im_data_out = im_arr_o_mask
-
-        else:
-            cent_mask = np.ones(im_size)
-            im_data_out = im_data_in
-
-        if self.m_mask_out_tag is not None:
-            self.m_mask_out_port.set_all(cent_mask)
-
-        return im_data_out
+        return im_data * mask
 
     def run(self):
         """
@@ -204,6 +162,11 @@ class PSFpreparationModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
+        if self.m_cent_size is not None:
+            self.m_cent_size /= pixscale
+        if self.m_edge_size is not None:
+            self.m_edge_size /= pixscale
+
         if self.m_verbose:
             sys.stdout.write("Running PSFpreparationModule...")
             sys.stdout.flush()
@@ -211,19 +174,31 @@ class PSFpreparationModule(ProcessingModule):
         im_data = self.m_image_in_port.get_all()
         im_norm = self._im_norm(im_data)
 
-        if self.m_resize > 0.:
+        if self.m_resize is not None:
             im_data = self._im_resizing(im_data)
 
         im_data = self._im_masking(im_data)
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
         self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
-        if self.m_resize > 0.:
-            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if self.m_resize is not None:
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
+
+        if self.m_resize is None:
+            self.m_resize = -1
+
+        if self.m_cent_size is None:
+            self.m_cent_size = -1
+        else:
+            self.m_cent_size *= pixscale
+
+        if self.m_edge_size is None:
+            self.m_edge_size = -1
+        else:
+            self.m_edge_size *= pixscale
 
         attributes = {"resize": float(self.m_resize),
-                      "cent_remove": self.m_cent_remove,
                       "cent_size": float(self.m_cent_size),
                       "edge_size": float(self.m_edge_size)}
 
@@ -265,7 +240,8 @@ class AngleCalculationModule(ProcessingModule):
         """
         Run method of the module. Calculates the parallactic angles of each frame by linearly
         interpolating between the start and end values of the data cubes. The values are written
-        as attributes to *data_tag*.
+        as attributes to *data_tag*. A correction of 360 deg is applied when the start and end
+        values of the angles change sign at +/-180 deg.
 
         :return: None
         """
@@ -286,6 +262,12 @@ class AngleCalculationModule(ProcessingModule):
 
         for i, _ in enumerate(parang_start):
             progress(i, len(parang_start), "Running AngleCalculationModule...")
+
+            if parang_start[i] < -170. and parang_end[i] > 170.:
+                parang_start[i] += 360.
+
+            elif parang_end[i] < -170. and parang_start[i] > 170.:
+                parang_end[i] += 360.
 
             new_angles = np.append(new_angles,
                                    np.linspace(parang_start[i],
