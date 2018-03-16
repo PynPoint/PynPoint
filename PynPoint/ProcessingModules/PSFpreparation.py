@@ -239,7 +239,8 @@ class AngleCalculationModule(ProcessingModule):
         """
         Run method of the module. Calculates the parallactic angles of each frame by linearly
         interpolating between the start and end values of the data cubes. The values are written
-        as attributes to *data_tag*.
+        as attributes to *data_tag*. A correction of 360 deg is applied when the start and end
+        values of the angles change sign at +/-180 deg.
 
         :return: None
         """
@@ -260,6 +261,12 @@ class AngleCalculationModule(ProcessingModule):
 
         for i in range(len(parang_start)):
             progress(i, len(parang_start), "Running AngleCalculationModule...")
+
+            if parang_start[i] < -170. and parang_end[i] > 170.:
+                parang_start[i] += 360.
+
+            elif parang_end[i] < -170. and parang_start[i] > 170.:
+                parang_end[i] += 360.
 
             new_angles = np.append(new_angles,
                                    np.linspace(parang_start[i],
