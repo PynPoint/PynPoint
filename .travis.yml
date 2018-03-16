@@ -10,7 +10,7 @@ before_install:
   - virtualenv venv -p python2
   - source venv/bin/activate
 install:
-  # - pip2 install numpy
+  - pip2 install numpy
   # - pip2 install matplotlib
   - pip2 install -r requirements.txt
   - pip2 install tox
@@ -18,9 +18,9 @@ install:
   - pip2 install sphinx
 before_script:
   - export OMP_NUM_THREADS=1
-  - mkdir $HOME/.matplotlib
-  - touch $HOME/.matplotlib/matplotlibrc
-  - echo backend=Agg >> $HOME/.matplotlib/matplotlibrc
+  # - mkdir $HOME/.matplotlib
+  # - touch $HOME/.matplotlib/matplotlibrc
+  # - echo backend=Agg >> $HOME/.matplotlib/matplotlibrc
 script:
   - make test
   - make test-all
