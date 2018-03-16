@@ -74,7 +74,7 @@ class PSFpreparationModule(ProcessingModule):
         if mask_out_tag is not None:
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
         else:
-            self.m_mask_out_port is None
+            self.m_mask_out_port = None
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_resize = resize
