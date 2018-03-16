@@ -12,6 +12,7 @@ from scipy.optimize import curve_fit
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, CombineTagsModule
+from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
 
 
@@ -623,7 +624,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 im_star = self.m_star_in_port[frame_start:frame_end, ]
 
             mask = self._create_mask(self.m_mask,
-                                     star_position[frame_start:frame_end, :],
+                                     star_position[frame_start:frame_end, ],
                                      frame_end-frame_start)
 
             im_star_mask = im_star*mask
@@ -882,10 +883,17 @@ class DitheringBackgroundModule(ProcessingModule):
             combine = CombineTagsModule(name_in="combine",
                                         check_attr=True,
                                         image_in_tags=tags,
-                                        image_out_tag=self.m_image_out_tag)
+                                        image_out_tag="combine")
 
             combine.connect_database(self._m_data_base)
             combine.run()
+
+            sort = SortParangModule(name_in="sort",
+                                    image_in_tag="combine",
+                                    image_out_tag=self.m_image_out_tag)
+
+            sort.connect_database(self._m_data_base)
+            sort.run()
 
 
 class NoddingBackgroundModule(ProcessingModule):
@@ -1035,7 +1043,5 @@ class NoddingBackgroundModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_science_in_port)
-
         self.m_image_out_port.add_history_information("Background", "nodding")
-
         self.m_image_out_port.close_database()
