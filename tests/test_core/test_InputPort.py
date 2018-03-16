@@ -39,11 +39,11 @@ class TestInputPort(object):
     def test_create_instance_access_data(self):
         port = InputPort("images", self.storage)
 
-        assert np.allclose(port[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(port.get_all()), 1.0506056979365338e-06, rtol=limit)
+        assert np.allclose(port[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(port.get_all()), 1.0506056979365338e-06, rtol=limit, atol=0.)
 
         arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05, -0.00038631277795631806), dtype=np.float64)
-        assert np.allclose(port[0:3, 0, 0], arr_tmp, rtol=limit)
+        assert np.allclose(port[0:3, 0, 0], arr_tmp, rtol=limit, atol=0.)
 
         assert len(port[0:2, 0, 0]) == 2
         assert port.get_shape() == (10, 100, 100)
