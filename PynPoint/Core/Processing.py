@@ -376,10 +376,15 @@ class ProcessingModule(PypelineModule):
         :return: None
         """
 
-        number_of_images = image_in_port.get_shape()[0]
+        ndim = image_in_port.get_ndim()
+
+        if ndim == 2:
+            nimages = 1
+        elif ndim == 3:
+            nimages = image_in_port.get_shape()[0]
 
         if num_images_in_memory is None:
-            num_images_in_memory = number_of_images
+            num_images_in_memory = nimages
 
         # check if input and output Port have the same tag
 
@@ -391,43 +396,57 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
 
-        while i < number_of_images:
-            progress(i, number_of_images, message)
+        while i < nimages:
+            progress(i, nimages, message)
 
-            if i + num_images_in_memory > number_of_images:
-                j = number_of_images
+            if i + num_images_in_memory > nimages:
+                j = nimages
             else:
                 j = i + num_images_in_memory
 
-            tmp_frames = image_in_port[i:j]
+            if ndim == 2:
+                tmp_frames = image_in_port[:, :]
+            elif ndim == 3:
+                tmp_frames = image_in_port[i:j]
+
             tmp_res = []
 
             # process frames
             # check if additional arguments are given
             if func_args is None:
-                for k in range(tmp_frames.shape[0]):
-                    tmp_res.append(func(tmp_frames[k]))
+                if ndim == 2:
+                    tmp_res.append(func(tmp_frames))
+                elif ndim == 3:
+                    for k in range(tmp_frames.shape[0]):
+                        tmp_res.append(func(tmp_frames[k]))
+
             else:
-                for k in range(tmp_frames.shape[0]):
-                    tmp_res.append(func(tmp_frames[k], * func_args))
+                if ndim == 2:
+                    tmp_res.append(func(tmp_frames, * func_args))
+                elif ndim == 3:
+                    for k in range(tmp_frames.shape[0]):
+                        tmp_res.append(func(tmp_frames[k], * func_args))
 
             if image_out_port is not None:
                 if update:
                     try:
-                        if num_images_in_memory == number_of_images:
+                        if num_images_in_memory == nimages:
                             image_out_port.set_all(np.array(tmp_res),
                                                    keep_attributes=True)
                         else:
                             image_out_port[i:j] = np.array(tmp_res)
+
                     except TypeError:
                         raise ValueError("Input and output port have the same tag while %s is changing "
                                          "the image shape. This is only possible for "
                                          "num_images_in_memory == None. Change num_images_in_memory"
                                          "or choose different port tags." % func)
+
                 elif first_time:
                     # The first time we have to reset the eventually existing data
                     image_out_port.set_all(np.array(tmp_res))
                     first_time = False
+
                 else:
                     image_out_port.append(np.array(tmp_res))
 
