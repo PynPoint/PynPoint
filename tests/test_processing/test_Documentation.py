@@ -23,7 +23,7 @@ from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModu
 
 warnings.simplefilter("always")
 
-limit = 1e-30
+limit = 1e-10
 
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
