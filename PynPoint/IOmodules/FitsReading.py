@@ -228,14 +228,3 @@ class FitsReadingModule(ReadingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.close_database()
-
-        # Update number of files used to create the data base entry
-        new_files_num = len(files)
-        if self.m_overwrite:
-            # no old files have been used
-            self.m_image_out_port.open_port()
-            self.m_image_out_port.add_attribute("Num_Files", new_files_num)
-
-        else:
-            # appended data
-            self.m_image_out_port.add_value_to_static_attribute("Num_Files", new_files_num)

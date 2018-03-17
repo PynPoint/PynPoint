@@ -851,7 +851,7 @@ class FastPCAModule(ProcessingModule):
                 stdout.flush()
             self._run_multi_processing(star_data)
             if self.m_verbose:
-                stdout.write("Creating residuals... [DONE]\n")
+                stdout.write(" [DONE]\n")
                 stdout.flush()
 
         # save history for all other ports
