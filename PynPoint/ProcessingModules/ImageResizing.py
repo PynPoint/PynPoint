@@ -61,7 +61,6 @@ class CropImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_size = int(self.m_size/pixscale)
@@ -147,7 +146,6 @@ class ScaleImagesModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         def image_scaling(image_in,
@@ -215,7 +213,6 @@ class AddLinesModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         shape_in = self.m_image_in_port.get_shape()
 
         if np.size(shape_in) != 3:
@@ -289,8 +286,6 @@ class RemoveLinesModule(ProcessingModule):
 
         :return: None
         """
-
-        memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output tags should be different.")

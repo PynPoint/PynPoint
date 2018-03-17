@@ -92,8 +92,6 @@ class DarkCalibrationModule(ProcessingModule):
         def dark_calibration(image_in, dark_in):
             return image_in - dark_in
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         dark = self.m_dark_in_port.get_all()
         master = _master_frame(dark, self.m_image_in_port)
 
@@ -146,8 +144,6 @@ class FlatCalibrationModule(ProcessingModule):
 
         :return: None
         """
-
-        memory = self._m_config_port.get_attribute("MEMORY")
 
         def flat_calibration(image_in, flat_in):
             return image_in / flat_in

@@ -20,7 +20,7 @@ from photutils import aperture_photometry, CircularAperture
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import FastPCAModule
 
 
 class FakePlanetModule(ProcessingModule):
@@ -262,7 +262,6 @@ class SimplexMinimizationModule(ProcessingModule):
                  aperture=0.1,
                  sigma=0.027,
                  tolerance=0.1,
-                 pca_module='FastPCAModule',
                  pca_number=20,
                  mask=0.,
                  extra_rot=0.):
@@ -316,9 +315,6 @@ class SimplexMinimizationModule(ProcessingModule):
                           and 0.1 pix. The tolerance on the output (i.e., function of merit)
                           is set to np.inf so the condition is always met.
         :type tolerance: float
-        :param pca_module: Name of the processing module for the PSF subtraction
-                           (PSFSubtractionModule or FastPCAModule).
-        :type pca_module: str
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.
@@ -346,7 +342,6 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_sigma = sigma
         self.m_tolerance = tolerance
-        self.m_pca_module = pca_module
         self.m_pca_number = pca_number
         self.m_mask = mask
         self.m_extra_rot = extra_rot
@@ -398,84 +393,29 @@ class SimplexMinimizationModule(ProcessingModule):
             fake_planet.connect_database(self._m_data_base)
             fake_planet.run()
 
-            if self.m_pca_module == "PSFSubtractionModule":
-
-                if self.m_mask > 0.:
-
-                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
-                                                   pca_number=self.m_pca_number,
-                                                   svd="arpack",
-                                                   images_in_tag="simplex_fake",
-                                                   reference_in_tag="simplex_fake",
-                                                   res_arr_out_tag="simplex_res_arr_out",
-                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
-                                                   res_mean_tag="simplex_res_mean",
-                                                   res_median_tag="simplex_res_median",
-                                                   res_var_tag="simplex_res_var",
-                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
-                                                   basis_out_tag="simplex_basis_out",
-                                                   image_ave_tag="simplex_image_ave",
-                                                   psf_model_tag="simplex_psf_model",
-                                                   ref_prep_tag="simplex_ref_prep",
-                                                   prep_tag="simplex_prep",
-                                                   cent_mask_tag="simplex_cent_mask",
-                                                   extra_rot=self.m_extra_rot,
-                                                   cent_size=self.m_mask,
-                                                   verbose=False)
-
-                else:
-
-                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
-                                                   pca_number=self.m_pca_number,
-                                                   svd="arpack",
-                                                   images_in_tag="simplex_fake",
-                                                   reference_in_tag="simplex_fake",
-                                                   res_arr_out_tag="simplex_res_arr_out",
-                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
-                                                   res_mean_tag="simplex_res_mean",
-                                                   res_median_tag="simplex_res_median",
-                                                   res_var_tag="simplex_res_var",
-                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
-                                                   basis_out_tag="simplex_basis_out",
-                                                   image_ave_tag="simplex_image_ave",
-                                                   psf_model_tag="simplex_psf_model",
-                                                   ref_prep_tag="simplex_ref_prep",
-                                                   prep_tag="simplex_prep",
-                                                   cent_mask_tag="simplex_cent_mask",
-                                                   extra_rot=self.m_extra_rot,
-                                                   cent_size=None,
-                                                   verbose=False)
-
-            elif self.m_pca_module == "FastPCAModule":
-
-                prep = PSFpreparationModule(name_in="prep",
-                                            image_in_tag="simplex_fake",
-                                            image_out_tag="simplex_prep",
-                                            image_mask_out_tag=None,
-                                            mask_out_tag=None,
-                                            norm=False,
-                                            cent_size=self.m_mask,
-                                            edge_size=1.,
-                                            verbose=False)
-
-                prep.connect_database(self._m_data_base)
-                prep.run()
-
-                psf_sub = FastPCAModule(name_in="pca_simplex",
-                                        pca_numbers=self.m_pca_number,
-                                        images_in_tag="simplex_prep",
-                                        reference_in_tag="simplex_prep",
-                                        res_mean_tag="simplex_res_mean",
-                                        res_median_tag=None,
-                                        res_arr_out_tag=None,
-                                        res_rot_mean_clip_tag=None,
-                                        extra_rot=self.m_extra_rot,
+            prep = PSFpreparationModule(name_in="prep",
+                                        image_in_tag="simplex_fake",
+                                        image_out_tag="simplex_prep",
+                                        image_mask_out_tag=None,
+                                        mask_out_tag=None,
+                                        norm=False,
+                                        cent_size=self.m_mask,
+                                        edge_size=1e10,
                                         verbose=False)
 
-            else:
+            prep.connect_database(self._m_data_base)
+            prep.run()
 
-                raise ValueError("The pca_module should be either PSFSubtractionModule or "
-                                 "FastPCAModule.")
+            psf_sub = FastPCAModule(name_in="pca_simplex",
+                                    pca_numbers=self.m_pca_number,
+                                    images_in_tag="simplex_prep",
+                                    reference_in_tag="simplex_prep",
+                                    res_mean_tag="simplex_res_mean",
+                                    res_median_tag=None,
+                                    res_arr_out_tag=None,
+                                    res_rot_mean_clip_tag=None,
+                                    extra_rot=self.m_extra_rot,
+                                    verbose=False)
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()

@@ -87,7 +87,6 @@ class StarExtractionModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if self.m_position is not None:
@@ -245,8 +244,6 @@ class StarAlignmentModule(ProcessingModule):
 
         :return: None
         """
-
-        memory = self._m_config_port.get_attribute("MEMORY")
 
         if self.m_ref_image_in_port is not None:
             im_dim = np.size(self.m_ref_image_in_port.get_shape())
@@ -578,8 +575,6 @@ class ShiftForCenteringModule(ProcessingModule):
 
         :return: None
         """
-
-        memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_shift(image_in):
             return shift(image_in, self.m_shift, order=5)
