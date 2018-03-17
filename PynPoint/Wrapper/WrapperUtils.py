@@ -49,8 +49,8 @@ class BasePynpointWrapper(object):
 
         # All static and non static attributes and their names in the database
         # {#Name_seen_from_outside: #database_name}
-        simple_attributes = {"files" : "Used_Files",
-                             "im_norm" : "im_norm",
+        simple_attributes = {"files" : "FILES",
+                             "im_norm" : "norm",
                              "para" : "PARANG",
                              "resize" : "resize",
                              "cent_size" : "cent_size",

@@ -14,7 +14,7 @@ from scipy.stats import t
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import FastPCAModule
 from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule
 
 
@@ -38,7 +38,6 @@ class ContrastModule(ProcessingModule):
                  psf_scaling=1.,
                  aperture=0.05,
                  ignore=False,
-                 pca_module='FastPCAModule',
                  pca_number=20,
                  mask=0.,
                  extra_rot=0.):
@@ -88,9 +87,6 @@ class ContrastModule(ProcessingModule):
         :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
                        the planet.
         :type ignore: bool
-        :param pca_module: Name of the processing module for the PSF subtraction
-                           (PSFSubtractionModule or FastPCAModule).
-        :type pca_module: str
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.
@@ -123,7 +119,6 @@ class ContrastModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_aperture = aperture
         self.m_ignore = ignore
-        self.m_pca_module = pca_module
         self.m_pca_number = pca_number
         self.m_mask = mask
         self.m_extra_rot = extra_rot
@@ -272,86 +267,29 @@ class ContrastModule(ProcessingModule):
                     fake_planet.connect_database(self._m_data_base)
                     fake_planet.run()
 
-                    if self.m_pca_module == "PSFSubtractionModule":
-
-                        if self.m_mask > 0.:
-
-                            psf_sub = \
-                            PSFSubtractionModule(pca_number=self.m_pca_number,
-                                                 svd="arpack",
-                                                 name_in="pca_contrast",
-                                                 images_in_tag="contrast_fake",
-                                                 reference_in_tag="contrast_fake",
-                                                 res_arr_out_tag="contrast_res_arr_out",
-                                                 res_arr_rot_out_tag="contrast_res_arr_rot_out",
-                                                 res_mean_tag="contrast_res_mean",
-                                                 res_median_tag="contrast_res_median",
-                                                 res_var_tag="contrast_res_var",
-                                                 res_rot_mean_clip_tag="contrast_res_rot_mean_clip",
-                                                 basis_out_tag="contrast_basis_out",
-                                                 image_ave_tag="contrast_image_ave",
-                                                 psf_model_tag="contrast_psf_model",
-                                                 ref_prep_tag="contrast_ref_prep",
-                                                 prep_tag="contrast_prep",
-                                                 cent_mask_tag="contrast_cent_mask",
-                                                 extra_rot=self.m_extra_rot,
-                                                 cent_size=self.m_mask,
-                                                 verbose=False)
-
-                        else:
-
-                            psf_sub = \
-                            PSFSubtractionModule(pca_number=self.m_pca_number,
-                                                 svd="arpack",
-                                                 name_in="pca_contrast",
-                                                 images_in_tag="contrast_fake",
-                                                 reference_in_tag="contrast_fake",
-                                                 res_arr_out_tag="contrast_res_arr_out",
-                                                 res_arr_rot_out_tag="contrast_res_arr_rot_out",
-                                                 res_mean_tag="contrast_res_mean",
-                                                 res_median_tag="contrast_res_median",
-                                                 res_var_tag="contrast_res_var",
-                                                 res_rot_mean_clip_tag="contrast_res_rot_mean_clip",
-                                                 basis_out_tag="contrast_basis_out",
-                                                 image_ave_tag="contrast_image_ave",
-                                                 psf_model_tag="contrast_psf_model",
-                                                 ref_prep_tag="contrast_ref_prep",
-                                                 prep_tag="contrast_prep",
-                                                 cent_mask_tag="contrast_cent_mask",
-                                                 extra_rot=self.m_extra_rot,
-                                                 cent_size=None,
-                                                 verbose=False)
-
-                    elif self.m_pca_module == "FastPCAModule":
-
-                        prep = PSFpreparationModule(name_in="prep",
-                                                    image_in_tag="contrast_fake",
-                                                    image_out_tag="contrast_prep",
-                                                    image_mask_out_tag=None,
-                                                    mask_out_tag=None,
-                                                    norm=True,
-                                                    cent_size=self.m_mask,
-                                                    edge_size=1.,
-                                                    verbose=False)
-
-                        prep.connect_database(self._m_data_base)
-                        prep.run()
-
-                        psf_sub = FastPCAModule(name_in="pca_contrast",
-                                                pca_numbers=self.m_pca_number,
-                                                images_in_tag="contrast_prep",
-                                                reference_in_tag="contrast_prep",
-                                                res_mean_tag="contrast_res_mean",
-                                                res_median_tag=None,
-                                                res_arr_out_tag=None,
-                                                res_rot_mean_clip_tag=None,
-                                                extra_rot=self.m_extra_rot,
+                    prep = PSFpreparationModule(name_in="prep",
+                                                image_in_tag="contrast_fake",
+                                                image_out_tag="contrast_prep",
+                                                image_mask_out_tag=None,
+                                                mask_out_tag=None,
+                                                norm=True,
+                                                cent_size=self.m_mask,
+                                                edge_size=1e10,
                                                 verbose=False)
 
-                    else:
+                    prep.connect_database(self._m_data_base)
+                    prep.run()
 
-                        raise ValueError("The pca_module should be either PSFSubtractionModule or "
-                                         "FastPCAModule.")
+                    psf_sub = FastPCAModule(name_in="pca_contrast",
+                                            pca_numbers=self.m_pca_number,
+                                            images_in_tag="contrast_prep",
+                                            reference_in_tag="contrast_prep",
+                                            res_mean_tag="contrast_res_mean",
+                                            res_median_tag=None,
+                                            res_arr_out_tag=None,
+                                            res_rot_mean_clip_tag=None,
+                                            extra_rot=self.m_extra_rot,
+                                            verbose=False)
 
                     psf_sub.connect_database(self._m_data_base)
                     psf_sub.run()

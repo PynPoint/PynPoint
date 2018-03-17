@@ -180,7 +180,7 @@ class PSFpreparationModule(ProcessingModule):
         im_data = self._im_masking(im_data)
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
-        self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
+        self.m_image_out_port.add_attribute("norm", im_norm, static=False)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         if self.m_resize is not None:
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)

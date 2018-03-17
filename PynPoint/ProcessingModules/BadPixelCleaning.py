@@ -247,8 +247,6 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
             return out_image
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         self.apply_function_to_images(_bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
@@ -384,8 +382,6 @@ class BadPixelInterpolationModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         bad_pixel_map = self.m_bp_map_in_port.get_all()
         im_shape = self.m_image_in_port.get_shape()
 
@@ -467,8 +463,6 @@ class BadPixelRefinementModule(ProcessingModule):
 
         :return: None
         """
-
-        memory = self._m_config_port.get_attribute("MEMORY")
 
         if "STAR_POSITION" not in self.m_image_in_port.get_all_non_static_attributes():
             raise IOError("There is no STAR_POSITION attribute associated with '%s'. The "
