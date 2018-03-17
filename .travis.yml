@@ -17,10 +17,7 @@ install:
   - pip2 install sphinx
 before_script:
   - mkdir $HOME/.matplotlib
-  - touch $HOME/.matplotlib/matplotlibrc
-  - cat $HOME/.matplotlib/matplotlibrc
-  - "echo 'backend: Agg' >> $HOME/.matplotlib/matplotlibrc"
-  - cat $HOME/.matplotlib/matplotlibrc
+  - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 script:
   - make test
   - make test-all
