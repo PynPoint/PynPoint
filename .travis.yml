@@ -16,12 +16,12 @@ install:
   - pip2 install coverage
   - pip2 install sphinx
 before_script:
-  - export OMP_NUM_THREADS=1
-  - export MPLBACKEND="Agg"
+  # - export OMP_NUM_THREADS=1
+  # - export MPLBACKEND="Agg"
   # - mkdir $HOME/.matplotlib
   # - touch $HOME/.matplotlib/matplotlibrc
   # Qt4Agg
-  # - echo 'backend= Agg' >> $HOME/.matplotlib/matplotlibrc
+  - echo 'backend="Agg"' >> $HOME/.matplotlib/matplotlibrc
 script:
   - make test
   - make test-all
