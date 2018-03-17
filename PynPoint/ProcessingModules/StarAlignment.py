@@ -81,8 +81,7 @@ class StarExtractionModule(ProcessingModule):
         selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
         used to smooth away the contribution of bad pixels which may have higher values than the
         peak of the PSF. Images are cropped and written to an output port. The position of the
-        star is attached as a non-static attribute (STAR_POSITION) to the database tag with the
-        input images.
+        star is attached to the input images as the non-static attribute STAR_POSITION (y, x).
 
         :return: None
         """
@@ -141,6 +140,8 @@ class StarExtractionModule(ProcessingModule):
                                  int(pos_x-width/2.):int(pos_x+width/2.)]
 
             im_smooth = cv2.GaussianBlur(subimage, kernel, sigma)
+
+            # argmax[0] s the y position and argmax[1] is the x position
             argmax = np.asarray(np.unravel_index(im_smooth.argmax(), im_smooth.shape))
 
             if self.m_position is not None:
