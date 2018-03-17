@@ -19,11 +19,11 @@ PynPoint
     :target: http://arxiv.org/abs/1207.6637
 
 
-PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of self-luminous exoplanets and brown dwarf companions, as well as circumstellar disks in scattered light.
+PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light.
 
-The pipeline has a modular architecture with a central data storage in which the reduction steps are stored by the processing modules. Each processing module has a specific task such as subtraction of the background, frame selection, centering, PSF subtraction, and flux and position determination. The tags from the central data storage can be written to FITS or text files with the available IO modules.
+The pipeline has a modular architecture with a central data storage in which the reduction steps are stored by the processing modules. These modules have specific tasks such as the subtraction of the background, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available IO modules.
 
-Additional functionalities will be added in the future. The Github repository will contain the latest updates. Bug reports, requests for new features, and contributions in the form of new processing modules are highly appreciated. Instructions for writing of modules are provided in the documentations. Bug reports and functionality requests can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
+PynPoint is under continuous development and the latest implementations can be pulled from Github repository. Bug reports, requests for new features, and contributions in the form of new processing modules are highly appreciated. Instructions for writing of modules are provided in the documentation. Bug reports and functionality requests can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
 Documentation
 -------------
