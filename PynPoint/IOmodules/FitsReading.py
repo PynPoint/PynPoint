@@ -187,7 +187,7 @@ class FitsReadingModule(ReadingModule):
         header_out_port = self.add_output_port('fits_header/'+fits_file)
         header_out_port.set_all(fits_header)
 
-        self.m_image_out_port.append_attribute_data("Used_Files", tmp_location+fits_file)
+        self.m_image_out_port.append_attribute_data("FILES", tmp_location+fits_file)
         self.m_image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
         self.m_image_out_port.flush()
 
