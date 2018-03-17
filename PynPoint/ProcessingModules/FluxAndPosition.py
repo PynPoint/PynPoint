@@ -420,7 +420,6 @@ class SimplexMinimizationModule(ProcessingModule):
                                                    prep_tag="simplex_prep",
                                                    cent_mask_tag="simplex_cent_mask",
                                                    extra_rot=self.m_extra_rot,
-                                                   cent_remove=True,
                                                    cent_size=self.m_mask,
                                                    verbose=False)
 
@@ -444,12 +443,10 @@ class SimplexMinimizationModule(ProcessingModule):
                                                    prep_tag="simplex_prep",
                                                    cent_mask_tag="simplex_cent_mask",
                                                    extra_rot=self.m_extra_rot,
-                                                   cent_remove=False,
+                                                   cent_size=None,
                                                    verbose=False)
 
             elif self.m_pca_module == "FastPCAModule":
-
-                cent_remove = bool(self.m_mask > 0.)
 
                 prep = PSFpreparationModule(name_in="prep",
                                             image_in_tag="simplex_fake",
@@ -457,7 +454,6 @@ class SimplexMinimizationModule(ProcessingModule):
                                             image_mask_out_tag=None,
                                             mask_out_tag=None,
                                             norm=False,
-                                            cent_remove=cent_remove,
                                             cent_size=self.m_mask,
                                             edge_size=1.,
                                             verbose=False)

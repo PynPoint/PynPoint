@@ -86,7 +86,7 @@ class CropImagesModule(ProcessingModule):
                 x_out = int(center[0] + size/2)
                 y_out = int(center[1] + size/2)
 
-                if x_in < 0 or y_in < 0 or x_out > image_in.shape[0] or y_out > image_in.shape[1]:
+                if x_in < 0 or y_in < 0 or x_out > image_in.shape[1] or y_out > image_in.shape[0]:
                     raise ValueError("Target image resolution does not fit inside the input frame "
                                      "resolution.")
 
