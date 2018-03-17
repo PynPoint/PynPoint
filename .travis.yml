@@ -18,9 +18,9 @@ install:
 before_script:
   # - export OMP_NUM_THREADS=1
   # - export MPLBACKEND="Agg"
-  # - mkdir $HOME/.matplotlib
-  # - touch $HOME/.matplotlib/matplotlibrc
-  # Qt4Agg
+  - ls -a $HOME/
+  - mkdir $HOME/.matplotlib
+  - touch $HOME/.matplotlib/matplotlibrc
   - echo 'backend="Agg"' >> $HOME/.matplotlib/matplotlibrc
 script:
   - make test
