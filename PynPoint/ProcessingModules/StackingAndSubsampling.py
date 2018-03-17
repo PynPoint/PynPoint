@@ -33,9 +33,10 @@ class StackAndSubsetModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param random: Number of random frames.
+        :param random: Number of random images. All images are used when set to None.
         :type random: int
-        :param stacking: Number of stacked images per subset.
+        :param stacking: Number of stacked images per subset. No stacking is applied when set
+                         to None.
         :type stacking: int
 
         :return: None
@@ -56,72 +57,72 @@ class StackAndSubsetModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_stacking in (None, False) and self.m_random in (None, False):
+        if self.m_stacking is None and self.m_random is None:
             return
 
-        tmp_data_shape = self.m_image_in_port.get_shape()
+        im_shape = self.m_image_in_port.get_shape()
+        nimages = im_shape[0]
 
-        if self.m_stacking is None and tmp_data_shape[0] < self.m_random:
-            raise ValueError("The number of images of the destination subset is larger than the "
-                             "number of images in the source.")
+        if self.m_random is not None:
+            if self.m_stacking is None and im_shape[0] < self.m_random:
+                raise ValueError("The number of images of the destination subset is larger than "
+                                 "the number of images in the source.")
 
-        elif self.m_stacking is not None and \
-                     int(float(tmp_data_shape[0])/float(self.m_stacking)) < self.m_random:
-            raise ValueError("The number of images of the destination subset is larger than the "
-                             "number of images in the stacked source.")
+            elif self.m_stacking is not None and \
+                        int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
+                raise ValueError("The number of images of the destination subset is larger than "
+                                 "the number of images in the stacked source.")
 
         parang = self.m_image_in_port.get_attribute("PARANG")
 
-        if self.m_stacking not in (False, None):
-            # Stack subsets of frames
-            num_new = int(np.floor(float(tmp_data_shape[0])/float(self.m_stacking)))
-            tmp_parang = np.zeros(num_new)
-            tmp_data = np.zeros([num_new, tmp_data_shape[1], tmp_data_shape[2]])
+        if self.m_stacking is not None:
+            frames = np.linspace(0,
+                                 nimages-nimages%self.m_stacking,
+                                 int(float(nimages)/float(self.m_stacking))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
 
-            for i in range(num_new):
-                progress(i, num_new, "Running StackAndSubsetModule...")
+            if nimages%self.m_stacking > 0:
+                frames = np.append(frames, nimages)
 
-                tmp_parang[i] = np.mean(parang[i*self.m_stacking:(i+1)*self.m_stacking])
-                tmp_data[i, ] = np.mean(self.m_image_in_port[i*self.m_stacking: \
-                                        (i+1)*self.m_stacking, ],
-                                        axis=0)
+            nimages_new = np.size(frames)-1
+            parang_new = np.zeros(nimages_new)
+            im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
-            tmp_data_shape = tmp_data.shape
+            for i in range(nimages_new):
+                progress(i, nimages_new, "Running StackAndSubsetModule...")
+
+                parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
+                                      axis=0)
+
+            im_shape = im_new.shape
 
         else:
-            tmp_parang = np.copy(parang)
+            parang_new = np.copy(parang)
 
         sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
         sys.stdout.flush()
 
         if self.m_random is not None:
-            tmp_choice = np.random.choice(tmp_data_shape[0], self.m_random, replace=False)
-            tmp_choice = np.sort(tmp_choice)
-            tmp_parang = tmp_parang[tmp_choice]
+            choice = np.random.choice(im_shape[0], self.m_random, replace=False)
+            choice = np.sort(choice)
+            parang_new = parang_new[choice]
 
             if self.m_stacking is None:
                 # This will cause memory problems for large values of random
-                tmp_data = self.m_image_in_port[tmp_choice, :, :]
+                im_new = self.m_image_in_port[choice, :, :]
+
             else:
                 # Possibly also here depending on the stacking value
-                tmp_data = tmp_data[tmp_choice, ]
+                im_new = im_new[choice, :, :]
 
-        self.m_image_out_port.set_all(tmp_data, keep_attributes=True)
+        self.m_image_out_port.set_all(im_new, keep_attributes=True)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("PARANG", tmp_parang, static=False)
-
-        if self.m_stacking is None:
-            history_stacked = "Nothing Stacked and "
-        else:
-            history_stacked = "Stacked every " + str(self.m_stacking) + " and "
-
-        if self.m_random is None:
-            history_subset = "no subset chosen"
-        else:
-            history_subset = "picked randomly " + str(self.m_random) + " frames."
-
-        history = history_stacked + history_subset
-        self.m_image_out_port.add_history_information("Subset", history)
+        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+        self.m_image_out_port.add_history_information("Stack and subset",
+                                                      "stacking ="+str(self.m_stacking)+
+                                                      "random ="+str(self.m_random))
         self.m_image_out_port.close_database()
 
 

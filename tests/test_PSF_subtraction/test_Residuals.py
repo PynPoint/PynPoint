@@ -92,8 +92,8 @@ class TestResidual(object):
 
     def setup(self):
         self.test_data_dir = os.path.dirname(__file__) + '/test_data/'
-        self.basis = PynPoint.basis.create_wdir(self.test_data_dir, resize=None, ran_sub=False, cent_size=0.2)
-        self.images = PynPoint.images.create_wdir(self.test_data_dir, resize=None, ran_sub=False, cent_size=0.2)
+        self.basis = PynPoint.basis.create_wdir(self.test_data_dir, resize=None, ran_sub=None, cent_size=0.2)
+        self.images = PynPoint.images.create_wdir(self.test_data_dir, resize=None, ran_sub=None, cent_size=0.2)
         self.res = PynPoint.residuals.create_winstances(self.images, self.basis)
         self.num_files = self.images.im_arr.shape[0]
 

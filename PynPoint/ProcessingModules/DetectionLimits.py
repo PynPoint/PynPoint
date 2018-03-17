@@ -295,7 +295,6 @@ class ContrastModule(ProcessingModule):
                                                  prep_tag="contrast_prep",
                                                  cent_mask_tag="contrast_cent_mask",
                                                  extra_rot=self.m_extra_rot,
-                                                 cent_remove=True,
                                                  cent_size=self.m_mask,
                                                  verbose=False)
 
@@ -320,12 +319,10 @@ class ContrastModule(ProcessingModule):
                                                  prep_tag="contrast_prep",
                                                  cent_mask_tag="contrast_cent_mask",
                                                  extra_rot=self.m_extra_rot,
-                                                 cent_remove=False,
+                                                 cent_size=None,
                                                  verbose=False)
 
                     elif self.m_pca_module == "FastPCAModule":
-
-                        cent_remove = bool(self.m_mask > 0.)
 
                         prep = PSFpreparationModule(name_in="prep",
                                                     image_in_tag="contrast_fake",
@@ -333,7 +330,6 @@ class ContrastModule(ProcessingModule):
                                                     image_mask_out_tag=None,
                                                     mask_out_tag=None,
                                                     norm=True,
-                                                    cent_remove=cent_remove,
                                                     cent_size=self.m_mask,
                                                     edge_size=1.,
                                                     verbose=False)
