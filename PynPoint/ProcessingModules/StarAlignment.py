@@ -168,8 +168,7 @@ class StarExtractionModule(ProcessingModule):
         self.apply_function_to_images(crop_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarExtractionModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarExtractionModule...")
 
         self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
@@ -312,8 +311,7 @@ class StarAlignmentModule(ProcessingModule):
         self.apply_function_to_images(align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarAlignmentModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarAlignmentModule...")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -529,8 +527,7 @@ class StarCenteringModule(ProcessingModule):
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarCenteringModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarCenteringModule...")
 
         if self.m_count > 0:
             print "2D Gaussian fit could not converge on %s images. [WARNING]\n" % self.m_count
@@ -590,8 +587,7 @@ class ShiftForCenteringModule(ProcessingModule):
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ShiftForCenteringModule...",
-                                      num_images_in_memory=memory)
+                                      "Running ShiftForCenteringModule...")
 
         self.m_image_out_port.add_history_information("Shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
