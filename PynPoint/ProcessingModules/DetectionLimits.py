@@ -194,7 +194,7 @@ class ContrastModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_aperture /= pixscale
-        self.m_mask /= pixscale*images.shape[1]
+        self.m_mask /= pixscale
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             warnings.warn('The number of frames in psf_in_tag does not match with the number of '
@@ -210,7 +210,7 @@ class ContrastModule(ProcessingModule):
                           self.m_angle[1]+self.m_extra_rot,
                           self.m_angle[2])
 
-        index_del = np.argwhere(pos_r-self.m_aperture <= self.m_mask*images.shape[1])
+        index_del = np.argwhere(pos_r-self.m_aperture <= self.m_mask)
         pos_r = np.delete(pos_r, index_del)
 
         index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)

@@ -373,13 +373,10 @@ class ProcessingModule(PypelineModule):
         """
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        nimages = image_in_port.get_shape()[0]
 
-        number_of_images = image_in_port.get_shape()[0]
-
-        if memory is None:
-            memory = number_of_images
-
-        # check if input and output Port have the same tag
+        if memory == 0 or memory >= nimages:
+            memory = nimages
 
         # we want to replace old values or create a new data set if True
         # if not we want to update the frames
@@ -389,11 +386,11 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
 
-        while i < number_of_images:
-            progress(i, number_of_images, message)
+        while i < nimages:
+            progress(i, nimages, message)
 
-            if i + memory > number_of_images:
-                j = number_of_images
+            if i + memory > nimages:
+                j = nimages
             else:
                 j = i + memory
 
@@ -412,7 +409,7 @@ class ProcessingModule(PypelineModule):
             if image_out_port is not None:
                 if update:
                     try:
-                        if memory == number_of_images:
+                        if memory == nimages:
                             image_out_port.set_all(np.array(tmp_res),
                                                    keep_attributes=True)
                         else:
