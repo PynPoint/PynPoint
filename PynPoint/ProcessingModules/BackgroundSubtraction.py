@@ -592,7 +592,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
-        star_position = self.m_star_in_port.get_attribute("STAR_POSITION")
+        star = self.m_star_in_port.get_attribute("STAR_POSITION")
 
         self.m_mask /= pixscale
 
@@ -604,28 +604,29 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        n_image = self.m_star_in_port.get_shape()[0]
-        if memory == -1 or memory >= n_image:
-            n_stack = 1
+        nimages = self.m_star_in_port.get_shape()[0]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
         else:
-            n_stack = int(float(n_image)/float(memory))
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
 
-        for i in range(n_stack):
-            progress(i, n_stack, "Calculating background model...")
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
-            if memory == -1 or memory >= n_image:
-                frame_start = 0
-                frame_end = n_image
-                im_star = self.m_star_in_port.get_all()
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Calculating background model...")
 
-            else:
-                frame_start = i*memory
-                frame_end = i*memory+memory
-                im_star = self.m_star_in_port[frame_start:frame_end, ]
+            im_star = self.m_star_in_port[frames[i]:frames[i+1], ]
 
             mask = self._create_mask(self.m_mask,
-                                     star_position[frame_start:frame_end, ],
-                                     frame_end-frame_start)
+                                     star[frames[i]:frames[i+1], ],
+                                     frames[i+1]-frames[i])
 
             im_star_mask = im_star*mask
             fit_im = self._model_background(basis_pca, im_star_mask, mask)
@@ -636,23 +637,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
-
-        if memory <= n_image and n_image%memory > 0:
-            frame_start = n_stack*memory
-            frame_end = n_image
-
-            im_star = self.m_star_in_port[frame_start:frame_end, ]
-
-            mask = self._create_mask(self.m_mask,
-                                     star_position[frame_start:frame_end, :],
-                                     frame_end-frame_start)
-
-            im_star_mask = im_star*mask
-            fit_im = self._model_background(basis_pca, im_star_mask, mask)
-
-            self.m_subtracted_out_port.append(im_star-fit_im)
-            if self.m_residuals_out_tag is not None:
-                self.m_residuals_out_port.append(fit_im)
 
         self.m_subtracted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_subtracted_out_port.add_history_information("Background",
@@ -920,9 +904,9 @@ class NoddingBackgroundModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry with sky subtracted images that are written
                               as output.
         :type image_out_tag: str
-        :param mode: Sky frames that are subtracted, relative to the science frames. Either the next,
-                     previous, or average of the next and previous cubes of sky frames can be used by
-                     choosing *next*, *previous*, or *both*, respectively.
+        :param mode: Sky frames that are subtracted, relative to the science frames. Either the
+                     next,, previous, or average of the next and previous cubes of sky frames can
+                     be used by choosing *next*, *previous*, or *both*, respectively.
         :type mode: str
 
         :return: None

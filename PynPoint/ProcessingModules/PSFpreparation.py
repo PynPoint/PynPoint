@@ -331,32 +331,38 @@ class SortParangModule(ProcessingModule):
         if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
             star = self.m_image_in_port.get_attribute("STAR_POSITION")
             star_new = np.zeros(star.shape)
+            starpos = True
+
+        else:
+            starpos = False
 
         index_sort = np.argsort(parang)
 
-        nimage = self.m_image_in_port.get_shape()[0]
+        nimages = self.m_image_in_port.get_shape()[0]
 
-        if memory == -1 or memory >= nimage:
-            frames = [0, nimage]
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
 
         else:
             frames = np.linspace(0,
-                                 nimage-nimage%memory,
-                                 int(float(nimage)/float(memory))+1,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
                                  endpoint=True,
                                  dtype=np.int)
 
-            if nimage%memory > 0:
-                frames = np.append(frames, nimage)
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames)-1, "Running SortParangModule...")
+            progress(i, len(frames[:-1]), "Running SortParangModule...")
 
             parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
-            star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
+            if starpos:
+                star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
-            self.m_image_out_port.append(images)
+            # h5py indexing elements must be in increasing order
+            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
 
         sys.stdout.write("Running SortParangModule... [DONE]\n")
         sys.stdout.flush()
@@ -364,7 +370,7 @@ class SortParangModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+        if starpos:
             self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
         if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
             self.m_image_out_port.del_attribute("NFRAMES")

@@ -252,7 +252,7 @@ class DerotateAndStackModule(ProcessingModule):
 
         count = 0.
         for i, ang in enumerate(parang):
-            progress(i, len(parang), "Running RotateAndStackModule...")
+            progress(i, len(parang), "Running DerotateAndStackModule...")
 
             im_rot = rotate(self.m_image_in_port[i, ], -ang+self.m_extra_rot, reshape=False)
 
@@ -266,7 +266,7 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_stack:
             stack /= count
 
-        sys.stdout.write("Running RotateAndStackModule... [DONE]\n")
+        sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.set_all(stack)
