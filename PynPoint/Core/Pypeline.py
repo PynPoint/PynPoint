@@ -136,6 +136,7 @@ class Pypeline(object):
                        'PARANG_END': 'ESO ADA POSANG END',
                        'DITHER_X': 'ESO SEQ CUMOFFSETX',
                        'DITHER_Y': 'ESO SEQ CUMOFFSETY',
+                       'TIME': 'MJD-OBS',
                        'PIXSCALE': 0.027,
                        'MEMORY': 1000,
                        'CPU': max_cpu_count}
@@ -170,12 +171,15 @@ class Pypeline(object):
             if config.has_option('header', 'DITHER_Y'):
                 config_dict['DITHER_Y'] = str(config.get('header', 'DITHER_Y'))
 
+            if config.has_option('header', 'TIME'):
+                config_dict['TIME'] = str(config.get('header', 'TIME'))
+
             if config.has_option('settings', 'PIXSCALE'):
                 config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
 
             if config.has_option('settings', 'MEMORY'):
                 if config.get('settings', 'MEMORY') == "None":
-                    config_dict['MEMORY'] = int(-1)
+                    config_dict['MEMORY'] = int(0)
                 else:
                     config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
 
@@ -195,7 +199,8 @@ class Pypeline(object):
             file_obj.write('PARANG_START: ESO ADA POSANG\n')
             file_obj.write('PARANG_END: ESO ADA POSANG END\n')
             file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
+            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
+            file_obj.write('TIME: MJD-OBS\n\n')
             file_obj.write('[settings]\n\n')
             file_obj.write('PIXSCALE: 0.027\n')
             file_obj.write('MEMORY: 1000\n')

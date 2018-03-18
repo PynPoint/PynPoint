@@ -505,18 +505,26 @@ class StarCenteringModule(ProcessingModule):
             self.m_radius /= pixscale
 
         nimages = self.m_image_in_port.get_shape()[0]
-        nstacks = int(float(nimages)/float(memory))
-
         npix = self.m_image_in_port.get_shape()[1]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
         if self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
-            for i in range(nstacks):
-                im_mean += np.sum(self.m_image_in_port[i*memory:i*memory+memory, ], axis=0)
-
-            if nimages%memory > 0:
-                im_mean += np.sum(self.m_image_in_port[nstacks*memory:nimages, ], axis=0)
+            for i, _ in enumerate(frames[:-1]):
+                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
             im_mean /= float(nimages)
 

@@ -119,12 +119,20 @@ class FakePlanetModule(ProcessingModule):
         ndim_psf = np.size(self.m_psf_in_port.get_shape())
 
         if ndim_image == 3:
-            n_image = self.m_image_in_port.get_shape()[0]
+            nimages = self.m_image_in_port.get_shape()[0]
 
-            if memory == -1 or memory >= n_image:
-                n_stack_im = 1
+            if memory == 0 or memory >= nimages:
+                frames = [0, nimages]
+
             else:
-                n_stack_im = int(float(n_image)/float(memory))
+                frames = np.linspace(0,
+                                     nimages-nimages%memory,
+                                     int(float(nimages)/float(memory))+1,
+                                     endpoint=True,
+                                     dtype=np.int)
+
+                if nimages%memory > 0:
+                    frames = np.append(frames, nimages)
 
             im_size = (self.m_image_in_port.get_shape()[1],
                        self.m_image_in_port.get_shape()[2])
@@ -133,12 +141,12 @@ class FakePlanetModule(ProcessingModule):
             raise ValueError("The image_in_tag should contain a cube of images.")
 
         if ndim_psf == 2:
-            n_psf = 1
+            npsf = 1
             psf_size = (self.m_psf_in_port.get_shape()[0],
                         self.m_psf_in_port.get_shape()[1])
 
         elif ndim_psf == 3:
-            n_psf = self.m_psf_in_port.get_shape()[0]
+            npsf = self.m_psf_in_port.get_shape()[0]
             psf_size = (self.m_psf_in_port.get_shape()[1],
                         self.m_psf_in_port.get_shape()[2])
 
@@ -146,70 +154,52 @@ class FakePlanetModule(ProcessingModule):
             raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
                              "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
 
-        if memory == -1 or memory >= n_psf:
-            n_stack_psf = 1
-        else:
-            n_stack_psf = int(float(n_psf)/float(memory))
-
-        im_stacks = np.zeros(1, dtype=np.int)
-        if memory == -1 or memory >= n_image:
-            im_stacks = np.append(im_stacks, im_stacks[0]+n_image)
-
-        else:
-            for i in range(n_stack_im):
-                im_stacks = np.append(im_stacks, im_stacks[i]+memory)
-            if n_stack_im*memory != n_image:
-                im_stacks = np.append(im_stacks, n_image)
-
-        if ndim_psf == 3 and n_psf == 1:
+        if ndim_psf == 3 and npsf == 1:
             psf = np.squeeze(self.m_psf_in_port.get_all(), axis=0)
             ndim_psf = psf.ndim
 
         elif ndim_psf == 2:
             psf = self.m_psf_in_port.get_all()
 
-        elif ndim_psf == 3 and n_image != n_psf:
-            psf = np.zeros((self.m_image_in_port.get_shape()[1],
-                            self.m_image_in_port.get_shape()[2]))
+        elif ndim_psf == 3 and nimages != npsf:
+            psf = np.zeros((self.m_psf_in_port.get_shape()[1],
+                            self.m_psf_in_port.get_shape()[2]))
 
-            if memory == -1 or memory >= n_psf:
-                psf = np.mean(self.m_psf_in_port.get_all(), axis=0)
+            if memory == 0 or memory >= npsf:
+                frames_psf = [0, npsf]
 
             else:
-                for i in range(n_stack_psf):
-                    psf += np.sum(self.m_psf_in_port[i*memory:(i+1)*memory], axis=0)
+                frames_psf = np.linspace(0,
+                                         npsf-npsf%memory,
+                                         int(float(npsf)/float(memory))+1,
+                                         endpoint=True,
+                                         dtype=np.int)
 
-                if n_stack_psf*memory != n_psf:
-                    psf += np.sum(self.m_psf_in_port[n_stack_psf*memory:n_psf], axis=0)
+                if npsf%memory > 0:
+                    frames_psf = np.append(frames_psf, npsf)
 
-                psf /= float(n_psf)
+            for i, _ in enumerate(frames_psf[:-1]):
+                psf += np.sum(self.m_psf_in_port[frames_psf[i]:frames_psf[i+1]], axis=0)
+
+            psf /= float(npsf)
 
             ndim_psf = psf.ndim
 
-        for j, _ in enumerate(im_stacks[:-1]):
+        for j, _ in enumerate(frames[:-1]):
             if self.m_verbose:
-                progress(j, len(im_stacks[:-1]), "Running FakePlanetModule...")
+                progress(j, len(frames[:-1]), "Running FakePlanetModule...")
 
-            image = np.copy(self.m_image_in_port[im_stacks[j]:im_stacks[j+1]])
+            image = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
 
             for i in range(image.shape[0]):
-                if memory == -1 or memory >= n_image:
-                    x_shift = radial*math.cos(theta-parang[i])
-                    y_shift = radial*math.sin(theta-parang[i])
-
-                else:
-                    x_shift = radial*math.cos(theta-parang[j*memory+i])
-                    y_shift = radial*math.sin(theta-parang[j*memory+i])
+                x_shift = radial*math.cos(theta-parang[frames[j]+i])
+                y_shift = radial*math.sin(theta-parang[frames[j]+i])
 
                 if ndim_psf == 2:
                     psf_tmp = np.copy(psf)
 
                 elif ndim_psf == 3:
-                    if memory == -1 or memory >= n_psf:
-                        psf_tmp = self.m_psf_in_port[i]
-
-                    else:
-                        psf_tmp = self.m_psf_in_port[j*memory+i]
+                    psf_tmp = self.m_psf_in_port[frames[j]+i]
 
                 if self.m_interpolation == "spline":
                     psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=5, mode='reflect')
@@ -510,8 +500,6 @@ class SimplexMinimizationModule(ProcessingModule):
                         self.m_image_in_port.get_shape()[2])
 
         center = (psf_size[0]/2., psf_size[1]/2.)
-
-        self.m_mask /= (pixscale*im_size[1])
 
         sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()

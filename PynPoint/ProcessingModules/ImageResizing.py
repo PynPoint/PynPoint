@@ -363,22 +363,22 @@ class CombineTagsModule(ProcessingModule):
             progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
 
             image_in_port = self.add_input_port(item)
-            nimage = image_in_port.get_shape()[0]
+            nimages = image_in_port.get_shape()[0]
 
-            if memory == -1 or memory >= nimage:
-                frames = [0, nimage]
+            if memory == 0 or memory >= nimages:
+                frames = [0, nimages]
 
             else:
                 frames = np.linspace(0,
-                                     nimage-nimage%memory,
-                                     int(float(nimage)/float(memory))+1,
+                                     nimages-nimages%memory,
+                                     int(float(nimages)/float(memory))+1,
                                      endpoint=True,
                                      dtype=np.int)
 
-                if nimage%memory > 0:
-                    frames = np.append(frames, nimage)
+                if nimages%memory > 0:
+                    frames = np.append(frames, nimages)
 
-            for j in range(np.size(frames)-1):
+            for j, _ in enumerate(frames[:-1]):
                 im_tmp = image_in_port[frames[j]:frames[j+1], ]
                 self.m_image_out_port.append(im_tmp)
 
