@@ -250,11 +250,20 @@ class StarAlignmentModule(ProcessingModule):
             im_dim = np.size(self.m_ref_image_in_port.get_shape())
 
             if im_dim == 3:
-                ref_images = np.asarray(self.m_ref_image_in_port.get_all())
-                self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
+                if self.m_ref_image_in_port.get_shape()[0] > self.m_num_references:
+                    ref_images = self.m_ref_image_in_port[np.sort(
+                        np.random.choice(self.m_ref_image_in_port.get_shape()[0],
+                                         self.m_num_references,
+                                         replace=False)), :, :]
+
+                else:
+                    ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                    self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
+
             elif im_dim == 2:
                 ref_images = np.array([self.m_ref_image_in_port.get_all(),])
                 self.m_num_references = 1
+
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
 
