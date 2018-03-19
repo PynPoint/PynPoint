@@ -372,8 +372,14 @@ class ProcessingModule(PypelineModule):
         :return: None
         """
 
+        ndim = image_in_port.get_ndim()
+
+        if ndim == 2:
+            nimages = 1
+        elif ndim == 3:
+            nimages = image_in_port.get_shape()[0]
+
         memory = self._m_config_port.get_attribute("MEMORY")
-        nimages = image_in_port.get_shape()[0]
 
         if memory == 0 or memory >= nimages:
             memory = nimages
@@ -394,17 +400,28 @@ class ProcessingModule(PypelineModule):
             else:
                 j = i + memory
 
-            tmp_frames = image_in_port[i:j]
+            if ndim == 2:
+                tmp_frames = image_in_port[:, :]
+            elif ndim == 3:
+                tmp_frames = image_in_port[i:j]
+
             tmp_res = []
 
             # process frames
             # check if additional arguments are given
             if func_args is None:
-                for k in range(tmp_frames.shape[0]):
-                    tmp_res.append(func(tmp_frames[k]))
+                if ndim == 2:
+                    tmp_res.append(func(tmp_frames))
+                elif ndim == 3:
+                    for k in range(tmp_frames.shape[0]):
+                        tmp_res.append(func(tmp_frames[k]))
+
             else:
-                for k in range(tmp_frames.shape[0]):
-                    tmp_res.append(func(tmp_frames[k], * func_args))
+                if ndim == 2:
+                    tmp_res.append(func(tmp_frames, * func_args))
+                elif ndim == 3:
+                    for k in range(tmp_frames.shape[0]):
+                        tmp_res.append(func(tmp_frames[k], * func_args))
 
             if image_out_port is not None:
                 if update:
@@ -414,6 +431,7 @@ class ProcessingModule(PypelineModule):
                                                    keep_attributes=True)
                         else:
                             image_out_port[i:j] = np.array(tmp_res)
+
                     except TypeError:
                         raise ValueError("Input and output port have the same tag while %s is changing "
                                          "the image shape. This is only possible when MEMORY=None."
@@ -422,6 +440,7 @@ class ProcessingModule(PypelineModule):
                     # The first time we have to reset the eventually existing data
                     image_out_port.set_all(np.array(tmp_res))
                     first_time = False
+
                 else:
                     image_out_port.append(np.array(tmp_res))
 
