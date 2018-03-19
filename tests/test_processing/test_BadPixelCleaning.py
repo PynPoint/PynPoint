@@ -89,10 +89,10 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["sigma"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(data[0, 10, 10], 0.025022559679385093, rtol=limit)
-        assert np.allclose(data[0, 20, 20], 0.024962143884217046, rtol=limit)
-        assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.025022559679385093, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], 0.024962143884217046, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit, atol=0.)
 
         storage.close_connection()
 
@@ -143,10 +143,10 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["interpolation"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit)
-        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit, atol=0.)
 
         storage.close_connection()
 
@@ -169,9 +169,9 @@ class TestBadPixelCleaning(object):
 
         data = storage.m_data_bank["refinement"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(data[0, 10, 10], 3.4572557271785087e-06, rtol=limit)
-        assert np.allclose(data[0, 20, 20], -9.694818774930603e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 3.001502328056615e-07, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 3.4572557271785087e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -9.694818774930603e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.001502328056615e-07, rtol=limit, atol=0.)
 
         storage.close_connection()
