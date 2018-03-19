@@ -268,18 +268,25 @@ class StarAlignmentModule(ProcessingModule):
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
 
         else:
-            ref_images = self.m_image_in_port[np.sort(
-                np.random.choice(self.m_image_in_port.get_shape()[0],
-                                 self.m_num_references,
-                                 replace=False)), :, :]
+            random = np.random.choice(self.m_image_in_port.get_shape()[0],
+                                      self.m_num_references,
+                                      replace=False)
+            sort = np.sort(random)
+            ref_images = self.m_image_in_port[sort, :, :]
 
         def align_image(image_in):
 
             offset = np.array([0.0, 0.0])
             for i in range(self.m_num_references):
-                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
-                                                        image_in,
-                                                        upsample_factor=self.m_accuracy)
+                if ref_images.ndim == 2:
+                    tmp_offset, _, _ = register_translation(ref_images,
+                                                            image_in,
+                                                            upsample_factor=self.m_accuracy)
+                
+                elif ref_images.ndim == 3:
+                    tmp_offset, _, _ = register_translation(ref_images[i, :, :],
+                                                            image_in,
+                                                            upsample_factor=self.m_accuracy)
                 offset += tmp_offset
 
             offset /= float(self.m_num_references)
