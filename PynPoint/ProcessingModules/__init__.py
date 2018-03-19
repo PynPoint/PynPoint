@@ -10,10 +10,9 @@ from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteri
                           ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule, \
                           CombineTagsModule
-from PSFpreparation import PSFpreparationModule, AngleCalculationModule
+from PSFpreparation import PSFpreparationModule, AngleCalculationModule, SDIPreparationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
-from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
+from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule, StellarPhotometryModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule, FalsePositiveModule, MCMCsamplingModule
 from DetectionLimits import ContrastModule
-from SDI import SDIPreparationModule

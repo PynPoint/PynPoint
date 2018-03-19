@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 
 from astropy.nddata import Cutout2D
+from photutils import geometry
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
@@ -514,3 +515,71 @@ class RemoveStartFramesModule(ProcessingModule):
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
         self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
         self.m_image_out_port.close_database()
+
+
+
+class StellarPhotometryModule(ProcessingModule):
+    """
+        Module for calculating the counts within a circular region around the image center.
+        """
+
+    def __init__(self,
+                 radius,
+                 name_in="Stellar Photometry",
+                 image_in_tag="im_arr",
+                 txt_out_tag="Phtometric_values"):
+        """
+            Constructor of StellarPhotometryModule.
+
+            :param radius: Radius (in arcseconds) of the circular region.
+            :type radius: int
+            :param name_in: Unique name of the module instance.
+            :type name_in: str
+            :param image_in_tag: Tag of the database entry that is read as input.
+            :type image_in_tag: str
+            :param image_out_tag: Tag of the database entry that is written as output. Should be
+            different from *image_in_tag*.
+            :type image_out_tag: str
+
+            :return: None
+            """
+
+        super(StellarPhotometryModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_txt_out_port = self.add_output_port(txt_out_tag)
+
+        self.m_radius = radius
+
+    def run(self):
+        """
+            Run method of the module. Calculates the counts for each frames and saves their
+            amount in the database.
+
+            :return: None
+            """
+
+        self.m_txt_out_port.del_all_data()
+        self.m_txt_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        self.m_radius /= pixscale
+        size = self.m_image_in_port.get_shape()[1]
+        fraction = geometry.circular_overlap_grid(-size/2., size/2.,-size/2., size/2., size, size, self.m_radius, 0, 10)
+
+        def get_photo(image):
+            circle = image*fraction
+            counts = np.sum(circle)
+            return counts
+
+        self.apply_function_to_images(get_photo,
+                                      self.m_image_in_port,
+                                      self.m_txt_out_port,
+                                      "Running StellarPhotometryModule...",
+                                      num_images_in_memory=memory)
+
+        self.m_txt_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_txt_out_port.add_history_information("Photometry radius = ", str(self.m_radius))
+        self.m_txt_out_port.close_database()
