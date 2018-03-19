@@ -316,13 +316,13 @@ class FrameSelectionModule(ProcessingModule):
         for i, item in enumerate(frames[:-1]):
             progress(nimages+item, nimages+nimages, "Running FrameSelectionModule...")
 
-            index = index_rm[frames[i]:frames[i+1], ]
+            index_sub = index_rm[frames[i]:frames[i+1], ]
             image = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            if np.size(image[np.logical_not(index)]) > 0:
-                self.m_selected_out_port.append(image[np.logical_not(index)])
-            if np.size(image[index]) > 0:
-                self.m_removed_out_port.append(image[index])
+            if np.size(image[np.logical_not(index_sub)]) > 0:
+                self.m_selected_out_port.append(image[np.logical_not(index_sub)])
+            if np.size(image[index_sub]) > 0:
+                self.m_removed_out_port.append(image[index_sub])
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
