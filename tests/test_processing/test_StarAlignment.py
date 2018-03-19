@@ -18,6 +18,7 @@ limit = 1e-10
 
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
+    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
 
     fwhm = 3
     npix = 100
@@ -55,6 +56,22 @@ def setup_module():
         header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
         hdu.data = image
         hdu.writeto(test_dir+'image'+str(j+1).zfill(2)+'.fits')
+
+    f = open(config_file, 'w')
+    f.write('[header]\n\n')
+    f.write('INSTRUMENT: INSTRUME\n')
+    f.write('NFRAMES: NAXIS3\n')
+    f.write('EXP_NO: ESO DET EXP NO\n')
+    f.write('NDIT: ESO DET NDIT\n')
+    f.write('PARANG_START: ESO ADA POSANG\n')
+    f.write('PARANG_END: ESO ADA POSANG END\n')
+    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+    f.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
+    f.write('[settings]\n\n')
+    f.write('PIXSCALE: 0.027\n')
+    f.write('MEMORY: 100\n')
+    f.write('CPU: 1')
+    f.close()
 
 def teardown_module():
     test_dir = os.path.dirname(__file__) + "/"
@@ -119,22 +136,22 @@ class TestStarAlignment(object):
         storage.open_connection()
 
         data = storage.m_data_bank["read"]
-        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit)
-        assert np.allclose(np.mean(data), 9.832838021311831e-05, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.832838021311831e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["extract"]
-        assert np.allclose(data[0, 10, 10], 0.05304008435511765, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0020655767159466613, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 0.05304008435511765, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0020655767159466613, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["header_extract/STAR_POSITION"]
         assert data[10, 0] ==  data[10, 1] == 75
 
         data = storage.m_data_bank["shift"]
-        assert np.allclose(data[0, 10, 10], -4.341611534220891e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit)
+        assert np.allclose(data[0, 10, 10], -4.341611534220891e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0005164420068450968, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["center"]
-        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=limit)
-        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=limit)
+        assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=1e-7, atol=0.)
 
         storage.close_connection()

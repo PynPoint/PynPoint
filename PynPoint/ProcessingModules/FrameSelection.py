@@ -68,66 +68,72 @@ class RemoveFramesModule(ProcessingModule):
             raise ValueError("Some values in frames are larger than the total number of "
                              "available frames, %s." % str(self.m_image_in_port.get_shape()[0]))
 
-        nframes = self.m_image_in_port.get_shape()[0]
-        nstacks = int(float(nframes)/float(memory))
+        nimages = self.m_image_in_port.get_shape()[0]
 
-        for i in range(nstacks):
-            progress(i, nstacks, "Running RemoveFramesModule...")
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+            memory = nimages
 
-            tmp_im = self.m_image_in_port[i*memory:(i+1)*memory, ]
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
 
-            index_del = np.where(np.logical_and(self.m_frames >= i*memory, \
-                                 self.m_frames < (i+1)*memory))
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
+
+            tmp_im = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            index_del = np.where(np.logical_and(self.m_frames >= frames[i], \
+                                                self.m_frames < frames[i+1]))
 
             if np.size(index_del) > 0:
-                tmp_im = np.delete(tmp_im,
-                                   self.m_frames[index_del]%memory,
-                                   axis=0)
+                tmp_im = np.delete(tmp_im, self.m_frames[index_del]%memory, axis=0)
 
             self.m_image_out_port.append(tmp_im)
 
         sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
         sys.stdout.flush()
 
-        index_del = np.where(self.m_frames >= nstacks*memory)[0]
-
-        if np.size(index_del) > 0:
-            tmp_im = self.m_image_in_port[nstacks*memory: \
-                                          self.m_image_in_port.get_shape()[0], ]
-
-            tmp_im = np.delete(tmp_im,
-                               self.m_frames[index_del]%memory,
-                               axis=0)
-
-            self.m_image_out_port.append(tmp_im)
-
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
+
+        index = self.m_image_in_port.get_attribute("INDEX")
+        self.m_image_out_port.add_attribute("INDEX",
+                                            np.delete(index, self.m_frames),
+                                            static=False)
+
+        if "PARANG" in non_static:
             parang = self.m_image_in_port.get_attribute("PARANG")
             self.m_image_out_port.add_attribute("PARANG",
                                                 np.delete(parang, self.m_frames),
                                                 static=False)
 
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+        if "STAR_POSITION" in non_static:
             position = self.m_image_in_port.get_attribute("STAR_POSITION")
             self.m_image_out_port.add_attribute("STAR_POSITION",
                                                 np.delete(position, self.m_frames, axis=0),
                                                 static=False)
 
-        nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
-        nframes_out = np.copy(nframes_in)
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        nframes_new = np.copy(nframes)
 
         total = 0
-        for i, frames in enumerate(nframes_in):
+        for i, frames in enumerate(nframes):
             index_del = np.where(np.logical_and(self.m_frames >= total, \
                                  self.m_frames < total+frames))[0]
 
-            nframes_out[i] -= np.size(index_del)
+            nframes_new[i] -= np.size(index_del)
 
             total += frames
 
-        self.m_image_out_port.add_attribute("NFRAMES", nframes_out, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed",
                                                       str(np.size(self.m_frames)))
         self.m_image_in_port.close_database()
@@ -179,7 +185,7 @@ class FrameSelectionModule(ProcessingModule):
         :param position: Subframe that is selected to search for the star. The tuple can contain a
                          single position and size as (pos_x, pos_y, size), or the position and size
                          can be defined for each image separately in which case the tuple should be
-                         2D (nframes x 3). Setting *position* to None will use the full image to
+                         2D (nimages x 3). Setting *position* to None will use the full image to
                          search for the star. If position=(None, None, size) then the center of the
                          image will be used.
         :type position: tuple, float
@@ -227,20 +233,27 @@ class FrameSelectionModule(ProcessingModule):
         else:
             parang = None
 
+        index = self.m_image_in_port.get_attribute("INDEX")
+
         self.m_aperture /= pixscale
 
-        nframes = self.m_image_in_port.get_shape()[0]
-        if memory == -1 or memory >= nframes:
-            frames = [0, nframes]
-        else:
-            frames = [0]
-            for i in range(int(float(nframes)/float(memory))):
-                frames.append((i+1)*memory)
-            if frames[-1] != nframes:
-                frames.append(nframes)
+        nimages = self.m_image_in_port.get_shape()[0]
 
-        position = np.zeros((nframes, 2), dtype=np.int64)
-        phot = np.zeros(nframes)
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
+
+        position = np.zeros((nimages, 2), dtype=np.int64)
+        phot = np.zeros(nimages)
 
         star = StarExtractionModule(name_in="star",
                                     image_in_tag=self.m_image_in_port.tag,
@@ -256,8 +269,8 @@ class FrameSelectionModule(ProcessingModule):
 
         rr_grid = None
 
-        for i in range(nframes):
-            progress(i, nframes+nframes, "Running FrameSelectionModule...")
+        for i in range(nimages):
+            progress(i, nimages+nimages, "Running FrameSelectionModule...")
 
             im_smooth = self.m_image_in_port[i]
 
@@ -302,33 +315,41 @@ class FrameSelectionModule(ProcessingModule):
         index_rm[np.isnan(phot)] = True
 
         for i, item in enumerate(frames[:-1]):
-            progress(nframes+item, nframes+nframes, "Running FrameSelectionModule...")
+            progress(nimages+item, nimages+nimages, "Running FrameSelectionModule...")
 
-            index = index_rm[frames[i]:frames[i+1], ]
+            index_sub = index_rm[frames[i]:frames[i+1], ]
             image = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            if np.size(image[np.logical_not(index)]) > 0:
-                self.m_selected_out_port.append(image[np.logical_not(index)])
-            if np.size(image[index]) > 0:
-                self.m_removed_out_port.append(image[index])
+            if np.size(image[np.logical_not(index_sub)]) > 0:
+                self.m_selected_out_port.append(image[np.logical_not(index_sub)])
+            if np.size(image[index_sub]) > 0:
+                self.m_removed_out_port.append(image[index_sub])
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
 
-        nframes_in = self.m_image_in_port.get_attribute("NFRAMES")
+        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
+            nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        else:
+            nframes = None
 
-        nframes_del = np.zeros(np.size(nframes_in), dtype=np.int64)
-        nframes_sel = np.zeros(np.size(nframes_in), dtype=np.int64)
+        if nframes is not None:
+            nframes_del = np.zeros(np.size(nframes), dtype=np.int64)
+            nframes_sel = np.zeros(np.size(nframes), dtype=np.int64)
 
-        total = 0
-        for i, frames in enumerate(nframes_in):
-            nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
-            nframes_sel[i] = frames - nframes_del[i]
-            total += frames
+            total = 0
+            for i, frames in enumerate(nframes):
+                nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
+                nframes_sel[i] = frames - nframes_del[i]
+                total += frames
 
         n_rm = np.size(index_rm[index_rm])
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_selected_out_port.add_attribute("INDEX",
+                                               index[np.logical_not(index_rm)],
+                                               static=False)
 
         if parang is not None:
             self.m_selected_out_port.add_attribute("PARANG",
@@ -340,9 +361,10 @@ class FrameSelectionModule(ProcessingModule):
                                                    position[np.logical_not(index_rm)],
                                                    static=False)
 
-        self.m_selected_out_port.add_attribute("NFRAMES",
-                                               nframes_sel,
-                                               static=False)
+        if nframes is not None:
+            self.m_selected_out_port.add_attribute("NFRAMES",
+                                                   nframes_sel,
+                                                   static=False)
 
         self.m_selected_out_port.add_history_information("Frame selection",
                                                          str(n_rm)+" images removed")
@@ -350,6 +372,10 @@ class FrameSelectionModule(ProcessingModule):
         if np.size(index_rm[index_rm]) > 0:
 
             self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+            self.m_removed_out_port.add_attribute("INDEX",
+                                                  index[index_rm],
+                                                  static=False)
 
             if parang is not None:
                 self.m_removed_out_port.add_attribute("PARANG",
@@ -361,9 +387,10 @@ class FrameSelectionModule(ProcessingModule):
                                                       position[index_rm],
                                                       static=False)
 
-            self.m_removed_out_port.add_attribute("NFRAMES",
-                                                  nframes_del,
-                                                  static=False)
+            if nframes is not None:
+                self.m_removed_out_port.add_attribute("NFRAMES",
+                                                      nframes_del,
+                                                      static=False)
 
             self.m_removed_out_port.add_history_information("Frame selection",
                                                             str(n_rm)+" images removed")
@@ -418,8 +445,10 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit = self.m_image_in_port.get_attribute("NDIT")
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
         nframes_new = []
+        index_new = []
 
         for i, item in enumerate(ndit):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
@@ -436,6 +465,8 @@ class RemoveLastFrameModule(ProcessingModule):
 
                 warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
 
+            index_new.extend(index[frame_start:frame_end])
+
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
 
@@ -444,6 +475,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
         self.m_image_out_port.close_database()
 
@@ -498,12 +530,17 @@ class RemoveStartFramesModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
+
+        index_new = []
 
         for i, _ in enumerate(nframes):
             progress(i, len(nframes), "Running RemoveStartFramesModule...")
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
             frame_end = np.sum(nframes[0:i+1])
+
+            index_new.extend(index[frame_start:frame_end])
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
@@ -513,6 +550,7 @@ class RemoveStartFramesModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
         self.m_image_out_port.close_database()
 
