@@ -103,6 +103,11 @@ class RemoveFramesModule(ProcessingModule):
 
         non_static = self.m_image_in_port.get_all_non_static_attributes()
 
+        index = self.m_image_in_port.get_attribute("INDEX")
+        self.m_image_out_port.add_attribute("INDEX",
+                                            np.delete(index, self.m_frames),
+                                            static=False)
+
         if "PARANG" in non_static:
             parang = self.m_image_in_port.get_attribute("PARANG")
             self.m_image_out_port.add_attribute("PARANG",
@@ -227,6 +232,8 @@ class FrameSelectionModule(ProcessingModule):
         else:
             parang = None
 
+        index = self.m_image_in_port.get_attribute("INDEX")
+
         self.m_aperture /= pixscale
 
         nimages = self.m_image_in_port.get_shape()[0]
@@ -339,6 +346,10 @@ class FrameSelectionModule(ProcessingModule):
 
         self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
+        self.m_selected_out_port.add_attribute("INDEX",
+                                               index[np.logical_not(index_rm)],
+                                               static=False)
+
         if parang is not None:
             self.m_selected_out_port.add_attribute("PARANG",
                                                    parang[np.logical_not(index_rm)],
@@ -360,6 +371,10 @@ class FrameSelectionModule(ProcessingModule):
         if np.size(index_rm[index_rm]) > 0:
 
             self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+            self.m_removed_out_port.add_attribute("INDEX",
+                                                  index[index_rm],
+                                                  static=False)
 
             if parang is not None:
                 self.m_removed_out_port.add_attribute("PARANG",
@@ -429,8 +444,10 @@ class RemoveLastFrameModule(ProcessingModule):
 
         ndit = self.m_image_in_port.get_attribute("NDIT")
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
         nframes_new = []
+        index_new = []
 
         for i, item in enumerate(ndit):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
@@ -447,6 +464,8 @@ class RemoveLastFrameModule(ProcessingModule):
 
                 warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
 
+            index_new.extend(index[frame_start:frame_end])
+
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
 
@@ -455,6 +474,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
         self.m_image_out_port.close_database()
 
@@ -509,12 +529,17 @@ class RemoveStartFramesModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
+
+        index_new = []
 
         for i, _ in enumerate(nframes):
             progress(i, len(nframes), "Running RemoveStartFramesModule...")
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
             frame_end = np.sum(nframes[0:i+1])
+
+            index_new.extend(index[frame_start:frame_end])
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
@@ -524,5 +549,6 @@ class RemoveStartFramesModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
         self.m_image_out_port.close_database()
