@@ -105,7 +105,7 @@ pygments_style = 'sphinx'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
-html_theme_options = {'github': 'aamara/PynPoint',
+html_theme_options = {'github': 'PynPoint/PynPoint',
                     # 'analytics_id': 'UA-your-number-here',
                       'logo': 'images/pynpoint.jpg'
 }

@@ -162,7 +162,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == self.test_dir+'adi01.fits'
+        assert port.get_attribute("FILES")[0] == self.test_dir+'adi01.fits'
         assert port.get_attribute("PARANG")[1] == 1.1904761904761905
 
         port.close_database()
@@ -299,7 +299,7 @@ class TestEndToEnd(object):
         subset = StackAndSubsetModule(name_in="subset",
                                       image_in_tag="im_remove",
                                       image_out_tag="im_subset",
-                                      random_subset=37,
+                                      random=37,
                                       stacking=2)
 
         self.pipeline.add_module(subset)

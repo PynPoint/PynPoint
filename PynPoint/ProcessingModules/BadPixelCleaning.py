@@ -247,16 +247,13 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
             return out_image
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         self.apply_function_to_images(_bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running BadPixelSigmaFilterModule...",
                                       func_args=(self.m_box,
                                                  self.m_sigma,
-                                                 self.m_iterate),
-                                      num_images_in_memory=memory)
+                                                 self.m_iterate))
 
         self.m_image_out_port.add_history_information("Bad pixel cleaning",
                                                       "Sigma filter = " + str(self.m_sigma))
@@ -385,8 +382,6 @@ class BadPixelInterpolationModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         bad_pixel_map = self.m_bp_map_in_port.get_all()
         im_shape = self.m_image_in_port.get_shape()
 
@@ -406,8 +401,7 @@ class BadPixelInterpolationModule(ProcessingModule):
         self.apply_function_to_images(image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelInterpolationModule...",
-                                      num_images_in_memory=memory)
+                                      "Running BadPixelInterpolationModule...")
 
         self.m_image_out_port.add_history_information("Bad pixel interpolation",
                                                       "Iterations = " + str(self.m_iterations))
@@ -470,8 +464,6 @@ class BadPixelRefinementModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         if "STAR_POSITION" not in self.m_image_in_port.get_all_non_static_attributes():
             raise IOError("There is no STAR_POSITION attribute associated with '%s'. The "
                           "attribute can be obtained with StarExtractionModule."
@@ -526,8 +518,7 @@ class BadPixelRefinementModule(ProcessingModule):
         self.apply_function_to_images(_bad_pixel_refinement,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelRefinementModule...",
-                                      num_images_in_memory=memory)
+                                      "Running BadPixelRefinementModule...")
 
         self.m_image_out_port.add_history_information("Bad pixel refinement",
                                                       "Iterations = "+str(self.m_iterations))

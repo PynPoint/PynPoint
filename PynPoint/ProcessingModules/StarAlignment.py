@@ -81,13 +81,11 @@ class StarExtractionModule(ProcessingModule):
         selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
         used to smooth away the contribution of bad pixels which may have higher values than the
         peak of the PSF. Images are cropped and written to an output port. The position of the
-        star is attached as a non-static attribute (STAR_POSITION) to the database tag with the
-        input images.
+        star is attached to the input images as the non-static attribute STAR_POSITION (y, x).
 
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if self.m_position is not None:
@@ -142,6 +140,8 @@ class StarExtractionModule(ProcessingModule):
                                  int(pos_x-width/2.):int(pos_x+width/2.)]
 
             im_smooth = cv2.GaussianBlur(subimage, kernel, sigma)
+
+            # argmax[0] s the y position and argmax[1] is the x position
             argmax = np.asarray(np.unravel_index(im_smooth.argmax(), im_smooth.shape))
 
             if self.m_position is not None:
@@ -168,8 +168,7 @@ class StarExtractionModule(ProcessingModule):
         self.apply_function_to_images(crop_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarExtractionModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarExtractionModule...")
 
         self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
@@ -247,17 +246,24 @@ class StarAlignmentModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         if self.m_ref_image_in_port is not None:
             im_dim = np.size(self.m_ref_image_in_port.get_shape())
 
             if im_dim == 3:
-                ref_images = np.asarray(self.m_ref_image_in_port.get_all())
-                self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
+                if self.m_ref_image_in_port.get_shape()[0] > self.m_num_references:
+                    ref_images = self.m_ref_image_in_port[np.sort(
+                        np.random.choice(self.m_ref_image_in_port.get_shape()[0],
+                                         self.m_num_references,
+                                         replace=False)), :, :]
+
+                else:
+                    ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                    self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
+
             elif im_dim == 2:
                 ref_images = np.array([self.m_ref_image_in_port.get_all(),])
                 self.m_num_references = 1
+
             else:
                 raise ValueError("reference Image needs to be 2 D or 3 D.")
 
@@ -319,8 +325,7 @@ class StarAlignmentModule(ProcessingModule):
         self.apply_function_to_images(align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarAlignmentModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarAlignmentModule...")
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
@@ -516,18 +521,26 @@ class StarCenteringModule(ProcessingModule):
             self.m_radius /= pixscale
 
         nimages = self.m_image_in_port.get_shape()[0]
-        nstacks = int(float(nimages)/float(memory))
-
         npix = self.m_image_in_port.get_shape()[1]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
         if self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
-            for i in range(nstacks):
-                im_mean += np.sum(self.m_image_in_port[i*memory:i*memory+memory, ], axis=0)
-
-            if nimages%memory > 0:
-                im_mean += np.sum(self.m_image_in_port[nstacks*memory:nimages, ], axis=0)
+            for i, _ in enumerate(frames[:-1]):
+                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
             im_mean /= float(nimages)
 
@@ -536,8 +549,7 @@ class StarCenteringModule(ProcessingModule):
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarCenteringModule...",
-                                      num_images_in_memory=memory)
+                                      "Running StarCenteringModule...")
 
         if self.m_count > 0:
             print "2D Gaussian fit could not converge on %s images. [WARNING]\n" % self.m_count
@@ -589,16 +601,13 @@ class ShiftForCenteringModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         def image_shift(image_in):
             return shift(image_in, self.m_shift, order=5)
 
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ShiftForCenteringModule...",
-                                      num_images_in_memory=memory)
+                                      "Running ShiftForCenteringModule...")
 
         self.m_image_out_port.add_history_information("Shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)

@@ -5,6 +5,7 @@ Modules to prepare the data for the PSF subtraction.
 from __future__ import division
 
 import sys
+import warnings
 
 import numpy as np
 
@@ -73,7 +74,7 @@ class PSFpreparationModule(ProcessingModule):
         if mask_out_tag is not None:
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
         else:
-            self.m_mask_out_port is None
+            self.m_mask_out_port = None
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_resize = resize
@@ -179,7 +180,7 @@ class PSFpreparationModule(ProcessingModule):
         im_data = self._im_masking(im_data)
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
-        self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
+        self.m_image_out_port.add_attribute("norm", im_norm, static=False)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         if self.m_resize is not None:
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
@@ -259,7 +260,7 @@ class AngleCalculationModule(ProcessingModule):
 
         new_angles = []
 
-        for i in range(len(parang_start)):
+        for i, _ in enumerate(parang_start):
             progress(i, len(parang_start), "Running AngleCalculationModule...")
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
@@ -279,3 +280,115 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_out_port.add_attribute("PARANG",
                                            new_angles,
                                            static=False)
+
+
+class SortParangModule(ProcessingModule):
+    """
+    Module to sort the images and non-static attributes with increasing INDEX.
+    """
+
+    def __init__(self,
+                 name_in="sort",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_sort"):
+        """
+        Constructor of SortParangModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry with images that is written as output.
+                              Should be different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(SortParangModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+        Run method of the module. Sorts the images and relevant non-static attributes.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        index = self.m_image_in_port.get_attribute("INDEX")
+
+        index_new = np.zeros(index.shape, dtype=np.int)
+
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
+            parang_new = np.zeros(parang.shape)
+
+        else:
+            parang_new = None
+
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            star = self.m_image_in_port.get_attribute("STAR_POSITION")
+            star_new = np.zeros(star.shape)
+
+        else:
+            star_new = None
+
+        index_sort = np.argsort(index)
+
+        nimages = self.m_image_in_port.get_shape()[0]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running SortParangModule...")
+
+            index_new[frames[i]:frames[i+1]] = index[index_sort[frames[i]:frames[i+1]]]
+
+            if parang_new is not None:
+                parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
+
+            if star_new is not None:
+                star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
+
+            # h5py indexing elements must be in increasing order
+            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+
+        sys.stdout.write("Running SortParangModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
+
+        if parang_new is not None:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
+        if star_new is not None:
+            self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
+
+        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
+            self.m_image_out_port.del_attribute("NFRAMES")
+
+        self.m_image_out_port.add_history_information("Images sorted", "parang")
+        self.m_image_out_port.close_database()
