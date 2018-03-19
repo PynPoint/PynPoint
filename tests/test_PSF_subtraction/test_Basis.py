@@ -22,7 +22,8 @@ def setup_module():
     basis = np.stack((basis1, basis2, basis3, basis4), axis=0)
 
     f = h5py.File(os.path.dirname(__file__) + '/test_data/test_data_PynPoint_conv.hdf5', 'w')
-    f.create_dataset("basis_arr", data=basis)
+    dset = f.create_dataset("basis_arr", data=basis)
+    dset.attrs['PIXSCALE'] = 0.01
     f.create_dataset("header_basis_arr/PARANG", data=np.array([1., 1., 1., 1.]))
     f.close()
 
@@ -111,13 +112,13 @@ class TestBasis(object):
         self.files_fits = [self.test_data_dir+'image1.fits', self.test_data_dir+'image2.fits',
                            self.test_data_dir+'image3.fits', self.test_data_dir+'image4.fits']
 
-        self.basis1 = PynPoint.basis.create_wdir(self.test_data_dir, resize=-1, ran_sub=None, cent_remove=False)
-        self.basis3 = PynPoint.basis.create_wdir(self.test_data_dir, resize=-1, ran_sub=None, cent_size=0.2, cent_remove=True)
-        self.basis4 = PynPoint.basis.create_wdir(self.test_data_dir, resize=2., ran_sub=None, cent_remove=False)
-        self.basisfits = PynPoint.basis.create_wfitsfiles(self.files_fits, resize=-1, ran_sub=None, cent_size=0.2, cent_remove=True)
+        self.basis1 = PynPoint.basis.create_wdir(self.test_data_dir, resize=None, ran_sub=None, cent_size=None)
+        self.basis3 = PynPoint.basis.create_wdir(self.test_data_dir, resize=None, ran_sub=None, cent_size=0.2)
+        self.basis4 = PynPoint.basis.create_wdir(self.test_data_dir, resize=2., ran_sub=None, cent_size=None)
+        self.basisfits = PynPoint.basis.create_wfitsfiles(self.files_fits, resize=None, ran_sub=None, cent_size=0.2)
 
         hdf5file = PynPoint.OldVersion._Util.filename4mdir(self.test_data_dir)
-        self.basis5 = PynPoint.basis.create_whdf5input(hdf5file, resize=-1, ran_sub=None, cent_remove=False)
+        self.basis5 = PynPoint.basis.create_whdf5input(hdf5file, resize=None, ran_sub=None, cent_size=None)
 
         self.eg_array1 = np.arange(100.).reshape(4, 5, 5)
         self.ave_eg_array1 = np.array([[37.5, 38.5, 39.5, 40.5, 41.5], [42.5, 43.5, 44.5, 45.5, 46.5],
@@ -142,10 +143,11 @@ class TestBasis(object):
                                          [1.00, 0.0, 0.0], [0.0, 1.00, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
 
     def test_basis_save_restore(self, tmpdir):
-        temp_file = str(tmpdir.join('tmp_hdf5.h5'))
+        temp_file = os.path.join(self.test_data_dir, 'tmp_hdf5.hdf5')
         self.basis3.save(temp_file)
         temp_basis = PynPoint.basis.create_restore(temp_file)
         self.func4test_overall_same(self.basis3, temp_basis)
+        os.remove(temp_file)
 
     def test_overall_basis1(self):
         basis = self.basis1
@@ -155,45 +157,44 @@ class TestBasis(object):
         assert np.array_equal(basis.im_arr.shape, basis_base.im_arr.shape)
         assert np.array_equal(basis.im_norm, basis_base.im_norm)
         assert np.array_equal(basis.im_arr.shape, (4, 146, 146))
-        assert np.allclose(basis.im_arr.min(), -0.0201545461598, rtol=limit)
-        assert np.allclose(basis.im_arr.max(), 0.0278516903399, rtol=limit)
-        assert np.allclose(basis.im_arr.var(), 7.24677588909e-07, rtol=limit)
-        # assert basis.cent_size == -1.
+        assert np.allclose(basis.im_arr.min(), -0.020154546159792064, rtol=limit, atol=0.)
+        assert np.allclose(basis.im_arr.max(), 0.02785169033987621, rtol=limit, atol=0.)
+        assert np.allclose(basis.im_arr.var(), 7.246775889090766e-07, rtol=limit, atol=0.)
+        assert basis.cent_size == -1.
         assert np.array_equal(basis.cent_mask, np.ones(shape=(146, 146)))
         assert np.array_equal(basis.psf_basis.shape, (4, 146, 146))
-        assert np.allclose(basis.psf_basis.var(), 4.69117947893e-05, rtol=limit)
+        assert np.allclose(basis.psf_basis.var(), 4.691179875591796e-05, rtol=1e-6, atol=0.)
 
     def test_overall_basis3(self):
         assert np.array_equal(self.basis3.im_size, (146, 146))
         assert self.basis3.cent_size == 0.2
         assert self.basis3.im_arr.shape == (4, 146, 146)
-        assert np.allclose(self.basis3.im_arr.min(), -0.00171494746241, rtol=limit)
-        assert np.allclose(self.basis3.im_arr.max(), 0.00177186490054, rtol=limit)
-        assert np.allclose(self.basis3.im_arr.var(), 9.49839029417e-08, rtol=limit)
-        assert np.allclose(self.basis3.im_norm, np.array([79863.82548531, 82103.89026117, 76156.65271824, 66806.05648646]), rtol=limit)
+        assert np.allclose(self.basis3.im_arr.min(), -0.00251849574318578, rtol=limit, atol=0.)
+        assert np.allclose(self.basis3.im_arr.max(), 0.0023918526633428805, rtol=limit, atol=0.)
+        assert np.allclose(self.basis3.im_arr.var(), 1.4193786571723436e-07, rtol=limit, atol=0.)
+        # assert np.allclose(self.basis3.im_norm, np.array([79863.82548531, 82103.89026117, 76156.65271824, 66806.05648646]), rtol=limit, atol=0.)
         assert np.array_equal(self.basis3.para, np.array([-17.3261, -17.172, -17.0143, -16.6004]))
         assert self.basis3.cent_mask.shape == (146, 146)
         assert self.basis3.cent_mask.min() == 0.0
         assert self.basis3.cent_mask.max() == 1.0
-        assert np.allclose(self.basis3.cent_mask.var(), 0.224916192873, rtol=limit)
+        assert np.allclose(self.basis3.cent_mask.var(), 0.05578190564690256, rtol=limit, atol=0.)
         assert self.basis3.psf_basis.shape == (4, 146, 146)
-        assert np.allclose(self.basis3.psf_basis.var(), 4.675319882312256e-05, rtol=limit)
-        # assert np.allclose(self.basis3.psf_basis.var(), 4.6765801282319207e-05, rtol=limit)
+        assert np.allclose(self.basis3.psf_basis.var(), 4.6562231691378416e-05, rtol=1e-4, atol=0.)
         assert self.basis3.im_ave.shape == (146, 146)
-        assert np.allclose(self.basis3.im_ave.min(), -0.000763643189976, rtol=limit)
-        assert np.allclose(self.basis3.im_ave.max(), 0.0042338920493, rtol=limit)
-        assert np.allclose(self.basis3.im_ave.var(), 2.14554721318e-07, rtol=limit)
+        assert np.allclose(self.basis3.im_ave.min(), -0.0007636431899760693, rtol=limit, atol=0.)
+        assert np.allclose(self.basis3.im_ave.max(), 0.008679750758241345, rtol=limit, atol=0.)
+        assert np.allclose(self.basis3.im_ave.var(), 5.323616526937163e-07, rtol=limit, atol=0.)
 
     def func4test_overall_same(self, basis, basis_base):
         assert np.array_equal(basis.im_size, basis_base.im_size)
-        assert np.allclose(basis.im_norm, basis_base.im_norm, rtol=limit)
-        assert np.allclose(basis.im_arr, basis_base.im_arr, rtol=limit)
-        assert np.allclose(basis.psf_basis[0], basis_base.psf_basis[0], rtol=limit)
-        assert np.allclose(basis.psf_basis[1], basis_base.psf_basis[1], rtol=limit)
-        assert np.allclose(basis.psf_basis[2], basis_base.psf_basis[2], rtol=limit)
-        assert np.allclose(basis.psf_basis[3], basis_base.psf_basis[3], rtol=limit)
-        assert np.allclose(basis.cent_mask, basis_base.cent_mask, rtol=limit)
-        assert np.allclose(basis.im_ave, basis_base.im_ave, rtol=limit)
+        assert np.allclose(basis.im_norm, basis_base.im_norm, rtol=limit, atol=0.)
+        assert np.allclose(basis.im_arr, basis_base.im_arr, rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_basis[0], basis_base.psf_basis[0], rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_basis[1], basis_base.psf_basis[1], rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_basis[2], basis_base.psf_basis[2], rtol=limit, atol=0.)
+        assert np.allclose(basis.psf_basis[3], basis_base.psf_basis[3], rtol=limit, atol=0.)
+        assert np.allclose(basis.cent_mask, basis_base.cent_mask, rtol=limit, atol=0.)
+        assert np.allclose(basis.im_ave, basis_base.im_ave, rtol=limit, atol=0.)
 
     def test_overall_basis5(self):
         self.func4test_overall_same(self.basis5, self.basis1)
@@ -201,4 +202,4 @@ class TestBasis(object):
     def test_mk_psfmodel(self):
         basis = self.basis3
         basis.mk_psfmodel(20)
-        assert np.allclose(basis.psf_im_arr.mean(), 0.000274004663716341, rtol=limit)
+        assert np.allclose(basis.psf_im_arr.mean(), 0.00043016667279535496, rtol=1e-4, atol=0.)

@@ -38,7 +38,7 @@ class PSFSubtractionModule(ProcessingModule):
                  extra_rot=0.,
                  **kwargs):
         """
-        Constructor of PSFpreparationModule.
+        Constructor of PSFSubtractionModule.
 
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
@@ -81,14 +81,12 @@ class PSFSubtractionModule(ProcessingModule):
                                             PSF of each image.
              * **cent_mask_tag** (*str*) -- Tag of the database entry with the circular mask of
                                             the inner and outer regions.
-             * **cent_remove** (*bool*) -- Mask the inner and outer regions of the data with a
-                                           fractional inner radius of *cent_size* and fractional
-                                           outer radius of *edge_size*.
-             * **cent_size** (*float*) -- Fractional inner radius of the central mask relative to
-                                          the image size.
-             * **edge_size** (*float*) -- Fractional outer radius relative to the image size. The
-                                          images are masked beyond this radius. Currently this
-                                          parameter is not used.
+             * **cent_size** (*float*) -- Radius of the central mask (arcsec). No mask is used
+                                          when set to None.
+             * **edge_size** (*float*) -- Outer radius (arcsec) beyond which pixels are masked.
+                                          No outer mask is used when set to None. If the value
+                                          is larger than half the image size then it will be
+                                          set to half the image size.
              * **prep_tag** (*str*) -- Tag of the database entry with the prepared science data.
              * **ref_prep_tag** (*str*) -- Tag of the database entry the prepared reference data.
              * **verbose** (*bool*) -- Print progress to the standard output.
@@ -118,22 +116,15 @@ class PSFSubtractionModule(ProcessingModule):
         else:
             cent_mask_tag = "cent_mask_tag"
 
-        if "cent_remove" in kwargs:
-            cent_remove = kwargs["cent_remove"]
-        else:
-            cent_remove = False
-
         if "cent_size" in kwargs:
             cent_size = kwargs["cent_size"]
-            cent_remove = True
         else:
-            cent_size = 0.05
+            cent_size = None
 
         if "edge_size" in kwargs:
             edge_size = kwargs["edge_size"]
-            cent_remove = True
         else:
-            edge_size = 1.0
+            edge_size = None
 
         if "prep_tag" in kwargs:
             prep_tag = kwargs["prep_tag"]
@@ -156,28 +147,20 @@ class PSFSubtractionModule(ProcessingModule):
         self._m_preparation_images = PSFpreparationModule(name_in="prep_im",
                                                           image_in_tag=images_in_tag,
                                                           image_out_tag=prep_tag,
-                                                          image_mask_out_tag="not_needed",
                                                           mask_out_tag=cent_mask_tag,
                                                           norm=True,
-                                                          cent_remove=cent_remove,
                                                           cent_size=cent_size,
                                                           edge_size=edge_size,
                                                           verbose=False)
 
-        self._m_preparation_images.m_image_mask_out_port.deactivate()
-
         self._m_preparation_reference = PSFpreparationModule(name_in="prep_ref",
                                                              image_in_tag=reference_in_tag,
                                                              image_out_tag=ref_prep_tag,
-                                                             image_mask_out_tag="not_needed",
                                                              mask_out_tag=cent_mask_tag,
                                                              norm=True,
-                                                             cent_remove=cent_remove,
                                                              cent_size=cent_size,
                                                              edge_size=edge_size,
                                                              verbose=False)
-
-        self._m_preparation_reference.m_image_mask_out_port.deactivate()
 
         self._m_make_pca_basis = MakePCABasisModule(pca_number=self.m_pca_number,
                                                     svd=self.m_svd,
@@ -868,7 +851,7 @@ class FastPCAModule(ProcessingModule):
                 stdout.flush()
             self._run_multi_processing(star_data)
             if self.m_verbose:
-                stdout.write("Creating residuals... [DONE]\n")
+                stdout.write(" [DONE]\n")
                 stdout.flush()
 
         # save history for all other ports

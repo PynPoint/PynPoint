@@ -21,12 +21,10 @@ class BasePynpointWrapper(object):
     def __init__(self,
                  working_pypeline):
         self._pypeline = working_pypeline
-        self._m_center_remove = True
         self._m_ran_sub = None
         self._m_stacking = None
-        self._m_cent_size = 0.05
-        self._m_edge_size = 1.0
-        self._m_f_final = -1.
+        self._m_cent_size = None
+        self._m_edge_size = None
 
         # Attributes / Ports set individually by Image and Basis
         self._m_image_data_tag = None
@@ -51,12 +49,10 @@ class BasePynpointWrapper(object):
 
         # All static and non static attributes and their names in the database
         # {#Name_seen_from_outside: #database_name}
-        simple_attributes = {"num_files" : "Num_Files",
-                             "files" : "Used_Files",
-                             "im_norm" : "im_norm",
+        simple_attributes = {"files" : "FILES",
+                             "im_norm" : "norm",
                              "para" : "PARANG",
                              "resize" : "resize",
-                             "cent_remove" : "cent_remove",
                              "cent_size" : "cent_size",
                              "edge_size" : "edge_size"}
 
@@ -103,9 +99,6 @@ class BasePynpointWrapper(object):
 
     def _save_kwargs(self,
                      **kwargs):
-        if "cent_remove" in kwargs:
-            self._m_center_remove = kwargs["cent_remove"]
-
         if "recent" in kwargs:
             warnings.warn('Recentering is not longer supported in PynPoint preparation')
 
@@ -131,13 +124,13 @@ class BasePynpointWrapper(object):
                                            mask_out_tag=self._m_mask_tag,
                                            image_out_tag=self._m_image_data_tag,
                                            resize=self._m_resize,
-                                           cent_remove=self._m_center_remove,
-                                           cent_size=self._m_cent_size)
+                                           cent_size=self._m_cent_size,
+                                           edge_size=self._m_edge_size)
 
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,
                                                 image_out_tag=self._m_image_data_tag,
-                                                random_subset=self._m_ran_sub,
+                                                random=self._m_ran_sub,
                                                 stacking=self._m_stacking)
 
         self._pypeline.add_module(preparation)
@@ -150,9 +143,6 @@ class BasePynpointWrapper(object):
              filename):
 
         filename = str(filename)
-
-        if os.path.isfile(filename):
-            warnings.warn('The file %s have been overwritten' % filename)
 
         head, tail = os.path.split(filename)
 

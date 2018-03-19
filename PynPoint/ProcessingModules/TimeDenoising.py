@@ -1,8 +1,6 @@
 from copy import deepcopy
 
 import pywt
-
-import matplotlib.pyplot as plt
 import numpy as np
 
 from statsmodels.robust import mad
@@ -244,13 +242,10 @@ class TimeNormalizationModule(ProcessingModule):
 
         super(TimeNormalizationModule, self).__init__(name_in=name_in)
 
-        # Ports
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
     def run(self):
-
-        self.m_num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
 
         def image_normalization(image_in):
 
@@ -262,8 +257,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(image_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running TimeNormalizationModule...",
-                                      num_images_in_memory=self.m_num_images_in_memory)
+                                      "Running TimeNormalizationModule...")
 
         self.m_image_out_port.add_history_information("Frame normalization",
                                                       "using median")

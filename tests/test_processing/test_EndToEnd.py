@@ -127,8 +127,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(data), 9.4518306864680034e-05, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.4518306864680034e-05, rtol=limit, atol=0.)
         assert data.shape == (82, 102, 100)
 
         storage.close_connection()
@@ -145,8 +145,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_last"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(data), 9.9365399524407205e-05, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.9365399524407205e-05, rtol=limit, atol=0.)
         assert data.shape == (78, 102, 100)
 
         storage.close_connection()
@@ -162,7 +162,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == self.test_dir+'adi01.fits'
+        assert port.get_attribute("FILES")[0] == self.test_dir+'adi01.fits'
         assert port.get_attribute("PARANG")[1] == 1.1904761904761905
 
         port.close_database()
@@ -181,8 +181,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_cut"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(data), 0.00010141595132969683, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010141595132969683, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
 
         storage.close_connection()
@@ -201,8 +201,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_bg"]
 
-        assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit)
-        assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
 
         storage.close_connection()
@@ -222,8 +222,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_bp"]
 
-        assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit)
-        assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
 
         storage.close_connection()
@@ -242,8 +242,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_star"]
 
-        assert np.allclose(data[0, 0, 0], 0.00018025424208141221, rtol=limit)
-        assert np.allclose(np.mean(data), 0.00063151691905138636, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00018025424208141221, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00063151691905138636, rtol=limit, atol=0.)
         assert data.shape == (78, 40, 40)
 
         storage.close_connection()
@@ -264,11 +264,11 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_center"]
 
-        assert np.allclose(data[1, 0, 0], 1.2113798549047296e-06, rtol=limit)
-        assert np.allclose(data[16, 0, 0], 1.0022456564129139e-05, rtol=limit)
-        assert np.allclose(data[50, 0, 0], 1.7024977291686637e-06, rtol=limit)
-        assert np.allclose(data[67, 0, 0], 7.8143774182171561e-07, rtol=limit)
-        assert np.allclose(np.mean(data), 2.5260676762055473e-05, rtol=limit)
+        assert np.allclose(data[1, 0, 0], 1.2113798549047296e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[16, 0, 0], 1.0022456564129139e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[50, 0, 0], 1.7024977291686637e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[67, 0, 0], 7.8143774182171561e-07, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.5260676762055473e-05, rtol=limit, atol=0.)
         assert data.shape == (78, 200, 200)
 
         storage.close_connection()
@@ -286,11 +286,11 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_remove"]
 
-        assert np.allclose(data[0, 0, 0], 1.2113798549047296e-06, rtol=limit)
-        assert np.allclose(data[14, 0, 0], 1.0022456564129139e-05, rtol=limit)
-        assert np.allclose(data[47, 0, 0], 1.7024977291686637e-06, rtol=limit)
-        assert np.allclose(data[63, 0, 0], 7.8143774182171561e-07, rtol=limit)
-        assert np.allclose(np.mean(data), 2.5255308248050269e-05, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 1.2113798549047296e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[14, 0, 0], 1.0022456564129139e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[47, 0, 0], 1.7024977291686637e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[63, 0, 0], 7.8143774182171561e-07, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.5255308248050269e-05, rtol=limit, atol=0.)
         assert data.shape == (74, 200, 200)
 
         storage.close_connection()
@@ -299,7 +299,7 @@ class TestEndToEnd(object):
         subset = StackAndSubsetModule(name_in="subset",
                                       image_in_tag="im_remove",
                                       image_out_tag="im_subset",
-                                      random_subset=37,
+                                      random=37,
                                       stacking=2)
 
         self.pipeline.add_module(subset)
@@ -309,8 +309,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["im_subset"]
 
-        assert np.allclose(data[0, 0, 0], -1.9081971570461925e-06, rtol=limit)
-        assert np.allclose(np.mean(data), 2.5255308248050275e-05, rtol=limit)
+        assert np.allclose(data[0, 0, 0], -1.9081971570461925e-06, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.5255308248050275e-05, rtol=limit, atol=0.)
         assert data.shape == (37, 200, 200)
 
         storage.close_connection()
@@ -336,8 +336,8 @@ class TestEndToEnd(object):
         storage.open_connection()
         data = storage.m_data_bank["res_mean"]
 
-        assert np.allclose(data[154, 99], 0.00043144351678910169, rtol=limit)
-        assert np.allclose(np.mean(data), -1.9270808587607946e-09, rtol=limit)
+        assert np.allclose(data[154, 99], 0.0004308570688425797, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.372451154992271e-08, rtol=limit, atol=0.)
         assert data.shape == (200, 200)
 
         storage.close_connection()

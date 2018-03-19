@@ -155,7 +155,7 @@ class ConfigPort(Port):
         
         .. code-block:: python
 
-            num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+            memory = self._m_config_port.get_attribute("MEMORY")
 
         :param tag: The tag of the port. The port can be used in order to get data from the dataset
                     with the key `config`.
@@ -350,7 +350,7 @@ class InputPort(Port):
         Returns the shape of the dataset the port is linked to. This can be useful if you need the
         shape without loading the whole data.
 
-        :return: Shape of the dataset, None is data set does not exist.
+        :return: Shape of the dataset, None if dataset does not exist.
         :rtype: tuple
         """
         if not self._check_error_cases():
@@ -358,6 +358,19 @@ class InputPort(Port):
 
         self.open_port()
         return self._m_data_storage.m_data_bank[self._m_tag].shape
+
+    def get_ndim(self):
+        """
+        Returns the number of dimensions of the dataset the port is linked to.
+
+        :return: Number of dimensions of the dataset, None if dataset does not exist.
+        :rtype: int
+        """
+        if not self._check_error_cases():
+            return
+
+        self.open_port()
+        return self._m_data_storage.m_data_bank[self._m_tag].ndim
 
     def get_all(self):
         """

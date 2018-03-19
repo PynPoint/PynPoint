@@ -3,6 +3,7 @@ Modules for stacking and subsampling of images.
 """
 
 import sys
+import warnings
 
 import numpy as np
 
@@ -21,7 +22,7 @@ class StackAndSubsetModule(ProcessingModule):
                  name_in="stacking_subset",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
-                 random_subset=None,
+                 random=None,
                  stacking=None):
         """
         Constructor of StackAndSubsetModule.
@@ -33,9 +34,10 @@ class StackAndSubsetModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param random_subset: Number of random frames.
-        :type random_subset: int
-        :param stacking: Number of stacked images per subset.
+        :param random: Number of random images. All images are used when set to None.
+        :type random: int
+        :param stacking: Number of stacked images per subset. No stacking is applied when set
+                         to None.
         :type stacking: int
 
         :return: None
@@ -46,7 +48,7 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_subset = random_subset
+        self.m_random = random
         self.m_stacking = stacking
 
     def run(self):
@@ -56,133 +58,78 @@ class StackAndSubsetModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_stacking in (None, False) and self.m_subset in (None, False):
+        if self.m_stacking is None and self.m_random is None:
             return
 
-        tmp_data_shape = self.m_image_in_port.get_shape()
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
 
-        if self.m_stacking is None and tmp_data_shape[0] < self.m_subset:
-            raise ValueError("The number of images of the destination subset is bigger than the "
-                             "number of images in the source.")
+        im_shape = self.m_image_in_port.get_shape()
+        nimages = im_shape[0]
 
-        elif self.m_stacking is not None and \
-                     int(float(tmp_data_shape[0])/float(self.m_stacking)) < self.m_subset:
-            raise ValueError("The number of images of the destination subset is bigger than the "
-                             "number of images in the stacked source.")
+        if self.m_random is not None:
+            if self.m_stacking is None and im_shape[0] < self.m_random:
+                raise ValueError("The number of images of the destination subset is larger than "
+                                 "the number of images in the source.")
 
-        tmp_files = self.m_image_in_port.get_attribute("Used_Files")
-        num_images = self.m_image_in_port.get_attribute("NFRAMES")
-        para_angles = self.m_image_in_port.get_attribute("PARANG")
+            elif self.m_stacking is not None and \
+                        int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
+                raise ValueError("The number of images of the destination subset is larger than "
+                                 "the number of images in the stacked source.")
 
-        if tmp_files is None:
-            raise ValueError("No files are listed in Used_Files.")
+        parang = self.m_image_in_port.get_attribute("PARANG")
 
-        if num_images is None:
-            raise ValueError("No images are present, NAXIS3 is empty.")
+        if self.m_stacking is not None:
+            frames = np.linspace(0,
+                                 nimages-nimages%self.m_stacking,
+                                 int(float(nimages)/float(self.m_stacking))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
 
-        if self.m_stacking not in (False, None):
-            # Stack subsets of frames
-            num_new = int(np.floor(float(tmp_data_shape[0])/float(self.m_stacking)))
-            tmp_parang = np.zeros(num_new)
-            tmp_data = np.zeros([num_new, tmp_data_shape[1], tmp_data_shape[2]])
+            if nimages%self.m_stacking > 0:
+                frames = np.append(frames, nimages)
 
-            for i in range(num_new):
-                progress(i, num_new, "Running StackAndSubsetModule...")
+            nimages_new = np.size(frames)-1
+            parang_new = np.zeros(nimages_new)
+            im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
-                tmp_parang[i] = np.mean(para_angles[i*self.m_stacking:(i+1)*self.m_stacking])
-                tmp_data[i, ] = np.mean(self.m_image_in_port[i*self.m_stacking: \
-                                        (i+1)*self.m_stacking, ],
-                                        axis=0)
+            for i in range(nimages_new):
+                progress(i, nimages_new, "Running StackAndSubsetModule...")
 
-            tmp_data_shape = tmp_data.shape
+                parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
+                                      axis=0)
+
+            im_shape = im_new.shape
 
         else:
-            tmp_parang = np.copy(para_angles)
+            parang_new = np.copy(parang)
 
         sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
         sys.stdout.flush()
 
-        if self.m_subset not in (None, False):
-            # Random selection of frames
-            tmp_choice = np.random.choice(tmp_data_shape[0],
-                                          self.m_subset,
-                                          replace=False)
-
-            tmp_choice = np.sort(tmp_choice)
-            tmp_parang = tmp_parang[tmp_choice]
+        if self.m_random is not None:
+            choice = np.random.choice(im_shape[0], self.m_random, replace=False)
+            choice = np.sort(choice)
+            parang_new = parang_new[choice]
 
             if self.m_stacking is None:
-                # This will cause memory problems for large values of random_subset
-                tmp_data = self.m_image_in_port[tmp_choice, :, :]
+                # This will cause memory problems for large values of random
+                im_new = self.m_image_in_port[choice, :, :]
+
             else:
                 # Possibly also here depending on the stacking value
-                tmp_data = tmp_data[tmp_choice, ]
+                im_new = im_new[choice, :, :]
 
-            # Check which files are used
-            frames_cumulative = np.zeros(np.size(num_images))
-            for i, item in enumerate(num_images):
-                if i == 0:
-                    frames_cumulative[i] = item
-                else:
-                    frames_cumulative[i] = frames_cumulative[i-1] + item
-
-            files_out = []
-            for i, item in enumerate(frames_cumulative):
-                if self.m_stacking is None:
-                    if i == 0:
-                        index_check = np.logical_and(tmp_choice >= 0,
-                                                     tmp_choice < frames_cumulative[i])
-                    else:
-                        index_check = np.logical_and(tmp_choice >= frames_cumulative[i-1],
-                                                     tmp_choice < frames_cumulative[i])
-
-                elif self.m_stacking is not None:
-                    # Only the first frame of a stacked subset is considered for Used_Files
-                    if i == 0:
-                        index_check = np.logical_and(tmp_choice*self.m_stacking >= 0, \
-                                      tmp_choice*self.m_stacking < frames_cumulative[i])
-
-                    else:
-                        index_check = np.logical_and(tmp_choice*self.m_stacking >= \
-                                      frames_cumulative[i-1], tmp_choice*self.m_stacking < \
-                                      frames_cumulative[i])
-
-                if True in index_check:
-                    files_out.append(tmp_files[i])
-
-            tmp_files = files_out
-
-        self.m_image_out_port.set_all(tmp_data,
-                                      keep_attributes=True)
-
+        self.m_image_out_port.set_all(im_new, keep_attributes=True)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_image_out_port.add_attribute("PARANG",
-                                            tmp_parang,
-                                            static=False)
-
-        self.m_image_out_port.add_attribute("Used_Files",
-                                            tmp_files,
-                                            static=False)
-
-        self.m_image_out_port.add_attribute("Num_Files",
-                                            len(tmp_files),
-                                            static=True)
-
-        if self.m_stacking is None:
-            history_stacked = "Nothing Stacked and "
-        else:
-            history_stacked = "Stacked every " + str(self.m_stacking) + " and "
-
-        if self.m_subset is None:
-            history_subset = "no subset chosen"
-        else:
-            history_subset = "picked randomly " + str(self.m_subset) + " frames."
-
-        history = history_stacked + history_subset
-        self.m_image_out_port.add_history_information("Subset",
-                                                      history)
-
+        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+        if "NFRAMES" in non_static:
+            self.m_image_out_port.del_attribute("NFRAMES")
+        if "INDEX" in non_static:
+            self.m_image_out_port.del_attribute("INDEX")
+        self.m_image_out_port.add_history_information("Stack and subset",
+                                                      "stacking ="+str(self.m_stacking)+
+                                                      "random ="+str(self.m_random))
         self.m_image_out_port.close_database()
 
 
@@ -225,6 +172,8 @@ class MeanCubeModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
+
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
         self.m_image_out_port.del_all_data()
@@ -247,18 +196,23 @@ class MeanCubeModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if "NFRAMES" in non_static:
+            self.m_image_out_port.del_attribute("NFRAMES")
+        if "INDEX" in non_static:
+            self.m_image_out_port.del_attribute("INDEX")
         self.m_image_out_port.close_database()
 
 
 class DerotateAndStackModule(ProcessingModule):
     """
-    Module for derotating the images and optional stacking.
+    Module for derotating and/or stacking of the images.
     """
 
     def __init__(self,
                  name_in="rotate_stack",
                  image_in_tag="im_arr",
                  image_out_tag="im_stack",
+                 derotate=True,
                  stack=False,
                  extra_rot=0.):
         """
@@ -284,8 +238,9 @@ class DerotateAndStackModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_extra_rot = extra_rot
+        self.m_derotate = derotate
         self.m_stack = stack
+        self.m_extra_rot = extra_rot
 
     def run(self):
         """
@@ -295,13 +250,14 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
+        if self.m_derotate:
+            parang = self.m_image_in_port.get_attribute("PARANG")
 
         if self.m_stack:
             stack = np.zeros((self.m_image_in_port.get_shape()[1],
@@ -310,11 +266,19 @@ class DerotateAndStackModule(ProcessingModule):
         elif not self.m_stack:
             stack = np.zeros(self.m_image_in_port.get_shape())
 
-        count = 0.
-        for i, ang in enumerate(parang):
-            progress(i, len(parang), "Running RotateAndStackModule...")
+        nimage = self.m_image_in_port.get_shape()[0]
 
-            im_rot = rotate(self.m_image_in_port[i, ], -ang+self.m_extra_rot, reshape=False)
+        count = 0.
+        for i in range(nimage):
+            progress(i, nimage, "Running DerotateAndStackModule...")
+
+            if self.m_derotate:
+                im_rot = rotate(self.m_image_in_port[i, ],
+                                -parang[i]+self.m_extra_rot,
+                                reshape=False)
+
+            else:
+                im_rot = self.m_image_in_port[i, ]
 
             if self.m_stack:
                 stack += im_rot
@@ -326,9 +290,140 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_stack:
             stack /= count
 
-        sys.stdout.write("Running RotateAndStackModule... [DONE]\n")
+        sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.set_all(stack)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_database()
+
+
+class CombineTagsModule(ProcessingModule):
+    """
+    Module for combining tags from multiple database entries into a single tag.
+    """
+
+    def __init__(self,
+                 image_in_tags,
+                 check_attr=True,
+                 name_in="combine_tags",
+                 image_out_tag="im_arr_combined"):
+        """
+        Constructor of CombineTagsModule.
+
+        :param image_in_tags: Tags of the database entries that are read as input and combined.
+        :type image_in_tags: tuple, str
+        :param check_attr: Compare non-static attributes between the tags or combine all non-static
+                           attributes into the new database tag.
+        :type check_attr: bool
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should not be
+                              present in *image_in_tags*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(CombineTagsModule, self).__init__(name_in=name_in)
+
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        if image_out_tag in image_in_tags:
+            raise ValueError("The name of image_out_tag can not be present in image_in_tags.")
+
+        self.m_image_in_tags = image_in_tags
+        self.m_check_attr = check_attr
+
+    def run(self):
+        """
+        Run method of the module. Combines the frames of multiple tags into a single output tag
+        and adds the static and non-static attributes. The values of the attributes are compared
+        between the input tags to make sure that the input tags decent from the same data set.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if len(self.m_image_in_tags) < 2:
+            raise ValueError("The tuple of image_in_tags should contain at least two tags.")
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+
+        for i, item in enumerate(self.m_image_in_tags):
+            progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
+
+            image_in_port = self.add_input_port(item)
+            nimages = image_in_port.get_shape()[0]
+
+            if memory == 0 or memory >= nimages:
+                frames = [0, nimages]
+
+            else:
+                frames = np.linspace(0,
+                                     nimages-nimages%memory,
+                                     int(float(nimages)/float(memory))+1,
+                                     endpoint=True,
+                                     dtype=np.int)
+
+                if nimages%memory > 0:
+                    frames = np.append(frames, nimages)
+
+            for j, _ in enumerate(frames[:-1]):
+                im_tmp = image_in_port[frames[j]:frames[j+1], ]
+                self.m_image_out_port.append(im_tmp)
+
+            static_attr = image_in_port.get_all_static_attributes()
+            non_static_attr = image_in_port.get_all_non_static_attributes()
+
+            for key in static_attr:
+                status = self.m_image_out_port.check_static_attribute(key, static_attr[key])
+
+                if status == 1:
+                    self.m_image_out_port.add_attribute(key, static_attr[key], static=True)
+
+                elif status == -1 and key[0:7] != "History":
+                    warnings.warn('The static keyword %s is already used but with a different '
+                                  'value. It is advisable to only combine tags that descend from '
+                                  'the same data set.' % key)
+
+            for key in non_static_attr:
+                values = image_in_port.get_attribute(key)
+                status = self.m_image_out_port.check_non_static_attribute(key, values)
+
+                if self.m_check_attr:
+                    if key == "PARANG" or key == "STAR_POSITION" or key == "INDEX":
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(key, values, static=False)
+                        else:
+                            for j in values:
+                                self.m_image_out_port.append_attribute_data(key, j)
+
+                    elif key == "NFRAMES":
+                        continue
+
+                    else:
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(key, values, static=False)
+
+                        if status == -1:
+                            warnings.warn('The non-static keyword %s is already used but with '
+                                          'different values. It is advisable to only combine tags '
+                                          'that descend from the same data set.' % key)
+
+                else:
+                    if status == 1:
+                        self.m_image_out_port.add_attribute(key, values, static=False)
+                    else:
+                        for j in values:
+                            self.m_image_out_port.append_attribute_data(key, j)
+
+        sys.stdout.write("Running CombineTagsModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.add_history_information("Database entries combined",
+                                                      str(np.size(self.m_image_in_tags)))
+
         self.m_image_out_port.close_database()
