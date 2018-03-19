@@ -36,12 +36,12 @@ requirements = ['configparser',
                 'emcee']
 
 setup(
-    name='PynPoint-exoplanet',
+    name='PynPoint',
     version='1.0.0',
-    description='Python package for processing and analysis of high-contrast imaging data',
+    description='Python package for the processing and analysis of high-contrast imaging data',
     long_description=readme,
-    author='Tomas Stolker, Markus Bonse, Adam Amara',
-    author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, adam.amara@phys.ethz.ch',
+    author='Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara',
+    author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, sascha.quanz@phys.ethz.ch, adam.amara@phys.ethz.ch',
     url='http://pynpoint.ethz.ch',
     packages=packages,
     package_dir={'PynPoint': 'PynPoint'},

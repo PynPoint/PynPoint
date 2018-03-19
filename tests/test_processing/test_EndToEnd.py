@@ -162,7 +162,7 @@ class TestEndToEnd(object):
         storage.open_connection()
         port = InputPort("im_last", storage)
 
-        assert port.get_attribute("Used_Files")[0] == self.test_dir+'adi01.fits'
+        assert port.get_attribute("FILES")[0] == self.test_dir+'adi01.fits'
         assert port.get_attribute("PARANG")[1] == 1.1904761904761905
 
         port.close_database()
