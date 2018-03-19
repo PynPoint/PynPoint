@@ -25,6 +25,7 @@ def setup_module():
     h5f = h5py.File(file_in, "w")
     dset = h5f.create_dataset("images", data=images)
     dset.attrs['PIXSCALE'] = 0.01
+    h5f.create_dataset("header_images/INDEX", data=np.arange(0, 40, 1))
     h5f.create_dataset("header_images/NFRAMES", data=[10, 10, 10, 10])
     h5f.create_dataset("header_images/EXP_NO", data=[1, 3, 5, 7])
     h5f.create_dataset("header_images/DITHER_X", data=[5, 5, -5, -5])
@@ -33,6 +34,7 @@ def setup_module():
     h5f.create_dataset("header_images/PARANG", data=np.full(40, 1.))
     dset = h5f.create_dataset("sky", data=sky)
     dset.attrs['PIXSCALE'] = 0.01
+    h5f.create_dataset("header_sky/INDEX", data=np.arange(0, 40, 1))
     h5f.create_dataset("header_sky/NFRAMES", data=[10, 10, 10, 10])
     h5f.create_dataset("header_sky/EXP_NO", data=[2, 4, 6, 8])
     h5f.close()

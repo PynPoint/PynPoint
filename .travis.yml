@@ -1,6 +1,4 @@
 language: python
-# python:
-#   - "2.7"
 matrix:
     include:
         - os: osx
@@ -8,22 +6,18 @@ matrix:
 before_install:
   - brew unlink python
   - brew update
-  - brew install python2 --framework
-  - ls -a $HOME
+  - brew install python2
   - virtualenv venv -p python2
   - source venv/bin/activate
 install:
   - pip2 install numpy
-  - pip2 install matplotlib
-  - mkdir $HOME/.matplotlib
-  - touch $HOME/.matplotlib/matplotlibrc
-  - echo backend=Agg >> $HOME/.matplotlib/matplotlibrc
   - pip2 install -r requirements.txt
   - pip2 install tox
   - pip2 install coverage
   - pip2 install sphinx
 before_script:
-  - export OMP_NUM_THREADS=1
+  - mkdir $HOME/.matplotlib
+  - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 script:
   - make test
   - make test-all

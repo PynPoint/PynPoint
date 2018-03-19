@@ -74,7 +74,7 @@ class PSFpreparationModule(ProcessingModule):
         if mask_out_tag is not None:
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
         else:
-            self.m_mask_out_port is None
+            self.m_mask_out_port = None
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_resize = resize
@@ -180,7 +180,7 @@ class PSFpreparationModule(ProcessingModule):
         im_data = self._im_masking(im_data)
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
-        self.m_image_out_port.add_attribute("im_norm", im_norm, static=False)
+        self.m_image_out_port.add_attribute("norm", im_norm, static=False)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         if self.m_resize is not None:
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
@@ -284,7 +284,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SortParangModule(ProcessingModule):
     """
-    Module to sort the images and non-static attributes with increasing parallactic angle.
+    Module to sort the images and non-static attributes with increasing INDEX.
     """
 
     def __init__(self,
@@ -324,48 +324,69 @@ class SortParangModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        parang_new = np.zeros(parang.shape)
+        index_new = np.zeros(index.shape, dtype=np.int)
+
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
+            parang_new = np.zeros(parang.shape)
+
+        else:
+            parang_new = None
 
         if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
             star = self.m_image_in_port.get_attribute("STAR_POSITION")
             star_new = np.zeros(star.shape)
 
-        index_sort = np.argsort(parang)
+        else:
+            star_new = None
 
-        nimage = self.m_image_in_port.get_shape()[0]
+        index_sort = np.argsort(index)
 
-        if memory == -1 or memory >= nimage:
-            frames = [0, nimage]
+        nimages = self.m_image_in_port.get_shape()[0]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
 
         else:
             frames = np.linspace(0,
-                                 nimage-nimage%memory,
-                                 int(float(nimage)/float(memory))+1,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
                                  endpoint=True,
                                  dtype=np.int)
 
-            if nimage%memory > 0:
-                frames = np.append(frames, nimage)
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames)-1, "Running SortParangModule...")
+            progress(i, len(frames[:-1]), "Running SortParangModule...")
 
-            parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
-            star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
+            index_new[frames[i]:frames[i+1]] = index[index_sort[frames[i]:frames[i+1]]]
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
-            self.m_image_out_port.append(images)
+            if parang_new is not None:
+                parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
+
+            if star_new is not None:
+                star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
+
+            # h5py indexing elements must be in increasing order
+            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
 
         sys.stdout.write("Running SortParangModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
+
+        if parang_new is not None:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
+        if star_new is not None:
             self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
+
         if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
             self.m_image_out_port.del_attribute("NFRAMES")
 
