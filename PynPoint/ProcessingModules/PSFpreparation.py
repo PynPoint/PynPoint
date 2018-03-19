@@ -284,7 +284,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SortParangModule(ProcessingModule):
     """
-    Module to sort the images and non-static attributes with increasing parallactic angle.
+    Module to sort the images and non-static attributes with increasing INDEX.
     """
 
     def __init__(self,
@@ -324,19 +324,25 @@ class SortParangModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        parang_new = np.zeros(parang.shape)
+        index_new = np.zeros(index.shape, dtype=np.int)
+
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
+            parang_new = np.zeros(parang.shape)
+
+        else:
+            parang_new = None
 
         if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
             star = self.m_image_in_port.get_attribute("STAR_POSITION")
             star_new = np.zeros(star.shape)
-            starpos = True
 
         else:
-            starpos = False
+            star_new = None
 
-        index_sort = np.argsort(parang)
+        index_sort = np.argsort(index)
 
         nimages = self.m_image_in_port.get_shape()[0]
 
@@ -356,8 +362,12 @@ class SortParangModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running SortParangModule...")
 
-            parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
-            if starpos:
+            index_new[frames[i]:frames[i+1]] = index[index_sort[frames[i]:frames[i+1]]]
+
+            if parang_new is not None:
+                parang_new[frames[i]:frames[i+1]] = parang[index_sort[frames[i]:frames[i+1]]]
+
+            if star_new is not None:
                 star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
             # h5py indexing elements must be in increasing order
@@ -369,9 +379,14 @@ class SortParangModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
-        if starpos:
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
+
+        if parang_new is not None:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
+        if star_new is not None:
             self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
+
         if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
             self.m_image_out_port.del_attribute("NFRAMES")
 

@@ -11,7 +11,8 @@ from scipy.optimize import curve_fit
 
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, CombineTagsModule
+from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
+from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
 
@@ -329,6 +330,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_background_out_port.del_all_attributes()
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
         if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("PARANG")
@@ -363,6 +365,9 @@ class PCABackgroundPreparationModule(ProcessingModule):
         background_nframes = np.empty(0, dtype=np.int64)
         star_nframes = np.empty(0, dtype=np.int64)
 
+        background_index = np.empty(0, dtype=np.int64)
+        star_index = np.empty(0, dtype=np.int64)
+
         if parang is not None:
             background_parang = np.empty(0, dtype=np.float64)
             star_parang = np.empty(0, dtype=np.float64)
@@ -386,6 +391,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
                 self.m_background_out_port.append(im_tmp-background)
                 background_nframes = np.append(background_nframes, nframes[i])
+                background_index = np.append(background_index, index[count:count+item])
                 if parang is not None:
                     background_parang = np.append(background_parang, parang[count:count+item])
 
@@ -423,6 +429,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
                 self.m_star_out_port.append(im_tmp-background)
                 star_nframes = np.append(star_nframes, nframes[i])
+                star_index = np.append(star_index, index[count:count+item])
                 if parang is not None:
                     star_parang = np.append(star_parang, parang[count:count+item])
 
@@ -433,6 +440,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
+        self.m_star_out_port.add_attribute("INDEX", star_index, static=False)
 
         if parang is not None:
             self.m_star_out_port.add_attribute("PARANG", star_parang, static=False)
@@ -443,6 +451,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_background_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_background_out_port.add_attribute("NFRAMES", background_nframes, static=False)
+        self.m_background_out_port.add_attribute("INDEX", background_index, static=False)
 
         if parang is not None:
             self.m_background_out_port.add_attribute("PARANG", background_parang, static=False)
