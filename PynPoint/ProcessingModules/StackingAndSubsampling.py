@@ -3,6 +3,7 @@ Modules for stacking and subsampling of images.
 """
 
 import sys
+import warnings
 
 import numpy as np
 
@@ -276,7 +277,7 @@ class DerotateAndStackModule(ProcessingModule):
                                 -parang[i]+self.m_extra_rot,
                                 reshape=False)
 
-             else:
+            else:
                 im_rot = self.m_image_in_port[i, ]
 
             if self.m_stack:
