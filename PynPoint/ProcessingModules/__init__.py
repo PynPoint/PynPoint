@@ -3,7 +3,7 @@ from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgro
                                   DitheringBackgroundModule, NoddingBackgroundModule
 from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationModule, \
                              BadPixelMapModule, BadPixelRefinementModule
-from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
+from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule, SubtractImagesModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, DerotateAndStackModule, \
                                    CombineTagsModule
