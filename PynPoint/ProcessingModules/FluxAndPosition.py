@@ -20,7 +20,7 @@ from photutils import aperture_photometry, CircularAperture
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import FastPCAModule
 
 
 class FakePlanetModule(ProcessingModule):
@@ -119,12 +119,20 @@ class FakePlanetModule(ProcessingModule):
         ndim_psf = np.size(self.m_psf_in_port.get_shape())
 
         if ndim_image == 3:
-            n_image = self.m_image_in_port.get_shape()[0]
+            nimages = self.m_image_in_port.get_shape()[0]
 
-            if memory == -1 or memory >= n_image:
-                n_stack_im = 1
+            if memory == 0 or memory >= nimages:
+                frames = [0, nimages]
+
             else:
-                n_stack_im = int(float(n_image)/float(memory))
+                frames = np.linspace(0,
+                                     nimages-nimages%memory,
+                                     int(float(nimages)/float(memory))+1,
+                                     endpoint=True,
+                                     dtype=np.int)
+
+                if nimages%memory > 0:
+                    frames = np.append(frames, nimages)
 
             im_size = (self.m_image_in_port.get_shape()[1],
                        self.m_image_in_port.get_shape()[2])
@@ -133,12 +141,12 @@ class FakePlanetModule(ProcessingModule):
             raise ValueError("The image_in_tag should contain a cube of images.")
 
         if ndim_psf == 2:
-            n_psf = 1
+            npsf = 1
             psf_size = (self.m_psf_in_port.get_shape()[0],
                         self.m_psf_in_port.get_shape()[1])
 
         elif ndim_psf == 3:
-            n_psf = self.m_psf_in_port.get_shape()[0]
+            npsf = self.m_psf_in_port.get_shape()[0]
             psf_size = (self.m_psf_in_port.get_shape()[1],
                         self.m_psf_in_port.get_shape()[2])
 
@@ -146,70 +154,52 @@ class FakePlanetModule(ProcessingModule):
             raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
                              "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
 
-        if memory == -1 or memory >= n_psf:
-            n_stack_psf = 1
-        else:
-            n_stack_psf = int(float(n_psf)/float(memory))
-
-        im_stacks = np.zeros(1, dtype=np.int)
-        if memory == -1 or memory >= n_image:
-            im_stacks = np.append(im_stacks, im_stacks[0]+n_image)
-
-        else:
-            for i in range(n_stack_im):
-                im_stacks = np.append(im_stacks, im_stacks[i]+memory)
-            if n_stack_im*memory != n_image:
-                im_stacks = np.append(im_stacks, n_image)
-
-        if ndim_psf == 3 and n_psf == 1:
+        if ndim_psf == 3 and npsf == 1:
             psf = np.squeeze(self.m_psf_in_port.get_all(), axis=0)
             ndim_psf = psf.ndim
 
         elif ndim_psf == 2:
             psf = self.m_psf_in_port.get_all()
 
-        elif ndim_psf == 3 and n_image != n_psf:
-            psf = np.zeros((self.m_image_in_port.get_shape()[1],
-                            self.m_image_in_port.get_shape()[2]))
+        elif ndim_psf == 3 and nimages != npsf:
+            psf = np.zeros((self.m_psf_in_port.get_shape()[1],
+                            self.m_psf_in_port.get_shape()[2]))
 
-            if memory == -1 or memory >= n_psf:
-                psf = np.mean(self.m_psf_in_port.get_all(), axis=0)
+            if memory == 0 or memory >= npsf:
+                frames_psf = [0, npsf]
 
             else:
-                for i in range(n_stack_psf):
-                    psf += np.sum(self.m_psf_in_port[i*memory:(i+1)*memory], axis=0)
+                frames_psf = np.linspace(0,
+                                         npsf-npsf%memory,
+                                         int(float(npsf)/float(memory))+1,
+                                         endpoint=True,
+                                         dtype=np.int)
 
-                if n_stack_psf*memory != n_psf:
-                    psf += np.sum(self.m_psf_in_port[n_stack_psf*memory:n_psf], axis=0)
+                if npsf%memory > 0:
+                    frames_psf = np.append(frames_psf, npsf)
 
-                psf /= float(n_psf)
+            for i, _ in enumerate(frames_psf[:-1]):
+                psf += np.sum(self.m_psf_in_port[frames_psf[i]:frames_psf[i+1]], axis=0)
+
+            psf /= float(npsf)
 
             ndim_psf = psf.ndim
 
-        for j, _ in enumerate(im_stacks[:-1]):
+        for j, _ in enumerate(frames[:-1]):
             if self.m_verbose:
-                progress(j, len(im_stacks[:-1]), "Running FakePlanetModule...")
+                progress(j, len(frames[:-1]), "Running FakePlanetModule...")
 
-            image = np.copy(self.m_image_in_port[im_stacks[j]:im_stacks[j+1]])
+            image = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
 
             for i in range(image.shape[0]):
-                if memory == -1 or memory >= n_image:
-                    x_shift = radial*math.cos(theta-parang[i])
-                    y_shift = radial*math.sin(theta-parang[i])
-
-                else:
-                    x_shift = radial*math.cos(theta-parang[j*memory+i])
-                    y_shift = radial*math.sin(theta-parang[j*memory+i])
+                x_shift = radial*math.cos(theta-parang[frames[j]+i])
+                y_shift = radial*math.sin(theta-parang[frames[j]+i])
 
                 if ndim_psf == 2:
                     psf_tmp = np.copy(psf)
 
                 elif ndim_psf == 3:
-                    if memory == -1 or memory >= n_psf:
-                        psf_tmp = self.m_psf_in_port[i]
-
-                    else:
-                        psf_tmp = self.m_psf_in_port[j*memory+i]
+                    psf_tmp = self.m_psf_in_port[frames[j]+i]
 
                 if self.m_interpolation == "spline":
                     psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=5, mode='reflect')
@@ -262,7 +252,6 @@ class SimplexMinimizationModule(ProcessingModule):
                  aperture=0.1,
                  sigma=0.027,
                  tolerance=0.1,
-                 pca_module='FastPCAModule',
                  pca_number=20,
                  mask=0.,
                  extra_rot=0.):
@@ -316,9 +305,6 @@ class SimplexMinimizationModule(ProcessingModule):
                           and 0.1 pix. The tolerance on the output (i.e., function of merit)
                           is set to np.inf so the condition is always met.
         :type tolerance: float
-        :param pca_module: Name of the processing module for the PSF subtraction
-                           (PSFSubtractionModule or FastPCAModule).
-        :type pca_module: str
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
         :param mask: Mask radius (arcsec) for the PSF subtraction.
@@ -346,7 +332,6 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_sigma = sigma
         self.m_tolerance = tolerance
-        self.m_pca_module = pca_module
         self.m_pca_number = pca_number
         self.m_mask = mask
         self.m_extra_rot = extra_rot
@@ -398,88 +383,29 @@ class SimplexMinimizationModule(ProcessingModule):
             fake_planet.connect_database(self._m_data_base)
             fake_planet.run()
 
-            if self.m_pca_module == "PSFSubtractionModule":
-
-                if self.m_mask > 0.:
-
-                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
-                                                   pca_number=self.m_pca_number,
-                                                   svd="arpack",
-                                                   images_in_tag="simplex_fake",
-                                                   reference_in_tag="simplex_fake",
-                                                   res_arr_out_tag="simplex_res_arr_out",
-                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
-                                                   res_mean_tag="simplex_res_mean",
-                                                   res_median_tag="simplex_res_median",
-                                                   res_var_tag="simplex_res_var",
-                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
-                                                   basis_out_tag="simplex_basis_out",
-                                                   image_ave_tag="simplex_image_ave",
-                                                   psf_model_tag="simplex_psf_model",
-                                                   ref_prep_tag="simplex_ref_prep",
-                                                   prep_tag="simplex_prep",
-                                                   cent_mask_tag="simplex_cent_mask",
-                                                   extra_rot=self.m_extra_rot,
-                                                   cent_remove=True,
-                                                   cent_size=self.m_mask,
-                                                   verbose=False)
-
-                else:
-
-                    psf_sub = PSFSubtractionModule(name_in="pca_simplex",
-                                                   pca_number=self.m_pca_number,
-                                                   svd="arpack",
-                                                   images_in_tag="simplex_fake",
-                                                   reference_in_tag="simplex_fake",
-                                                   res_arr_out_tag="simplex_res_arr_out",
-                                                   res_arr_rot_out_tag="simplex_res_arr_rot_out",
-                                                   res_mean_tag="simplex_res_mean",
-                                                   res_median_tag="simplex_res_median",
-                                                   res_var_tag="simplex_res_var",
-                                                   res_rot_mean_clip_tag="simplex_res_rot_mean_clip",
-                                                   basis_out_tag="simplex_basis_out",
-                                                   image_ave_tag="simplex_image_ave",
-                                                   psf_model_tag="simplex_psf_model",
-                                                   ref_prep_tag="simplex_ref_prep",
-                                                   prep_tag="simplex_prep",
-                                                   cent_mask_tag="simplex_cent_mask",
-                                                   extra_rot=self.m_extra_rot,
-                                                   cent_remove=False,
-                                                   verbose=False)
-
-            elif self.m_pca_module == "FastPCAModule":
-
-                cent_remove = bool(self.m_mask > 0.)
-
-                prep = PSFpreparationModule(name_in="prep",
-                                            image_in_tag="simplex_fake",
-                                            image_out_tag="simplex_prep",
-                                            image_mask_out_tag=None,
-                                            mask_out_tag=None,
-                                            norm=False,
-                                            cent_remove=cent_remove,
-                                            cent_size=self.m_mask,
-                                            edge_size=1.,
-                                            verbose=False)
-
-                prep.connect_database(self._m_data_base)
-                prep.run()
-
-                psf_sub = FastPCAModule(name_in="pca_simplex",
-                                        pca_numbers=self.m_pca_number,
-                                        images_in_tag="simplex_prep",
-                                        reference_in_tag="simplex_prep",
-                                        res_mean_tag="simplex_res_mean",
-                                        res_median_tag=None,
-                                        res_arr_out_tag=None,
-                                        res_rot_mean_clip_tag=None,
-                                        extra_rot=self.m_extra_rot,
+            prep = PSFpreparationModule(name_in="prep",
+                                        image_in_tag="simplex_fake",
+                                        image_out_tag="simplex_prep",
+                                        image_mask_out_tag=None,
+                                        mask_out_tag=None,
+                                        norm=False,
+                                        cent_size=self.m_mask,
+                                        edge_size=1e10,
                                         verbose=False)
 
-            else:
+            prep.connect_database(self._m_data_base)
+            prep.run()
 
-                raise ValueError("The pca_module should be either PSFSubtractionModule or "
-                                 "FastPCAModule.")
+            psf_sub = FastPCAModule(name_in="pca_simplex",
+                                    pca_numbers=self.m_pca_number,
+                                    images_in_tag="simplex_prep",
+                                    reference_in_tag="simplex_prep",
+                                    res_mean_tag="simplex_res_mean",
+                                    res_median_tag=None,
+                                    res_arr_out_tag=None,
+                                    res_rot_mean_clip_tag=None,
+                                    extra_rot=self.m_extra_rot,
+                                    verbose=False)
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()
@@ -574,8 +500,6 @@ class SimplexMinimizationModule(ProcessingModule):
                         self.m_image_in_port.get_shape()[2])
 
         center = (psf_size[0]/2., psf_size[1]/2.)
-
-        self.m_mask /= (pixscale*im_size[1])
 
         sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()

@@ -327,13 +327,12 @@ class ProcessingModule(PypelineModule):
                                                length_of_processed_data)
         line_processor.run()
 
-    @staticmethod
-    def apply_function_to_images(func,
+    def apply_function_to_images(self,
+                                 func,
                                  image_in_port,
                                  image_out_port,
                                  message,
-                                 func_args=None,
-                                 num_images_in_memory=100):
+                                 func_args=None):
         """
         Often a algorithm is applied to all images of a 3D data stack. Hence we have implemented
         this function which applies a given function to all images of a data stack. The function
@@ -369,19 +368,15 @@ class ProcessingModule(PypelineModule):
         :type message: str
         :param func_args: Additional arguments which are needed by the function *func*
         :type func_args: tuple
-        :param num_images_in_memory: Maximum number of frames which will be loaded to the memory. If
-                                     None all frames will be load at once. (This is probably the
-                                     fastest but most memory expensive option)
-        :type num_images_in_memory: int
+
         :return: None
         """
 
-        number_of_images = image_in_port.get_shape()[0]
+        memory = self._m_config_port.get_attribute("MEMORY")
+        nimages = image_in_port.get_shape()[0]
 
-        if num_images_in_memory is None:
-            num_images_in_memory = number_of_images
-
-        # check if input and output Port have the same tag
+        if memory == 0 or memory >= nimages:
+            memory = nimages
 
         # we want to replace old values or create a new data set if True
         # if not we want to update the frames
@@ -391,13 +386,13 @@ class ProcessingModule(PypelineModule):
         i = 0
         first_time = True
 
-        while i < number_of_images:
-            progress(i, number_of_images, message)
+        while i < nimages:
+            progress(i, nimages, message)
 
-            if i + num_images_in_memory > number_of_images:
-                j = number_of_images
+            if i + memory > nimages:
+                j = nimages
             else:
-                j = i + num_images_in_memory
+                j = i + memory
 
             tmp_frames = image_in_port[i:j]
             tmp_res = []
@@ -414,16 +409,15 @@ class ProcessingModule(PypelineModule):
             if image_out_port is not None:
                 if update:
                     try:
-                        if num_images_in_memory == number_of_images:
+                        if memory == nimages:
                             image_out_port.set_all(np.array(tmp_res),
                                                    keep_attributes=True)
                         else:
                             image_out_port[i:j] = np.array(tmp_res)
                     except TypeError:
                         raise ValueError("Input and output port have the same tag while %s is changing "
-                                         "the image shape. This is only possible for "
-                                         "num_images_in_memory == None. Change num_images_in_memory"
-                                         "or choose different port tags." % func)
+                                         "the image shape. This is only possible when MEMORY=None."
+                                         % func)
                 elif first_time:
                     # The first time we have to reset the eventually existing data
                     image_out_port.set_all(np.array(tmp_res))

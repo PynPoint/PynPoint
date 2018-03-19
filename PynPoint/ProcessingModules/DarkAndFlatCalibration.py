@@ -92,8 +92,6 @@ class DarkCalibrationModule(ProcessingModule):
         def dark_calibration(image_in, dark_in):
             return image_in - dark_in
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         dark = self.m_dark_in_port.get_all()
         master = _master_frame(dark, self.m_image_in_port)
 
@@ -101,8 +99,7 @@ class DarkCalibrationModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running DarkCalibrationModule...",
-                                      func_args=(master, ),
-                                      num_images_in_memory=memory)
+                                      func_args=(master, ))
 
         self.m_image_out_port.add_history_information("Calibration", "dark")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -148,8 +145,6 @@ class FlatCalibrationModule(ProcessingModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
         def flat_calibration(image_in, flat_in):
             return image_in / flat_in
 
@@ -171,8 +166,7 @@ class FlatCalibrationModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running FlatCalibrationModule...",
-                                      func_args=(master, ),
-                                      num_images_in_memory=memory)
+                                      func_args=(master, ))
 
         self.m_image_out_port.add_history_information("Calibration", "flat")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
