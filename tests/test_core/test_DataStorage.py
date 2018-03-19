@@ -28,8 +28,8 @@ class TestDataStorage(object):
         storage.open_connection()
         data = storage.m_data_bank["images"]
 
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
 
         os.remove(self.test_data)
 
