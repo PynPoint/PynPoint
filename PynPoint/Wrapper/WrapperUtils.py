@@ -49,12 +49,10 @@ class BasePynpointWrapper(object):
 
         # All static and non static attributes and their names in the database
         # {#Name_seen_from_outside: #database_name}
-        simple_attributes = {"num_files" : "Num_Files",
-                             "files" : "Used_Files",
-                             "im_norm" : "im_norm",
+        simple_attributes = {"files" : "FILES",
+                             "im_norm" : "norm",
                              "para" : "PARANG",
                              "resize" : "resize",
-                             "cent_remove" : "cent_remove",
                              "cent_size" : "cent_size",
                              "edge_size" : "edge_size"}
 
@@ -132,7 +130,7 @@ class BasePynpointWrapper(object):
         subsample_module = StackAndSubsetModule(name_in="stacking",
                                                 image_in_tag=self._m_image_data_tag,
                                                 image_out_tag=self._m_image_data_tag,
-                                                random_subset=self._m_ran_sub,
+                                                random=self._m_ran_sub,
                                                 stacking=self._m_stacking)
 
         self._pypeline.add_module(preparation)
@@ -145,9 +143,6 @@ class BasePynpointWrapper(object):
              filename):
 
         filename = str(filename)
-
-        if os.path.isfile(filename):
-            warnings.warn('The file %s have been overwritten' % filename)
 
         head, tail = os.path.split(filename)
 

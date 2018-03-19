@@ -278,7 +278,7 @@ class TestDocumentation(object):
         subset = StackAndSubsetModule(name_in="stacking_subset",
                                       image_in_tag="im_arr_aligned",
                                       image_out_tag="im_arr_stacked",
-                                      random_subset=None,
+                                      random=None,
                                       stacking=4)
 
         self.pipeline.add_module(subset)
@@ -339,8 +339,8 @@ class TestDocumentation(object):
         assert np.allclose(data[0, 10, 10], 2.5572805947810986e-05, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["res_mean"]
-        assert np.allclose(data[38, 22], 0.00014998109476361662, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -2.3760203934491141e-07, rtol=limit, atol=0.)
+        assert np.allclose(data[38, 22], 0.00018312083384477404, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -1.598348168584834e-07, rtol=limit, atol=0.)
         assert data.shape == (44, 44)
 
         storage.close_connection()
