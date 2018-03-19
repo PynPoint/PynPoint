@@ -215,9 +215,9 @@ class SubtractImagesModule(ProcessingModule):
 
         images1 = self.m_image_in1_port.get_all()
         images2 = self.m_image_in2_port.get_all()
-        
-        if self.m_image_in1_port.get_shape()!=self.m_image_in2_port.get_shape():
-            raise ValueError("The dimensions of the two tags have to be equal")
+
+        if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
+            raise ValueError("The shape of the two tags have to be equal.")
 
         self.m_image_out_port.set_all(images1-images2)
 
