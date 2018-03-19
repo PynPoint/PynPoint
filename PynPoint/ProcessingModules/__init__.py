@@ -16,3 +16,4 @@ from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
 from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule, FalsePositiveModule, MCMCsamplingModule
 from DetectionLimits import ContrastModule
+from SDI import SDIPreparationModule
