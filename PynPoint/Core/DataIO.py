@@ -155,7 +155,7 @@ class ConfigPort(Port):
         
         .. code-block:: python
 
-            num_images_in_memory = self._m_config_port.get_attribute("MEMORY")
+            memory = self._m_config_port.get_attribute("MEMORY")
 
         :param tag: The tag of the port. The port can be used in order to get data from the dataset
                     with the key `config`.

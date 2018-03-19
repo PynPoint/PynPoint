@@ -22,7 +22,8 @@ def setup_module():
     basis = np.stack((basis1, basis2, basis3, basis4), axis=0)
 
     f = h5py.File(os.path.dirname(__file__) + '/test_data/test_data_PynPoint_conv.hdf5', 'w')
-    f.create_dataset("basis_arr", data=basis)
+    dset = f.create_dataset("basis_arr", data=basis)
+    dset.attrs['PIXSCALE'] = 0.01
     f.create_dataset("header_basis_arr/PARANG", data=np.array([1., 1., 1., 1.]))
     f.close()
 

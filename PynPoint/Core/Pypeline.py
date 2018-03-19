@@ -175,7 +175,7 @@ class Pypeline(object):
 
             if config.has_option('settings', 'MEMORY'):
                 if config.get('settings', 'MEMORY') == "None":
-                    config_dict['MEMORY'] = int(-1)
+                    config_dict['MEMORY'] = int(0)
                 else:
                     config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
 

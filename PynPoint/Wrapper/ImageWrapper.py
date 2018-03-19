@@ -60,9 +60,9 @@ class ImageWrapper(BasePynpointWrapper):
         :return: an image of the PSF model
         """
         im_temp = self.psf_im_arr[ind, ]
-        if self.cent_remove is True:
+        if self.cent_size is not None:
             if full is True:
-                im_temp = im_temp + self.im_arr_mask[ind,]
+                im_temp = im_temp
             elif full is False:
                 im_temp = im_temp * self.cent_mask
         return im_temp
