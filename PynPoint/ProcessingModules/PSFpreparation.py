@@ -397,7 +397,7 @@ class SortParangModule(ProcessingModule):
 
 
 class SDIPreparationModule(ProcessingModule):
-    """
+   """
    Module for preparing continuum frames for SDI subtraction.
    """
 
@@ -409,7 +409,7 @@ class SDIPreparationModule(ProcessingModule):
                  name_in="SDI_preparation",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_SDI"):
-        """
+       """
        Constructor of SDIPreparationModule.
 
        :param line_wvl: central wavelength of the line filter.
@@ -444,7 +444,7 @@ class SDIPreparationModule(ProcessingModule):
         self.m_cnt_out_tag = image_out_tag
 
     def run(self):
-        """
+       """
        Run method of the module. Normalizes for different filter widths, upscales the images
        to align PSF patterns and crops them to be of the same dimension as before.
 
