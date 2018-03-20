@@ -172,6 +172,73 @@ class ScaleImagesModule(ProcessingModule):
         self.m_image_out_port.close_database()
 
 
+
+
+class StretchImagesModule(ProcessingModule):
+    """
+    Module for rescaling of an image.
+    """
+
+    def __init__(self,
+                 stretch_factor,
+                 name_in="stretching",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_stretched"):
+        """
+        Constructor of StretchImagesModule.
+
+        :param scaling_flux: Scaling factor for increase or decrease the total image flux.
+        :type scaling_flux: float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output. Should be
+                              different from *image_in_tag*.
+        :type image_out_tag: str
+
+        :return: None
+        """
+
+        super(StretchImagesModule, self).__init__(name_in=name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_stretch_factor = stretch_factor
+
+    def run(self):
+        """
+        Run method of the module. Stretches an image with a with the factor given.
+
+        :return: None
+        """
+
+        def image_stretching(image_in,
+                             stretch_factor):
+
+            sum_before = np.sum(image_in)
+            tmp_image = zoom(np.asarray(image_in, dtype=np.float64),
+                             zoom=stretch_factor,
+                             order=5,
+                             mode="reflect")
+            sum_after = np.sum(tmp_image)
+
+            return tmp_image * (sum_before / sum_after)
+
+        self.apply_function_to_images(image_stretching,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      "Running StretchImagesModule...",
+                                      func_args=(self.m_stretch_factor,))
+
+        self.m_image_out_port.add_history_information("Images stretched", "factor  = "+str(self.m_stretch_factor))
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_database()
+
+
+
+
 class AddLinesModule(ProcessingModule):
     """
     Module to add lines of pixels to increase the size of an image.
