@@ -398,7 +398,7 @@ class SortParangModule(ProcessingModule):
 
 class SDIPreparationModule(ProcessingModule):
     """
-        Module for preparing continuum for subtraction.
+        Module for preparing continuum frames for SDI subtraction.
         """
 
     def __init__(self,
@@ -407,10 +407,10 @@ class SDIPreparationModule(ProcessingModule):
                  line_width,
                  cnt_width,
                  name_in="SDI_preparation",
-                 image_in_tag="im_arr_cnt",
-                 image_out_tag="im_arr_cnt2"):
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_SDI"):
         """
-            Constructor of RemoveFramesModule.
+            Constructor of SDIPreparationModule.
 
             :param line_wvl: central wavelength of the line filter.
             :type line_wvl: float
@@ -434,7 +434,6 @@ class SDIPreparationModule(ProcessingModule):
         super(SDIPreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_line_wvl = line_wvl
