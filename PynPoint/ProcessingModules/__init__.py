@@ -11,7 +11,7 @@ from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteri
                           ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule
 from PSFpreparation import PSFpreparationModule, AngleCalculationModule, SortParangModule, \
-                          SDIPreparationModule
+                          SDIpreparationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
