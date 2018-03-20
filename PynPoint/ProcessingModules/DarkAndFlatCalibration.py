@@ -2,11 +2,13 @@
 Modules for dark frame and flat field calibrations.
 """
 
+import sys
 import warnings
 
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.Progress import progress
 
 
 def _master_frame(data,
@@ -158,7 +160,7 @@ class FlatCalibrationModule(ProcessingModule):
         # normalization
         master /= np.median(master)
 
-        if not np.allclose(np.median(master), 1., rtol=1e-6):
+        if not np.allclose(np.median(master), 1., rtol=1e-6, atol=0.):
             raise ValueError("Median of the master flat should be equal to unity (value=%s)."
                              % np.median(master))
 
@@ -213,13 +215,36 @@ class SubtractImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
-        images1 = self.m_image_in1_port.get_all()
-        images2 = self.m_image_in2_port.get_all()
-
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
-            raise ValueError("The shape of the two tags have to be equal.")
+            raise ValueError("The shape of the two input tags have to be equal.")
 
-        self.m_image_out_port.set_all(images1-images2)
+        memory = self._m_config_port.get_attribute("MEMORY")
+
+        nimages = self.m_image_in1_port.get_shape()[0]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running SubtractImagesModule...")
+
+            images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
+            images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.set_all(images1-images2)
+
+        sys.stdout.write("Running SubtractImagesModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.add_history_information("Images subtracted", "")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
