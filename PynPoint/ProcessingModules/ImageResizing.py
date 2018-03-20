@@ -2,14 +2,12 @@
 Modules with simple pre-processing tools.
 """
 
-import sys
 import warnings
 
 import numpy as np
 
 from skimage.transform import rescale
 
-from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 
 
@@ -110,16 +108,19 @@ class ScaleImagesModule(ProcessingModule):
     """
 
     def __init__(self,
-                 scaling,
+                 scaling_size,
+                 scaling_flux,
                  name_in="scaling",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_scaled"):
         """
         Constructor of ScaleImagesModule.
 
-        :param scaling: Scaling factor for upsampling (*scaling_factor* > 1) and downsampling
+        :param scaling_size: Scaling factor for upsampling (*scaling_factor* > 1) and downsampling
                         (0 < *scaling_factor* < 1).
-        :type scaling: float
+        :type scaling_size: float
+        :param scaling_flux: Scaling factor for increase or decrease the total image flux.
+        :type scaling_flux: float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -136,7 +137,8 @@ class ScaleImagesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_scaling = scaling
+        self.m_scaling_size = scaling_size
+        self.m_scaling_flux = scaling_flux
 
     def run(self):
         """
@@ -149,26 +151,27 @@ class ScaleImagesModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         def image_scaling(image_in,
-                          scaling):
+                          scaling_size,
+                          scaling_flux):
 
             sum_before = np.sum(image_in)
             tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
-                                scale=(scaling, scaling),
+                                scale=(scaling_size, scaling_size),
                                 order=5,
                                 mode="reflect")
 
             sum_after = np.sum(tmp_image)
-            return tmp_image * (sum_before / sum_after)
+            return tmp_image * (sum_before / sum_after) * scaling_flux
 
         self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ScaleImagesModule...",
-                                      func_args=(self.m_scaling,))
+                                      func_args=(self.m_scaling_size,self.m_scaling_flux,))
 
-        self.m_image_out_port.add_history_information("Images scaled", str(self.m_scaling))
+        self.m_image_out_port.add_history_information("Images scaled", "size  = "+str(self.m_scaling_size)+", flux = "+str(self.m_scaling_flux))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_scaling)
+        self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_scaling_size)
         self.m_image_out_port.close_database()
 
 
