@@ -396,30 +396,26 @@ class SortParangModule(ProcessingModule):
 
 
 
-class SDIPreparationModule(ProcessingModule):
+class SDIpreparationModule(ProcessingModule):
     """
     Module for preparing continuum frames for SDI subtraction.
     """
 
     def __init__(self,
-                 line_wvl,
-                 cnt_wvl,
-                 line_width,
-                 cnt_width,
+                 wavelength,
+                 width,
                  name_in="SDI_preparation",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_SDI"):
         """
-        Constructor of SDIPreparationModule.
+        Constructor of SDIpreparationModule.
 
-        :param line_wvl: central wavelength of the line filter.
-        :type line_wvl: float
-        :param cnt_wvl: central wavelength of the continuum filter.
-        :type cnt_wvl: float
-        :param line_width: equivalent width of the line filter.
-        :type line_width: float
-        :param cnt_width: equivalent width of the continuum filter.
-        :type cnt_width: float
+        :param wavelength: Tuple with the central wavelengths of the line and continuum filter,
+                           (line, continuum), in arbitrary but identical units.
+        :type wavelength: tuple, float
+        :param width: Tuple with the equivalent widths of the line and continuum filter,
+                      (line, continuum), in arbitrary but identical units.
+        :type width: tuple, float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -431,22 +427,23 @@ class SDIPreparationModule(ProcessingModule):
         :return: None
         """
 
-        super(SDIPreparationModule, self).__init__(name_in)
+        super(SDIpreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_line_wvl = line_wvl
-        self.m_cnt_wvl = cnt_wvl
-        self.m_line_width = line_width
-        self.m_cnt_width = cnt_width
+        self.m_line_wvl = wavelength[0]
+        self.m_cnt_wvl = wavelength[1]
+        self.m_line_width = width[0]
+        self.m_cnt_width = width[1]
         self.m_image_in_tag = image_in_tag
         self.m_cnt_out_tag = image_out_tag
 
     def run(self):
         """
-        Run method of the module. Normalizes for different filter widths, upscales the images
-        to align PSF patterns and crops them to be of the same dimension as before.
+        Run method of the module. Normalizes the images for the different filter widths,
+        upscales the images, and crops the images to the initial image shape in order to
+        align the PSF patterns.
 
         :return: None
         """
@@ -456,29 +453,32 @@ class SDIPreparationModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        width_factor = self.m_line_width/self.m_cnt_width
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
+        width_factor = self.m_line_width/self.m_cnt_width
+
         im_size = self.m_image_in_port.get_shape()[1]
 
-        sys.stdout.write("Starting SDI preparation... \n")
+        sys.stdout.write("Running SDIpreparationModule...\n")
+        sys.stdout.flush()
 
-        scaling = ScaleImagesModule(scaling_size=wvl_factor,
-                                    scaling_flux=width_factor,
+        scaling = ScaleImagesModule(scaling=(wvl_factor, width_factor),
                                     name_in="scaling",
                                     image_in_tag=self.m_image_in_tag,
-                                    image_out_tag="im_arr_scaled")
+                                    image_out_tag="sdi_scaled")
 
         scaling.connect_database(self._m_data_base)
         scaling.run()
 
-        crop = CropImagesModule(im_size*pixscale,
+        crop = CropImagesModule(size=im_size*pixscale,
                                 center=None,
                                 name_in="crop",
-                                image_in_tag="im_arr_scaled",
+                                image_in_tag="sdi_scaled",
                                 image_out_tag=self.m_cnt_out_tag)
 
         crop.connect_database(self._m_data_base)
         crop.run()
-        sys.stdout.write("SDI preparation finished... \n")
+
+        sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_in_port.close_database()
