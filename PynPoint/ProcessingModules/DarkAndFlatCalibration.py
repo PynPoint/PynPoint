@@ -241,7 +241,7 @@ class SubtractImagesModule(ProcessingModule):
             images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
             images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
 
-            self.m_image_out_port.set_all(images1-images2)
+            self.m_image_out_port.append(images1-images2)
 
         sys.stdout.write("Running SubtractImagesModule... [DONE]\n")
         sys.stdout.flush()
