@@ -10,7 +10,8 @@ from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, Derotat
 from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteringModule, \
                           ShiftForCenteringModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule
-from PSFpreparation import PSFpreparationModule, AngleCalculationModule, SortParangModule
+from PSFpreparation import PSFpreparationModule, AngleCalculationModule, SortParangModule, \
+                          SDIpreparationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
 from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
