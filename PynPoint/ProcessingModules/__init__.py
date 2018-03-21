@@ -14,6 +14,6 @@ from PSFpreparation import PSFpreparationModule, AngleCalculationModule, SortPar
                           SDIpreparationModule
 from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
                           WaveletTimeDenoisingModule, TimeNormalizationModule
-from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
+from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule, StellarPhotometryModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule, FalsePositiveModule, MCMCsamplingModule
 from DetectionLimits import ContrastModule
