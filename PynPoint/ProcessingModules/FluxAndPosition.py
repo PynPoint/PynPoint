@@ -484,11 +484,7 @@ class SimplexMinimizationModule(ProcessingModule):
         ndim_image = np.size(self.m_image_in_port.get_shape())
         ndim_psf = np.size(self.m_psf_in_port.get_shape())
 
-        if ndim_image == 3:
-            im_size = (self.m_image_in_port.get_shape()[1],
-                       self.m_image_in_port.get_shape()[2])
-
-        else:
+        if ndim_image != 3:
             raise ValueError("The image_in_tag should contain a cube of images.")
 
         if ndim_psf == 2:
@@ -1118,3 +1114,79 @@ class MCMCsamplingModule(ProcessingModule):
 
         except emcee.autocorr.AutocorrError:
             print "The chain is too short to reliably estimate the autocorrelation time. [WARNING]"
+
+
+class AperturePhotometryModule(ProcessingModule):
+    """
+    Module for calculating the counts within a circular region.
+    """
+
+    def __init__(self,
+                 radius=0.1,
+                 position=None,
+                 name_in="aperture_photometry",
+                 image_in_tag="im_arr",
+                 phot_out_tag="photometry"):
+        """
+        Constructor of AperturePhotometryModule.
+
+        :param radius: Radius (arcsec) of the circular aperture.
+        :type radius: int
+        :param position: Center position (pix) of the aperture, (x, y). The center of the image
+                         will be used if set to None.
+        :type position: tuple, float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param phot_out_tag: Tag of the database entry with the photometry values that are written
+                             as output.
+        :type phot_out_tag: str
+
+        :return: None
+        """
+
+        super(AperturePhotometryModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_phot_out_port = self.add_output_port(phot_out_tag)
+
+        self.m_radius = radius
+        self.m_position = position
+
+    def run(self):
+        """
+        Run method of the module. Calculates the counts for each frames and saves the values
+        in the database.
+
+        :return: None
+        """
+
+        def photometry(image, aperture):
+            photo = aperture_photometry(image, aperture, method='exact')
+            return photo['aperture_sum']
+
+        self.m_phot_out_port.del_all_data()
+        self.m_phot_out_port.del_all_attributes()
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        self.m_radius /= pixscale
+
+        size = self.m_image_in_port.get_shape()[1]
+
+        if self.m_position is None:
+            self.m_position = (size/2., size/2.)
+
+        # Position in CircularAperture is defined as (x, y)
+        aperture = CircularAperture(self.m_position, self.m_radius)
+
+        self.apply_function_to_images(photometry,
+                                      self.m_image_in_port,
+                                      self.m_phot_out_port,
+                                      "Running AperturePhotometryModule...",
+                                      func_args=(aperture))
+
+        self.m_phot_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_phot_out_port.add_history_information("Aperture photometry",
+                                                     "radius = "+str(self.m_radius*pixscale))
+        self.m_phot_out_port.close_database()
