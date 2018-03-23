@@ -427,3 +427,66 @@ class CombineTagsModule(ProcessingModule):
                                                       str(np.size(self.m_image_in_tags)))
 
         self.m_image_out_port.close_database()
+
+
+
+class MeanStackModule(ProcessingModule):
+    """
+     Module for calculating the mean of the whole stack associated with a database tag.
+     """
+
+    def __init__(self,
+                 name_in="mean_cube",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_mean"):
+        """
+          Constructor of MeanStackModule.
+
+          :param name_in: Unique name of the module instance.
+          :type name_in: str
+          :param image_in_tag: Tag of the database entry that is read as input.
+          :type image_in_tag: str
+          :param image_out_tag: Tag of the database entry with the mean collapsed images that are
+                                written as output. Should be different from *image_in_tag*.
+          :type image_out_tag: str
+
+          :return: None
+          """
+
+        super(MeanStackModule, self).__init__(name_in=name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+    def run(self):
+        """
+          Run method of the module. Calculates the mean of the stack, and saves the data and
+          attributes.
+
+          :return: None
+          """
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        sys.stdout.write("Running MeanStackModule...\n")
+        im_arr = self.m_image_in_port.get_all()
+
+        mean_frame = np.mean(im_arr, axis=0)
+
+        self.m_image_out_port.set_all(mean_frame, data_dim=2)
+
+        sys.stdout.write("Running MeanStackModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if "NFRAMES" in non_static:
+            self.m_image_out_port.del_attribute("NFRAMES")
+        if "INDEX" in non_static:
+            self.m_image_out_port.del_attribute("INDEX")
+            self.m_image_out_port.close_database()

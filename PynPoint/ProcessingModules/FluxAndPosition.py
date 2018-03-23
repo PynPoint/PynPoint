@@ -1184,7 +1184,7 @@ class AperturePhotometryModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       "Running AperturePhotometryModule...",
-                                      func_args=(aperture))
+                                      func_args=(aperture,))
 
         self.m_phot_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_phot_out_port.add_history_information("Aperture photometry",
