@@ -228,13 +228,13 @@ class AddLinesModule(ProcessingModule):
 
         if any(np.asarray(self.m_lines) < 0.):
             raise ValueError("The lines argument should contain values equal to or larger than "
-                     "zero.")
+                             "zero.")
 
-        if np.size(shape_in) == 3:
+        if shape_in.ndim == 3:
             shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        if np.size(shape_in) == 2:
+        elif shape_in.ndim == 2:
             shape_out = (shape_in[0]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
