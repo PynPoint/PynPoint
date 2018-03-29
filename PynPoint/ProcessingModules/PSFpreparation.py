@@ -7,6 +7,7 @@ from __future__ import division
 import sys
 import warnings
 
+import ephem
 import numpy as np
 
 from scipy import ndimage
@@ -211,17 +212,17 @@ class PSFpreparationModule(ProcessingModule):
             sys.stdout.flush()
 
 
-class AngleCalculationModule(ProcessingModule):
+class AngleInterpolationModule(ProcessingModule):
     """
     Module for calculating the parallactic angle values by interpolating between the begin and end
     value of a data cube.
     """
 
     def __init__(self,
-                 name_in="angle_calculation",
+                 name_in="angle_interpolation",
                  data_tag="im_arr"):
         """
-        Constructor of AngleCalculationModule.
+        Constructor of AngleInterpolationModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -232,7 +233,7 @@ class AngleCalculationModule(ProcessingModule):
         :return: None
         """
 
-        super(AngleCalculationModule, self).__init__(name_in)
+        super(AngleInterpolationModule, self).__init__(name_in)
 
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
@@ -394,6 +395,198 @@ class SortParangModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Images sorted", "parang")
         self.m_image_out_port.close_database()
 
+
+class AngleCalculationModule(ProcessingModule):
+    """
+    Module for calculating the parallactic angles. The start time of the observation is taken and
+    multiples of the exposure time are added to derive the parallactic angle of each frame inside
+    the cube. Instrument specific overheads are included.
+    """
+
+    def __init__(self,
+                 instrument="NACO",
+                 name_in="angle_calculation",
+                 data_tag="im_arr"):
+        """
+        Constructor of AngleCalculationModule.
+
+        :param instrument: Instrument name (*NACO*, *SPHERE/IRDIS*, or *SPHERE/IFS*)
+        :type instrument: str
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param data_tag: Tag of the database entry for which the parallactic angles are written as
+                         attributes.
+        :type data_tag: str
+
+        :return: None
+        """
+
+        super(AngleCalculationModule, self).__init__(name_in)
+
+        # Parameters
+        self.m_instrument = instrument
+
+        # Set parameters according to choice of instrument
+        if self.m_instrument == "NACO":
+
+            # pupil offset in degrees
+            self.m_pupil_offset = 0.            # No offset here
+
+            # no overheads in cube mode, since cube is read out after all individual exposures
+            # see NACO manual page 62 (v102)
+            self.m_O_START = 0.
+            self.m_DIT_DELAY = 0.
+            self.m_ROT = 0.
+
+            # rotator offset in degrees
+            self.m_rot_offset = 89.44           # According to NACO manual page 65 (v102)
+
+        elif self.m_instrument == "SPHERE/IRDIS":
+
+            # pupil offset in degrees
+            self.m_pupil_offset = -135.99       # According to SPHERE manual page 64 (v102)
+
+            # overheads in cube mode (several NDITS) in hours
+            self.m_O_START = 0.3 / 3600.        # According to SPHERE manual page 90/91 (v102)
+            self.m_DIT_DELAY = 0.1 / 3600.      # According to SPHERE manual page 90/91 (v102)
+            self.m_ROT = 0.838 / 3600.          # According to SPHERE manual page 90/91 (v102)
+
+            # rotator offset in degrees
+            self.m_rot_offset = 0.              # no offset here
+
+        elif self.m_instrument == "SPHERE/IFS":
+
+            # pupil offset in degrees
+            self.m_pupil_offset = -135.99 - 100.48  # According to SPHERE manual page 64 (v102)
+
+            # overheads in cube mode (several NDITS) in hours
+            self.m_O_START = 0.3 / 3600.            # According to SPHERE manual page 90/91 (v102)
+            self.m_DIT_DELAY = 0.2 / 3600.          # According to SPHERE manual page 90/91 (v102)
+            self.m_ROT = 1.65 / 3600.               # According to SPHERE manual page 90/91 (v102)
+
+            # rotator offset in degrees
+            self.m_rot_offset = 0.                  # no offset here
+
+        else:
+            raise ValueError("The instrument argument should be set to either 'NACO', "
+                             "'SPHERE/IRDIS', or 'SPHERE/IFS'.")
+
+        self.m_data_in_port = self.add_input_port(data_tag)
+        self.m_data_out_port = self.add_output_port(data_tag)
+
+    def run(self):
+        """
+        Run method of the module. Calculates the parallactic angles from the position of the object
+        on the sky and the telescope location on earth. The start of the observation is used to
+        extrapolate for the observation time of each individual image of a data cube. The values
+        are written as PARANG attributes to *data_tag*.
+
+        :return: None
+        """
+
+        # Load cube sizes
+        steps = self.m_data_in_port.get_attribute("NFRAMES")
+        ndit = self.m_data_in_port.get_attribute("NDIT")
+
+        if False in ndit == steps:
+            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
+                          "angles are calculated with a linear interpolation by using NAXIS3 "
+                          "steps. A frame selection should be applied after the parallactic "
+                          "angles are calculated.")
+
+        if self.m_instrument == "SPHERE/IFS":
+            warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
+
+        # Load exposure time [hours]
+        exptime = self.m_data_in_port.get_attribute("DIT")/3600.
+
+        # Load telescope location
+        tel_lat = self.m_data_in_port.get_attribute("LATITUDE")
+        tel_lon = self.m_data_in_port.get_attribute("LONGITUDE")
+
+        # Load target position [deg]
+        ra = self.m_data_in_port.get_attribute("RA")
+        dec = self.m_data_in_port.get_attribute("DEC")
+
+        ra = np.mean(ra)
+        dec = np.mean(dec)
+
+        # Load start times of exposures
+        obs_dates = self.m_data_in_port.get_attribute("DATE")
+
+        # Load pupil positions during observations
+        if self.m_instrument == "NACO":
+            pupil_pos = self.m_data_in_port.get_attribute("PUPIL")
+
+        elif self.m_instrument == "SPHERE/IRDIS":
+            pupil_pos = None
+
+        elif self.m_instrument == "SPHERE/IFS":
+            pupil_pos = None
+
+        new_angles = np.array([])
+        pupil_pos_arr = np.array([])
+
+        # Calculate parallactic angles for each cube
+        for i, tmp_steps in enumerate(steps):
+
+            # Create an ephem observer class to calculate local sidereal time
+            obs = ephem.Observer()
+
+            obs.lat = ephem.degrees(str(tel_lat))
+            obs.long = ephem.degrees(str(tel_lon))
+
+            obs.date = obs_dates[i].replace('T', ' ')
+
+            # Get sideral time in hours
+            sid_time = str(obs.sidereal_time())
+
+            # Get hours minutes and seconds
+            h, m, s = sid_time.split(":")
+
+            sid_time = (float(h) + (float(m) / 60.) + (float(s) / 3600.))
+
+            # Extrapolate sideral times from start time of the cube for each frame of it
+            sid_time_arr = np.linspace(sid_time+self.m_O_START,
+                                       (sid_time+self.m_O_START) + (exptime+self.m_DIT_DELAY+ \
+                                                 self.m_ROT)*(tmp_steps-1),
+                                       tmp_steps)
+
+            # Convert to degrees
+            sid_time_arr_deg = sid_time_arr * 15.
+
+            # Calculate hour angle in degrees
+            hour_angle = sid_time_arr_deg - ra
+
+            # Conversion to radians:
+            hour_angle_rad = np.deg2rad(hour_angle)
+            dec_rad = np.deg2rad(dec)
+            lat_rad = np.deg2rad(tel_lat)
+
+            p_angle = np.arctan2(np.sin(hour_angle_rad),
+                                 (np.cos(dec_rad)*np.tan(lat_rad) - \
+                                  np.sin(dec_rad)*np.cos(hour_angle_rad)))
+
+            new_angles = np.append(new_angles, np.rad2deg(p_angle))
+            pupil_pos_arr = np.append(pupil_pos_arr, np.ones(tmp_steps)*pupil_pos[i])
+
+        # Correct for rotator (SPHERE) or pupil offset (NACO)
+        if self.m_instrument == "NACO":
+            # See NACO manual page 65 (v102)
+            new_angles_corr = new_angles - (90. + (self.m_rot_offset-pupil_pos_arr))
+
+        elif self.m_instrument == "SPHERE/IRDIS":
+            # See SPHERE manual page 64 (v102)
+            new_angles_corr = new_angles - self.m_pupil_offset
+
+        elif self.m_instrument == "SPHERE/IFS":
+            # See SPHERE manual page 64 (v102)
+            new_angles_corr = new_angles - self.m_pupil_offset
+
+        self.m_data_out_port.add_attribute("PARANG", new_angles_corr, static=False)
+
+        sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
+        sys.stdout.flush()
 
 
 class SDIpreparationModule(ProcessingModule):
