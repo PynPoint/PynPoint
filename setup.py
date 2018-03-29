@@ -32,7 +32,8 @@ requirements = ['configparser',
                 'statsmodels',
                 'PyWavelets',
                 'matplotlib',
-                'emcee']
+                'emcee',
+                'ephem']
 
 setup(
     name='PynPoint',
