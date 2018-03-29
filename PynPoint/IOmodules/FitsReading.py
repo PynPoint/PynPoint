@@ -65,7 +65,10 @@ class FitsReadingModule(ReadingModule):
         self.m_image_tag = image_tag
         self.m_overwrite = overwrite
 
-        self.m_static = ['INSTRUMENT']
+        self.m_static = ['INSTRUMENT',
+                         'LATITUDE',
+                         'LONGITUDE',
+                         'DIT']
 
         self.m_non_static = ['NFRAMES',
                              'EXP_NO',
@@ -74,7 +77,11 @@ class FitsReadingModule(ReadingModule):
                              'PARANG_END',
                              'PARANG',
                              'DITHER_X',
-                             'DITHER_Y']
+                             'DITHER_Y',
+                             'PUPIL',
+                             'DATE',
+                             'RA',
+                             'DEC']
 
         self.m_attr_check = np.ones(len(self.m_non_static), dtype=bool)
 
