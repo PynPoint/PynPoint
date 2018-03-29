@@ -131,6 +131,7 @@ class Pypeline(object):
         config_dict = {'INSTRUMENT': 'INSTRUME',
                        'NFRAMES': 'NAXIS3',
                        'EXP_NO': 'ESO DET EXP NO',
+                       'DIT': 'ESO DET DIT',
                        'NDIT': 'ESO DET NDIT',
                        'PARANG_START': 'ESO ADA POSANG',
                        'PARANG_END': 'ESO ADA POSANG END',
@@ -142,7 +143,6 @@ class Pypeline(object):
                        'LONGITUDE': 'ESO TEL GEOLON',
                        'RA': 'RA',
                        'DEC': 'DEC',
-                       'DIT': 'ESO DET DIT',
                        'PIXSCALE': 0.027,
                        'MEMORY': 1000,
                        'CPU': max_cpu_count}
@@ -161,6 +161,9 @@ class Pypeline(object):
 
             if config.has_option('header', 'EXP_NO'):
                 config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
+
+            if config.has_option('header', 'DIT'):
+                config_dict['DIT'] = str(config.get('header', 'DIT'))
 
             if config.has_option('header', 'NDIT'):
                 config_dict['NDIT'] = str(config.get('header', 'NDIT'))
@@ -198,9 +201,6 @@ class Pypeline(object):
             if config.has_option('header', 'DEC'):
                 config_dict['DEC'] = str(config.get('header', 'DEC'))
 
-            if config.has_option('header', 'DIT'):
-                config_dict['DIT'] = str(config.get('header', 'DIT'))
-
             if config.has_option('settings', 'MEMORY'):
                 if config.get('settings', 'MEMORY') == "None":
                     config_dict['MEMORY'] = int(0)
@@ -219,6 +219,7 @@ class Pypeline(object):
             file_obj.write('INSTRUMENT: INSTRUME\n')
             file_obj.write('NFRAMES: NAXIS3\n')
             file_obj.write('EXP_NO: ESO DET EXP NO\n')
+            file_obj.write('DIT: ESO DET DIT\n')
             file_obj.write('NDIT: ESO DET NDIT\n')
             file_obj.write('PARANG_START: ESO ADA POSANG\n')
             file_obj.write('PARANG_END: ESO ADA POSANG END\n')
@@ -229,8 +230,7 @@ class Pypeline(object):
             file_obj.write('LATITUDE: ESO TEL GEOLAT\n')
             file_obj.write('LONGITUDE: ESO TEL GEOLON\n')
             file_obj.write('RA: RA\n')
-            file_obj.write('DEC: DEC\n')
-            file_obj.write('DIT: ESO DET DIT\n\n')
+            file_obj.write('DEC: DEC\n\n')
             file_obj.write('[settings]\n\n')
             file_obj.write('PIXSCALE: 0.027\n')
             file_obj.write('MEMORY: 1000\n')
