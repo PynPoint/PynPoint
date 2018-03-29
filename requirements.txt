@@ -8,8 +8,7 @@ photutils
 scikit-image
 scikit-learn
 opencv-python
-matplotlib
 statsmodels
 PyWavelets
-mlpy
+matplotlib
 emcee
