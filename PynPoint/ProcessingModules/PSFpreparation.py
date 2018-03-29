@@ -398,9 +398,9 @@ class SortParangModule(ProcessingModule):
 
 class AngleCalculationModule(ProcessingModule):
     """
-    Module for calculating the parallactic angle values. The start time of the observation is
-    taken and multiples of the exposure time are added to receive the parallactic angle of each
-    frame inside the cube. Instrument specific overheads are added.
+    Module for calculating the parallactic angles. The start time of the observation is taken and
+    multiples of the exposure time are added to derive the parallactic angle of each frame inside
+    the cube. Instrument specific overheads are included.
     """
 
     def __init__(self,
@@ -410,7 +410,7 @@ class AngleCalculationModule(ProcessingModule):
         """
         Constructor of AngleCalculationModule.
 
-        :param instrument: Instrument name (*NACO* or *SPHERE/IRDIS* or *SPHERE/IFS*)
+        :param instrument: Instrument name (*NACO*, *SPHERE/IRDIS*, or *SPHERE/IFS*)
         :type instrument: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -476,10 +476,10 @@ class AngleCalculationModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Caluclates the parallactic angle from the position of the object
-        in sky and the telescope on earth The values are written. The start of the observation is
-        used to extrapolate for the observation time of each individual image of a datacube. The
-        values are written as attributes to *data_tag*.
+        Run method of the module. Calculates the parallactic angles from the position of the object
+        on the sky and the telescope location on earth. The start of the observation is used to
+        extrapolate for the observation time of each individual image of a data cube. The values
+        are written as PARANG attributes to *data_tag*.
 
         :return: None
         """
