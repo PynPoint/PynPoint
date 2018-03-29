@@ -495,26 +495,26 @@ class AngleCalculationModule(ProcessingModule):
                           "angles are calculated.")
 
         if self.m_instrument == "SPHERE/IFS":
-            warnings.warn("AngleCalculationModule has not been tested yet for SPHERE/IFS data.")
+            warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
 
-        # Load exposure time in hours
+        # Load exposure time [hours]
         exptime = self.m_data_in_port.get_attribute("DIT")/3600.
 
-        # load telescope location
+        # Load telescope location
         tel_lat = self.m_data_in_port.get_attribute("LATITUDE")
         tel_lon = self.m_data_in_port.get_attribute("LONGITUDE")
 
-        # load target position
-        ra = self.m_data_in_port.get_attribute("RA")  # input in degrees
-        dec = self.m_data_in_port.get_attribute("DEC")  # input in degrees
+        # Load target position [deg]
+        ra = self.m_data_in_port.get_attribute("RA")
+        dec = self.m_data_in_port.get_attribute("DEC")
 
         ra = np.mean(ra)
         dec = np.mean(dec)
 
-        # load start times of exposures
+        # Load start times of exposures
         obs_dates = self.m_data_in_port.get_attribute("DATE")
 
-        # load pupil positions during observations (only for NACO data)
+        # Load pupil positions during observations
         if self.m_instrument == "NACO":
             pupil_pos = self.m_data_in_port.get_attribute("PUPIL")
 
@@ -530,7 +530,7 @@ class AngleCalculationModule(ProcessingModule):
         # Calculate parallactic angles for each cube
         for i, tmp_steps in enumerate(steps):
 
-            # create an ephem observer class to calculate local sidereal time:
+            # Create an ephem observer class to calculate local sidereal time
             obs = ephem.Observer()
 
             obs.lat = ephem.degrees(str(tel_lat))
@@ -558,7 +558,7 @@ class AngleCalculationModule(ProcessingModule):
             # Calculate hour angle in degrees
             hour_angle = sid_time_arr_deg - ra
 
-            # conversion to radians:
+            # Conversion to radians:
             hour_angle_rad = np.deg2rad(hour_angle)
             dec_rad = np.deg2rad(dec)
             lat_rad = np.deg2rad(tel_lat)
@@ -570,29 +570,20 @@ class AngleCalculationModule(ProcessingModule):
             new_angles = np.append(new_angles, np.rad2deg(p_angle))
             pupil_pos_arr = np.append(pupil_pos_arr, np.ones(tmp_steps)*pupil_pos[i])
 
-        # correct for rotator (SPHERE) or pupil offset (NACO)
-        # see SPHERE manual page 64 (v102)
-        # see NACO manual page 65 (v102)
+        # Correct for rotator (SPHERE) or pupil offset (NACO)
         if self.m_instrument == "NACO":
+            # See NACO manual page 65 (v102)
             new_angles_corr = new_angles - (90. + (self.m_rot_offset-pupil_pos_arr))
 
         elif self.m_instrument == "SPHERE/IRDIS":
+            # See SPHERE manual page 64 (v102)
             new_angles_corr = new_angles - self.m_pupil_offset
 
         elif self.m_instrument == "SPHERE/IFS":
+            # See SPHERE manual page 64 (v102)
             new_angles_corr = new_angles - self.m_pupil_offset
 
-        self.m_data_out_port.add_attribute("PARANG",
-                                           new_angles_corr,
-                                           static=False)
-
-        # For correct compass (north up, east left) in DS9
-        # self.m_data_out_port.add_attribute("CTYPE1", 'RA---TAN', static=True)
-        # self.m_data_out_port.add_attribute("CTYPE2", 'DEC--TAN', static=True)
-        # self.m_data_out_port.add_attribute("CD1_1",-7.55278e-06,static=True)
-        # self.m_data_out_port.add_attribute("CD1_2",0.00000e+00,static=True)
-        # self.m_data_out_port.add_attribute("CD2_1",0.00000e+00,static=True)
-        # self.m_data_out_port.add_attribute("CD2_2",7.55278e-06,static=True)
+        self.m_data_out_port.add_attribute("PARANG", new_angles_corr, static=False)
 
         sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
         sys.stdout.flush()
