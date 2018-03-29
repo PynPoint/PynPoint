@@ -9,6 +9,9 @@ PynPoint
 .. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master
     :target: https://travis-ci.org/PynPoint/PynPoint
 
+.. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
+    :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
+
 .. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
     :target: https://pypi.python.org/pypi/PynPoint-exoplanet
 
@@ -28,7 +31,7 @@ PynPoint is under continuous development and the latest implementations can be p
 Documentation
 -------------
 
-Documentation can be found at `pythonhosted.org/PynPoint-exoplanet <http://pythonhosted.org/PynPoint-exoplanet/>`_, including installation instructions, details on the architecture of PynPoint, end-to-end examples for data obtained with dithering and nodding, and a description of the various processing modules and parameters.
+Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, end-to-end examples for data obtained with dithering and nodding, and a description of the various processing modules and parameters.
 
 Attribution
 -----------
