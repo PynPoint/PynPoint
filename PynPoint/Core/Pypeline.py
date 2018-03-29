@@ -131,11 +131,18 @@ class Pypeline(object):
         config_dict = {'INSTRUMENT': 'INSTRUME',
                        'NFRAMES': 'NAXIS3',
                        'EXP_NO': 'ESO DET EXP NO',
+                       'DIT': 'ESO DET DIT',
                        'NDIT': 'ESO DET NDIT',
                        'PARANG_START': 'ESO ADA POSANG',
                        'PARANG_END': 'ESO ADA POSANG END',
                        'DITHER_X': 'ESO SEQ CUMOFFSETX',
                        'DITHER_Y': 'ESO SEQ CUMOFFSETY',
+                       'PUPIL': 'ESO ADA PUPILPOS',
+                       'DATE': 'DATE-OBS',
+                       'LATITUDE': 'ESO TEL GEOLAT',
+                       'LONGITUDE': 'ESO TEL GEOLON',
+                       'RA': 'RA',
+                       'DEC': 'DEC',
                        'PIXSCALE': 0.027,
                        'MEMORY': 1000,
                        'CPU': max_cpu_count}
@@ -155,6 +162,9 @@ class Pypeline(object):
             if config.has_option('header', 'EXP_NO'):
                 config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
 
+            if config.has_option('header', 'DIT'):
+                config_dict['DIT'] = str(config.get('header', 'DIT'))
+
             if config.has_option('header', 'NDIT'):
                 config_dict['NDIT'] = str(config.get('header', 'NDIT'))
 
@@ -172,6 +182,24 @@ class Pypeline(object):
 
             if config.has_option('settings', 'PIXSCALE'):
                 config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
+
+            if config.has_option('header', 'DATE'):
+                config_dict['DATE'] = str(config.get('header', 'DATE'))
+
+            if config.has_option('header', 'PUPIL'):
+                config_dict['PUPIL'] = str(config.get('header', 'PUPIL'))
+
+            if config.has_option('header', 'LATITUDE'):
+                config_dict['LATITUDE'] = str(config.get('header', 'LATITUDE'))
+
+            if config.has_option('header', 'LONGITUDE'):
+                config_dict['LONGITUDE'] = str(config.get('header', 'LONGITUDE'))
+
+            if config.has_option('header', 'RA'):
+                config_dict['RA'] = str(config.get('header', 'RA'))
+
+            if config.has_option('header', 'DEC'):
+                config_dict['DEC'] = str(config.get('header', 'DEC'))
 
             if config.has_option('settings', 'MEMORY'):
                 if config.get('settings', 'MEMORY') == "None":
@@ -191,11 +219,18 @@ class Pypeline(object):
             file_obj.write('INSTRUMENT: INSTRUME\n')
             file_obj.write('NFRAMES: NAXIS3\n')
             file_obj.write('EXP_NO: ESO DET EXP NO\n')
+            file_obj.write('DIT: ESO DET DIT\n')
             file_obj.write('NDIT: ESO DET NDIT\n')
             file_obj.write('PARANG_START: ESO ADA POSANG\n')
             file_obj.write('PARANG_END: ESO ADA POSANG END\n')
             file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
+            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
+            file_obj.write('PUPIL: ESO ADA PUPILPOS\n')
+            file_obj.write('DATE: DATE-OBS\n')
+            file_obj.write('LATITUDE: ESO TEL GEOLAT\n')
+            file_obj.write('LONGITUDE: ESO TEL GEOLON\n')
+            file_obj.write('RA: RA\n')
+            file_obj.write('DEC: DEC\n\n')
             file_obj.write('[settings]\n\n')
             file_obj.write('PIXSCALE: 0.027\n')
             file_obj.write('MEMORY: 1000\n')

@@ -12,7 +12,7 @@ from PynPoint.Core.DataIO import DataStorage, InputPort
 from PynPoint.IOmodules import FitsReadingModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule, RemoveFramesModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
-from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
+from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
@@ -152,7 +152,7 @@ class TestEndToEnd(object):
         storage.close_connection()
 
     def test_parang(self):
-        angle = AngleCalculationModule(name_in="angle",
+        angle = AngleInterpolationModule(name_in="angle",
                                        data_tag="im_last")
 
         self.pipeline.add_module(angle)
