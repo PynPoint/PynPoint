@@ -273,7 +273,8 @@ class ContrastModule(ProcessingModule):
                                                 image_mask_out_tag=None,
                                                 mask_out_tag=None,
                                                 norm=True,
-                                                cent_size=self.m_mask,
+                                                resize=None,
+                                                cent_size=self.m_mask*pixscale,
                                                 edge_size=1e10,
                                                 verbose=False)
 
