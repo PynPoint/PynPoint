@@ -494,6 +494,9 @@ class AngleCalculationModule(ProcessingModule):
                           "steps. A frame selection should be applied after the parallactic "
                           "angles are calculated.")
 
+        if self.m_instrument == "SPHERE/IFS":
+            warnings.warn("AngleCalculationModule has not been tested yet for SPHERE/IFS data.")
+
         # Load exposure time in hours
         exptime = self.m_data_in_port.get_attribute("DIT")/3600.
 

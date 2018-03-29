@@ -66,9 +66,9 @@ class FitsReadingModule(ReadingModule):
         self.m_overwrite = overwrite
 
         self.m_static = ['INSTRUMENT',
+                         'DIT',
                          'LATITUDE',
-                         'LONGITUDE',
-                         'DIT']
+                         'LONGITUDE']
 
         self.m_non_static = ['NFRAMES',
                              'EXP_NO',
