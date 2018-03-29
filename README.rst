@@ -9,6 +9,9 @@ PynPoint
 .. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master
     :target: https://travis-ci.org/PynPoint/PynPoint
 
+.. image:: https://codecov.io/gh/PynPoint/PynPoint/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/PynPoint/PynPoint
+
 .. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
     :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
 
