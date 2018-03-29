@@ -209,7 +209,7 @@ class DerotateAndStackModule(ProcessingModule):
     """
 
     def __init__(self,
-                 name_in="rotate_stack",
+                 name_in="derotate_stack",
                  image_in_tag="im_arr",
                  image_out_tag="im_stack",
                  derotate=True,
@@ -225,7 +225,9 @@ class DerotateAndStackModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. The output is
                               either 2D (*stack=False*) or 3D (*stack=True*).
         :type image_out_tag: str
-        :param stack: Apply a mean stacking after derotation.
+        :param derotate: Derotate the images with the PARANG attribute.
+        :type derotate: bool
+        :param stack: Mean stacking after derotation.
         :type stack: bool
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
@@ -256,6 +258,8 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
+        memory = self._m_config_port.get_attribute("MEMORY")
+
         if self.m_derotate:
             parang = self.m_image_in_port.get_attribute("PARANG")
 
@@ -266,26 +270,45 @@ class DerotateAndStackModule(ProcessingModule):
         elif not self.m_stack:
             stack = np.zeros(self.m_image_in_port.get_shape())
 
-        nimage = self.m_image_in_port.get_shape()[0]
+        nimages = self.m_image_in_port.get_shape()[0]
+
+        if memory == 0 or memory >= nimages:
+            frames = [0, nimages]
+
+        else:
+            frames = np.linspace(0,
+                                 nimages-nimages%memory,
+                                 int(float(nimages)/float(memory))+1,
+                                 endpoint=True,
+                                 dtype=np.int)
+
+            if nimages%memory > 0:
+                frames = np.append(frames, nimages)
 
         count = 0.
-        for i in range(nimage):
-            progress(i, nimage, "Running DerotateAndStackModule...")
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
             if self.m_derotate:
-                im_rot = rotate(self.m_image_in_port[i, ],
-                                -parang[i]+self.m_extra_rot,
-                                reshape=False)
+                for j in range(frames[i+1]-frames[i]):
+                    im_rot = rotate(self.m_image_in_port[frames[i]+j, ],
+                                    -parang[frames[i]+j]+self.m_extra_rot,
+                                    reshape=False)
 
             else:
-                im_rot = self.m_image_in_port[i, ]
+                im_rot = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             if self.m_stack:
-                stack += im_rot
-            elif not self.m_stack:
-                stack[i, ] = im_rot
+                if im_rot.ndim == 3:
+                    stack += np.sum(im_rot, axis=0)
 
-            count += 1.
+                elif im_rot.ndim == 2:
+                    stack += im_rot
+
+            elif not self.m_stack:
+                stack[frames[i]:frames[i+1], ] = im_rot
+
+            count += float(frames[i+1])-float(frames[i])
 
         if self.m_stack:
             stack /= count
@@ -427,4 +450,3 @@ class CombineTagsModule(ProcessingModule):
                                                       str(np.size(self.m_image_in_tags)))
 
         self.m_image_out_port.close_database()
-
