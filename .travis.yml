@@ -14,6 +14,7 @@ install:
   - pip2 install tox
   - pip2 install coverage
   - pip2 install sphinx
+  - pip2 install codecov
 before_script:
   - mkdir $HOME/.matplotlib
   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
@@ -22,6 +23,8 @@ script:
   - make test-all
   - make coverage
   - make docs
+after_success:
+  - codecov
 notifications:
   email:
     recipients:
