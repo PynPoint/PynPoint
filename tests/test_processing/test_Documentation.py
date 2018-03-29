@@ -14,7 +14,7 @@ from PynPoint.IOmodules.FitsWriting import FitsWritingModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
-from PynPoint.ProcessingModules.PSFpreparation import AngleCalculationModule
+from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
@@ -270,7 +270,7 @@ class TestDocumentation(object):
         self.pipeline.add_module(ref_extract)
         self.pipeline.add_module(alignment)
 
-        angle_calc = AngleCalculationModule(name_in="angle_calculation",
+        angle_calc = AngleInterpolationModule(name_in="angle_calculation",
                                             data_tag="im_arr_aligned")
 
         self.pipeline.add_module(angle_calc)
