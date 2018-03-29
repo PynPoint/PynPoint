@@ -226,15 +226,17 @@ class AddLinesModule(ProcessingModule):
 
         shape_in = self.m_image_in_port.get_shape()
 
-        if np.size(shape_in) != 3:
-            raise ValueError("Expecting a 3D array with images.")
-
         if any(np.asarray(self.m_lines) < 0.):
             raise ValueError("The lines argument should contain values equal to or larger than "
                              "zero.")
 
-        shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
-                     shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
+        if shape_in.ndim == 3:
+            shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
+                         shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
+
+        elif shape_in.ndim == 2:
+            shape_out = (shape_in[0]+int(self.m_lines[2])+int(self.m_lines[3]),
+                         shape_in[1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
         if shape_out[0] != shape_out[1]:
             warnings.warn("The dimensions of the output images %s are not equal. PynPoint only "

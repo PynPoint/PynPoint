@@ -31,7 +31,6 @@ requirements = ['configparser',
                 'opencv-python',
                 'statsmodels',
                 'PyWavelets',
-                'mlpy',
                 'matplotlib',
                 'emcee']
 
