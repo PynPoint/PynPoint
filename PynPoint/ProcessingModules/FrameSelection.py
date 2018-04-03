@@ -135,7 +135,7 @@ class RemoveFramesModule(ProcessingModule):
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed",
                                                       str(np.size(self.m_frames)))
-        self.m_image_in_port.close_database()
+        self.m_image_in_port.close_port()
 
 
 class FrameSelectionModule(ProcessingModule):
@@ -397,7 +397,7 @@ class FrameSelectionModule(ProcessingModule):
         else:
             warnings.warn("No frames were removed.")
 
-        self.m_image_in_port.close_database()
+        self.m_image_in_port.close_port()
 
 
 class RemoveLastFrameModule(ProcessingModule):
@@ -476,7 +476,7 @@ class RemoveLastFrameModule(ProcessingModule):
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class RemoveStartFramesModule(ProcessingModule):
@@ -533,6 +533,12 @@ class RemoveStartFramesModule(ProcessingModule):
 
         index_new = []
 
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
+            parang_new = []
+        else:
+            parang = None
+
         for i, _ in enumerate(nframes):
             progress(i, len(nframes), "Running RemoveStartFramesModule...")
 
@@ -540,6 +546,8 @@ class RemoveStartFramesModule(ProcessingModule):
             frame_end = np.sum(nframes[0:i+1])
 
             index_new.extend(index[frame_start:frame_end])
+            if parang is not None:
+                parang_new.extend(parang[frame_start:frame_end])
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
@@ -550,5 +558,7 @@ class RemoveStartFramesModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
+        if parang is not None:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()

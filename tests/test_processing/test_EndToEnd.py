@@ -92,7 +92,14 @@ def setup_module():
     f.write('PARANG_START: ESO ADA POSANG\n')
     f.write('PARANG_END: ESO ADA POSANG END\n')
     f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    f.write('DITHER_Y: ESO SEQ CUMOFFSETY\n\n')
+    f.write('DITHER_Y: None\n')
+    f.write('DIT: None\n')
+    f.write('LATITUDE: None\n')
+    f.write('LONGITUDE: None\n')
+    f.write('PUPIL: None\n')
+    f.write('DATE: None\n')
+    f.write('RA: None\n')
+    f.write('DEC: None\n\n')
     f.write('[settings]\n\n')
     f.write('PIXSCALE: 0.027\n')
     f.write('MEMORY: 100\n')
@@ -165,7 +172,7 @@ class TestEndToEnd(object):
         assert port.get_attribute("FILES")[0] == self.test_dir+'adi01.fits'
         assert port.get_attribute("PARANG")[1] == 1.1904761904761905
 
-        port.close_database()
+        port.close_port()
         storage.close_connection()
 
     def test_cut_lines(self):

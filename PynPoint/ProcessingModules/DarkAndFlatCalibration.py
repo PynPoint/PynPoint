@@ -105,7 +105,7 @@ class DarkCalibrationModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Calibration", "dark")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class FlatCalibrationModule(ProcessingModule):
@@ -172,7 +172,7 @@ class FlatCalibrationModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Calibration", "flat")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class SubtractImagesModule(ProcessingModule):
@@ -248,4 +248,4 @@ class SubtractImagesModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Images subtracted", "")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()

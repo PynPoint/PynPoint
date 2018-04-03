@@ -17,6 +17,7 @@ clean-build:
 	rm -rf build/
 	rm -rf htmlcov/
 	rm -rf .eggs/
+	rm -rf docs/_build
 
 clean-python:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -45,7 +46,7 @@ coverage:
 	coverage html --omit=PynPoint/OldVersion/*
 
 docs:
-	rm -f docs/modules.rst
+	rm -f docs/PynPoint.Core.rst
 	rm -f docs/PynPoint.IOmodules.rst
 	rm -f docs/PynPoint.OldVersion.rst
 	rm -f docs/PynPoint.ProcessingModules.rst

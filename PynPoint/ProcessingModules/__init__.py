@@ -17,4 +17,4 @@ from TimeDenoising import CwtWaveletConfiguration, DwtWaveletConfiguration, \
 from FrameSelection import RemoveFramesModule, FrameSelectionModule, RemoveLastFrameModule, RemoveStartFramesModule
 from FluxAndPosition import FakePlanetModule, SimplexMinimizationModule, FalsePositiveModule, MCMCsamplingModule, \
                             AperturePhotometryModule
-from DetectionLimits import ContrastModule
+from DetectionLimits import ContrastCurveModule
