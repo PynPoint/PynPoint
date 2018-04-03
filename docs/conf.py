@@ -21,7 +21,7 @@
 
 project = u'PynPoint'
 copyright = u'2014-2018, ETH Zurich'
-author = u'Tomas Stolker'
+author = u'Tomas Stolker & Markus Bonse'
 
 # The short X.Y version
 version = u''
@@ -143,7 +143,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PynPoint.tex', u'PynPoint Documentation',
-     u'Tomas Stolker', 'manual'),
+     u'Tomas Stolker & Markus Bonse', 'manual'),
 ]
 
 
