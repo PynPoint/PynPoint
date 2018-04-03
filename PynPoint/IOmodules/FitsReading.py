@@ -245,4 +245,4 @@ class FitsReadingModule(ReadingModule):
         sys.stdout.write("Running FitsReadingModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()

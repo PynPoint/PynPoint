@@ -393,7 +393,7 @@ class SortParangModule(ProcessingModule):
             self.m_image_out_port.del_attribute("NFRAMES")
 
         self.m_image_out_port.add_history_information("Images sorted", "parang")
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class AngleCalculationModule(ProcessingModule):
@@ -674,4 +674,4 @@ class SDIpreparationModule(ProcessingModule):
         sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_in_port.close_database()
+        self.m_image_in_port.close_port()

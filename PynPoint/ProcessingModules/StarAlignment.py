@@ -175,7 +175,7 @@ class StarExtractionModule(ProcessingModule):
         if self.m_image_size is not None and self.m_image_out_tag is not None:
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Star extract", "maximum")
-            self.m_image_out_port.close_database()
+            self.m_image_out_port.close_port()
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -338,7 +338,7 @@ class StarAlignmentModule(ProcessingModule):
         else:
             history = "cross-correlation, upsampling factor =" + str(self.m_resize)
         self.m_image_out_port.add_history_information("PSF alignment", history)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class StarCenteringModule(ProcessingModule):
@@ -558,7 +558,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class ShiftForCenteringModule(ProcessingModule):
@@ -611,4 +611,4 @@ class ShiftForCenteringModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
