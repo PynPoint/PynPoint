@@ -259,7 +259,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                                                       "Sigma filter = " + str(self.m_sigma))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class BadPixelMapModule(ProcessingModule):
@@ -335,7 +335,7 @@ class BadPixelMapModule(ProcessingModule):
         bpmap[np.where(flat < max_flat * self.m_flat_threshold)] = 0
 
         self.m_bp_map_out_port.set_all(bpmap)
-        self.m_bp_map_out_port.close_database()
+        self.m_bp_map_out_port.close_port()
 
 
 class BadPixelInterpolationModule(ProcessingModule):
@@ -407,7 +407,7 @@ class BadPixelInterpolationModule(ProcessingModule):
                                                       "Iterations = " + str(self.m_iterations))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class BadPixelRefinementModule(ProcessingModule):
@@ -525,4 +525,4 @@ class BadPixelRefinementModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()

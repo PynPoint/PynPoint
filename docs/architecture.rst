@@ -3,89 +3,94 @@
 Architecture
 ============
 
-In version 0.3.0 we have redesigned the whole PynPoint architecture in order to make it an end to end data processing tool for ADI data instead of a PSF-subtraction toolkit. Our goal was to create a pipeline which inheres a list of different pipeline-modules, one for each processing step. Moreover we designed the new pipeline to be extendable for new data processing techniques or data types in future. A list of all currently available Pipeline-modules is given in the :ref:`pipeline-modules` section.
+PynPoint has evolved from PSF subtraction toolkit to an end-to-end pipeline from processing and analysis of high-contrast imaging data obtained with the angular differential imaging (ADI) technique. The architecture of PynPoint has been redesigned in version 0.3.0 with the goal to create a pipeline which inheres a list of processing modules, one for each data reduction and analysis step. In addition, the pipeline architecture is extendable for new data processing techniques and data types in future. An overview of the available IO and processing modules is provide in the :ref:`pynpoint-package` section.
 
-The actual pipeline is located in a different sub-package than the functionality of the processing steps. This makes it possible to extend the functionality of the pipeline steps without changing the core of the pipeline.
+The actual pipeline and processing functionalities are implemented in a different subpackages. Therefore it is possible to extend the processing functionalities of the pipeline without changing the core of the pipeline.
 
-The image below illustrates the structure of the central pipeline architecture using a UML class diagram:
+The UML class diagram below illustrates the pipeline architecture of PynPoint:
 
-.. image:: _static/images/PynPoint-UML.png
+.. image:: _images/uml.png
    :width: 100%
 
-As you can see the architecture is separated in three different components:
+The diagram shows that the architecture is subdivided in three components:
 
-	* A data management component
-	* Pipeline modules for reading, writing and processing
+	* Data management
+	* Pipeline modules for reading, writing, and processing of data
 	* The actual pipeline
 
-Central Data Storage
---------------------
+.. _database:
 
-One central idea of the new PynPoint Pipeline is to separate the data and the pipeline steps. This has different reasons:
-
-	1. Some raw datasets are very large which makes it hard to work with them on a computer with small memory (RAM). Therefore we decided to use a central storage on the hard drive.
-	2. Some data is used in different steps of the pipeline. A central database makes it easy to access that data without making a copy.
-	3. The central storage on the hard drive will remain updated after each step. If the program crashes or is interrupted by the user you do not have to run the already finished steps again.
-
-Usually if you just use the pipeline you do not have to worry about the central data storage classes. This is only important if you plan to write your own Pipeline modules (See :ref:`writing`). But it is important to understand how **tags** work.
-
-You might already have noticed in the :ref:`interactive` section that each pipeline module has some input and output tags. A tag is like a key for a specific dataset in the central database. A module with an image_in_tag = `im_arr` is looking for image data under the tag `im_arr` in the central database as input. The same way around a module with an image_out_tag = `im_arr_processed` will write out its result to the central database under the tag `im_arr_processed`. Note in_tags will never change the data in the database.
-
-Under the surface of a pipeline module this access of data from the central database is implemented using Ports.
-
-.. _pipeline-modules:
-
-Pipeline modules
+Central Database
 ----------------
 
-A pipeline module is like a task which can be added to the pipeline internal task queue. This task can read and write specific data from and to the pipeline database. You can think about a pipeline module as a block with input and output connections to that central database. For an illustration have a look at the PSF-subtraction module below:
+The new architecture of PynPoint separates the data management from the data reduction steps for the following reasons:
 
-.. image:: _static/images/Pipeline_module.jpg
+	1. Raw datasets can be very large, in particular in the 3--5 μm wavelength regime, which challenges the processing on a computer with a small amount of memory (RAM). A central database is used to store the data on a computer's hard drive.
+	2. Some data is used in different steps of the pipeline. A central database makes it easy to access that data without making a copy.
+	3. The central data storage on the hard drive will remain updated after each step. Therefore, processing steps that already finished remain unaffected if an error occurs or the data reduction is interrupted by the user.
+
+Understanding the central data storage classes is important if you plan to write your own Pipeline modules (see :ref:`writing`). When running the pipeline, it is enough to understand the concept of database tags.
+
+As already encountered in the :ref:`end-to-end` section, each pipeline module has input and/or output tags. A tag is a label of a specific dataset in the central database. A module with ``image_in_tag=im_arr`` will look for a stack of input images in the central database under the tag name `im_arr`. Similarly, a module with ``image_out_tag=im_arr_processed`` will a stack of processed images to the central database under the tag `im_arr_processed`. Note that input tags will never change the data in the database.
+
+Accessing the data storage occurs through instances of :class:`PynPoint.Core.DataIO.Port` which allow pipeline modules to read data from and write data to central database.
+
+.. _modules:
+
+Modules
+-------
+
+A pipeline module has a specific task that is appended to the internal queue of pipeline tasks. A module can read and write data tags from and to the central database through dedicated input and output connections. As illustration, this is the input and output structure of the :class:`PynPoint.ProcessingModules.PSFSubtractionPCA.PSFSubtractionModule`:
+
+.. image:: _images/module.jpg
    :width: 70%
    :align: center
 
-On the left you can see that the PSF-subtraction module needs two input tags which means it has two internal input ports to the central database. The first port imports the data which will be processed. The second port imports reference data which is used to calculate the PSF model using PCA. 
+The module requires two input tags (blue) which means that two internal input ports are used to access data from the central database. The first port imports the science images and the second port imports the reference images that are used to calculate the PSF model using principle component analysis (PCA). In this case, both input tags can have the same name and therefore point to the same data set. 
 
-In the middle all module parameters are listed (e.g. the number of PCA components used for the PSF-fit).
+The module parameters are listed in the center of the illustration, which includes the number of principle components and the additional derotation that is applied.
 
-On the right a list of all output tags (internal Output ports) which store the results of the PSF-subtraction to the internal database.
+The output tags (red) are required to setup the internal output ports which store the results of the PSF subtraction (e.g., mean and variance of the residuals) to the central database.
 
-In order to create a valid pipeline you should check that the required input tags are linked to data which was created by a previous pipeline module. In other words there need to be a previous module with the same tag as output.
+In order to create a valid pipeline one should check that the required input tags are linked to data which was previously created by a pipeline module. In other words, there need to be a previous module with the same tag as output.
 
-There are three different types of Pipeline modules:
-	1 :class:`PynPoint.Core.Processing.ReadingModule` - A module only with output tags / ports. The perfect interface to read raw data.
+There are three types of pipeline modules:
 
-	1.2 :class:`PynPoint.Core.Processing.ProcessingModule` - A module with input and output tags / ports. The typical processing step module.
+	1. :class:`PynPoint.Core.Processing.ReadingModule` - A module with only output tags/ports, used to read data to the central database.
+	2. :class:`PynPoint.Core.Processing.WritingModule` - A module with only input tags/ports, used to export data from the central database.
+	3. :class:`PynPoint.Core.Processing.ProcessingModule` - A module with both input and output tags/ports, used for processing of the data.
 
-	1.3 :class:`PynPoint.Core.Processing.WritingModule` - A module only with input tags / ports which can be used to export data from the internal database.
+.. _pipeline:
 
-If you just use pipeline modules the differences between these three module types are not important for you. However, if you are interested in writing own modules you should keep this in mind.
+Pipeline
+--------
 
-The Pipeline
-------------
+The :class:`PynPoint.Core.Pypeline` module is the central component which manages the order and execution of the different pipeline modules. Each ``Pypeline`` instance has an ``working_place_in`` path which is where the central database and configuration file are stored, an ``input_place_in`` path which is the default data location for reading modules, and an ``output_place_in`` path which is the default output path where the data will be saved by the writing modules: ::
 
-The :class:`PynPoint.Core.Pypeline` module is the central component which manages the order and execution of the different pipeline processing steps. From a simple perspective it is just a ordered list of different pipeline modules. Each Pypeline instance has a input directory which is used as the default input location for reading modules, a working directory where the central pipeline database will be stored and a default output directory which can be used by all writing modules. 
+    pipeline = Pypeline(working_place_in="/path/to/working_place",
+                        input_place_in="/path/to/input_place",
+                        output_place_in="/path/to/output_place")
 
-At the moment there is one Pypeline method which can be used to append a pipeline module to the queue of modules: ::
+A pipeline module is appended to the queue of modules as: ::
 
-    pipeline.add_module(pipeline_module)
+    pipeline.add_module("module")
 
-And one method to remove modules: ::
+And can be removed from the queue with the following ``Pypeline`` method: ::
 
-    pipeline.remove_module(name)
+    pipeline.remove_module("module")
 
-If you what to check the names and order of the added pipeline modules use: ::
+The names and order of the pipeline modules are listed with: ::
 
     pipeline.get_module_names()
 
-Finally you can run all modules by calling: ::
+Running all modules attached to the pipeline is achieved with: ::
 
     pipeline.run()
 
-Or run a single module using: ::
+Or a single module is executed as: ::
 
-    pipeline.run_module(name)
+    pipeline.run_module("name")
 
 Both run methods will check if the pipeline has valid input and output tags.
 
-A Pypeline instance can be used to directly access data from the central database. See section :ref:`dataaccess` for more information.
+An instance of ``Pypeline`` can be used to directly access data from the central database. See the :ref:`hdf5-files` section for more information.
