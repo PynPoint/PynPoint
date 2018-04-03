@@ -7,7 +7,7 @@ import numpy as np
 from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelMapModule, \
-                                                        BadPixelInterpolationModule, BadPixelRefinementModule
+                                                        BadPixelInterpolationModule
 
 warnings.simplefilter("always")
 
@@ -154,31 +154,5 @@ class TestBadPixelCleaning(object):
         assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit, atol=0.)
         assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit, atol=0.)
-
-        storage.close_connection()
-
-    def test_bad_pixel_refinement(self):
-
-        refinement = BadPixelRefinementModule(name_in="refinement",
-                                              image_in_tag="images",
-                                              bad_pixel_map_tag="bp_map",
-                                              image_out_tag="refinement",
-                                              box_size=5,
-                                              sigma=4.,
-                                              iterations=100)
-
-        self.pipeline.add_module(refinement)
-
-        self.pipeline.run()
-
-        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
-        storage.open_connection()
-
-        data = storage.m_data_bank["refinement"]
-
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 10, 10], 3.4572557271785087e-06, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 20, 20], -9.694818774930603e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.001502328056615e-07, rtol=limit, atol=0.)
 
         storage.close_connection()
