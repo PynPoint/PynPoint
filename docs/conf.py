@@ -27,7 +27,7 @@ from PynPoint import __version__
 
 project = u'PynPoint'
 copyright = u'2014-2018, ETH Zurich'
-author = u'Tomas Stolker & Markus Bonse'
+author = u'Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara'
 
 # The short X.Y version
 version = __version__
@@ -149,7 +149,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PynPoint.tex', u'PynPoint Documentation',
-     u'Tomas Stolker & Markus Bonse', 'manual'),
+     u'Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara', 'manual'),
 ]
 
 
