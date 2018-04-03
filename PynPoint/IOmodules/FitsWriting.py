@@ -83,7 +83,6 @@ class FitsWritingModule(WritingModule):
             sys.stdout.flush()
 
         else:
-            # attributes
             prihdr = fits.Header()
             attributes = self.m_data_port.get_all_static_attributes()
             for attr in attributes:
@@ -92,7 +91,6 @@ class FitsWritingModule(WritingModule):
                 else:
                     prihdr[attr] = attributes[attr]
 
-            # data
             if self.m_range is None:
                 hdu = fits.PrimaryHDU(self.m_data_port.get_all(),
                                       header=prihdr)
@@ -105,4 +103,4 @@ class FitsWritingModule(WritingModule):
             sys.stdout.write(" [DONE]\n")
             sys.stdout.flush()
 
-        self.m_data_port.close_database()
+        self.m_data_port.close_port()

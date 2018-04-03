@@ -100,7 +100,7 @@ class Hdf5WritingModule(WritingModule):
                         attr_tag = "header_" + out_tag + "/" + key
                         out_file.create_dataset(attr_tag, data=tmp_data_attr)
 
-            tmp_port.close_database()
+            tmp_port.close_port()
 
         out_file.close()
 
