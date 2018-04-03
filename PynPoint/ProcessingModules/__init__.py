@@ -2,7 +2,7 @@ from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgro
                                   PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
                                   DitheringBackgroundModule, NoddingBackgroundModule
 from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationModule, \
-                             BadPixelMapModule, BadPixelRefinementModule
+                             BadPixelMapModule
 from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule, SubtractImagesModule
 from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
 from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, DerotateAndStackModule, \
