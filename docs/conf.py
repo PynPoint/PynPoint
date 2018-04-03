@@ -6,6 +6,12 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
 
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath('..'))
+from PynPoint import __version__
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -24,9 +30,9 @@ copyright = u'2014-2018, ETH Zurich'
 author = u'Tomas Stolker & Markus Bonse'
 
 # The short X.Y version
-version = u''
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = u''
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------

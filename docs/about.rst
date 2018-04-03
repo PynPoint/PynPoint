@@ -60,8 +60,8 @@ We would like to thank several people who provided contributions and helped test
 
 .. _history:
 
-History
--------
+Changelog
+---------
 
 0.4.0 (2018-03-15)
 ++++++++++++++++++

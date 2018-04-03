@@ -25,8 +25,8 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
 
 .. _contents:
 
-Contents
-========
+User Guide
+==========
 
 .. toctree::
    :maxdepth: 2
@@ -35,6 +35,27 @@ Contents
    tutorial
    architecture
    writing
-   mailing
-   about
+
+API Documentation
+=================
+
+.. toctree::
+   :maxdepth: 2
+
    modules
+
+Mailing List
+============
+
+.. toctree::
+   :maxdepth: 2
+
+   mailing
+
+About
+=====
+
+.. toctree::
+   :maxdepth: 2
+
+   about
