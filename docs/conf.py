@@ -6,7 +6,11 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
 
-import PynPoint
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath('..'))
+from PynPoint import __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -26,9 +30,9 @@ copyright = u'2014-2018, ETH Zurich'
 author = u'Tomas Stolker & Markus Bonse'
 
 # The short X.Y version
-version = PynPoint.__version__
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = PynPoint.__version__
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
