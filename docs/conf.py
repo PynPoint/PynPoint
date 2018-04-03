@@ -24,9 +24,9 @@ copyright = u'2014-2018, ETH Zurich'
 author = u'Tomas Stolker & Markus Bonse'
 
 # The short X.Y version
-version = u''
+version = PynPoint.__version__
 # The full version, including alpha/beta/rc tags
-release = u''
+release = PynPoint.__version__
 
 
 # -- General configuration ---------------------------------------------------
