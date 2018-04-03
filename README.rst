@@ -18,7 +18,7 @@ PynPoint
 .. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
     :target: https://pypi.python.org/pypi/PynPoint-exoplanet
 
-.. image:: https://img.shields.io/aur/license/yaourt.svg?style=flat
+.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
     :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
 
 .. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
