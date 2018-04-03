@@ -126,6 +126,11 @@ class PSFSubtractionModule(ProcessingModule):
         else:
             edge_size = None
 
+        if "norm" in kwargs:
+            norm = kwargs["norm"]
+        else:
+            norm = True
+
         if "prep_tag" in kwargs:
             prep_tag = kwargs["prep_tag"]
         else:
@@ -148,7 +153,7 @@ class PSFSubtractionModule(ProcessingModule):
                                                           image_in_tag=images_in_tag,
                                                           image_out_tag=prep_tag,
                                                           mask_out_tag=cent_mask_tag,
-                                                          norm=True,
+                                                          norm=norm,
                                                           cent_size=cent_size,
                                                           edge_size=edge_size,
                                                           verbose=False)
@@ -157,7 +162,7 @@ class PSFSubtractionModule(ProcessingModule):
                                                              image_in_tag=reference_in_tag,
                                                              image_out_tag=ref_prep_tag,
                                                              mask_out_tag=cent_mask_tag,
-                                                             norm=True,
+                                                             norm=norm,
                                                              cent_size=cent_size,
                                                              edge_size=edge_size,
                                                              verbose=False)
@@ -863,4 +868,4 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
         self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
 
-        self.m_res_mean_out_port.close_database()
+        self.m_res_mean_out_port.close_port()

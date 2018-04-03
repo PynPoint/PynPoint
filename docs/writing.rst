@@ -3,192 +3,231 @@
 Writing Modules
 ===============
 
+.. _starting:
+
 Getting Started
 ---------------
 
-Before you start reading this chapter you should check your python knowledge. Beside the basics of python you need to know:
+The modular architecture of PynPoint allows for easy implementations of new processing modules and we welcome contributions from users. Before writing own PynPoint modules, it is helpful to have a look at the :ref:`architecture` section. In addition, some basic knowledge on Python is required as well as an understanding of the following items:
 
-    * basics of the python |Types in Python| like lists, tupels and dictionaries
-    * how |Classes in Python| work, particularly inheritance is important.
-    * |ABC in Python| as interfaces
+    * Python |types| such as lists, tuples, and dictionaries
+    * |classes|, in particular the concept of inheritance
+    * |abc| as interfaces
 
-In addition you should know :ref:`architecture`.
+.. |types| raw:: html
 
-Processing Modules
-------------------
+   <a href="https://docs.python.org/3/library/stdtypes.html" target="_blank">types</a>
 
-As you should already know there are three different types of pipeline modules. Before you start implementing a module you need to choose one of them as an interface. Since all three module types are very similar we explain only how to write a processing module.
+.. |classes| raw:: html
 
-First we need to import the interface (i.e. abstract class) ProcessingModule: ::
+   <a href="https://docs.python.org/3/tutorial/classes.html" target="_blank">Classes</a>
 
-    from PynPoint.core import ProcessingModule
+.. |abc| raw:: html
 
-All pipeline modules are classes which contain the parameters of the pipeline step, input ports and/or output ports. So let’s create a simple DummyModule class using the ProcessingModule interface (inheritance): ::
+   <a href="https://docs.python.org/2/library/abc.html" target="_blank">Abstract classes</a>
+
+There are three different types of pipeline modules: ``ReadingModule``, ``WritingModule``, and ``ProcessingModule``. Before implementing a new module, one should choose which interface to use. The concept is similar for the three types of module so here we will explain only how to write a processing module.
+
+.. _conventions:
+
+Conventions
+-----------
+
+Before we start writing a new PynPoint module, please take notice of the following style conventions:
+
+    * |pep8| -- style guide for Python code
+    * We recommend using |pylint| to analyze newly written code in order to keep PynPoint well structured, readable, and documented.
+    * Names of class member should start with ``m_``.
+    * Images should ideally not be read from and written to the central database at once but in amounts of ``MEMORY``.
+
+.. |pep8| raw:: html
+
+   <a href="https://www.python.org/dev/peps/pep-0008" target="_blank">PEP 8</a>
+
+.. |pylint| raw:: html
+
+   <a href="https://www.pylint.org" target="_blank">pylint</a>
+
+Now we are ready to code!
+
+.. _constructor:
+
+Class Constructor
+-----------------
+
+First, we need to import the interface (i.e. abstract class) ``ProcessingModule``: ::
+
+    from PynPoint.Core import ProcessingModule
+
+All pipeline modules are classes which contain the parameters of the pipeline step, input ports and/or output ports. So let’s create a simple ExampleModule class using the ProcessingModule interface (inheritance): ::
     
-    class DummyModule(ProcessingModule):
+    class ExampleModule(ProcessingModule):
 
-If you are using an IDE like PyCharm you might get a warning like this:
-
-.. image:: _static/images/abstract.png
-   :width: 100%
-
-The abstract class ProcessingModule has some abstract methods which have to be implemented by its children classes (e.g. __init__() and run()). Thus we have to implement the __init__() function (i.e. the constructor of our module): ::
+When an IDE like PyCharm is used, a warning will appear that all abstract methods must be implemented in the ExampleModule class. The abstract class ProcessingModule has some abstract methods which have to be implemented by its children classes (e.g., ``__init__()`` and ``run()``). Thus we have to implement the ``__init__()`` function (i.e., the constructor of our module): ::
 
     def __init__(self,
-                 name_in="dummy",
-                 in_tag_1="im_arr",
-                 in_tag_2="im_arr2",
-                 out_tag_1="result",
-                 out_tag_2="result2”,
-                 some_parameter=0):
+                 name_in="example",
+                 in_tag_1="in_tag_1",
+                 in_tag_2="in_tag_2",
+                 out_tag_1="out_tag_1",
+                 out_tag_2="out_tag_2”,
+                 parameter_1=0,
+                 parameter_2="value"):
 
-Each __init__ function of a Pypeline module needs to have a name_in argument which is needed by the pipeline to run individual modules by name (please choose a default name). Furthermore we have to define input and output tags which can be set by the user in order to access data from the central database. The first line of the constructor has to be a call of the ProcessingModule constructor: ::
+Each ``__init__()`` function of a ``PypelineModule`` requires a ``name_in`` argument (and default value) which is used by the pipeline to run individual modules by name. Furthermore, the input and output tags have to be defined which are used to to access data from the central database. The constructor starts with a call of the ``ProcessingModule`` constructor: ::
    
-    super(DummyModule, self).__init__(name_in)
+    super(ExampleModule, self).__init__(name_in)
 
-Next we can add the ports behind the tags which help us accessing the data from the central database: ::
+Next, the input and output ports behind the database tags have to be defined: ::
 
-        # Ports
         self.m_in_port_1 = self.add_input_port(in_tag_1)
         self.m_in_port_2 = self.add_input_port(in_tag_2)
 
         self.m_out_port_1 = self.add_output_port(out_tag_1)
         self.m_out_port_2 = self.add_output_port(out_tag_2)
 
-You should always use the functions add_input_port and add_output_port in oder to add a Port! Do not add a Port by manually creating an instance of InputPort or OutputPort.
-Last you need to save all module parameters: ::
+Reading to and writing from the central database should always be done with the ``add_input_port`` and ``add_output_port`` functionalities and not by manually creating an instance of ``InputPort`` or ``OutputPort``.
 
-        self.m_parameter = some_parameter
+Finally, the module parameters should be saved to the ``ExampleModule`` instance: ::
 
-Thats it! Now we can focus on the actual functionality of the module by writing the run() method which will be called by the Pypeline: ::
+        self.m_parameter_1 = parameter_1
+        self.m_parameter_2 = parameter_2
+
+That's it! The constructor of the ``ExampleModule`` is ready.
+
+.. _method:
+
+Run Method
+----------
+
+We can now add the functionalities of the module in the ``run()`` method which will be called by the pipeline: ::
 
     def run(self):
 
-You can use the input ports of your module to load data from the central database into the memory by using slicing or the get_all() function. Note: Be careful using the get_all() function if the data you are working with is larger than the memory of your computer! ::
+The input ports of the module are used to load data from the central database into the memory with slicing or the ``get_all()`` function: ::
 
-        some_data = self.m_in_port_1.get_all()
+        data1 = self.m_in_port_1.get_all()
+        data2 = self.m_in_port_2[0:4]
 
-        more_data = self.m_in_port_1[0:4]
+We want to avoid using the ``get_all()`` function because data sets in 3--5 μm range typically consists of thousands of images. Therefore, loading all images at once in the computer memory might not be possible, in particular early in the data reduction chain when the images have their original size. Instead, it is recommended to use the ``MEMORY`` attribute that is specified in the configuration file.
 
-You can access attributes (header information) by using: ::
+Attributes of the input port are accessed in the following: ::
 
-        some_attribute_data = self.m_in_port_2.get_attribute("AIRMASS")
+        parang = self.m_in_port_1.get_attribute("PARANG")
+        pixscale = self.m_in_port_2.get_attribute("PIXSCALE")
 
-For more information about how to import data have a look at the package documentation :class:`PynPoint.Core.DataIO.InputPort`. 
+And attributes of the central configuration are accessed through the ``ConfigPort``: ::
 
-Next you can implement your algorithm. And finally write out the results using your output ports: ::
+        memory = self._m_config_port.get_attribute("MEMORY")
+        cpu = self._m_config_port.get_attribute("CPU")
 
-        # Do something useful here ...
-        result = None
-        other_result = [None, None]
+More information on importing of data can be found in the package documentation of :class:`PynPoint.Core.DataIO.InputPort`. 
+
+Next, the processing steps are implemented: ::
+
+        result1 = 10.*self.m_parameter_1
+        result2 = 20.*self.m_parameter_1
+        result3 = [1, 2, 3]
+
+        attribute = self.m_parameter_2
         
-        attribute_result = "bla"
-        
-        result2 = [1,2,3]
-        
-        # save results
-        self.m_out_port_1.set_all(result)
-        self.m_out_port_1.append(other_result)
-        
-        self.m_out_port_2.add_attribute(name="very_important_information",
-                                        value=attribute_result)
-        
+The output ports are used to write the results to the central database: ::
+
+        self.m_out_port_1.set_all(result1)
+        self.m_out_port_1.append(result2)
+
         self.m_out_port_2[0:2] = result2
+        self.m_out_port_2.add_attribute(name="new_attribute",
+                                        value=attribute)
 
-For more information about how to store data have a look at the package documentation :class:`PynPoint.Core.DataIO.OutputPort`.
+More information on storing of data can be found in the package documentation of :class:`PynPoint.Core.DataIO.OutputPort`.
 
-After you have saved the data you should always copy the attribute information of the input port and add history information. Do this for all Output Ports: ::
-
-        self.m_out_port_1.add_history_information("dummyModule",
-                                                      "nothing useful")
+The attribute information has to be copied from the input port and history information has to be added. This step should be repeated for all the output ports: ::
 
         self.m_out_port_1.copy_attributes_from_input_port(self.m_in_port_1)
-        
-Finally you need to close the ports: ::
+        self.m_out_port_1.add_history_information("ExampleModule",
+                                                  "history text")
+
+        self.m_out_port_2.copy_attributes_from_input_port(self.m_in_port_1)
+        self.m_out_port_2.add_history_information("ExampleModule",
+                                                  "history text")
+
+Finally, the central database and all the open ports should be closed: ::
 
         self.m_out_port_1.close_port()
 
-It is enough to close only one port and all other ports will be closed automatically.
+It is enough to close only one port because all other ports will be closed automatically.
 
-**Problems with different sized results:** If you write a module that is changing the shape of the resulting images or data you should worry about the following. If a user chooses the same tag as input and output you can not save a subset of the results while the old input data still exists. **Example:** A list of 200 images (200x200) is stored under the tag `im_arr`. The user of your module sets the input and output tag to `im_arr`. Your module loads the first 100 images using slicing and changes their shape (100x100). Now it is not possible to replace the first 100 images of the dataset using slicing since the last 100 images have a different shape. You can only use the set_all() method which will delete the last 100 input images. **How to solve this problem:** The first option could be to load all data at once and save it after the processing (only for the case in_tag=out_tag). Unfortunately this can lead to high memory requirements. Second option: raise an error if in_tag=out_tag.
+**Note on tag names and storing data:**
 
-	
+It is not recommended to use the same tag name for the input and output port because that would only be possible when data is read and written at once with the ``get_all()`` and ``set_all()`` functionalities, respectively. Instead image should be read and written in amounts of ``MEMORY`` so an error should be raised when ``in_tag=out_tag``.
 
-.. |Classes in Python| raw:: html
+.. _example-module:
 
-   <a href="https://docs.python.org/3/tutorial/classes.html" target="_blank">classes</a>
+Example Module
+--------------
 
-.. |Types in Python| raw:: html
-
-   <a href="https://docs.python.org/3/library/stdtypes.html" target="_blank">types</a>
-
-.. |ABC in Python| raw:: html
-
-   <a href="https://docs.python.org/2/library/abc.html" target="_blank">abstract classes</a>
-
-Example
--------
-The Dummy Module from above: ::
+The full code for the ExampleModule from above is: ::
 
     from PynPoint.Core import ProcessingModule
 
-
-    class DummyModule(ProcessingModule):
+    class ExampleModule(ProcessingModule):
 
         def __init__(self,
-                     name_in="dummy",
-                     in_tag_1="im_arr",
-                     in_tag_2="im_arr2",
-                     out_tag_1="result",
-                     out_tag_2="result2",
-                     some_parameter=0):
+                     name_in="example",
+                     in_tag_1="in_tag_1",
+                     in_tag_2="in_tag_2",
+                     out_tag_1="out_tag_1",
+                     out_tag_2="out_tag_2”,
+                     parameter_1=0,
+                     parameter_2="value"):
 
-            super(DummyModule, self).__init__(name_in)
+            super(ExampleModule, self).__init__(name_in)
 
-            # Ports
             self.m_in_port_1 = self.add_input_port(in_tag_1)
             self.m_in_port_2 = self.add_input_port(in_tag_2)
 
             self.m_out_port_1 = self.add_output_port(out_tag_1)
             self.m_out_port_2 = self.add_output_port(out_tag_2)
 
-            self.m_parameter = some_parameter
+            self.m_parameter_1 = parameter_1
+            self.m_parameter_2 = parameter_2
 
         def run(self):
 
-            some_data = self.m_in_port_1.get_all()
+            data1 = self.m_in_port_1.get_all()
+            data2 = self.m_in_port_2[0:4]
 
-            more_data = self.m_in_port_1[0:4]
+            parang = self.m_in_port_1.get_attribute("PARANG")
+            pixscale = self.m_in_port_2.get_attribute("PIXSCALE")
 
-            some_attribute_data = self.m_in_port_2.get_attribute("AIRMASS")
+            memory = self._m_config_port.get_attribute("MEMORY")
+            cpu = self._m_config_port.get_attribute("CPU")
 
-            # Do something useful here ...
-            result = None
-            other_result = [None, None]
+            result1 = 10.*self.m_parameter_1
+            result2 = 20.*self.m_parameter_1
+            result3 = [1, 2, 3]
 
-            attribute_result = "bla"
-
-            result2 = [1,2,3]
-
-            # save results
-            self.m_out_port_1.set_all(result)
-            self.m_out_port_1.append(other_result)
-
-            self.m_out_port_2.add_attribute(name="very_important_information",
-                                            value=attribute_result)
+            self.m_out_port_1.set_all(result1)
+            self.m_out_port_1.append(result2)
 
             self.m_out_port_2[0:2] = result2
+            self.m_out_port_2.add_attribute(name="new_attribute",
+                                            value=attribute)
 
-Additional Functionality
+            self.m_out_port_1.copy_attributes_from_input_port(self.m_in_port_1)
+            self.m_out_port_1.add_history_information("ExampleModule",
+                                                      "history text")
+
+            self.m_out_port_2.copy_attributes_from_input_port(self.m_in_port_1)
+            self.m_out_port_2.add_history_information("ExampleModule",
+                                                      "history text")
+
+            self.m_out_port_1.close_port()
+
+.. _apply-function:
+
+Apply Function To Images
 ------------------------
-Some pipeline processing modules apply a method to each image of the image stack. Hence we have implemented a function, which applies a function to all images in the stack. If you are planning to write such a module have a look at the function :func:`PynPoint.Core.Processing.ProcessingModule.apply_function_to_images`. If you need an example check out the code of the bad pixel cleaning using sigma filtering (:class:`PynPoint.ProcessingModules.BadPixelCleaning.BadPixelCleaningSigmaFilterModule`).
 
-Conventions
------------
-
-If you want us to include your module in the next PynPoint version please use |Pylint| to analyse your code. In addition use `m_` for class member names.
-
-.. |Pylint| raw:: html
-
-   <a href="https://www.pylint.org" target="_blank">pylint</a>
-
+A processing module often applies a specific method to each image of an input port. For example, subtraction of a dark frame, fitting of a 2D Gaussian, or cleaning of bad pixels. Therefore, we have implemented the ``apply_function_to_images()`` function which applies a function to all images of an input port. More details are provided in the package documentation of :func:`PynPoint.Core.Processing.ProcessingModule.apply_function_to_images`. An example of the implementation can be found in the code of the bad pixel cleaning with a sigma filter: :class:`PynPoint.ProcessingModules.BadPixelCleaning.BadPixelSigmaFilterModule`.

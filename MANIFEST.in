@@ -3,9 +3,6 @@ include Makefile
 include README.rst
 include requirements.txt
 include tox.ini
-include PynPoint/data/*
 include docs/*
-graft test
-graft docs/_static/
-graft docs/_theme/
-graft docs/_planning/
+include docs/_images/*
+graft tests

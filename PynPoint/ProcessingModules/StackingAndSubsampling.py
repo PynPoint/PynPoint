@@ -130,7 +130,7 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Stack and subset",
                                                       "stacking ="+str(self.m_stacking)+
                                                       "random ="+str(self.m_random))
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class MeanCubeModule(ProcessingModule):
@@ -200,7 +200,7 @@ class MeanCubeModule(ProcessingModule):
             self.m_image_out_port.del_attribute("NFRAMES")
         if "INDEX" in non_static:
             self.m_image_out_port.del_attribute("INDEX")
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class DerotateAndStackModule(ProcessingModule):
@@ -318,7 +318,7 @@ class DerotateAndStackModule(ProcessingModule):
 
         self.m_image_out_port.set_all(stack)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class CombineTagsModule(ProcessingModule):
@@ -449,4 +449,4 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))
 
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()

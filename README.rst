@@ -1,7 +1,7 @@
 PynPoint
 ========
 
-**Python package for the processing and analysis of high-contrast imaging data**
+**Python package for processing and analysis of high-contrast imaging data**
 
 .. image:: https://img.shields.io/badge/GitHub-PynPoint-blue.svg?style=flat
     :target: https://github.com/PynPoint/PynPoint

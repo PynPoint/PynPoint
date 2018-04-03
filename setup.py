@@ -37,8 +37,8 @@ requirements = ['configparser',
 
 setup(
     name='PynPoint',
-    version='1.0.0',
-    description='Python package for the processing and analysis of high-contrast imaging data',
+    version='0.4.0',
+    description='Python package for processing and analysis of high-contrast imaging data',
     long_description=readme,
     author='Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara',
     author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, sascha.quanz@phys.ethz.ch, adam.amara@phys.ethz.ch',
@@ -51,7 +51,7 @@ setup(
     zip_safe=False,
     keywords='PynPoint',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Astronomy'
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
