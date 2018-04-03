@@ -1,62 +1,40 @@
+.. _index:
+
 PynPoint
 ========
 
-PynPoint is a python package for analyzing exoplanet imaging data. When trying to image planets around a nearby star, the basic idea is to take many, typically several thousands, of frames and to process the data using statistical methods. The aim is to remove the light from the star, so as to reveal the companion planet.
+PynPoint is a Python package for processing and analysis of high-contrast imaging data of faint companions and circumstellar disks. The package has been developed at the |ipa| of ETH Zurich in a collaboration between the |spf| and the |cosmo|.
 
-.. image:: _static/images/planet_graphic.jpg
+.. figure:: _images/eso.jpg
    :width: 100 %
+   :target: http://www.eso.org/public/news/eso1310
 
-The PynPoint package has been developed at ETH Zurich as a collaboration between the |SPF_link| and the |Cosmo_link| of the |Astro|. Details of the methodology behind PynPoint can be found in |Method|. The package was further developed, with the support of the |SoftwareLab|, and is now publicly available. Further information on the package can also be found in our code description paper. 
+   Credit: ESO/L. Calçada
 
-.. |SPF_link| raw:: html
+.. |ipa| raw:: html
+	
+	<a href="http://www.ipa.phys.ethz.ch" target="_blank">Institute of Particle Physics and Astrophysics</a>
+
+.. |spf| raw:: html
 
    <a href="http://www.schmid-group.ethz.ch/" target="_blank">Star and Planet Formation Group</a>
 
-.. |Cosmo_link| raw:: html
+.. |cosmo| raw:: html
 
    <a href="http://www.cosmology.ethz.ch" target="_blank">Cosmology Research Group</a>
 
-.. |Astro| raw:: html
-	
-	<a href="http://www.ipa.phys.ethz.ch" target="_blank">ETH Institute of Particle Physics and Astrophysics</a>
+.. _contents:
 
-.. |Method| raw:: html
-
-	<a href="http://adsabs.harvard.edu/abs/2012MNRAS.427..948A" target="_blank">our method paper</a>
-	
-.. |SoftwareLab| raw:: html
-
-	<a href="http://www.cosmology.ethz.ch/research/software-lab.html" target="_blank">Software Lab of the Cosmology Research Group</a>
-
-Contents:
-=========
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
 
-   installation
-   usage
+   quickstart
+   tutorial
    architecture
    writing
-   PynPoint
-   contributing
-   mailinglist
+   mailing
    about
-
-
-Image Credits
-=============
-
-The image above was produced using one of the artistic renderings of the protoplanet candidate HD100546b in the |eso| press release: |HD100546b| 
-
-.. |eso| raw:: html
-
-	<a href="http://www.eso.org" target="_blank">ESO</a>
-	
-.. |HD100546b| raw:: html
-
-	<a href="http://www.eso.org/public/news/eso1310" target="_blank">The Birth of a Giant Planet?</a>
-	
-	
-	
-	
+   modules

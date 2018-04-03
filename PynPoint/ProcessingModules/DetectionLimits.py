@@ -18,7 +18,7 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import FastPCAModule
 from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule
 
 
-class ContrastModule(ProcessingModule):
+class ContrastCurveModule(ProcessingModule):
     """
     Module to calculate contrast limits by iterating towards a threshold for the false positive
     fraction, with a correction for small sample statistics.
@@ -42,7 +42,7 @@ class ContrastModule(ProcessingModule):
                  mask=0.,
                  extra_rot=0.):
         """
-        Constructor of ContrastModule.
+        Constructor of ContrastCurveModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -97,7 +97,7 @@ class ContrastModule(ProcessingModule):
         :return: None
         """
 
-        super(ContrastModule, self).__init__(name_in)
+        super(ContrastCurveModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if psf_in_tag == image_in_tag:
@@ -397,4 +397,4 @@ class ContrastModule(ProcessingModule):
 
         self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_pca_out_port.close_database()
+        self.m_pca_out_port.close_port()

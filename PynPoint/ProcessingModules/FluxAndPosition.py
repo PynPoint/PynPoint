@@ -230,7 +230,7 @@ class FakePlanetModule(ProcessingModule):
                                                       "{0:.2f}".format(self.m_position[1])+", "+ \
                                                       "{0:.2f}".format(self.m_magnitude)+")")
 
-        self.m_image_out_port.close_database()
+        self.m_image_out_port.close_port()
 
 
 class SimplexMinimizationModule(ProcessingModule):
@@ -520,7 +520,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_res_out_port.close_database()
+        self.m_res_out_port.close_port()
 
 
 class FalsePositiveModule(ProcessingModule):
@@ -642,7 +642,7 @@ class FalsePositiveModule(ProcessingModule):
 
         self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_snr_out_port.close_database()
+        self.m_snr_out_port.close_port()
 
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
@@ -1096,7 +1096,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.set_all(sampler.chain)
         self.m_chain_out_port.add_history_information("Flux and position", "MCMC sampling")
         self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_chain_out_port.close_database()
+        self.m_chain_out_port.close_port()
 
         print "Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction))
 
@@ -1189,4 +1189,4 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_phot_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_phot_out_port.add_history_information("Aperture photometry",
                                                      "radius = "+str(self.m_radius*pixscale))
-        self.m_phot_out_port.close_database()
+        self.m_phot_out_port.close_port()

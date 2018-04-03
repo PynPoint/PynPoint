@@ -104,7 +104,7 @@ class Port:
         """
         return self._m_tag
 
-    def close_database(self):
+    def close_port(self):
         """
         Closes the connection to the Data Storage and force it to save the data to the hard drive.
         All data that was accessed using the port is cleaned from the memory.

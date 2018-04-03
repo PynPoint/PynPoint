@@ -4,20 +4,6 @@ PynPoint.Core package
 Submodules
 ----------
 
-:py:mod:`PynPoint.Core.DataIO`:
-
-    * :py:class:`PynPoint.Core.DataIO.DataStorage`
-    * :py:class:`PynPoint.Core.DataIO.InputPort`
-    * :py:class:`PynPoint.Core.DataIO.OutputPort`
-
-:py:mod:`PynPoint.Core.Processing`
-
-    * :py:class:`PynPoint.Core.Processing.WritingModule`
-    * :py:class:`PynPoint.Core.Processing.ReadingModule`
-    * :py:class:`PynPoint.Core.Processing.ProcessingModule`
-
-:py:mod:`PynPoint.Core.Pypeline`
-
 PynPoint.Core.DataIO module
 ---------------------------
 
@@ -25,7 +11,6 @@ PynPoint.Core.DataIO module
     :members:
     :undoc-members:
     :show-inheritance:
-
 
 PynPoint.Core.Processing module
 -------------------------------
@@ -35,11 +20,19 @@ PynPoint.Core.Processing module
     :undoc-members:
     :show-inheritance:
 
-
 PynPoint.Core.Pypeline module
 -----------------------------
 
 .. automodule:: PynPoint.Core.Pypeline
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: PynPoint.Core
     :members:
     :undoc-members:
     :show-inheritance:

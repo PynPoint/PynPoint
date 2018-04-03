@@ -1,5 +1,7 @@
-PynPoint
-========
+.. _api:
+
+API
+===
 
 .. toctree::
    :maxdepth: 4
