@@ -154,7 +154,8 @@ class StarExtractionModule(ProcessingModule):
                         or argmax[1] + psf_radius >= image.shape[1]:
 
                     raise ValueError('Highest value is near the border. PSF size is too '
-                                     'large to be cropped (image index = '+str(self.m_count)+').')
+                                     'large to be cut (image index = '+str(self.m_count)+', '
+                                     'pixel with highest value [x,y] = ' +str([argmax[1]] + [argmax[0]])+ ').')
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
