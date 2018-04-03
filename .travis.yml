@@ -15,6 +15,7 @@ install:
   - pip2 install coverage
   - pip2 install sphinx
   - pip2 install codecov
+  - pip2 install sphinx_rtd_theme
 before_script:
   - mkdir $HOME/.matplotlib
   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
