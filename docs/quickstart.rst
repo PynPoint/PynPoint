@@ -35,7 +35,7 @@ Running PynPoint
 
 As a quick start example, we provide a preprocessed data cube of beta Pic in the M' band (4.8 μm). This archival data set was obtained with the high-resolution, adaptive optics assisted, near-infrared camera at the Very Large Telescope under the ESO program ID |id|. The exposure time of the individual images was 65 ms and the total field rotation about 50 deg.
 
-Each image in the data cube has been obtained with a pre-stacking of every 200 images. The data is stored in an HDF5 database (see :ref:`hdf5-files`) which contains a stack of 263 images of 80x80 in size, the parallactic angles, and the pixel scale of the detector. The following script downloads the data (13 MB), runs the PSF subtraction with PynPoint, and plots an image of the mean residuals (make sure to adjust the path of ``working_path``, ``input_path``, and ``output_path``): ::
+Each image in the data cube has been obtained with a pre-stacking of every 200 images. The data is stored in an HDF5 database (see :ref:`hdf5-files`) which contains a stack of 263 images of 80x80 in size, the parallactic angles, and the pixel scale of the detector. The following script downloads the data (13 MB), runs the PSF subtraction with PynPoint, and plots an image of the mean residuals (make sure to adjust the path of ``working_place``, ``input_place``, and ``output_place``): ::
 
 	import urllib
 	import numpy as np
@@ -47,17 +47,17 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 	from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
 	from PynPoint.ProcessingModules import PSFSubtractionModule
 
-	working_path = "/path/to/working_place/"
-	input_path = "/path/to/input_place/"
-	output_path = "/path/to/output_place/"
+	working_place = "/path/to/working_place/"
+	input_place = "/path/to/input_place/"
+	output_place = "/path/to/output_place/"
 
 	url = urllib.URLopener()
 	url.retrieve("https://people.phys.ethz.ch/~stolkert/BetaPic_NACO_Mp.hdf5",
-		     input_path+"BetaPic_NACO_Mp.hdf5")
+		     input_place+"BetaPic_NACO_Mp.hdf5")
 
-	pipeline = Pypeline(working_place_in=working_path,
-	                    input_place_in=input_path,
-	                    output_place_in=output_path)
+	pipeline = Pypeline(working_place_in=working_place,
+	                    input_place_in=input_place,
+	                    output_place_in=output_place)
 
 	read = Hdf5ReadingModule(name_in="read",
                                  input_filename="BetaPic_NACO_Mp.hdf5",
@@ -90,7 +90,7 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 	plt.xlabel('R.A. offset [arcsec]', fontsize=12)
 	plt.ylabel('Dec. offset [arcsec]', fontsize=12)
 	plt.colorbar()
-	plt.savefig(output_path+"residuals.png")
+	plt.savefig(output_place+"residuals.png")
 
 .. |id| raw:: html
 
