@@ -29,7 +29,7 @@ clean-test:
 	rm -f .coverage
 	rm -f coverage.xml
 	rm -rf .tox/
-	rm -rf PynPoint_exoplanet.egg-info/
+	rm -rf PynPoint.egg-info/
 	rm -f junit-docs-ci.xml
 	rm -f junit-py27.xml
 	rm -rf .pytest_cache/
