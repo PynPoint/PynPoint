@@ -35,6 +35,7 @@ class PypelineModule:
 
         :param name_in: The name of the Pypeline Module
         :type name_in: str
+
         :return: None
         """
 
@@ -103,6 +104,7 @@ class WritingModule(PypelineModule):
         :param output_dir: Directory where the results will be saved (Needs to be a directory,
                            raises error if not).
         :type output_dir: str
+
         :return: None
         """
 
@@ -151,6 +153,7 @@ class WritingModule(PypelineModule):
 
         :param data_base_in: The input database
         :type data_base_in: DataStorage
+
         :return: None
         """
 
@@ -245,6 +248,7 @@ class ProcessingModule(PypelineModule):
         :param default_activation: Activation status of the Port after creation. Deactivated Ports
                                    will not save their results until the are activated.
         :type default_activation: bool
+
         :return: The new OutputPort
         :rtype: OutputPort
         """
@@ -270,6 +274,7 @@ class ProcessingModule(PypelineModule):
 
         :param data_base_in: The input database
         :type data_base_in: DataStorage
+
         :return: None
         """
 
@@ -289,10 +294,12 @@ class ProcessingModule(PypelineModule):
                                                         func_args=None):
         """
         Applies a given function to all lines in time.
+
         :param func: The function to be applied
         :param image_in_port: Input Port where the data to be processed is located
         :param image_out_port: Input Port where the results will be stored
         :param func_args: addition arguments needed for the function (can be None)
+
         :return: None
         """
 
@@ -500,6 +507,7 @@ class ReadingModule(PypelineModule):
         :param input_dir: Directory where the input files are located (Needs to be a directory,
                           raises error if not)
         :type input_dir: str
+
         :return: None
         """
 
@@ -529,6 +537,7 @@ class ReadingModule(PypelineModule):
         :param default_activation: Activation status of the Port after creation. Deactivated Ports
                                    will not save their results until the are activated.
         :type default_activation: bool
+
         :return: The new OutputPort
         :rtype: OutputPort
         """
@@ -554,6 +563,7 @@ class ReadingModule(PypelineModule):
 
         :param data_base_in: The input database
         :type data_base_in: DataStorage
+
         :return: None
         """
 
