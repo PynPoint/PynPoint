@@ -27,6 +27,7 @@ class DataStorage(object):
 
         :param location_in: Location (directory + filename) of the .hdf5 data bank
         :type location_in: str
+
         :return: None
         """
 
@@ -87,6 +88,7 @@ class Port:
         :type tag: str
         :param data_storage_in: The data storage the port is connected with
         :type data_storage_in: DataStorage
+
         :return: None
         """
 
@@ -132,6 +134,7 @@ class Port:
 
         :param data_base_in: The input DataStorage
         :type data_base_in: DataStorage
+
         :return: None
         """
         self._m_data_storage = data_base_in
@@ -165,6 +168,7 @@ class ConfigPort(Port):
                                 Usually the DataStorage is set later by calling
                                 set_database_connection().
         :type data_storage_in: DataStorage
+
         :return: None
         """
         super(ConfigPort, self).__init__(tag, data_storage_in)
@@ -217,6 +221,7 @@ class ConfigPort(Port):
 
         :param name: The name of the attribute to be returned.
         :type name: str
+
         :return: The attribute value. Returns None if the attribute does not exist.
         :rtype: str, float, int
         """
@@ -277,6 +282,7 @@ class InputPort(Port):
                                 instance which will link the port to that DataStorage. Usually the
                                 DataStorage is set later by calling set_database_connection().
         :type data_storage_in: DataStorage
+
         :return: None
         """
         super(InputPort, self).__init__(tag, data_storage_in)
@@ -333,6 +339,7 @@ class InputPort(Port):
 
         :param item: Slicing parameter
         :type item: slice
+
         :return: The selected data as numpy array. Returns None if no data exists under the tag of
                  the Port.
         :rtype: numpy array
@@ -398,6 +405,7 @@ class InputPort(Port):
 
         :param name: The name of the attribute to be returned
         :type name: str
+
         :return: The attribute value. Returns None if the attribute does not exist.
         :rtype: numpy array for non-static attributes and simple types for static attributes.
         """
@@ -512,6 +520,7 @@ class OutputPort(Port):
                                 Usually the DataStorage is set later by calling
                                 set_database_connection().
         :type data_storage_in: DataStorage
+
         :return: None
         """
 
@@ -557,6 +566,7 @@ class OutputPort(Port):
         :type first_data: bytearray
         :param data_dim: number of desired dimensions. If None the dimension of the first_data is
             used.
+
         :return: None
         """
         # convert input data into numpy array
@@ -624,6 +634,7 @@ class OutputPort(Port):
         :param keep_attributes: Parameter which can be set True to keep all static attributes of the
          dataset. Non-static attributes will be kept, (Not needed for setting non-static attributes)
         :type keep_attributes: Boolean
+
         :return: None
         """
 
@@ -725,6 +736,7 @@ class OutputPort(Port):
 
         :param key: Slicing indices to be changed
         :param value: New values
+
         :return: None
         """
         if not self._check_status_and_activate():
@@ -785,6 +797,7 @@ class OutputPort(Port):
         :param keep_attributes: If True all attributes of a old dataset which will be replaced
                                 remain the same.
         :type keep_attributes: bool
+
         :return: None
         """
 
@@ -827,6 +840,7 @@ class OutputPort(Port):
         :type data_dim: int
         :param force: If True existing data will be overwritten if shape or type does not match.
         :type force: bool
+
         :return: None
         """
 
@@ -881,6 +895,7 @@ class OutputPort(Port):
         :param value: The value of the attribute
         :param static: If True the attribute will be static (default)
         :type static: bool
+
         :return: None
         """
 
@@ -907,6 +922,7 @@ class OutputPort(Port):
         :param name: Name of the attribute
         :type name: str
         :param value: Value which will be appended to the attribute dataset.
+
         :return: None
         """
 
@@ -926,6 +942,7 @@ class OutputPort(Port):
         :type name: str
         :param value: Value to be added
         :type value: int or float
+
         :return: None
         """
         if not self._check_status_and_activate():
@@ -950,6 +967,7 @@ class OutputPort(Port):
 
         :param input_port: The InputPort containing header information
         :type input_port: InputPort
+
         :return: None
         """
         if input_port.tag == self._m_tag:
@@ -986,6 +1004,7 @@ class OutputPort(Port):
 
         :param name: Name of the attribute.
         :type name: str
+
         :return: None
         """
         if not self._check_status_and_activate():
@@ -1026,6 +1045,7 @@ class OutputPort(Port):
         :param name: Name of the attribute
         :type name: str
         :param comparison_value: Value for comparison
+
         :return:
                      * 1 if the attribute does not exist
                      * 0 if the attribute exists and is equal,
@@ -1052,6 +1072,7 @@ class OutputPort(Port):
         :param name: Name of the attribute
         :type name: str
         :param comparison_value: Value for comparison
+
         :return:
                      * 1 if the attribute does not exist
                      * 0 if the attribute exists and is equal,
@@ -1085,6 +1106,7 @@ class OutputPort(Port):
         :type pipeline_step: str
         :param history_information: Extra information about the step e.g. parameters
         :type history_information: str
+
         :return: None
         """
         self.add_attribute("History: " + pipeline_step,
