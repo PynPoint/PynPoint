@@ -119,6 +119,8 @@ html_context = { 'display_github': True,
                  'github_repo': 'PynPoint',
                  'github_version': 'master/docs/' }
 
+autoclass_content = 'both'
+
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.

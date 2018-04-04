@@ -53,9 +53,9 @@ class ImageWrapper(BasePynpointWrapper):
                            ind,
                            full=False):
         """
-        Function for making a realisation of the PSF using the data stored in the object
+        Function for making a realization of the PSF using the data stored in the object
 
-        :param ind: index of the image to be modelled
+        :param ind: index of the image to be modeled
         :param full: if set to True then the masked region will be included
         :return: an image of the PSF model
         """

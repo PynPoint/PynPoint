@@ -39,7 +39,7 @@ Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.r
 Attribution
 -----------
 
-Please cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ when results obtained with PynPoint are published.
+If you use the new architecture of PynPoint (v0.3.0 or later) in your publication then please cite Stolker et al. in prep. Also, please cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ when PCA is used as PSF subtraction method.
 
 License
 -------

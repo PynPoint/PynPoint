@@ -256,6 +256,7 @@ class Pypeline(object):
         :param pipeline_module: The input module. Needs to be either a Processing, Reading or
                                 Writing Module.
         :type pipeline_module: ProcessingModule, ReadingModule, WritingModule
+
         :return: None
         """
         assert isinstance(pipeline_module, PypelineModule), 'Error: the given pipeline_module is '\
