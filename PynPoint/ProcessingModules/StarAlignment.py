@@ -155,7 +155,8 @@ class StarExtractionModule(ProcessingModule):
 
                     raise ValueError('Highest value is near the border. PSF size is too '
                                      'large to be cut (image index = '+str(self.m_count)+', '
-                                     'pixel with highest value [x,y] = ' +str([argmax[1]] + [argmax[0]])+ ').')
+                                     'pixel with highest value [x,y] = ' +str([argmax[1]] + \
+                                     [argmax[0]])+ ').')
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
@@ -283,7 +284,7 @@ class StarAlignmentModule(ProcessingModule):
                     tmp_offset, _, _ = register_translation(ref_images,
                                                             image_in,
                                                             upsample_factor=self.m_accuracy)
-                
+
                 elif ref_images.ndim == 3:
                     tmp_offset, _, _ = register_translation(ref_images[i, :, :],
                                                             image_in,
@@ -355,6 +356,7 @@ class StarCenteringModule(ProcessingModule):
                  method="full",
                  interpolation="spline",
                  radius=None,
+                 sign="positive",
                  **kwargs):
         """
         Constructor of StarCenteringModule.
@@ -387,6 +389,9 @@ class StarCenteringModule(ProcessingModule):
                        The radius is centered on the position specified in *guess*, which is the
                        center of the image by default.
         :type radius: float
+        :param sign: Fit a positive (*"positive"*) or negative (*"negative"*) Gaussian. A negative
+                     Gaussian could be used to center coronagraphic data.
+        :type sign: bool
         :param \**kwargs:
             See below.
 
@@ -413,6 +418,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_method = method
         self.m_interpolation = interpolation
         self.m_radius = radius
+        self.m_sign = sign
         self.m_count = 0
 
     def run(self):
@@ -457,6 +463,9 @@ class StarCenteringModule(ProcessingModule):
 
             xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
             rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
+
+            if self.m_sign == "negative":
+                image = -image + np.abs(np.min(-image))
 
             if self.m_radius is not None:
                 image[rr_ap > self.m_radius] = 0.
@@ -521,7 +530,13 @@ class StarCenteringModule(ProcessingModule):
         if self.m_radius is not None:
             self.m_radius /= pixscale
 
-        nimages = self.m_image_in_port.get_shape()[0]
+        ndim = self.m_image_in_port.get_ndim()
+
+        if ndim == 2:
+            nimages = 1
+        elif ndim == 3:
+            nimages = self.m_image_in_port.get_shape()[0]
+
         npix = self.m_image_in_port.get_shape()[1]
 
         if memory == 0 or memory >= nimages:
@@ -540,10 +555,14 @@ class StarCenteringModule(ProcessingModule):
         if self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
-            for i, _ in enumerate(frames[:-1]):
-                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+            if ndim == 2:
+                im_mean += self.m_image_in_port[:, :]
 
-            im_mean /= float(nimages)
+            elif ndim == 3:
+                for i, _ in enumerate(frames[:-1]):
+                    im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+
+                im_mean /= float(nimages)
 
             self.m_popt = _least_squares(im_mean)
 
