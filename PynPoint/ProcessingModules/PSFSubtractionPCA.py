@@ -2,6 +2,7 @@
 Modules for PSF subtraction with principle component analysis.
 """
 
+import warnings
 from copy import deepcopy
 from sys import platform, stdout
 
@@ -223,6 +224,9 @@ class PSFSubtractionModule(ProcessingModule):
 
         :return: None
         """
+
+        warnings.warn("PSFSubtractionModule will be deprecated in the future. Please use "
+                      "PcaPsfSubtractionModule instead.", PendingDeprecationWarning)
 
         if self.m_verbose:
             stdout.write("Preparing PSF subtraction...")
@@ -585,7 +589,7 @@ class MakePCABasisModule(ProcessingModule):
         self._m_basis_out_port.flush()
 
 
-class FastPCAModule(ProcessingModule):
+class PcaPsfSubtractionModule(ProcessingModule):
     """
     Module for fast (compared to PSFSubtractionModule) PCA subtraction. The multiprocessing
     implementation is only supported for Linux and Windows. Mac only runs in single processing
@@ -604,7 +608,7 @@ class FastPCAModule(ProcessingModule):
                  extra_rot=0.,
                  **kwargs):
         """
-        Constructor of FastPCAModule.
+        Constructor of PcaPsfSubtractionModule.
 
         :param pca_numbers: Number of PCA components used for the PSF model. Can be a single value
                             or a list of integers. A list of PCAs will be processed (if supported)
@@ -643,7 +647,7 @@ class FastPCAModule(ProcessingModule):
         :return: None
         """
 
-        super(FastPCAModule, self).__init__(name_in)
+        super(PcaPsfSubractionModule, self).__init__(name_in)
 
         if "basis_out_tag" in kwargs:
             self.m_basis_tag = kwargs["basis_out_tag"]
@@ -777,7 +781,7 @@ class FastPCAModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
                     self.m_star_in_port)
                 self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
-                                                                             "Fast PCA")
+                                                                             "PcaPsfSubtractionModule")
 
             # 2.) mean
             tmp_res_rot_mean = np.mean(res_array, axis=0)
@@ -864,8 +868,8 @@ class FastPCAModule(ProcessingModule):
         self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
 
-        self.m_res_mean_out_port.add_history_information("PSF subtraction", "Fast PCA")
-        self.m_res_median_out_port.add_history_information("PSF subtraction", "Fast PCA")
-        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "Fast PCA")
+        self.m_res_mean_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
+        self.m_res_median_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
+        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
 
         self.m_res_mean_out_port.close_port()

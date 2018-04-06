@@ -20,7 +20,7 @@ from photutils import aperture_photometry, CircularAperture
 from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import FastPCAModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 
 
 class FakePlanetModule(ProcessingModule):
@@ -396,16 +396,16 @@ class SimplexMinimizationModule(ProcessingModule):
             prep.connect_database(self._m_data_base)
             prep.run()
 
-            psf_sub = FastPCAModule(name_in="pca_simplex",
-                                    pca_numbers=self.m_pca_number,
-                                    images_in_tag="simplex_prep",
-                                    reference_in_tag="simplex_prep",
-                                    res_mean_tag="simplex_res_mean",
-                                    res_median_tag=None,
-                                    res_arr_out_tag=None,
-                                    res_rot_mean_clip_tag=None,
-                                    extra_rot=self.m_extra_rot,
-                                    verbose=False)
+            psf_sub = PcaPsfSubtractionModule(name_in="pca_simplex",
+                                              pca_numbers=self.m_pca_number,
+                                              images_in_tag="simplex_prep",
+                                              reference_in_tag="simplex_prep",
+                                              res_mean_tag="simplex_res_mean",
+                                              res_median_tag=None,
+                                              res_arr_out_tag=None,
+                                              res_rot_mean_clip_tag=None,
+                                              extra_rot=self.m_extra_rot,
+                                              verbose=False)
 
             psf_sub.connect_database(self._m_data_base)
             psf_sub.run()
