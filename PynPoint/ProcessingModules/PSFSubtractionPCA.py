@@ -225,8 +225,9 @@ class PSFSubtractionModule(ProcessingModule):
         :return: None
         """
 
-        warnings.warn("PSFSubtractionModule will be deprecated in the future. Please use "
-                      "PcaPsfSubtractionModule instead.", PendingDeprecationWarning)
+        warnings.warn("PSFSubtractionModule is deprecated and will be removed in the next "
+                      "release. Please use PcaPsfSubtractionModule instead.",
+                      DeprecationWarning)
 
         if self.m_verbose:
             stdout.write("Preparing PSF subtraction...")
