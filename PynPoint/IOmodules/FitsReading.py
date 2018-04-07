@@ -136,7 +136,7 @@ class FitsReadingModule(ReadingModule):
         tmp_header = hdulist[0].header
 
         # static attributes
-        for item in self.m_static:
+        for i, item in enumerate(self.m_static):
 
             if self.m_static_check[i]:
 
