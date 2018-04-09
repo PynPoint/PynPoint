@@ -73,20 +73,22 @@ class FitsReadingModule(ReadingModule):
         self.m_non_static = ['NFRAMES',
                              'EXP_NO',
                              'NDIT',
+                             'DATE',
                              'PARANG_START',
                              'PARANG_END',
                              'PARANG',
                              'DITHER_X',
                              'DITHER_Y',
                              'PUPIL',
-                             'DATE',
                              'RA',
                              'DEC']
 
-        self.m_attr_check = np.ones(len(self.m_non_static), dtype=bool)
+        self.m_static_check = np.ones(len(self.m_static), dtype=bool)
+        self.m_nonstatic_check = np.ones(len(self.m_non_static), dtype=bool)
 
         if not check:
-            self.m_attr_check[3:8] = False
+            self.m_static_check[2:4] = False
+            self.m_nonstatic_check[4:12] = False
 
         self.m_count = 0
 
@@ -134,36 +136,39 @@ class FitsReadingModule(ReadingModule):
         tmp_header = hdulist[0].header
 
         # static attributes
-        for item in self.m_static:
-            fitskey = self._m_config_port.get_attribute(item)
+        for i, item in enumerate(self.m_static):
 
-            if fitskey != "None":
+            if self.m_static_check[i]:
 
-                if fitskey in tmp_header:
-                    value = tmp_header[fitskey]
-                    status = self.m_image_out_port.check_static_attribute(item, value)
+                fitskey = self._m_config_port.get_attribute(item)
 
-                    if status == 1:
-                        self.m_image_out_port.add_attribute(item, value, static=True)
+                if fitskey != "None":
 
-                    if status == -1:
-                        warnings.warn('Static attribute %s has changed. Probably the current '
-                                      'file %s does not belong to the data set "%s" of the PynPoint'
-                                      ' database. Updating attribute...' \
-                                      % (fitskey, fits_file, self.m_image_tag))
+                    if fitskey in tmp_header:
+                        value = tmp_header[fitskey]
+                        status = self.m_image_out_port.check_static_attribute(item, value)
 
-                    elif status == 0:
-                        # Attribute is known and is still the same
-                        pass
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(item, value, static=True)
 
-                else:
-                    warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
-                                  % (item, fitskey))
+                        if status == -1:
+                            warnings.warn('Static attribute %s has changed. Probably the current '
+                                          'file %s does not belong to the data set "%s" of the PynPoint'
+                                          ' database. Updating attribute...' \
+                                          % (fitskey, fits_file, self.m_image_tag))
+
+                        elif status == 0:
+                            # Attribute is known and is still the same
+                            pass
+
+                    else:
+                        warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
+                                      % (item, fitskey))
 
         # non-static attributes
         for i, item in enumerate(self.m_non_static):
 
-            if self.m_attr_check[i]:
+            if self.m_nonstatic_check[i]:
 
                 if item == 'PARANG':
                     fitskey = 'PARANG'

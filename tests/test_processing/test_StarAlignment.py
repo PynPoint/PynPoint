@@ -120,7 +120,7 @@ class TestStarAlignment(object):
 
         self.pipeline.add_module(align)
 
-        shift = ShiftForCenteringModule((4., 6.),
+        shift = ShiftForCenteringModule((6., 4.),
                                         name_in="shift",
                                         image_in_tag="align",
                                         image_out_tag="shift")
