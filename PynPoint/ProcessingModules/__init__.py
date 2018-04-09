@@ -4,7 +4,7 @@ from BackgroundSubtraction import SimpleBackgroundSubtractionModule, MeanBackgro
 from BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelInterpolationModule, \
                              BadPixelMapModule
 from DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule, SubtractImagesModule
-from PSFSubtractionPCA import PSFSubtractionModule, FastPCAModule
+from PSFSubtractionPCA import PSFSubtractionModule, PcaPsfSubtractionModule
 from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, DerotateAndStackModule, \
                                    CombineTagsModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteringModule, \
