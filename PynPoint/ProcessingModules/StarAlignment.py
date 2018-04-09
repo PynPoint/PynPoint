@@ -391,7 +391,7 @@ class StarCenteringModule(ProcessingModule):
         :type radius: float
         :param sign: Fit a positive (*"positive"*) or negative (*"negative"*) Gaussian. A negative
                      Gaussian could be used to center coronagraphic data.
-        :type sign: bool
+        :type sign: str
         :param \**kwargs:
             See below.
 
@@ -594,7 +594,7 @@ class ShiftForCenteringModule(ProcessingModule):
         """
         Constructor of ShiftForCenteringModule.
 
-        :param shift_xy: Tuple (delta_y, delta_x) with the shift in both directions.
+        :param shift_xy: Tuple (delta_x, delta_y) with the shift in both directions.
         :type shift_xy: tuple, float
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -622,7 +622,7 @@ class ShiftForCenteringModule(ProcessingModule):
         """
 
         def image_shift(image_in):
-            return shift(image_in, self.m_shift, order=5)
+            return shift(image_in, (self.m_shift[1], self.m_shift[0]), order=5)
 
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,

@@ -80,7 +80,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Background", "simple subtraction")
+        self.m_image_out_port.add_history_information("Background subtraction", "simple")
         self.m_image_out_port.close_port()
 
 
@@ -258,7 +258,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Background", "mean subtraction")
+        self.m_image_out_port.add_history_information("Background subtraction", "mean")
         self.m_image_out_port.close_port()
 
 
@@ -648,13 +648,11 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_subtracted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-        self.m_subtracted_out_port.add_history_information("Background",
-                                                           "PCA subtraction")
+        self.m_subtracted_out_port.add_history_information("Background subtraction", "PCA")
 
         if self.m_residuals_out_tag is not None:
             self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_residuals_out_port.add_history_information("Background",
-                                                              "PCA residuals")
+            self.m_residuals_out_port.add_history_information("Background subtraction", "PCA")
 
         self.m_subtracted_out_port.close_port()
 
@@ -896,8 +894,8 @@ class NoddingBackgroundModule(ProcessingModule):
 
     def __init__(self,
                  name_in="sky_subtraction",
-                 sky_in_tag="sky_arr",
                  science_in_tag="im_arr",
+                 sky_in_tag="sky_arr",
                  image_out_tag="im_arr",
                  mode="both"):
         """
@@ -905,15 +903,15 @@ class NoddingBackgroundModule(ProcessingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param sky_in_tag: Tag of the database entry with sky frames that are read as input.
+        :param science_in_tag: Tag of the database entry with science images that are read as
+                               input.
+        :type science_in_tag: str
+        :param sky_in_tag: Tag of the database entry with sky images that are read as input.
         :type sky_in_tag: str
-        :param science_data_in_tag: Tag of the database entry with science frames that are read as
-                                    input.
-        :type science_data_in_tag: str
         :param image_out_tag: Tag of the database entry with sky subtracted images that are written
                               as output.
         :type image_out_tag: str
-        :param mode: Sky frames that are subtracted, relative to the science frames. Either the
+        :param mode: Sky images that are subtracted, relative to the science images. Either the
                      next, previous, or average of the next and previous cubes of sky frames can
                      be used by choosing *next*, *previous*, or *both*, respectively.
         :type mode: str
@@ -923,8 +921,8 @@ class NoddingBackgroundModule(ProcessingModule):
 
         super(NoddingBackgroundModule, self).__init__(name_in=name_in)
 
-        self.m_sky_in_port = self.add_input_port(sky_in_tag)
         self.m_science_in_port = self.add_input_port(science_in_tag)
+        self.m_sky_in_port = self.add_input_port(sky_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_time_stamps = []
@@ -932,44 +930,43 @@ class NoddingBackgroundModule(ProcessingModule):
         if mode in ["next", "previous", "both"]:
             self.m_mode = mode
         else:
-            raise ValueError("Mode needs to be next, previous or both.")
+            raise ValueError("Mode needs to be 'next', 'previous', or 'both'.")
 
     def _create_time_stamp_list(self):
         """
         Internal method for assigning a time stamp, based on the exposure number ID, to each cube
-        of sky and science frames.
+        of sky and science images.
         """
 
         class TimeStamp:
+
             def __init__(self,
                          time,
-                         sky_or_science,
+                         im_type,
                          index):
+
                 self.m_time = time
-                self.m_sky_or_science = sky_or_science
+                self.m_im_type = im_type
                 self.m_index = index
 
             def __repr__(self):
+
                 return repr((self.m_time,
-                             self.m_sky_or_science,
+                             self.m_im_type,
                              self.m_index))
 
-        exp_no = self.m_sky_in_port.get_attribute("EXP_NO")
+        exp_no_sky = self.m_sky_in_port.get_attribute("EXP_NO")
+        exp_no_science = self.m_science_in_port.get_attribute("EXP_NO")
+        nframes_science = self.m_science_in_port.get_attribute("NFRAMES")
 
-        for i, item in enumerate(exp_no):
-            self.m_time_stamps.append(TimeStamp(item,
-                                                "SKY",
-                                                i))
-
-        exp_no = self.m_science_in_port.get_attribute("EXP_NO")
-        nframes = self.m_science_in_port.get_attribute("NFRAMES")
+        for i, item in enumerate(exp_no_sky):
+            self.m_time_stamps.append(TimeStamp(item, "SKY", i))
 
         current = 0
-        for i, item in enumerate(exp_no):
-            self.m_time_stamps.append(TimeStamp(item,
-                                                "SCIENCE",
-                                                slice(current, current+nframes[i])))
-            current += nframes[i]
+        for i, item in enumerate(exp_no_science):
+            frames = slice(current, current+nframes_science[i])
+            self.m_time_stamps.append(TimeStamp(item, "SCIENCE", frames))
+            current += nframes_science[i]
 
         self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
 
@@ -981,24 +978,23 @@ class NoddingBackgroundModule(ProcessingModule):
         sky frames.
         """
 
-        # check if there is at least one SKY in the database
-        if not any(x.m_sky_or_science == "SKY" for x in self.m_time_stamps):
-            raise ValueError('List of time stamps does not contain any SKY frames')
+        if not any(x.m_im_type == "SKY" for x in self.m_time_stamps):
+            raise ValueError("List of time stamps does not contain any SKY images.")
 
         def search_for_next_sky():
             for i in range(index_of_science_data, len(self.m_time_stamps)):
-                if self.m_time_stamps[i].m_sky_or_science == "SKY":
+                if self.m_time_stamps[i].m_im_type == "SKY":
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
 
-            # no next sky found look for previous sky
+            # no next sky found, look for previous sky
             return search_for_previous_sky()
 
         def search_for_previous_sky():
             for i in reversed(range(0, index_of_science_data)):
-                if self.m_time_stamps[i].m_sky_or_science == "SKY":
+                if self.m_time_stamps[i].m_im_type == "SKY":
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
 
-            # no previous sky found look for next sky
+            # no previous sky found, look for next sky
             return search_for_next_sky()
 
         if self.m_mode == "next":
@@ -1010,25 +1006,26 @@ class NoddingBackgroundModule(ProcessingModule):
         if self.m_mode == "both":
             previous_sky = search_for_previous_sky()
             next_sky = search_for_next_sky()
-            return (previous_sky + next_sky)/2.0
+
+            return (previous_sky+next_sky)/2.
 
     def run(self):
         """
-        Run method of the module. Create list of time stamps, get sky and science frames, and
-        subtract the sky background from the science frames.
+        Run method of the module. Create list of time stamps, get sky and science images, and
+        subtract the sky images from the science images.
 
         :return: None
         """
 
-        self._create_time_stamp_list()
-
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
+
+        self._create_time_stamp_list()
 
         for i, time_entry in enumerate(self.m_time_stamps):
             progress(i, len(self.m_time_stamps), "Running NoddingBackgroundModule...")
 
-            if time_entry.m_sky_or_science == "SKY":
+            if time_entry.m_im_type == "SKY":
                 continue
 
             sky = self.calc_sky_frame(i)
@@ -1040,5 +1037,5 @@ class NoddingBackgroundModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_science_in_port)
-        self.m_image_out_port.add_history_information("Background", "nodding")
+        self.m_image_out_port.add_history_information("Background subtraction", "nodding")
         self.m_image_out_port.close_port()
