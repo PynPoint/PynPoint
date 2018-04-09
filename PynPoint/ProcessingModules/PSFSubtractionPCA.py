@@ -648,7 +648,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :return: None
         """
 
-        super(PcaPsfSubractionModule, self).__init__(name_in)
+        super(PcaPsfSubtractionModule, self).__init__(name_in)
 
         if "basis_out_tag" in kwargs:
             self.m_basis_tag = kwargs["basis_out_tag"]
