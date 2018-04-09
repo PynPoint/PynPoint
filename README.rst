@@ -24,6 +24,8 @@ PynPoint
 .. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
     :target: http://arxiv.org/abs/1207.6637
 
+.. image:: https://img.shields.io/badge/ascl.net/1501.001-blue.svg?colorB=262255
+    :target: http://ascl.net/1501.001
 
 PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light.
 
