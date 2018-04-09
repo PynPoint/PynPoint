@@ -24,9 +24,6 @@ PynPoint
 .. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
     :target: http://arxiv.org/abs/1207.6637
 
-.. image:: https://img.shields.io/badge/ascl.net/1501.001-blue.svg?colorB=262255
-    :target: http://ascl.net/1501.001
-
 PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light.
 
 The pipeline has a modular architecture with a central data storage in which the reduction steps are stored by the processing modules. These modules have specific tasks such as the subtraction of the background, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available IO modules.
