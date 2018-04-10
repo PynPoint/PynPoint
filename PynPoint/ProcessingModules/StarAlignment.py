@@ -50,11 +50,11 @@ class StarExtractionModule(ProcessingModule):
                           to convolve the images.
         :type fwhm_star: float
         :param position: Subframe that is selected to search for the star. The tuple can contain a
-                         single position in pixels and size as (pos_x, pos_y, size), or the position
-                         and size can be defined for each image separately in which case the tuple
-                         should be 2D (nframes x 3). Setting *position* to None will use the
-                         full image to search for the star. If position=(None, None, size) then
-                         the center of the image will be used.
+                         single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
+                         position and size can be defined for each image separately in which case
+                         the tuple should be 2D (nframes x 3). Setting *position* to None will use
+                         the full image to search for the star. If *position=(None, None, size)*
+                         then the center of the image will be used.
         :type position: tuple, float
 
         :return: None
@@ -120,21 +120,21 @@ class StarExtractionModule(ProcessingModule):
                 if self.m_position.ndim == 1:
                     pos_x = self.m_position[0]
                     pos_y = self.m_position[1]
-                    width = self.m_position[2]
+                    width = self.m_position[2]/pixscale
 
                     if pos_x > self.m_image_in_port.get_shape()[1] or \
                             pos_y > self.m_image_in_port.get_shape()[2]:
-                        raise ValueError('The indicated position lays outside the image')
+                        raise ValueError('The specified position is outside the image.')
 
                 elif self.m_position.ndim == 2:
                     pos_x = self.m_position[self.m_count, 0]
                     pos_y = self.m_position[self.m_count, 1]
-                    width = self.m_position[self.m_count, 2]
+                    width = self.m_position[self.m_count, 2]/pixscale
 
                 if pos_y <= width/2. or pos_x <= width/2. \
                         or pos_y+width/2. >= self.m_image_in_port.get_shape()[2]\
                         or pos_x+width/2. >= self.m_image_in_port.get_shape()[1]:
-                    warnings.warn("The region for the star extraction exceeds the image")
+                    warnings.warn("The region for the star extraction exceeds the image.")
 
                 subimage = image[int(pos_y-width/2.):int(pos_y+width/2.),
                                  int(pos_x-width/2.):int(pos_x+width/2.)]
