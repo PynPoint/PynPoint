@@ -23,7 +23,8 @@ class RemoveFramesModule(ProcessingModule):
                  frames,
                  name_in="remove_frames",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_remove"):
+                 selected_out_tag="im_arr_selected",
+                 removed_out_tag="im_arr_removed"):
         """
         Constructor of RemoveFramesModule.
 
@@ -33,9 +34,14 @@ class RemoveFramesModule(ProcessingModule):
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        :param selected_out_tag: Tag of the database entry with the selected images that are
+                                 written as output. Should be different from *image_in_tag*.
+                                 No data is written when set to *None*.
+        :type selected_out_tag: str
+        :param removed_out_tag: Tag of the database entry with the removed images that are
+                                written as output. Should be different from *image_in_tag*.
+                                No data is written when set to *None*.
+        :type removed_out_tag: str
 
         :return: None
         """
@@ -43,30 +49,48 @@ class RemoveFramesModule(ProcessingModule):
         super(RemoveFramesModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_frames = np.asarray(frames)
+        if selected_out_tag is None:
+            self.m_selected_out_port = None
+        else:
+            self.m_selected_out_port = self.add_output_port(selected_out_tag)
+
+        if removed_out_tag is None:
+            self.m_removed_out_port = None
+        else:
+            self.m_removed_out_port = self.add_output_port(removed_out_tag)
+
+        self.m_frames = np.asarray(frames, dtype=np.int)
 
     def run(self):
         """
-        Run method of the module. Removes the frames, removes the associated PARANG values,
-        updates the NAXIS3 value, and saves the data and attributes.
+        Run method of the module. Removes the frames and corresponding attributes, updates the
+        NFRAMES attribute, and saves the data and attributes.
 
         :return: None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
+        if self.m_selected_out_port is not None:
+            if self.m_image_in_port.tag == self.m_selected_out_port.tag:
+                raise ValueError("Input and output ports should have a different tag.")
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError("Input and output port should have a different tag.")
+        if self.m_removed_out_port is not None:
+            if self.m_image_in_port.tag == self.m_removed_out_port.tag:
+                raise ValueError("Input and output ports should have a different tag.")
 
         if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
             raise ValueError("Some values in frames are larger than the total number of "
                              "available frames, %s." % str(self.m_image_in_port.get_shape()[0]))
 
+        if self.m_selected_out_port is not None:
+            self.m_selected_out_port.del_all_data()
+            self.m_selected_out_port.del_all_attributes()
+
+        if self.m_removed_out_port is not None:
+            self.m_removed_out_port.del_all_data()
+            self.m_removed_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
 
         if memory == 0 or memory >= nimages:
@@ -86,55 +110,97 @@ class RemoveFramesModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
 
-            tmp_im = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             index_del = np.where(np.logical_and(self.m_frames >= frames[i], \
                                                 self.m_frames < frames[i+1]))
 
             if np.size(index_del) > 0:
-                tmp_im = np.delete(tmp_im, self.m_frames[index_del]%memory, axis=0)
+                if self.m_removed_out_port is not None:
+                    self.m_removed_out_port.append(images[self.m_frames[index_del]%memory])
+                images = np.delete(images, self.m_frames[index_del]%memory, axis=0)
 
-            self.m_image_out_port.append(tmp_im)
+            if self.m_selected_out_port is not None:
+                self.m_selected_out_port.append(images)
 
         sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if self.m_selected_out_port is not None:
+            self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        if self.m_removed_out_port is not None:
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         non_static = self.m_image_in_port.get_all_non_static_attributes()
 
         index = self.m_image_in_port.get_attribute("INDEX")
-        self.m_image_out_port.add_attribute("INDEX",
-                                            np.delete(index, self.m_frames),
-                                            static=False)
+
+        if self.m_selected_out_port is not None:
+            self.m_selected_out_port.add_attribute("INDEX",
+                                                   np.delete(index, self.m_frames),
+                                                   static=False)
+
+        if self.m_removed_out_port is not None:
+            self.m_removed_out_port.add_attribute("INDEX",
+                                                  index[self.m_frames],
+                                                  static=False)
 
         if "PARANG" in non_static:
             parang = self.m_image_in_port.get_attribute("PARANG")
-            self.m_image_out_port.add_attribute("PARANG",
-                                                np.delete(parang, self.m_frames),
-                                                static=False)
+
+            if self.m_selected_out_port is not None:
+                self.m_selected_out_port.add_attribute("PARANG",
+                                                       np.delete(parang, self.m_frames),
+                                                       static=False)
+
+            if self.m_removed_out_port is not None:
+                self.m_removed_out_port.add_attribute("PARANG",
+                                                      parang[self.m_frames],
+                                                      static=False)
 
         if "STAR_POSITION" in non_static:
             position = self.m_image_in_port.get_attribute("STAR_POSITION")
-            self.m_image_out_port.add_attribute("STAR_POSITION",
-                                                np.delete(position, self.m_frames, axis=0),
-                                                static=False)
 
-        nframes = self.m_image_in_port.get_attribute("NFRAMES")
-        nframes_new = np.copy(nframes)
+            if self.m_selected_out_port is not None:
+                self.m_selected_out_port.add_attribute("STAR_POSITION",
+                                                       np.delete(position, self.m_frames, axis=0),
+                                                       static=False)
 
-        total = 0
-        for i, frames in enumerate(nframes):
-            index_del = np.where(np.logical_and(self.m_frames >= total, \
-                                 self.m_frames < total+frames))[0]
+            if self.m_removed_out_port is not None:
+                self.m_removed_out_port.add_attribute("STAR_POSITION",
+                                                      position[self.m_frames],
+                                                      static=False)
 
-            nframes_new[i] -= np.size(index_del)
+        if "NFRAMES" in non_static:
+            nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-            total += frames
+            nframes_sel = np.zeros(nframes.shape)
+            nframes_del = np.zeros(nframes.shape)
 
-        self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
-        self.m_image_out_port.add_history_information("Frames removed",
-                                                      str(np.size(self.m_frames)))
+            for i, frames in enumerate(nframes):
+                total = np.sum(nframes[0:i])
+
+                index_del = np.where(np.logical_and(self.m_frames >= total, \
+                                     self.m_frames < total+frames))[0]
+
+                nframes_sel[i] = frames-np.size(index_del)
+                nframes_del[i] = np.size(index_del)
+
+            if self.m_selected_out_port is not None:
+                self.m_selected_out_port.add_attribute("NFRAMES", nframes_sel, static=False)
+
+            if self.m_removed_out_port is not None:
+                self.m_removed_out_port.add_attribute("NFRAMES", nframes_del, static=False)
+
+        if self.m_selected_out_port is not None:
+            self.m_selected_out_port.add_history_information("Frames removed",
+                                                             str(np.size(self.m_frames)))
+
+        if self.m_removed_out_port is not None:
+            self.m_removed_out_port.add_history_information("Frames removed",
+                                                            str(np.size(self.m_frames)))
+
         self.m_image_in_port.close_port()
 
 
@@ -148,6 +214,7 @@ class FrameSelectionModule(ProcessingModule):
                  image_in_tag="im_arr",
                  selected_out_tag="im_arr_selected",
                  removed_out_tag="im_arr_removed",
+                 index_out_tag=None,
                  method="median",
                  threshold=4.,
                  fwhm=0.2,
@@ -162,10 +229,16 @@ class FrameSelectionModule(ProcessingModule):
         :type image_in_tag: str
         :param selected_out_tag: Tag of the database entry with the selected images that are
                                  written as output. Should be different from *image_in_tag*.
+                                 No data is written when set to *None*.
         :type selected_out_tag: str
         :param removed_out_tag: Tag of the database entry with the removed images that are
                                 written as output. Should be different from *image_in_tag*.
+                                No data is written when set to *None*.
         :type removed_out_tag: str
+        :param index_out_tag: Tag of the database entry with the list of frames indices that are
+                              removed with the frames selection. No data is written when set to
+                              *None*.
+        :type index_out_tag: str
         :param method: Perform the sigma clipping with respect to the median or maximum aperture
                        flux by setting the method to *median* or *max*, respectively.
         :type method: str
@@ -175,18 +248,21 @@ class FrameSelectionModule(ProcessingModule):
         :type threshold: float
         :param fwhm: The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is
                      used to smooth the images before the brightest pixel is located. Should be
-                     similar in size to the FWHM of the stellar PSF.
+                     similar in size to the FWHM of the stellar PSF. A fixed position, specified
+                     by *position*, is used when *fwhm* is set to *None*.
         :type fwhm: float
         :param aperture: The aperture radius (arcsec) that is used for measuring the photometry
                          around the location of the brightest pixel. Typically a few times the
-                         stellar FWHM would be recommended.
+                         stellar FWHM would be recommended. The position of the aperture has to
+                         be specified with *position* when *fwhm=None*.
         :type aperture: float
         :param position: Subframe that is selected to search for the star. The tuple can contain a
-                         single position and size as (pos_x, pos_y, size), or the position and size
-                         can be defined for each image separately in which case the tuple should be
-                         2D (nimages x 3). Setting *position* to None will use the full image to
-                         search for the star. If position=(None, None, size) then the center of the
-                         image will be used.
+                         single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
+                         position and size can be defined for each image separately in which case
+                         the tuple should be 2D (nimages x 3). Setting *position* to None will use
+                         the full image to search for the star. If *position=(None, None, size)* then
+                         the center of the image will be used. The value of *size* is not used when
+                         *fwhm=None*.
         :type position: tuple, float
 
         :return: None
@@ -195,8 +271,13 @@ class FrameSelectionModule(ProcessingModule):
         super(FrameSelectionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_selected_out_port = self.add_output_port(selected_out_tag)
-        self.m_removed_out_port = self.add_output_port(removed_out_tag)
+        if index_out_tag is None:
+            self.m_index_out_port = None
+        else:
+            self.m_index_out_port = self.add_output_port(index_out_tag)
+
+        self.m_selected_out_tag = selected_out_tag
+        self.m_removed_out_tag = removed_out_tag
 
         self.m_method = method
         self.m_fwhm = fwhm
@@ -214,29 +295,24 @@ class FrameSelectionModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
-                self.m_image_in_port.tag == self.m_removed_out_port.tag:
+        if self.m_image_in_port.tag == self.m_selected_out_tag or \
+                self.m_image_in_port.tag == self.m_removed_out_tag:
             raise ValueError("Input and output ports should have a different tag.")
 
-        self.m_selected_out_port.del_all_data()
-        self.m_selected_out_port.del_all_attributes()
-
-        self.m_removed_out_port.del_all_data()
-        self.m_removed_out_port.del_all_attributes()
+        if self.m_index_out_port is not None:
+            self.m_index_out_port.del_all_data()
+            self.m_index_out_port.del_all_attributes()
 
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
-            parang = self.m_image_in_port.get_attribute("PARANG")
-        else:
-            parang = None
-
-        index = self.m_image_in_port.get_attribute("INDEX")
-
         self.m_aperture /= pixscale
 
         nimages = self.m_image_in_port.get_shape()[0]
+        npix = self.m_image_in_port.get_shape()[1]
+
+        if self.m_position is None or (self.m_position[0] is None and self.m_position[1] is None):
+            self.m_position = (float(npix)/2., float(npix)/2.)
 
         if memory == 0 or memory >= nimages:
             frames = [0, nimages]
@@ -251,37 +327,40 @@ class FrameSelectionModule(ProcessingModule):
             if nimages%memory > 0:
                 frames = np.append(frames, nimages)
 
-        position = np.zeros((nimages, 2), dtype=np.int64)
         phot = np.zeros(nimages)
 
-        star = StarExtractionModule(name_in="star",
-                                    image_in_tag=self.m_image_in_port.tag,
-                                    image_out_tag=None,
-                                    image_size=None,
-                                    fwhm_star=self.m_fwhm,
-                                    position=self.m_position)
+        if self.m_fwhm is None:
+            starpos = np.full((nimages, 2), self.m_position, dtype=np.int64)
 
-        star.connect_database(self._m_data_base)
-        star.run()
+        else:
+            star = StarExtractionModule(name_in="star",
+                                        image_in_tag=self.m_image_in_port.tag,
+                                        image_out_tag=None,
+                                        image_size=None,
+                                        fwhm_star=self.m_fwhm,
+                                        position=self.m_position)
 
-        position = self.m_image_in_port.get_attribute("STAR_POSITION")
+            star.connect_database(self._m_data_base)
+            star.run()
+
+            starpos = self.m_image_in_port.get_attribute("STAR_POSITION")
 
         rr_grid = None
 
         for i in range(nimages):
-            progress(i, nimages+nimages, "Running FrameSelectionModule...")
+            progress(i, nimages, "Running FrameSelectionModule...")
 
             im_smooth = self.m_image_in_port[i]
 
-            check_pos_in = any(np.floor(position[i, :]-self.m_aperture) < 0.)
-            check_pos_out = any(np.ceil(position[i, :]+self.m_aperture) > im_smooth.shape[0])
+            check_pos_in = any(np.floor(starpos[i, :]-self.m_aperture) < 0.)
+            check_pos_out = any(np.ceil(starpos[i, :]+self.m_aperture) > im_smooth.shape[0])
 
             if check_pos_in or check_pos_out:
                 phot[i] = np.nan
 
             else:
                 im_cut = Cutout2D(im_smooth,
-                                  (position[i, 1], position[i, 0]),
+                                  (starpos[i, 1], starpos[i, 0]),
                                   size=2.*self.m_aperture).data
 
                 if rr_grid is None:
@@ -301,8 +380,10 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
+
         elif self.m_method == "max":
             phot_ref = np.nanmax(phot)
+
         else:
             raise ValueError("The method argument should be set to 'median' or 'max'.")
 
@@ -312,90 +393,30 @@ class FrameSelectionModule(ProcessingModule):
                                  (phot < phot_ref-self.m_threshold*phot_std))
 
         index_rm[np.isnan(phot)] = True
-
-        for i, item in enumerate(frames[:-1]):
-            progress(nimages+item, nimages+nimages, "Running FrameSelectionModule...")
-
-            index_sub = index_rm[frames[i]:frames[i+1], ]
-            image = self.m_image_in_port[frames[i]:frames[i+1], ]
-
-            if np.size(image[np.logical_not(index_sub)]) > 0:
-                self.m_selected_out_port.append(image[np.logical_not(index_sub)])
-            if np.size(image[index_sub]) > 0:
-                self.m_removed_out_port.append(image[index_sub])
+        indices = np.where(index_rm)
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
 
-        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
-            nframes = self.m_image_in_port.get_attribute("NFRAMES")
-        else:
-            nframes = None
+        if np.size(indices) > 0:
+            if self.m_index_out_port is not None:
+                self.m_index_out_port.set_all(indices)
+                self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+                self.m_index_out_port.add_history_information("Frames removed",
+                                                              str(np.size(indices)))
 
-        if nframes is not None:
-            nframes_del = np.zeros(np.size(nframes), dtype=np.int64)
-            nframes_sel = np.zeros(np.size(nframes), dtype=np.int64)
+            if self.m_selected_out_tag is not None or self.m_removed_out_tag is not None:
+                remove = RemoveFramesModule(frames=indices,
+                                            name_in="remove",
+                                            image_in_tag=self.m_image_in_port.tag,
+                                            selected_out_tag=self.m_selected_out_tag,
+                                            removed_out_tag=self.m_removed_out_tag)
 
-            total = 0
-            for i, frames in enumerate(nframes):
-                nframes_del[i] = np.size(np.where(index_rm[total:total+frames])[0])
-                nframes_sel[i] = frames - nframes_del[i]
-                total += frames
-
-        n_rm = np.size(index_rm[index_rm])
-
-        self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        self.m_selected_out_port.add_attribute("INDEX",
-                                               index[np.logical_not(index_rm)],
-                                               static=False)
-
-        if parang is not None:
-            self.m_selected_out_port.add_attribute("PARANG",
-                                                   parang[np.logical_not(index_rm)],
-                                                   static=False)
-
-        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
-            self.m_selected_out_port.add_attribute("STAR_POSITION",
-                                                   position[np.logical_not(index_rm)],
-                                                   static=False)
-
-        if nframes is not None:
-            self.m_selected_out_port.add_attribute("NFRAMES",
-                                                   nframes_sel,
-                                                   static=False)
-
-        self.m_selected_out_port.add_history_information("Frame selection",
-                                                         str(n_rm)+" images removed")
-
-        if np.size(index_rm[index_rm]) > 0:
-
-            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-            self.m_removed_out_port.add_attribute("INDEX",
-                                                  index[index_rm],
-                                                  static=False)
-
-            if parang is not None:
-                self.m_removed_out_port.add_attribute("PARANG",
-                                                      parang[index_rm],
-                                                      static=False)
-
-            if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
-                self.m_removed_out_port.add_attribute("STAR_POSITION",
-                                                      position[index_rm],
-                                                      static=False)
-
-            if nframes is not None:
-                self.m_removed_out_port.add_attribute("NFRAMES",
-                                                      nframes_del,
-                                                      static=False)
-
-            self.m_removed_out_port.add_history_information("Frame selection",
-                                                            str(n_rm)+" images removed")
+                remove.connect_database(self._m_data_base)
+                remove.run()
 
         else:
-            warnings.warn("No frames were removed.")
+            print "No frames where removed with the frame selection. [WARNING]"
 
         self.m_image_in_port.close_port()
 
@@ -473,9 +494,11 @@ class RemoveLastFrameModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
+
         self.m_image_out_port.close_port()
 
 
@@ -536,6 +559,7 @@ class RemoveStartFramesModule(ProcessingModule):
         if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("PARANG")
             parang_new = []
+
         else:
             parang = None
 
@@ -556,9 +580,11 @@ class RemoveStartFramesModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
         if parang is not None:
             self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
         self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
         self.m_image_out_port.close_port()
