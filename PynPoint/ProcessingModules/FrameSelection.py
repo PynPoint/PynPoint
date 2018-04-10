@@ -399,13 +399,14 @@ class FrameSelectionModule(ProcessingModule):
 
         index_rm[np.isnan(phot)] = True
         indices = np.where(index_rm)
+        indices = np.asarray(indices, dtype=np.int)
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
 
         if np.size(indices) > 0:
             if self.m_index_out_port is not None:
-                self.m_index_out_port.set_all(indices)
+                self.m_index_out_port.set_all(np.transpose(indices))
                 self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
                 self.m_index_out_port.add_history_information("Frames removed",
                                                               str(np.size(indices)))
