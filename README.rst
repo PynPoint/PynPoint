@@ -12,6 +12,9 @@ PynPoint
 .. image:: https://codecov.io/gh/PynPoint/PynPoint/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/PynPoint/PynPoint
 
+.. image:: https://www.codefactor.io/repository/github/pynpoint/pynpoint/badge
+    :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
+
 .. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
     :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
 
