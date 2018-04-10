@@ -72,7 +72,11 @@ class TextWritingModule(WritingModule):
         if data.ndim > 2:
             raise ValueError("Only 1D or 2D arrays can be written to a text file.")
 
-        np.savetxt(out_name, data, header=self.m_header, comments='# ')
+        if data.dtype == "int32" or data.dtype == "int64":
+            np.savetxt(out_name, data, header=self.m_header, comments='# ', fmt="%i")
+
+        elif data.dtype == "float32" or data.dtype == "float64":
+            np.savetxt(out_name, data, header=self.m_header, comments='# ')
 
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
