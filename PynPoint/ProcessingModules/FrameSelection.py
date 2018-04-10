@@ -28,8 +28,9 @@ class RemoveFramesModule(ProcessingModule):
         """
         Constructor of RemoveFramesModule.
 
-        :param frames: Frame indices to be removed. Python indexing starts at 0.
-        :type frames: tuple or array, int
+        :param frames: A tuple or array with the frame indices that have to be removed or a
+                       database tag pointing to a list of frame indices.
+        :type frames: int or str
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -60,7 +61,11 @@ class RemoveFramesModule(ProcessingModule):
         else:
             self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
-        self.m_frames = np.asarray(frames, dtype=np.int)
+        if isinstance(frames, str):
+            self.m_index_in_port = self.add_input_port(frames)
+        else:
+            self.m_index_in_port = None
+            self.m_frames = np.asarray(frames, dtype=np.int)
 
     def run(self):
         """
@@ -77,6 +82,9 @@ class RemoveFramesModule(ProcessingModule):
         if self.m_removed_out_port is not None:
             if self.m_image_in_port.tag == self.m_removed_out_port.tag:
                 raise ValueError("Input and output ports should have a different tag.")
+
+        if self.m_index_in_port is not None:
+            self.m_frames = self.m_index_in_port.get_all()
 
         if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
             raise ValueError("Some values in frames are larger than the total number of "
@@ -260,9 +268,9 @@ class FrameSelectionModule(ProcessingModule):
                          single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
                          position and size can be defined for each image separately in which case
                          the tuple should be 2D (nimages x 3). Setting *position* to None will use
-                         the full image to search for the star. If *position=(None, None, size)* then
-                         the center of the image will be used. The value of *size* is not used when
-                         *fwhm=None*.
+                         the full image to search for the star. If *position=(None, None, size)*
+                         then the center of the image will be used. The value of *size* is not used
+                         when *fwhm=None*.
         :type position: tuple, float
 
         :return: None
@@ -306,7 +314,11 @@ class FrameSelectionModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_aperture /= pixscale
+        if self.m_aperture[0] == "circular":
+            aperture = (0., self.m_aperture[1]/pixscale)
+
+        elif self.m_aperture[0] == "annulus" or self.m_aperture[0] == "ratio":
+            aperture = (self.m_aperture[1]/pixscale, self.m_aperture[2]/pixscale)
 
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[1]
@@ -357,8 +369,8 @@ class FrameSelectionModule(ProcessingModule):
 
             im_smooth = self.m_image_in_port[i]
 
-            check_pos_in = any(np.floor(starpos[i, :]-self.m_aperture) < 0.)
-            check_pos_out = any(np.ceil(starpos[i, :]+self.m_aperture) > im_smooth.shape[0])
+            check_pos_in = any(np.floor(starpos[i, :]-aperture[1]) < 0.)
+            check_pos_out = any(np.ceil(starpos[i, :]+aperture[1]) > im_smooth.shape[0])
 
             if check_pos_in or check_pos_out:
                 phot[i] = np.nan
@@ -366,7 +378,7 @@ class FrameSelectionModule(ProcessingModule):
             else:
                 im_cut = Cutout2D(im_smooth,
                                   (starpos[i, 1], starpos[i, 0]),
-                                  size=2.*self.m_aperture).data
+                                  size=2.*aperture[1]).data
 
                 if rr_grid is None:
                     npix = im_cut.shape[0]
@@ -379,9 +391,15 @@ class FrameSelectionModule(ProcessingModule):
                     xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
                     rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
-                im_cut[rr_grid >= self.m_aperture] = 0.
+                if self.m_aperture[0] == "circular":
+                    phot[i] = np.sum(im_cut[rr_grid < aperture[1]])
 
-                phot[i] = np.sum(im_cut)
+                elif self.m_aperture[0] == "annulus":
+                    phot[i] = np.sum(im_cut[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
+
+                elif self.m_aperture[0] == "ratio":
+                    phot[i] = np.sum(im_cut[rr_grid < aperture[0]]) / \
+                              np.sum(im_cut[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
