@@ -281,10 +281,11 @@ class TestEndToEnd(object):
         storage.close_connection()
 
     def test_remove_frames(self):
-        remove_frames = RemoveFramesModule((0, 15, 49, 66),
+        remove_frames = RemoveFramesModule(frames=(0, 15, 49, 66),
                                            name_in="remove_frames",
                                            image_in_tag="im_center",
-                                           image_out_tag="im_remove")
+                                           selected_out_tag="im_remove",
+                                           removed_out_tag=None)
 
         self.pipeline.add_module(remove_frames)
         self.pipeline.run_module("remove_frames")
