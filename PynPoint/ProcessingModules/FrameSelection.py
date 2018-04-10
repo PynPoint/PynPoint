@@ -183,8 +183,8 @@ class RemoveFramesModule(ProcessingModule):
         if "NFRAMES" in non_static:
             nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-            nframes_sel = np.zeros(nframes.shape)
-            nframes_del = np.zeros(nframes.shape)
+            nframes_sel = np.zeros(nframes.shape, dtype=np.int)
+            nframes_del = np.zeros(nframes.shape, dtype=np.int)
 
             for i, frames in enumerate(nframes):
                 total = np.sum(nframes[0:i])
@@ -226,7 +226,7 @@ class FrameSelectionModule(ProcessingModule):
                  method="median",
                  threshold=4.,
                  fwhm=0.1,
-                 aperture=0.2,
+                 aperture=("circular", 0.2),
                  position=(None, None, 0.5)):
         """
         Constructor of FrameSelectionModule.
@@ -513,6 +513,9 @@ class RemoveLastFrameModule(ProcessingModule):
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
+
+        nframes_new = np.asarray(nframes_new, dtype=np.int)
+        index_new = np.asarray(index_new, dtype=np.int)
 
         sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()
