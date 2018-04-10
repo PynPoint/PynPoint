@@ -217,9 +217,9 @@ class FrameSelectionModule(ProcessingModule):
                  index_out_tag=None,
                  method="median",
                  threshold=4.,
-                 fwhm=0.2,
-                 aperture=0.5,
-                 position=None):
+                 fwhm=0.1,
+                 aperture=0.2,
+                 position=(None, None, 0.5)):
         """
         Constructor of FrameSelectionModule.
 
@@ -311,8 +311,11 @@ class FrameSelectionModule(ProcessingModule):
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[1]
 
-        if self.m_position is None or (self.m_position[0] is None and self.m_position[1] is None):
-            self.m_position = (float(npix)/2., float(npix)/2.)
+        if self.m_position is None:
+            self.m_position = (float(npix)/2., float(npix)/2., None)
+
+        elif self.m_position[0] is None and self.m_position[1] is None:
+            self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
 
         if memory == 0 or memory >= nimages:
             frames = [0, nimages]
@@ -330,7 +333,9 @@ class FrameSelectionModule(ProcessingModule):
         phot = np.zeros(nimages)
 
         if self.m_fwhm is None:
-            starpos = np.full((nimages, 2), self.m_position, dtype=np.int64)
+            starpos = np.zeros((nimages, 2), dtype=np.int64)
+            starpos[:, 0] = self.m_position[0]
+            starpos[:, 1] = self.m_position[1]
 
         else:
             star = StarExtractionModule(name_in="star",
