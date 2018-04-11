@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 def _master_frame(data,
@@ -219,21 +219,9 @@ class SubtractImagesModule(ProcessingModule):
             raise ValueError("The shape of the two input tags have to be equal.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
-
         nimages = self.m_image_in1_port.get_shape()[0]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running SubtractImagesModule...")

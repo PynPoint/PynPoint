@@ -17,10 +17,10 @@ from skimage.feature import hessian_matrix
 from astropy.nddata import Cutout2D
 from photutils import aperture_photometry, CircularAperture
 
-from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class FakePlanetModule(ProcessingModule):
@@ -121,21 +121,10 @@ class FakePlanetModule(ProcessingModule):
         if ndim_image == 3:
             nimages = self.m_image_in_port.get_shape()[0]
 
-            if memory == 0 or memory >= nimages:
-                frames = [0, nimages]
-
-            else:
-                frames = np.linspace(0,
-                                     nimages-nimages%memory,
-                                     int(float(nimages)/float(memory))+1,
-                                     endpoint=True,
-                                     dtype=np.int)
-
-                if nimages%memory > 0:
-                    frames = np.append(frames, nimages)
-
             im_size = (self.m_image_in_port.get_shape()[1],
                        self.m_image_in_port.get_shape()[2])
+
+            frames = memory_frames(memory, nimages)
 
         else:
             raise ValueError("The image_in_tag should contain a cube of images.")
@@ -165,18 +154,7 @@ class FakePlanetModule(ProcessingModule):
             psf = np.zeros((self.m_psf_in_port.get_shape()[1],
                             self.m_psf_in_port.get_shape()[2]))
 
-            if memory == 0 or memory >= npsf:
-                frames_psf = [0, npsf]
-
-            else:
-                frames_psf = np.linspace(0,
-                                         npsf-npsf%memory,
-                                         int(float(npsf)/float(memory))+1,
-                                         endpoint=True,
-                                         dtype=np.int)
-
-                if npsf%memory > 0:
-                    frames_psf = np.append(frames_psf, npsf)
+            frames_psf = memory_frames(memory, npsf)
 
             for i, _ in enumerate(frames_psf[:-1]):
                 psf += np.sum(self.m_psf_in_port[frames_psf[i]:frames_psf[i+1]], axis=0)

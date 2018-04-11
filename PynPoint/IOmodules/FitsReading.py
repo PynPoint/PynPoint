@@ -11,7 +11,7 @@ import numpy as np
 from astropy.io import fits
 
 from PynPoint.Core.Processing import ReadingModule
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress
 
 
 class FitsReadingModule(ReadingModule):
