@@ -320,7 +320,9 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_stack:
             self.m_image_out_port.set_all(im_tot/float(nimages))
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if self.m_derotate or self.m_stack:
+            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.close_port()
 
 
