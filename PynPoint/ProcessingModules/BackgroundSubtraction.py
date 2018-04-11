@@ -690,9 +690,10 @@ class DitheringBackgroundModule(ProcessingModule):
         :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
                          to smooth the image before the star is located.
         :type gaussian: float
-        :param subframe: Size (pix) of the subframe that is used to search for the star. Cropping
-                         of the subframe is done around the center of the dithering position. If
-                         set to None then the full frame size (*size*) will be used.
+        :param subframe: Size (arcsec) of the subframe that is used to search for the star.
+                         Cropping of the subframe is done around the center of the dithering
+                         position. If set to None then the full frame size (*size*) will be
+                         used.
         :type subframe: float
         :param pca_number: Number of principle components.
         :type pca_number: int
@@ -829,7 +830,9 @@ class DitheringBackgroundModule(ProcessingModule):
                 if self.m_subframe is None:
                     position = None
                 else:
-                    position = (None, None, self.m_subframe/pixscale)
+                    position = (None, None, self.m_subframe)
+
+                print position
 
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),
