@@ -290,10 +290,12 @@ class DerotateAndStackModule(ProcessingModule):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
             if self.m_derotate:
+                im_rot = np.zeros(self.m_image_in_port.get_shape()[-2:])
+
                 for j in range(frames[i+1]-frames[i]):
-                    im_rot = rotate(self.m_image_in_port[frames[i]+j, ],
-                                    -parang[frames[i]+j]+self.m_extra_rot,
-                                    reshape=False)
+                    im_rot += rotate(input=self.m_image_in_port[frames[i]+j,],
+                                     angle=-parang[frames[i]+j]+self.m_extra_rot,
+                                     reshape=False)
 
             else:
                 im_rot = self.m_image_in_port[frames[i]:frames[i+1], ]

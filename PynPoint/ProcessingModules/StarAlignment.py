@@ -259,7 +259,7 @@ class StarAlignmentModule(ProcessingModule):
                                          replace=False)), :, :]
 
                 else:
-                    ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                    ref_images = self.m_ref_image_in_port.get_all()
                     self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
 
             elif im_dim == 2:
