@@ -15,6 +15,7 @@ from scipy.ndimage import shift
 from scipy.optimize import curve_fit
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.ModuleTools import memory_frames
 
 
 class StarExtractionModule(ProcessingModule):
@@ -539,18 +540,7 @@ class StarCenteringModule(ProcessingModule):
 
         npix = self.m_image_in_port.get_shape()[1]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         if self.m_method == "mean":
             im_mean = np.zeros((npix, npix))

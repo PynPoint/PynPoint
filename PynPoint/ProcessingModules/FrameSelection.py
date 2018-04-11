@@ -11,7 +11,7 @@ from astropy.nddata import Cutout2D
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class RemoveFramesModule(ProcessingModule):
@@ -101,19 +101,10 @@ class RemoveFramesModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
 
+        frames = memory_frames(memory, nimages)
+
         if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
             memory = nimages
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
@@ -329,18 +320,7 @@ class FrameSelectionModule(ProcessingModule):
         elif self.m_position[0] is None and self.m_position[1] is None:
             self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         phot = np.zeros(nimages)
 

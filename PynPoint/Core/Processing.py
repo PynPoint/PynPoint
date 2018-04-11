@@ -12,7 +12,7 @@ import numpy as np
 
 from PynPoint.Core.DataIO import OutputPort, InputPort, ConfigPort
 from PynPoint.Util.Multiprocessing import LineProcessingCapsule, apply_function
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress
 
 
 class PypelineModule:
