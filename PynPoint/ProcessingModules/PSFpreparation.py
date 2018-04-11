@@ -519,10 +519,10 @@ class AngleCalculationModule(ProcessingModule):
             pupil_pos = self.m_data_in_port.get_attribute("PUPIL")
 
         elif self.m_instrument == "SPHERE/IRDIS":
-            pupil_pos = np.zeros(np.size(steps))
+            pupil_pos = np.zeros(steps.shape)
 
         elif self.m_instrument == "SPHERE/IFS":
-            pupil_pos = np.zeros(np.size(steps))
+            pupil_pos = np.zeros(steps.shape)
 
         new_angles = np.array([])
         pupil_pos_arr = np.array([])
