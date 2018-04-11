@@ -249,7 +249,7 @@ class StarAlignmentModule(ProcessingModule):
         """
 
         if self.m_ref_image_in_port is not None:
-            im_dim = np.size(self.m_ref_image_in_port.get_shape())
+            im_dim = self.m_ref_image_in_port.get_ndim()
 
             if im_dim == 3:
                 if self.m_ref_image_in_port.get_shape()[0] > self.m_num_references:

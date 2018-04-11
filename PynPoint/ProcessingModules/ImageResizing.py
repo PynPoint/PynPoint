@@ -68,13 +68,13 @@ class CropImagesModule(ProcessingModule):
                           center):
 
             if center is None:
-                x_off = (image_in.shape[0] - size) / 2
-                y_off = (image_in.shape[1] - size) / 2
+                x_off = (image_in.shape[1] - size) / 2
+                y_off = (image_in.shape[0] - size) / 2
 
                 if size > image_in.shape[0] or size > image_in.shape[1]:
                     raise ValueError("Input frame resolution smaller than target image resolution.")
 
-                image_out = image_in[x_off:x_off+size, y_off:y_off+size]
+                image_out = image_in[y_off:y_off+size, x_off:x_off+size]
 
             else:
                 x_in = int(center[0] - size/2)
