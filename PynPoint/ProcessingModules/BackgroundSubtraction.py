@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress, memory_frames
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
@@ -615,18 +615,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         nimages = self.m_star_in_port.get_shape()[0]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Calculating background model...")
@@ -771,6 +760,8 @@ class DitheringBackgroundModule(ProcessingModule):
         :return: None
         """
 
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
         if self.m_cubes is None:
             dither_x = self.m_image_in_port.get_attribute("DITHER_X")
             dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
@@ -838,7 +829,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 if self.m_subframe is None:
                     position = None
                 else:
-                    position = (None, None, self.m_subframe)
+                    position = (None, None, self.m_subframe/pixscale)
 
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),
