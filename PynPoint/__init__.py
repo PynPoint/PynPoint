@@ -1,6 +1,10 @@
+import warnings
+
 from PynPoint.Wrapper.BasisWrapper import BasisWrapper as basis
 from PynPoint.Wrapper.ImageWrapper import ImageWrapper as images
 from PynPoint.Wrapper.ResidualsWrapper import ResidualsWrapper as residuals
+
+warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara'
 __email__ = 'tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, sascha.quanz@phys.ethz.ch, adam.amara@phys.ethz.ch'
