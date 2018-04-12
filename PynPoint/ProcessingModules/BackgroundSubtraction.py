@@ -761,8 +761,6 @@ class DitheringBackgroundModule(ProcessingModule):
         :return: None
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
         if self.m_cubes is None:
             dither_x = self.m_image_in_port.get_attribute("DITHER_X")
             dither_y = self.m_image_in_port.get_attribute("DITHER_Y")

@@ -320,8 +320,6 @@ class FrameSelectionModule(ProcessingModule):
         elif self.m_position[0] is None and self.m_position[1] is None:
             self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
 
-        frames = memory_frames(memory, nimages)
-
         phot = np.zeros(nimages)
 
         if self.m_fwhm is None:
