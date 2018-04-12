@@ -171,13 +171,14 @@ class ConfigPort(Port):
 
         :return: None
         """
+
         super(ConfigPort, self).__init__(tag, data_storage_in)
 
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use and open it.
+        Internal function which checks if the ConfigPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
+        :return: Returns True if the ConfigPort can be used, False if not.
         :rtype: bool
         """
 
@@ -227,14 +228,16 @@ class ConfigPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            exit = None
 
         if name in self._m_data_storage.m_data_bank["config"].attrs:
-            return self._m_data_storage.m_data_bank["config"].attrs[name]
+            exit = self._m_data_storage.m_data_bank["config"].attrs[name]
 
         else:
             warnings.warn('No attribute found - requested: %s' % name)
-            return None
+            exit = None
+
+        return exit
 
 
 class InputPort(Port):
@@ -297,9 +300,9 @@ class InputPort(Port):
 
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use and open it.
+        Internal function which checks if the InputPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
+        :return: Returns True if the InputPort can be used, False if not.
         :rtype: bool
         """
         if self._m_data_storage is None:
@@ -464,9 +467,11 @@ class InputPort(Port):
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
                 result.append(key)
-            return result
+            exit = result
         else:
-            return None
+            exit = None
+
+        return exit
 
 
 class OutputPort(Port):
@@ -538,10 +543,10 @@ class OutputPort(Port):
     # internal functions
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use.
+        Internal function which checks if the OutputPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
-        :rtype: Boolean
+        :return: Returns True if the OutputPort can be used, False if not.
+        :rtype: bool
         """
         if not self.m_activate:
             return False
@@ -633,7 +638,7 @@ class OutputPort(Port):
         :type data_dim: int
         :param keep_attributes: Parameter which can be set True to keep all static attributes of the
          dataset. Non-static attributes will be kept, (Not needed for setting non-static attributes)
-        :type keep_attributes: Boolean
+        :type keep_attributes: bool
 
         :return: None
         """
@@ -698,8 +703,7 @@ class OutputPort(Port):
         def _type_check():
             if tmp_dim == data.ndim:
                 if tmp_dim == 3:
-                    return (tmp_shape[1] == data.shape[1]) \
-                        and (tmp_shape[2] == data.shape[2])
+                    return (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
                 elif tmp_dim == 2:
                     return tmp_shape[1] == data.shape[1]
                 else:
@@ -1040,16 +1044,16 @@ class OutputPort(Port):
                                name,
                                comparison_value):
         """
-        Checks if a attribute exists and if it is equal to a comparison value.
+        Checks if a static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the attribute
+        :param name: Name of the static attribute.
         :type name: str
-        :param comparison_value: Value for comparison
+        :param comparison_value: Value for comparison.
 
         :return:
-                     * 1 if the attribute does not exist
-                     * 0 if the attribute exists and is equal,
-                     * -1 if the attribute exists but is not equal
+                     * 1 if the static attribute does not exist
+                     * 0 if the static attribute exists and is equal
+                     * -1 if the static attribute exists but is not equal
         :rtype: int
         """
         if not self._check_status_and_activate():
@@ -1057,26 +1061,28 @@ class OutputPort(Port):
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
-                return 0
+                exit = 0
             else:
-                return -1
+                exit = -1
         else:
-            return 1
+            exit = 1
+
+        return exit
 
     def check_non_static_attribute(self,
                                    name,
                                    comparison_value):
         """
-        Checks if a attribute exists and if it is equal to a comparison value.
+        Checks if a non-static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the attribute
+        :param name: Name of the non-static attribute.
         :type name: str
-        :param comparison_value: Value for comparison
+        :param comparison_value: Value for comparison.
 
         :return:
-                     * 1 if the attribute does not exist
-                     * 0 if the attribute exists and is equal,
-                     * -1 if the attribute exists but is not equal
+                     * 1 if the non-static attribute does not exist
+                     * 0 if the non-static attribute exists and is equal
+                     * -1 if the non-static attribute exists but is not equal
         :rtype: int
         """
         if not self._check_status_and_activate():
@@ -1087,13 +1093,15 @@ class OutputPort(Port):
         if group in self._m_data_storage.m_data_bank:
             if name in self._m_data_storage.m_data_bank[group]:
                 if np.array_equal(self._m_data_storage.m_data_bank[group+name][:], comparison_value):
-                    return 0
+                    exit = 0
                 else:
-                    return -1
+                    exit = -1
             else:
-                return 1
+                exit = 1
         else:
-            return 1
+            exit = 1
+
+        return exit
 
     def add_history_information(self,
                                 pipeline_step,

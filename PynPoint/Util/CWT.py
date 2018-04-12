@@ -1,12 +1,15 @@
+import copy
+
 import numpy as np
-import continous as wave
+import matplotlib.pyplot as plt
+
+from numba import jit
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
-from numba import jit
-import copy
 
-import matplotlib.pyplot as plt
+import PynPoint.Util.continous as wave
+
 
 # --- Wavelet analysis Capsule ---------
 # TODO: Documentation
@@ -16,21 +19,21 @@ import matplotlib.pyplot as plt
 def _fast_zeros(soft,
                 spectrum,
                 uthresh):
-        if soft:
-            for i in range(0, spectrum.shape[0], 1):
-                for j in range(0, spectrum.shape[1], 1):
-                    tmp_value = spectrum[i, j].real
-                    if abs(spectrum[i, j]) > uthresh:
-                        spectrum[i, j] = np.sign(tmp_value) * (abs(tmp_value) - uthresh)
-                    else:
-                        spectrum[i, j] = 0
-        else:
-            for i in range(0, spectrum.shape[0], 1):
-                for j in range(0, spectrum.shape[1], 1):
-                    if abs(spectrum[i, j]) < uthresh:
-                        spectrum[i, j] = 0
+    if soft:
+        for i in range(0, spectrum.shape[0], 1):
+            for j in range(0, spectrum.shape[1], 1):
+                tmp_value = spectrum[i, j].real
+                if abs(spectrum[i, j]) > uthresh:
+                    spectrum[i, j] = np.sign(tmp_value) * (abs(tmp_value) - uthresh)
+                else:
+                    spectrum[i, j] = 0
+    else:
+        for i in range(0, spectrum.shape[0], 1):
+            for j in range(0, spectrum.shape[1], 1):
+                if abs(spectrum[i, j]) < uthresh:
+                    spectrum[i, j] = 0
 
-        return spectrum
+    return spectrum
 
 
 @jit(cache=True)
@@ -96,14 +99,15 @@ class WaveletAnalysisCapsule:
         self.__m_data_mean = np.mean(signal_in)
 
         if order not in self.__m_C_reconstructions:
-            raise ValueError('Wavelet ' + str(wavelet_in) + ' does not support order ' + str(order) +
-                             ". \n Only orders: " + str(sorted(self.__m_C_reconstructions.keys())).strip('[]') +
+            raise ValueError('Wavelet ' + str(wavelet_in) + ' does not support order ' +
+                             str(order) + ". \n Only orders: " +
+                             str(sorted(self.__m_C_reconstructions.keys())).strip('[]') +
                              " are supported")
         self.__m_order = order
         self.__m_C_final_reconstruction = self.__m_C_reconstructions[order]
 
         # create scales for wavelet transform
-        self.__m_scales = wave.autoscales(N = self.__m_data_size,
+        self.__m_scales = wave.autoscales(N=self.__m_data_size,
                                           dt=1,
                                           dj=frequency_resolution,
                                           wf=wavelet_in,
@@ -176,9 +180,9 @@ class WaveletAnalysisCapsule:
         self.__m_data *= reconstruction_factor
 
     def __transform_period(self,
-                         period):
+                           period):
 
-        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
+        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
 
         def transformation(x):
             return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
@@ -256,7 +260,7 @@ class WaveletAnalysisCapsule:
         plt.figure(figsize=(8, 6))
         plt.subplot(1, 1, 1)
 
-        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet,self.__m_order)
+        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
         tmp_x = np.arange(0, self.__m_data_size + 1, 1)
 
 
@@ -291,7 +295,7 @@ class WaveletAnalysisCapsule:
         plt.ylim([tmp_y[0],
                   tmp_y[-1]])
 
-        plt.fill_between(np.arange(0, len(coi) , 1.0),
+        plt.fill_between(np.arange(0, len(coi), 1.0),
                          inner_frequency * coi / np.sqrt(2),
                          np.ones(len(coi)) * tmp_y[-1],
                          facecolor="none",

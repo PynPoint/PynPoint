@@ -302,7 +302,6 @@ class FrameSelectionModule(ProcessingModule):
             self.m_index_out_port.del_all_data()
             self.m_index_out_port.del_all_attributes()
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if self.m_aperture[0] == "circular":
