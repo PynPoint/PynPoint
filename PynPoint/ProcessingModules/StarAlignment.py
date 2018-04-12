@@ -249,7 +249,7 @@ class StarAlignmentModule(ProcessingModule):
         """
 
         if self.m_ref_image_in_port is not None:
-            im_dim = np.size(self.m_ref_image_in_port.get_shape())
+            im_dim = self.m_ref_image_in_port.get_ndim()
 
             if im_dim == 3:
                 if self.m_ref_image_in_port.get_shape()[0] > self.m_num_references:
@@ -259,15 +259,15 @@ class StarAlignmentModule(ProcessingModule):
                                          replace=False)), :, :]
 
                 else:
-                    ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                    ref_images = self.m_ref_image_in_port.get_all()
                     self.m_num_references = self.m_ref_image_in_port.get_shape()[0]
 
             elif im_dim == 2:
-                ref_images = np.array([self.m_ref_image_in_port.get_all(),])
+                ref_images = np.array([self.m_ref_image_in_port.get_all(), ])
                 self.m_num_references = 1
 
             else:
-                raise ValueError("reference Image needs to be 2 D or 3 D.")
+                raise ValueError("Reference images need to be 2D or 3D.")
 
         else:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
@@ -277,18 +277,12 @@ class StarAlignmentModule(ProcessingModule):
             ref_images = self.m_image_in_port[sort, :, :]
 
         def align_image(image_in):
+            offset = np.array([0., 0.])
 
-            offset = np.array([0.0, 0.0])
             for i in range(self.m_num_references):
-                if ref_images.ndim == 2:
-                    tmp_offset, _, _ = register_translation(ref_images,
-                                                            image_in,
-                                                            upsample_factor=self.m_accuracy)
-
-                elif ref_images.ndim == 3:
-                    tmp_offset, _, _ = register_translation(ref_images[i, :, :],
-                                                            image_in,
-                                                            upsample_factor=self.m_accuracy)
+                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
+                                                        image_in,
+                                                        upsample_factor=self.m_accuracy)
                 offset += tmp_offset
 
             offset /= float(self.m_num_references)
