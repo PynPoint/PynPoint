@@ -11,7 +11,7 @@ from astropy.nddata import Cutout2D
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class RemoveFramesModule(ProcessingModule):
@@ -101,19 +101,10 @@ class RemoveFramesModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
 
+        frames = memory_frames(memory, nimages)
+
         if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
             memory = nimages
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
@@ -183,8 +174,8 @@ class RemoveFramesModule(ProcessingModule):
         if "NFRAMES" in non_static:
             nframes = self.m_image_in_port.get_attribute("NFRAMES")
 
-            nframes_sel = np.zeros(nframes.shape)
-            nframes_del = np.zeros(nframes.shape)
+            nframes_sel = np.zeros(nframes.shape, dtype=np.int)
+            nframes_del = np.zeros(nframes.shape, dtype=np.int)
 
             for i, frames in enumerate(nframes):
                 total = np.sum(nframes[0:i])
@@ -226,7 +217,7 @@ class FrameSelectionModule(ProcessingModule):
                  method="median",
                  threshold=4.,
                  fwhm=0.1,
-                 aperture=0.2,
+                 aperture=("circular", 0.2),
                  position=(None, None, 0.5)):
         """
         Constructor of FrameSelectionModule.
@@ -328,19 +319,6 @@ class FrameSelectionModule(ProcessingModule):
 
         elif self.m_position[0] is None and self.m_position[1] is None:
             self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
-
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
 
         phot = np.zeros(nimages)
 
@@ -513,6 +491,9 @@ class RemoveLastFrameModule(ProcessingModule):
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
+
+        nframes_new = np.asarray(nframes_new, dtype=np.int)
+        index_new = np.asarray(index_new, dtype=np.int)
 
         sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()

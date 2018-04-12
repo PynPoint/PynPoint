@@ -8,7 +8,7 @@ from PSFSubtractionPCA import PSFSubtractionModule, PcaPsfSubtractionModule
 from StackingAndSubsampling import StackAndSubsetModule, MeanCubeModule, DerotateAndStackModule, \
                                    CombineTagsModule
 from StarAlignment import StarAlignmentModule, StarExtractionModule, StarCenteringModule, \
-                          ShiftForCenteringModule
+                          ShiftImagesModule
 from ImageResizing import CropImagesModule, ScaleImagesModule, AddLinesModule, RemoveLinesModule
 from PSFpreparation import PSFpreparationModule, AngleInterpolationModule, AngleCalculationModule, \
                           SortParangModule, SDIpreparationModule
