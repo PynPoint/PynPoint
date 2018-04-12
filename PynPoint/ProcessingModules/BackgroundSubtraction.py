@@ -830,8 +830,6 @@ class DitheringBackgroundModule(ProcessingModule):
                 else:
                     position = (None, None, self.m_subframe)
 
-                print position
-
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),
                                             image_out_tag=None,
