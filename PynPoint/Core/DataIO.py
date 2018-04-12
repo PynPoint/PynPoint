@@ -45,8 +45,10 @@ class DataStorage(object):
 
         :return: None
         """
+
         if self.m_open:
             return
+
         self.m_data_bank = h5py.File(self._m_location, mode='a')
         self.m_open = True
 
@@ -57,8 +59,10 @@ class DataStorage(object):
 
         :return: None
         """
+
         if not self.m_open:
             return
+
         self.m_data_bank.close()
         self.m_open = False
 
@@ -93,6 +97,7 @@ class Port:
         """
 
         assert (isinstance(tag, str)), "Error: Port tags need to be strings."
+
         self._m_tag = tag
         self._m_data_storage = data_storage_in
         self._m_data_base_active = False
@@ -104,6 +109,7 @@ class Port:
 
         :return:
         """
+
         return self._m_tag
 
     def close_port(self):
@@ -113,6 +119,7 @@ class Port:
 
         :return: None
         """
+
         if self._m_data_base_active:
             self._m_data_storage.close_connection()
             self._m_data_base_active = False
@@ -123,6 +130,7 @@ class Port:
 
         :return: None
         """
+
         if not self._m_data_base_active:
             self._m_data_storage.open_connection()
             self._m_data_base_active = True
@@ -137,6 +145,7 @@ class Port:
 
         :return: None
         """
+
         self._m_data_storage = data_base_in
 
 
@@ -155,7 +164,7 @@ class ConfigPort(Port):
         the settings stored in the central database under the tag `config`. An instance of the
         ConfigPort is created in the constructor of PypelineModule such that the attributes in
         the ConfigPort can be accessed from within all type of modules. For example:
-        
+
         .. code-block:: python
 
             memory = self._m_config_port.get_attribute("MEMORY")
@@ -182,14 +191,17 @@ class ConfigPort(Port):
         :rtype: bool
         """
 
+        check = True
+
         if self._m_data_storage is None:
-            warnings.warn("Port can not load data unless a database is connected")
-            return False
+            warnings.warn("ConfigPort can not load data unless a database is connected.")
+            check = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        if check is True:
+            if not self._m_data_base_active:
+                self.open_port()
 
-        return True
+        return check
 
     def _check_if_data_exists(self):
         """
@@ -206,14 +218,16 @@ class ConfigPort(Port):
         Internal function which checks the error cases.
         """
 
+        check = True
+
         if not self._check_status_and_activate():
-            return False
+            check = False
 
         if self._check_if_data_exists() is False:
             warnings.warn("No data under the tag which is linked by the InputPort")
-            return False
+            check = False
 
-        return True
+        return check
 
     def get_attribute(self,
                       name):
@@ -228,16 +242,16 @@ class ConfigPort(Port):
         """
 
         if not self._check_error_cases():
-            exit = None
+            value = None
 
         if name in self._m_data_storage.m_data_bank["config"].attrs:
-            exit = self._m_data_storage.m_data_bank["config"].attrs[name]
+            value = self._m_data_storage.m_data_bank["config"].attrs[name]
 
         else:
             warnings.warn('No attribute found - requested: %s' % name)
-            exit = None
+            value = None
 
-        return exit
+        return value
 
 
 class InputPort(Port):
@@ -306,7 +320,7 @@ class InputPort(Port):
         :rtype: bool
         """
         if self._m_data_storage is None:
-            warnings.warn("Port can not load data unless a database is connected")
+            warnings.warn("InputPort can not load data unless a database is connected")
             return False
 
         if not self._m_data_base_active:
@@ -416,22 +430,26 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
+        value = None
+
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
             attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
             try:
-                return attr.item()
+                value = attr.item()
             except:
-                return attr
+                value = attr
 
-        if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
-            return np.asarray(self._m_data_storage.m_data_bank
-                              [("header_" + self._m_tag + "/" + name)][...])
-        else:
-            warnings.warn('No attribute found - requested: %s' % name)
-            return None
+        if value is None:
+            if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
+                value = np.asarray(self._m_data_storage.m_data_bank
+                                   [("header_" + self._m_tag + "/" + name)][...])
+            else:
+                warnings.warn('No attribute found - requested: %s' % name)
+
+        return value
 
     def get_all_static_attributes(self):
         """
@@ -467,11 +485,11 @@ class InputPort(Port):
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
                 result.append(key)
-            exit = result
+            keys = result
         else:
-            exit = None
+            keys = None
 
-        return exit
+        return keys
 
 
 class OutputPort(Port):
@@ -548,17 +566,21 @@ class OutputPort(Port):
         :return: Returns True if the OutputPort can be used, False if not.
         :rtype: bool
         """
+
+        check = True
+
         if not self.m_activate:
-            return False
+            check = False
 
         if self._m_data_storage is None:
-            warnings.warn("Port can not store data unless a database is connected.")
-            return False
+            warnings.warn("OutputPort can not store data unless a database is connected.")
+            check = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        if check is True:
+            if not self._m_data_base_active:
+                self.open_port()
 
-        return True
+        return check
 
     def _initialize_database_entry(self,
                                    first_data,
@@ -574,6 +596,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         # convert input data into numpy array
         first_data = np.asarray(first_data)
 
@@ -662,6 +685,7 @@ class OutputPort(Port):
         if keep_attributes:
             for key, value in tmp_attributes.iteritems():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
+
         return
 
     def _append_key(self,
@@ -703,13 +727,15 @@ class OutputPort(Port):
         def _type_check():
             if tmp_dim == data.ndim:
                 if tmp_dim == 3:
-                    return (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
+                    check = (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
                 elif tmp_dim == 2:
-                    return tmp_shape[1] == data.shape[1]
+                    check = tmp_shape[1] == data.shape[1]
                 else:
-                    return True
+                    check = True
             else:
-                return False
+                check = False
+
+            return check
 
         if _type_check():
 
@@ -743,13 +769,17 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
         self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
     def del_all_data(self):
-        # check if port is ready to use
+        """
+        Delete all data belonging to the database tag.
+        """
+
         if not self._check_status_and_activate():
             return
 
@@ -848,7 +878,6 @@ class OutputPort(Port):
         :return: None
         """
 
-        # check if port is ready to use
         if not self._check_status_and_activate():
             return
 
@@ -863,6 +892,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self.m_activate = True
 
     def deactivate(self):
@@ -871,6 +901,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self.m_activate = False
 
     def add_attribute(self,
@@ -913,7 +944,6 @@ class OutputPort(Port):
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
         else:
-            # add information in sub Group
             self._set_all_key(tag=("header_" + self._m_tag + "/" + name),
                               data=np.asarray(value))
 
@@ -949,6 +979,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -974,6 +1005,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if input_port.tag == self._m_tag:
             return
 
@@ -1011,13 +1043,14 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
+        elif "header_"+self._m_tag+"/"+name in self._m_data_storage.m_data_bank:
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
         else:
@@ -1029,6 +1062,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -1056,18 +1090,19 @@ class OutputPort(Port):
                      * -1 if the static attribute exists but is not equal
         :rtype: int
         """
+
         if not self._check_status_and_activate():
             return
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
-                exit = 0
+                check = 0
             else:
-                exit = -1
+                check = -1
         else:
-            exit = 1
+            check = 1
 
-        return exit
+        return check
 
     def check_non_static_attribute(self,
                                    name,
@@ -1085,6 +1120,7 @@ class OutputPort(Port):
                      * -1 if the non-static attribute exists but is not equal
         :rtype: int
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -1092,16 +1128,17 @@ class OutputPort(Port):
 
         if group in self._m_data_storage.m_data_bank:
             if name in self._m_data_storage.m_data_bank[group]:
-                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:], comparison_value):
-                    exit = 0
+                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:],
+                                  comparison_value):
+                    check = 0
                 else:
-                    exit = -1
+                    check = -1
             else:
-                exit = 1
+                check = 1
         else:
-            exit = 1
+            check = 1
 
-        return exit
+        return check
 
     def add_history_information(self,
                                 pipeline_step,
@@ -1117,6 +1154,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self.add_attribute("History: " + pipeline_step,
                            history_information)
 
@@ -1127,4 +1165,5 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self._m_data_storage.m_data_bank.flush()
