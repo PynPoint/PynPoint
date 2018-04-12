@@ -259,6 +259,7 @@ class Pypeline(object):
 
         :return: None
         """
+
         assert isinstance(pipeline_module, PypelineModule), 'Error: the given pipeline_module is '\
                                                             'not a accepted Pypeline Module.'
 
@@ -322,11 +323,11 @@ class Pypeline(object):
         """
 
         self.m_data_storage.open_connection()
+
         existing_data_tags = self.m_data_storage.m_data_bank.keys()
         for module in self._m_modules.itervalues():
 
-            validation = self._validate(module,
-                                        existing_data_tags)
+            validation = self._validate(module, existing_data_tags)
 
             if not validation[0]:
                 return validation
@@ -368,9 +369,9 @@ class Pypeline(object):
 
         validation = self.validate_pipeline()
         if not validation[0]:
-            raise AttributeError("Pipeline module '%s' is looking for data under a tag which is not "
-                                 "created by a previous module or does not exist in the database."
-                                 % validation[1])
+            raise AttributeError("Pipeline module '%s' is looking for data under a tag which is "
+                                 "not created by a previous module or does not exist in the "
+                                 "database." % validation[1])
 
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
