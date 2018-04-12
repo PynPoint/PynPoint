@@ -193,9 +193,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         if self.m_list_mode:
             # Calculate Results
-            self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
-                                                                 self.m_image_in_port,
-                                                                 self.m_tmp_data_port_denoising)
+            self.apply_function_in_time(denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_tmp_data_port_denoising)
             print "Finished analyzing. Start splitting ..."
 
             tmp_num_elements_per_threshold = self.m_image_in_port.get_shape()[0]
@@ -221,9 +221,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             self.m_image_in_port.close_port()
 
         else:
-            self.apply_function_to_line_in_time_multi_processing(denoise_line_in_time,
-                                                                 self.m_image_in_port,
-                                                                 self.m_image_out_port)
+            self.apply_function_in_time(denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_image_out_port)
 
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Wavelet time denoising",

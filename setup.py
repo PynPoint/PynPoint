@@ -5,8 +5,10 @@ import sys
 
 from setuptools import setup
 
+path = os.path.dirname(os.path.abspath(__file__))
+
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist bdist_wheel upload')
+    os.system('python '+os.path.join(path, 'setup.py')+' sdist upload')
     sys.exit()
 
 readme = open('README.rst').read()

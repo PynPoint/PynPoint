@@ -191,7 +191,7 @@ class TestBackgroundSubtraction(object):
         storage.open_connection()
 
         data = storage.m_data_bank["pca_dither1"]
-        assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=1e-8, atol=0.)
+        assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=1e-6, atol=0.)
         assert np.allclose(np.mean(data), 4.1545008537769944e-08, rtol=1e-6, atol=0.)
 
         data = storage.m_data_bank["pca_dither2"]

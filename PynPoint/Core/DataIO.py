@@ -461,6 +461,7 @@ class InputPort(Port):
         :return: Dictionary of all attributes {attr_name: attr_value}
         :rtype: dict
         """
+
         if not self._check_error_cases():
             return
 
@@ -548,6 +549,7 @@ class OutputPort(Port):
         """
 
         super(OutputPort, self).__init__(tag, data_storage_in)
+
         self.m_activate = activate_init
 
         if tag == "config":
@@ -667,6 +669,7 @@ class OutputPort(Port):
         """
 
         tmp_attributes = {}
+
         # check if database entry is new...
         if tag in self._m_data_storage.m_data_bank:
             # NO -> database entry exists
@@ -682,6 +685,7 @@ class OutputPort(Port):
         self._initialize_database_entry(data,
                                         tag,
                                         data_dim=data_dim)
+
         if keep_attributes:
             for key, value in tmp_attributes.iteritems():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
@@ -738,21 +742,20 @@ class OutputPort(Port):
             return check
 
         if _type_check():
-
             # YES -> dim and type match
             # we always append in axis one independent of the dimension
             # 1D case
-            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0],
-                                                         axis=0)
+            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
+
             return
 
         # NO -> shape or type is different
         # Check force
         if force:
             # YES -> Force is true
-            self._set_all_key(tag,
-                              data=data)
+            self._set_all_key(tag, data=data)
+
             return
 
         # NO -> Error message
@@ -1021,8 +1024,7 @@ class OutputPort(Port):
                 if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
                     del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
 
-                self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
-                    attr_data
+                self._m_data_storage.m_data_bank["header_"+self._m_tag+"/"+attr_name] = attr_data
 
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
@@ -1050,9 +1052,11 @@ class OutputPort(Port):
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+
         elif "header_"+self._m_tag+"/"+name in self._m_data_storage.m_data_bank:
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
+
         else:
             warnings.warn("Attribute '%s' does not exist and could not be deleted." % name)
 
@@ -1099,6 +1103,7 @@ class OutputPort(Port):
                 check = 0
             else:
                 check = -1
+
         else:
             check = 1
 
@@ -1135,6 +1140,7 @@ class OutputPort(Port):
                     check = -1
             else:
                 check = 1
+
         else:
             check = 1
 
@@ -1155,8 +1161,7 @@ class OutputPort(Port):
         :return: None
         """
 
-        self.add_attribute("History: " + pipeline_step,
-                           history_information)
+        self.add_attribute("History: " + pipeline_step, history_information)
 
     def flush(self):
         """
