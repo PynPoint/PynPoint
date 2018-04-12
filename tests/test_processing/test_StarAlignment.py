@@ -10,7 +10,7 @@ from PynPoint import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule, \
-                                                     ShiftForCenteringModule, StarCenteringModule
+                                                     ShiftImagesModule, StarCenteringModule
 
 warnings.simplefilter("always")
 
@@ -120,19 +120,22 @@ class TestStarAlignment(object):
 
         self.pipeline.add_module(align)
 
-        shift = ShiftForCenteringModule((6., 4.),
-                                        name_in="shift",
-                                        image_in_tag="align",
-                                        image_out_tag="shift")
+        shift = ShiftImagesModule((6., 4.),
+                                  name_in="shift",
+                                  image_in_tag="align",
+                                  image_out_tag="shift")
 
         self.pipeline.add_module(shift)
 
         center = StarCenteringModule(name_in="center",
                                      image_in_tag="shift",
                                      image_out_tag="center",
+                                     mask_out_tag=None,
                                      fit_out_tag="center_fit",
                                      method="full",
                                      interpolation="spline",
+                                     radius=0.1,
+                                     sign="positive",
                                      guess=(6., 4., 1., 1., 1., 0.))
 
         self.pipeline.add_module(center)
@@ -159,6 +162,6 @@ class TestStarAlignment(object):
 
         data = storage.m_data_bank["center"]
         assert np.allclose(data[0, 10, 10], 4.128859892625027e-05, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.0005163769620309259, rtol=1e-7, atol=0.)
+        assert np.allclose(np.mean(data), 0.0005163806188663894, rtol=1e-7, atol=0.)
 
         storage.close_connection()
