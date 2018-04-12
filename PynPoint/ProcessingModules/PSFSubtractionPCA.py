@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from scipy import linalg, ndimage, sparse
 
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress
 from PynPoint.Util.MultiprocessingPCA import PcaMultiprocessingCapsule
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule

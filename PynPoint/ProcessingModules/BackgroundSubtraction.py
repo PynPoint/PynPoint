@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
-from PynPoint.Util.Progress import progress
+from PynPoint.Util.ModuleTools import progress, memory_frames
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
@@ -615,18 +615,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         nimages = self.m_star_in_port.get_shape()[0]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Calculating background model...")
@@ -701,9 +690,10 @@ class DitheringBackgroundModule(ProcessingModule):
         :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
                          to smooth the image before the star is located.
         :type gaussian: float
-        :param subframe: Size (pix) of the subframe that is used to search for the star. Cropping
-                         of the subframe is done around the center of the dithering position. If
-                         set to None then the full frame size (*size*) will be used.
+        :param subframe: Size (arcsec) of the subframe that is used to search for the star.
+                         Cropping of the subframe is done around the center of the dithering
+                         position. If set to None then the full frame size (*size*) will be
+                         used.
         :type subframe: float
         :param pca_number: Number of principle components.
         :type pca_number: int
@@ -839,6 +829,8 @@ class DitheringBackgroundModule(ProcessingModule):
                     position = None
                 else:
                     position = (None, None, self.m_subframe)
+
+                print position
 
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),

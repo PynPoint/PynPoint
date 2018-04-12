@@ -12,6 +12,14 @@ PynPoint.Util.CWT module
     :undoc-members:
     :show-inheritance:
 
+PynPoint.Util.ModuleTools module
+--------------------------------
+
+.. automodule:: PynPoint.Util.ModuleTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint.Util.Multiprocessing module
 ------------------------------------
 
@@ -24,14 +32,6 @@ PynPoint.Util.MultiprocessingPCA module
 ---------------------------------------
 
 .. automodule:: PynPoint.Util.MultiprocessingPCA
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-PynPoint.Util.Progress module
------------------------------
-
-.. automodule:: PynPoint.Util.Progress
     :members:
     :undoc-members:
     :show-inheritance:

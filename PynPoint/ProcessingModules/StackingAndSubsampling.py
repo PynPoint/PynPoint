@@ -9,8 +9,8 @@ import numpy as np
 
 from scipy.ndimage import rotate
 
-from PynPoint.Util.Progress import progress
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class StackAndSubsetModule(ProcessingModule):
@@ -79,14 +79,7 @@ class StackAndSubsetModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
 
         if self.m_stacking is not None:
-            frames = np.linspace(0,
-                                 nimages-nimages%self.m_stacking,
-                                 int(float(nimages)/float(self.m_stacking))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%self.m_stacking > 0:
-                frames = np.append(frames, nimages)
+            frames = memory_frames(self.m_stacking, nimages)
 
             nimages_new = np.size(frames)-1
             parang_new = np.zeros(nimages_new)
@@ -271,18 +264,7 @@ class DerotateAndStackModule(ProcessingModule):
         elif ndim == 3:
             nimages = self.m_image_in_port.get_shape()[0]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
-
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
-
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
@@ -386,18 +368,7 @@ class CombineTagsModule(ProcessingModule):
             image_in_port = self.add_input_port(item)
             nimages = image_in_port.get_shape()[0]
 
-            if memory == 0 or memory >= nimages:
-                frames = [0, nimages]
-
-            else:
-                frames = np.linspace(0,
-                                     nimages-nimages%memory,
-                                     int(float(nimages)/float(memory))+1,
-                                     endpoint=True,
-                                     dtype=np.int)
-
-                if nimages%memory > 0:
-                    frames = np.append(frames, nimages)
+            frames = memory_frames(memory, nimages)
 
             for j, _ in enumerate(frames[:-1]):
                 im_tmp = image_in_port[frames[j]:frames[j+1], ]
