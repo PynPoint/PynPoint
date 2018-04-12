@@ -5,7 +5,7 @@ import numpy as np
 
 from astropy.io import fits
 
-import PynPoint as PynPoint
+import PynPoint.OldVersion
 
 warnings.simplefilter("always")
 

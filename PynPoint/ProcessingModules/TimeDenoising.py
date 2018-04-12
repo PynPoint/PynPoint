@@ -5,7 +5,7 @@ import numpy as np
 
 from statsmodels.robust import mad
 
-from PynPoint.Util import WaveletAnalysisCapsule
+from PynPoint.Util.WaveletAnalysis import WaveletAnalysisCapsule
 from PynPoint.Core.Processing import ProcessingModule
 
 
