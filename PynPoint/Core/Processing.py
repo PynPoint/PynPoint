@@ -26,6 +26,7 @@ class PypelineModule:
     Each pipeline module has a name as a unique identifier in the Pypeline and has to implement the
     functions connect_database and run which are used in the Pypeline methods.
     """
+
     __metaclass__ = ABCMeta
 
     def __init__(self,
@@ -66,6 +67,7 @@ class PypelineModule:
         :param data_base_in: The Data Storage
         :type data_base_in: DataStorage
         """
+
         pass
 
     @abstractmethod
@@ -74,6 +76,7 @@ class PypelineModule:
         Abstract interface for the run method of a Pypeline Module which inheres the actual
         algorithm behind the module.
         """
+
         pass
 
 
@@ -87,6 +90,7 @@ class WritingModule(PypelineModule):
     Pypline output directory is used. WritingModules have a dictionary of input ports
     (self._m_input_ports) but no output ports.
     """
+
     __metaclass__ = ABCMeta
 
     def __init__(self,
@@ -115,6 +119,7 @@ class WritingModule(PypelineModule):
         assert (os.path.isdir(str(output_dir))
                 or output_dir is None), 'Error: Output directory for writing module does not exist'\
                                         ' - input requested: %s' % output_dir
+
         self.m_output_location = output_dir
         self._m_input_ports = {}
 
@@ -186,6 +191,7 @@ class ProcessingModule(PypelineModule):
     data base using a dictionary of output ports (self._m_output_ports) and a dictionary of input
     ports (self._m_input_ports).
     """
+
     __metaclass__ = ABCMeta
 
     def __init__(self,
@@ -280,6 +286,7 @@ class ProcessingModule(PypelineModule):
 
         for port in self._m_input_ports.itervalues():
             port.set_database_connection(data_base_in)
+
         for port in self._m_output_ports.itervalues():
             port.set_database_connection(data_base_in)
 
@@ -287,11 +294,11 @@ class ProcessingModule(PypelineModule):
 
         self._m_data_base = data_base_in
 
-    def apply_function_to_line_in_time_multi_processing(self,
-                                                        func,
-                                                        image_in_port,
-                                                        image_out_port,
-                                                        func_args=None):
+    def apply_function_in_time(self,
+                               func,
+                               image_in_port,
+                               image_out_port,
+                               func_args=None):
         """
         Applies a given function to all lines in time.
 
@@ -440,9 +447,9 @@ class ProcessingModule(PypelineModule):
                             image_out_port[i:j] = np.array(tmp_res)
 
                     except TypeError:
-                        raise ValueError("Input and output port have the same tag while %s is changing "
-                                         "the image shape. This is only possible when MEMORY=None."
-                                         % func)
+                        raise ValueError("Input and output port have the same tag while %s is "
+                                         "changing the image shape. This is only possible when "
+                                         "MEMORY=None." % func)
                 elif first_time:
                     # The first time we have to reset the eventually existing data
                     image_out_port.set_all(np.array(tmp_res))
@@ -490,6 +497,7 @@ class ReadingModule(PypelineModule):
     module is located. If no input directory is given the default Pypline input directory is used.
     Reading modules have a dictionary of output ports (self._m_out_ports) but no input ports.
     """
+
     __metaclass__ = ABCMeta
 
     def __init__(self,
@@ -517,6 +525,7 @@ class ReadingModule(PypelineModule):
         assert (os.path.isdir(str(input_dir))
                 or input_dir is None), 'Error: Input directory for reading module does not exist ' \
                                        '- input requested: %s' % input_dir
+
         self.m_input_location = input_dir
         self._m_output_ports = {}
 
