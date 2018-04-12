@@ -9,12 +9,12 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
-from PynPoint.Util.ModuleTools import progress, memory_frames
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
