@@ -8,7 +8,7 @@ from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
 
-from PynPoint.Util.Continous import autoscales, cwt, icwt, fourier_from_scales
+from PynPoint.Util.Continuous import autoscales, cwt, icwt, fourier_from_scales
 
 
 # --- Wavelet analysis Capsule ---------
