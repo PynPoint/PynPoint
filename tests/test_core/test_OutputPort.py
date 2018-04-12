@@ -115,7 +115,7 @@ class TestOutputPort(object):
         assert len(record) == 1
 
         # check that the message matches
-        assert record[0].message.args[0] == "Port can not store data unless a database is connected."
+        assert record[0].message.args[0] == "OutputPort can not store data unless a database is connected."
 
         # ---- Test data dim of actual data for new data entry is < 1 or > 3
 
