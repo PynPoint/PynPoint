@@ -40,16 +40,16 @@ def setup_module():
     contrast = 1e-2
 
     parang = []
-    for i in range(len(parang_start)):
+    for i, item in enumerate(parang_start):
         for j in range(ndit[i]):
-            parang.append(parang_start[i]+float(j)*(parang_end[i]-parang_start[i])/float(ndit[i]))
+            parang.append(item+float(j)*(parang_end[i]-item)/float(ndit[i]))
 
     np.random.seed(1)
 
     p_count = 0
-    for j in range(len(fwhm)):
+    for j, item in enumerate(fwhm):
 
-        sigma = fwhm[j] / ( 2. * math.sqrt(2.*math.log(2.)) )
+        sigma = item / ( 2. * math.sqrt(2.*math.log(2.)) )
 
         x = np.arange(0., npix[j], 1.)
         y = np.arange(0., npix[j]+2, 1.)
