@@ -116,7 +116,7 @@ class BasisWrapper(BasePynpointWrapper):
         self._pypeline.add_module(basis_creation)
         self._pypeline.run_module("basis_creation")
 
-    def mk_orig(self,ind):
+    def mk_orig(self, ind):
         pass
 
     def mk_psfmodel(self, num):

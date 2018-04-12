@@ -63,7 +63,7 @@ class WaveletAnalysisCapsule:
         self.__m_supported_wavelets = ['dog', 'morlet']
 
         # check supported wavelets
-        if not (wavelet_in in self.__m_supported_wavelets):
+        if wavelet_in not in self.__m_supported_wavelets:
             raise ValueError('Wavelet ' + str(wavelet_in) + ' is not supported')
 
         if wavelet_in == 'dog':
@@ -201,7 +201,7 @@ class WaveletAnalysisCapsule:
                                              threshold=1.0,
                                              soft=False):
 
-        if not self.__m_padding == "none":
+        if self.__m_padding != "none":
             noise_length_4 = len(self.__m_data)/4
             noise_spectrum = self.__m_spectrum[0, noise_length_4: (noise_length_4*3)].real
         else:
@@ -217,7 +217,7 @@ class WaveletAnalysisCapsule:
     def denoise_spectrum_universal_threshold_planet_save(self,
                                                          low_border,
                                                          high_border):
-        if not self.__m_padding == "none":
+        if self.__m_padding != "none":
             noise_length_4 = len(self.__m_data)/4
             noise_spectrum = self.__m_spectrum[0, noise_length_4: (noise_length_4*3)].real
         else:

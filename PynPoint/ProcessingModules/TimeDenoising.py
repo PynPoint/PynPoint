@@ -25,7 +25,7 @@ class CwtWaveletConfiguration(WaveletConfiguration):
                  keep_mean=False,
                  resolution=0.1):
 
-        if not wavelet in ["dog", "morlet"]:
+        if wavelet not in ["dog", "morlet"]:
             raise ValueError("CWT supports only dog and morlet wavelets")
 
         super(CwtWaveletConfiguration, self).__init__(wavelet)
