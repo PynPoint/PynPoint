@@ -365,17 +365,17 @@ class StarCenteringModule(ProcessingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
+        :param image_in_tag: Tag of the database entry with images that are read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry with the centered images that are written
                               as output. Should be different from *image_in_tag*.
         :type image_out_tag: str
         :param mask_out_tag: Tag of the database entry with the masked images that are written as
                              output. The unmasked part of the images is used for the fit. Data is
-                             not written when set to None.
+                             not written when set to *None*.
         :type mask_out_tag: str
         :param fit_out_tag: Tag of the database entry with the best-fit results of the 2D Gaussian
-                            fit and the 1sigma errors. Data is written in the following format:
+                            fit and the 1-sigma errors. Data is written in the following format:
                             x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
                             error (arcsec), FWHM major axis (arcsec), FWHM major axis error
                             (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
@@ -394,8 +394,8 @@ class StarCenteringModule(ProcessingModule):
                        neglected with the fit. The radius is centered on the position specified
                        in *guess*, which is the center of the image by default.
         :type radius: float
-        :param sign: Fit a positive (*"positive"*) or negative (*"negative"*) Gaussian. A negative
-                     Gaussian could be used to center coronagraphic data.
+        :param sign: Fit a *"positive"* or *"negative"* Gaussian. A negative Gaussian can be
+                     used to center coronagraphic data in which a dark hole is present.
         :type sign: str
         :param \**kwargs:
             See below.
@@ -475,17 +475,17 @@ class StarCenteringModule(ProcessingModule):
             xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
             rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
-            if self.m_sign == "negative":
-                image = -image + np.abs(np.min(-image))
-
             if self.m_mask_out_port is not None:
                 mask = np.copy(image)
                 mask[rr_ap > self.m_radius] = 0.
 
                 if self.m_method == "mean":
-                    self.m_mask_out_port.append(mask, data_dim=2)
+                    self.m_mask_out_port.set_all(mask)
                 elif self.m_method == "full":
                     self.m_mask_out_port.append(mask, data_dim=3)
+
+            if self.m_sign == "negative":
+                image = -image + np.abs(np.min(-image))
 
             image = image[rr_ap < self.m_radius]
 
@@ -520,13 +520,13 @@ class StarCenteringModule(ProcessingModule):
 
             return popt
 
-        def _centering(image):
+        def _centering(image, fit):
 
             if self.m_method == "full":
                 popt = _least_squares(np.copy(image))
 
             elif self.m_method == "mean":
-                popt = self.m_popt
+                popt = fit
 
             if self.m_interpolation == "spline":
                 im_center = shift(image, (-popt[1], -popt[0]), order=5)
@@ -573,7 +573,10 @@ class StarCenteringModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
-        if self.m_method == "mean":
+        if self.m_method == "full":
+            fit = None
+
+        elif self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
             if ndim == 2:
@@ -585,15 +588,16 @@ class StarCenteringModule(ProcessingModule):
 
                 im_mean /= float(nimages)
 
-            self.m_popt = _least_squares(im_mean)
+            fit = _least_squares(im_mean)
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarCenteringModule...")
+                                      "Running StarCenteringModule...",
+                                      func_args=(fit, ))
 
         if self.m_count > 0:
-            print "2D Gaussian fit could not converge on %s images. [WARNING]\n" % self.m_count
+            print "2D Gaussian fit could not converge on %s images. [WARNING]" % self.m_count
 
         self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
