@@ -15,6 +15,7 @@ from scipy.ndimage import shift
 from scipy.optimize import curve_fit
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.ModuleTools import memory_frames
 
 
 class StarExtractionModule(ProcessingModule):
@@ -346,10 +347,11 @@ class StarCenteringModule(ProcessingModule):
                  name_in="centering",
                  image_in_tag="im_arr",
                  image_out_tag="im_center",
+                 mask_out_tag=None,
                  fit_out_tag="center_fit",
                  method="full",
                  interpolation="spline",
-                 radius=None,
+                 radius=0.1,
                  sign="positive",
                  **kwargs):
         """
@@ -357,13 +359,17 @@ class StarCenteringModule(ProcessingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
+        :param image_in_tag: Tag of the database entry with images that are read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry with the centered images that are written
                               as output. Should be different from *image_in_tag*.
         :type image_out_tag: str
+        :param mask_out_tag: Tag of the database entry with the masked images that are written as
+                             output. The unmasked part of the images is used for the fit. Data is
+                             not written when set to *None*.
+        :type mask_out_tag: str
         :param fit_out_tag: Tag of the database entry with the best-fit results of the 2D Gaussian
-                            fit and the 1sigma errors. Data is written in the following format:
+                            fit and the 1-sigma errors. Data is written in the following format:
                             x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
                             error (arcsec), FWHM major axis (arcsec), FWHM major axis error
                             (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
@@ -378,13 +384,12 @@ class StarCenteringModule(ProcessingModule):
         :param interpolation: Type of interpolation that is used for shifting the images (spline,
                               bilinear, or fft).
         :type interpolation: str
-        :param radius: Radius around the center of the image beyond which pixel values are set to
-                       zero when fitting the 2D Gaussian. The full image is used when set to None.
-                       The radius is centered on the position specified in *guess*, which is the
-                       center of the image by default.
+        :param radius: Radius (arcsec) around the center of the image beyond which pixels are
+                       neglected with the fit. The radius is centered on the position specified
+                       in *guess*, which is the center of the image by default.
         :type radius: float
-        :param sign: Fit a positive (*"positive"*) or negative (*"negative"*) Gaussian. A negative
-                     Gaussian could be used to center coronagraphic data.
+        :param sign: Fit a *"positive"* or *"negative"* Gaussian. A negative Gaussian can be
+                     used to center coronagraphic data in which a dark hole is present.
         :type sign: str
         :param \**kwargs:
             See below.
@@ -407,6 +412,10 @@ class StarCenteringModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+        if mask_out_tag is None:
+            self.m_mask_out_port = None
+        else:
+            self.m_mask_out_port = self.add_output_port(mask_out_tag)
         self.m_fit_out_port = self.add_output_port(fit_out_tag)
 
         self.m_method = method
@@ -425,9 +434,10 @@ class StarCenteringModule(ProcessingModule):
         :return: None
         """
 
-        def _2d_gaussian((x_grid, y_grid), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        def _2d_gaussian((x_grid, y_grid, rr_ap_1d, npix), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
+            rr_ap = np.reshape(rr_ap_1d, (npix, npix))
 
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
@@ -439,6 +449,7 @@ class StarCenteringModule(ProcessingModule):
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
             gaussian = amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
+            gaussian = gaussian[rr_ap < self.m_radius]
 
             return np.ravel(gaussian)
 
@@ -457,19 +468,26 @@ class StarCenteringModule(ProcessingModule):
 
             xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
             rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
+            rr_ap_1d = np.ravel(rr_ap)
+
+            if self.m_mask_out_port is not None:
+                mask = np.copy(image)
+                mask[rr_ap > self.m_radius] = 0.
+
+                if self.m_method == "mean":
+                    self.m_mask_out_port.set_all(mask)
+                elif self.m_method == "full":
+                    self.m_mask_out_port.append(mask, data_dim=3)
 
             if self.m_sign == "negative":
                 image = -image + np.abs(np.min(-image))
 
-            if self.m_radius is not None:
-                image[rr_ap > self.m_radius] = 0.
-
-            im_ravel = np.ravel(image)
+            image = image[rr_ap < self.m_radius]
 
             try:
                 popt, pcov = curve_fit(_2d_gaussian,
-                                       (x_grid, y_grid),
-                                       im_ravel,
+                                       (x_grid, y_grid, rr_ap_1d, npix),
+                                       image,
                                        p0=self.m_guess,
                                        sigma=None,
                                        method='lm')
@@ -492,13 +510,13 @@ class StarCenteringModule(ProcessingModule):
 
             return popt
 
-        def _centering(image):
+        def _centering(image, fit):
 
             if self.m_method == "full":
                 popt = _least_squares(np.copy(image))
 
             elif self.m_method == "mean":
-                popt = self.m_popt
+                popt = fit
 
             if self.m_interpolation == "spline":
                 im_center = shift(image, (-popt[1], -popt[0]), order=5)
@@ -518,6 +536,10 @@ class StarCenteringModule(ProcessingModule):
         self.m_fit_out_port.del_all_data()
         self.m_fit_out_port.del_all_attributes()
 
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
+
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
@@ -533,20 +555,18 @@ class StarCenteringModule(ProcessingModule):
 
         npix = self.m_image_in_port.get_shape()[1]
 
-        if memory == 0 or memory >= nimages:
-            frames = [0, nimages]
+        if npix/2.+self.m_guess[0]+self.m_radius > npix or \
+                npix/2.+self.m_guess[1]+self.m_radius > npix or \
+                npix/2.+self.m_guess[1]-self.m_radius < 0. or \
+                npix/2.+self.m_guess[1]-self.m_radius < 0.:
+            raise ValueError("Mask radius extends beyond the size of the image.")
 
-        else:
-            frames = np.linspace(0,
-                                 nimages-nimages%memory,
-                                 int(float(nimages)/float(memory))+1,
-                                 endpoint=True,
-                                 dtype=np.int)
+        frames = memory_frames(memory, nimages)
 
-            if nimages%memory > 0:
-                frames = np.append(frames, nimages)
+        if self.m_method == "full":
+            fit = None
 
-        if self.m_method == "mean":
+        elif self.m_method == "mean":
             im_mean = np.zeros((npix, npix))
 
             if ndim == 2:
@@ -558,24 +578,31 @@ class StarCenteringModule(ProcessingModule):
 
                 im_mean /= float(nimages)
 
-            self.m_popt = _least_squares(im_mean)
+            fit = _least_squares(im_mean)
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarCenteringModule...")
+                                      "Running StarCenteringModule...",
+                                      func_args=(fit, ))
 
         if self.m_count > 0:
-            print "2D Gaussian fit could not converge on %s images. [WARNING]\n" % self.m_count
+            print "2D Gaussian fit could not converge on %s images. [WARNING]" % self.m_count
 
         self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
-        self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.add_history_information("Centering", "2D Gaussian fit")
+            self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.close_port()
 
 
-class ShiftForCenteringModule(ProcessingModule):
+class ShiftImagesModule(ProcessingModule):
     """
     Module for shifting of an image.
     """
@@ -586,9 +613,9 @@ class ShiftForCenteringModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_shifted"):
         """
-        Constructor of ShiftForCenteringModule.
+        Constructor of ShiftImagesModule.
 
-        :param shift_xy: Tuple (delta_x, delta_y) with the shift in both directions.
+        :param shift_xy: Tuple (delta_x, delta_y) with the shift (pix) in both directions.
         :type shift_xy: tuple, float
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -601,7 +628,7 @@ class ShiftForCenteringModule(ProcessingModule):
         :return: None
         """
 
-        super(ShiftForCenteringModule, self).__init__(name_in=name_in)
+        super(ShiftImagesModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -621,8 +648,8 @@ class ShiftForCenteringModule(ProcessingModule):
         self.apply_function_to_images(image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ShiftForCenteringModule...")
+                                      "Running ShiftImagesModule...")
 
-        self.m_image_out_port.add_history_information("Shifted", str(self.m_shift))
+        self.m_image_out_port.add_history_information("Images shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
