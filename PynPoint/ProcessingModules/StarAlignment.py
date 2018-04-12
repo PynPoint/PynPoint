@@ -440,10 +440,10 @@ class StarCenteringModule(ProcessingModule):
         :return: None
         """
 
-        def _2d_gaussian((x_grid, y_grid), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-            rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
+        def _2d_gaussian((x_grid, y_grid, rr_ap_1d, npix), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
+            rr_ap = np.reshape(rr_ap_1d, (npix, npix))
 
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
@@ -455,7 +455,7 @@ class StarCenteringModule(ProcessingModule):
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
             gaussian = amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
-            gaussian = gaussian[rr_grid < self.m_radius]
+            gaussian = gaussian[rr_ap < self.m_radius]
 
             return np.ravel(gaussian)
 
@@ -474,6 +474,7 @@ class StarCenteringModule(ProcessingModule):
 
             xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
             rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
+            rr_ap_1d = np.ravel(rr_ap)
 
             if self.m_mask_out_port is not None:
                 mask = np.copy(image)
@@ -489,13 +490,11 @@ class StarCenteringModule(ProcessingModule):
 
             image = image[rr_ap < self.m_radius]
 
-            init = (0., 0., self.m_guess[2], self.m_guess[3], self.m_guess[4], self.m_guess[5])
-
             try:
                 popt, pcov = curve_fit(_2d_gaussian,
-                                       (x_grid, y_grid),
+                                       (x_grid, y_grid, rr_ap_1d, npix),
                                        image,
-                                       p0=init,
+                                       p0=self.m_guess,
                                        sigma=None,
                                        method='lm')
 
@@ -505,9 +504,6 @@ class StarCenteringModule(ProcessingModule):
                 popt = np.zeros(6)
                 perr = np.zeros(6)
                 self.m_count += 1
-
-            popt[0] += self.m_guess[0]
-            popt[1] += self.m_guess[1]
 
             res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
                               popt[1]*pixscale, perr[1]*pixscale,
