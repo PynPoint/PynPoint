@@ -4,7 +4,7 @@ import warnings
 import h5py
 import numpy as np
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, SimpleBackgroundSubtractionModule, \
                                                              PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
@@ -161,10 +161,8 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(data[0, 10, 10], 9.38719992395586e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 5.782411586589357e-23, rtol=limit, atol=0.)
 
-        # TODO Unclear why rtol can only be 1e-5 and 1e-6
-
         data = storage.m_data_bank["subtracted"]
-        assert np.allclose(data[0, 10, 10], 0.00017730624664203748, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.00017730624664203748, rtol=1e-7, atol=0.)
         assert np.allclose(np.mean(data), 3.102053539454623e-07, rtol=1e-6, atol=0.)
 
         data = storage.m_data_bank["residuals"]
@@ -212,10 +210,8 @@ class TestBackgroundSubtraction(object):
         storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
         storage.open_connection()
 
-        # TODO Unclear why rtol can only be 1e-6
-
         data = storage.m_data_bank["pca_dither1"]
-        assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=1e-8, atol=0.)
         assert np.allclose(np.mean(data), 4.1545008537769944e-08, rtol=1e-6, atol=0.)
 
         data = storage.m_data_bank["pca_dither2"]

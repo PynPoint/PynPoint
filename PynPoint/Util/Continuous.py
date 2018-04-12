@@ -19,9 +19,6 @@
 from numpy import *
 from scipy.special import gamma
 
-__all__ = ["cwt", "icwt", "autoscales", "fourier_from_scales",
-           "scales_from_fourier"]
-
 PI2 = 2 * pi
 
 

@@ -8,7 +8,7 @@ from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
 
-import PynPoint.Util.continous as wave
+from PynPoint.Util.Continous import autoscales, cwt, icwt, fourier_from_scales
 
 
 # --- Wavelet analysis Capsule ---------
@@ -107,11 +107,11 @@ class WaveletAnalysisCapsule:
         self.__m_C_final_reconstruction = self.__m_C_reconstructions[order]
 
         # create scales for wavelet transform
-        self.__m_scales = wave.autoscales(N=self.__m_data_size,
-                                          dt=1,
-                                          dj=frequency_resolution,
-                                          wf=wavelet_in,
-                                          p=order)
+        self.__m_scales = autoscales(N=self.__m_data_size,
+                                     dt=1,
+                                     dj=frequency_resolution,
+                                     wf=wavelet_in,
+                                     p=order)
 
         self.__m_number_of_scales = len(self.__m_scales)
         self.__m_frequency_resolution = frequency_resolution
@@ -164,25 +164,25 @@ class WaveletAnalysisCapsule:
         return reconstruction_factor.real
 
     def compute_cwt(self):
-        self.__m_spectrum = wave.cwt(self.__m_data,
-                                     dt=1,
-                                     scales=self.__m_scales,
-                                     wf=self.__m_wavelet,
-                                     p=self.__m_order)
+        self.__m_spectrum = cwt(self.__m_data,
+                                dt=1,
+                                scales=self.__m_scales,
+                                wf=self.__m_wavelet,
+                                p=self.__m_order)
 
     def update_signal(self):
-        self.__m_data = wave.icwt(self.__m_spectrum,
-                                  dt=1,
-                                  scales=self.__m_scales,
-                                  wf=self.__m_wavelet,
-                                  p=self.__m_order)
+        self.__m_data = icwt(self.__m_spectrum,
+                             dt=1,
+                             scales=self.__m_scales,
+                             wf=self.__m_wavelet,
+                             p=self.__m_order)
         reconstruction_factor = self.__compute_reconstruction_factor()
         self.__m_data *= reconstruction_factor
 
     def __transform_period(self,
                            period):
 
-        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
+        tmp_y = fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
 
         def transformation(x):
             return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
@@ -260,7 +260,7 @@ class WaveletAnalysisCapsule:
         plt.figure(figsize=(8, 6))
         plt.subplot(1, 1, 1)
 
-        tmp_y = wave.fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
+        tmp_y = fourier_from_scales(self.__m_scales, self.__m_wavelet, self.__m_order)
         tmp_x = np.arange(0, self.__m_data_size + 1, 1)
 
 

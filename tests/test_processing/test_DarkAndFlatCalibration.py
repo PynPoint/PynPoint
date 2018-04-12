@@ -7,7 +7,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule

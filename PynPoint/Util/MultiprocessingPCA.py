@@ -4,10 +4,12 @@ configurations at the same time. The PCA basis is required as input. Note due to
 functionality in numpy this does not run on Mac.
 """
 
-from PynPoint.Util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter,\
-    MultiprocessingCapsule, to_slice, TaskInput, TaskResult
 import numpy as np
+
 from scipy import ndimage
+
+from PynPoint.Util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
+                                          TaskInput, MultiprocessingCapsule, to_slice
 
 
 class PcaTaskCreator(TaskCreator):
