@@ -263,14 +263,13 @@ class DerotateAndStackModule(ProcessingModule):
         if self.m_derotate:
             parang = self.m_image_in_port.get_attribute("PARANG")
 
-        if self.m_stack:
-            stack = np.zeros((self.m_image_in_port.get_shape()[1],
-                              self.m_image_in_port.get_shape()[2]))
+        ndim = self.m_image_in_port.get_ndim()
+        npix = self.m_image_in_port.get_shape()[1]
 
-        elif not self.m_stack:
-            stack = np.zeros(self.m_image_in_port.get_shape())
-
-        nimages = self.m_image_in_port.get_shape()[0]
+        if ndim == 2:
+            nimages = 1
+        elif ndim == 3:
+            nimages = self.m_image_in_port.get_shape()[0]
 
         if memory == 0 or memory >= nimages:
             frames = [0, nimages]
@@ -285,39 +284,45 @@ class DerotateAndStackModule(ProcessingModule):
             if nimages%memory > 0:
                 frames = np.append(frames, nimages)
 
-        count = 0.
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
+            if self.m_stack:
+                im_tot = np.zeros((npix, npix))
+
             if self.m_derotate:
                 for j in range(frames[i+1]-frames[i]):
-                    im_rot = rotate(self.m_image_in_port[frames[i]+j, ],
-                                    -parang[frames[i]+j]+self.m_extra_rot,
+                    im_rot = rotate(input=self.m_image_in_port[frames[i]+j, ],
+                                    angle=-parang[frames[i]+j]+self.m_extra_rot,
                                     reshape=False)
 
+                    if self.m_stack:
+                        im_tot += im_rot
+
+                    elif not self.m_stack:
+                        if ndim == 2:
+                            self.m_image_out_port.set_all(im_rot)
+                        elif ndim == 3:
+                            self.m_image_out_port.append(im_rot, data_dim=3)
+
             else:
-                im_rot = self.m_image_in_port[frames[i]:frames[i+1], ]
+                if self.m_stack:
+                    im_tmp = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            if self.m_stack:
-                if im_rot.ndim == 3:
-                    stack += np.sum(im_rot, axis=0)
-
-                elif im_rot.ndim == 2:
-                    stack += im_rot
-
-            elif not self.m_stack:
-                stack[frames[i]:frames[i+1], ] = im_rot
-
-            count += float(frames[i+1])-float(frames[i])
-
-        if self.m_stack:
-            stack /= count
+                    if im_tmp.ndim == 2:
+                        im_tot += im_tmp
+                    elif im_tmp.ndim == 3:
+                        im_tot += np.sum(im_tmp, axis=0)
 
         sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.set_all(stack)
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if self.m_stack:
+            self.m_image_out_port.set_all(im_tot/float(nimages))
+
+        if self.m_derotate or self.m_stack:
+            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.close_port()
 
 
