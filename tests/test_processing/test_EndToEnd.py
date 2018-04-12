@@ -7,9 +7,9 @@ import numpy as np
 from astropy.io import fits
 from scipy.ndimage import shift
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage, InputPort
-from PynPoint.IOmodules import FitsReadingModule
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule, RemoveFramesModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule

@@ -4,7 +4,7 @@ import warnings
 import h5py
 import numpy as np
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, BadPixelMapModule, \
                                                         BadPixelInterpolationModule

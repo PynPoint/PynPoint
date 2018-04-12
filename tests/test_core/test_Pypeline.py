@@ -7,9 +7,10 @@ import numpy as np
 
 from astropy.io import fits
 
-from PynPoint.Core import Pypeline
-from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule
-from PynPoint.ProcessingModules import BadPixelSigmaFilterModule
+from PynPoint.Core.Pypeline import Pypeline
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
+from PynPoint.IOmodules.FitsWriting import FitsWritingModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 
 warnings.simplefilter("always")
 

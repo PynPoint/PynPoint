@@ -5,6 +5,7 @@ needed to process lines in time as used in the wavelet time de-noising.
 
 import multiprocessing
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 
