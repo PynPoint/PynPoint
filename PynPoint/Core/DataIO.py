@@ -1,5 +1,5 @@
 """
-Modules to save and load data from a central DataStorage (.hdf5).
+Modules to access data and attributes in the central HDF5 database.
 """
 
 import warnings
@@ -183,6 +183,9 @@ class ConfigPort(Port):
         """
 
         super(ConfigPort, self).__init__(tag, data_storage_in)
+
+        if tag != "config":
+            raise ValueError("The tag name of the central configuration should be 'config'.")
 
     def _check_status_and_activate(self):
         """
@@ -435,22 +438,20 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            # item unpacks numpy types to python types hdf5 only uses numpy types
-            attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
-            try:
-                return attr.item()
-
-            except:
-                return attr
+            # try:
+            #     return attr.item()
+            #
+            # except:
+            #     return attr
 
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)][...])
 
-        warnings.warn('No attribute found - requested: %s' % name)
+        warnings.warn("No attribute found - requested: %s." % name)
 
         return None
 
@@ -561,7 +562,6 @@ class OutputPort(Port):
             raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
                              "headers.")
 
-    # internal functions
     def _check_status_and_activate(self):
         """
         Internal function which checks if the OutputPort is ready to use and open it.
@@ -597,10 +597,8 @@ class OutputPort(Port):
         :return: None
         """
 
-        # convert input data into numpy array
         first_data = np.asarray(first_data)
 
-        # check Error cases
         if first_data.ndim > 3 or first_data.ndim < 1:
             raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
                              'attributes to save as int, float, or string.')
@@ -611,36 +609,39 @@ class OutputPort(Port):
         if data_dim > 3 or data_dim < 1:
             raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
 
-        if data_dim < first_data.ndim:
+        elif data_dim < first_data.ndim:
             raise ValueError('The dimensions of the data should be equal to or larger than the '
                              'dimensions of the input data.')
 
-        if data_dim == 3 and first_data.ndim == 1:
+        elif data_dim == 3 and first_data.ndim == 1:
             raise ValueError('Cannot initialize 1D data in 3D data container.')
 
-        # if no data_dim is given check the input data
         if data_dim == first_data.ndim:
-            if first_data.ndim == 1:  # case (1,1)
+            if first_data.ndim == 1: # case (1,1)
                 data_shape = (None,)
-            elif first_data.ndim == 2:  # case (2,2)
+
+            elif first_data.ndim == 2: # case (2,2)
                 data_shape = (None, first_data.shape[1])
-            elif first_data.ndim == 3:  # case (3,3)
+
+            elif first_data.ndim == 3: # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
+
             else:
-                raise ValueError('Input shape not supported')  # pragma: no cover
+                raise ValueError('Input shape not supported')
+
         else:
-            if data_dim == 2:  # case (2, 1)
+            if data_dim == 2: # case (2,1)
                 data_shape = (None, first_data.shape[0])
                 first_data = first_data[np.newaxis, :]
-            elif data_dim == 3:  # case (3, 2)
+
+            elif data_dim == 3: # case (3,2)
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
-            else:
-                raise ValueError('Input shape not supported') # pragma: no cover
 
-        self._m_data_storage.m_data_bank.create_dataset(tag,
-                                                        data=first_data,
-                                                        maxshape=data_shape)
+            else:
+                raise ValueError('Input shape not supported')
+
+        self._m_data_storage.m_data_bank.create_dataset(tag, data=first_data, maxshape=data_shape)
 
     def _set_all_key(self,
                      tag,

@@ -83,7 +83,7 @@ class Pypeline(object):
             assert (os.path.isdir(str(value))), "Error: Input directory for " + str(key) + \
                                                 " does not exist - input requested: %s." % value
 
-        super(Pypeline, self).__setattr__(key, value)  # use the method of object
+        super(Pypeline, self).__setattr__(key, value)
 
     @staticmethod
     def _validate(module,
@@ -131,88 +131,99 @@ class Pypeline(object):
 
         cpu = multiprocessing.cpu_count()
 
-        config_dict = [('INSTRUMENT', ('header', 'INSTRUME', 'string')),
-                       ('NFRAMES', ('header', 'NAXIS3', 'string')),
-                       ('EXP_NO', ('header', 'ESO DET EXP NO', 'string')),
-                       ('DIT', ('header', 'ESO DET DIT', 'string')),
-                       ('NDIT', ('header', 'ESO DET NDIT', 'string')),
-                       ('PARANG_START', ('header', 'ESO ADA POSANG', 'string')),
-                       ('PARANG_END', ('header', 'ESO ADA POSANG END', 'string')),
-                       ('DITHER_X', ('header', 'ESO SEQ CUMOFFSETX', 'string')),
-                       ('DITHER_Y', ('header', 'ESO SEQ CUMOFFSETY', 'string')),
-                       ('PUPIL', ('header', 'ESO ADA PUPILPOS', 'string')),
-                       ('DATE', ('header', 'DATE-OBS', 'string')),
-                       ('LATITUDE', ('header', 'ESO TEL GEOLAT', 'string')),
-                       ('LONGITUDE', ('header', 'ESO TEL GEOLON', 'string')),
-                       ('RA', ('header', 'RA', 'string')),
-                       ('DEC', ('header', 'DEC', 'string')),
-                       ('PIXSCALE', ('settings', 0.027, 'float')),
-                       ('MEMORY', ('settings', 1000, 'int')),
-                       ('CPU', ('settings', cpu, 'int'))]
+        default = [('INSTRUMENT', ('header', 'INSTRUME', 'str')),
+                   ('NFRAMES', ('header', 'NAXIS3', 'str')),
+                   ('EXP_NO', ('header', 'ESO DET EXP NO', 'str')),
+                   ('DIT', ('header', 'ESO DET DIT', 'str')),
+                   ('NDIT', ('header', 'ESO DET NDIT', 'str')),
+                   ('PARANG_START', ('header', 'ESO ADA POSANG', 'str')),
+                   ('PARANG_END', ('header', 'ESO ADA POSANG END', 'str')),
+                   ('DITHER_X', ('header', 'ESO SEQ CUMOFFSETX', 'str')),
+                   ('DITHER_Y', ('header', 'ESO SEQ CUMOFFSETY', 'str')),
+                   ('PUPIL', ('header', 'ESO ADA PUPILPOS', 'str')),
+                   ('DATE', ('header', 'DATE-OBS', 'str')),
+                   ('LATITUDE', ('header', 'ESO TEL GEOLAT', 'str')),
+                   ('LONGITUDE', ('header', 'ESO TEL GEOLON', 'str')),
+                   ('RA', ('header', 'RA', 'str')),
+                   ('DEC', ('header', 'DEC', 'str')),
+                   ('PIXSCALE', ('settings', 0.027, 'float')),
+                   ('MEMORY', ('settings', 1000, 'int')),
+                   ('CPU', ('settings', cpu, 'int'))]
 
-        config_dict = collections.OrderedDict(config_dict)
+        default = collections.OrderedDict(default)
+        config_dict = collections.OrderedDict()
+
+        def _create_config(filename):
+            group = None
+
+            file_obj = open(filename, 'w')
+            for i, item in enumerate(default):
+                if default[item][0] != group:
+                    if i != 0:
+                        file_obj.write('\n')
+                    file_obj.write('['+str(default[item][0])+']\n\n')
+
+                file_obj.write(item+': '+str(default[item][1])+'\n')
+                group = default[item][0]
+
+            file_obj.close()
 
         def _read_config(config_file):
             config = configparser.ConfigParser()
             config.read_file(open(config_file))
 
-            for _, item in enumerate(config_dict):
-                if config.has_option(config_dict[item][0], item):
+            for _, item in enumerate(default):
+                if config.has_option(default[item][0], item):
 
-                    if config.get(config_dict[item][0], item) == "None":
-                        config_dict[item] = int(0)
+                    if config.get(default[item][0], item) == "None":
+                        if default[item][2] == "str":
+                            config_dict[item] = "None"
+
+                        elif default[item][2] == "float":
+                            config_dict[item] = float(0.)
+
+                        elif default[item][2] == "int":
+                            config_dict[item] = int(0)
 
                     else:
-                        if config_dict[item][2] == "string":
-                            config_dict[item] = str(config.get(config_dict[item][0], item))
+                        if default[item][2] == "str":
+                            config_dict[item] = str(config.get(default[item][0], item))
 
-                        elif config_dict[item][2] == "float":
-                            config_dict[item] = float(config.get(config_dict[item][0], item))
+                        elif default[item][2] == "float":
+                            config_dict[item] = float(config.get(default[item][0], item))
 
-                        elif config_dict[item][2] == "int":
-                            config_dict[item] = int(config.get(config_dict[item][0], item))
+                        elif default[item][2] == "int":
+                            config_dict[item] = int(config.get(default[item][0], item))
 
                 else:
-                    config_dict[item] = config_dict[item][1]
+                    config_dict[item] = default[item][1]
 
-        def _create_config(filename):
+            return config_dict
 
-            group = None
+        def _write_config(config_dict):
+            hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
 
-            file_obj = open(filename, 'w')
-            for i, item in enumerate(config_dict):
-                if config_dict[item][0] != group:
-                    if i != 0:
-                        file_obj.write('\n')
-                    file_obj.write('['+str(config_dict[item][0])+']\n\n')
+            if "config" in hdf:
+                del hdf["config"]
 
-                file_obj.write(item+': '+str(config_dict[item][1])+'\n')
-                group = config_dict[item][0]
+            config = hdf.create_group("config")
 
-            file_obj.close()
+            for i in config_dict:
+                config.attrs[i] = config_dict[i]
+
+            hdf.close()
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
-        if os.path.isfile(config_file):
-            _read_config(config_file)
-
-        else:
-            warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
+        if not os.path.isfile(config_file):
+            warnings.warn("Configuration file not found. Creating PynPoint_config.ini with "
                           "default values.")
 
             _create_config(config_file)
 
-        hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
+        config_dict = _read_config(config_file)
 
-        if "config" in hdf:
-            del hdf["config"]
-
-        config = hdf.create_group("config")
-
-        for i in config_dict:
-            config.attrs[i] = config_dict[i]
-
-        hdf.close()
+        _write_config(config_dict)
 
     def add_module(self,
                    module):
@@ -231,12 +242,10 @@ class Pypeline(object):
         assert isinstance(module, PypelineModule), "Error: the given pipeline_module is not an " \
                                                    "accepted Pypeline module."
 
-        # if no specific output directory is given use the default
         if isinstance(module, WritingModule):
             if module.m_output_location is None:
                 module.m_output_location = self._m_output_place
 
-        # if no specific input directory is given use the default
         if isinstance(module, ReadingModule):
             if module.m_input_location is None:
                 module.m_input_location = self._m_input_place
