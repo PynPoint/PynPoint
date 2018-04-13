@@ -73,7 +73,7 @@ class TestOutputPort(object):
 
         data = [1, 3]
         outport.set_all(data, data_dim=1)
-        
+
         inport = self.create_input_port("new_data")
 
         assert np.array_equal(inport.get_all(), [1., 3.])
@@ -98,7 +98,7 @@ class TestOutputPort(object):
 
         # ----- 3D input -----
 
-        data = [[[1, 3], [2, 4]],[[1, 3], [2, 4]]]
+        data = [[[1, 3], [2, 4]], [[1, 3], [2, 4]]]
         outport.set_all(data, data_dim=3)
         assert np.array_equal(inport.get_all(), [[[1, 3], [2, 4]], [[1, 3], [2, 4]]])
         outport.del_all_data()
@@ -115,7 +115,8 @@ class TestOutputPort(object):
         assert len(record) == 1
 
         # check that the message matches
-        assert record[0].message.args[0] == "OutputPort can not store data unless a database is connected."
+        assert record[0].message.args[0] == "OutputPort can not store data unless a database is " \
+                                            "connected."
 
         # ---- Test data dim of actual data for new data entry is < 1 or > 3
 
@@ -430,7 +431,8 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.add_value_to_static_attribute("attr1", value="test")
 
-        assert error.value[0] == "Only integer and float values can be added to an existing attribute."
+        assert error.value[0] == "Only integer and float values can be added to an existing " \
+                                 "attribute."
 
         # add data to not existing attribute
         with pytest.raises(AttributeError) as error2:

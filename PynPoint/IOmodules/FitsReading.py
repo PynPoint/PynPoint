@@ -132,29 +132,27 @@ class FitsReadingModule(ReadingModule):
         elif images.ndim == 2:
             nimages = 1
 
-        # store header info
-        tmp_header = hdulist[0].header
+        header = hdulist[0].header
 
         # static attributes
         for i, item in enumerate(self.m_static):
 
             if self.m_static_check[i]:
-
                 fitskey = self._m_config_port.get_attribute(item)
 
                 if fitskey != "None":
 
-                    if fitskey in tmp_header:
-                        value = tmp_header[fitskey]
+                    if fitskey in header:
+                        value = header[fitskey]
                         status = self.m_image_out_port.check_static_attribute(item, value)
 
                         if status == 1:
                             self.m_image_out_port.add_attribute(item, value, static=True)
 
                         if status == -1:
-                            warnings.warn('Static attribute %s has changed. Probably the current '
-                                          'file %s does not belong to the data set "%s" of the PynPoint'
-                                          ' database. Updating attribute...' \
+                            warnings.warn('Static attribute %s has changed. Possibly the current '
+                                          'file %s does not belong to the data set %s of the '
+                                          'database. Updating attribute...' \
                                           % (fitskey, fits_file, self.m_image_tag))
 
                         elif status == 0:
@@ -178,11 +176,11 @@ class FitsReadingModule(ReadingModule):
 
                 if fitskey != "None":
 
-                    if fitskey in tmp_header:
-                        value = tmp_header[fitskey]
+                    if fitskey in header:
+                        value = header[fitskey]
                         self.m_image_out_port.append_attribute_data(item, value)
 
-                    elif tmp_header['NAXIS'] == 2 and item == 'NFRAMES':
+                    elif header['NAXIS'] == 2 and item == 'NFRAMES':
                         self.m_image_out_port.append_attribute_data(item, 1)
 
                     elif item == 'PARANG':
@@ -194,9 +192,9 @@ class FitsReadingModule(ReadingModule):
                         self.m_image_out_port.append_attribute_data(item, -1)
 
         fits_header = []
-        for key in tmp_header:
+        for key in header:
             if key:
-                fits_header.append(str(key)+" = "+str(tmp_header[key]))
+                fits_header.append(str(key)+" = "+str(header[key]))
 
         hdulist.close()
 

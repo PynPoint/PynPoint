@@ -19,7 +19,6 @@ limit = 1e-10
 
 def setup_module():
     file_in = os.path.dirname(__file__) + "/images.fits"
-    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
 
     np.random.seed(1)
     images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
@@ -77,13 +76,13 @@ class TestPypeline(object):
         dir_exists = self.test_dir
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline(dir_non_exists, dir_exists, dir_exists)
+            Pypeline(dir_non_exists, dir_exists, dir_exists)
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline(dir_exists, dir_non_exists, dir_non_exists)
+            Pypeline(dir_exists, dir_non_exists, dir_non_exists)
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline()
+            Pypeline()
 
     def test_create_instance_new_data_base(self):
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -225,5 +224,5 @@ class TestPypeline(object):
         assert pipeline.get_module_names() == ["filter"]
 
         assert pipeline.remove_module("filter") is True
-        
+
         os.remove(self.test_data)

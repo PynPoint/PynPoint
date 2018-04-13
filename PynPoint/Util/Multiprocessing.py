@@ -1,6 +1,6 @@
 """
-Utilities for Poison Pill multiprocessing. Provides abstract interfaces as well as an implementation
-needed to process lines in time as used in the wavelet time de-noising.
+Utilities for Poison Pill multiprocessing. Provides abstract interfaces as well as an
+implementation needed to process lines in time as used in the wavelet time denoising.
 """
 
 import multiprocessing

@@ -42,7 +42,8 @@ class TestInputPort(object):
         assert np.allclose(port[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(port.get_all()), 1.0506056979365338e-06, rtol=limit, atol=0.)
 
-        arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05, -0.00038631277795631806), dtype=np.float64)
+        arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05,
+                              -0.00038631277795631806), dtype=np.float64)
         assert np.allclose(port[0:3, 0, 0], arr_tmp, rtol=limit, atol=0.)
 
         assert len(port[0:2, 0, 0]) == 2

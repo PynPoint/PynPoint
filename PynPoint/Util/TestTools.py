@@ -1,24 +1,33 @@
-def create_config(filename):
+"""
+Functions for the test cases.
+"""
 
-    f = open(filename, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: None\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.027\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+def create_config(filename):
+    """
+    Create a configuration file.
+    """
+
+    file_obj = open(filename, 'w')
+
+    file_obj.write('[header]\n\n')
+    file_obj.write('INSTRUMENT: INSTRUME\n')
+    file_obj.write('NFRAMES: NAXIS3\n')
+    file_obj.write('EXP_NO: ESO DET EXP NO\n')
+    file_obj.write('NDIT: ESO DET NDIT\n')
+    file_obj.write('PARANG_START: ESO ADA POSANG\n')
+    file_obj.write('PARANG_END: ESO ADA POSANG END\n')
+    file_obj.write('DITHER_X: None\n')
+    file_obj.write('DITHER_Y: None\n')
+    file_obj.write('DIT: None\n')
+    file_obj.write('LATITUDE: None\n')
+    file_obj.write('LONGITUDE: None\n')
+    file_obj.write('PUPIL: None\n')
+    file_obj.write('DATE: None\n')
+    file_obj.write('RA: None\n')
+    file_obj.write('DEC: None\n\n')
+    file_obj.write('[settings]\n\n')
+    file_obj.write('PIXSCALE: 0.027\n')
+    file_obj.write('MEMORY: 100\n')
+    file_obj.write('CPU: 1')
+
+    file_obj.close()

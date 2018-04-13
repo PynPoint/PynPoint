@@ -300,11 +300,9 @@ class RemoveLinesModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError("Input and output tags should be different.")
-
         def remove_lines(image_in):
             shape_in = image_in.shape
+
             return image_in[int(self.m_lines[2]):shape_in[0]-int(self.m_lines[3]),
                             int(self.m_lines[0]):shape_in[1]-int(self.m_lines[1])]
 

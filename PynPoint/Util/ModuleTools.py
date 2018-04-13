@@ -1,9 +1,16 @@
-import sys
+"""
+Functions for Pypeline modules.
+"""
 
+import sys
 import numpy as np
 
 
 def progress(current, total, message):
+    """
+    Function to show and update the progress as standard output.
+    """
+
     fraction = float(current)/float(total)
     percentage = round(fraction*100., 1)
 
@@ -11,6 +18,10 @@ def progress(current, total, message):
     sys.stdout.flush()
 
 def memory_frames(memory, nimages):
+    """
+    Function to subdivide the input images is in quantities of MEMORY.
+    """
+
     if memory == 0 or memory >= nimages:
         frames = [0, nimages]
 
