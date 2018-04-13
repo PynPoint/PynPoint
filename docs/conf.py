@@ -10,7 +10,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.abspath('..'))
-from PynPoint import __version__
+from PynPoint import __author__, __copyright__, __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -26,8 +26,8 @@ from PynPoint import __version__
 # -- Project information -----------------------------------------------------
 
 project = u'PynPoint'
-copyright = u'2014-2018, ETH Zurich'
-author = u'Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara'
+copyright = __copyright__
+author = __author__
 
 # The short X.Y version
 version = __version__

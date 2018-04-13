@@ -1,5 +1,5 @@
 """
-Module which capsules different pipeline processing steps.
+Module which capsules the methods of the Pypeline.
 """
 
 import os
@@ -18,11 +18,11 @@ from PynPoint.Core.Processing import PypelineModule, WritingModule, ReadingModul
 
 class Pypeline(object):
     """
-    A Pypeline instance can be used to manage various processing steps. It inheres a internal
-    dictionary of Pipeline steps (modules) and their names. A Pypeline has a central DataStorage on
-    the hard drive which can be accessed by these different modules. The order of the modules
-    depends on the order the steps have been added to the pypeline. It is possible to run the whole
-    Pypeline (i.e. all modules / steps) or a single modules by name.
+    A Pypeline instance can be used to manage various processing steps. It inheres an internal
+    dictionary of Pypeline steps (modules) and their names. A Pypeline has a central DataStorage on
+    the hard drive which can be accessed by various modules. The order of the modules depends on
+    the order the steps have been added to the pypeline. It is possible to run all modules attached
+    to the Pypeline at once or run a single modules by name.
     """
 
     def __init__(self,
@@ -30,21 +30,22 @@ class Pypeline(object):
                  input_place_in=None,
                  output_place_in=None):
         """
-        Constructor of a Pypeline object.
+        Constructor of Pypeline.
 
         :param working_place_in: Working location of the Pypeline which needs to be a folder on the
                                  hard drive. The given folder will be used to save the central
-                                 PynPoint database (a .hdf5 file). **NOTE**: Depending on the input
-                                 this .hdf5 file can become very large!
+                                 PynPoint database (an HDF5 file) in which all the intermediate
+                                 processing steps are saved. Note that the HDF5 file can become
+                                 very large depending on the size and number of input images.
         :type working_place_in: str
-        :param input_place_in: Default input directory of the Pypeline. All ReadingModules added to
-                               the Pypeline can use this directory to look for input data. It is
-                               possible to specify a different location for each Reading Modules
+        :param input_place_in: Default input directory of the Pypeline. All ReadingModules added
+                               to the Pypeline use this directory to look for input data. It is
+                               possible to specify a different location for the ReadingModules
                                using their constructors.
         :type input_place_in: str
         :param output_place_in: Default result directory used to save the output of all
                                 WritingModules added to the Pypeline. It is possible to specify
-                                a different locations for each WritingModule using their
+                                a different locations for the WritingModules by using their
                                 constructors.
 
         :return: None
@@ -65,228 +66,195 @@ class Pypeline(object):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-    def __setattr__(self, key, value):
+    def __setattr__(self,
+                    key,
+                    value):
         """
-        This method is called every time a member / attribute of the Pypeline is changed.
-        It checks whether a chosen working / input / output directory exists.
+        This method is called every time a member / attribute of the Pypeline is changed. It checks
+        whether a chosen working / input / output directory exists.
 
-        :param key: member / attribute name
-        :param value: new value for the given attribute / member
+        :param key: Member or attribute name.
+        :param value: New value for the given member or attribute.
 
         :return: None
         """
 
-        # Error case directory does not exist
         if key in ["_m_working_place", "_m_input_place", "_m_output_place"]:
-            assert (os.path.isdir(str(value))), 'Error: Input directory for ' + str(key) + \
-                                                ' does not exist - input ' \
-                                                'requested: %s' % value
+            assert (os.path.isdir(str(value))), "Error: Input directory for " + str(key) + \
+                                                " does not exist - input requested: %s." % value
 
         super(Pypeline, self).__setattr__(key, value)  # use the method of object
 
     @staticmethod
     def _validate(module,
-                  existing_data_tags):
+                  tags):
         """
         Internal function which is used for the validation of the pipeline. Validates a
         single module.
 
-        :param module: The module
-        :param existing_data_tags: Tags which exist in the database
+        :param module: The module.
+        :type module: ReadingModule, WritingModule, ProcessingModule
+        :param tags: Tags in the database.
+        :type tags: list, str
 
-        :return: validation
+        :return: Module validation.
         :rtype: bool, str
         """
 
         if isinstance(module, ReadingModule):
-            existing_data_tags.extend(module.get_all_output_tags())
+            tags.extend(module.get_all_output_tags())
 
         elif isinstance(module, WritingModule):
             for tag in module.get_all_input_tags():
-                if tag not in existing_data_tags:
+                if tag not in tags:
                     return False, module.name
 
         elif isinstance(module, ProcessingModule):
-            existing_data_tags.extend(module.get_all_output_tags())
+            tags.extend(module.get_all_output_tags())
             for tag in module.get_all_input_tags():
-                if tag not in existing_data_tags:
+                if tag not in tags:
                     return False, module.name
 
-        else: # pragma: no cover
+        else:
             return False, None
 
         return True, None
 
     def _config_init(self):
         """
-        Internal function which initializes the configuration file. It create the
-        PynPoint_config.ini file with the default (NACO) settings in case the file is not
-        present in the working directory.
+        Internal function which initializes the configuration file. It reads PynPoint_config.ini
+        in the working folder and creates this file with the default (ESO/NACO) settings in case
+        the file is not present.
 
         :return: None
         """
 
-        max_cpu_count = multiprocessing.cpu_count()
+        cpu = multiprocessing.cpu_count()
 
-        config_dict = {'INSTRUMENT': 'INSTRUME',
-                       'NFRAMES': 'NAXIS3',
-                       'EXP_NO': 'ESO DET EXP NO',
-                       'DIT': 'ESO DET DIT',
-                       'NDIT': 'ESO DET NDIT',
-                       'PARANG_START': 'ESO ADA POSANG',
-                       'PARANG_END': 'ESO ADA POSANG END',
-                       'DITHER_X': 'ESO SEQ CUMOFFSETX',
-                       'DITHER_Y': 'ESO SEQ CUMOFFSETY',
-                       'PUPIL': 'ESO ADA PUPILPOS',
-                       'DATE': 'DATE-OBS',
-                       'LATITUDE': 'ESO TEL GEOLAT',
-                       'LONGITUDE': 'ESO TEL GEOLON',
-                       'RA': 'RA',
-                       'DEC': 'DEC',
-                       'PIXSCALE': 0.027,
-                       'MEMORY': 1000,
-                       'CPU': max_cpu_count}
+        config_dict = [('INSTRUMENT', ('header', 'INSTRUME', 'string')),
+                       ('NFRAMES', ('header', 'NAXIS3', 'string')),
+                       ('EXP_NO', ('header', 'ESO DET EXP NO', 'string')),
+                       ('DIT', ('header', 'ESO DET DIT', 'string')),
+                       ('NDIT', ('header', 'ESO DET NDIT', 'string')),
+                       ('PARANG_START', ('header', 'ESO ADA POSANG', 'string')),
+                       ('PARANG_END', ('header', 'ESO ADA POSANG END', 'string')),
+                       ('DITHER_X', ('header', 'ESO SEQ CUMOFFSETX', 'string')),
+                       ('DITHER_Y', ('header', 'ESO SEQ CUMOFFSETY', 'string')),
+                       ('PUPIL', ('header', 'ESO ADA PUPILPOS', 'string')),
+                       ('DATE', ('header', 'DATE-OBS', 'string')),
+                       ('LATITUDE', ('header', 'ESO TEL GEOLAT', 'string')),
+                       ('LONGITUDE', ('header', 'ESO TEL GEOLON', 'string')),
+                       ('RA', ('header', 'RA', 'string')),
+                       ('DEC', ('header', 'DEC', 'string')),
+                       ('PIXSCALE', ('settings', 0.027, 'float')),
+                       ('MEMORY', ('settings', 1000, 'int')),
+                       ('CPU', ('settings', cpu, 'int'))]
+
+        config_dict = collections.OrderedDict(config_dict)
+
+        def _read_config(config_file):
+            config = configparser.ConfigParser()
+            config.read_file(open(config_file))
+
+            for _, item in enumerate(config_dict):
+                if config.has_option(config_dict[item][0], item):
+
+                    if config.get(config_dict[item][0], item) == "None":
+                        config_dict[item] = int(0)
+
+                    else:
+                        if config_dict[item][2] == "string":
+                            config_dict[item] = str(config.get(config_dict[item][0], item))
+
+                        elif config_dict[item][2] == "float":
+                            config_dict[item] = float(config.get(config_dict[item][0], item))
+
+                        elif config_dict[item][2] == "int":
+                            config_dict[item] = int(config.get(config_dict[item][0], item))
+
+                else:
+                    config_dict[item] = config_dict[item][1]
+
+        def _create_config(filename):
+
+            group = None
+
+            file_obj = open(filename, 'w')
+            for i, item in enumerate(config_dict):
+                if config_dict[item][0] != group:
+                    if i != 0:
+                        file_obj.write('\n')
+                    file_obj.write('['+str(config_dict[item][0])+']\n\n')
+
+                file_obj.write(item+': '+str(config_dict[item][1])+'\n')
+                group = config_dict[item][0]
+
+            file_obj.close()
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
         if os.path.isfile(config_file):
-            config = configparser.ConfigParser()
-            config.read_file(open(config_file))
-
-            if config.has_option('header', 'INSTRUMENT'):
-                config_dict['INSTRUMENT'] = str(config.get('header', 'INSTRUMENT'))
-
-            if config.has_option('header', 'NFRAMES'):
-                config_dict['NFRAMES'] = str(config.get('header', 'NFRAMES'))
-
-            if config.has_option('header', 'EXP_NO'):
-                config_dict['EXP_NO'] = str(config.get('header', 'EXP_NO'))
-
-            if config.has_option('header', 'DIT'):
-                config_dict['DIT'] = str(config.get('header', 'DIT'))
-
-            if config.has_option('header', 'NDIT'):
-                config_dict['NDIT'] = str(config.get('header', 'NDIT'))
-
-            if config.has_option('header', 'PARANG_START'):
-                config_dict['PARANG_START'] = str(config.get('header', 'PARANG_START'))
-
-            if config.has_option('header', 'PARANG_END'):
-                config_dict['PARANG_END'] = str(config.get('header', 'PARANG_END'))
-
-            if config.has_option('header', 'DITHER_X'):
-                config_dict['DITHER_X'] = str(config.get('header', 'DITHER_X'))
-
-            if config.has_option('header', 'DITHER_Y'):
-                config_dict['DITHER_Y'] = str(config.get('header', 'DITHER_Y'))
-
-            if config.has_option('settings', 'PIXSCALE'):
-                config_dict['PIXSCALE'] = float(config.get('settings', 'PIXSCALE'))
-
-            if config.has_option('header', 'DATE'):
-                config_dict['DATE'] = str(config.get('header', 'DATE'))
-
-            if config.has_option('header', 'PUPIL'):
-                config_dict['PUPIL'] = str(config.get('header', 'PUPIL'))
-
-            if config.has_option('header', 'LATITUDE'):
-                config_dict['LATITUDE'] = str(config.get('header', 'LATITUDE'))
-
-            if config.has_option('header', 'LONGITUDE'):
-                config_dict['LONGITUDE'] = str(config.get('header', 'LONGITUDE'))
-
-            if config.has_option('header', 'RA'):
-                config_dict['RA'] = str(config.get('header', 'RA'))
-
-            if config.has_option('header', 'DEC'):
-                config_dict['DEC'] = str(config.get('header', 'DEC'))
-
-            if config.has_option('settings', 'MEMORY'):
-                if config.get('settings', 'MEMORY') == "None":
-                    config_dict['MEMORY'] = int(0)
-                else:
-                    config_dict['MEMORY'] = int(config.get('settings', 'MEMORY'))
-
-            if config.has_option('settings', 'CPU'):
-                config_dict['CPU'] = int(config.get('settings', 'CPU'))
+            _read_config(config_file)
 
         else:
             warnings.warn("Configuration file not found so creating PynPoint_config.ini with "
                           "default values.")
 
-            file_obj = open(config_file, 'w')
-            file_obj.write('[header]\n\n')
-            file_obj.write('INSTRUMENT: INSTRUME\n')
-            file_obj.write('NFRAMES: NAXIS3\n')
-            file_obj.write('EXP_NO: ESO DET EXP NO\n')
-            file_obj.write('DIT: ESO DET DIT\n')
-            file_obj.write('NDIT: ESO DET NDIT\n')
-            file_obj.write('PARANG_START: ESO ADA POSANG\n')
-            file_obj.write('PARANG_END: ESO ADA POSANG END\n')
-            file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-            file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
-            file_obj.write('PUPIL: ESO ADA PUPILPOS\n')
-            file_obj.write('DATE: DATE-OBS\n')
-            file_obj.write('LATITUDE: ESO TEL GEOLAT\n')
-            file_obj.write('LONGITUDE: ESO TEL GEOLON\n')
-            file_obj.write('RA: RA\n')
-            file_obj.write('DEC: DEC\n\n')
-            file_obj.write('[settings]\n\n')
-            file_obj.write('PIXSCALE: 0.027\n')
-            file_obj.write('MEMORY: 1000\n')
-            file_obj.write('CPU: '+str(max_cpu_count))
-            file_obj.close()
+            _create_config(config_file)
 
         hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
+
         if "config" in hdf:
             del hdf["config"]
+
         config = hdf.create_group("config")
+
         for i in config_dict:
             config.attrs[i] = config_dict[i]
+
         hdf.close()
 
     def add_module(self,
-                   pipeline_module):
+                   module):
         """
-        Adds a given pipeline module to the internal Pypeline step dictionary. The module is
-        appended at the end of this ordered dictionary. If the input module is a reading or writing
-        module without a specified input / output location the Pypeline default location is used.
-        Moreover the given module is connected to the Pypeline internal data storage.
+        Adds a Pypeline module to the internal Pypeline dictionary. The module is appended at the
+        end of this ordered dictionary. If the input module is a reading or writing module without
+        a specified input or output location then the Pypeline default location is used. Moreover,
+        the given module is connected to the Pypeline internal data storage.
 
-        :param pipeline_module: The input module. Needs to be either a Processing, Reading or
-                                Writing Module.
-        :type pipeline_module: ProcessingModule, ReadingModule, WritingModule
+        :param module: Input module.
+        :type module: ReadingModule, WritingModule, ProcessingModule
 
         :return: None
         """
 
-        assert isinstance(pipeline_module, PypelineModule), 'Error: the given pipeline_module is '\
-                                                            'not a accepted Pypeline Module.'
+        assert isinstance(module, PypelineModule), "Error: the given pipeline_module is not an " \
+                                                   "accepted Pypeline module."
 
         # if no specific output directory is given use the default
-        if isinstance(pipeline_module, WritingModule):
-            if pipeline_module.m_output_location is None:
-                pipeline_module.m_output_location = self._m_output_place
+        if isinstance(module, WritingModule):
+            if module.m_output_location is None:
+                module.m_output_location = self._m_output_place
 
         # if no specific input directory is given use the default
-        if isinstance(pipeline_module, ReadingModule):
-            if pipeline_module.m_input_location is None:
-                pipeline_module.m_input_location = self._m_input_place
+        if isinstance(module, ReadingModule):
+            if module.m_input_location is None:
+                module.m_input_location = self._m_input_place
 
-        pipeline_module.connect_database(self.m_data_storage)
+        module.connect_database(self.m_data_storage)
 
-        if pipeline_module.name in self._m_modules:
+        if module.name in self._m_modules:
             warnings.warn("Processing module names need to be unique. Overwriting module '%s'."
-                          % pipeline_module.name)
+                          % module.name)
 
-        self._m_modules[pipeline_module.name] = pipeline_module
+        self._m_modules[module.name] = module
 
     def remove_module(self,
                       name):
         """
         Removes a Pypeline module from the internal dictionary.
 
-        :param name: The name (key) of the module which has to be removed.
+        :param name: Name of the module which has to be removed.
         :type name: str
 
         :return: True if module was deleted and False if module does not exist.
@@ -295,19 +263,17 @@ class Pypeline(object):
 
         if name in self._m_modules:
             del self._m_modules[name]
-            removed = True
+            return True
 
-        else:
-            warnings.warn("Module name '"+name+"' not found in the Pypeline dictionary.")
-            removed = False
+        warnings.warn("Module name '"+name+"' not found in the Pypeline dictionary.")
 
-        return removed
+        return False
 
     def get_module_names(self):
         """
         Function which returns a list of all module names.
 
-        :return: Ordered list of all pipeline names
+        :return: Ordered list of all Pypeline modules.
         :rtype: list[str]
         """
 
@@ -315,18 +281,19 @@ class Pypeline(object):
 
     def validate_pipeline(self):
         """
-        Function which checks if all input ports of the pipeline are lined to previous output ports.
+        Function which checks if all input ports of the Pypeline are pointing to previous output
+        ports.
 
-        :return: True if pipeline is valid False of not. The second parameter gives the name of the
-                 module which is not valid.
+        :return: True if Pypeline is valid and False if not. The second parameter contains the name
+                 of the module which is not valid.
         :rtype: bool, str
         """
 
         self.m_data_storage.open_connection()
 
         existing_data_tags = self.m_data_storage.m_data_bank.keys()
-        for module in self._m_modules.itervalues():
 
+        for module in self._m_modules.itervalues():
             validation = self._validate(module, existing_data_tags)
 
             if not validation[0]:
@@ -336,21 +303,23 @@ class Pypeline(object):
 
     def validate_pipeline_module(self, name):
         """
-        Checks if the data for the module with the name *name* exists.
+        Checks if the data exists for the module with label *name*.
 
-        :param name: name of the module to be checked
+        :param name: Name of the module that is checked.
         :type name: str
 
-        :return: True if pipeline is valid and False if not valid. The second parameter gives the
-                 name of the module which is not valid.
+        :return: True if the Pypeline module is valid and False if not. The second parameter gives
+                 the name of the module which is not valid.
         :rtype: bool, str
         """
 
         self.m_data_storage.open_connection()
+
         existing_data_tags = self.m_data_storage.m_data_bank.keys()
 
         if name in self._m_modules:
             module = self._m_modules[name]
+
         else:
             return
 
@@ -358,8 +327,8 @@ class Pypeline(object):
 
     def run(self):
         """
-        Walks through all saved processing steps and calls their run methods. The order the steps
-        are called depends on the order they have been added to the Pypeline.
+        Walks through all saved processing steps and calls their run methods. The order in which
+        the steps are called depends on the order they have been added to the Pypeline.
 
         :return: None
         """
@@ -368,6 +337,7 @@ class Pypeline(object):
         sys.stdout.flush()
 
         validation = self.validate_pipeline()
+
         if not validation[0]:
             raise AttributeError("Pipeline module '%s' is looking for data under a tag which is "
                                  "not created by a previous module or does not exist in the "
@@ -381,7 +351,7 @@ class Pypeline(object):
 
     def run_module(self, name):
         """
-        Runs a specific processing module identified by name.
+        Runs a single processing module.
 
         :param name: Name of the module.
         :type name: str
@@ -410,9 +380,9 @@ class Pypeline(object):
     def get_data(self,
                  tag):
         """
-        Function for easy access of the database.
+        Function for accessing data in the central database.
 
-        :param tag: Dataset tag.
+        :param tag: Database tag.
         :type tag: str
 
         :return: The selected dataset from the database.
@@ -427,11 +397,11 @@ class Pypeline(object):
                       data_tag,
                       attr_name):
         """
-        Function for easy attributes data access. Supports only static attributes.
+        Function for accessing static attributes in the central database.
 
-        :param data_tag: Dataset tag.
+        :param data_tag: Database tag.
         :type data_tag: str
-        :param attr_name: Name of the attribute from the database.
+        :param attr_name: Name of the static attribute.
         :type attr_name: str
 
         :return: The attribute value(s).
