@@ -1,15 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import sys
-
 from setuptools import setup
-
-path = os.path.dirname(os.path.abspath(__file__))
-
-if sys.argv[-1] == 'publish':
-    os.system('python '+os.path.join(path, 'setup.py')+' sdist upload')
-    sys.exit()
 
 readme = open('README.rst').read()
 
@@ -43,7 +35,7 @@ setup(
     description='Python package for processing and analysis of high-contrast imaging data',
     long_description=readme,
     author='Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara',
-    author_email='tomas.stolker@phys.ethz.ch, mbonse@tuebingen.mpg.de, sascha.quanz@phys.ethz.ch, adam.amara@phys.ethz.ch',
+    author_email='tomas.stolker@phys.ethz.ch',
     url='http://pynpoint.ethz.ch',
     packages=packages,
     package_dir={'PynPoint': 'PynPoint'},

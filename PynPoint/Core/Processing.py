@@ -40,7 +40,8 @@ class PypelineModule:
         :return: None
         """
 
-        assert (isinstance(name_in, str)), "Error: Name needs to be a String"
+        assert (isinstance(name_in, str)), "Error: Name needs to be a string."
+
         self._m_name = name_in
         self._m_data_base = None
         self._m_config_port = ConfigPort("config")
