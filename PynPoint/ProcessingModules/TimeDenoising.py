@@ -125,6 +125,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 if self.m_list_mode:
                     tmp_res = []
+
                     for threshold in self.m_denoising_threshold:
                         current_threshold = threshold * uthresh
                         tmp_denoised = deepcopy(coef[:])
@@ -136,18 +137,20 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                         tmp_res += list(pywt.waverec(tmp_denoised,
                                                      wavelet=self.m_wavelet_configuration.m_wavelet,
                                                      mode=self.m_padding))
+
                     return np.asarray(tmp_res)
 
-                else:
-                    threshold = uthresh * self.m_denoising_threshold
-                    denoised = coef[:]
-                    denoised[1:] = (pywt.threshold(i,
-                                                   value=threshold,
-                                                   mode=self.m_threshold_function)
-                                    for i in denoised[1:])
-                    return pywt.waverec(denoised,
-                                        wavelet=self.m_wavelet_configuration.m_wavelet,
-                                        mode=self.m_padding)
+                threshold = uthresh * self.m_denoising_threshold
+
+                denoised = coef[:]
+                denoised[1:] = (pywt.threshold(i,
+                                               value=threshold,
+                                               mode=self.m_threshold_function)
+                                for i in denoised[1:])
+
+                return pywt.waverec(denoised,
+                                    wavelet=self.m_wavelet_configuration.m_wavelet,
+                                    mode=self.m_padding)
 
         elif type(self.m_wavelet_configuration) is CwtWaveletConfiguration:
             # use CWT denoising
@@ -178,15 +181,16 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 if self.m_list_mode:
                     tmp_res = []
+
                     for threshold in self.m_denoising_threshold:
                         tmp_cwt_capsule = deepcopy(cwt_capsule)
                         tmp_res += list(denoise_one_threshold(tmp_cwt_capsule,
                                                               threshold))
+
                     return np.asarray(tmp_res)
 
-                else:
-                    return denoise_one_threshold(cwt_capsule,
-                                                 self.m_denoising_threshold)
+                return denoise_one_threshold(cwt_capsule,
+                                             self.m_denoising_threshold)
 
         else:
             return

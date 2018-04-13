@@ -1,3 +1,7 @@
+"""
+Wavelet analysis capsule
+"""
+
 import copy
 
 import numpy as np
@@ -9,10 +13,6 @@ from scipy.signal import medfilt
 from statsmodels.robust import mad
 
 from PynPoint.Util.Continuous import autoscales, cwt, icwt, fourier_from_scales
-
-
-# --- Wavelet analysis Capsule ---------
-# TODO: Documentation
 
 
 @jit(cache=True)
@@ -249,8 +249,8 @@ class WaveletAnalysisCapsule:
         tmp_data = self.__m_data + np.ones(len(self.__m_data))*self.__m_data_mean
         if self.__m_padding == "none":
             return tmp_data
-        else:
-            return tmp_data[len(self.__m_data)/4: 3*len(self.__m_data)/4]
+
+        return tmp_data[len(self.__m_data)/4: 3*len(self.__m_data)/4]
 
     # ----- plotting functions --------
 
@@ -335,5 +335,3 @@ class WaveletAnalysisCapsule:
                     location):
         self.__plot_or_save_signal()
         plt.savefig(location)
-
-    # ---------------------------------

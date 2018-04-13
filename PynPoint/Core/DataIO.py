@@ -76,6 +76,7 @@ class Port:
     Furthermore a port knows exact one DataStorage instance and whether it is active or not
     (self._m_data_base_active).
     """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -302,6 +303,7 @@ class InputPort(Port):
 
         :return: None
         """
+
         super(InputPort, self).__init__(tag, data_storage_in)
 
         if tag == "config":
@@ -319,6 +321,7 @@ class InputPort(Port):
         :return: Returns True if the InputPort can be used, False if not.
         :rtype: bool
         """
+
         if self._m_data_storage is None:
             warnings.warn("InputPort can not load data unless a database is connected")
             return False
@@ -365,9 +368,7 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        result = self._m_data_storage.m_data_bank[self._m_tag][item]
-
-        return result
+        return self._m_data_storage.m_data_bank[self._m_tag][item]
 
     def get_shape(self):
         """
@@ -377,10 +378,12 @@ class InputPort(Port):
         :return: Shape of the dataset, None if dataset does not exist.
         :rtype: tuple
         """
+
         if not self._check_error_cases():
             return
 
         self.open_port()
+
         return self._m_data_storage.m_data_bank[self._m_tag].shape
 
     def get_ndim(self):
@@ -390,10 +393,12 @@ class InputPort(Port):
         :return: Number of dimensions of the dataset, None if dataset does not exist.
         :rtype: int
         """
+
         if not self._check_error_cases():
             return
 
         self.open_port()
+
         return self._m_data_storage.m_data_bank[self._m_tag].ndim
 
     def get_all(self):
@@ -430,26 +435,24 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        value = None
-
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             # item unpacks numpy types to python types hdf5 only uses numpy types
             attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
             try:
-                value = attr.item()
+                return attr.item()
+
             except:
-                value = attr
+                return attr
 
-        if value is None:
-            if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
-                value = np.asarray(self._m_data_storage.m_data_bank
-                                   [("header_" + self._m_tag + "/" + name)][...])
-            else:
-                warnings.warn('No attribute found - requested: %s' % name)
+        if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
+            return np.asarray(self._m_data_storage.m_data_bank
+                              [("header_" + self._m_tag + "/" + name)][...])
 
-        return value
+        warnings.warn('No attribute found - requested: %s' % name)
+
+        return None
 
     def get_all_static_attributes(self):
         """
@@ -482,15 +485,13 @@ class InputPort(Port):
 
         result = []
 
-        # check if header Group exists
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
                 result.append(key)
-            keys = result
-        else:
-            keys = None
 
-        return keys
+            return result
+
+        return None
 
 
 class OutputPort(Port):
@@ -569,20 +570,17 @@ class OutputPort(Port):
         :rtype: bool
         """
 
-        check = True
-
         if not self.m_activate:
-            check = False
+            return False
 
         if self._m_data_storage is None:
             warnings.warn("OutputPort can not store data unless a database is connected.")
-            check = False
+            return False
 
-        if check is True:
-            if not self._m_data_base_active:
-                self.open_port()
+        if not self._m_data_base_active:
+            self.open_port()
 
-        return check
+        return True
 
     def _initialize_database_entry(self,
                                    first_data,
@@ -659,10 +657,11 @@ class OutputPort(Port):
         :param data: The data which is used to replace the old data.
         :type data: numpy array
         :param data_dim: Dimension of the data that is saved. See set_all() and append of more
-        documentation()
+                         documentation()
         :type data_dim: int
-        :param keep_attributes: Parameter which can be set True to keep all static attributes of the
-         dataset. Non-static attributes will be kept, (Not needed for setting non-static attributes)
+        :param keep_attributes: Parameter which can be set True to keep all static attributes of
+                                the dataset. Non-static attributes will be kept, (Not needed for
+                                setting non-static attributes)
         :type keep_attributes: bool
 
         :return: None
@@ -705,9 +704,7 @@ class OutputPort(Port):
         # check if database entry is new...
         if tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
-            self._initialize_database_entry(data,
-                                            tag,
-                                            data_dim=data_dim)
+            self._initialize_database_entry(data, tag, data_dim=data_dim)
             return
 
         # NO -> database entry exists
@@ -731,15 +728,14 @@ class OutputPort(Port):
         def _type_check():
             if tmp_dim == data.ndim:
                 if tmp_dim == 3:
-                    check = (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
-                elif tmp_dim == 2:
-                    check = tmp_shape[1] == data.shape[1]
-                else:
-                    check = True
-            else:
-                check = False
+                    return (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
 
-            return check
+                elif tmp_dim == 2:
+                    return tmp_shape[1] == data.shape[1]
+
+                return True
+
+            return False
 
         if _type_check():
             # YES -> dim and type match
@@ -755,7 +751,6 @@ class OutputPort(Port):
         if force:
             # YES -> Force is true
             self._set_all_key(tag, data=data)
-
             return
 
         # NO -> Error message
@@ -1100,14 +1095,11 @@ class OutputPort(Port):
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
-                check = 0
-            else:
-                check = -1
+                return 0
 
-        else:
-            check = 1
+            return -1
 
-        return check
+        return 1
 
     def check_non_static_attribute(self,
                                    name,
@@ -1135,16 +1127,13 @@ class OutputPort(Port):
             if name in self._m_data_storage.m_data_bank[group]:
                 if np.array_equal(self._m_data_storage.m_data_bank[group+name][:],
                                   comparison_value):
-                    check = 0
-                else:
-                    check = -1
-            else:
-                check = 1
+                    return 0
 
-        else:
-            check = 1
+                return -1
 
-        return check
+            return 1
+
+        return 1
 
     def add_history_information(self,
                                 pipeline_step,
