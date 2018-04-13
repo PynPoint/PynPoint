@@ -1,5 +1,5 @@
 """
-Wavelet analysis capsule
+Capsule for the wavelet analysis.
 """
 
 import copy
