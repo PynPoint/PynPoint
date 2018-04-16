@@ -1,3 +1,8 @@
+"""
+CWT based wavelet de-noising for speckle suppression in the time domain. The module acts as an
+additional pre-processing step. For more information see Bonse et al 2018.
+"""
+
 import pywt
 import numpy as np
 
@@ -8,6 +13,10 @@ from PynPoint.Core.Processing import ProcessingModule
 
 
 class CwtWaveletConfiguration(object):
+    """
+    Configuration capsule for a CWT based time de-noising. Standard configuration as in the original
+    paper.
+    """
 
     def __init__(self,
                  wavelet="dog",
@@ -25,6 +34,11 @@ class CwtWaveletConfiguration(object):
 
 
 class DwtWaveletConfiguration(object):
+    """
+    Configuration capsule for a DWT based time de-noising. A cheap alternative of the CWT based
+    wavelet de-noising. However, the supported wavelets should perform worse compared to the
+    CWT DOG wavelet.
+    """
 
     def __init__(self,
                  wavelet="db8"):
@@ -42,6 +56,10 @@ class DwtWaveletConfiguration(object):
 
 
 class WaveletTimeDenoisingModule(ProcessingModule):
+    """
+    Module for speckle subtraction in time domain used CWT or DWT wavelet shrinkage.
+    See Bonse et al 2018.
+    """
 
     def __init__(self,
                  wavelet_configuration,
@@ -49,11 +67,20 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  image_in_tag="star_arr",
                  image_out_tag="star_arr_denoised",
                  padding="zero",
-                 median_filter=True,
+                 median_filter=False,
                  threshold_function="soft"):
         """
-        :type image_in_tag: list and str
-        :type denoising_threshold: list and float
+        Constructor of the module
+        :param wavelet_configuration: Instance of DwtWaveletConfiguration or CwtWaveletConfiguration
+            which gives the parameters of the wavelet transformation to be used.
+        :param name_in: Module name
+        :param image_in_tag: Input tag in the central database
+        :param image_out_tag: Output tag in the central database
+        :param padding: Padding strategy can be (zero, mirror and none)
+        :param median_filter: If true a median filter in time gets applied which removes outliers in
+            time like cosmic rays
+        :param threshold_function: Threshold function used for wavelet shrinkage in the wavelet
+            space. Can be soft or hard.
         """
 
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
@@ -75,6 +102,11 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         self.m_median_filter = median_filter
 
     def run(self):
+        """
+        Run method of the module. Applies time de-noising using multiprocessing parallel on all
+        lines in time.
+        :return: None
+        """
 
         if isinstance(self.m_wavelet_configuration, DwtWaveletConfiguration):
             # use DWT denoising
@@ -84,6 +116,11 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 self.m_padding = "periodic"
 
             def denoise_line_in_time(signal_in):
+                """
+                Definition of temporal de-noising for DWT
+                :param signal_in: 1d signal
+                :return:
+                """
                 coef = pywt.wavedec(signal_in,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
                                     level=6,
@@ -102,8 +139,12 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                     mode=self.m_padding)
 
         elif isinstance(self.m_wavelet_configuration, CwtWaveletConfiguration):
-            # use CWT denoising
             def denoise_line_in_time(signal_in):
+                """
+                Definition of temporal de-noising for CWT
+                :param signal_in: 1d signal
+                :return:
+                """
 
                 cwt_capsule = WaveletAnalysisCapsule(
                     signal_in,
@@ -138,6 +179,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
 
 class TimeNormalizationModule(ProcessingModule):
+    """
+    Module for normalization of global brightness variations of the detector (see Bonse et al 2018.)
+    """
 
     def __init__(self,
                  name_in="normalization",
@@ -150,8 +194,15 @@ class TimeNormalizationModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
     def run(self):
+        """
+        Run method of the module.
+        :return: None
+        """
 
         def image_normalization(image_in):
+            """
+            Subtract the median pixel value from the current image
+            """
 
             median = np.median(image_in)
             tmp_image = image_in - median
