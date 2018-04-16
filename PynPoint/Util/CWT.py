@@ -255,8 +255,8 @@ class WaveletAnalysisCapsule(object):
         tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
         if self.m_padding == "none":
             return tmp_data
-        else:
-            return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
+
+        return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
 
     # ----- plotting functions --------
 
