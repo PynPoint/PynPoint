@@ -4,102 +4,30 @@ import warnings
 import h5py
 import numpy as np
 
-from astropy.io import fits
-
 import PynPoint.OldVersion
+from PynPoint.Util.TestTools import prepare_pca_tests
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
 def setup_module():
-    basis1 = np.loadtxt(os.path.dirname(__file__) + "/test_data/basis1.dat", dtype=np.float64)
-    basis2 = np.loadtxt(os.path.dirname(__file__) + "/test_data/basis2.dat", dtype=np.float64)
-    basis3 = np.loadtxt(os.path.dirname(__file__) + "/test_data/basis3.dat", dtype=np.float64)
-    basis4 = np.loadtxt(os.path.dirname(__file__) + "/test_data/basis4.dat", dtype=np.float64)
+    path = os.path.dirname(__file__)
+
+    basis1 = np.loadtxt(path + "/test_data/basis1.dat", dtype=np.float64)
+    basis2 = np.loadtxt(path + "/test_data/basis2.dat", dtype=np.float64)
+    basis3 = np.loadtxt(path + "/test_data/basis3.dat", dtype=np.float64)
+    basis4 = np.loadtxt(path + "/test_data/basis4.dat", dtype=np.float64)
 
     basis = np.stack((basis1, basis2, basis3, basis4), axis=0)
 
-    f = h5py.File(os.path.dirname(__file__) + '/test_data/test_data_PynPoint_conv.hdf5', 'w')
+    f = h5py.File(path+'/test_data/test_data_PynPoint_conv.hdf5', 'w')
     dset = f.create_dataset("basis_arr", data=basis)
     dset.attrs['PIXSCALE'] = 0.01
     f.create_dataset("header_basis_arr/PARANG", data=np.array([1., 1., 1., 1.]))
     f.close()
 
-    image1 = np.loadtxt(os.path.dirname(__file__) + "/test_data/image1.dat")
-    image2 = np.loadtxt(os.path.dirname(__file__) + "/test_data/image2.dat")
-    image3 = np.loadtxt(os.path.dirname(__file__) + "/test_data/image3.dat")
-    image4 = np.loadtxt(os.path.dirname(__file__) + "/test_data/image4.dat")
-
-    hdu = fits.PrimaryHDU()
-    header = hdu.header
-    header['INSTRUME'] = "IMAGER"
-    header['HIERARCH ESO DET EXP NO'] = 1
-    header['HIERARCH ESO DET NDIT'] = 1
-    header['HIERARCH ESO ADA POSANG'] = 1.
-    header['HIERARCH ESO ADA POSANG END'] = 1.
-    header['PARANG'] = -17.3261
-    header['PARANG'] = -17.3261
-    hdu.data = image1
-    hdu.writeto(os.path.dirname(__file__) + "/test_data/image1.fits")
-
-    hdu = fits.PrimaryHDU()
-    header = hdu.header
-    header['INSTRUME'] = "IMAGER"
-    header['HIERARCH ESO DET EXP NO'] = 2
-    header['HIERARCH ESO DET NDIT'] = 1
-    header['HIERARCH ESO ADA POSANG'] = 1.
-    header['HIERARCH ESO ADA POSANG END'] = 1.
-    header['PARANG'] = -17.1720
-    hdu.data = image2
-    hdu.writeto(os.path.dirname(__file__) + "/test_data/image2.fits")
-
-    hdu = fits.PrimaryHDU()
-    header = hdu.header
-    header['INSTRUME'] = "IMAGER"
-    header['HIERARCH ESO DET EXP NO'] = 3
-    header['HIERARCH ESO DET NDIT'] = 1
-    header['HIERARCH ESO ADA POSANG'] = 1.
-    header['HIERARCH ESO ADA POSANG END'] = 1.
-    header['PARANG'] = -17.0143
-    hdu.data = image3
-    hdu.writeto(os.path.dirname(__file__) + "/test_data/image3.fits")
-
-    hdu = fits.PrimaryHDU()
-    header = hdu.header
-    header['INSTRUME'] = "IMAGER"
-    header['HIERARCH ESO DET EXP NO'] = 4
-    header['HIERARCH ESO DET NDIT'] = 1
-    header['HIERARCH ESO ADA POSANG'] = 1.
-    header['HIERARCH ESO ADA POSANG END'] = 1.
-    header['PARANG'] = -16.6004
-    hdu.data = image4
-    hdu.writeto(os.path.dirname(__file__) + "/test_data/image4.fits")
-
-    config_file = os.path.dirname(__file__) + "/test_data/PynPoint_config.ini"
-
-    f = open(config_file, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: None\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.01\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+    prepare_pca_tests(path)
 
 def teardown_module():
     os.remove(os.path.dirname(__file__) + "/test_data/image1.fits")
