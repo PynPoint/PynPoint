@@ -92,7 +92,7 @@ class FakePlanetModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_interpolation = interpolation
 
-    def _images(self):
+    def _images_init(self):
         memory = self._m_config_port.get_attribute("MEMORY")
 
         ndim_image = self.m_image_in_port.get_ndim()
@@ -186,7 +186,7 @@ class FakePlanetModule(ProcessingModule):
 
         flux_ratio = 10.**(-self.m_magnitude/2.5)
 
-        frames, psf, ndim_psf = self._images()
+        frames, psf, ndim_psf = self._images_init()
 
         for j, _ in enumerate(frames[:-1]):
             if self.m_verbose:
