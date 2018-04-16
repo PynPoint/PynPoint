@@ -1,5 +1,5 @@
 """
-Utilities for Poison Pill multiprocessing. Provides abstract interfaces as well as an
+Utilities for poison pill multiprocessing. Provides abstract interfaces as well as an
 implementation needed to process lines in time as used in the wavelet time denoising.
 """
 
@@ -13,16 +13,21 @@ import numpy as np
 
 class TaskResult(object):
     """
-    Result object which can be stored by the Writer.
+    Result object which can be stored by the TaskWriter.
     """
+
     def __init__(self,
                  data_array,
                  position):
         """
-        Constructor of a Result object.
+        Constructor of TaskResult.
+
         :param data_array: Some kind of 1/2/3D data which is the result for a given position.
+        :type data_array:
         :param position: The position where the result data will be stored
         :type position: slice
+
+        :return: None
         """
 
         self.m_data_array = data_array
@@ -31,17 +36,21 @@ class TaskResult(object):
 
 class TaskInput(object):
     """
-    Data and parameter Capsule for Tasks to be processed by the TaskProcessors.
+    Data and parameter capsule for tasks to be processed by the TaskProcessor.
     """
 
     def __init__(self,
                  input_data,
                  job_parameter):
         """
-        Constructor of the Task object
+        Constructor of TaskInput.
+
         :param input_data: Data needed by the TaskProcessors
+        :type input_data:
         :param job_parameter: Additional data or parameters
         :type job_parameter: tuple
+
+        :return: None
         """
 
         self.m_input_data = input_data
@@ -50,10 +59,10 @@ class TaskInput(object):
 
 class TaskCreator(multiprocessing.Process):
     """
-    Abstract Interface for all Task Creator classes. A Task creator is supposed to create instances
-    of TaskInputs which can be processed by Task Processors and appends them to a central task
-    queue. In general there is only one Creator task running for a poison pill multiprocessing
-    application. A Task creator needs to communicate to the writer in order to avoid simultaneously
+    Abstract Interface for all TaskCreator classes. A TaskCreator is supposed to create instances
+    of TaskInput which can be processed by a TaskProcessor and appends them to a central task
+    queue. In general there is only one TaskCreator running for a poison pill multiprocessing
+    application. A TaskCreator needs to communicate to the writer in order to avoid simultaneously
     access to the central database.
     """
 
@@ -65,17 +74,21 @@ class TaskCreator(multiprocessing.Process):
                  data_mutex_in,
                  number_of_processors):
         """
-        General Constructor for a task creator. Can only by called by using super from children
-        classes.
+        Constructor of TaskCreator. Can only be called by using super from children classes.
+
         :param data_port_in: A Port which links to data to be processed.
-        :param tasks_queue_in: The central Task queue
+        :type data_port_in:
+        :param tasks_queue_in: The central Task queue.
         :type tasks_queue_in: multiprocessing.Queue
         :param data_mutex_in: A mutex shared with the writer to ensure that no read and write
-        operations happen at the same time.
-        :param number_of_processors: Maximum number of TaskProcessors running at the same time
+                              operations happen at the same time.
+        :type data_mutex_in:
+        :param number_of_processors: Maximum number of TaskProcessors running at the same time.
+        :type number_of_processors:
         """
 
         multiprocessing.Process.__init__(self)
+
         self.m_data_mutex = data_mutex_in
         self.m_task_queue = tasks_queue_in
 
@@ -85,7 +98,8 @@ class TaskCreator(multiprocessing.Process):
     @abstractmethod
     def run(self):
         """
-        Creates TaskInput objects until all tasks are in the task queue
+        Creates objects of TaskInput until all tasks are in the task queue
+
         :return: None
         """
 
@@ -93,38 +107,44 @@ class TaskCreator(multiprocessing.Process):
 
     def create_poison_pills(self):
         """
-        Function which creates the poison pills for all Task Processors and the Writer. If a Process
-        gets a poison pill as the new task it will shut down. Run the method at the end of the run
-        method.
+        Function which creates the poison pills for TaskProcessor and TaskWriter. If a process
+        gets a poison pill as the new task it will shut down. Run the method at the end of the
+        run method.
 
         :return: None
         """
 
-        for _ in range(self.m_number_of_processors - 1):
+        for _ in range(self.m_number_of_processors-1):
             # poison pills
             self.m_task_queue.put(1)
 
-        # Final poison pill
+        # final poison pill
         self.m_task_queue.put(None)
 
 
 class TaskProcessor(multiprocessing.Process):
     """
-    Abstract Interface for a TaskProcessor. There are up to CPU count instances of TaskProcessor
+    Abstract interface for a TaskProcessor. There are up to CPU count instances of TaskProcessor
     running at the same time in a poison pill multiprocessing application. There is no guarantee
     which process finishes first. A TaskProcessor takes tasks from a task-queue performs an
     analysis and stores the result back into a result-queue. If the next task is a poison pill it
     is should down.
     """
+
     __metaclass__ = ABCMeta
 
     def __init__(self,
                  tasks_queue_in,
                  result_queue_in):
         """
-        Abstract constructor of the TaskProcessor.
-        :param tasks_queue_in: The input task queue (contains TaskInput instances)
-        :param result_queue_in: The result task queue (contains TaskResult instances)
+        Abstract constructor of TaskProcessor.
+
+        :param tasks_queue_in: The input task queue (contains TaskInput instances).
+        :type tasks_queue_in:
+        :param result_queue_in: The result task queue (contains TaskResult instances).
+        :type result_queue_in:
+
+        :return: None
         """
 
         multiprocessing.Process.__init__(self)
@@ -137,21 +157,24 @@ class TaskProcessor(multiprocessing.Process):
         """
         Run this function to check if the next task is a poison pill. The shut down of the process
         needs to be done in its run method.
+
         :param next_task: The next task
-        :return: True if the next task is a poison pill, else False
+        :type next_task:
+
+        :return: True if the next task is a poison pill, else False.
+        :rtype: bool
         """
-        # process_name = self.name
 
         if next_task is 1:
             # Poison pill means shutdown
-            # print '%s: Exiting' % process_name
+            # print '%s: Exiting' % self.name
             self.m_task_queue.task_done()
             return True
 
         if next_task is None:
             # got final Poison pill
             self.m_result_queue.put(None)  # shut down writer process
-            # print '%s: Exiting' % process_name
+            # print '%s: Exiting' % self.name
             self.m_task_queue.task_done()
             return True
 
@@ -159,8 +182,9 @@ class TaskProcessor(multiprocessing.Process):
 
     def run(self):
         """
-        The run method is called to start a Task Processor. The Process will continue to process
+        The run method is called to start a TaskProcessor. The process will continue to process
         tasks from the input task queue until it gets a poison pill.
+
         :return: None
         """
 
@@ -181,8 +205,12 @@ class TaskProcessor(multiprocessing.Process):
         """
         Abstract interface for the run_job method which is called from run() for each task
         individually.
+
         :param tmp_task: Input Task
+        :type tmp_task:
+
         :return: A TaskResult
+        :rtype:
         """
 
         pass
@@ -190,8 +218,8 @@ class TaskProcessor(multiprocessing.Process):
 
 class TaskWriter(multiprocessing.Process):
     """
-    The TaskWriter tasks results from the result queue computed by the Task Processors and stores
-    them into the central database. It uses the position parameter of the Task Result objects in
+    The TaskWriter takes results from the result queue computed by a TaskProcessor and stores
+    them into the central database. It uses the position parameter of the TaskResult objects in
     order to slice the result to the correct location in global output.
     """
 
@@ -209,9 +237,13 @@ class TaskWriter(multiprocessing.Process):
     def check_poison_pill(self, next_result):
         """
         Checks if the next result is a poison pill.
+
         :param next_result: next result
+        :type next_result:
+
         :return: 0 -> no poison pill, 1 -> poison pill, 2 -> poison pill but still results in the
         queue (rare error case)
+        :rtype: int
         """
 
         if next_result is None:
@@ -233,6 +265,7 @@ class TaskWriter(multiprocessing.Process):
         """
         The run method of the writer process is called once and will start him to store results
         until it gets a poison pill.
+
         :return: None
         """
 
@@ -256,7 +289,7 @@ class TaskWriter(multiprocessing.Process):
 class MultiprocessingCapsule(object):
     """
     Abstract interface for multiprocessing capsules based on the poison pill patter. It consists
-    of Task Creator, a result writer as well as a list of Task Processors.
+    of a TaskCreator, a result writer as well as a list of Task Processors.
     """
 
     __metaclass__ = ABCMeta
@@ -267,9 +300,15 @@ class MultiprocessingCapsule(object):
                  num_processors):
         """
         Constructor can only be called from children classes by using super.
+
         :param image_in_port: Port to the input data
+        :type image_in_port:
         :param image_out_port: Port to the place where the output will be stored
+        :type image_in_port:
         :param num_processors: Maximum number of Task Processors
+        :type num_processors:
+
+        :return: None
         """
 
         # buffer twice the data as processes are available
@@ -292,19 +331,24 @@ class MultiprocessingCapsule(object):
     def create_writer(self, image_out_port):
         """
         Called from the constructor to create the writer object.
+
         :param image_out_port: Output port for the creator.
+        :type image_out_port:
+
         :return: Writer object
+        :rtype:
         """
 
         tmp_writer = TaskWriter(self.m_result_queue,
                                 image_out_port,
                                 self.m_data_mutex)
+
         return tmp_writer
 
     @abstractmethod
     def create_processors(self):
         """
-        Called from the constructor to create a list of Task Processors.
+        Called from the constructor to create a list of a TaskProcessor.
         """
 
         # loop to create Task Processors
@@ -315,8 +359,12 @@ class MultiprocessingCapsule(object):
     def init_creator(self, image_in_port):
         """
         Called from the constructor to create a creator object.
+
         :param image_in_port: Input port for the creator.
-        :return: Creator object
+        :type image_in_port:
+
+        :return: Creator object.
+        :rtype:
         """
 
         return None
@@ -325,6 +373,7 @@ class MultiprocessingCapsule(object):
         """
         The run method starts the Creator, all Task Processors and the Writer Process. Finally it
         will shut down them again after all tasks are done.
+
         :return: None
         """
 
@@ -352,7 +401,9 @@ class MultiprocessingCapsule(object):
 def apply_function(tmp_data, func, func_args):
     """
     Applies the function func with its arguments func_args to the tmp_data
+
     :return: the results of the function
+    :rtype:
     """
 
     # process line
@@ -366,8 +417,12 @@ def apply_function(tmp_data, func, func_args):
 def to_slice(tuple_slice):
     """
     this function is needed to pickle slices as reburied for multiprocessing queues
+
     :param tuple_slice: Tuple to be converted to a slice
+    :type tuple_slice:
+
     :return: the slice
+    :rtype:
     """
 
     return (slice(tuple_slice[0][0], tuple_slice[0][1], tuple_slice[0][2]),
@@ -387,8 +442,9 @@ class LineTaskProcessor(TaskProcessor):
                  result_queue_in,
                  function,
                  function_args):
-        super(LineTaskProcessor, self).__init__(tasks_queue_in,
-                                                result_queue_in)
+
+        super(LineTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
+
         self.m_function = function
         self.m_function_args = function_args
 
@@ -405,8 +461,7 @@ class LineTaskProcessor(TaskProcessor):
                                                      self.m_function,
                                                      self.m_function_args)
 
-        result = TaskResult(result_arr,
-                            tmp_task.m_job_parameter[1])
+        result = TaskResult(result_arr, tmp_task.m_job_parameter[1])
 
         return result
 
@@ -423,6 +478,7 @@ class LineReader(TaskCreator):
                  data_mutex_in,
                  number_of_processors,
                  length_of_processed_data):
+
         super(LineReader, self).__init__(data_port_in,
                                          tasks_queue_in,
                                          data_mutex_in,
@@ -469,6 +525,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
                  function,
                  function_args,
                  length_of_processed_data):
+
         self.m_function = function
         self.m_function_args = function_args
         self.m_length_of_processed_data = length_of_processed_data
@@ -476,6 +533,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_processors)
 
     def create_processors(self):
+
         tmp_processors = [LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
                                             result_queue_in=self.m_result_queue,
                                             function=self.m_function,
@@ -485,6 +543,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         return tmp_processors
 
     def init_creator(self, image_in_port):
+
         reader = LineReader(image_in_port,
                             self.m_tasks_queue,
                             self.m_data_mutex,
