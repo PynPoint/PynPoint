@@ -134,18 +134,18 @@ class WritingModule(PypelineModule):
         :param tag: Tag of the new input port.
         :type tag: str
 
-        :return: The new InputPort.
+        :return: The new InputPort for the WritingModule.
         :rtype: InputPort
         """
 
-        tmp_port = InputPort(tag)
+        port = InputPort(tag)
 
         if self._m_data_base is not None:
-            tmp_port.set_database_connection(self._m_data_base)
+            port.set_database_connection(self._m_data_base)
 
-        self._m_input_ports[tag] = tmp_port
+        self._m_input_ports[tag] = port
 
-        return tmp_port
+        return port
 
     def connect_database(self,
                          data_base_in):
@@ -222,18 +222,18 @@ class ProcessingModule(PypelineModule):
         :param tag: Tag of the new input port.
         :type tag: str
 
-        :return: The new InputPort.
+        :return: The new InputPort for the ProcessingModule.
         :rtype: InputPort
         """
 
-        tmp_port = InputPort(tag)
+        port = InputPort(tag)
 
         if self._m_data_base is not None:
-            tmp_port.set_database_connection(self._m_data_base)
+            port.set_database_connection(self._m_data_base)
 
-        self._m_input_ports[tag] = tmp_port
+        self._m_input_ports[tag] = port
 
-        return tmp_port
+        return port
 
     def add_output_port(self,
                         tag,
@@ -254,21 +254,21 @@ class ProcessingModule(PypelineModule):
                            will not save their results until they are activated.
         :type activation: bool
 
-        :return: The new OutputPort.
+        :return: The new OutputPort for the ProcessingModule.
         :rtype: OutputPort
         """
 
-        tmp_port = OutputPort(tag, activate_init=activation)
+        port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
             warnings.warn("Tag '"+tag+"' already used. Updating...")
 
         if self._m_data_base is not None:
-            tmp_port.set_database_connection(self._m_data_base)
+            port.set_database_connection(self._m_data_base)
 
-        self._m_output_ports[tag] = tmp_port
+        self._m_output_ports[tag] = port
 
-        return tmp_port
+        return port
 
     def connect_database(self,
                          data_base_in):
@@ -544,21 +544,21 @@ class ReadingModule(PypelineModule):
                            will not save their results until they are activated.
         :type activation: bool
 
-        :return: The new OutputPort.
+        :return: The new OutputPort for the ReadingModule.
         :rtype: OutputPort
         """
 
-        tmp_port = OutputPort(tag, activate_init=activation)
+        port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
             warnings.warn("Tag '"+tag+"' already used. Updating...")
 
         if self._m_data_base is not None:
-            tmp_port.set_database_connection(self._m_data_base)
+            port.set_database_connection(self._m_data_base)
 
-        self._m_output_ports[tag] = tmp_port
+        self._m_output_ports[tag] = port
 
-        return tmp_port
+        return port
 
     def connect_database(self,
                          data_base_in):

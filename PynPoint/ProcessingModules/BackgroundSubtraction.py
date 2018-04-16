@@ -459,6 +459,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
         self.m_star_out_port.add_attribute("INDEX", star_index, static=False)
 
@@ -764,9 +765,13 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_cubes = cubes
         self.m_size = size
         self.m_gaussian = gaussian
-        self.m_subframe = subframe
         self.m_pca_number = pca_number
         self.m_mask = mask
+
+        if subframe is None:
+             self.m_subframe = subframe
+        else:
+             self.m_subframe = (None, None, subframes)
 
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
@@ -850,17 +855,13 @@ class DitheringBackgroundModule(ProcessingModule):
                 prepare.run()
 
             if self.m_pca_background:
-                if self.m_subframe is None:
-                    position = None
-                else:
-                    position = (None, None, self.m_subframe)
 
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),
                                             image_out_tag=None,
                                             image_size=None,
                                             fwhm_star=self.m_gaussian,
-                                            position=position)
+                                            position=self.m_subframe)
 
                 star.connect_database(self._m_data_base)
                 star.run()
