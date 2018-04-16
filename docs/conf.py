@@ -9,18 +9,16 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('..'))
 from PynPoint import __author__, __copyright__, __version__
+
 
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -114,10 +112,10 @@ html_static_path = ['_images']
 # html_favicon = '_images/logo.jpg'
 html_search_language = 'en'
 
-html_context = { 'display_github': True,
-                 'github_user': 'PynPoint',
-                 'github_repo': 'PynPoint',
-                 'github_version': 'master/docs/' }
+html_context = {'display_github': True,
+                'github_user': 'PynPoint',
+                'github_repo': 'PynPoint',
+                'github_version': 'master/docs/'}
 
 autoclass_content = 'both'
 
