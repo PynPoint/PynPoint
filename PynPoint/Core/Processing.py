@@ -262,7 +262,8 @@ class ProcessingModule(PypelineModule):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn("Tag '"+tag+"' already used. Updating...")
+            warnings.warn("Tag '%s' of ProcessingModule '%s' is already used."
+                          % (tag, self._m_name))
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
@@ -553,7 +554,8 @@ class ReadingModule(PypelineModule):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn("Tag '"+tag+"' already used. Updating...")
+            warnings.warn("Tag '%s' of ReadingModule '%s' is already used."
+                          % (tag, self._m_name))
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
