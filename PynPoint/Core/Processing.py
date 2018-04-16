@@ -65,7 +65,7 @@ class PypelineModule:
         Abstract interface for the function *connect_database* which is needed to connect the Ports
         of a PypelineModule with the DataStorage.
 
-        :param data_base_in: The DataStorage
+        :param data_base_in: The central database.
         :type data_base_in: DataStorage
         """
 
@@ -150,10 +150,11 @@ class WritingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal input and output port dictionaries to the given database.
-        This function is called by Pypeline and connects its DataStorage object to all module ports.
+        Function that connects all ports in the internal input and output port dictionaries to the
+        database. The function is called by Pypeline and connects the DataStorage object to all
+        module ports.
 
-        :param data_base_in: The input database
+        :param data_base_in: The central database.
         :type data_base_in: DataStorage
 
         :return: None
@@ -273,10 +274,11 @@ class ProcessingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal input and output port dictionaries to the database. This
-        function is called by the Pypeline and connects its DataStorage object to all module ports.
+        Function that connects all ports in the internal input and output port dictionaries to the
+        database. The function is called by Pypeline and connects the DataStorage object to all
+        module ports.
 
-        :param data_base_in: The input database
+        :param data_base_in: The central database.
         :type data_base_in: DataStorage
 
         :return: None
@@ -563,11 +565,12 @@ class ReadingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Connects all ports in the internal input and output port dictionaries to the given database.
-        This function is called by Pypeline and connects the DataStorage object to all module ports.
+        Function that connects all ports in the internal input and output port dictionaries to the
+        database. The function is called by Pypeline and connects the DataStorage object to all
+        module ports.
 
-        :param database: The input database.
-        :type database: DataStorage
+        :param data_base_in: The central database.
+        :type data_base_in: DataStorage
 
         :return: None
         """
