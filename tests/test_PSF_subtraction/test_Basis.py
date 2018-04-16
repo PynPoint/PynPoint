@@ -148,7 +148,7 @@ class TestBasis(object):
                                          [-8.591506115107919e-01, -2.830412197722555e+00, -2.504032196304351e-02],
                                          [1.00, 0.0, 0.0], [0.0, 1.00, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
 
-    def test_basis_save_restore(self, tmpdir):
+    def test_basis_save_restore(self):
         temp_file = os.path.join(self.test_data_dir, 'tmp_hdf5.hdf5')
         self.basis3.save(temp_file)
         temp_basis = PynPoint.basis.create_restore(temp_file)
