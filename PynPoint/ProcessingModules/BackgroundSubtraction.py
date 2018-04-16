@@ -771,7 +771,7 @@ class DitheringBackgroundModule(ProcessingModule):
         if subframe is None:
              self.m_subframe = subframe
         else:
-             self.m_subframe = (None, None, subframes)
+             self.m_subframe = (None, None, subframe)
 
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
@@ -819,17 +819,31 @@ class DitheringBackgroundModule(ProcessingModule):
         :return: None
         """
 
+        def _admin_start(count, n_dither, position, star_pos):
+            if self.m_crop or self.m_prepare or self.m_pca_background:
+                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"..."
+                print "Center position =", position
+
+                if self.m_cubes is None and self.m_center is not None:
+                    print "DITHER_X, DITHER_Y =", tuple(star_pos)
+
+        def _admin_end(count, n_dither):
+            if self.m_combine == "mean":
+                tags.append("star"+str(count+1))
+
+            elif self.m_combine == "pca":
+                tags.append("pca_sub"+str(count+1))
+
+            if self.m_crop or self.m_prepare or self.m_pca_background:
+                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"... [DONE]"
+
         n_dither, star_pos = self._initialize()
 
         tags = []
 
         for i, position in enumerate(self.m_center):
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
-                print "Center position =", position
 
-                if self.m_cubes is None and self.m_center is not None:
-                    print "DITHER_X, DITHER_Y =", tuple(star_pos[i])
+            _admin_start(i, n_dither, position, star_pos)
 
             if self.m_crop:
                 crop = CropImagesModule(size=self.m_size,
@@ -877,14 +891,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 pca.connect_database(self._m_data_base)
                 pca.run()
 
-            if self.m_combine == "mean":
-                tags.append("star"+str(i+1))
-
-            elif self.m_combine == "pca":
-                tags.append("pca_sub"+str(i+1))
-
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"... [DONE]"
+            _admin_end(i, n_dither)
 
         if self.m_combine is not None:
             combine = CombineTagsModule(name_in="combine",
