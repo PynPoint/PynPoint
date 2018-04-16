@@ -158,7 +158,7 @@ class TaskProcessor(multiprocessing.Process):
         Run this function to check if the next task is a poison pill. The shut down of the process
         needs to be done in its run method.
 
-        :param next_task: The next task
+        :param next_task: The next task.
         :type next_task:
 
         :return: True if the next task is a poison pill, else False.
@@ -238,11 +238,11 @@ class TaskWriter(multiprocessing.Process):
         """
         Checks if the next result is a poison pill.
 
-        :param next_result: next result
+        :param next_result: The next result.
         :type next_result:
 
         :return: 0 -> no poison pill, 1 -> poison pill, 2 -> poison pill but still results in the
-        queue (rare error case)
+                 queue (rare error case).
         :rtype: int
         """
 
