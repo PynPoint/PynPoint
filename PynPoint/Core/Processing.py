@@ -150,9 +150,9 @@ class WritingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Function that connects all ports in the internal input and output port dictionaries to the
-        database. The function is called by Pypeline and connects the DataStorage object to all
-        module ports.
+        Function used by a WritingModule to connect all ports in the internal input and output
+        port dictionaries to the database. The function is called by Pypeline and connects the
+        DataStorage object to all module ports.
 
         :param data_base_in: The central database.
         :type data_base_in: DataStorage
@@ -274,9 +274,9 @@ class ProcessingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Function that connects all ports in the internal input and output port dictionaries to the
-        database. The function is called by Pypeline and connects the DataStorage object to all
-        module ports.
+        Function used by a ProcessingModule to connect all ports in the internal input and output
+        port dictionaries to the database. The function is called by Pypeline and connects the
+        DataStorage object to all module ports.
 
         :param data_base_in: The central database.
         :type data_base_in: DataStorage
@@ -565,9 +565,9 @@ class ReadingModule(PypelineModule):
     def connect_database(self,
                          data_base_in):
         """
-        Function that connects all ports in the internal input and output port dictionaries to the
-        database. The function is called by Pypeline and connects the DataStorage object to all
-        module ports.
+        Function used by a ReadingModule to connect all ports in the internal input and output
+        port dictionaries to the database. The function is called by Pypeline and connects the
+        DataStorage object to all module ports.
 
         :param data_base_in: The central database.
         :type data_base_in: DataStorage
