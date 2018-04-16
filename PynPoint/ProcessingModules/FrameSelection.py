@@ -35,13 +35,13 @@ class RemoveFramesModule(ProcessingModule):
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param selected_out_tag: Tag of the database entry with the selected images that are
-                                 written as output. Should be different from *image_in_tag*.
-                                 No data is written when set to *None*.
+        :param selected_out_tag: Tag of the database entry with the remaining images after
+                                 removing the specified images. Should be different from
+                                 *image_in_tag*. No data is written when set to *None*.
         :type selected_out_tag: str
-        :param removed_out_tag: Tag of the database entry with the removed images that are
-                                written as output. Should be different from *image_in_tag*.
-                                No data is written when set to *None*.
+        :param removed_out_tag: Tag of the database entry with the images that are removed.
+                                Should be different from *image_in_tag*. No data is written
+                                when set to *None*.
         :type removed_out_tag: str
 
         :return: None
@@ -67,13 +67,7 @@ class RemoveFramesModule(ProcessingModule):
             self.m_index_in_port = None
             self.m_frames = np.asarray(frames, dtype=np.int)
 
-    def run(self):
-        """
-        Run method of the module. Removes the frames and corresponding attributes, updates the
-        NFRAMES attribute, and saves the data and attributes.
-
-        :return: None
-        """
+    def _initialize(self):
 
         if self.m_selected_out_port is not None:
             if self.m_image_in_port.tag == self.m_selected_out_port.tag:
@@ -98,49 +92,21 @@ class RemoveFramesModule(ProcessingModule):
             self.m_removed_out_port.del_all_data()
             self.m_removed_out_port.del_all_attributes()
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-        nimages = self.m_image_in_port.get_shape()[0]
+    def _write_attributes(self):
+        index = self.m_image_in_port.get_attribute("INDEX")
 
-        frames = memory_frames(memory, nimages)
-
-        if memory == 0 or memory >= nimages:
-            memory = nimages
-
-        for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
-
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
-
-            index_del = np.where(np.logical_and(self.m_frames >= frames[i], \
-                                                self.m_frames < frames[i+1]))
-
-            if np.size(index_del) > 0:
-                if self.m_removed_out_port is not None:
-                    self.m_removed_out_port.append(images[self.m_frames[index_del]%memory])
-                images = np.delete(images, self.m_frames[index_del]%memory, axis=0)
-
-            if self.m_selected_out_port is not None:
-                self.m_selected_out_port.append(images)
-
-        sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
-        sys.stdout.flush()
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
 
         if self.m_selected_out_port is not None:
             self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
-        non_static = self.m_image_in_port.get_all_non_static_attributes()
-
-        index = self.m_image_in_port.get_attribute("INDEX")
-
-        if self.m_selected_out_port is not None:
             self.m_selected_out_port.add_attribute("INDEX",
                                                    np.delete(index, self.m_frames),
                                                    static=False)
 
         if self.m_removed_out_port is not None:
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
             self.m_removed_out_port.add_attribute("INDEX",
                                                   index[self.m_frames],
                                                   static=False)
@@ -191,6 +157,46 @@ class RemoveFramesModule(ProcessingModule):
 
             if self.m_removed_out_port is not None:
                 self.m_removed_out_port.add_attribute("NFRAMES", nframes_del, static=False)
+
+    def run(self):
+        """
+        Run method of the module. Removes the frames and corresponding attributes, updates the
+        NFRAMES attribute, and saves the data and attributes.
+
+        :return: None
+        """
+
+        self._initialize()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        nimages = self.m_image_in_port.get_shape()[0]
+
+        frames = memory_frames(memory, nimages)
+
+        if memory == 0 or memory >= nimages:
+            memory = nimages
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            index_del = np.where(np.logical_and(self.m_frames >= frames[i], \
+                                                self.m_frames < frames[i+1]))
+
+            if np.size(index_del) > 0:
+                if self.m_removed_out_port is not None:
+                    self.m_removed_out_port.append(images[self.m_frames[index_del]%memory])
+
+                images = np.delete(images, self.m_frames[index_del]%memory, axis=0)
+
+            if self.m_selected_out_port is not None:
+                self.m_selected_out_port.append(images)
+
+        sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
+        sys.stdout.flush()
+
+        self._write_attributes()
 
         if self.m_selected_out_port is not None:
             self.m_selected_out_port.add_history_information("Frames removed",
@@ -283,17 +289,9 @@ class FrameSelectionModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_threshold = threshold
         self.m_position = position
+        self.m_rr_grid = None
 
-    def run(self):
-        """
-        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
-        pixel in each image, measures the integrated flux around the brightest pixel, calculates
-        the median and standard deviation of the photometry, and applies sigma clipping to remove
-        images that are of poor quality (e.g., due to opening of the AO loop).
-
-        :return: None
-        """
-
+    def _initialize(self):
         if self.m_image_in_port.tag == self.m_selected_out_tag or \
                 self.m_image_in_port.tag == self.m_removed_out_tag:
             raise ValueError("Input and output ports should have a different tag.")
@@ -310,7 +308,6 @@ class FrameSelectionModule(ProcessingModule):
         elif self.m_aperture[0] == "annulus" or self.m_aperture[0] == "ratio":
             aperture = (self.m_aperture[1]/pixscale, self.m_aperture[2]/pixscale)
 
-        nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[1]
 
         if self.m_position is None:
@@ -318,6 +315,59 @@ class FrameSelectionModule(ProcessingModule):
 
         elif self.m_position[0] is None and self.m_position[1] is None:
             self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
+
+        return aperture
+
+    def _photometry(self, images, starpos, aperture):
+        check_pos_in = any(np.floor(starpos[:]-aperture[1]) < 0.)
+        check_pos_out = any(np.ceil(starpos[:]+aperture[1]) > images.shape[0])
+
+        if check_pos_in or check_pos_out:
+            phot = np.nan
+
+        else:
+            im_cut = Cutout2D(images,
+                              (starpos[1], starpos[0]),
+                              size=2.*aperture[1]).data
+
+            if self.m_rr_grid is None:
+                npix = im_cut.shape[0]
+
+                if npix%2 == 0:
+                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                elif npix%2 == 1:
+                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+                self.m_rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+
+            if self.m_aperture[0] == "circular":
+                phot = np.sum(im_cut[self.m_rr_grid < aperture[1]])
+
+            elif self.m_aperture[0] == "annulus":
+                phot = np.sum(im_cut[(self.m_rr_grid > aperture[0]) &
+                                     (self.m_rr_grid < aperture[1])])
+
+            elif self.m_aperture[0] == "ratio":
+                phot = np.sum(im_cut[self.m_rr_grid < aperture[0]]) / \
+                          np.sum(im_cut[(self.m_rr_grid > aperture[0]) &
+                                        (self.m_rr_grid < aperture[1])])
+
+        return phot
+
+    def run(self):
+        """
+        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
+        pixel in each image, measures the integrated flux around the brightest pixel, calculates
+        the median and standard deviation of the photometry, and applies sigma clipping to remove
+        images that are of poor quality (e.g., due to opening of the AO loop).
+
+        :return: None
+        """
+
+        aperture = self._initialize()
+
+        nimages = self.m_image_in_port.get_shape()[0]
 
         phot = np.zeros(nimages)
 
@@ -339,44 +389,12 @@ class FrameSelectionModule(ProcessingModule):
 
             starpos = self.m_image_in_port.get_attribute("STAR_POSITION")
 
-        rr_grid = None
-
         for i in range(nimages):
             progress(i, nimages, "Running FrameSelectionModule...")
 
-            im_smooth = self.m_image_in_port[i]
+            images = self.m_image_in_port[i]
 
-            check_pos_in = any(np.floor(starpos[i, :]-aperture[1]) < 0.)
-            check_pos_out = any(np.ceil(starpos[i, :]+aperture[1]) > im_smooth.shape[0])
-
-            if check_pos_in or check_pos_out:
-                phot[i] = np.nan
-
-            else:
-                im_cut = Cutout2D(im_smooth,
-                                  (starpos[i, 1], starpos[i, 0]),
-                                  size=2.*aperture[1]).data
-
-                if rr_grid is None:
-                    npix = im_cut.shape[0]
-
-                    if npix%2 == 0:
-                        x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                    elif npix%2 == 1:
-                        x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
-                    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-                    rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
-                if self.m_aperture[0] == "circular":
-                    phot[i] = np.sum(im_cut[rr_grid < aperture[1]])
-
-                elif self.m_aperture[0] == "annulus":
-                    phot[i] = np.sum(im_cut[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
-
-                elif self.m_aperture[0] == "ratio":
-                    phot[i] = np.sum(im_cut[rr_grid < aperture[0]]) / \
-                              np.sum(im_cut[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
+            phot[i] = self._photometry(images, starpos[i, :], aperture)
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
