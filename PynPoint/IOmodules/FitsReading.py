@@ -21,7 +21,7 @@ class FitsReadingModule(ReadingModule):
     should have the same shape and type. The header of the FITS is scanned for the required static
     attributes (should be identical for each FITS file) and non-static attributes. Static entries
     will be saved as HDF5 attributes while non-static attributes will be saved as separate data
-    sets in a subfolder of the database named *header_+image_tag*. If the FITS files in the input
+    sets in a subfolder of the database named *header_* + image_tag. If the FITS files in the input
     directory have changing static attributes or the shape of the input images is changing a
     warning appears. FitsReadingModule overwrites by default all existing data with the same tags
     in the central database. Note that PynPoint only supports the processing of square images so
@@ -43,8 +43,8 @@ class FitsReadingModule(ReadingModule):
                           Pypeline default directory is used.
         :type input_dir: str
         :param image_tag: Tag of the read data in the HDF5 database. Non static header
-                          information is stored with the tag: *header_*+image_tag /
-                          #header_entry_name#.
+                          information is stored with the tag: *header_* + image_tag /
+                          header_entry_name.
         :type image_tag: str
         :param overwrite: Overwrite existing data and header in the central database.
         :type overwrite: bool
@@ -88,9 +88,9 @@ class FitsReadingModule(ReadingModule):
                           overwrite_tags):
         """
         Internal function which reads a single FITS file and appends it to the database. The
-        function gets a list of *overwriting_keys*. If a new key (header entry or image data) is
+        function gets a list of *overwriting_tags*. If a new key (header entry or image data) is
         found that is not on this list the old entry is overwritten if *self.m_overwrite* is
-        active. After replacing the old entry the key is added to the *overwriting_keys*. This
+        active. After replacing the old entry the key is added to the *overwriting_tags*. This
         procedure guaranties that all previous database information, that does not belong to the
         new data set that is read by FitsReadingModule is replaced and the rest is kept.
 
@@ -243,7 +243,7 @@ class FitsReadingModule(ReadingModule):
         """
         Run method of the module. Looks for all FITS files in the input directory and reads them
         using the internal function _read_single_file(). Note that previous database information
-        is overwritten if *overwrite=True*. The filenames are stored as attributes. Note that
+        is overwritten if overwrite=True. The filenames are stored as attributes. Note that
         PynPoint only supports processing of square images so, in case required, images should
         be made square with e.g. CropImagesModule or RemoveLinesModule.
 

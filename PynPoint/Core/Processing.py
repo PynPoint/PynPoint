@@ -529,9 +529,9 @@ class ReadingModule(PypelineModule):
                         tag,
                         activation=True):
         """
-        Function which creates an OutputPort for a ProcessingModule and appends it to the internal
+        Function which creates an OutputPort for a ReadingModule and appends it to the internal
         OutputPort dictionary. This function should be used by classes inheriting from
-        ProcessingModule to make sure that only output ports with unique tags are added. The new
+        ReadingModule to make sure that only output ports with unique tags are added. The new
         port can be used as: ::
 
              port = self._m_input_ports[tag]
