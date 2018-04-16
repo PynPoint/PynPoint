@@ -60,13 +60,13 @@ class PypelineModule:
 
     @abstractmethod
     def connect_database(self,
-                         database):
+                         data_base_in):
         """
         Abstract interface for the function *connect_database* which is needed to connect the Ports
         of a PypelineModule with the DataStorage.
 
-        :param database: The DataStorage
-        :type database: DataStorage
+        :param data_base_in: The DataStorage
+        :type data_base_in: DataStorage
         """
 
         pass
@@ -148,7 +148,7 @@ class WritingModule(PypelineModule):
         return tmp_port
 
     def connect_database(self,
-                         database):
+                         data_base_in):
         """
         Connects all ports in the internal input and output port dictionaries to the given database.
         This function is called by Pypeline and connects its DataStorage object to all module ports.
@@ -160,11 +160,11 @@ class WritingModule(PypelineModule):
         """
 
         for port in self._m_input_ports.itervalues():
-            port.set_database_connection(database)
+            port.set_database_connection(data_base_in)
 
-        self._m_config_port.set_database_connection(database)
+        self._m_config_port.set_database_connection(data_base_in)
 
-        self._m_data_base = database
+        self._m_data_base = data_base_in
 
     def get_all_input_tags(self):
         """
@@ -271,26 +271,26 @@ class ProcessingModule(PypelineModule):
         return tmp_port
 
     def connect_database(self,
-                         database):
+                         data_base_in):
         """
         Connects all ports in the internal input and output port dictionaries to the database. This
         function is called by the Pypeline and connects its DataStorage object to all module ports.
 
-        :param database: The input database
-        :type database: DataStorage
+        :param data_base_in: The input database
+        :type data_base_in: DataStorage
 
         :return: None
         """
 
         for port in self._m_input_ports.itervalues():
-            port.set_database_connection(database)
+            port.set_database_connection(data_base_in)
 
         for port in self._m_output_ports.itervalues():
-            port.set_database_connection(database)
+            port.set_database_connection(data_base_in)
 
-        self._m_config_port.set_database_connection(database)
+        self._m_config_port.set_database_connection(data_base_in)
 
-        self._m_data_base = database
+        self._m_data_base = data_base_in
 
     def apply_function_in_time(self,
                                func,
@@ -561,7 +561,7 @@ class ReadingModule(PypelineModule):
         return tmp_port
 
     def connect_database(self,
-                         database):
+                         data_base_in):
         """
         Connects all ports in the internal input and output port dictionaries to the given database.
         This function is called by Pypeline and connects the DataStorage object to all module ports.
@@ -573,11 +573,11 @@ class ReadingModule(PypelineModule):
         """
 
         for port in self._m_output_ports.itervalues():
-            port.set_database_connection(database)
+            port.set_database_connection(data_base_in)
 
-        self._m_config_port.set_database_connection(database)
+        self._m_config_port.set_database_connection(data_base_in)
 
-        self._m_data_base = database
+        self._m_data_base = data_base_in
 
     def get_all_output_tags(self):
         """

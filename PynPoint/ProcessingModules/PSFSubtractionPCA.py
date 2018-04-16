@@ -782,7 +782,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
                     self.m_star_in_port)
                 self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
-                                                                             "PcaPsfSubtractionModule")
+                                                                             "PCA")
 
             # 2.) mean
             tmp_res_rot_mean = np.mean(res_array, axis=0)
@@ -869,8 +869,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
 
-        self.m_res_mean_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
-        self.m_res_median_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
-        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
+        self.m_res_mean_out_port.add_history_information("PSF subtraction", "PCA")
+        self.m_res_median_out_port.add_history_information("PSF subtraction", "PCA")
+        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "PCA")
 
         self.m_res_mean_out_port.close_port()
