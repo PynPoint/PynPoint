@@ -244,7 +244,7 @@ class ProcessingModule(PypelineModule):
         ProcessingModule to make sure that only output ports with unique tags are added. The new
         port can be used as: ::
 
-             port = self._m_input_ports[tag]
+             port = self._m_output_ports[tag]
 
         or by using the returned Port.
 
@@ -534,7 +534,7 @@ class ReadingModule(PypelineModule):
         ReadingModule to make sure that only output ports with unique tags are added. The new
         port can be used as: ::
 
-             port = self._m_input_ports[tag]
+             port = self._m_output_ports[tag]
 
         or by using the returned Port.
 
