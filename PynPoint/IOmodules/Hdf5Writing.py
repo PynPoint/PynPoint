@@ -31,7 +31,7 @@ class Hdf5WritingModule(WritingModule):
         :type name_in: str
         :param file_name: Name of the file which will be created by the module.
         :type file_name: str
-        :param output_dir: Location where the .hdf5 file will be stored. The Pypeline default
+        :param output_dir: Location where the HDF5 file will be stored. The Pypeline default
                            output location is used when no location is given.
         :type output_dir: str
         :param tag_dictionary: Directory containing all tags / keys of the datasets which will be

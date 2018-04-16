@@ -19,12 +19,12 @@ class FitsReadingModule(ReadingModule):
     Reads FITS files from the given *input_dir* or the default directory of the Pypeline. The FITS
     files need to contain either single images (2D) or cubes of images (3D). Individual images
     should have the same shape and type. The header of the FITS is scanned for the required static
-    attributes (should be identical for a FITS files) and non-static attributes. Static entries
+    attributes (should be identical for each FITS file) and non-static attributes. Static entries
     will be saved as HDF5 attributes while non-static attributes will be saved as separate data
-    sets in a subfolder of the database named *header_ + image_tag*. If the FITS files in the input
+    sets in a subfolder of the database named *header_+image_tag*. If the FITS files in the input
     directory have changing static attributes or the shape of the input images is changing a
-    warning is caused. FitsReadingModule overwrites by default all existing data with the same tags
-    in the Pynpoint database. Note that PynPoint only supports the processing of square images so
+    warning appears. FitsReadingModule overwrites by default all existing data with the same tags
+    in the central database. Note that PynPoint only supports the processing of square images so
     rectangular images should be made square with e.g. CropImagesModule or RemoveLinesModule.
     """
 
@@ -35,23 +35,20 @@ class FitsReadingModule(ReadingModule):
                  overwrite=True,
                  check=True):
         """
-        Constructor of FitsReadingModule. As all Reading Modules it has a name and
-        input directory (:class:`PynPoint.core.Processing.ReadingModule`). In addition a image_tag
-        can be chosen which will be the tag / key of the read data in the .hdf5 database.
+        Constructor of FitsReadingModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param input_dir: Input directory where the FITS files are located. If not specified the
                           Pypeline default directory is used.
         :type input_dir: str
-        :param image_tag: Tag of the read data in the .hdf5 data base. Non static header
-                          information is stored with the tag: *header_* + image_tag /
+        :param image_tag: Tag of the read data in the HDF5 database. Non static header
+                          information is stored with the tag: *header_*+image_tag /
                           #header_entry_name#.
         :type image_tag: str
-        :param overwrite: If True existing data (header and the actual data set) in the .hdf5
-                          data base will be overwritten.
+        :param overwrite: Overwrite existing data and header in the central database.
         :type overwrite: bool
-        :param check: Check all the listed non-static attributes or leave out the attributes that
+        :param check: Check all the listed non-static attributes or ignore the attributes that
                       are not always required (e.g. PARANG_START, DITHER_X).
         :type check: bool
 
@@ -62,187 +59,219 @@ class FitsReadingModule(ReadingModule):
 
         self.m_image_out_port = self.add_output_port(image_tag)
 
-        self.m_image_tag = image_tag
         self.m_overwrite = overwrite
+        self.m_check = check
 
-        self.m_static = ['INSTRUMENT',
-                         'DIT',
-                         'LATITUDE',
-                         'LONGITUDE']
+        self.m_static = [('INSTRUMENT', True),
+                         ('DIT', True),
+                         ('LATITUDE', False),
+                         ('LONGITUDE', False)]
 
-        self.m_non_static = ['NFRAMES',
-                             'EXP_NO',
-                             'NDIT',
-                             'DATE',
-                             'PARANG_START',
-                             'PARANG_END',
-                             'PARANG',
-                             'DITHER_X',
-                             'DITHER_Y',
-                             'PUPIL',
-                             'RA',
-                             'DEC']
-
-        self.m_static_check = np.ones(len(self.m_static), dtype=bool)
-        self.m_nonstatic_check = np.ones(len(self.m_non_static), dtype=bool)
-
-        if not check:
-            self.m_static_check[2:4] = False
-            self.m_nonstatic_check[4:12] = False
+        self.m_non_static = [('NFRAMES', True),
+                             ('EXP_NO', True),
+                             ('NDIT', True),
+                             ('DATE', True),
+                             ('PARANG_START', False),
+                             ('PARANG_END', False),
+                             ('PARANG', False),
+                             ('DITHER_X', False),
+                             ('DITHER_Y', False),
+                             ('PUPIL', False),
+                             ('RA', False),
+                             ('DEC', False)]
 
         self.m_count = 0
 
     def _read_single_file(self,
                           fits_file,
                           location,
-                          overwrite_keys):
+                          overwrite_tags):
         """
         Internal function which reads a single FITS file and appends it to the database. The
         function gets a list of *overwriting_keys*. If a new key (header entry or image data) is
         found that is not on this list the old entry is overwritten if *self.m_overwrite* is
         active. After replacing the old entry the key is added to the *overwriting_keys*. This
-        procedure guaranties that all old data base information, that does not belong to the
+        procedure guaranties that all previous database information, that does not belong to the
         new data set that is read by FitsReadingModule is replaced and the rest is kept.
 
         :param fits_file: Name of the FITS file.
         :type fits_file: str
         :param location: Directory where the FITS file is located.
         :type location: str
-        :param overwrite_keys: The list of keys that will not be overwritten by the function
-        :type overwrite_keys: bool
+        :param overwrite_tags: The list of database tags that will not be overwritten.
+        :type overwrite_tags: bool
 
-        :return: None
+        :return: FITS header and image shape.
+        :rtype: astropy FITS header, int, tuple(int)
         """
-
-        pixscale = self._m_config_port.get_attribute('PIXSCALE')
 
         hdulist = fits.open(location + fits_file)
         images = hdulist[0].data.byteswap().newbyteorder()
 
-        if self.m_overwrite and self.m_image_tag not in overwrite_keys:
+        if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
+            overwrite_tags.append(self.m_image_out_port.tag)
+
             self.m_image_out_port.set_all(images, data_dim=3)
             self.m_image_out_port.del_all_attributes()
-            overwrite_keys.append(self.m_image_tag)
 
         else:
             self.m_image_out_port.append(images, data_dim=3)
 
-        if images.ndim == 3:
-            nimages = images.shape[0]
-        elif images.ndim == 2:
-            nimages = 1
-
         header = hdulist[0].header
-
-        # static attributes
-        for i, item in enumerate(self.m_static):
-
-            if self.m_static_check[i]:
-                fitskey = self._m_config_port.get_attribute(item)
-
-                if fitskey != "None":
-
-                    if fitskey in header:
-                        value = header[fitskey]
-                        status = self.m_image_out_port.check_static_attribute(item, value)
-
-                        if status == 1:
-                            self.m_image_out_port.add_attribute(item, value, static=True)
-
-                        if status == -1:
-                            warnings.warn('Static attribute %s has changed. Possibly the current '
-                                          'file %s does not belong to the data set %s of the '
-                                          'database. Updating attribute...' \
-                                          % (fitskey, fits_file, self.m_image_tag))
-
-                        elif status == 0:
-                            # Attribute is known and is still the same
-                            pass
-
-                    else:
-                        warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
-                                      % (item, fitskey))
-
-        # non-static attributes
-        for i, item in enumerate(self.m_non_static):
-
-            if self.m_nonstatic_check[i]:
-
-                if item == 'PARANG':
-                    fitskey = 'PARANG'
-
-                else:
-                    fitskey = self._m_config_port.get_attribute(item)
-
-                if fitskey != "None":
-
-                    if fitskey in header:
-                        value = header[fitskey]
-                        self.m_image_out_port.append_attribute_data(item, value)
-
-                    elif header['NAXIS'] == 2 and item == 'NFRAMES':
-                        self.m_image_out_port.append_attribute_data(item, 1)
-
-                    elif item == 'PARANG':
-                        continue
-
-                    else:
-                        warnings.warn("Non-static attribute %s (=%s) not found in the FITS "
-                                      "header." % (item, fitskey))
-                        self.m_image_out_port.append_attribute_data(item, -1)
 
         fits_header = []
         for key in header:
-            if key:
-                fits_header.append(str(key)+" = "+str(header[key]))
+            fits_header.append(str(key)+" = "+str(header[key]))
 
         hdulist.close()
 
         header_out_port = self.add_output_port('fits_header/'+fits_file)
         header_out_port.set_all(fits_header)
 
+        return header, images.shape
+
+    def _static_attributes(self, fits_file, header):
+        """
+        Internal function which adds the static attributes to the central database.
+
+        :param fits_file: Name of the FITS file.
+        :type fits_file: str
+        :param header: Header information from the FITS file that is read.
+        :type header: astropy FITS header
+
+        :return: None
+        """
+
+        for i, item in enumerate(self.m_static):
+
+            if self.m_check or self.m_static[i][1]:
+                fitskey = self._m_config_port.get_attribute(item[0])
+
+                if fitskey != "None":
+
+                    if fitskey in header:
+                        status = self.m_image_out_port.check_static_attribute(item[0],
+                                                                              header[fitskey])
+
+                        if status == 1:
+                            self.m_image_out_port.add_attribute(item[0],
+                                                                header[fitskey],
+                                                                static=True)
+
+                        if status == -1:
+                            warnings.warn('Static attribute %s has changed. Possibly the current '
+                                          'file %s does not belong to the data set %s of the '
+                                          'database. Updating attribute...' \
+                                          % (fitskey, fits_file, self.m_image_out_port.tag))
+
+                        elif status == 0:
+                            pass
+
+                    else:
+                        warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
+                                      % (item[0], fitskey))
+
+    def _non_static_attributes(self, header):
+        """
+        Internal function which adds the non-static attributes to the central database.
+
+        :param header: Header information from the FITS file that is read.
+        :type header: astropy FITS header
+
+        :return: None
+        """
+
+        for i, item in enumerate(self.m_non_static):
+
+            if self.m_check or self.m_non_static[i][1]:
+
+                if item[0] == 'PARANG':
+                    fitskey = 'PARANG'
+
+                else:
+                    fitskey = self._m_config_port.get_attribute(item[0])
+
+                if fitskey != "None":
+
+                    if fitskey in header:
+                        self.m_image_out_port.append_attribute_data(item[0], header[fitskey])
+
+                    elif header['NAXIS'] == 2 and item[0] == 'NFRAMES':
+                        self.m_image_out_port.append_attribute_data(item[0], 1)
+
+                    elif item[0] == 'PARANG':
+                        continue
+
+                    else:
+                        warnings.warn("Non-static attribute %s (=%s) not found in the FITS "
+                                      "header." % (item[0], fitskey))
+
+                        self.m_image_out_port.append_attribute_data(item[0], -1)
+
+    def _extra_attributes(self, fits_file, location, shape):
+        """
+        Internal function which adds extra attributes to the central database.
+
+        :param fits_file: Name of the FITS file.
+        :type fits_file: str
+        :param location: Directory where the FITS file is located.
+        :type location: str
+        :param shape: Shape of the images.
+        :type shape: tuple(int)
+
+        :return: None
+        """
+
+        pixscale = self._m_config_port.get_attribute('PIXSCALE')
+
+        if len(shape) == 2:
+            nimages = 1
+        elif len(shape) == 3:
+            nimages = shape[0]
+
         index = np.arange(self.m_count, self.m_count+nimages, 1)
 
-        for i, item in enumerate(index):
+        for _, item in enumerate(index):
             self.m_image_out_port.append_attribute_data("INDEX", item)
 
         self.m_image_out_port.append_attribute_data("FILES", location+fits_file)
         self.m_image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
-        self.m_image_out_port.flush()
 
         self.m_count += nimages
 
     def run(self):
         """
         Run method of the module. Looks for all FITS files in the input directory and reads them
-        using the internal function _read_single_file(). Note that if *overwrite* is True old
-        database information is overwritten. The module saves the number of files and filenames as
-        attributes. Note that PynPoint only supports the processing of square images so, in case
-        required, images should be made square (e.g. with CropImagesModule or RemoveLinesModule)
-        after importing the FITS files.
+        using the internal function _read_single_file(). Note that previous database information
+        is overwritten if *overwrite=True*. The filenames are stored as attributes. Note that
+        PynPoint only supports processing of square images so, in case required, images should
+        be made square with e.g. CropImagesModule or RemoveLinesModule.
 
         :return: None
         """
 
         location = os.path.join(self.m_input_location, '')
 
-        # search for fits files
         files = []
-        for tmp_file in os.listdir(location):
-            if tmp_file.endswith('.fits'):
-                files.append(tmp_file)
+        for filename in os.listdir(location):
+            if filename.endswith('.fits'):
+                files.append(filename)
+
         files.sort()
 
-        assert(files), 'Error no FITS files found in %s' % self.m_input_location
+        assert(files), 'No FITS files found in %s.' % self.m_input_location
 
-        # overwrite_keys save the database keys which were updated. Used for overwriting only
-        overwrite_keys = []
+        overwrite_tags = []
 
-        # read file and append data to storage
         for i, fits_file in enumerate(files):
             progress(i, len(files), "Running FitsReadingModule...")
 
-            self._read_single_file(fits_file, location, overwrite_keys)
+            header, shape = self._read_single_file(fits_file, location, overwrite_tags)
+
+            self._static_attributes(fits_file, header)
+            self._non_static_attributes(header)
+            self._extra_attributes(fits_file, location, shape)
+
             self.m_image_out_port.flush()
 
         sys.stdout.write("Running FitsReadingModule... [DONE]\n")

@@ -582,43 +582,47 @@ class OutputPort(Port):
 
         return True
 
-    def _initialize_database_entry(self,
-                                   first_data,
-                                   tag,
-                                   data_dim=None):
+    def _initialize_database(self,
+                             first_data,
+                             tag,
+                             data_dim=None):
         """
-        Internal function which is used to create (initialize) a data base in .hdf5 data base.
+        Internal function which is used to initialize the HDF5 database.
 
-        :param first_data: The initial data
+        :param first_data: The initial data.
         :type first_data: bytearray
-        :param data_dim: number of desired dimensions. If None the dimension of the first_data is
-            used.
+        :param data_dim: Number of desired dimensions. The dimensions of *first_data* is used if
+                         set to None.
+        :type data_dim: int
 
         :return: None
         """
 
-        first_data = np.asarray(first_data)
+        def _ndim_check(data_dim, first_dim):
+            if first_dim > 3 or first_dim < 1:
+                raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
+                                 'attributes to save as int, float, or string.')
 
-        if first_data.ndim > 3 or first_data.ndim < 1:
-            raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
-                             'attributes to save as int, float, or string.')
+            if data_dim > 3 or data_dim < 1:
+                raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
+
+            elif data_dim < first_dim:
+                raise ValueError('The dimensions of the data should be equal to or larger than the '
+                                 'dimensions of the input data.')
+
+            elif data_dim == 3 and first_dim == 1:
+                raise ValueError('Cannot initialize 1D data in 3D data container.')
+
+        first_data = np.asarray(first_data)
 
         if data_dim is None:
             data_dim = first_data.ndim
 
-        if data_dim > 3 or data_dim < 1:
-            raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
-
-        elif data_dim < first_data.ndim:
-            raise ValueError('The dimensions of the data should be equal to or larger than the '
-                             'dimensions of the input data.')
-
-        elif data_dim == 3 and first_data.ndim == 1:
-            raise ValueError('Cannot initialize 1D data in 3D data container.')
+        _ndim_check(data_dim, first_data.ndim)
 
         if data_dim == first_data.ndim:
             if first_data.ndim == 1: # case (1,1)
-                data_shape = (None,)
+                data_shape = (None, )
 
             elif first_data.ndim == 2: # case (2,2)
                 data_shape = (None, first_data.shape[1])
@@ -627,7 +631,7 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
 
             else:
-                raise ValueError('Input shape not supported')
+                raise ValueError('Input shape not supported.')
 
         else:
             if data_dim == 2: # case (2,1)
@@ -639,7 +643,7 @@ class OutputPort(Port):
                 first_data = first_data[np.newaxis, :, :]
 
             else:
-                raise ValueError('Input shape not supported')
+                raise ValueError('Input shape not supported.')
 
         self._m_data_storage.m_data_bank.create_dataset(tag, data=first_data, maxshape=data_shape)
 
@@ -650,7 +654,7 @@ class OutputPort(Port):
                      keep_attributes=False):
         """
         Internal function which sets the values of a data set under the tag "tag" using the data
-        of the input "data". If old data exists it will be overwritten. This Function is used in
+        of the input "data". If old data exists it will be overwritten. This function is used in
         set_all() as well as for setting non-static attributes.
 
         :param tag: Data base tag of the data to be modified
@@ -682,9 +686,7 @@ class OutputPort(Port):
             del self._m_data_storage.m_data_bank[tag]
 
         # make new database entry
-        self._initialize_database_entry(data,
-                                        tag,
-                                        data_dim=data_dim)
+        self._initialize_database(data, tag, data_dim=data_dim)
 
         if keep_attributes:
             for key, value in tmp_attributes.iteritems():
@@ -705,7 +707,7 @@ class OutputPort(Port):
         # check if database entry is new...
         if tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
-            self._initialize_database_entry(data, tag, data_dim=data_dim)
+            self._initialize_database(data, tag, data_dim=data_dim)
             return
 
         # NO -> database entry exists
