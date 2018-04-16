@@ -2,6 +2,7 @@
 Functions for the test cases.
 """
 
+import h5py
 import numpy as np
 from astropy.io import fits
 
@@ -115,3 +116,20 @@ def prepare_pca_tests(path):
     file_obj.write('MEMORY: 100\n')
     file_obj.write('CPU: 1')
     file_obj.close()
+
+def create_random(path):
+    """
+    Create a stack of images with Gaussian distributed pixel values.
+    """
+
+    file_in = path + "/PynPoint_database.hdf5"
+
+    np.random.seed(1)
+    images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
+    parang = np.arange(1, 11, 1)
+
+    h5f = h5py.File(file_in, "w")
+    dset = h5f.create_dataset("images", data=images)
+    dset.attrs['PIXSCALE'] = 0.01
+    h5f.create_dataset("header_images/PARANG", data=parang)
+    h5f.close()
