@@ -122,11 +122,12 @@ class WritingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Function which creates a new InputPort and appends it to the internal InputPort dictionary.
-        This function should be used by classes inheriting from WritingModule to make sure that
-        only InputPorts with unique tags are added. The new port can be used as: ::
+        Function which creates an InputPort for a WritingModule and appends it to the internal
+        InputPort dictionary. This function should be used by classes inheriting from WritingModule
+        to make sure that only input ports with unique tags are added. The new port can be used
+        as: ::
 
-             Port = self._m_input_ports[tag]
+             port = self._m_input_ports[tag]
 
         or by using the returned Port.
 
@@ -209,11 +210,12 @@ class ProcessingModule(PypelineModule):
     def add_input_port(self,
                        tag):
         """
-        Method which creates a new InputPort and appends it to the internal InputPort dictionary.
-        This function should be used by classes inheriting from WritingModule to make sure that
-        only InputPorts with unique tags are added. The new port can be used as: ::
+        Function which creates an InputPort for a ProcessingModule and appends it to the internal
+        InputPort dictionary. This function should be used by classes inheriting from
+        ProcessingModule to make sure that only input ports with unique tags are added. The new
+        port can be used as: ::
 
-             Port = self._m_input_ports[tag]
+             port = self._m_input_ports[tag]
 
         or by using the returned Port.
 
@@ -237,18 +239,19 @@ class ProcessingModule(PypelineModule):
                         tag,
                         activation=True):
         """
-        Method which creates a new OutputPort and append it to the internal OutputPort dictionary.
-        This function should be used by classes inheriting from Processing Module to make sure that
-        only OutputPorts with unique tags are added. The new port can be used as: ::
+        Function which creates an OutputPort for a ProcessingModule and appends it to the internal
+        OutputPort dictionary. This function should be used by classes inheriting from
+        ProcessingModule to make sure that only output ports with unique tags are added. The new
+        port can be used as: ::
 
-             Port = self._m_output_ports[tag]
+             port = self._m_input_ports[tag]
 
         or by using the returned Port.
 
         :param tag: Tag of the new output port.
         :type tag: str
-        :param activation: Activation status of the Port after creation. Deactivated Ports
-                           will not save their results until the are activated.
+        :param activation: Activation status of the Port after creation. Deactivated ports
+                           will not save their results until they are activated.
         :type activation: bool
 
         :return: The new OutputPort.
@@ -370,28 +373,44 @@ class ProcessingModule(PypelineModule):
         :return: None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
+        def _initialize():
+            """
+            Internal function to get the number of dimensions and subdivide the images by the
+            MEMORY attribute.
 
-        ndim = image_in_port.get_ndim()
+            :return: Number of dimensions and array with subdivision of the images.
+            :rtype: int, numpy.ndarray
+            """
 
-        if ndim == 2:
-            nimages = 1
-        elif ndim == 3:
-            nimages = image_in_port.get_shape()[0]
-
-        if image_out_port is not None and image_out_port.tag != image_in_port.tag:
-            image_out_port.del_all_attributes()
-            image_out_port.del_all_data()
-
-        frames = memory_frames(memory, nimages)
-
-        for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), message)
+            memory = self._m_config_port.get_attribute("MEMORY")
+            ndim = image_in_port.get_ndim()
 
             if ndim == 2:
-                images = image_in_port[:, :]
+                nimages = 1
             elif ndim == 3:
-                images = image_in_port[frames[i]:frames[i+1], ]
+                nimages = image_in_port.get_shape()[0]
+
+            if image_out_port is not None and image_out_port.tag != image_in_port.tag:
+                image_out_port.del_all_attributes()
+                image_out_port.del_all_data()
+
+            frames = memory_frames(memory, nimages)
+
+            return ndim, frames
+
+        def _append_result(ndim, images):
+            """
+            Internal function to apply the function on the images and append the results to a list.
+
+
+            :param ndim: Number of dimensions.
+            :type ndim: int
+            :param images: (Sub)stack of images.
+            :type images: numpy.ndarray
+
+            :return: List with results of the function.
+            :rtype: list
+            """
 
             result = []
 
@@ -410,6 +429,20 @@ class ProcessingModule(PypelineModule):
                 elif ndim == 3:
                     for k in range(images.shape[0]):
                         result.append(func(images[k], * func_args))
+
+            return result
+
+        ndim, frames = _initialize()
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), message)
+
+            if ndim == 2:
+                images = image_in_port[:, :]
+            elif ndim == 3:
+                images = image_in_port[frames[i]:frames[i+1], ]
+
+            result = _append_result(ndim, images)
 
             if image_out_port is not None:
                 if image_out_port.tag == image_in_port.tag:
@@ -496,18 +529,19 @@ class ReadingModule(PypelineModule):
                         tag,
                         activation=True):
         """
-        Method which creates an OutputPort and appends it to the internal OutputPort dictionary.
-        This function should be used by classes inheriting from ReadingModule to make sure that
-        only OutputPorts with unique tags are added. The new port can be used as: ::
+        Function which creates an OutputPort for a ProcessingModule and appends it to the internal
+        OutputPort dictionary. This function should be used by classes inheriting from
+        ProcessingModule to make sure that only output ports with unique tags are added. The new
+        port can be used as: ::
 
-             Port = self._m_output_ports[tag]
+             port = self._m_input_ports[tag]
 
         or by using the returned Port.
 
-        :param tag: Tag of the new OutputPort.
+        :param tag: Tag of the new output port.
         :type tag: str
-        :param activation: Activation status of the Port after creation. Deactivated Ports
-                           will not save their results until the are activated.
+        :param activation: Activation status of the Port after creation. Deactivated ports
+                           will not save their results until they are activated.
         :type activation: bool
 
         :return: The new OutputPort.
