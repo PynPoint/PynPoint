@@ -230,11 +230,11 @@ class AddLinesModule(ProcessingModule):
             raise ValueError("The lines argument should contain values equal to or larger than "
                              "zero.")
 
-        if shape_in.ndim == 3:
+        if len(shape_in) == 3:
             shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        elif shape_in.ndim == 2:
+        elif len(shape_in) == 2:
             shape_out = (shape_in[0]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
