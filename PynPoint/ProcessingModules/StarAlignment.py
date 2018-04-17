@@ -373,9 +373,9 @@ class StarCenteringModule(ProcessingModule):
                             x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
                             error (arcsec), FWHM major axis (arcsec), FWHM major axis error
                             (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
-                            (arcsec), amplitude (counts), amplitude error (counts), angle (deg)
-                            measured in counterclockwise direction with respect to the upward
-                            direction (i.e., East of North).
+                            (arcsec), amplitude (counts), amplitude error (counts), angle (deg),
+                            angle error (deg) measured in counterclockwise direction with respect
+                            to the upward direction (i.e., East of North).
         :type fit_out_tag: str
         :param method: Fit and shift all the images individually ("full") or only fit the mean of
                        the cube and shift all images to that location ("mean"). The "mean" method
