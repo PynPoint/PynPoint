@@ -195,17 +195,14 @@ class ConfigPort(Port):
         :rtype: bool
         """
 
-        check = True
-
         if self._m_data_storage is None:
             warnings.warn("ConfigPort can not load data unless a database is connected.")
-            check = False
+            return False
 
-        if check is True:
-            if not self._m_data_base_active:
-                self.open_port()
+        if not self._m_data_base_active:
+            self.open_port()
 
-        return check
+        return True
 
     def _check_if_data_exists(self):
         """
@@ -222,16 +219,14 @@ class ConfigPort(Port):
         Internal function which checks the error cases.
         """
 
-        check = True
-
         if not self._check_status_and_activate():
-            check = False
+            return False
 
         if self._check_if_data_exists() is False:
             warnings.warn("No data under the tag which is linked by the InputPort")
-            check = False
+            return False
 
-        return check
+        return True
 
     def get_attribute(self,
                       name):
@@ -246,16 +241,14 @@ class ConfigPort(Port):
         """
 
         if not self._check_error_cases():
-            value = None
+            return
 
         if name in self._m_data_storage.m_data_bank["config"].attrs:
-            value = self._m_data_storage.m_data_bank["config"].attrs[name]
+            return self._m_data_storage.m_data_bank["config"].attrs[name]
 
-        else:
-            warnings.warn('No attribute found - requested: %s' % name)
-            value = None
+        warnings.warn('No attribute found - requested: %s' % name)
 
-        return value
+        return None
 
 
 class InputPort(Port):
@@ -645,7 +638,9 @@ class OutputPort(Port):
             else:
                 raise ValueError('Input shape not supported.')
 
-        self._m_data_storage.m_data_bank.create_dataset(tag, data=first_data, maxshape=data_shape)
+        self._m_data_storage.m_data_bank.create_dataset(tag,
+                                                        data=first_data,
+                                                        maxshape=data_shape)
 
     def _set_all_key(self,
                      tag,
