@@ -284,7 +284,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                        first cube which contains the star (Python indexing starts at zero). Sorting
                        is based on the DITHER_X and DITHER_Y attributes  when *cubes_per_position*
                        is set to None.
-        :type select: tuple
+        :type dither: tuple
         :param mean: Subtract the mean pixel value from each image separately, both star and
                      background frames.
         :type mean: bool
