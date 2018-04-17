@@ -836,20 +836,20 @@ class DitheringBackgroundModule(ProcessingModule):
         :return: None
         """
 
-        def _admin_start(i, n_dither, position, star_pos):
+        def _admin_start(count, n_dither, position, star_pos):
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
+                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"..."
                 print "Center position =", position
 
                 if self.m_cubes is None and self.m_center is not None:
                     print "DITHER_X, DITHER_Y =", tuple(star_pos)
 
-        def _admin_end(i, n_dither):
+        def _admin_end(count, n_dither):
             if self.m_combine == "mean":
-                tags.append("star"+str(i+1))
+                tags.append("star"+str(count+1))
 
             elif self.m_combine == "pca":
-                tags.append("pca_sub"+str(i+1))
+                tags.append("pca_sub"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
                 print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"... [DONE]"
@@ -860,7 +860,7 @@ class DitheringBackgroundModule(ProcessingModule):
 
         for i, position in enumerate(self.m_center):
 
-            _admin_start(i, n_dither, position, star_pos)
+            _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
                 crop = CropImagesModule(size=self.m_size,
