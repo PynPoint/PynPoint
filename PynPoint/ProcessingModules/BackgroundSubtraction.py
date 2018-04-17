@@ -852,7 +852,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 tags.append("pca_sub"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"... [DONE]"
+                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"... [DONE]"
 
         n_dither, star_pos = self._initialize()
 
