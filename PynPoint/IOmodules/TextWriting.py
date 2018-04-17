@@ -1,5 +1,5 @@
 """
-Module for writing data as text file.
+Modules for writing data as text file.
 """
 
 import os
@@ -12,10 +12,9 @@ from PynPoint.Core.Processing import WritingModule
 
 class TextWritingModule(WritingModule):
     """
-    Module for writing a 1D or 2D data set from the central .hdf5 database as text file.
-    TextWritingModule is a WritingModule and supports to use the Pypeline default output
-    directory as well as an own location. See :class:`PynPoint.core.Processing.WritingModule`
-    for more information.
+    Module for writing a 1D or 2D data set from the central HDF5 database as text file.
+    TextWritingModule is a :class:`PynPoint.core.Processing.WritingModule` and supports
+    the use of the Pypeline default output directory as well as a specified location.
     """
 
     def __init__(self,
@@ -31,10 +30,10 @@ class TextWritingModule(WritingModule):
         :type name_in: str
         :param file_name: Name of the output file.
         :type file_name: str
-        :param output_dir: Output directory where the text file will be stored. If no folder is
-                           specified the Pypeline default is chosen.
+        :param output_dir: Output directory where the text file will be stored. If no path is
+                           specified then the Pypeline default output location is used.
         :type output_dir: str
-        :param data_tag: Tag of the data base entry the module has to export as text file.
+        :param data_tag: Tag of the database entry from which data is exported.
         :type data_tag: str
         :param header: Header that is written at the top of the text file.
         :type header: str
@@ -45,7 +44,7 @@ class TextWritingModule(WritingModule):
         super(TextWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output file_name needs to be a string.")
+            raise ValueError("Output filename needs to be a string.")
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -54,7 +53,7 @@ class TextWritingModule(WritingModule):
 
     def run(self):
         """
-        Run method of the module. Saves the specified data to a text file.
+        Run method of the module. Saves the specified data from the database to a text file.
 
         :return: None
         """
@@ -102,8 +101,8 @@ class ParangWritingModule(WritingModule):
         :type file_name: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param output_dir: Output directory where the text file will be stored. If no folder is
-                           specified the Pypeline default is chosen.
+        :param output_dir: Output directory where the text file will be stored. If no path is
+                           specified then the Pypeline default output location is used.
         :type output_dir: str
         :param data_tag: Tag of the database entry from which the PARANG attribute is read.
         :type data_tag: str

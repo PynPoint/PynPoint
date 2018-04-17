@@ -9,12 +9,12 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
-from PynPoint.Util.ModuleTools import progress, memory_frames
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
+from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -314,6 +314,135 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_dither = dither
         self.m_mean = mean
 
+    def _prepare(self):
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        cube_mean = np.zeros((nframes.shape[0],
+                              self.m_image_in_port.get_shape()[2],
+                              self.m_image_in_port.get_shape()[1]))
+
+        count = 0
+        for i, item in enumerate(nframes):
+            cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
+            count += item
+
+        if self.m_dither[1] is None:
+            dither_x = self.m_image_in_port.get_attribute("DITHER_X")
+            dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
+
+            star = np.logical_and(dither_x == self.m_dither[2][0],
+                                  dither_y == self.m_dither[2][1])
+
+            bg_frames = np.invert(star)
+
+        else:
+            bg_frames = np.ones(nframes.shape[0], dtype=bool)
+
+            for i in range(self.m_dither[2]*self.m_dither[1],
+                           np.size(nframes),
+                           self.m_dither[1]*self.m_dither[0]):
+
+                bg_frames[i:i+self.m_dither[1]] = False
+
+        return bg_frames, cube_mean
+
+    def _separate(self, bg_frames, bg_indices, parang, cube_mean):
+
+        def _initialize():
+            background_nframes = np.empty(0, dtype=np.int64)
+            star_nframes = np.empty(0, dtype=np.int64)
+
+            background_index = np.empty(0, dtype=np.int64)
+            star_index = np.empty(0, dtype=np.int64)
+
+            if parang is None:
+                background_parang = None
+                star_parang = None
+
+            else:
+                background_parang = np.empty(0, dtype=np.float64)
+                star_parang = np.empty(0, dtype=np.float64)
+
+            return star_index, star_parang, star_nframes, background_index, \
+                   background_parang, background_nframes
+
+        def _select_background(i):
+
+            # Previous background cube
+            if np.size(bg_indices[bg_indices < i]) > 0:
+                index_prev = np.amax(bg_indices[bg_indices < i])
+                bg_prev = cube_mean[index_prev, ]
+
+            else:
+                bg_prev = None
+
+            # Next background cube
+            if np.size(bg_indices[bg_indices > i]) > 0:
+                index_next = np.amin(bg_indices[bg_indices > i])
+                bg_next = cube_mean[index_next, ]
+
+            else:
+                bg_next = None
+
+            # Select background: previous, next, or mean of previous and next
+            if bg_prev is None and bg_next is not None:
+                background = bg_next
+
+            elif bg_prev is not None and bg_next is None:
+                background = bg_prev
+
+            elif bg_prev is not None and bg_next is not None:
+                background = (bg_prev+bg_next)/2.
+
+            else:
+                raise ValueError("Neither previous nor next background frames found.")
+
+            return background
+
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
+
+        star_index, star_parang, star_nframes, background_index, background_parang, \
+            background_nframes = _initialize()
+
+        # Separate star and background cubes. Subtract mean background.
+        count = 0
+        for i, item in enumerate(nframes):
+            progress(i, len(nframes), "Running PCABackgroundPreparationModule...")
+
+            im_tmp = self.m_image_in_port[count:count+item, ]
+
+            if self.m_mean:
+                for j in enumerate(item):
+                    im_tmp[j, ] -= np.mean(im_tmp[j, ])
+
+            # Background frames
+            if bg_frames[i]:
+                background = cube_mean[i, ]
+                self.m_background_out_port.append(im_tmp-background)
+
+                background_nframes = np.append(background_nframes, nframes[i])
+                background_index = np.append(background_index, index[count:count+item])
+
+                if parang is not None:
+                    background_parang = np.append(background_parang, parang[count:count+item])
+
+            # Star frames
+            else:
+                background = _select_background(i)
+                self.m_star_out_port.append(im_tmp-background)
+
+                star_nframes = np.append(star_nframes, nframes[i])
+                star_index = np.append(star_index, index[count:count+item])
+
+                if parang is not None:
+                    star_parang = np.append(star_parang, parang[count:count+item])
+
+            count += item
+
+        return star_index, star_parang, star_nframes, background_index, \
+               background_parang, background_nframes
+
     def run(self):
         """
         Run method of the module. Separates the star and background frames, subtracts the mean
@@ -330,115 +459,24 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_background_out_port.del_all_attributes()
 
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
-        index = self.m_image_in_port.get_attribute("INDEX")
 
         if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("PARANG")
         else:
             parang = None
 
-        # Mean of each cube
-        cube_mean = np.zeros((nframes.shape[0], self.m_image_in_port.get_shape()[2], \
-                             self.m_image_in_port.get_shape()[1]))
-
-        count = 0
-        for i, item in enumerate(nframes):
-            cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
-            count += item
-
-        # Flag star and background cubes
-        if self.m_dither[1] is None:
-            dither_x = self.m_image_in_port.get_attribute("DITHER_X")
-            dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
-
-            star = np.logical_and(dither_x == self.m_dither[2][0], dither_y == self.m_dither[2][1])
-            bg_frames = np.invert(star)
-
-        else:
-            bg_frames = np.ones(nframes.shape[0], dtype=bool)
-            for i in range(self.m_dither[2]*self.m_dither[1], np.size(nframes), \
-                           self.m_dither[1]*self.m_dither[0]):
-                bg_frames[i:i+self.m_dither[1]] = False
+        bg_frames, cube_mean = self._prepare()
 
         bg_indices = np.nonzero(bg_frames)[0]
 
-        background_nframes = np.empty(0, dtype=np.int64)
-        star_nframes = np.empty(0, dtype=np.int64)
-
-        background_index = np.empty(0, dtype=np.int64)
-        star_index = np.empty(0, dtype=np.int64)
-
-        if parang is not None:
-            background_parang = np.empty(0, dtype=np.float64)
-            star_parang = np.empty(0, dtype=np.float64)
-
-        # Separate star and background cubes. Subtract mean background.
-        count = 0
-        for i, item in enumerate(nframes):
-            progress(i, len(nframes), "Running PCABackgroundPreparationModule...")
-
-            im_tmp = self.m_image_in_port[count:count+item, ]
-
-            if self.m_mean:
-                for j in enumerate(item):
-                    im_tmp[j, ] -= np.mean(im_tmp[j, ])
-
-            # Background frames
-            if bg_frames[i]:
-                # Mean background of the cube
-                background = cube_mean[i, ]
-
-                # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
-                self.m_background_out_port.append(im_tmp-background)
-                background_nframes = np.append(background_nframes, nframes[i])
-                background_index = np.append(background_index, index[count:count+item])
-                if parang is not None:
-                    background_parang = np.append(background_parang, parang[count:count+item])
-
-            # Star frames
-            else:
-                # Previous background cube
-                if np.size(bg_indices[bg_indices < i]) > 0:
-                    index_prev = np.amax(bg_indices[bg_indices < i])
-                    bg_prev = cube_mean[index_prev, ]
-
-                else:
-                    bg_prev = None
-
-                # Next background cube
-                if np.size(bg_indices[bg_indices > i]) > 0:
-                    index_next = np.amin(bg_indices[bg_indices > i])
-                    bg_next = cube_mean[index_next, ]
-
-                else:
-                    bg_next = None
-
-                # Select background: previous, next, or mean of previous and next
-                if bg_prev is None and bg_next is not None:
-                    background = bg_next
-
-                elif bg_prev is not None and bg_next is None:
-                    background = bg_prev
-
-                elif bg_prev is not None and bg_next is not None:
-                    background = (bg_prev+bg_next)/2.
-
-                else:
-                    raise ValueError("Neither previous nor next background frames found.")
-
-                # Subtract mean background, save data, and select corresponding PARANG and NFRAMES
-                self.m_star_out_port.append(im_tmp-background)
-                star_nframes = np.append(star_nframes, nframes[i])
-                star_index = np.append(star_index, index[count:count+item])
-                if parang is not None:
-                    star_parang = np.append(star_parang, parang[count:count+item])
-
-            count += item
+        star_index, star_parang, star_nframes, background_index, background_parang, \
+            background_nframes = self._separate(bg_frames, bg_indices, parang, cube_mean)
 
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
         self.m_star_out_port.add_attribute("INDEX", star_index, static=False)
 
@@ -511,77 +549,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         self.m_mask = mask
         self.m_residuals_out_tag = residuals_out_tag
 
-    def _create_mask(self, mask_radius, star_position, num_frames):
-        """
-        Method for creating a circular mask at the star position.
-        """
-
-        im_dim = self.m_star_in_port[0, ].shape
-
-        x_grid = np.arange(0, im_dim[0], 1)
-        y_grid = np.arange(0, im_dim[1], 1)
-
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-
-        mask = np.ones((num_frames, im_dim[0], im_dim[1]))
-
-        cent_x = star_position[:, 0]
-        cent_y = star_position[:, 1]
-
-        for i in range(num_frames):
-            rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
-            mask[i, ][rr_grid < mask_radius] = 0.
-
-        return mask
-
-    def _create_basis(self, im_arr):
-        """
-        Method for creating a set of principle components for a stack of images.
-        """
-
-        _, _, v_svd = svds(im_arr.reshape(im_arr.shape[0],
-                                          im_arr.shape[1]*im_arr.shape[2]),
-                           k=self.m_pca_number)
-
-        v_svd = v_svd[::-1, ]
-
-        pca_basis = v_svd.reshape(v_svd.shape[0], im_arr.shape[1], im_arr.shape[2])
-
-        return pca_basis
-
-    def _model_background(self, basis, im_arr, mask):
-        """
-        Method for creating a model of the background.
-        """
-
-        def _dot_product(x_dot, *p):
-            return np.dot(p, x_dot)
-
-        fit_im_chi = np.zeros(im_arr.shape)
-        # fit_coeff_chi = np.zeros((im_arr.shape[0], basis.shape[0]))
-
-        basis_reshaped = basis.reshape(basis.shape[0], -1)
-
-        for i in xrange(im_arr.shape[0]):
-            basis_reshaped_masked = (basis*mask[i]).reshape(basis.shape[0], -1)
-
-            data_to_fit = im_arr[i, ]
-
-            init = np.ones(basis_reshaped_masked.shape[0])
-
-            fitted = curve_fit(_dot_product,
-                               basis_reshaped_masked,
-                               data_to_fit.reshape(-1),
-                               init)
-
-            fit_im = np.dot(fitted[0], basis_reshaped)
-            fit_im = fit_im.reshape(data_to_fit.shape[0], data_to_fit.shape[1])
-
-            fit_im_chi[i, ] = fit_im
-            # fit_coeff_chi[i, ] = fitted[0]
-
-        return fit_im_chi
-
     def run(self):
         """
         Run method of the module. Creates a PCA basis set of the background frames, masks the PSF
@@ -591,6 +558,77 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         :return: None
         """
+
+        def _create_mask(mask_radius, star_position, num_frames):
+            """
+            Method for creating a circular mask at the star position.
+            """
+
+            im_dim = self.m_star_in_port[0, ].shape
+
+            x_grid = np.arange(0, im_dim[0], 1)
+            y_grid = np.arange(0, im_dim[1], 1)
+
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+            mask = np.ones((num_frames, im_dim[0], im_dim[1]))
+
+            cent_x = star_position[:, 0]
+            cent_y = star_position[:, 1]
+
+            for i in range(num_frames):
+                rr_grid = np.sqrt((xx_grid - cent_x[i])**2 + (yy_grid - cent_y[i])**2)
+                mask[i, ][rr_grid < mask_radius] = 0.
+
+            return mask
+
+        def _create_basis(images, pca_number):
+            """
+            Method for creating a set of principle components for a stack of images.
+            """
+
+            _, _, v_svd = svds(images.reshape(images.shape[0],
+                                              images.shape[1]*images.shape[2]),
+                               k=pca_number)
+
+            v_svd = v_svd[::-1, ]
+
+            pca_basis = v_svd.reshape(v_svd.shape[0], images.shape[1], images.shape[2])
+
+            return pca_basis
+
+        def _model_background(basis, im_arr, mask):
+            """
+            Method for creating a model of the background.
+            """
+
+            def _dot_product(x_dot, *p):
+                return np.dot(p, x_dot)
+
+            fit_im_chi = np.zeros(im_arr.shape)
+            # fit_coeff_chi = np.zeros((im_arr.shape[0], basis.shape[0]))
+
+            basis_reshaped = basis.reshape(basis.shape[0], -1)
+
+            for i in xrange(im_arr.shape[0]):
+                basis_reshaped_masked = (basis*mask[i]).reshape(basis.shape[0], -1)
+
+                data_to_fit = im_arr[i, ]
+
+                init = np.ones(basis_reshaped_masked.shape[0])
+
+                fitted = curve_fit(_dot_product,
+                                   basis_reshaped_masked,
+                                   data_to_fit.reshape(-1),
+                                   init)
+
+                fit_im = np.dot(fitted[0], basis_reshaped)
+                fit_im = fit_im.reshape(data_to_fit.shape[0], data_to_fit.shape[1])
+
+                fit_im_chi[i, ] = fit_im
+                # fit_coeff_chi[i, ] = fitted[0]
+
+            return fit_im_chi
 
         self.m_subtracted_out_port.del_all_data()
         self.m_subtracted_out_port.del_all_attributes()
@@ -605,11 +643,12 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         self.m_mask /= pixscale
 
-        im_background = self.m_background_in_port.get_all()
-
         sys.stdout.write("Creating PCA basis set...")
         sys.stdout.flush()
-        basis_pca = self._create_basis(im_background)
+
+        basis_pca = _create_basis(self.m_background_in_port.get_all(),
+                                  self.m_pca_number)
+
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
@@ -622,12 +661,11 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             im_star = self.m_star_in_port[frames[i]:frames[i+1], ]
 
-            mask = self._create_mask(self.m_mask,
-                                     star[frames[i]:frames[i+1], ],
-                                     frames[i+1]-frames[i])
+            mask = _create_mask(self.m_mask,
+                                star[frames[i]:frames[i+1], ],
+                                frames[i+1]-frames[i])
 
-            im_star_mask = im_star*mask
-            fit_im = self._model_background(basis_pca, im_star_mask, mask)
+            fit_im = _model_background(basis_pca, im_star*mask, mask)
 
             self.m_subtracted_out_port.append(im_star-fit_im)
             if self.m_residuals_out_tag is not None:
@@ -744,23 +782,18 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_cubes = cubes
         self.m_size = size
         self.m_gaussian = gaussian
-        self.m_subframe = subframe
         self.m_pca_number = pca_number
         self.m_mask = mask
+
+        if subframe is None:
+            self.m_subframe = subframe
+        else:
+            self.m_subframe = (None, None, subframe)
 
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
 
-    def run(self):
-        """
-        Run method of the module. Cuts out the detector sections at the different dither positions,
-        prepares the PCA background subtraction, applies a bad pixel correction, locates the star
-        in each image, runs the PCA background subtraction, combines the output from the different
-        dither positions is written to a single database tag.
-
-        :return: None
-        """
-
+    def _initialize(self):
         if self.m_cubes is None:
             dither_x = self.m_image_in_port.get_attribute("DITHER_X")
             dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
@@ -791,15 +824,43 @@ class DitheringBackgroundModule(ProcessingModule):
         else:
             star_pos = np.arange(0, n_dither, 1)
 
-        tags = []
+        return n_dither, star_pos
 
-        for i, position in enumerate(self.m_center):
+    def run(self):
+        """
+        Run method of the module. Cuts out the detector sections at the different dither positions,
+        prepares the PCA background subtraction, applies a bad pixel correction, locates the star
+        in each image, runs the PCA background subtraction, combines the output from the different
+        dither positions is written to a single database tag.
+
+        :return: None
+        """
+
+        def _admin_start(count, n_dither, position, star_pos):
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"..."
+                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"..."
                 print "Center position =", position
 
                 if self.m_cubes is None and self.m_center is not None:
-                    print "DITHER_X, DITHER_Y =", tuple(star_pos[i])
+                    print "DITHER_X, DITHER_Y =", tuple(star_pos)
+
+        def _admin_end(count, n_dither):
+            if self.m_combine == "mean":
+                tags.append("star"+str(count+1))
+
+            elif self.m_combine == "pca":
+                tags.append("pca_sub"+str(count+1))
+
+            if self.m_crop or self.m_prepare or self.m_pca_background:
+                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"... [DONE]"
+
+        n_dither, star_pos = self._initialize()
+
+        tags = []
+
+        for i, position in enumerate(self.m_center):
+
+            _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
                 crop = CropImagesModule(size=self.m_size,
@@ -825,19 +886,13 @@ class DitheringBackgroundModule(ProcessingModule):
                 prepare.run()
 
             if self.m_pca_background:
-                if self.m_subframe is None:
-                    position = None
-                else:
-                    position = (None, None, self.m_subframe)
-
-                print position
 
                 star = StarExtractionModule(name_in="star"+str(i),
                                             image_in_tag="star"+str(i+1),
                                             image_out_tag=None,
                                             image_size=None,
                                             fwhm_star=self.m_gaussian,
-                                            position=position)
+                                            position=self.m_subframe)
 
                 star.connect_database(self._m_data_base)
                 star.run()
@@ -853,14 +908,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 pca.connect_database(self._m_data_base)
                 pca.run()
 
-            if self.m_combine == "mean":
-                tags.append("star"+str(i+1))
-
-            elif self.m_combine == "pca":
-                tags.append("pca_sub"+str(i+1))
-
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(i+1)+" out of "+str(n_dither)+"... [DONE]"
+            _admin_end(i, n_dither)
 
         if self.m_combine is not None:
             combine = CombineTagsModule(name_in="combine",

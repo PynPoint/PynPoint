@@ -587,7 +587,7 @@ class StarCenteringModule(ProcessingModule):
                                       func_args=(fit, ))
 
         if self.m_count > 0:
-            print "2D Gaussian fit could not converge on %s images. [WARNING]" % self.m_count
+            print "2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count
 
         self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
