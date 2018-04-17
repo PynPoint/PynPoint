@@ -196,15 +196,15 @@ class AddLinesModule(ProcessingModule):
         """
         Constructor of AddLinesModule.
 
-        :param lines: Tuple with the number of additional lines in left, right, bottom, and top
-                      direction.
+        :param lines: Tuple with the number of lines that are added in left, right, bottom, and
+                      top direction.
         :type lines: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
+        :param image_out_tag: Tag of the database entry that is written as output, including the
+                              images with increased size. Should be different from *image_in_tag*.
         :type image_out_tag: str
 
         :return: None
@@ -273,15 +273,15 @@ class RemoveLinesModule(ProcessingModule):
         """
         Constructor of RemoveLinesModule.
 
-        :param lines: Tuple with the number of lines to be removed in left, right, bottom,
+        :param lines: Tuple with the number of lines that are removed in left, right, bottom,
                       and top direction.
         :type lines: tuple, int
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
+        :param image_out_tag: Tag of the database entry that is written as output, including the
+                              images with decreased size. Should be different from *image_in_tag*.
         :type image_out_tag: str
 
         :return: None
@@ -301,11 +301,9 @@ class RemoveLinesModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError("Input and output tags should be different.")
-
         def remove_lines(image_in):
             shape_in = image_in.shape
+
             return image_in[int(self.m_lines[2]):shape_in[0]-int(self.m_lines[3]),
                             int(self.m_lines[0]):shape_in[1]-int(self.m_lines[1])]
 

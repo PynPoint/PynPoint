@@ -6,23 +6,15 @@ import h5py
 import numpy as np
 
 from PynPoint.Core.DataIO import OutputPort, DataStorage, InputPort
+from PynPoint.Util.TestTools import create_random
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
 def setup_module():
-    file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-
-    np.random.seed(1)
-    images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-    parang = np.arange(1, 11, 1)
-
-    h5f = h5py.File(file_in, "w")
-    dset = h5f.create_dataset("images", data=images)
-    dset.attrs['PIXSCALE'] = 0.01
-    h5f.create_dataset("header_images/PARANG", data=parang)
-    h5f.close()
+    path = os.path.dirname(__file__)
+    create_random(path)
 
 def teardown_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
@@ -73,7 +65,7 @@ class TestOutputPort(object):
 
         data = [1, 3]
         outport.set_all(data, data_dim=1)
-        
+
         inport = self.create_input_port("new_data")
 
         assert np.array_equal(inport.get_all(), [1., 3.])
@@ -98,7 +90,7 @@ class TestOutputPort(object):
 
         # ----- 3D input -----
 
-        data = [[[1, 3], [2, 4]],[[1, 3], [2, 4]]]
+        data = [[[1, 3], [2, 4]], [[1, 3], [2, 4]]]
         outport.set_all(data, data_dim=3)
         assert np.array_equal(inport.get_all(), [[[1, 3], [2, 4]], [[1, 3], [2, 4]]])
         outport.del_all_data()
@@ -115,7 +107,8 @@ class TestOutputPort(object):
         assert len(record) == 1
 
         # check that the message matches
-        assert record[0].message.args[0] == "Port can not store data unless a database is connected."
+        assert record[0].message.args[0] == "OutputPort can not store data unless a database is " \
+                                            "connected."
 
         # ---- Test data dim of actual data for new data entry is < 1 or > 3
 
@@ -430,7 +423,8 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.add_value_to_static_attribute("attr1", value="test")
 
-        assert error.value[0] == "Only integer and float values can be added to an existing attribute."
+        assert error.value[0] == "Only integer and float values can be added to an existing " \
+                                 "attribute."
 
         # add data to not existing attribute
         with pytest.raises(AttributeError) as error2:

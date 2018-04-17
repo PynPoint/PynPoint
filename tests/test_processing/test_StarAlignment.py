@@ -6,11 +6,12 @@ import numpy as np
 
 from astropy.io import fits
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule, \
                                                      ShiftImagesModule, StarCenteringModule
+from PynPoint.Util.TestTools import create_config
 
 warnings.simplefilter("always")
 
@@ -18,7 +19,6 @@ limit = 1e-10
 
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
-    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
 
     fwhm = 3
     npix = 100
@@ -57,28 +57,8 @@ def setup_module():
         hdu.data = image
         hdu.writeto(test_dir+'image'+str(j+1).zfill(2)+'.fits')
 
-    f = open(config_file, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.027\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
+    create_config(filename)
 
 def teardown_module():
     test_dir = os.path.dirname(__file__) + "/"

@@ -185,7 +185,7 @@ class BasePynpointWrapper(object):
         return obj
 
     @classmethod
-    def create_wfitsfiles(cls, files,**kwargs):
+    def create_wfitsfiles(cls, files, **kwargs):
         pass
 
     @classmethod

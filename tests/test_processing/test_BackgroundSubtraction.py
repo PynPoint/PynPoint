@@ -4,11 +4,12 @@ import warnings
 import h5py
 import numpy as np
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, SimpleBackgroundSubtractionModule, \
                                                              PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
                                                              DitheringBackgroundModule, NoddingBackgroundModule
+from PynPoint.Util.TestTools import create_config
 
 warnings.simplefilter("always")
 
@@ -16,7 +17,6 @@ limit = 1e-10
 
 def setup_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
 
     np.random.seed(1)
     images = np.random.normal(loc=0, scale=2e-4, size=(40, 100, 100))
@@ -39,28 +39,8 @@ def setup_module():
     h5f.create_dataset("header_sky/EXP_NO", data=[2, 4, 6, 8])
     h5f.close()
 
-    f = open(config_file, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.01\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
+    create_config(filename)
 
 def teardown_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
@@ -161,10 +141,8 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(data[0, 10, 10], 9.38719992395586e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 5.782411586589357e-23, rtol=limit, atol=0.)
 
-        # TODO Unclear why rtol can only be 1e-5 and 1e-6
-
         data = storage.m_data_bank["subtracted"]
-        assert np.allclose(data[0, 10, 10], 0.00017730624664203748, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.00017730624664203748, rtol=1e-7, atol=0.)
         assert np.allclose(np.mean(data), 3.102053539454623e-07, rtol=1e-6, atol=0.)
 
         data = storage.m_data_bank["residuals"]
@@ -211,8 +189,6 @@ class TestBackgroundSubtraction(object):
 
         storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
         storage.open_connection()
-
-        # TODO Unclear why rtol can only be 1e-6
 
         data = storage.m_data_bank["pca_dither1"]
         assert np.allclose(data[0, 10, 10], 4.9091895841309806e-05, rtol=1e-6, atol=0.)

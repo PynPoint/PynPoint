@@ -7,9 +7,11 @@ import numpy as np
 
 from astropy.io import fits
 
-from PynPoint.Core import Pypeline
-from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule
-from PynPoint.ProcessingModules import BadPixelSigmaFilterModule
+from PynPoint.Core.Pypeline import Pypeline
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
+from PynPoint.IOmodules.FitsWriting import FitsWritingModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
+from PynPoint.Util.TestTools import create_config
 
 warnings.simplefilter("always")
 
@@ -17,7 +19,6 @@ limit = 1e-10
 
 def setup_module():
     file_in = os.path.dirname(__file__) + "/images.fits"
-    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
 
     np.random.seed(1)
     images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
@@ -35,28 +36,8 @@ def setup_module():
     hdu.data = images
     hdu.writeto(file_in)
 
-    f = open(config_file, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.01\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
+    create_config(filename)
 
 def teardown_module():
     file_in = os.path.dirname(__file__) + "/images.fits"
@@ -95,13 +76,13 @@ class TestPypeline(object):
         dir_exists = self.test_dir
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline(dir_non_exists, dir_exists, dir_exists)
+            Pypeline(dir_non_exists, dir_exists, dir_exists)
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline(dir_exists, dir_non_exists, dir_non_exists)
+            Pypeline(dir_exists, dir_non_exists, dir_non_exists)
 
         with pytest.raises(AssertionError):
-            pipeline = Pypeline()
+            Pypeline()
 
     def test_create_instance_new_data_base(self):
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -243,5 +224,5 @@ class TestPypeline(object):
         assert pipeline.get_module_names() == ["filter"]
 
         assert pipeline.remove_module("filter") is True
-        
+
         os.remove(self.test_data)

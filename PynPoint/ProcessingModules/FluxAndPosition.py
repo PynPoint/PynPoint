@@ -92,31 +92,11 @@ class FakePlanetModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_interpolation = interpolation
 
-    def run(self):
-        """
-        Run method of the module. Shifts the reference PSF to the location of the fake planet
-        with an additional correction for the parallactic angle and writes the stack with images
-        with the injected planet signal.
-
-        :return: None
-        """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
+    def _images_init(self):
         memory = self._m_config_port.get_attribute("MEMORY")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        parang *= math.pi/180.
-
-        radial = self.m_position[0]/pixscale
-        theta = self.m_position[1]*math.pi/180. + math.pi/2.
-
-        flux_ratio = 10.**(-self.m_magnitude/2.5)
-
-        ndim_image = np.size(self.m_image_in_port.get_shape())
-        ndim_psf = np.size(self.m_psf_in_port.get_shape())
+        ndim_image = self.m_image_in_port.get_ndim()
+        ndim_psf = self.m_psf_in_port.get_ndim()
 
         if ndim_image == 3:
             nimages = self.m_image_in_port.get_shape()[0]
@@ -163,6 +143,51 @@ class FakePlanetModule(ProcessingModule):
 
             ndim_psf = psf.ndim
 
+        return frames, psf, ndim_psf
+
+    def _shift_psf(self, psf, parang):
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        radial = self.m_position[0]/pixscale
+        theta = self.m_position[1]*math.pi/180. + math.pi/2.
+
+        x_shift = radial*math.cos(theta-parang)
+        y_shift = radial*math.sin(theta-parang)
+
+        if self.m_interpolation == "spline":
+            psf_shift = shift(psf, (y_shift, x_shift), order=5, mode='reflect')
+
+        elif self.m_interpolation == "bilinear":
+            psf_shift = shift(psf, (y_shift, x_shift), order=1, mode='reflect')
+
+        elif self.m_interpolation == "fft":
+            psf_fft = fourier_shift(np.fft.fftn(psf), (y_shift, x_shift))
+            psf_shift = np.fft.ifftn(psf_fft).real
+
+        else:
+            raise ValueError("Interpolation should be fft, spline, or bilinear.")
+
+        return psf_shift
+
+    def run(self):
+        """
+        Run method of the module. Shifts the reference PSF to the location of the fake planet
+        with an additional correction for the parallactic angle and writes the stack with images
+        with the injected planet signal.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        parang = self.m_image_in_port.get_attribute("PARANG")
+        parang *= math.pi/180.
+
+        flux_ratio = 10.**(-self.m_magnitude/2.5)
+
+        frames, psf, ndim_psf = self._images_init()
+
         for j, _ in enumerate(frames[:-1]):
             if self.m_verbose:
                 progress(j, len(frames[:-1]), "Running FakePlanetModule...")
@@ -170,29 +195,14 @@ class FakePlanetModule(ProcessingModule):
             image = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
 
             for i in range(image.shape[0]):
-                x_shift = radial*math.cos(theta-parang[frames[j]+i])
-                y_shift = radial*math.sin(theta-parang[frames[j]+i])
-
                 if ndim_psf == 2:
                     psf_tmp = np.copy(psf)
 
                 elif ndim_psf == 3:
-                    psf_tmp = self.m_psf_in_port[frames[j]+i]
+                    psf_tmp = self.m_psf_in_port[frames+i]
 
-                if self.m_interpolation == "spline":
-                    psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=5, mode='reflect')
-
-                elif self.m_interpolation == "bilinear":
-                    psf_tmp = shift(psf_tmp, (y_shift, x_shift), order=1, mode='reflect')
-
-                elif self.m_interpolation == "fft":
-                    psf_fft = fourier_shift(np.fft.fftn(psf_tmp), (y_shift, x_shift))
-                    psf_tmp = np.fft.ifftn(psf_fft).real
-
-                else:
-                    raise ValueError("Interpolation should be fft, spline, or bilinear.")
-
-                image[i, ] += self.m_psf_scaling*flux_ratio*psf_tmp
+                psf_shift = self._shift_psf(psf_tmp, parang[frames[j]+i])
+                image[i, ] += self.m_psf_scaling*flux_ratio*psf_shift
 
             self.m_image_out_port.append(image)
 
@@ -717,105 +727,6 @@ def _psf_subtraction(images,
     return np.mean(residuals, axis=0)
 
 
-def _lnprior(param,
-             bounds):
-    """
-    Internal function for the log prior function. Should be placed at the highest level of the
-    Python module in order to be pickled.
-
-    :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The angle
-                  is measured in counterclockwise direction with respect to the upward direction
-                  (i.e., East of North).
-    :type param: tuple, float
-    :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
-                   contrast (mag). Each set of boundaries is specified as a tuple.
-    :type bounds: tuple, float
-
-    :return: Log prior.
-    :rtype float
-    """
-
-    if bounds[0][0] <= param[0] <= bounds[0][1] and \
-       bounds[1][0] <= param[1] <= bounds[1][1] and \
-       bounds[2][0] <= param[2] <= bounds[2][1]:
-
-        lnprior = 0.
-
-    else:
-
-        lnprior = -np.inf
-
-    return lnprior
-
-
-def _lnlike(param,
-            images,
-            psf,
-            mask,
-            parang,
-            psf_scaling,
-            pixscale,
-            pca_number,
-            extra_rot,
-            aperture):
-
-    """
-    Internal function for the log likelihood function. Should be placed at the highest level of the
-    Python module in order to be pickled.
-
-    :param param: Tuple with the separation (arcsec), angle (deg), and contrast
-                  (mag). The angle is measured in counterclockwise direction with
-                  respect to the upward direction (i.e., East of North).
-    :type param: tuple, float
-    :param images: Stack with images.
-    :type images: ndarray
-    :param mask: Array with the circular mask (zeros) of the central and outer regions.
-    :type mask: ndarray
-    :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
-                equal to *image_in_tag*.
-    :type psf: ndarray
-    :param parang: Array with the angles for derotation.
-    :type parang: ndarray
-    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
-                        neutral density filter). Should be negative in order to inject negative
-                        fake planets.
-    :type psf_scaling: float
-    :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
-                     density filter). Should be negative in order to inject negative fake planets.
-    :type pixscale: float
-    :param pca_number: Number of principle components used for the PSF subtraction.
-    :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
-    :param aperture: Circular aperture at the position specified in *param*.
-    :type aperture: photutils.CircularAperture
-
-    :return: Log likelihood.
-    :rtype float
-    """
-
-    sep, ang, mag = param
-
-    fake = _fake_planet(images,
-                        psf,
-                        parang-extra_rot,
-                        (sep, ang),
-                        mag,
-                        psf_scaling,
-                        pixscale)
-
-    fake *= mask
-
-    im_res = _psf_subtraction(fake,
-                              parang,
-                              pca_number,
-                              extra_rot)
-
-    phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
-
-    return -0.5*phot_table['aperture_sum'][0]
-
-
 def _lnprob(param,
             bounds,
             images,
@@ -865,22 +776,62 @@ def _lnprob(param,
     :rtype float
     """
 
-    lnprior = _lnprior(param, bounds)
+    def _lnprior():
+        """
+        Internal function for the log prior function.
+
+        :return: Log prior.
+        :rtype float
+        """
+
+        if bounds[0][0] <= param[0] <= bounds[0][1] and \
+           bounds[1][0] <= param[1] <= bounds[1][1] and \
+           bounds[2][0] <= param[2] <= bounds[2][1]:
+
+            lnprior = 0.
+
+        else:
+
+            lnprior = -np.inf
+
+        return lnprior
+
+    def _lnlike():
+        """
+        Internal function for the log likelihood function.
+
+        :return: Log likelihood.
+        :rtype float
+        """
+
+        sep, ang, mag = param
+
+        fake = _fake_planet(images,
+                            psf,
+                            parang-extra_rot,
+                            (sep, ang),
+                            mag,
+                            psf_scaling,
+                            pixscale)
+
+        fake *= mask
+
+        im_res = _psf_subtraction(fake,
+                                  parang,
+                                  pca_number,
+                                  extra_rot)
+
+        phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
+
+        return -0.5*phot_table['aperture_sum'][0]
+
+    lnprior = _lnprior()
 
     if math.isinf(lnprior):
         lnprob = -np.inf
 
     else:
-        lnprob = lnprior + _lnlike(param,
-                                   images,
-                                   psf,
-                                   mask,
-                                   parang,
-                                   psf_scaling,
-                                   pixscale,
-                                   pca_number,
-                                   extra_rot,
-                                   aperture)
+        lnprob = lnprior + _lnlike()
 
     return lnprob
 
