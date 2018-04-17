@@ -225,16 +225,17 @@ class AddLinesModule(ProcessingModule):
         """
 
         shape_in = self.m_image_in_port.get_shape()
+        ndim_in = self.m_image_in_port.get_ndim()
 
         if any(np.asarray(self.m_lines) < 0.):
             raise ValueError("The lines argument should contain values equal to or larger than "
                              "zero.")
 
-        if len(shape_in) == 3:
+        if ndim_in == 3:
             shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        elif len(shape_in) == 2:
+        elif ndim_in == 2:
             shape_out = (shape_in[0]+int(self.m_lines[2])+int(self.m_lines[3]),
                          shape_in[1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
