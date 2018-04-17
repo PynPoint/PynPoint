@@ -70,17 +70,21 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  median_filter=False,
                  threshold_function="soft"):
         """
-        Constructor of the module
+        Constructor of WaveletTimeDenoisingModule.
+
         :param wavelet_configuration: Instance of DwtWaveletConfiguration or CwtWaveletConfiguration
-            which gives the parameters of the wavelet transformation to be used.
+                                      which gives the parameters of the wavelet transformation to be
+                                      used.
         :param name_in: Module name
         :param image_in_tag: Input tag in the central database
         :param image_out_tag: Output tag in the central database
         :param padding: Padding strategy can be (zero, mirror and none)
-        :param median_filter: If true a median filter in time gets applied which removes outliers in
-            time like cosmic rays
+        :param median_filter: If true a median filter in time gets applied which removes outliers
+                              in time like cosmic rays
         :param threshold_function: Threshold function used for wavelet shrinkage in the wavelet
-            space. Can be soft or hard.
+                                   space. Can be soft or hard.
+
+        :return: None
         """
 
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
@@ -121,6 +125,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 :param signal_in: 1d signal
                 :return:
                 """
+
                 coef = pywt.wavedec(signal_in,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
                                     level=6,

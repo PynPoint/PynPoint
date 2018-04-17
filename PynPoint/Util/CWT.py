@@ -11,7 +11,7 @@ from statsmodels.robust import mad
 from numba import jit
 import matplotlib.pyplot as plt
 
-import PynPoint.Util.continous as wave
+from PynPoint.Util.continous import *
 
 
 @jit(cache=True)
@@ -27,6 +27,7 @@ def _fast_zeros(soft,
     :param uthresh: Threshold used by the threshold function
     :return: The modified spectrum
     """
+
     if soft:
         for i in range(0, spectrum.shape[0], 1):
             for j in range(0, spectrum.shape[1], 1):
@@ -114,11 +115,11 @@ class WaveletAnalysisCapsule(object):
         self._m_c_final_reconstruction = self._m_c_reconstructions[order]
 
         # create scales for wavelet transform
-        self._m_scales = wave.autoscales(N=self._m_data_size,
-                                         dt=1,
-                                         dj=frequency_resolution,
-                                         wf=wavelet_in,
-                                         p=order)
+        self._m_scales = autoscales(N=self._m_data_size,
+                                    dt=1,
+                                    dj=frequency_resolution,
+                                    wf=wavelet_in,
+                                    p=order)
 
         self._m_number_of_scales = len(self._m_scales)
         self._m_frequency_resolution = frequency_resolution
@@ -175,31 +176,31 @@ class WaveletAnalysisCapsule(object):
         Compute the wavelet space of the given input signal.
         :return: None
         """
-        self.m_spectrum = wave.cwt(self._m_data,
-                                   dt=1,
-                                   scales=self._m_scales,
-                                   wf=self.m_wavelet,
-                                   p=self.m_order)
+        self.m_spectrum = cwt(self._m_data,
+                              dt=1,
+                              scales=self._m_scales,
+                              wf=self.m_wavelet,
+                              p=self.m_order)
 
     def update_signal(self):
         """
         Updates the internal signal by the reconstruction of the current wavelet space.
         :return: None
         """
-        self._m_data = wave.icwt(self.m_spectrum,
-                                 dt=1,
-                                 scales=self._m_scales,
-                                 wf=self.m_wavelet,
-                                 p=self.m_order)
+        self._m_data = icwt(self.m_spectrum,
+                            dt=1,
+                            scales=self._m_scales,
+                            wf=self.m_wavelet,
+                            p=self.m_order)
         reconstruction_factor = self.__compute_reconstruction_factor()
         self._m_data *= reconstruction_factor
 
     def __transform_period(self,
                            period):
 
-        tmp_y = wave.fourier_from_scales(self._m_scales,
-                                         self.m_wavelet,
-                                         self.m_order)
+        tmp_y = fourier_from_scales(self._m_scales,
+                                    self.m_wavelet,
+                                    self.m_order)
 
         def __transformation(x):
             return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
@@ -243,12 +244,13 @@ class WaveletAnalysisCapsule(object):
         after temporal de-noising
         :return: None
         """
+
         self._m_data = medfilt(self._m_data, 19)
 
     def get_signal(self):
         """
         Returns the current version of the 1d signal. Use update_signal() in advance in order to get
-         the current reconstruction of the wavelet space. Removes padded values as well.
+        the current reconstruction of the wavelet space. Removes padded values as well.
         :return:
         """
 
@@ -266,9 +268,9 @@ class WaveletAnalysisCapsule(object):
         plt.figure(figsize=(8, 6))
         plt.subplot(1, 1, 1)
 
-        tmp_y = wave.fourier_from_scales(self._m_scales,
-                                         self.m_wavelet,
-                                         self.m_order)
+        tmp_y = fourier_from_scales(self._m_scales,
+                                    self.m_wavelet,
+                                    self.m_order)
 
         tmp_x = np.arange(0, self._m_data_size + 1, 1)
 
@@ -321,6 +323,7 @@ class WaveletAnalysisCapsule(object):
         Shows a plot of the current wavelet space.
         :return: None
         """
+
         self.__plot_or_save_spectrum()
         plt.show()
 
