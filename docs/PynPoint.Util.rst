@@ -4,10 +4,10 @@ PynPoint\.Util package
 Submodules
 ----------
 
-PynPoint\.Util\.Continuous module
----------------------------------
+PynPoint\.Util\.CWT module
+--------------------------
 
-.. automodule:: PynPoint.Util.Continuous
+.. automodule:: PynPoint.Util.CWT
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,18 +36,10 @@ PynPoint\.Util\.MultiprocessingPCA module
     :undoc-members:
     :show-inheritance:
 
-PynPoint\.Util\.TestTools module
+PynPoint\.Util\.continous module
 --------------------------------
 
-.. automodule:: PynPoint.Util.TestTools
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-PynPoint\.Util\.WaveletAnalysis module
---------------------------------------
-
-.. automodule:: PynPoint.Util.WaveletAnalysis
+.. automodule:: PynPoint.Util.continous
     :members:
     :undoc-members:
     :show-inheritance:
