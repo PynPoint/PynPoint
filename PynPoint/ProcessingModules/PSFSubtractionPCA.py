@@ -365,11 +365,11 @@ class CreateResidualsModule(ProcessingModule):
         delta_para = -1.*self.m_im_arr_in_port.get_attribute("PARANG")
         res_rot = np.zeros(shape=res_arr.shape)
 
-        for i in range(0, len(delta_para)):
+        for i, angle in enumerate(delta_para):
             res_temp = res_arr[i, ]
             # ndimage.rotate rotates in clockwise direction for positive angles
             res_rot[i, ] = ndimage.rotate(res_temp,
-                                          delta_para[i]+self.m_extra_rot,
+                                          angle+self.m_extra_rot,
                                           reshape=False)
 
         # create mean
@@ -770,10 +770,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
             # inverse rotation
             delta_para = -1.*self.m_star_in_port.get_attribute("PARANG")
             res_array = np.zeros(shape=tmp_without_psf.shape)
-            for j, item in enumerate(delta_para):
+            for j, angle in enumerate(delta_para):
                 res_temp = tmp_without_psf[j, ]
                 # ndimage.rotate rotates in clockwise direction for positive angles
-                res_array[j, ] = ndimage.rotate(res_temp, item+self.m_extra_rot, reshape=False)
+                res_array[j, ] = ndimage.rotate(res_temp, angle+self.m_extra_rot, reshape=False)
 
             # create residuals
             # 1.) The de-rotated result images
@@ -782,7 +782,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
                     self.m_star_in_port)
                 self.m_res_arr_out_ports[pca_number].add_history_information("PSF subtraction",
-                                                                             "PcaPsfSubtractionModule")
+                                                                             "PCA")
 
             # 2.) mean
             tmp_res_rot_mean = np.mean(res_array, axis=0)
@@ -869,8 +869,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
 
-        self.m_res_mean_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
-        self.m_res_median_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
-        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "PcaPsfSubtractionModule")
+        self.m_res_mean_out_port.add_history_information("PSF subtraction", "PCA")
+        self.m_res_median_out_port.add_history_information("PSF subtraction", "PCA")
+        self.m_res_rot_mean_clip_out_port.add_history_information("PSF subtraction", "PCA")
 
         self.m_res_mean_out_port.close_port()

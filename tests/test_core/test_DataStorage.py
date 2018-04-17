@@ -49,7 +49,7 @@ class TestDataStorage(object):
         file_in = "/test/test.hdf5"
 
         with pytest.raises(AssertionError):
-            storage = DataStorage(file_in)
+            DataStorage(file_in)
 
     def test_open_close_connection(self):
         storage = DataStorage(self.test_data)

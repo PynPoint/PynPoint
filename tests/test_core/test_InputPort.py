@@ -6,23 +6,15 @@ import h5py
 import numpy as np
 
 from PynPoint.Core.DataIO import InputPort, DataStorage
+from PynPoint.Util.TestTools import create_random
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
 def setup_module():
-    file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-
-    np.random.seed(1)
-    images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-    parang = np.arange(1, 11, 1)
-
-    h5f = h5py.File(file_in, "w")
-    dset = h5f.create_dataset("images", data=images)
-    dset.attrs['PIXSCALE'] = 0.01
-    h5f.create_dataset("header_images/PARANG", data=parang)
-    h5f.close()
+    path = os.path.dirname(__file__)
+    create_random(path)
 
 def teardown_module():
     file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
@@ -42,7 +34,8 @@ class TestInputPort(object):
         assert np.allclose(port[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(port.get_all()), 1.0506056979365338e-06, rtol=limit, atol=0.)
 
-        arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05, -0.00038631277795631806), dtype=np.float64)
+        arr_tmp = np.asarray((0.00032486907273264834, -2.4494781298462809e-05,
+                              -0.00038631277795631806), dtype=np.float64)
         assert np.allclose(port[0:3, 0, 0], arr_tmp, rtol=limit, atol=0.)
 
         assert len(port[0:2, 0, 0]) == 2

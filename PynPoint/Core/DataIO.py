@@ -1,5 +1,5 @@
 """
-Modules to save and load data from a central DataStorage (.hdf5).
+Modules to access data and attributes in the central HDF5 database.
 """
 
 import warnings
@@ -45,8 +45,10 @@ class DataStorage(object):
 
         :return: None
         """
+
         if self.m_open:
             return
+
         self.m_data_bank = h5py.File(self._m_location, mode='a')
         self.m_open = True
 
@@ -57,8 +59,10 @@ class DataStorage(object):
 
         :return: None
         """
+
         if not self.m_open:
             return
+
         self.m_data_bank.close()
         self.m_open = False
 
@@ -72,6 +76,7 @@ class Port:
     Furthermore a port knows exact one DataStorage instance and whether it is active or not
     (self._m_data_base_active).
     """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -93,6 +98,7 @@ class Port:
         """
 
         assert (isinstance(tag, str)), "Error: Port tags need to be strings."
+
         self._m_tag = tag
         self._m_data_storage = data_storage_in
         self._m_data_base_active = False
@@ -104,6 +110,7 @@ class Port:
 
         :return:
         """
+
         return self._m_tag
 
     def close_port(self):
@@ -113,6 +120,7 @@ class Port:
 
         :return: None
         """
+
         if self._m_data_base_active:
             self._m_data_storage.close_connection()
             self._m_data_base_active = False
@@ -123,6 +131,7 @@ class Port:
 
         :return: None
         """
+
         if not self._m_data_base_active:
             self._m_data_storage.open_connection()
             self._m_data_base_active = True
@@ -137,6 +146,7 @@ class Port:
 
         :return: None
         """
+
         self._m_data_storage = data_base_in
 
 
@@ -155,7 +165,7 @@ class ConfigPort(Port):
         the settings stored in the central database under the tag `config`. An instance of the
         ConfigPort is created in the constructor of PypelineModule such that the attributes in
         the ConfigPort can be accessed from within all type of modules. For example:
-        
+
         .. code-block:: python
 
             memory = self._m_config_port.get_attribute("MEMORY")
@@ -171,24 +181,31 @@ class ConfigPort(Port):
 
         :return: None
         """
+
         super(ConfigPort, self).__init__(tag, data_storage_in)
+
+        if tag != "config":
+            raise ValueError("The tag name of the central configuration should be 'config'.")
 
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use and open it.
+        Internal function which checks if the ConfigPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
+        :return: Returns True if the ConfigPort can be used, False if not.
         :rtype: bool
         """
 
+        check = True
+
         if self._m_data_storage is None:
-            warnings.warn("Port can not load data unless a database is connected")
-            return False
+            warnings.warn("ConfigPort can not load data unless a database is connected.")
+            check = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        if check is True:
+            if not self._m_data_base_active:
+                self.open_port()
 
-        return True
+        return check
 
     def _check_if_data_exists(self):
         """
@@ -205,14 +222,16 @@ class ConfigPort(Port):
         Internal function which checks the error cases.
         """
 
+        check = True
+
         if not self._check_status_and_activate():
-            return False
+            check = False
 
         if self._check_if_data_exists() is False:
             warnings.warn("No data under the tag which is linked by the InputPort")
-            return False
+            check = False
 
-        return True
+        return check
 
     def get_attribute(self,
                       name):
@@ -227,14 +246,16 @@ class ConfigPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            value = None
 
         if name in self._m_data_storage.m_data_bank["config"].attrs:
-            return self._m_data_storage.m_data_bank["config"].attrs[name]
+            value = self._m_data_storage.m_data_bank["config"].attrs[name]
 
         else:
             warnings.warn('No attribute found - requested: %s' % name)
-            return None
+            value = None
+
+        return value
 
 
 class InputPort(Port):
@@ -285,6 +306,7 @@ class InputPort(Port):
 
         :return: None
         """
+
         super(InputPort, self).__init__(tag, data_storage_in)
 
         if tag == "config":
@@ -297,13 +319,14 @@ class InputPort(Port):
 
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use and open it.
+        Internal function which checks if the InputPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
+        :return: Returns True if the InputPort can be used, False if not.
         :rtype: bool
         """
+
         if self._m_data_storage is None:
-            warnings.warn("Port can not load data unless a database is connected")
+            warnings.warn("InputPort can not load data unless a database is connected")
             return False
 
         if not self._m_data_base_active:
@@ -348,9 +371,7 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        result = self._m_data_storage.m_data_bank[self._m_tag][item]
-
-        return result
+        return self._m_data_storage.m_data_bank[self._m_tag][item]
 
     def get_shape(self):
         """
@@ -360,10 +381,12 @@ class InputPort(Port):
         :return: Shape of the dataset, None if dataset does not exist.
         :rtype: tuple
         """
+
         if not self._check_error_cases():
             return
 
         self.open_port()
+
         return self._m_data_storage.m_data_bank[self._m_tag].shape
 
     def get_ndim(self):
@@ -373,10 +396,12 @@ class InputPort(Port):
         :return: Number of dimensions of the dataset, None if dataset does not exist.
         :rtype: int
         """
+
         if not self._check_error_cases():
             return
 
         self.open_port()
+
         return self._m_data_storage.m_data_bank[self._m_tag].ndim
 
     def get_all(self):
@@ -413,22 +438,22 @@ class InputPort(Port):
         if not self._check_error_cases():
             return
 
-        # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            # item unpacks numpy types to python types hdf5 only uses numpy types
-            attr = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
-            try:
-                return attr.item()
-            except:
-                return attr
+            # try:
+            #     return attr.item()
+            #
+            # except:
+            #     return attr
 
         if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
             return np.asarray(self._m_data_storage.m_data_bank
                               [("header_" + self._m_tag + "/" + name)][...])
-        else:
-            warnings.warn('No attribute found - requested: %s' % name)
-            return None
+
+        warnings.warn("No attribute found - requested: %s." % name)
+
+        return None
 
     def get_all_static_attributes(self):
         """
@@ -440,6 +465,7 @@ class InputPort(Port):
         :return: Dictionary of all attributes {attr_name: attr_value}
         :rtype: dict
         """
+
         if not self._check_error_cases():
             return
 
@@ -460,13 +486,13 @@ class InputPort(Port):
 
         result = []
 
-        # check if header Group exists
         if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
             for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
                 result.append(key)
+
             return result
-        else:
-            return None
+
+        return None
 
 
 class OutputPort(Port):
@@ -525,6 +551,7 @@ class OutputPort(Port):
         """
 
         super(OutputPort, self).__init__(tag, data_storage_in)
+
         self.m_activate = activate_init
 
         if tag == "config":
@@ -535,19 +562,19 @@ class OutputPort(Port):
             raise ValueError("The tag name 'fits_header' is reserved for storage of the FITS "
                              "headers.")
 
-    # internal functions
     def _check_status_and_activate(self):
         """
-        Internal function which checks if the port is ready to use.
+        Internal function which checks if the OutputPort is ready to use and open it.
 
-        :return: Returns True if the Port can be used, False if not.
-        :rtype: Boolean
+        :return: Returns True if the OutputPort can be used, False if not.
+        :rtype: bool
         """
+
         if not self.m_activate:
             return False
 
         if self._m_data_storage is None:
-            warnings.warn("Port can not store data unless a database is connected.")
+            warnings.warn("OutputPort can not store data unless a database is connected.")
             return False
 
         if not self._m_data_base_active:
@@ -555,64 +582,70 @@ class OutputPort(Port):
 
         return True
 
-    def _initialize_database_entry(self,
-                                   first_data,
-                                   tag,
-                                   data_dim=None):
+    def _initialize_database(self,
+                             first_data,
+                             tag,
+                             data_dim=None):
         """
-        Internal function which is used to create (initialize) a data base in .hdf5 data base.
+        Internal function which is used to initialize the HDF5 database.
 
-        :param first_data: The initial data
+        :param first_data: The initial data.
         :type first_data: bytearray
-        :param data_dim: number of desired dimensions. If None the dimension of the first_data is
-            used.
+        :param data_dim: Number of desired dimensions. The dimensions of *first_data* is used if
+                         set to None.
+        :type data_dim: int
 
         :return: None
         """
-        # convert input data into numpy array
-        first_data = np.asarray(first_data)
 
-        # check Error cases
-        if first_data.ndim > 3 or first_data.ndim < 1:
-            raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
-                             'attributes to save as int, float, or string.')
+        def _ndim_check(data_dim, first_dim):
+            if first_dim > 3 or first_dim < 1:
+                raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
+                                 'attributes to save as int, float, or string.')
+
+            if data_dim > 3 or data_dim < 1:
+                raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
+
+            elif data_dim < first_dim:
+                raise ValueError('The dimensions of the data should be equal to or larger than the '
+                                 'dimensions of the input data.')
+
+            elif data_dim == 3 and first_dim == 1:
+                raise ValueError('Cannot initialize 1D data in 3D data container.')
+
+        first_data = np.asarray(first_data)
 
         if data_dim is None:
             data_dim = first_data.ndim
 
-        if data_dim > 3 or data_dim < 1:
-            raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
+        _ndim_check(data_dim, first_data.ndim)
 
-        if data_dim < first_data.ndim:
-            raise ValueError('The dimensions of the data should be equal to or larger than the '
-                             'dimensions of the input data.')
-
-        if data_dim == 3 and first_data.ndim == 1:
-            raise ValueError('Cannot initialize 1D data in 3D data container.')
-
-        # if no data_dim is given check the input data
         if data_dim == first_data.ndim:
-            if first_data.ndim == 1:  # case (1,1)
-                data_shape = (None,)
-            elif first_data.ndim == 2:  # case (2,2)
+            if first_data.ndim == 1: # case (1,1)
+                data_shape = (None, )
+
+            elif first_data.ndim == 2: # case (2,2)
                 data_shape = (None, first_data.shape[1])
-            elif first_data.ndim == 3:  # case (3,3)
+
+            elif first_data.ndim == 3: # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
+
             else:
-                raise ValueError('Input shape not supported')  # pragma: no cover
+                raise ValueError('Input shape not supported.')
+
         else:
-            if data_dim == 2:  # case (2, 1)
+            if data_dim == 2: # case (2,1)
                 data_shape = (None, first_data.shape[0])
                 first_data = first_data[np.newaxis, :]
-            elif data_dim == 3:  # case (3, 2)
+
+            elif data_dim == 3: # case (3,2)
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
-            else:
-                raise ValueError('Input shape not supported') # pragma: no cover
 
-        self._m_data_storage.m_data_bank.create_dataset(tag,
-                                                        data=first_data,
-                                                        maxshape=data_shape)
+            else:
+                raise ValueError('Input shape not supported.')
+
+        self._m_data_storage.m_data_bank.create_dataset(tag, data=first_data, maxshape=data_shape)
 
     def _set_all_key(self,
                      tag,
@@ -621,7 +654,7 @@ class OutputPort(Port):
                      keep_attributes=False):
         """
         Internal function which sets the values of a data set under the tag "tag" using the data
-        of the input "data". If old data exists it will be overwritten. This Function is used in
+        of the input "data". If old data exists it will be overwritten. This function is used in
         set_all() as well as for setting non-static attributes.
 
         :param tag: Data base tag of the data to be modified
@@ -629,16 +662,18 @@ class OutputPort(Port):
         :param data: The data which is used to replace the old data.
         :type data: numpy array
         :param data_dim: Dimension of the data that is saved. See set_all() and append of more
-        documentation()
+                         documentation()
         :type data_dim: int
-        :param keep_attributes: Parameter which can be set True to keep all static attributes of the
-         dataset. Non-static attributes will be kept, (Not needed for setting non-static attributes)
-        :type keep_attributes: Boolean
+        :param keep_attributes: Parameter which can be set True to keep all static attributes of
+                                the dataset. Non-static attributes will be kept, (Not needed for
+                                setting non-static attributes)
+        :type keep_attributes: bool
 
         :return: None
         """
 
         tmp_attributes = {}
+
         # check if database entry is new...
         if tag in self._m_data_storage.m_data_bank:
             # NO -> database entry exists
@@ -651,12 +686,12 @@ class OutputPort(Port):
             del self._m_data_storage.m_data_bank[tag]
 
         # make new database entry
-        self._initialize_database_entry(data,
-                                        tag,
-                                        data_dim=data_dim)
+        self._initialize_database(data, tag, data_dim=data_dim)
+
         if keep_attributes:
             for key, value in tmp_attributes.iteritems():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
+
         return
 
     def _append_key(self,
@@ -672,9 +707,7 @@ class OutputPort(Port):
         # check if database entry is new...
         if tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
-            self._initialize_database_entry(data,
-                                            tag,
-                                            data_dim=data_dim)
+            self._initialize_database(data, tag, data_dim=data_dim)
             return
 
         # NO -> database entry exists
@@ -698,31 +731,29 @@ class OutputPort(Port):
         def _type_check():
             if tmp_dim == data.ndim:
                 if tmp_dim == 3:
-                    return (tmp_shape[1] == data.shape[1]) \
-                        and (tmp_shape[2] == data.shape[2])
+                    return (tmp_shape[1] == data.shape[1]) and (tmp_shape[2] == data.shape[2])
+
                 elif tmp_dim == 2:
                     return tmp_shape[1] == data.shape[1]
-                else:
-                    return True
-            else:
-                return False
+
+                return True
+
+            return False
 
         if _type_check():
-
             # YES -> dim and type match
             # we always append in axis one independent of the dimension
             # 1D case
-            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0],
-                                                         axis=0)
+            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
+
             return
 
         # NO -> shape or type is different
         # Check force
         if force:
             # YES -> Force is true
-            self._set_all_key(tag,
-                              data=data)
+            self._set_all_key(tag, data=data)
             return
 
         # NO -> Error message
@@ -739,13 +770,17 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
         self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
     def del_all_data(self):
-        # check if port is ready to use
+        """
+        Delete all data belonging to the database tag.
+        """
+
         if not self._check_status_and_activate():
             return
 
@@ -844,7 +879,6 @@ class OutputPort(Port):
         :return: None
         """
 
-        # check if port is ready to use
         if not self._check_status_and_activate():
             return
 
@@ -859,6 +893,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self.m_activate = True
 
     def deactivate(self):
@@ -867,6 +902,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self.m_activate = False
 
     def add_attribute(self,
@@ -909,7 +945,6 @@ class OutputPort(Port):
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
         else:
-            # add information in sub Group
             self._set_all_key(tag=("header_" + self._m_tag + "/" + name),
                               data=np.asarray(value))
 
@@ -945,6 +980,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -970,6 +1006,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if input_port.tag == self._m_tag:
             return
 
@@ -985,8 +1022,7 @@ class OutputPort(Port):
                 if "header_" + self._m_tag + "/" + attr_name in self._m_data_storage.m_data_bank:
                     del self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name]
 
-                self._m_data_storage.m_data_bank["header_" + self._m_tag + "/" + attr_name] = \
-                    attr_data
+                self._m_data_storage.m_data_bank["header_"+self._m_tag+"/"+attr_name] = attr_data
 
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
@@ -1007,15 +1043,18 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
-        elif ("header_" + self._m_tag + "/" + name) in self._m_data_storage.m_data_bank:
+
+        elif "header_"+self._m_tag+"/"+name in self._m_data_storage.m_data_bank:
             # remove non-static attribute
             del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/" + name)]
+
         else:
             warnings.warn("Attribute '%s' does not exist and could not be deleted." % name)
 
@@ -1025,6 +1064,7 @@ class OutputPort(Port):
 
         :return: None
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -1040,45 +1080,47 @@ class OutputPort(Port):
                                name,
                                comparison_value):
         """
-        Checks if a attribute exists and if it is equal to a comparison value.
+        Checks if a static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the attribute
+        :param name: Name of the static attribute.
         :type name: str
-        :param comparison_value: Value for comparison
+        :param comparison_value: Value for comparison.
 
         :return:
-                     * 1 if the attribute does not exist
-                     * 0 if the attribute exists and is equal,
-                     * -1 if the attribute exists but is not equal
+                     * 1 if the static attribute does not exist
+                     * 0 if the static attribute exists and is equal
+                     * -1 if the static attribute exists but is not equal
         :rtype: int
         """
+
         if not self._check_status_and_activate():
             return
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
                 return 0
-            else:
-                return -1
-        else:
-            return 1
+
+            return -1
+
+        return 1
 
     def check_non_static_attribute(self,
                                    name,
                                    comparison_value):
         """
-        Checks if a attribute exists and if it is equal to a comparison value.
+        Checks if a non-static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the attribute
+        :param name: Name of the non-static attribute.
         :type name: str
-        :param comparison_value: Value for comparison
+        :param comparison_value: Value for comparison.
 
         :return:
-                     * 1 if the attribute does not exist
-                     * 0 if the attribute exists and is equal,
-                     * -1 if the attribute exists but is not equal
+                     * 1 if the non-static attribute does not exist
+                     * 0 if the non-static attribute exists and is equal
+                     * -1 if the non-static attribute exists but is not equal
         :rtype: int
         """
+
         if not self._check_status_and_activate():
             return
 
@@ -1086,14 +1128,15 @@ class OutputPort(Port):
 
         if group in self._m_data_storage.m_data_bank:
             if name in self._m_data_storage.m_data_bank[group]:
-                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:], comparison_value):
+                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:],
+                                  comparison_value):
                     return 0
-                else:
-                    return -1
-            else:
-                return 1
-        else:
+
+                return -1
+
             return 1
+
+        return 1
 
     def add_history_information(self,
                                 pipeline_step,
@@ -1109,8 +1152,8 @@ class OutputPort(Port):
 
         :return: None
         """
-        self.add_attribute("History: " + pipeline_step,
-                           history_information)
+
+        self.add_attribute("History: " + pipeline_step, history_information)
 
     def flush(self):
         """
@@ -1119,4 +1162,5 @@ class OutputPort(Port):
 
         :return: None
         """
+
         self._m_data_storage.m_data_bank.flush()

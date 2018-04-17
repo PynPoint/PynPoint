@@ -8,8 +8,8 @@ import numpy as np
 
 from statsmodels.robust import mad
 
-from PynPoint.Util import WaveletAnalysisCapsule
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.WaveletAnalysis import WaveletAnalysisCapsule
 
 
 class CwtWaveletConfiguration(object):

@@ -1,5 +1,5 @@
 """
-Module for writing data as .fits file.
+Module for writing data as FITS file.
 """
 
 import os
@@ -12,13 +12,13 @@ from PynPoint.Core.Processing import WritingModule
 
 class FitsWritingModule(WritingModule):
     """
-    Module for writing a data set of the central .hdf5 data base as .fits file. The data and all
+    Module for writing a data set of the central HDF5 database as FITS file. The data and all
     attached attributes will be saved. Beside typical image stacks it is possible to export for
-    example non static header information. To choose the data set from the data base its tag
+    example non static header information. To choose the data set from the database its tag
     / key has to be specified. FitsWritingModule is a Writing Module and supports to use the
     Pypeline default output directory as well as a own location. See
     :class:`PynPoint.core.Processing.WritingModule` for more information. Note that per default
-    this module will overwrite an existing .fits file with the same filename.
+    this module will overwrite an existing FITS file with the same filename.
     """
 
     def __init__(self,
@@ -35,18 +35,18 @@ class FitsWritingModule(WritingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param file_name: Name of the .fits output file. Requires the fits extension.
+        :param file_name: Name of the FITS output file. Requires the FITS extension.
         :type file_name: str
-        :param output_dir: Output directory where the .fits file will be stored. If no folder is
+        :param output_dir: Output directory where the FITS file will be stored. If no folder is
                            specified the Pypeline default is chosen.
         :type output_dir: str
-        :param data_tag: Tag of the data base entry the module has to export as .fits file.
+        :param data_tag: Tag of the database entry the module has to export as FITS file.
         :type data_tag: str
         :param data_range: A two element tuple which specifies a begin and end frame of the export.
                            This can be used to save a subsets of huge dataset. If None the whole
                            dataset will be exported.
         :type data_range: tuple
-        :param overwrite: Overwrite existing .fits file with identical filename.
+        :param overwrite: Overwrite existing FITS file with identical filename.
         :type overwrite: bool
 
         :return: None
@@ -58,7 +58,7 @@ class FitsWritingModule(WritingModule):
             raise ValueError("Output file_name needs to be a string.")
 
         if not file_name.endswith(".fits"):
-            raise ValueError("Output file_name requires the fits extension.")
+            raise ValueError("Output file_name requires the FITS extension.")
 
         self.m_file_name = file_name
         self.m_data_port = self.add_input_port(data_tag)
@@ -67,7 +67,7 @@ class FitsWritingModule(WritingModule):
 
     def run(self):
         """
-        Run method of the module. Creates a .fits file and saves the data as well as the
+        Run method of the module. Creates a FITS file and saves the data as well as the
         corresponding attributes.
 
         :return: None

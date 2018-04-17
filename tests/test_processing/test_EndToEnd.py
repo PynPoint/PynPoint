@@ -7,9 +7,9 @@ import numpy as np
 from astropy.io import fits
 from scipy.ndimage import shift
 
-from PynPoint import Pypeline
+from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage, InputPort
-from PynPoint.IOmodules import FitsReadingModule
+from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule, RemoveFramesModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
@@ -18,6 +18,7 @@ from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtr
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
+from PynPoint.Util.TestTools import create_config
 
 warnings.simplefilter("always")
 
@@ -39,16 +40,16 @@ def setup_module():
     contrast = 1e-2
 
     parang = []
-    for i in range(len(parang_start)):
+    for i, item in enumerate(parang_start):
         for j in range(ndit[i]):
-            parang.append(parang_start[i]+float(j)*(parang_end[i]-parang_start[i])/float(ndit[i]))
+            parang.append(item+float(j)*(parang_end[i]-item)/float(ndit[i]))
 
     np.random.seed(1)
 
     p_count = 0
-    for j in range(len(fwhm)):
+    for j, item in enumerate(fwhm):
 
-        sigma = fwhm[j] / ( 2. * math.sqrt(2.*math.log(2.)) )
+        sigma = item / ( 2. * math.sqrt(2.*math.log(2.)) )
 
         x = np.arange(0., npix[j], 1.)
         y = np.arange(0., npix[j]+2, 1.)
@@ -81,30 +82,8 @@ def setup_module():
         hdu.data = image
         hdu.writeto(test_dir+'adi'+str(j+1).zfill(2)+'.fits')
 
-    config_file = os.path.dirname(__file__) + "/PynPoint_config.ini"
-
-    f = open(config_file, 'w')
-    f.write('[header]\n\n')
-    f.write('INSTRUMENT: INSTRUME\n')
-    f.write('NFRAMES: NAXIS3\n')
-    f.write('EXP_NO: ESO DET EXP NO\n')
-    f.write('NDIT: ESO DET NDIT\n')
-    f.write('PARANG_START: ESO ADA POSANG\n')
-    f.write('PARANG_END: ESO ADA POSANG END\n')
-    f.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    f.write('DITHER_Y: None\n')
-    f.write('DIT: None\n')
-    f.write('LATITUDE: None\n')
-    f.write('LONGITUDE: None\n')
-    f.write('PUPIL: None\n')
-    f.write('DATE: None\n')
-    f.write('RA: None\n')
-    f.write('DEC: None\n\n')
-    f.write('[settings]\n\n')
-    f.write('PIXSCALE: 0.027\n')
-    f.write('MEMORY: 100\n')
-    f.write('CPU: 1')
-    f.close()
+    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
+    create_config(filename)
 
 def teardown_module():
     test_dir = os.path.dirname(__file__) + "/"

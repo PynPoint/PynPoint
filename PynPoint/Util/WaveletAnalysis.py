@@ -2,16 +2,17 @@
 Wrapper utils for the wavelet functions for the mlpy cwt implementation (see continous.py)
 """
 
-# --- Wavelet analysis Capsule ---------
 import copy
+
 import numpy as np
+import matplotlib.pyplot as plt
+
+from numba import jit
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
-from numba import jit
-import matplotlib.pyplot as plt
 
-from PynPoint.Util.continous import *
+from PynPoint.Util.Continuous import autoscales, cwt, icwt, fourier_from_scales
 
 
 @jit(cache=True)
@@ -365,5 +366,3 @@ class WaveletAnalysisCapsule(object):
         """
         self.__plot_or_save_signal()
         plt.savefig(location)
-
-    # ---------------------------------

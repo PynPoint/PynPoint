@@ -59,11 +59,12 @@ class ImageWrapper(BasePynpointWrapper):
         :param full: if set to True then the masked region will be included
         :return: an image of the PSF model
         """
+
         im_temp = self.psf_im_arr[ind, ]
         if self.cent_size is not None:
             if full is True:
                 im_temp = im_temp
             elif full is False:
                 im_temp = im_temp * self.cent_mask
-        return im_temp
 
+        return im_temp

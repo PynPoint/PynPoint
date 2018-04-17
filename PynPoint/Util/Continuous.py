@@ -16,17 +16,14 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from numpy import *
+import numpy as np
 from scipy.special import gamma
 
-__all__ = ["cwt", "icwt", "autoscales", "fourier_from_scales",
-           "scales_from_fourier"]
-
-PI2 = 2 * pi
+PI2 = 2 * np.pi
 
 
 def normalization(s, dt):
-    return sqrt((PI2 * s) / dt)
+    return np.sqrt((PI2 * s) / dt)
 
 
 def morletft(s, w, w0, dt):
@@ -42,12 +39,12 @@ def morletft(s, w, w0, dt):
     """
 
     p = 0.75112554446494251  # pi**(-1.0/4.0)
-    wavelet = zeros((s.shape[0], w.shape[0]))
+    wavelet = np.zeros((s.shape[0], w.shape[0]))
     pos = w > 0
 
     for i in range(s.shape[0]):
         n = normalization(s[i], dt)
-        wavelet[i][pos] = n * p * exp(-(s[i] * w[pos] - w0) ** 2 / 2.0)
+        wavelet[i][pos] = n * p * np.exp(-(s[i] * w[pos] - w0) ** 2 / 2.0)
 
     return wavelet
 
@@ -64,13 +61,13 @@ def dogft(s, w, order, dt):
       * (normalized) fourier transformed DOG function
     """
 
-    p = - (0.0 + 1.0j) ** order / sqrt(gamma(order + 0.5))
-    wavelet = zeros((s.shape[0], w.shape[0]), dtype=complex128)
+    p = - (0.0 + 1.0j) ** order / np.sqrt(gamma(order + 0.5))
+    wavelet = np.zeros((s.shape[0], w.shape[0]), dtype=np.complex128)
 
     for i in range(s.shape[0]):
         n = normalization(s[i], dt)
         h = s[i] * w
-        wavelet[i] = n * p * h ** order * exp(-h ** 2 / 2.0)
+        wavelet[i] = n * p * h ** order * np.exp(-h ** 2 / 2.0)
 
     return wavelet
 
@@ -91,13 +88,13 @@ def angularfreq(N, dt):
     # See (5) at page 64.
 
     N2 = int(N / 2.0)
-    w = empty(N)
+    w = np.empty(N)
 
     for i in range(w.shape[0]):
         if i <= N2:
-            w[i] = (2 * pi * i) / (N * dt)
+            w[i] = (2 * np.pi * i) / (N * dt)
         else:
-            w[i] = (2 * pi * (i - N)) / (N * dt)
+            w[i] = (2 * np.pi * (i - N)) / (N * dt)
 
     return w
 
@@ -123,16 +120,16 @@ def autoscales(N, dt, dj, wf, p):
     """
 
     if wf == 'dog':
-        s0 = (dt * sqrt(p + 0.5)) / pi
+        s0 = (dt * np.sqrt(p + 0.5)) / np.pi
     elif wf == 'morlet':
-        s0 = (dt * (p + sqrt(2 + p ** 2))) / (2 * pi)
+        s0 = (dt * (p + np.sqrt(2 + p ** 2))) / (2 * np.pi)
     else:
-        raise ValueError('wavelet function not available')
+        raise ValueError('Wavelet function not available.')
 
     # See (9) and (10) at page 67.
 
-    J = int(floor(dj ** -1 * log2((N * dt) / s0)))
-    s = empty(J + 1)
+    J = int(np.floor(dj ** -1 * np.log2((N * dt) / s0)))
+    s = np.empty(J + 1)
 
     for i in range(s.shape[0]):
         s[i] = s0 * 2 ** (i * dj)
@@ -157,12 +154,12 @@ def fourier_from_scales(scales, wf, p):
        fourier wavelengths
     """
 
-    scales_arr = asarray(scales)
+    scales_arr = np.asarray(scales)
 
     if wf == 'dog':
-        return (2 * pi * scales_arr) / sqrt(p + 0.5)
+        return (2 * np.pi * scales_arr) / np.sqrt(p + 0.5)
     elif wf == 'morlet':
-        return (4 * pi * scales_arr) / (p + sqrt(2 + p ** 2))
+        return (4 * np.pi * scales_arr) / (p + np.sqrt(2 + p ** 2))
     else:
         raise ValueError('wavelet function not available')
 
@@ -183,12 +180,12 @@ def scales_from_fourier(f, wf, p):
        scales
     """
 
-    f_arr = asarray(f)
+    f_arr = np.asarray(f)
 
     if wf == 'dog':
-        return (f_arr * sqrt(p + 0.5)) / (2 * pi)
+        return (f_arr * np.sqrt(p + 0.5)) / (2 * np.pi)
     elif wf == 'morlet':
-        return (f_arr * (p + sqrt(2 + p ** 2))) / (4 * pi)
+        return (f_arr * (p + np.sqrt(2 + p ** 2))) / (4 * np.pi)
     else:
         raise ValueError('wavelet function not available')
 
@@ -214,8 +211,8 @@ def cwt(x, dt, scales, wf='dog', p=2):
           transformed data
     """
 
-    x_arr = asarray(x) - mean(x)
-    scales_arr = asarray(scales)
+    x_arr = np.asarray(x) - np.mean(x)
+    scales_arr = np.asarray(scales)
 
     if x_arr.ndim is not 1:
         raise ValueError('x must be an 1d numpy array of list')
@@ -232,12 +229,12 @@ def cwt(x, dt, scales, wf='dog', p=2):
     else:
         raise ValueError('wavelet function is not available')
 
-    X_ARR = empty((wft.shape[0], wft.shape[1]), dtype=complex128)
+    X_ARR = np.empty((wft.shape[0], wft.shape[1]), dtype=np.complex128)
 
-    x_arr_ft = fft.fft(x_arr)
+    x_arr_ft = np.fft.fft(x_arr)
 
     for i in range(X_ARR.shape[0]):
-        X_ARR[i] = fft.ifft(x_arr_ft * wft[i])
+        X_ARR[i] = np.fft.ifft(x_arr_ft * wft[i])
 
     return X_ARR
 
@@ -263,17 +260,17 @@ def icwt(X, dt, scales, wf='dog', p=2):
           data
     """
 
-    X_arr = asarray(X)
-    scales_arr = asarray(scales)
+    X_arr = np.asarray(X)
+    scales_arr = np.asarray(scales)
 
     if X_arr.shape[0] != scales_arr.shape[0]:
         raise ValueError('X, scales: shape mismatch')
 
     # See (11), (13) at page 68
-    X_ARR = empty_like(X_arr)
+    X_ARR = np.empty_like(X_arr)
     for i in range(scales_arr.shape[0]):
-        X_ARR[i] = X_arr[i] / sqrt(scales_arr[i])
+        X_ARR[i] = X_arr[i] / np.sqrt(scales_arr[i])
 
-    x = sum(real(X_ARR), axis=0)
+    x = np.sum(np.real(X_ARR), axis=0)
 
     return x
