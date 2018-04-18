@@ -148,7 +148,7 @@ class StarExtractionModule(ProcessingModule):
 
             im_smooth = cv2.GaussianBlur(subimage, kernel, sigma)
 
-            # argmax[0] s the y position and argmax[1] is the x position
+            # argmax[0] is the y position and argmax[1] is the x position
             argmax = np.asarray(np.unravel_index(im_smooth.argmax(), im_smooth.shape))
 
             if self.m_position is not None:
