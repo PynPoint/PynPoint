@@ -117,6 +117,12 @@ class StarExtractionModule(ProcessingModule):
             if self.m_position is None:
                 subimage = image
 
+            elif self.m_position[2] is None:
+                pos_x = self.m_position[0]
+                pos_y = self.m_position[1]
+                subimage = image
+                width = np.shape(image)[0]
+
             else:
                 if self.m_position.ndim == 1:
                     pos_x = self.m_position[0]
