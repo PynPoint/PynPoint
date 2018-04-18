@@ -159,19 +159,34 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                       var_image,
                       mean_image,
                       source_image,
-                      out_image):
+                      out_image,
+                      create_map):
+
+        if create_map:
+            bad_pixel_map = np.ones(dev_image.shape)
+
+        else:
+            bad_pixel_map = None
 
         for i in range(source_image.shape[0]):
             for j in range(source_image.shape[1]):
+
                 if dev_image[i][j] < var_image[i][j]:
                     out_image[i][j] = source_image[i][j]
+
                 else:
                     out_image[i][j] = mean_image[i][j]
+
+                    if create_map:
+                        bad_pixel_map[i][j] = 0
+
+        return bad_pixel_map
 
     def __init__(self,
                  name_in="sigma_filtering",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_bp_clean",
+                 map_out_tag=None,
                  box=9,
                  sigma=5,
                  iterate=1):
@@ -184,6 +199,9 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output.
         :type image_out_tag: str
+        :param map_out_tag: Tag of the database entry with the bad pixel map that is written as
+                            output. No data is written if set to None.
+        :type map_out_tag: str
         :param box: Size of the sigma filter.
         :type box: int
         :param sigma: Sigma threshold.
@@ -198,6 +216,10 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+        if map_out_tag is None:
+            self.m_map_out_port = None
+        else:
+            self.m_map_out_port = self.add_output_port()
 
         self.m_box = box
         self.m_sigma = sigma
@@ -237,11 +259,25 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
                 out_image = image_in
 
-                self._sigma_filter(dev_image,
-                                   var_image,
-                                   mean_image,
-                                   source_image,
-                                   out_image)
+                if self.m_map_out_port is None:
+
+                    bad_pixel_map = self._sigma_filter(dev_image,
+                                                       var_image,
+                                                       mean_image,
+                                                       source_image,
+                                                       out_image,
+                                                       False)
+
+                else:
+
+                    bad_pixel_map = self._sigma_filter(dev_image,
+                                                       var_image,
+                                                       mean_image,
+                                                       source_image,
+                                                       out_image,
+                                                       True)
+
+                    self.m_map_out_port.append(bad_pixel_map, data_dim=3)
 
                 iterate -= 1
 
@@ -259,6 +295,14 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                                                       "Sigma filter = " + str(self.m_sigma))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        if self.m_map_out_port is None:
+
+            self.m_map_out_port.add_history_information("Bad pixel cleaning",
+                                                        "Sigma filter = " + str(self.m_sigma))
+
+            self.m_map_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
         self.m_image_out_port.close_port()
 
 
