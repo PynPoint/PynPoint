@@ -219,7 +219,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         if map_out_tag is None:
             self.m_map_out_port = None
         else:
-            self.m_map_out_port = self.add_output_port()
+            self.m_map_out_port = self.add_output_port(map_out_tag)
 
         self.m_box = box
         self.m_sigma = sigma
