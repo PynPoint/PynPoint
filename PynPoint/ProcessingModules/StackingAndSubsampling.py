@@ -76,26 +76,32 @@ class StackAndSubsetModule(ProcessingModule):
                 raise ValueError("The number of images of the destination subset is larger than "
                                  "the number of images in the stacked source.")
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
+        if "PARANG" in non_static:
+            parang = self.m_image_in_port.get_attribute("PARANG")
+        else:
+            parang = None
 
         if self.m_stacking is not None:
             frames = memory_frames(self.m_stacking, nimages)
 
             nimages_new = np.size(frames)-1
-            parang_new = np.zeros(nimages_new)
+            if parang is not None:
+                parang_new = np.zeros(nimages_new)
             im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
             for i in range(nimages_new):
                 progress(i, nimages_new, "Running StackAndSubsetModule...")
 
-                parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                if parang is not None:
+                    parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
                 im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
                                       axis=0)
 
             im_shape = im_new.shape
 
         else:
-            parang_new = np.copy(parang)
+            if parang is not None:
+                parang_new = np.copy(parang)
 
         sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
         sys.stdout.flush()
@@ -103,7 +109,8 @@ class StackAndSubsetModule(ProcessingModule):
         if self.m_random is not None:
             choice = np.random.choice(im_shape[0], self.m_random, replace=False)
             choice = np.sort(choice)
-            parang_new = parang_new[choice]
+            if parang is not None:
+                parang_new = parang_new[choice]
 
             if self.m_stacking is None:
                 # This will cause memory problems for large values of random
@@ -113,16 +120,25 @@ class StackAndSubsetModule(ProcessingModule):
                 # Possibly also here depending on the stacking value
                 im_new = im_new[choice, :, :]
 
+        if im_new.ndim == 2:
+            nimages = 1
+        elif im_new.ndim == 3:
+            nimages = im_new.shape[0]
+
         self.m_image_out_port.set_all(im_new, keep_attributes=True)
+
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
+        self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
+        if parang is not None:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
         if "NFRAMES" in non_static:
             self.m_image_out_port.del_attribute("NFRAMES")
-        if "INDEX" in non_static:
-            self.m_image_out_port.del_attribute("INDEX")
+
         self.m_image_out_port.add_history_information("Stack and subset",
                                                       "stacking ="+str(self.m_stacking)+
                                                       "random ="+str(self.m_random))
+
         self.m_image_out_port.close_port()
 
 
@@ -396,6 +412,7 @@ class CombineTagsModule(ProcessingModule):
                     if key == "PARANG" or key == "STAR_POSITION" or key == "INDEX":
                         if status == 1:
                             self.m_image_out_port.add_attribute(key, values, static=False)
+
                         else:
                             for j in values:
                                 self.m_image_out_port.append_attribute_data(key, j)
@@ -415,6 +432,7 @@ class CombineTagsModule(ProcessingModule):
                 else:
                     if status == 1:
                         self.m_image_out_port.add_attribute(key, values, static=False)
+
                     else:
                         for j in values:
                             self.m_image_out_port.append_attribute_data(key, j)
