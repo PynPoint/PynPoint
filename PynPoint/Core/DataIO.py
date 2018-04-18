@@ -31,9 +31,9 @@ class DataStorage(object):
         :return: None
         """
 
-        assert (os.path.isdir(os.path.split(location_in)[0])), 'Error: Input directory for ' \
-                                                               'DataStorage does not exist - input'\
-                                                               'requested: %s' % location_in
+        assert (os.path.isdir(os.path.split(location_in)[0])), 'Input directory for DataStorage ' \
+                                                               'does not exist - input requested:'\
+                                                               ' %s.' % location_in
 
         self._m_location = location_in
         self.m_data_bank = None
@@ -97,7 +97,7 @@ class Port:
         :return: None
         """
 
-        assert (isinstance(tag, str)), "Error: Port tags need to be strings."
+        assert (isinstance(tag, str)), "Port tag need to be strings."
 
         self._m_tag = tag
         self._m_data_storage = data_storage_in
