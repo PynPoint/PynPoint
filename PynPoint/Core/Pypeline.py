@@ -80,8 +80,8 @@ class Pypeline(object):
         """
 
         if key in ["_m_working_place", "_m_input_place", "_m_output_place"]:
-            assert (os.path.isdir(str(value))), "Error: Input directory for " + str(key) + \
-                                                " does not exist - input requested: %s." % value
+            assert (os.path.isdir(str(value))), "Input directory for " + str(key) + "does not " \
+                                                "exist - input requested: %s." % value
 
         super(Pypeline, self).__setattr__(key, value)
 
@@ -239,8 +239,8 @@ class Pypeline(object):
         :return: None
         """
 
-        assert isinstance(module, PypelineModule), "Error: the given pipeline_module is not an " \
-                                                   "accepted Pypeline module."
+        assert isinstance(module, PypelineModule), "The added module is not a valid " \
+                                                   "Pypeline module."
 
         if isinstance(module, WritingModule):
             if module.m_output_location is None:
