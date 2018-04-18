@@ -40,7 +40,7 @@ class PypelineModule:
         :return: None
         """
 
-        assert (isinstance(name_in, str)), "Error: Name of the PypelineModule needs to be a string."
+        assert (isinstance(name_in, str)), "Name of the PypelineModule needs to be a string."
 
         self._m_name = name_in
         self._m_data_base = None
@@ -113,8 +113,8 @@ class WritingModule(PypelineModule):
 
         super(WritingModule, self).__init__(name_in)
 
-        assert (os.path.isdir(str(output_dir)) or output_dir is None), 'Error: Output directory ' \
-            'for writing module does not exist - input requested: %s' % output_dir
+        assert (os.path.isdir(str(output_dir)) or output_dir is None), 'Output directory for ' \
+            'writing module does not exist - input requested: %s.' % output_dir
 
         self.m_output_location = output_dir
         self._m_input_ports = {}
@@ -522,8 +522,8 @@ class ReadingModule(PypelineModule):
 
         super(ReadingModule, self).__init__(name_in)
 
-        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Error: Input directory ' \
-            'for reading module does not exist - input requested: %s' % input_dir
+        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Input directory for ' \
+            'reading module does not exist - input requested: %s.' % input_dir
 
         self.m_input_location = input_dir
         self._m_output_ports = {}
