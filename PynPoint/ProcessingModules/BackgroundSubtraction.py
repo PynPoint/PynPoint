@@ -503,7 +503,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
 class PCABackgroundSubtractionModule(ProcessingModule):
     """
-    Module for PCA background subtraction.
+    Module for PCA-based background subtraction. See Hunziker et al. 2018 for details.
     """
 
     def __init__(self,
