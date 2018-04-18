@@ -93,6 +93,9 @@ class RemoveFramesModule(ProcessingModule):
             self.m_removed_out_port.del_all_attributes()
 
     def _write_attributes(self):
+        if "INDEX" not in self.m_image_in_port.get_all_non_static_attributes():
+            raise ValueError("The INDEX attributes is not found.")
+
         index = self.m_image_in_port.get_attribute("INDEX")
 
         non_static = self.m_image_in_port.get_all_non_static_attributes()
