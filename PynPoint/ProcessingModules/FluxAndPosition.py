@@ -376,7 +376,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                         image_out_tag="simplex_prep",
                                         image_mask_out_tag=None,
                                         mask_out_tag=None,
-                                        norm=True,
+                                        norm=False,
                                         cent_size=self.m_mask,
                                         edge_size=1e10,
                                         verbose=False)
