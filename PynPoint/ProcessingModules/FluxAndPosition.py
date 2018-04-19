@@ -376,7 +376,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                         image_out_tag="simplex_prep",
                                         image_mask_out_tag=None,
                                         mask_out_tag=None,
-                                        norm=False,
+                                        norm=True,
                                         cent_size=self.m_mask,
                                         edge_size=1e10,
                                         verbose=False)
@@ -476,12 +476,12 @@ class SimplexMinimizationModule(ProcessingModule):
             raise ValueError("The image_in_tag should contain a cube of images.")
 
         if ndim_psf == 2:
-            psf_size = (self.m_image_in_port.get_shape()[0],
-                        self.m_image_in_port.get_shape()[1])
+            psf_size = (self.m_psf_in_port.get_shape()[0],
+                        self.m_psf_in_port.get_shape()[1])
 
         elif ndim_psf == 3:
-            psf_size = (self.m_image_in_port.get_shape()[1],
-                        self.m_image_in_port.get_shape()[2])
+            psf_size = (self.m_psf_in_port.get_shape()[1],
+                        self.m_psf_in_port.get_shape()[2])
 
         center = (psf_size[0]/2., psf_size[1]/2.)
 
