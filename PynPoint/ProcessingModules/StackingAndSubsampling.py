@@ -58,6 +58,61 @@ class StackAndSubsetModule(ProcessingModule):
         :return: None
         """
 
+        def _stack(nimages, im_shape, parang):
+            im_new = None
+            parang_new = None
+
+            if self.m_stacking is not None:
+                frames = memory_frames(self.m_stacking, nimages)
+
+                nimages_new = np.size(frames)-1
+                if parang is not None:
+                    parang_new = np.zeros(nimages_new)
+                im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
+
+                for i in range(nimages_new):
+                    progress(i, nimages_new, "Running StackAndSubsetModule...")
+
+                    if parang is not None:
+                        parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
+                                          axis=0)
+
+                im_shape = im_new.shape
+
+            else:
+                if parang is not None:
+                    parang_new = np.copy(parang)
+
+            return im_shape, im_new, parang_new
+
+        def _subset(im_shape, im_new, parang_new):
+
+            if self.m_random is not None:
+                choice = np.random.choice(im_shape[0], self.m_random, replace=False)
+                choice = np.sort(choice)
+
+                if parang_new is not None:
+                    parang_new = parang_new[choice]
+
+                if self.m_stacking is None:
+                    # This will cause memory problems for large values of random
+                    im_new = self.m_image_in_port[choice, :, :]
+
+                else:
+                    # Possibly also here depending on the stacking value
+                    im_new = im_new[choice, :, :]
+
+            if im_new.ndim == 2:
+                nimages = 1
+            elif im_new.ndim == 3:
+                nimages = im_new.shape[0]
+
+            return nimages, im_new, parang_new
+
+        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
+        sys.stdout.flush()
+
         if self.m_stacking is None and self.m_random is None:
             return
 
@@ -81,49 +136,8 @@ class StackAndSubsetModule(ProcessingModule):
         else:
             parang = None
 
-        if self.m_stacking is not None:
-            frames = memory_frames(self.m_stacking, nimages)
-
-            nimages_new = np.size(frames)-1
-            if parang is not None:
-                parang_new = np.zeros(nimages_new)
-            im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
-
-            for i in range(nimages_new):
-                progress(i, nimages_new, "Running StackAndSubsetModule...")
-
-                if parang is not None:
-                    parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
-                im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
-                                      axis=0)
-
-            im_shape = im_new.shape
-
-        else:
-            if parang is not None:
-                parang_new = np.copy(parang)
-
-        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
-        sys.stdout.flush()
-
-        if self.m_random is not None:
-            choice = np.random.choice(im_shape[0], self.m_random, replace=False)
-            choice = np.sort(choice)
-            if parang is not None:
-                parang_new = parang_new[choice]
-
-            if self.m_stacking is None:
-                # This will cause memory problems for large values of random
-                im_new = self.m_image_in_port[choice, :, :]
-
-            else:
-                # Possibly also here depending on the stacking value
-                im_new = im_new[choice, :, :]
-
-        if im_new.ndim == 2:
-            nimages = 1
-        elif im_new.ndim == 3:
-            nimages = im_new.shape[0]
+        im_shape, im_new, parang_new = _stack(nimages, im_shape, parang)
+        nimages, im_new, parang_new = _subset(im_shape, im_new, parang_new)
 
         self.m_image_out_port.set_all(im_new, keep_attributes=True)
 
