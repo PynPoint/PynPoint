@@ -20,7 +20,7 @@ from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarA
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
-from PynPoint.Util.TestTools import create_config
+from PynPoint.Util.TestTools import create_config, create_fits, create_fake
 
 warnings.simplefilter("always")
 
@@ -35,110 +35,33 @@ def setup_module():
 
     # SCIENCE
 
-    fwhm =  [ 3, 3, 3, 3 ]
-    exp_no =  [ 1, 2, 3, 4 ]
-    npix = [ 100, 100, 100, 100 ]
-    ndit = [ 22, 17, 21, 18 ]
-    naxis3 = [ 23, 18, 22, 19 ]
-    x0 = [ 25, 75, 75, 25 ]
-    y0 = [ 75, 75, 25, 25 ]
-    parang_start = [ 0., 25., 50., 75. ]
-    parang_end = [ 25., 50., 75., 100. ]
-    sep = 7
-    contrast = 1e-2
-
-    parang = []
-    for i, item in enumerate(parang_start):
-        for j in range(ndit[i]):
-            parang.append(item+float(j)*(parang_end[i]-item)/float(ndit[i]))
-
-    np.random.seed(1)
-
-    p_count = 0
-    for j, item in enumerate(fwhm):
-
-        sigma = item / ( 2. * math.sqrt(2.*math.log(2.)) )
-
-        x = np.arange(0., npix[j], 1.)
-        y = np.arange(0., npix[j]+2, 1.)
-        xx, yy = np.meshgrid(x,y)
-    
-        image = np.zeros((naxis3[j], npix[j]+2, npix[j]))
-
-        for i in range(ndit[j]):
-            star = (1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
-            noise = np.random.normal(loc=0, scale=2e-4, size=(102, 100))
-
-            planet = contrast*(1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
-            x_shift = sep*math.cos(parang[p_count]*math.pi/180.)
-            y_shift = sep*math.sin(parang[p_count]*math.pi/180.)
-            planet = shift(planet, (x_shift, y_shift), order=5)
-
-            image[i, 0:npix[j]+2, 0:npix[j]] = star+noise+planet
-        
-            p_count += 1
-
-        hdu = fits.PrimaryHDU()
-        header = hdu.header
-        header['INSTRUME'] = 'IMAGER'
-        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
-        header['HIERARCH ESO DET NDIT'] = ndit[j]
-        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
-        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
-        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
-        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
-        hdu.data = image
-        hdu.writeto(test_dir+'adi/adi'+str(j+1).zfill(2)+'.fits')
+    create_fake(test_dir + 'adi/adi', 7., 1e-2)
 
     # DARK
 
-    exp_no =  [ 1, 2, 3, 4 ]
     ndit = [ 3, 3, 5, 5 ]
-    naxis3 = ndit
-    parang_start = [ 0., 0., 0., 0. ]
-    parang_end = [ 0., 0., 0., 0. ]
+    parang = [ [0., 0.], [0., 0.], [0., 0.], [0., 0.] ]
 
     np.random.seed(2)
 
     for j, n in enumerate(ndit):
         image = np.random.normal(loc=0, scale=2e-4, size=(n, 100, 100))
 
-        hdu = fits.PrimaryHDU()
-        header = hdu.header
-        header['INSTRUME'] = 'IMAGER'
-        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
-        header['HIERARCH ESO DET NDIT'] = ndit[j]
-        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
-        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
-        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
-        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
-        hdu.data = image
-        hdu.writeto(test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits')
+        filename = test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits'
+        create_fits(filename, image, ndit[j], parang[j])
 
     # FLAT
 
-    exp_no =  [ 1, 2, 3, 4 ]
     ndit = [ 3, 3, 5, 5 ]
-    naxis3 = ndit
-    parang_start = [ 0., 0., 0., 0. ]
-    parang_end = [ 0., 0., 0., 0. ]
+    parang = [ [0., 0.], [0., 0.], [0., 0.], [0., 0.] ]
 
     np.random.seed(3)
 
     for j, n in enumerate(ndit):
         image = np.random.normal(loc=1, scale=1e-2, size=(n, 100, 100))
 
-        hdu = fits.PrimaryHDU()
-        header = hdu.header
-        header['INSTRUME'] = 'IMAGER'
-        header['HIERARCH ESO DET EXP NO'] = exp_no[j]
-        header['HIERARCH ESO DET NDIT'] = ndit[j]
-        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
-        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
-        header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
-        header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
-        hdu.data = image
-        hdu.writeto(test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits')
+        filename = test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits'
+        create_fits(filename, image, ndit[j], parang[j])
 
     filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
     create_config(filename)
