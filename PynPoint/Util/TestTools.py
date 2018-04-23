@@ -2,8 +2,11 @@
 Functions for the test cases.
 """
 
+import math
+
 import h5py
 import numpy as np
+from scipy.ndimage import shift
 from astropy.io import fits
 
 
@@ -133,3 +136,64 @@ def create_random(path):
     dset.attrs['PIXSCALE'] = 0.01
     h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
+
+def create_fits(filename, image, ndit, parang):
+    """
+    Create a FITS file with images and header information
+    """
+
+    hdu = fits.PrimaryHDU()
+    header = hdu.header
+    header['INSTRUME'] = 'IMAGER'
+    header['HIERARCH ESO DET EXP NO'] = 1.
+    header['HIERARCH ESO DET NDIT'] = ndit
+    header['HIERARCH ESO ADA POSANG'] = parang[0]
+    header['HIERARCH ESO ADA POSANG END'] = parang[1]
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
+    hdu.data = image
+    hdu.writeto(filename)
+
+def create_fake(file_start, sep, contrast):
+
+    ndit = [ 22, 17, 21, 18 ]
+    naxis3 = [ 23, 18, 22, 19 ]
+    npix = [ 100, 100, 100, 100 ]
+    fwhm =  [ 3., 3., 3., 3. ]
+    x0 = [ 25, 75, 75, 25 ]
+    y0 = [ 75, 75, 25, 25 ]
+    angles = [ [0., 25.], [25., 50.], [50., 75.], [75.,100.] ]
+
+    parang = []
+    for i, item in enumerate(angles):
+        for j in range(ndit[i]):
+            parang.append(item[0]+float(j)*(item[1]-item[0])/float(ndit[i]))
+
+    np.random.seed(1)
+
+    p_count = 0
+    for j, item in enumerate(fwhm):
+
+        sigma = item / ( 2. * math.sqrt(2.*math.log(2.)) )
+
+        x = np.arange(0., npix[j], 1.)
+        y = np.arange(0., npix[j]+2, 1.)
+        xx, yy = np.meshgrid(x,y)
+    
+        image = np.zeros((naxis3[j], npix[j]+2, npix[j]))
+
+        for i in range(ndit[j]):
+            star = (1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            noise = np.random.normal(loc=0, scale=2e-4, size=(102, 100))
+
+            planet = contrast*(1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            x_shift = sep*math.cos(parang[p_count]*math.pi/180.)
+            y_shift = sep*math.sin(parang[p_count]*math.pi/180.)
+            planet = shift(planet, (x_shift, y_shift), order=5)
+
+            image[i, 0:npix[j]+2, 0:npix[j]] = star+noise+planet
+        
+            p_count += 1
+
+        filename = file_start+str(j+1).zfill(2)+'.fits'
+        create_fits(filename, image, ndit[j], angles[j])
