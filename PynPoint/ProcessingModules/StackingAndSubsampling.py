@@ -275,6 +275,33 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
+        def _derotate(frames, im_tot, parang, count):
+            for j in range(frames[count+1]-frames[count]):
+                im_rot = rotate(input=self.m_image_in_port[frames[count]+j, ],
+                                angle=-parang[frames[count]+j]+self.m_extra_rot,
+                                reshape=False)
+
+                if self.m_stack:
+                    im_tot += im_rot
+
+                elif not self.m_stack:
+                    if ndim == 2:
+                        self.m_image_out_port.set_all(im_rot)
+                    elif ndim == 3:
+                        self.m_image_out_port.append(im_rot, data_dim=3)
+
+            return im_tot
+
+        def _stack(frames, im_tot, count):
+            im_tmp = self.m_image_in_port[frames[count]:frames[count+1], ]
+
+            if im_tmp.ndim == 2:
+                im_tot += im_tmp
+            elif im_tmp.ndim == 3:
+                im_tot += np.sum(im_tmp, axis=0)
+
+            return im_tot
+
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
@@ -301,30 +328,15 @@ class DerotateAndStackModule(ProcessingModule):
 
             if self.m_stack:
                 im_tot = np.zeros((npix, npix))
+            else:
+                im_tot = None
 
             if self.m_derotate:
-                for j in range(frames[i+1]-frames[i]):
-                    im_rot = rotate(input=self.m_image_in_port[frames[i]+j, ],
-                                    angle=-parang[frames[i]+j]+self.m_extra_rot,
-                                    reshape=False)
-
-                    if self.m_stack:
-                        im_tot += im_rot
-
-                    elif not self.m_stack:
-                        if ndim == 2:
-                            self.m_image_out_port.set_all(im_rot)
-                        elif ndim == 3:
-                            self.m_image_out_port.append(im_rot, data_dim=3)
+                im_tot = _derotate(frames, im_tot, parang, i)
 
             else:
                 if self.m_stack:
-                    im_tmp = self.m_image_in_port[frames[i]:frames[i+1], ]
-
-                    if im_tmp.ndim == 2:
-                        im_tot += im_tmp
-                    elif im_tmp.ndim == 3:
-                        im_tot += np.sum(im_tmp, axis=0)
+                    im_tot = _stack(frames, im_tot, i)
 
         sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
