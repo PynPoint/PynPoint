@@ -58,6 +58,61 @@ class StackAndSubsetModule(ProcessingModule):
         :return: None
         """
 
+        def _stack(nimages, im_shape, parang):
+            im_new = None
+            parang_new = None
+
+            if self.m_stacking is not None:
+                frames = memory_frames(self.m_stacking, nimages)
+
+                nimages_new = np.size(frames)-1
+                if parang is not None:
+                    parang_new = np.zeros(nimages_new)
+                im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
+
+                for i in range(nimages_new):
+                    progress(i, nimages_new, "Running StackAndSubsetModule...")
+
+                    if parang is not None:
+                        parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
+                                          axis=0)
+
+                im_shape = im_new.shape
+
+            else:
+                if parang is not None:
+                    parang_new = np.copy(parang)
+
+            return im_shape, im_new, parang_new
+
+        def _subset(im_shape, im_new, parang_new):
+
+            if self.m_random is not None:
+                choice = np.random.choice(im_shape[0], self.m_random, replace=False)
+                choice = np.sort(choice)
+
+                if parang_new is not None:
+                    parang_new = parang_new[choice]
+
+                if self.m_stacking is None:
+                    # This will cause memory problems for large values of random
+                    im_new = self.m_image_in_port[choice, :, :]
+
+                else:
+                    # Possibly also here depending on the stacking value
+                    im_new = im_new[choice, :, :]
+
+            if im_new.ndim == 2:
+                nimages = 1
+            elif im_new.ndim == 3:
+                nimages = im_new.shape[0]
+
+            return nimages, im_new, parang_new
+
+        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
+        sys.stdout.flush()
+
         if self.m_stacking is None and self.m_random is None:
             return
 
@@ -81,49 +136,8 @@ class StackAndSubsetModule(ProcessingModule):
         else:
             parang = None
 
-        if self.m_stacking is not None:
-            frames = memory_frames(self.m_stacking, nimages)
-
-            nimages_new = np.size(frames)-1
-            if parang is not None:
-                parang_new = np.zeros(nimages_new)
-            im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
-
-            for i in range(nimages_new):
-                progress(i, nimages_new, "Running StackAndSubsetModule...")
-
-                if parang is not None:
-                    parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
-                im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
-                                      axis=0)
-
-            im_shape = im_new.shape
-
-        else:
-            if parang is not None:
-                parang_new = np.copy(parang)
-
-        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
-        sys.stdout.flush()
-
-        if self.m_random is not None:
-            choice = np.random.choice(im_shape[0], self.m_random, replace=False)
-            choice = np.sort(choice)
-            if parang is not None:
-                parang_new = parang_new[choice]
-
-            if self.m_stacking is None:
-                # This will cause memory problems for large values of random
-                im_new = self.m_image_in_port[choice, :, :]
-
-            else:
-                # Possibly also here depending on the stacking value
-                im_new = im_new[choice, :, :]
-
-        if im_new.ndim == 2:
-            nimages = 1
-        elif im_new.ndim == 3:
-            nimages = im_new.shape[0]
+        im_shape, im_new, parang_new = _stack(nimages, im_shape, parang)
+        nimages, im_new, parang_new = _subset(im_shape, im_new, parang_new)
 
         self.m_image_out_port.set_all(im_new, keep_attributes=True)
 
@@ -261,6 +275,33 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
+        def _derotate(frames, im_tot, parang, count):
+            for j in range(frames[count+1]-frames[count]):
+                im_rot = rotate(input=self.m_image_in_port[frames[count]+j, ],
+                                angle=-parang[frames[count]+j]+self.m_extra_rot,
+                                reshape=False)
+
+                if self.m_stack:
+                    im_tot += im_rot
+
+                elif not self.m_stack:
+                    if ndim == 2:
+                        self.m_image_out_port.set_all(im_rot)
+                    elif ndim == 3:
+                        self.m_image_out_port.append(im_rot, data_dim=3)
+
+            return im_tot
+
+        def _stack(frames, im_tot, count):
+            im_tmp = self.m_image_in_port[frames[count]:frames[count+1], ]
+
+            if im_tmp.ndim == 2:
+                im_tot += im_tmp
+            elif im_tmp.ndim == 3:
+                im_tot += np.sum(im_tmp, axis=0)
+
+            return im_tot
+
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
@@ -287,30 +328,15 @@ class DerotateAndStackModule(ProcessingModule):
 
             if self.m_stack:
                 im_tot = np.zeros((npix, npix))
+            else:
+                im_tot = None
 
             if self.m_derotate:
-                for j in range(frames[i+1]-frames[i]):
-                    im_rot = rotate(input=self.m_image_in_port[frames[i]+j, ],
-                                    angle=-parang[frames[i]+j]+self.m_extra_rot,
-                                    reshape=False)
-
-                    if self.m_stack:
-                        im_tot += im_rot
-
-                    elif not self.m_stack:
-                        if ndim == 2:
-                            self.m_image_out_port.set_all(im_rot)
-                        elif ndim == 3:
-                            self.m_image_out_port.append(im_rot, data_dim=3)
+                im_tot = _derotate(frames, im_tot, parang, i)
 
             else:
                 if self.m_stack:
-                    im_tmp = self.m_image_in_port[frames[i]:frames[i+1], ]
-
-                    if im_tmp.ndim == 2:
-                        im_tot += im_tmp
-                    elif im_tmp.ndim == 3:
-                        im_tot += np.sum(im_tmp, axis=0)
+                    im_tot = _stack(frames, im_tot, i)
 
         sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
