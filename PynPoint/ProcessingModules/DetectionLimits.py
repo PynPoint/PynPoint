@@ -93,10 +93,10 @@ class ContrastCurveModule(ProcessingModule):
         :type pca_number: int
         :param norm: Normalization of each image by its Frobenius norm.
         :type norm: bool
-        :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
+        :param cent_size: Central mask radius (arcsec). No mask is used when set to None.
         :type cent_size: float
-        :param edge_size: Outer radius (arcsec) beyond which pixels are masked. No outer mask is
-                          used when set to None. If the value is larger than half the image size
+        :param edge_size: Outer edge radius (arcsec) beyond which pixels are masked. No outer mask
+                          is used when set to None. If the value is larger than half the image size
                           then it will be set to half the image size.
         :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
@@ -219,7 +219,11 @@ class ContrastCurveModule(ProcessingModule):
                           self.m_angle[1]+self.m_extra_rot,
                           self.m_angle[2])
 
-        index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size/pixscale)
+        if self.m_cent_size is None:
+            index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
+        else:
+            index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size/pixscale)
+
         pos_r = np.delete(pos_r, index_del)
 
         if self.m_edge_size is None:
