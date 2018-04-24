@@ -241,7 +241,8 @@ class SimplexMinimizationModule(ProcessingModule):
                  sigma=0.027,
                  tolerance=0.1,
                  pca_number=20,
-                 mask=0.,
+                 cent_size=None,
+                 edge_size=None,
                  extra_rot=0.):
         """
         Constructor of SimplexMinimizationModule.
@@ -295,8 +296,12 @@ class SimplexMinimizationModule(ProcessingModule):
         :type tolerance: float
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
-        :param mask: Mask radius (arcsec) for the PSF subtraction.
-        :type mask: float
+        :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
+        :type cent_size: float
+        :param edge_size: Outer radius (arcsec) beyond which pixels are masked. No outer mask is
+                          used when set to None. The radius will be set to half the image size if
+                          the *edge_size* value is larger than half the image size.
+        :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
@@ -321,7 +326,8 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_sigma = sigma
         self.m_tolerance = tolerance
         self.m_pca_number = pca_number
-        self.m_mask = mask
+        self.m_cent_size = cent_size
+        self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
 
         self.m_image_in_tag = image_in_tag
@@ -377,8 +383,8 @@ class SimplexMinimizationModule(ProcessingModule):
                                         image_mask_out_tag=None,
                                         mask_out_tag=None,
                                         norm=False,
-                                        cent_size=self.m_mask,
-                                        edge_size=1e10,
+                                        cent_size=self.m_cent_size,
+                                        edge_size=self.m_edge_size,
                                         verbose=False)
 
             prep.connect_database(self._m_data_base)
