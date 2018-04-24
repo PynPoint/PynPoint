@@ -74,7 +74,6 @@ class StarExtractionModule(ProcessingModule):
         self.m_fwhm_star = fwhm_star
         self.m_position = position
         self.m_count = 0
-        self.m_image_out_tag = image_out_tag
 
     def run(self):
         """
@@ -110,7 +109,7 @@ class StarExtractionModule(ProcessingModule):
 
         star = []
 
-        def crop_image(image):
+        def _crop_image(image):
             sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
             kernel = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
 
@@ -174,14 +173,14 @@ class StarExtractionModule(ProcessingModule):
             if self.m_image_size is not None:
                 return im_crop
 
-        self.apply_function_to_images(crop_image,
+        self.apply_function_to_images(_crop_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarExtractionModule...")
 
         self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
-        if self.m_image_size is not None and self.m_image_out_tag is not None:
+        if self.m_image_size is not None and self.m_image_out_port is not None:
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Star extract", "maximum")
             self.m_image_out_port.close_port()
@@ -283,7 +282,7 @@ class StarAlignmentModule(ProcessingModule):
             sort = np.sort(random)
             ref_images = self.m_image_in_port[sort, :, :]
 
-        def align_image(image_in):
+        def _align_image(image_in):
             offset = np.array([0., 0.])
 
             for i in range(self.m_num_references):
@@ -325,7 +324,7 @@ class StarAlignmentModule(ProcessingModule):
 
             return tmp_image
 
-        self.apply_function_to_images(align_image,
+        self.apply_function_to_images(_align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarAlignmentModule...")
@@ -444,7 +443,49 @@ class StarCenteringModule(ProcessingModule):
         :return: None
         """
 
-        def _2d_gaussian((x_grid, y_grid, rr_ap_1d, npix), x_center, y_center, fwhm_x, fwhm_y, amp, theta):
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        self.m_fit_out_port.del_all_data()
+        self.m_fit_out_port.del_all_attributes()
+
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        def _initialize():
+            if self.m_radius is not None:
+                self.m_radius /= pixscale
+
+            ndim = self.m_image_in_port.get_ndim()
+
+            if ndim == 2:
+                nimages = 1
+            elif ndim == 3:
+                nimages = self.m_image_in_port.get_shape()[0]
+
+            npix = self.m_image_in_port.get_shape()[1]
+
+            if npix/2.+self.m_guess[0]+self.m_radius > npix or \
+                    npix/2.+self.m_guess[1]+self.m_radius > npix or \
+                    npix/2.+self.m_guess[1]-self.m_radius < 0. or \
+                    npix/2.+self.m_guess[1]-self.m_radius < 0.:
+                raise ValueError("Mask radius extends beyond the size of the image.")
+
+            frames = memory_frames(memory, nimages)
+
+            return ndim, nimages, npix, frames
+
+        def _2d_gaussian((x_grid, y_grid, rr_ap_1d, npix),
+                         x_center,
+                         y_center,
+                         fwhm_x,
+                         fwhm_y,
+                         amp,
+                         theta):
             rr_ap = np.reshape(rr_ap_1d, (npix, npix))
 
             xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
@@ -520,7 +561,8 @@ class StarCenteringModule(ProcessingModule):
 
             return popt
 
-        def _centering(image, fit):
+        def _centering(image,
+                       fit):
 
             if self.m_method == "full":
                 popt = _least_squares(np.copy(image))
@@ -540,39 +582,7 @@ class StarCenteringModule(ProcessingModule):
 
             return im_center
 
-        if self.m_image_out_port is not None:
-            self.m_image_out_port.del_all_data()
-            self.m_image_out_port.del_all_attributes()
-
-        self.m_fit_out_port.del_all_data()
-        self.m_fit_out_port.del_all_attributes()
-
-        if self.m_mask_out_port is not None:
-            self.m_mask_out_port.del_all_data()
-            self.m_mask_out_port.del_all_attributes()
-
-        memory = self._m_config_port.get_attribute("MEMORY")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
-        if self.m_radius is not None:
-            self.m_radius /= pixscale
-
-        ndim = self.m_image_in_port.get_ndim()
-
-        if ndim == 2:
-            nimages = 1
-        elif ndim == 3:
-            nimages = self.m_image_in_port.get_shape()[0]
-
-        npix = self.m_image_in_port.get_shape()[1]
-
-        if npix/2.+self.m_guess[0]+self.m_radius > npix or \
-                npix/2.+self.m_guess[1]+self.m_radius > npix or \
-                npix/2.+self.m_guess[1]-self.m_radius < 0. or \
-                npix/2.+self.m_guess[1]-self.m_radius < 0.:
-            raise ValueError("Mask radius extends beyond the size of the image.")
-
-        frames = memory_frames(memory, nimages)
+        ndim, nimages, npix, frames = _initialize()
 
         if self.m_method == "full":
             fit = None
@@ -654,10 +664,10 @@ class ShiftImagesModule(ProcessingModule):
         :return: None
         """
 
-        def image_shift(image_in):
+        def _image_shift(image_in):
             return shift(image_in, (self.m_shift[1], self.m_shift[0]), order=5)
 
-        self.apply_function_to_images(image_shift,
+        self.apply_function_to_images(_image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ShiftImagesModule...")
