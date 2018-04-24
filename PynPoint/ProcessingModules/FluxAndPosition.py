@@ -299,8 +299,8 @@ class SimplexMinimizationModule(ProcessingModule):
         :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
         :type cent_size: float
         :param edge_size: Outer radius (arcsec) beyond which pixels are masked. No outer mask is
-                          used when set to None. If the value is larger than half the image size
-                          then it will be set to half the image size.
+                          used when set to None. The radius will be set to half the image size if
+                          the *edge_size* value is larger than half the image size.
         :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
