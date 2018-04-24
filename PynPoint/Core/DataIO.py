@@ -223,7 +223,7 @@ class ConfigPort(Port):
             return False
 
         if self._check_if_data_exists() is False:
-            warnings.warn("No data under the tag which is linked by the InputPort")
+            warnings.warn("No data under the tag which is linked by the InputPort.")
             return False
 
         return True
@@ -246,7 +246,7 @@ class ConfigPort(Port):
         if name in self._m_data_storage.m_data_bank["config"].attrs:
             return self._m_data_storage.m_data_bank["config"].attrs[name]
 
-        warnings.warn('No attribute found - requested: %s' % name)
+        warnings.warn('No attribute found - requested: %s.' % name)
 
         return None
 
@@ -319,7 +319,7 @@ class InputPort(Port):
         """
 
         if self._m_data_storage is None:
-            warnings.warn("InputPort can not load data unless a database is connected")
+            warnings.warn("InputPort can not load data unless a database is connected.")
             return False
 
         if not self._m_data_base_active:
@@ -343,7 +343,7 @@ class InputPort(Port):
             return False
 
         if self._check_if_data_exists() is False:
-            warnings.warn("No data under the tag which is linked by the InputPort")
+            warnings.warn("No data under the tag which is linked by the InputPort.")
             return False
 
         return True
