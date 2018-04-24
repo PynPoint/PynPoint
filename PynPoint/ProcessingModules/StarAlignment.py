@@ -368,7 +368,8 @@ class StarCenteringModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry with images that are read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry with the centered images that are written
-                              as output. Should be different from *image_in_tag*.
+                              as output. Should be different from *image_in_tag*. Data is not
+                              written when set to *None*.
         :type image_out_tag: str
         :param mask_out_tag: Tag of the database entry with the masked images that are written as
                              output. The unmasked part of the images is used for the fit. Data is
@@ -417,7 +418,10 @@ class StarCenteringModule(ProcessingModule):
         super(StarCenteringModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
+        if image_out_tag is None:
+            self.m_image_out_port = None
+        else:
+            self.m_image_out_port = self.add_output_port(image_out_tag)
         if mask_out_tag is None:
             self.m_mask_out_port = None
         else:
@@ -536,8 +540,9 @@ class StarCenteringModule(ProcessingModule):
 
             return im_center
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
+        if self.m_image_out_port is not None:
+            self.m_image_out_port.del_all_data()
+            self.m_image_out_port.del_all_attributes()
 
         self.m_fit_out_port.del_all_data()
         self.m_fit_out_port.del_all_attributes()
@@ -595,8 +600,9 @@ class StarCenteringModule(ProcessingModule):
         if self.m_count > 0:
             print "2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count
 
-        self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        if self.m_mask_out_port is not None:
+            self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
+            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -605,7 +611,7 @@ class StarCenteringModule(ProcessingModule):
             self.m_mask_out_port.add_history_information("Centering", "2D Gaussian fit")
             self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.close_port()
+        self.m_fit_out_port.close_port()
 
 
 class ShiftImagesModule(ProcessingModule):
