@@ -53,16 +53,15 @@ class PSFSubtractionModule(ProcessingModule):
         :param reference_in_tag: Tag of the database entry with the reference images that are
                                  read as input.
         :type reference_in_tag: str
-        :param res_arr_out_tag: Tag of the database entry with the image residuals from the PSF
-                                subtraction.
+        :param res_arr_out_tag: Tag of the database entry with the image residuals.
         :type res_arr_out_tag: str
         :param res_arr_rot_out_tag: Tag of the database entry with the image residuals from the
                                     PSF subtraction that are rotated by PARANG to a common
                                     orientation.
         :type res_arr_rot_out_tag: str
-        :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
+        :param res_mean_tag: Tag of the database entry with the mean combined residuals.
         :type res_mean_tag: str
-        :param res_median_tag: Tag of the database entry with the median collapsed residuals.
+        :param res_median_tag: Tag of the database entry with the median combined residuals.
         :type res_median_tag: str
         :param res_var_tag: Tag of the database entry with the variance of the pixel values across
                             the stack of residuals.
