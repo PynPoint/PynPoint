@@ -226,7 +226,7 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        if self.m_edge_size is None:
+        if self.m_edge_size is None or self.m_edge_size/pixscale > images.shape[1]/2.:
             index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
         else:
             index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size/pixscale)
