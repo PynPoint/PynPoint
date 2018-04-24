@@ -39,7 +39,9 @@ class ContrastCurveModule(ProcessingModule):
                  aperture=0.05,
                  ignore=False,
                  pca_number=20,
-                 mask=0.,
+                 norm=False,
+                 cent_size=None,
+                 edge_size=None,
                  extra_rot=0.):
         """
         Constructor of ContrastCurveModule.
@@ -89,8 +91,14 @@ class ContrastCurveModule(ProcessingModule):
         :type ignore: bool
         :param pca_number: Number of principle components used for the PSF subtraction.
         :type pca_number: int
-        :param mask: Mask radius (arcsec) for the PSF subtraction.
-        :type mask: float
+        :param norm: Normalization of each image by its Frobenius norm.
+        :type norm: bool
+        :param cent_size: Central mask radius (arcsec). No mask is used when set to None.
+        :type cent_size: float
+        :param edge_size: Outer edge radius (arcsec) beyond which pixels are masked. No outer mask
+                          is used when set to None. If the value is larger than half the image size
+                          then it will be set to half the image size.
+        :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
 
@@ -120,7 +128,9 @@ class ContrastCurveModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_ignore = ignore
         self.m_pca_number = pca_number
-        self.m_mask = mask
+        self.m_norm = norm
+        self.m_cent_size = cent_size
+        self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
 
     def _false_alarm(self,
@@ -194,7 +204,6 @@ class ContrastCurveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_aperture /= pixscale
-        self.m_mask /= pixscale
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             warnings.warn('The number of frames in psf_in_tag does not match with the number of '
@@ -210,10 +219,18 @@ class ContrastCurveModule(ProcessingModule):
                           self.m_angle[1]+self.m_extra_rot,
                           self.m_angle[2])
 
-        index_del = np.argwhere(pos_r-self.m_aperture <= self.m_mask)
+        if self.m_cent_size is None:
+            index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
+        else:
+            index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size/pixscale)
+
         pos_r = np.delete(pos_r, index_del)
 
-        index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
+        if self.m_edge_size is None or self.m_edge_size/pixscale > images.shape[1]/2.:
+            index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
+        else:
+            index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size/pixscale)
+
         pos_r = np.delete(pos_r, index_del)
 
         fake_mag = np.zeros((len(pos_r), len(pos_t)))
@@ -272,10 +289,10 @@ class ContrastCurveModule(ProcessingModule):
                                                 image_out_tag="contrast_prep",
                                                 image_mask_out_tag=None,
                                                 mask_out_tag=None,
-                                                norm=True,
+                                                norm=self.m_norm,
                                                 resize=None,
-                                                cent_size=self.m_mask*pixscale,
-                                                edge_size=1e10,
+                                                cent_size=self.m_cent_size,
+                                                edge_size=self.m_edge_size,
                                                 verbose=False)
 
                     prep.connect_database(self._m_data_base)
