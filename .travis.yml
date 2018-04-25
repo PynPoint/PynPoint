@@ -8,7 +8,7 @@ before_install:
   - brew update
   - brew install python2
   - brew install llvm
-  - ll /usr/bin/llvm*
+  - ls -l /usr/bin/
   - export LLVM_CONFIG="/usr/bin/llvm-config-3.8"
   - virtualenv venv -p python2
   - source venv/bin/activate
