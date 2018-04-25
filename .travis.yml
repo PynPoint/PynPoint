@@ -11,6 +11,7 @@ before_install:
   - source venv/bin/activate
 install:
   - pip2 install numpy
+  - pip2 install enum34
   - pip2 install -r requirements.txt
   - pip2 install tox
   - pip2 install coverage
