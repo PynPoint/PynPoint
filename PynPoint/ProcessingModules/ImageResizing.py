@@ -251,8 +251,8 @@ class AddLinesModule(ProcessingModule):
 
             return image_out
 
-        self.m_lines[1] = shape_out[1] - self.m_lines[1]
-        self.m_lines[3] = shape_out[0] - self.m_lines[3]
+        self.m_lines[1] = shape_out[1] - self.m_lines[1] # right side of image
+        self.m_lines[3] = shape_out[0] - self.m_lines[3] # top side of image
 
         self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,
