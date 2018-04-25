@@ -110,9 +110,6 @@ class StackAndSubsetModule(ProcessingModule):
 
             return nimages, im_new, parang_new
 
-        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
-        sys.stdout.flush()
-
         if self.m_stacking is None and self.m_random is None:
             return
 
@@ -138,6 +135,9 @@ class StackAndSubsetModule(ProcessingModule):
 
         im_shape, im_new, parang_new = _stack(nimages, im_shape, parang)
         nimages, im_new, parang_new = _subset(im_shape, im_new, parang_new)
+
+        sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
+        sys.stdout.flush()
 
         self.m_image_out_port.set_all(im_new, keep_attributes=True)
 
