@@ -7,6 +7,7 @@ before_install:
   - brew unlink python
   - brew update
   - brew install python2
+  - brew install llvm
   - virtualenv venv -p python2
   - source venv/bin/activate
 install:
