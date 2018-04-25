@@ -63,9 +63,9 @@ class CropImagesModule(ProcessingModule):
 
         self.m_size = int(self.m_size/pixscale)
 
-        def image_cutting(image_in,
-                          size,
-                          center):
+        def _image_cutting(image_in,
+                           size,
+                           center):
 
             if center is None:
                 x_off = (image_in.shape[1] - size) / 2
@@ -91,7 +91,7 @@ class CropImagesModule(ProcessingModule):
 
             return image_out
 
-        self.apply_function_to_images(image_cutting,
+        self.apply_function_to_images(_image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running CropImagesModule...",
@@ -155,9 +155,9 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        def image_scaling(image_in,
-                          scaling_size,
-                          scaling_flux):
+        def _image_scaling(image_in,
+                           scaling_size,
+                           scaling_flux):
 
             sum_before = np.sum(image_in)
 
@@ -170,7 +170,7 @@ class ScaleImagesModule(ProcessingModule):
 
             return tmp_image * (sum_before / sum_after) * scaling_flux
 
-        self.apply_function_to_images(image_scaling,
+        self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ScaleImagesModule...",
@@ -215,7 +215,7 @@ class AddLinesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_lines = lines
+        self.m_lines = np.asarray(lines)
 
     def run(self):
         """
@@ -243,14 +243,18 @@ class AddLinesModule(ProcessingModule):
             warnings.warn("The dimensions of the output images %s are not equal. PynPoint only "
                           "supports square images." % str(shape_out))
 
-        def add_lines(image_in):
+        def _add_lines(image_in):
             image_out = np.zeros(shape_out)
-            image_out[int(self.m_lines[2]):-int(self.m_lines[3]),
-                      int(self.m_lines[0]):-int(self.m_lines[1])] = image_in
+
+            image_out[int(self.m_lines[2]):int(self.m_lines[3]),
+                      int(self.m_lines[0]):int(self.m_lines[1])] = image_in
 
             return image_out
 
-        self.apply_function_to_images(add_lines,
+        self.m_lines[1] = shape_out[1] - self.m_lines[1]
+        self.m_lines[3] = shape_out[0] - self.m_lines[3]
+
+        self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running AddLinesModule...")
@@ -301,13 +305,13 @@ class RemoveLinesModule(ProcessingModule):
         :return: None
         """
 
-        def remove_lines(image_in):
+        def _remove_lines(image_in):
             shape_in = image_in.shape
 
             return image_in[int(self.m_lines[2]):shape_in[0]-int(self.m_lines[3]),
                             int(self.m_lines[0]):shape_in[1]-int(self.m_lines[1])]
 
-        self.apply_function_to_images(remove_lines,
+        self.apply_function_to_images(_remove_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running RemoveLinesModule...")
