@@ -11,12 +11,10 @@ warnings.simplefilter("always")
 limit = 1e-10
 
 def setup_module():
-    path = os.path.dirname(__file__)
-    prepare_pca_tests(path)
+    prepare_pca_tests(os.path.dirname(__file__))
 
 def teardown_module():
-    path = os.path.dirname(__file__)
-    remove_psf_test_data(path)
+    remove_psf_test_data(os.path.dirname(__file__))
 
 class TestImages(object):
 
