@@ -222,7 +222,7 @@ class ConfigPort(Port):
             return False
 
         if self._check_if_data_exists() is False:
-            warnings.warn("No data under the tag which is linked by the InputPort.")
+            warnings.warn("No data under the tag which is linked by the ConfigPort.")
             return False
 
         return True
@@ -230,7 +230,7 @@ class ConfigPort(Port):
     def get_attribute(self,
                       name):
         """
-        Returns a (static) attribute which is connected to the dataset of the config port.
+        Returns a (static) attribute which is connected to the dataset of the ConfigPort.
 
         :param name: The name of the attribute to be returned.
         :type name: str
@@ -252,41 +252,40 @@ class ConfigPort(Port):
 
 class InputPort(Port):
     """
-    InputPorts can be used to read datasets with a specific tag from a (HDF5) database. You can use
-    an InputPort instance to access:
+    InputPorts can be used to read datasets with a specific tag from the HDF5 database. This type
+    of port can be used to access:
 
-        * the complete dataset using the get_all() method.
-        * a single attribute of the dataset using get_attribute().
-        * all attributes of the dataset using get_all_static_attributes() and
+        * A complete dataset using the get_all() method.
+        * A single attribute of the dataset using get_attribute().
+        * All attributes of the dataset using get_all_static_attributes() and
           get_all_non_static_attributes().
-        * a part of the dataset using slicing. For example:
+        * A part of a dataset using slicing. For example:
 
         .. code-block:: python
 
-            tmp_in_port = InputPort("Some_tag")
-            data = tmp_in_port[0,:,:] # returns the first 2D image of a 3D image stack.
+            in_port = InputPort("tag")
+            data = in_port[0, :, :] # returns the first 2D image of a 3D image stack.
 
-    (More information about how 1D 2D and 3D data is organized in the documentation of Output
-    Port (:func:`PynPoint.core.DataIO.OutputPort.append` and
+    (More information about how 1D, 2D, and 3D data is organized can be found in the documentation
+    of OutputPort (:func:`PynPoint.core.DataIO.OutputPort.append` and
     :func:`PynPoint.core.DataIO.OutputPort.set_all`)
 
-    InputPorts can load two different types of Attributes which give additional information about
-    the data set the port is linked to:
+    InputPorts can load two types of attributes which give additional information about
+    a dataset the port is linked to:
 
-        * static attributes: Contain global information about a dataset which is not changing
-          through the data. (e.g. The name of the instrument used for the observation)
-        * non-static attributes: Contain small datasets with information about the actual dataset
-          which is different for parts of the dataset (e.g. the airmass which is changing during the
-          observation).
+        * Static attributes: contain global information about a dataset which is not changing
+          through a dataset in the database (e.g. the instrument name or pixel scale).
+        * Non-static attributes: contain information which changes for different parts of the
+          dataset (e.g. the parallactic angles or dithering positions).
     """
 
     def __init__(self,
                  tag,
                  data_storage_in=None):
         """
-        Constructor of the InputPort class which creates an input port instance which can read data
-        stored in the central database under the tag `tag`. If you write a PypelineModule you should
-        not create instances manually! Use the add_input_port() function instead.
+        Constructor of InputPort. An input port can read data from the central database under the
+        key `tag`. Instances of InputPort should not be created manually inside a PypelineModule
+        but should be created with the add_input_port() function.
 
         :param tag: The tag of the port. The port can be used in order to get data from the dataset
                     with the key `tag`.
