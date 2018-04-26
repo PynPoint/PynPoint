@@ -2,7 +2,9 @@
 Functions for the test cases.
 """
 
+import os
 import math
+import fileinput
 
 import h5py
 import numpy as np
@@ -36,7 +38,7 @@ def create_config(filename):
     file_obj.write('[settings]\n\n')
     file_obj.write('PIXSCALE: 0.027\n')
     file_obj.write('MEMORY: 100\n')
-    file_obj.write('CPU: 1')
+    file_obj.write('CPU: 1\n')
 
     file_obj.close()
 
@@ -97,28 +99,11 @@ def prepare_pca_tests(path):
 
     config_file = path+"/test_data/PynPoint_config.ini"
 
-    file_obj = open(config_file, 'w')
-    file_obj.write('[header]\n\n')
-    file_obj.write('INSTRUMENT: INSTRUME\n')
-    file_obj.write('NFRAMES: NAXIS3\n')
-    file_obj.write('EXP_NO: ESO DET EXP NO\n')
-    file_obj.write('NDIT: ESO DET NDIT\n')
-    file_obj.write('PARANG_START: ESO ADA POSANG\n')
-    file_obj.write('PARANG_END: ESO ADA POSANG END\n')
-    file_obj.write('DITHER_X: None\n')
-    file_obj.write('DITHER_Y: None\n')
-    file_obj.write('DIT: None\n')
-    file_obj.write('LATITUDE: None\n')
-    file_obj.write('LONGITUDE: None\n')
-    file_obj.write('PUPIL: None\n')
-    file_obj.write('DATE: None\n')
-    file_obj.write('RA: None\n')
-    file_obj.write('DEC: None\n\n')
-    file_obj.write('[settings]\n\n')
-    file_obj.write('PIXSCALE: 0.01\n')
-    file_obj.write('MEMORY: 100\n')
-    file_obj.write('CPU: 1')
-    file_obj.close()
+    create_config(config_file)
+
+    for lines in fileinput.FileInput(config_file, inplace=1):
+        lines = lines.replace("PIXSCALE: 0.027\n", "PIXSCALE: 0.01\n")
+        print lines
 
 def create_random(path):
     """
@@ -155,14 +140,17 @@ def create_fits(filename, image, ndit, parang):
     hdu.writeto(filename)
 
 def create_fake(file_start, sep, contrast):
+    """
+    Create ADI test data with fake planets.
+    """
 
-    ndit = [ 22, 17, 21, 18 ]
-    naxis3 = [ 23, 18, 22, 19 ]
-    npix = [ 100, 100, 100, 100 ]
-    fwhm =  [ 3., 3., 3., 3. ]
-    x0 = [ 25, 75, 75, 25 ]
-    y0 = [ 75, 75, 25, 25 ]
-    angles = [ [0., 25.], [25., 50.], [50., 75.], [75.,100.] ]
+    ndit = [22, 17, 21, 18]
+    naxis3 = [23, 18, 22, 19]
+    npix = [100, 100, 100, 100]
+    fwhm = [3., 3., 3., 3.]
+    x0 = [25, 75, 75, 25]
+    y0 = [75, 75, 25, 25]
+    angles = [[0., 25.], [25., 50.], [50., 75.], [75., 100.]]
 
     parang = []
     for i, item in enumerate(angles):
@@ -174,26 +162,38 @@ def create_fake(file_start, sep, contrast):
     p_count = 0
     for j, item in enumerate(fwhm):
 
-        sigma = item / ( 2. * math.sqrt(2.*math.log(2.)) )
+        sigma = item / (2.*math.sqrt(2.*math.log(2.)))
 
         x = np.arange(0., npix[j], 1.)
         y = np.arange(0., npix[j]+2, 1.)
-        xx, yy = np.meshgrid(x,y)
-    
+        xx, yy = np.meshgrid(x, y)
+
         image = np.zeros((naxis3[j], npix[j]+2, npix[j]))
 
         for i in range(ndit[j]):
-            star = (1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
             noise = np.random.normal(loc=0, scale=2e-4, size=(102, 100))
 
-            planet = contrast*(1./(2.*np.pi*sigma**2)) * np.exp( -((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2) )
+            planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
             x_shift = sep*math.cos(parang[p_count]*math.pi/180.)
             y_shift = sep*math.sin(parang[p_count]*math.pi/180.)
             planet = shift(planet, (x_shift, y_shift), order=5)
 
             image[i, 0:npix[j]+2, 0:npix[j]] = star+noise+planet
-        
+
             p_count += 1
 
         filename = file_start+str(j+1).zfill(2)+'.fits'
         create_fits(filename, image, ndit[j], angles[j])
+
+def remove_psf_test_data(path):
+    """
+    Remove FITS files that were created for the test cases of the PSF subtraction.
+    """
+
+    os.remove(os.path.join(path, "test_data/image1.fits"))
+    os.remove(os.path.join(path, "test_data/image2.fits"))
+    os.remove(os.path.join(path, "test_data/image3.fits"))
+    os.remove(os.path.join(path, "test_data/image4.fits"))
+    os.remove(os.path.join(path, "test_data/PynPoint_database.hdf5"))
+    os.remove(os.path.join(path, "test_data/PynPoint_config.ini"))
