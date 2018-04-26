@@ -14,7 +14,7 @@ from PynPoint.Core.Processing import ProcessingModule
 
 @jit(cache=True)
 def _calc_fast_convolution(f_roof, w_conv, s_conv, n_size, g_conv, n_conv):
-    new = np.zeros(n_conv, dtype=np.complex64)
+    output = np.zeros(n_conv, dtype=np.complex64)
 
     if s_conv[0] == 0 and s_conv[1] == 0:
         check = True
@@ -34,24 +34,25 @@ def _calc_fast_convolution(f_roof, w_conv, s_conv, n_size, g_conv, n_conv):
     if check:
         for m in range(n_conv[0]):
             for j in range(n_conv[1]):
-                new[m, j] = f_roof * w_conv[m-s_conv[0], j-s_conv[1]]
+                output[m, j] = f_roof * w_conv[m-s_conv[0], j-s_conv[1]]
 
     else:
         for m in range(n_conv[0]):
             for j in range(n_conv[1]):
                 w_tmp_1 = w_conv[m-s_conv[0], j-s_conv[1]]
                 w_tmp_2 = w_conv[(m+s_conv[0])%n_conv[0], (j+s_conv[1])%n_conv[1]]
-                new[m, j] = (f_roof*w_tmp_1 + np.conjugate(f_roof)*w_tmp_2)
+
+                output[m, j] = f_roof*w_tmp_1 + np.conjugate(f_roof)*w_tmp_2
 
     # Original code by Markus
     # if ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == 0)) or ((s_conv[0] == 0) and (s_conv[1] == \
     #         n_conv[1]/2)) or ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == n_conv[1]/2)):
-    #     res = new/float(n_size) # seems to make problems, unclear why
+    #     res = output/float(n_size) # seems to make problems, unclear why
     #
     # else:
-    #     res = new/float(n_size)
+    #     res = output/float(n_size)
 
-    res = new/float(n_size)
+    res = output / float(n_size)
 
     return g_conv - res
 
