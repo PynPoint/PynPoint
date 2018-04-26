@@ -4,23 +4,17 @@ import warnings
 import numpy as np
 
 import PynPoint.OldVersion
-from PynPoint.Util.TestTools import prepare_pca_tests
+from PynPoint.Util.TestTools import prepare_pca_tests, remove_psf_test_data
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
 def setup_module():
-    path = os.path.dirname(__file__)
-    prepare_pca_tests(path)
+    prepare_pca_tests(os.path.dirname(__file__))
 
 def teardown_module():
-    os.remove(os.path.dirname(__file__) + "/test_data/image1.fits")
-    os.remove(os.path.dirname(__file__) + "/test_data/image2.fits")
-    os.remove(os.path.dirname(__file__) + "/test_data/image3.fits")
-    os.remove(os.path.dirname(__file__) + "/test_data/image4.fits")
-    os.remove(os.path.dirname(__file__) + "/test_data/PynPoint_database.hdf5")
-    os.remove(os.path.dirname(__file__) + "/test_data/PynPoint_config.ini")
+    remove_psf_test_data(os.path.dirname(__file__))
 
 class TestImages(object):
 
