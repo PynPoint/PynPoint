@@ -13,7 +13,7 @@ import numpy as np
 
 class DataStorage(object):
     """
-    Instances of DataStorage manage to open and close the Pypeline .hdf5 databases. They have an
+    Instances of DataStorage manage to open and close the Pypeline HDF5 databases. They have an
     internal h5py data bank (self.m_data_bank) which gives direct access to the data if the storage
     is open (self.m_open == True).
     """
@@ -21,11 +21,11 @@ class DataStorage(object):
     def __init__(self,
                  location_in):
         """
-        Constructor of a DataStorage instance. It needs the location of the .hdf5 file (Pypeline
+        Constructor of a DataStorage instance. It needs the location of the HDF5 file (Pypeline
         database) as input. If the file already exists it is opened and extended, if not a new File
         will be created.
 
-        :param location_in: Location (directory + filename) of the .hdf5 data bank
+        :param location_in: Location (directory + filename) of the HDF5 data bank
         :type location_in: str
 
         :return: None
@@ -41,7 +41,7 @@ class DataStorage(object):
 
     def open_connection(self):
         """
-        Opens the connection to the .hdf5 file by opening an old file or creating a new one.
+        Opens the connection to the HDF5 file by opening an old file or creating a new one.
 
         :return: None
         """
@@ -54,7 +54,7 @@ class DataStorage(object):
 
     def close_connection(self):
         """
-        Closes the connection to the .hdf5 file. All entries of the data bank will be stored on the
+        Closes the connection to the HDF5 file. All entries of the data bank will be stored on the
         hard drive and the memory is cleaned.
 
         :return: None
@@ -69,12 +69,11 @@ class DataStorage(object):
 
 class Port:
     """
-    Abstract interface and implementation of common functionality of the Input and Output Port.
-    Each Port has a internal tag which is its key to a dataset of the DataStorage. If for example
-    data is stored under the entry *im_arr* in the central data storage only a port
-    with the tag (self._m_tag = *im_arr*) can access and change that data.
-    Furthermore a port knows exact one DataStorage instance and whether it is active or not
-    (self._m_data_base_active).
+    Abstract interface and implementation of common functionality of the InputPort, OutputPort, and
+    ConfigPort. Each Port has a internal tag which is its key to a dataset in the DataStorage. If
+    for example data is stored under the entry *im_arr* in the central data storage only a port
+    with the tag (self._m_tag = *im_arr*) can access and change that data. A port knows exactly
+    one DataStorage instance, whether it is active or not (self._m_data_base_active).
     """
 
     __metaclass__ = ABCMeta
@@ -152,7 +151,7 @@ class Port:
 
 class ConfigPort(Port):
     """
-    ConfigPort can be used to read the "config" tag from a (.hdf5) database. This tag contains
+    ConfigPort can be used to read the "config" tag from a (HDF5) database. This tag contains
     the central settings used by PynPoint, as well as the relevant FITS header keywords. You can
     use a ConfigPort instance to access a single attribute of the dataset using get_attribute().
     """
@@ -253,7 +252,7 @@ class ConfigPort(Port):
 
 class InputPort(Port):
     """
-    InputPorts can be used to read datasets with a specific tag from a (.hdf5) database. You can use
+    InputPorts can be used to read datasets with a specific tag from a (HDF5) database. You can use
     an InputPort instance to access:
 
         * the complete dataset using the get_all() method.
@@ -490,7 +489,7 @@ class InputPort(Port):
 
 class OutputPort(Port):
     """
-    Output Ports can be used to save results under a given tag to a (.hdf5) Data Storage. An
+    Output Ports can be used to save results under a given tag to a (HDF5) Data Storage. An
     instance of OutputPort with self.tag= `tag` can store data under the key `tag` by using one of
     the following methods:
 
@@ -793,7 +792,7 @@ class OutputPort(Port):
         dimension different to the input data. The following cases are implemented:
 
             * (#dimension of the first input data#, #desired data_dim#)
-            * (1, 1) 1D input or single value will be stored as list in .hdf5
+            * (1, 1) 1D input or single value will be stored as list in HDF5
             * (1, 2) 1D input, but 2D array stored inside (i.e. a list of lists with a fixed size).
             * (2, 2) 2D input (single image) and 2D array stored inside (i.e. a list of lists with a
               fixed size).
@@ -917,7 +916,7 @@ class OutputPort(Port):
                attributes later (:func:`PynPoint.core.DataIO.OutputPort.append_attribute_data`).
                This is not supported by static attributes.
 
-        Static and non-static attributes are stored in a different way using the .hdf5 file format.
+        Static and non-static attributes are stored in a different way using the HDF5 file format.
         Static attributes will be direct attributes while non-static attributes are stored in a
         group with the name *header_* + name of the dataset.
 
