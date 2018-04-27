@@ -488,9 +488,9 @@ class InputPort(Port):
 
 class OutputPort(Port):
     """
-    Output Ports can be used to save results under a given tag to a (HDF5) Data Storage. An
-    instance of OutputPort with self.tag= `tag` can store data under the key `tag` by using one of
-    the following methods:
+    Output ports can be used to save results under a given tag to the HDF5 DataStorage. An instance
+    of OutputPort with self.tag=`tag` can store data under the key `tag` by using one of the
+    following methods:
 
         * set_all(...) - replaces and sets the whole dataset
         * append(...) - appends data to the existing data set. For more information see
@@ -499,9 +499,9 @@ class OutputPort(Port):
 
         .. code-block:: python
 
-            tmp_in_port = OutputPort("Some_tag")
+            out_port = OutputPort("Some_tag")
             data = np.ones(200, 200) # 2D image filled with ones
-            tmp_in_port[0,:,:] = data # Sets the first 2D image of a 3D image stack
+            out_port[0,:,:] = data # Sets the first 2D image of a 3D image stack
 
         * add_attribute(...) - modifies or creates a attribute of the dataset
         * del_attribute(...) - deletes a attribute
@@ -1150,7 +1150,7 @@ class OutputPort(Port):
 
     def flush(self):
         """
-        Forces the Data Storage to save all data from the memory to the hard drive without closing
+        Forces the DataStorage to save all data from the memory to the hard drive without closing
         it.
 
         :return: None
