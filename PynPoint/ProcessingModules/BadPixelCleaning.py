@@ -13,36 +13,48 @@ from PynPoint.Core.Processing import ProcessingModule
 
 
 @jit(cache=True)
-def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
-    new = np.zeros(N, dtype=np.complex64)
+def _calc_fast_convolution(f_roof, w_conv, s_conv, n_size, g_conv, n_conv):
+    output = np.zeros(n_conv, dtype=np.complex64)
 
-    if ((tmp_s[0] == 0) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):
-        for m in range(0, N[0], 1):
-            for j in range(0, N[1], 1):
-                new[m, j] = F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]]
+    if s_conv[0] == 0 and s_conv[1] == 0:
+        check = True
 
-    else:
-        for m in range(0, N[0], 1):
-            for j in range(0, N[1], 1):
-                new[m, j] = (F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]] +
-                             np.conjugate(F_roof_tmp) * W[
-                                 (m + tmp_s[0]) % N[0], (j + tmp_s[1]) % N[1]])
+    elif s_conv[0] == n_conv[0]/2 and s_conv[1] == 0:
+        check = True
 
-    if ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):
-        # seems to make problems, unclear why
-        res = new / float(N_size)
+    elif s_conv[0] == 0 and s_conv[1] == n_conv[1]/2:
+        check = True
+
+    elif s_conv[0] == n_conv[0]/2 and s_conv[1] == n_conv[1]/2:
+        check = True
 
     else:
-        res = new / float(N_size)
+        check = False
 
-    tmp_G = tmp_G - res
+    if check:
+        for m in range(n_conv[0]):
+            for j in range(n_conv[1]):
+                output[m, j] = f_roof * w_conv[m-s_conv[0], j-s_conv[1]]
 
-    return tmp_G
+    else:
+        for m in range(n_conv[0]):
+            for j in range(n_conv[1]):
+                w_tmp_1 = w_conv[m-s_conv[0], j-s_conv[1]]
+                w_tmp_2 = w_conv[(m+s_conv[0])%n_conv[0], (j+s_conv[1])%n_conv[1]]
+
+                output[m, j] = f_roof*w_tmp_1 + np.conjugate(f_roof)*w_tmp_2
+
+    # Original code by Markus
+    # if ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == 0)) or ((s_conv[0] == 0) and (s_conv[1] == \
+    #         n_conv[1]/2)) or ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == n_conv[1]/2)):
+    #     res = output/float(n_size) # seems to make problems, unclear why
+    #
+    # else:
+    #     res = output/float(n_size)
+
+    res = output / float(n_size)
+
+    return g_conv - res
 
 
 def _bad_pixel_interpolation(image_in,
@@ -423,12 +435,12 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError("The shape of the bad pixel map does not match the shape of the "
                              "images.")
 
-        def image_interpolation(image_in):
+        def _image_interpolation(image_in):
             return _bad_pixel_interpolation(image_in,
                                             bad_pixel_map,
                                             self.m_iterations)
 
-        self.apply_function_to_images(image_interpolation,
+        self.apply_function_to_images(_image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running BadPixelInterpolationModule...")
