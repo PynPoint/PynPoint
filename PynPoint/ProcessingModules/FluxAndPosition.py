@@ -804,7 +804,8 @@ def _lnprob(param,
 
     def _lnlike():
         """
-        Internal function for the log likelihood function.
+        Internal function for the log likelihood function. Noise of each pixel is assumed to be
+        given by photon noise only (see Wertz et al. 2017 for details).
 
         :return: Log likelihood.
         :rtype float
