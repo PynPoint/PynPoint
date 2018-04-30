@@ -28,7 +28,7 @@ class ContrastCurveModule(ProcessingModule):
                  name_in="contrast",
                  image_in_tag="im_arr",
                  psf_in_tag="im_psf",
-                 pca_out_tag="im_pca",
+                 pca_out_tag=None,
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
                  angle=(0., 360., 60.),
@@ -55,7 +55,8 @@ class ContrastCurveModule(ProcessingModule):
                            the dimensions equal to *image_in_tag*.
         :type psf_in_tag: str
         :param pca_out_tag: Tag of the database entry that contains all the residuals of the PSF
-                            subtraction for each position and optimization step.
+                            subtraction for each position and optimization step. No data is written
+                            if set to None.
         :type pca_out_tag: str
         :param contrast_out_tag: Tag of the database entry that contains the azimuthally averaged
                                  contrast limits, the azimuthal variance of the contrast limits,
@@ -112,8 +113,10 @@ class ContrastCurveModule(ProcessingModule):
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
-
-        self.m_pca_out_port = self.add_output_port(pca_out_tag)
+        if pca_out_tag is None:
+            self.m_pca_out_port = None
+        else:
+            self.m_pca_out_port = self.add_output_port(pca_out_tag)
         self.m_contrast_out_port = self.add_output_port(contrast_out_tag)
 
         self.m_image_in_tag = image_in_tag
@@ -321,10 +324,11 @@ class ContrastCurveModule(ProcessingModule):
                         else:
                             raise ValueError("Multiple residual images found, expecting only one.")
 
-                    if count == 1 and iteration == 1:
-                        self.m_pca_out_port.set_all(im_res, data_dim=3)
-                    else:
-                        self.m_pca_out_port.append(im_res, data_dim=3)
+                    if self.m_pca_out_port is not None:
+                        if count == 1 and iteration == 1:
+                            self.m_pca_out_port.set_all(im_res, data_dim=3)
+                        else:
+                            self.m_pca_out_port.append(im_res, data_dim=3)
 
                     list_fpf.append(self._false_alarm(im_res, x_fake, y_fake, self.m_aperture))
 
@@ -404,14 +408,15 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(result, data_dim=2)
 
-        self.m_pca_out_port.add_history_information("Contrast limits",
-                                                    str(self.m_sigma)+" sigma")
+        if self.m_pca_out_port is not None:
+            self.m_pca_out_port.add_history_information("Contrast limits",
+                                                        str(self.m_sigma)+" sigma")
+
+            self.m_pca_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_contrast_out_port.add_history_information("Contrast limits",
                                                          str(self.m_sigma)+" sigma")
 
-        self.m_pca_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_pca_out_port.close_port()
+        self.m_contrast_out_port.close_port()
