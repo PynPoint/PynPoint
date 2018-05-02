@@ -143,6 +143,9 @@ class FakePlanetModule(ProcessingModule):
 
             ndim_psf = psf.ndim
 
+        elif ndim_psf == 3 and nimages == npsf:
+            psf = None
+
         return frames, psf, ndim_psf
 
     def _shift_psf(self, psf, parang):
@@ -199,7 +202,7 @@ class FakePlanetModule(ProcessingModule):
                     psf_tmp = np.copy(psf)
 
                 elif ndim_psf == 3:
-                    psf_tmp = self.m_psf_in_port[frames+i]
+                    psf_tmp = self.m_psf_in_port[frames[j]+i, ]
 
                 psf_shift = self._shift_psf(psf_tmp, parang[frames[j]+i])
                 image[i, ] += self.m_psf_scaling*flux_ratio*psf_shift
