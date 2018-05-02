@@ -24,7 +24,7 @@ class PSFpreparationModule(ProcessingModule):
     """
 
     def __init__(self,
-                 name_in=None,
+                 name_in="psf_preparation",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
                  mask_out_tag="mask_arr",
