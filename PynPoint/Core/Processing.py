@@ -185,9 +185,9 @@ class WritingModule(PypelineModule):
 class ProcessingModule(PypelineModule):
     """
     The abstract class ProcessingModule is an interface for all processing steps in the pipeline
-    which reads, processes and saves data. Hence they have reading and writing access to the central
-    data base using a dictionary of output ports (self._m_output_ports) and a dictionary of input
-    ports (self._m_input_ports).
+    which read, process, and store data. Hence processing modules have read and write access to the
+    central database through a dictionary of output ports (self._m_output_ports) and a dictionary
+    of input ports (self._m_input_ports).
     """
 
     __metaclass__ = ABCMeta
@@ -496,7 +496,7 @@ class ReadingModule(PypelineModule):
     """
     The abstract class ReadingModule is an interface for processing steps in the Pypeline which
     have only read access to the central data storage. One can specify a directory on the hard
-    drive where the input data for the module is located. If no input directory is givennthe
+    drive where the input data for the module is located. If no input directory is given then
     default Pypeline input directory is used. Reading modules have a dictionary of output ports
     (self._m_out_ports) but no input ports.
     """
