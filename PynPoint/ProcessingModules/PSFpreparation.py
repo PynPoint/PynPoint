@@ -263,7 +263,7 @@ class AngleInterpolationModule(ProcessingModule):
         new_angles = []
 
         for i, _ in enumerate(parang_start):
-            progress(i, len(parang_start), "Running AngleCalculationModule...")
+            progress(i, len(parang_start), "Running AngleInterpolationModule...")
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
                 parang_start[i] += 360.
@@ -276,7 +276,7 @@ class AngleInterpolationModule(ProcessingModule):
                                                parang_end[i],
                                                num=steps[i]))
 
-        sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
+        sys.stdout.write("Running AngleInterpolationModule... [DONE]\n")
         sys.stdout.flush()
 
         self.m_data_out_port.add_attribute("PARANG",
