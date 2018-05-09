@@ -10,6 +10,7 @@ import numpy as np
 import emcee
 
 from scipy.ndimage import shift, fourier_shift, rotate
+from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import minimize
 from scipy.stats import t
 from sklearn.decomposition import PCA
@@ -445,6 +446,9 @@ class SimplexMinimizationModule(ProcessingModule):
                 merit = np.sum(np.abs(hes_det))
 
             elif self.m_merit == "sum":
+
+                if self.m_sigma > 0.:
+                    im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
 
                 im_crop[rr_grid > self.m_aperture] = 0.
                 merit = np.sum(np.abs(im_crop))
