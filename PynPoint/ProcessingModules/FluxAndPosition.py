@@ -22,6 +22,7 @@ from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.AnalysisTools import false_alarm
 
 
 class FakePlanetModule(ProcessingModule):
@@ -281,8 +282,9 @@ class SimplexMinimizationModule(ProcessingModule):
                                   row of values contain the best-fit results.
         :type flux_position_tag: str
         :param merit: Function of merit for the minimization. Can be either *hessian*, to minimize
-                      the sum of the absolute values of the determinant of the Hessian matrix, or
-                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017).
+                      the sum of the absolute values of the determinant of the Hessian matrix,
+                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017),
+                      or *ttest*, to minimize the SNR as defined by the t-test (Mawet et al. 2014).
         :type merit: str
         :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
         :type aperture: float
@@ -453,8 +455,21 @@ class SimplexMinimizationModule(ProcessingModule):
                 im_crop[rr_grid > self.m_aperture] = 0.
                 merit = np.sum(np.abs(im_crop))
 
+            elif self.m_merit == "ttest":
+
+                if self.m_sigma > 0.:
+                    im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
+
+                noise, _, _ = false_alarm(im_crop, pos_x, pos_y, self.m_aperture, True)
+
+                im_crop[rr_grid > self.m_aperture] = 0.
+                print noise, np.sum(np.abs(im_crop))
+                merit = np.sum(np.abs(im_crop))**2 / noise**2
+                print merit
+                sys.exit(0)
+
             else:
-                raise ValueError("Function of merit should be set to hessian or sum.")
+                raise ValueError("Function of merit not recognized.")
 
             position = _rotate(center, (pos_x, pos_y), -self.m_extra_rot)
 
