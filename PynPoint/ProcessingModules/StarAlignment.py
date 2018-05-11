@@ -2,6 +2,7 @@
 Modules for locating, aligning, and centering of the star.
 """
 
+import os
 import math
 
 import warnings
@@ -13,6 +14,7 @@ from skimage.transform import rescale
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 from scipy.optimize import curve_fit
+from astropy.io import fits
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import memory_frames
@@ -163,6 +165,11 @@ class StarExtractionModule(ProcessingModule):
                                      'large to be cut (image index = '+str(self.m_count)+', '
                                      'pixel with highest value [x,y] = ' +str([argmax[1]] + \
                                      [argmax[0]])+ ').')
+
+                    print os.path.dirname(os.path.abspath(__file__))
+                    print os.getcwd()
+                    images = np.concatenate((im_smooth, subimage))
+                    fits.writeto("star_extraction_error.fits", images, overwrite=True)
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
