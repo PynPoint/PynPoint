@@ -192,7 +192,6 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
     """
 
     fwhm = 3
-    npix = 100
     ndit = 10
     naxis3 = ndit
     exp_no = [1, 2, 3, 4]
