@@ -186,6 +186,43 @@ def create_fake(file_start, sep, contrast):
         filename = file_start+str(j+1).zfill(2)+'.fits'
         create_fits(filename, image, ndit[j], angles[j])
 
+def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
+    """
+    Create data with a stellar PSF and Gaussian noise.
+    """
+
+    fwhm = 3
+    ndit = 10
+    naxis3 = ndit
+    exp_no = [1, 2, 3, 4]
+
+    np.random.seed(1)
+
+    for j, item in enumerate(exp_no):
+        sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
+
+        x = y = np.arange(0., npix_x, 1.)
+        xx, yy = np.meshgrid(x, y)
+
+        image = np.zeros((naxis3, npix_x, npix_y))
+
+        for i in range(ndit):
+            star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
+            noise = np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
+            image[i, 0:npix_x, 0:npix_x] = star+noise
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = item
+        header['HIERARCH ESO DET NDIT'] = ndit
+        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
+        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = "None"
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
+        hdu.data = image
+        hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
+
 def remove_psf_test_data(path):
     """
     Remove FITS files that were created for the test cases of the PSF subtraction.
