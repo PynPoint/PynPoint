@@ -279,6 +279,7 @@ class FrameSelectionModule(ProcessingModule):
         super(FrameSelectionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+
         if index_out_tag is None:
             self.m_index_out_port = None
         else:
@@ -383,6 +384,7 @@ class FrameSelectionModule(ProcessingModule):
             star = StarExtractionModule(name_in="star",
                                         image_in_tag=self.m_image_in_port.tag,
                                         image_out_tag=None,
+                                        index_out_tag=None,
                                         image_size=None,
                                         fwhm_star=self.m_fwhm,
                                         position=self.m_position)
@@ -390,6 +392,7 @@ class FrameSelectionModule(ProcessingModule):
             star.connect_database(self._m_data_base)
             star.run()
 
+            self.m_image_in_port = self.add_input_port(self.m_image_in_port.tag)
             starpos = self.m_image_in_port.get_attribute("STAR_POSITION")
 
         for i in range(nimages):
