@@ -427,15 +427,15 @@ class SimplexMinimizationModule(ProcessingModule):
 
             npix = im_crop.shape[0]
 
-            if npix%2 == 0:
-                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-            elif npix%2 == 1:
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-            rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
             if self.m_merit == "hessian":
+
+                if npix%2 == 0:
+                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                elif npix%2 == 1:
+                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
                 hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
                                                                     sigma=self.m_sigma,
@@ -452,21 +452,21 @@ class SimplexMinimizationModule(ProcessingModule):
                 if self.m_sigma > 0.:
                     im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
 
-                im_crop[rr_grid > self.m_aperture] = 0.
-                merit = np.sum(np.abs(im_crop))
+                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
+                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
+                merit = phot_table['aperture_sum']
 
             elif self.m_merit == "ttest":
 
                 if self.m_sigma > 0.:
+                    im_res = gaussian_filter(input=im_res, sigma=self.m_sigma)
                     im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
 
-                noise, _, _ = false_alarm(im_crop, pos_x, pos_y, self.m_aperture, True)
+                noise, _, _ = false_alarm(im_res, pos_x, pos_y, self.m_aperture, True)
 
-                im_crop[rr_grid > self.m_aperture] = 0.
-                print noise, np.sum(np.abs(im_crop))
-                merit = np.sum(np.abs(im_crop))**2 / noise**2
-                print merit
-                sys.exit(0)
+                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
+                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
+                merit = phot_table['aperture_sum']**2 / noise**2
 
             else:
                 raise ValueError("Function of merit not recognized.")
