@@ -192,10 +192,6 @@ class StarExtractionModule(ProcessingModule):
             if self.m_image_size is not None:
                 return im_crop
 
-        index.append(2)
-        index.append(5)
-        index.append(8)
-
         self.apply_function_to_images(_crop_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,

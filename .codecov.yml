@@ -1,5 +1,4 @@
-comment:
-  require_changes: yes
+comment: off
 
 ignore:
   - "PynPoint/OldVersion"
