@@ -8,7 +8,6 @@ import warnings
 
 import numpy as np
 
-from photutils import aperture_photometry, CircularAperture
 from scipy.interpolate import interp1d
 from scipy.stats import t
 
@@ -16,6 +15,7 @@ from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule
+from PynPoint.Util.AnalysisTools import false_alarm, student_fpf
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -136,54 +136,6 @@ class ContrastCurveModule(ProcessingModule):
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
 
-    def _false_alarm(self,
-                     image,
-                     x_pos,
-                     y_pos,
-                     size):
-
-        center = (np.size(image, 0)/2., np.size(image, 1)/2.)
-        radius = math.sqrt((center[0]-y_pos)**2.+(center[1]-x_pos)**2.)
-
-        num_ap = int(math.pi*radius/size)
-        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
-
-        if self.m_ignore:
-            num_ap -= 2
-            ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
-
-        if num_ap < 3:
-            raise ValueError("Number of apertures (num_ap=%s) is too small to calculate the "
-                             "false positive fraction. Increase the lower limit of the "
-                             "separation argument." % num_ap)
-
-        ap_phot = np.zeros(num_ap)
-        for i, theta in enumerate(ap_theta):
-            x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
-                                (y_pos-center[0])*math.sin(theta)
-            y_tmp = center[0] + (x_pos-center[1])*math.sin(theta) + \
-                                (y_pos-center[0])*math.cos(theta)
-
-            aperture = CircularAperture((x_tmp, y_tmp), size)
-            phot_table = aperture_photometry(image, aperture, method='exact')
-            ap_phot[i] = phot_table['aperture_sum']
-
-        t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / \
-                 (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
-
-        return 1. - t.cdf(t_test, num_ap-2)
-
-    def _student_fpf(self,
-                     sigma,
-                     radius,
-                     size):
-
-        num_ap = int(math.pi*radius/size)
-        if self.m_ignore:
-            num_ap -= 2
-
-        return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
-
     def run(self):
         """
         Run method of the module. Fake positive companions are injected for a range of separations
@@ -241,8 +193,11 @@ class ContrastCurveModule(ProcessingModule):
 
         count = 1
 
+        sys.stdout.write("Running ContrastCurveModule...\n")
+        sys.stdout.flush()
+
         for m, sep in enumerate(pos_r):
-            fpf_threshold = self._student_fpf(self.m_sigma, sep, self.m_aperture)
+            fpf_threshold = student_fpf(self.m_sigma, sep, self.m_aperture, self.m_ignore)
             fake_fpf[m] = fpf_threshold
 
             for n, ang in enumerate(pos_t):
@@ -330,7 +285,9 @@ class ContrastCurveModule(ProcessingModule):
                         else:
                             self.m_pca_out_port.append(im_res, data_dim=3)
 
-                    list_fpf.append(self._false_alarm(im_res, x_fake, y_fake, self.m_aperture))
+                    _, _, fpf = false_alarm(im_res, x_fake, y_fake, self.m_aperture, self.m_ignore)
+
+                    list_fpf.append(fpf)
 
                     if abs(fpf_threshold-list_fpf[-1]) < self.m_accuracy*fpf_threshold:
                         if len(list_fpf) == 1:
@@ -407,6 +364,9 @@ class ContrastCurveModule(ProcessingModule):
                                   fake_fpf))
 
         self.m_contrast_out_port.set_all(result, data_dim=2)
+
+        sys.stdout.write("Running ContrastCurveModule... [DONE]\n")
+        sys.stdout.flush()
 
         if self.m_pca_out_port is not None:
             self.m_pca_out_port.add_history_information("Contrast limits",

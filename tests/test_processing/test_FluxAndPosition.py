@@ -78,7 +78,7 @@ class TestFluxAndPosition(object):
                                             name_in="simplex",
                                             image_in_tag="fake",
                                             psf_in_tag="read",
-                                            res_out_tag="pca_res",
+                                            res_out_tag="simplex_res",
                                             flux_position_tag="flux_position",
                                             merit="sum",
                                             aperture=0.05,
@@ -136,20 +136,20 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[0, 49, 31], 0.00036532633147006946, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0001012983225928772, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["pca_res"]
-        assert np.allclose(data[46, 49, 31], 1.8936434205673436e-06, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -2.8850503470725503e-08, rtol=limit, atol=0.)
+        data = storage.m_data_bank["simplex_res"]
+        assert np.allclose(data[46, 49, 31], 3.718481593648487e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.8892749617545238e-08, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["flux_position"]
-        assert np.allclose(data[46, 0], 31.378322643989137, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 1], 49.94461112812883, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 2], 0.5027875127365663, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 3], 90.17042177085045, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 4], 5.072394778584217, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 0], 31.276994533457994, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 1], 50.10345749706295, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 2], 0.5055288651354779, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 3], 89.6834045889695, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 4], 4.997674024675655, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["pca_res"]
-        assert np.allclose(data[0, 49, 31], -0.00024018362015251087, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -2.8850503470725503e-08, rtol=limit, atol=0.)
+        data = storage.m_data_bank["res_mean"]
+        assert np.allclose(data[0, 49, 31], 9.258255068620805e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.610863424405134e-08, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["snr_fpf"]
         assert np.allclose(data[0, 2], 0.513710034941892, rtol=limit, atol=0.)
