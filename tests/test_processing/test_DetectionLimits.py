@@ -18,9 +18,7 @@ warnings.simplefilter("always")
 limit = 1e-10
 
 def setup_module():
-    test_dir = os.path.dirname(__file__) + "/"
-
-    create_star_data(path=test_dir,
+    create_star_data(path=os.path.dirname(__file__),
                      npix_x=100,
                      npix_y=100,    
                      x0=[50, 50, 50, 50],
@@ -28,8 +26,7 @@ def setup_module():
                      parang_start=[0., 5., 10., 15.],
                      parang_end=[5., 10., 15., 20.])
 
-    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
-    create_config(filename)
+    create_config(os.path.join(os.path.dirname(__file__), "/PynPoint_config.ini"))
 
 def teardown_module():
     test_dir = os.path.dirname(__file__) + "/"
@@ -40,7 +37,7 @@ def teardown_module():
     os.remove(test_dir + 'PynPoint_database.hdf5')
     os.remove(test_dir + 'PynPoint_config.ini')
 
-class TestStarAlignment(object):
+class TestDetectionLimits(object):
 
     def setup(self):
         self.test_dir = os.path.dirname(__file__) + "/"
