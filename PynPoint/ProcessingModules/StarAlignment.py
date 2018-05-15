@@ -28,6 +28,7 @@ class StarExtractionModule(ProcessingModule):
                  name_in="star_cutting",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_crop",
+                 index_out_tag=None,
                  image_size=2.,
                  fwhm_star=0.2,
                  position=None):
@@ -43,6 +44,10 @@ class StarExtractionModule(ProcessingModule):
                               is set to None then only the STAR_POSITION attributes will be written
                               to *image_in_tag* and *image_out_tag* is not used.
         :type image_out_tag: str
+        :param index_out_tag: List with image indices for which the image size is too large to
+                              be cropped around the brightest pixel. No data is written if set
+                              to None.
+        :type index_out_tag: str
         :param image_size: Cropped image size (arcsec). If *image_out_tag* and/or *image_size* is
                            set to None then only the STAR_POSITION attributes will be written to
                            *image_in_tag* and *image_out_tag* is not used.
@@ -64,15 +69,22 @@ class StarExtractionModule(ProcessingModule):
         super(StarExtractionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_position_out_port = self.add_output_port(image_in_tag)
+
         if image_out_tag is None:
             self.m_image_out_port = None
         else:
             self.m_image_out_port = self.add_output_port(image_out_tag)
-        self.m_position_out_port = self.add_output_port(image_in_tag)
+
+        if index_out_tag is None:
+            self.m_index_out_port = None
+        else:
+            self.m_index_out_port = self.add_output_port(index_out_tag)
 
         self.m_image_size = image_size
         self.m_fwhm_star = fwhm_star
         self.m_position = position
+
         self.m_count = 0
 
     def run(self):
@@ -108,6 +120,7 @@ class StarExtractionModule(ProcessingModule):
         self.m_fwhm_star = int(self.m_fwhm_star)
 
         star = []
+        index = []
 
         def _crop_image(image):
             sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
@@ -159,15 +172,20 @@ class StarExtractionModule(ProcessingModule):
                         or argmax[0] + psf_radius >= image.shape[0] \
                         or argmax[1] + psf_radius >= image.shape[1]:
 
-                    raise ValueError('Highest value is near the border. PSF size is too '
-                                     'large to be cut (image index = '+str(self.m_count)+', '
-                                     'pixel with highest value [x,y] = ' +str([argmax[1]] + \
-                                     [argmax[0]])+ ').')
+                    warnings.warn("PSF size is too large to crop the image around the brightest "
+                                  "pixel (image index = "+str(self.m_count)+", pixel [x, y] = "
+                                  +str([argmax[1]]+[argmax[0]])+"). Using the center of the image "
+                                  "instead.")
+
+                    index.append(self.m_count)
+
+                    argmax = [np.size(image, 0)/2., np.size(image, 0)/2.]
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
 
             star.append(argmax)
+
             self.m_count += 1
 
             if self.m_image_size is not None:
@@ -180,10 +198,16 @@ class StarExtractionModule(ProcessingModule):
 
         self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
+        if self.m_index_out_port is not None:
+            self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
+            self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_index_out_port.add_history_information("Star extract", "maximum")
+
         if self.m_image_size is not None and self.m_image_out_port is not None:
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Star extract", "maximum")
-            self.m_image_out_port.close_port()
+
+        self.m_position_out_port.close_port()
 
 
 class StarAlignmentModule(ProcessingModule):

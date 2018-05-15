@@ -22,6 +22,7 @@ from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.AnalysisTools import false_alarm
 
 
 class FakePlanetModule(ProcessingModule):
@@ -281,8 +282,9 @@ class SimplexMinimizationModule(ProcessingModule):
                                   row of values contain the best-fit results.
         :type flux_position_tag: str
         :param merit: Function of merit for the minimization. Can be either *hessian*, to minimize
-                      the sum of the absolute values of the determinant of the Hessian matrix, or
-                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017).
+                      the sum of the absolute values of the determinant of the Hessian matrix,
+                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017),
+                      or *ttest*, to minimize the SNR as defined by the t-test (Mawet et al. 2014).
         :type merit: str
         :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
         :type aperture: float
@@ -425,15 +427,15 @@ class SimplexMinimizationModule(ProcessingModule):
 
             npix = im_crop.shape[0]
 
-            if npix%2 == 0:
-                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-            elif npix%2 == 1:
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-            rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
             if self.m_merit == "hessian":
+
+                if npix%2 == 0:
+                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+                elif npix%2 == 1:
+                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
                 hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
                                                                     sigma=self.m_sigma,
@@ -450,11 +452,24 @@ class SimplexMinimizationModule(ProcessingModule):
                 if self.m_sigma > 0.:
                     im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
 
-                im_crop[rr_grid > self.m_aperture] = 0.
-                merit = np.sum(np.abs(im_crop))
+                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
+                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
+                merit = phot_table['aperture_sum']
+
+            elif self.m_merit == "ttest":
+
+                if self.m_sigma > 0.:
+                    im_res = gaussian_filter(input=im_res, sigma=self.m_sigma)
+                    im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
+
+                noise, _, _ = false_alarm(im_res, pos_x, pos_y, self.m_aperture, True)
+
+                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
+                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
+                merit = phot_table['aperture_sum']**2 / noise**2
 
             else:
-                raise ValueError("Function of merit should be set to hessian or sum.")
+                raise ValueError("Function of merit not recognized.")
 
             position = _rotate(center, (pos_x, pos_y), -self.m_extra_rot)
 
