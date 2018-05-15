@@ -11,7 +11,7 @@ from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.DetectionLimits import ContrastCurveModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
-from PynPoint.Util.TestTools import create_config
+from PynPoint.Util.TestTools import create_config, create_star_data
 
 warnings.simplefilter("always")
 
@@ -20,42 +20,13 @@ limit = 1e-10
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
 
-    fwhm = 3
-    npix = 100
-    ndit = 10
-    naxis3 = ndit
-    exp_no = [1, 2, 3, 4]
-    x0 = [50, 50, 50, 50]
-    y0 = [50, 50, 50, 50]
-    parang_start = [0., 5., 10., 15.]
-    parang_end = [5., 10., 15., 20.]
-
-    np.random.seed(1)
-
-    for j, item in enumerate(exp_no):
-        sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
-
-        x = y = np.arange(0., npix, 1.)
-        xx, yy = np.meshgrid(x, y)
-
-        image = np.zeros((naxis3, npix, npix))
-
-        for i in range(ndit):
-            star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
-            noise = np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
-            image[i, 0:npix, 0:npix] = star+noise
-
-        hdu = fits.PrimaryHDU()
-        header = hdu.header
-        header['INSTRUME'] = 'IMAGER'
-        header['HIERARCH ESO DET EXP NO'] = item
-        header['HIERARCH ESO DET NDIT'] = ndit
-        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
-        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
-        header['HIERARCH ESO SEQ CUMOFFSETX'] = "None"
-        header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
-        hdu.data = image
-        hdu.writeto(test_dir+'image'+str(j+1).zfill(2)+'.fits')
+    create_star_data(path=test_dir,
+                     npix_x=100,
+                     npix_y=100,    
+                     x0=[50, 50, 50, 50],
+                     y0=[50, 50, 50, 50],
+                     parang_start=[0., 5., 10., 15.],
+                     parang_end=[5., 10., 15., 20.])
 
     filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
     create_config(filename)
