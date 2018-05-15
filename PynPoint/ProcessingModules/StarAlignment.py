@@ -179,8 +179,7 @@ class StarExtractionModule(ProcessingModule):
 
                     index.append(self.m_count)
 
-                    center = int(np.size(image, 0)/2.)
-                    argmax = [center, center]
+                    argmax = [np.size(image, 0)/2., np.size(image, 0)/2.]
 
                 im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
                                 int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
