@@ -197,6 +197,8 @@ class StarExtractionModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running StarExtractionModule...")
 
+        self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
+
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
             self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -205,8 +207,6 @@ class StarExtractionModule(ProcessingModule):
         if self.m_image_size is not None and self.m_image_out_port is not None:
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_image_out_port.add_history_information("Star extract", "maximum")
-
-        self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
 
         self.m_position_out_port.close_port()
 
