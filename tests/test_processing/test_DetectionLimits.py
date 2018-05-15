@@ -26,7 +26,7 @@ def setup_module():
                      parang_start=[0., 5., 10., 15.],
                      parang_end=[5., 10., 15., 20.])
 
-    create_config(os.path.join(os.path.dirname(__file__), "/PynPoint_config.ini"))
+    create_config(os.path.join(os.path.dirname(__file__), "PynPoint_config.ini"))
 
 def teardown_module():
     test_dir = os.path.dirname(__file__) + "/"
