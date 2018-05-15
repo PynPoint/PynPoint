@@ -4,6 +4,14 @@ PynPoint\.Util package
 Submodules
 ----------
 
+PynPoint\.Util\.AnalysisTools module
+------------------------------------
+
+.. automodule:: PynPoint.Util.AnalysisTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint\.Util\.Continuous module
 ---------------------------------
 
