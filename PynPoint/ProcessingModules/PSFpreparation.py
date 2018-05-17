@@ -254,10 +254,10 @@ class AngleInterpolationModule(ProcessingModule):
         steps = self.m_data_in_port.get_attribute("NFRAMES")
         ndit = self.m_data_in_port.get_attribute("NDIT")
 
-        if False in ndit == steps:
-            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
+        if False in (ndit == steps):
+            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The derotation "
                           "angles are calculated with a linear interpolation by using NAXIS3 "
-                          "steps. A frame selection should be applied after the parallactic "
+                          "steps. A frame selection should be applied after the derotation "
                           "angles are calculated.")
 
         new_angles = []
@@ -477,11 +477,10 @@ class AngleCalculationModule(ProcessingModule):
         steps = self.m_data_in_port.get_attribute("NFRAMES")
         ndit = self.m_data_in_port.get_attribute("NDIT")
 
-        if False in ndit == steps:
-            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The parallactic"
-                          "angles are calculated with a linear interpolation by using NAXIS3 "
-                          "steps. A frame selection should be applied after the parallactic "
-                          "angles are calculated.")
+        if False in (ndit == steps):
+            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. A frame "
+                          "selection should be applied after the derotation angle are "
+                          "calculated.")
 
         if self.m_instrument == "SPHERE/IFS":
             warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
