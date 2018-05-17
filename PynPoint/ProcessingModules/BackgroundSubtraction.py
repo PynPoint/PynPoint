@@ -675,7 +675,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         sys.stdout.write("Creating PCA basis set...")
         sys.stdout.flush()
-        
+
         basis_pca = _create_basis(self.m_background_in_port.get_all(),
                                   self.m_pca_number)
 
@@ -699,8 +699,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 mask_planet = np.ones(im_star.shape)
 
             else:
-                npix = im_star.shape[1]
-
                 cent_x = star[frames[i]:frames[i+1], 1]
                 cent_y = star[frames[i]:frames[i+1], 0]
 
@@ -921,7 +919,8 @@ class DitheringBackgroundModule(ProcessingModule):
                 tags.append("pcabg_res"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"... [DONE]"
+                print "Processing dither position "+str(count+1)+ \
+                      " out of "+str(n_dither)+"... [DONE]"
 
         n_dither, star_pos = self._initialize()
 
