@@ -215,5 +215,5 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(np.mean(data), 8.937360237872607e-07, rtol=limit, atol=0.)
 
         data = self.pipeline.get_data("nodding")
-        assert np.allclose(data[0, 50, 50], 0.09789197255024433, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.711185953895942e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.942251790089106e-05, rtol=limit, atol=0.)
