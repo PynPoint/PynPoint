@@ -151,7 +151,7 @@ def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
     header['INSTRUME'] = 'IMAGER'
     header['HIERARCH ESO DET EXP NO'] = 1.
     header['HIERARCH ESO DET NDIT'] = ndit
-    header['HIERARCH ESO DET EXP NO'] = ndit
+    header['HIERARCH ESO DET EXP NO'] = exp_no
     header['HIERARCH ESO ADA POSANG'] = parang[0]
     header['HIERARCH ESO ADA POSANG END'] = parang[1]
     header['HIERARCH ESO SEQ CUMOFFSETX'] = x0
