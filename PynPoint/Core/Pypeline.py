@@ -404,18 +404,27 @@ class Pypeline(object):
 
     def get_attribute(self,
                       data_tag,
-                      attr_name):
+                      attr_name,
+                      static=True):
         """
-        Function for accessing static attributes in the central database.
+        Function for accessing attributes in the central database.
 
         :param data_tag: Database tag.
         :type data_tag: str
-        :param attr_name: Name of the static attribute.
+        :param attr_name: Name of the attribute.
         :type attr_name: str
+        :param static: Static or non-static attribute.
+        :type static: bool
 
         :return: The attribute value(s).
         """
 
         self.m_data_storage.open_connection()
 
-        return self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]
+        if static:
+            attr = self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]
+
+        else:
+            attr = self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+
+        return attr

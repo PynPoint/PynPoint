@@ -279,11 +279,11 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         :param dither: Tuple with the parameters for separating the star and background frames.
                        The tuple should contain three values (positions, cubes, first) with
-                       *dither* the number of unique dithering position, *cubes* the number of
+                       *positions* the number of unique dithering position, *cubes* the number of
                        consecutive cubes per dithering position, and *first* the index value of the
                        first cube which contains the star (Python indexing starts at zero). Sorting
-                       is based on the DITHER_X and DITHER_Y attributes  when *cubes_per_position*
-                       is set to None.
+                       is based on the DITHER_X and DITHER_Y attributes when *cubes* is set to
+                       None.
         :type dither: tuple
         :param mean: Subtract the mean pixel value from each image separately, both star and
                      background frames.

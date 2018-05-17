@@ -26,7 +26,17 @@ limit = 1e-10
 def setup_module():
     test_dir = os.path.dirname(__file__) + "/"
 
-    create_fake(test_dir + 'adi', 10., 1e-2)
+    create_fake(file_start=test_dir+'adi',
+                ndit=[22, 17, 21, 18],
+                nframes=[23, 18, 22, 19],
+                exp_no=[1, 2, 3, 4],
+                npix=(100, 102),
+                fwhm=3.,
+                x0=[25, 75, 75, 25],
+                y0=[75, 75, 25, 25],
+                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                sep=10.,
+                contrast=1e-2)
 
     filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
     create_config(filename)
@@ -55,15 +65,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(read_fits)
         self.pipeline.run_module("read_fits")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im"]
+        data = self.pipeline.get_data("im")
 
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.4518306864680034e-05, rtol=limit, atol=0.)
         assert data.shape == (82, 102, 100)
-
-        storage.close_connection()
 
     def test_remove_last(self):
         remove_last = RemoveLastFrameModule(name_in="remove_last",
@@ -73,32 +79,24 @@ class TestEndToEnd(object):
         self.pipeline.add_module(remove_last)
         self.pipeline.run_module("remove_last")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_last"]
+        data = self.pipeline.get_data("im_last")
 
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.9365399524407205e-05, rtol=limit, atol=0.)
         assert data.shape == (78, 102, 100)
 
-        storage.close_connection()
-
     def test_parang(self):
         angle = AngleInterpolationModule(name_in="angle",
-                                       data_tag="im_last")
+                                         data_tag="im_last")
 
         self.pipeline.add_module(angle)
         self.pipeline.run_module("angle")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        port = InputPort("im_last", storage)
+        files = self.pipeline.get_attribute("im_last", "FILES", static=False)
+        parang = self.pipeline.get_attribute("im_last", "PARANG", static=False)
 
-        assert port.get_attribute("FILES")[0] == self.test_dir+'adi01.fits'
-        assert port.get_attribute("PARANG")[1] == 1.1904761904761905
-
-        port.close_port()
-        storage.close_connection()
+        assert files[0] == self.test_dir+'adi01.fits'
+        assert parang[1] == 1.1904761904761905
 
     def test_cut_lines(self):
         cut_lines = RemoveLinesModule(lines=(0, 0, 0, 2),
@@ -109,15 +107,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(cut_lines)
         self.pipeline.run_module("cut_lines")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_cut"]
+        data = self.pipeline.get_data("im_cut")
 
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010141595132969683, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
-
-        storage.close_connection()
 
     def test_background(self):
         background = MeanBackgroundSubtractionModule(shift=None,
@@ -129,15 +123,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(background)
         self.pipeline.run_module("background")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_bg"]
+        data = self.pipeline.get_data("im_bg")
 
         assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
-
-        storage.close_connection()
 
     def test_bad_pixel(self):
         bad_pixel = BadPixelSigmaFilterModule(name_in="bad_pixel",
@@ -150,15 +140,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(bad_pixel)
         self.pipeline.run_module("bad_pixel")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_bp"]
+        data = self.pipeline.get_data("im_bp")
 
         assert np.allclose(data[0, 0, 0], 0.00037132392435389595, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.3675404363850964e-07, rtol=limit, atol=0.)
         assert data.shape == (78, 100, 100)
-
-        storage.close_connection()
 
     def test_star(self):
         star = StarExtractionModule(name_in="star",
@@ -170,15 +156,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(star)
         self.pipeline.run_module("star")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_star"]
+        data = self.pipeline.get_data("im_star")
 
         assert np.allclose(data[0, 0, 0], 0.00018025424208141221, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00063151691905138636, rtol=limit, atol=0.)
         assert data.shape == (78, 40, 40)
-
-        storage.close_connection()
 
     def test_center(self):
         center = StarAlignmentModule(name_in="center",
@@ -192,9 +174,7 @@ class TestEndToEnd(object):
         self.pipeline.add_module(center)
         self.pipeline.run_module("center")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_center"]
+        data = self.pipeline.get_data("im_center")
 
         assert np.allclose(data[1, 0, 0], 1.2113798549047296e-06, rtol=limit, atol=0.)
         assert np.allclose(data[16, 0, 0], 1.0022456564129139e-05, rtol=limit, atol=0.)
@@ -202,8 +182,6 @@ class TestEndToEnd(object):
         assert np.allclose(data[67, 0, 0], 7.8143774182171561e-07, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.5260676762055473e-05, rtol=limit, atol=0.)
         assert data.shape == (78, 200, 200)
-
-        storage.close_connection()
 
     def test_remove_frames(self):
         remove_frames = RemoveFramesModule(frames=(0, 15, 49, 66),
@@ -215,9 +193,7 @@ class TestEndToEnd(object):
         self.pipeline.add_module(remove_frames)
         self.pipeline.run_module("remove_frames")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_remove"]
+        data = self.pipeline.get_data("im_remove")
 
         assert np.allclose(data[0, 0, 0], 1.2113798549047296e-06, rtol=limit, atol=0.)
         assert np.allclose(data[14, 0, 0], 1.0022456564129139e-05, rtol=limit, atol=0.)
@@ -225,8 +201,6 @@ class TestEndToEnd(object):
         assert np.allclose(data[63, 0, 0], 7.8143774182171561e-07, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.5255308248050269e-05, rtol=limit, atol=0.)
         assert data.shape == (74, 200, 200)
-
-        storage.close_connection()
 
     def test_subset(self):
         subset = StackAndSubsetModule(name_in="subset",
@@ -238,15 +212,11 @@ class TestEndToEnd(object):
         self.pipeline.add_module(subset)
         self.pipeline.run_module("subset")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["im_subset"]
+        data = self.pipeline.get_data("im_subset")
 
         assert np.allclose(data[0, 0, 0], -1.9081971570461925e-06, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.5255308248050275e-05, rtol=limit, atol=0.)
         assert data.shape == (37, 200, 200)
-
-        storage.close_connection()
 
     def test_pca(self):
         pca = PSFSubtractionModule(name_in="pca",
@@ -265,12 +235,8 @@ class TestEndToEnd(object):
         self.pipeline.add_module(pca)
         self.pipeline.run_module("pca")
 
-        storage = DataStorage(self.test_dir+"PynPoint_database.hdf5")
-        storage.open_connection()
-        data = storage.m_data_bank["res_mean"]
+        data = self.pipeline.get_data("res_mean")
 
         assert np.allclose(data[154, 99], 0.0004308570688425797, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.372451154992271e-08, rtol=limit, atol=0.)
         assert data.shape == (200, 200)
-
-        storage.close_connection()
