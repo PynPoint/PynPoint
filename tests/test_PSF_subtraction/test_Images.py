@@ -1,10 +1,10 @@
-import os
 import warnings
+import os
 
 import numpy as np
 
-import PynPoint.OldVersion
 from PynPoint.Util.TestTools import prepare_pca_tests, remove_psf_test_data
+import PynPoint.OldVersion
 
 warnings.simplefilter("always")
 
