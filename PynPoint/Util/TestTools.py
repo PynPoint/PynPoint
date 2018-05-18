@@ -26,8 +26,8 @@ def create_config(filename):
     file_obj.write('NDIT: ESO DET NDIT\n')
     file_obj.write('PARANG_START: ESO ADA POSANG\n')
     file_obj.write('PARANG_END: ESO ADA POSANG END\n')
-    file_obj.write('DITHER_X: None\n')
-    file_obj.write('DITHER_Y: None\n')
+    file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+    file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
     file_obj.write('DIT: None\n')
     file_obj.write('LATITUDE: None\n')
     file_obj.write('LONGITUDE: None\n')
@@ -59,6 +59,8 @@ def prepare_pca_tests(path):
     header['HIERARCH ESO DET NDIT'] = 1
     header['HIERARCH ESO ADA POSANG'] = 1.
     header['HIERARCH ESO ADA POSANG END'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 1.
     header['PARANG'] = -17.3261
     header['PARANG'] = -17.3261
     hdu.data = image1
@@ -71,6 +73,8 @@ def prepare_pca_tests(path):
     header['HIERARCH ESO DET NDIT'] = 1
     header['HIERARCH ESO ADA POSANG'] = 1.
     header['HIERARCH ESO ADA POSANG END'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 1.
     header['PARANG'] = -17.1720
     hdu.data = image2
     hdu.writeto(path+"/test_data/image2.fits")
@@ -82,6 +86,8 @@ def prepare_pca_tests(path):
     header['HIERARCH ESO DET NDIT'] = 1
     header['HIERARCH ESO ADA POSANG'] = 1.
     header['HIERARCH ESO ADA POSANG END'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 1.
     header['PARANG'] = -17.0143
     hdu.data = image3
     hdu.writeto(path+"/test_data/image3.fits")
@@ -93,17 +99,30 @@ def prepare_pca_tests(path):
     header['HIERARCH ESO DET NDIT'] = 1
     header['HIERARCH ESO ADA POSANG'] = 1.
     header['HIERARCH ESO ADA POSANG END'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 1.
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 1.
     header['PARANG'] = -16.6004
     hdu.data = image4
     hdu.writeto(path+"/test_data/image4.fits")
 
     config_file = path+"/test_data/PynPoint_config.ini"
-
     create_config(config_file)
 
     for lines in fileinput.FileInput(config_file, inplace=1):
         lines = lines.replace("PIXSCALE: 0.027\n", "PIXSCALE: 0.01\n")
-        print lines
+        print lines # writes to file
+
+def remove_psf_test_data(path):
+    """
+    Remove FITS files that were created for the test cases of the PSF subtraction.
+    """
+
+    os.remove(os.path.join(path, "test_data/image1.fits"))
+    os.remove(os.path.join(path, "test_data/image2.fits"))
+    os.remove(os.path.join(path, "test_data/image3.fits"))
+    os.remove(os.path.join(path, "test_data/image4.fits"))
+    os.remove(os.path.join(path, "test_data/PynPoint_database.hdf5"))
+    os.remove(os.path.join(path, "test_data/PynPoint_config.ini"))
 
 def create_random(path):
     """
@@ -122,7 +141,7 @@ def create_random(path):
     h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
-def create_fits(filename, image, ndit, parang):
+def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
     """
     Create a FITS file with images and header information
     """
@@ -132,59 +151,56 @@ def create_fits(filename, image, ndit, parang):
     header['INSTRUME'] = 'IMAGER'
     header['HIERARCH ESO DET EXP NO'] = 1.
     header['HIERARCH ESO DET NDIT'] = ndit
+    header['HIERARCH ESO DET EXP NO'] = exp_no
     header['HIERARCH ESO ADA POSANG'] = parang[0]
     header['HIERARCH ESO ADA POSANG END'] = parang[1]
-    header['HIERARCH ESO SEQ CUMOFFSETX'] = 5.
-    header['HIERARCH ESO SEQ CUMOFFSETY'] = 5.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = x0
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = y0
     hdu.data = image
     hdu.writeto(filename)
 
-def create_fake(file_start, sep, contrast):
+def create_fake(file_start, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, contrast):
     """
     Create ADI test data with fake planets.
     """
-
-    ndit = [22, 17, 21, 18]
-    naxis3 = [23, 18, 22, 19]
-    npix = [100, 100, 100, 100]
-    fwhm = [3., 3., 3., 3.]
-    x0 = [25, 75, 75, 25]
-    y0 = [75, 75, 25, 25]
-    angles = [[0., 25.], [25., 50.], [50., 75.], [75., 100.]]
 
     parang = []
     for i, item in enumerate(angles):
         for j in range(ndit[i]):
             parang.append(item[0]+float(j)*(item[1]-item[0])/float(ndit[i]))
 
+    if fwhm is not None or contrast is not None:
+        sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
+
+    x = np.arange(0., npix[0], 1.)
+    y = np.arange(0., npix[1], 1.)
+    xx, yy = np.meshgrid(x, y)
+
     np.random.seed(1)
 
-    p_count = 0
-    for j, item in enumerate(fwhm):
-
-        sigma = item / (2.*math.sqrt(2.*math.log(2.)))
-
-        x = np.arange(0., npix[j], 1.)
-        y = np.arange(0., npix[j]+2, 1.)
-        xx, yy = np.meshgrid(x, y)
-
-        image = np.zeros((naxis3[j], npix[j]+2, npix[j]))
+    count = 0
+    for j, item in enumerate(nframes):
+        image = np.zeros((item, npix[1], npix[0]))
 
         for i in range(ndit[j]):
-            star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
-            noise = np.random.normal(loc=0, scale=2e-4, size=(102, 100))
+            noise = np.random.normal(loc=0, scale=2e-4, size=(npix[1], npix[0]))
+            image[i, 0:npix[1], 0:npix[0]] = noise
 
-            planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
-            x_shift = sep*math.cos(parang[p_count]*math.pi/180.)
-            y_shift = sep*math.sin(parang[p_count]*math.pi/180.)
-            planet = shift(planet, (x_shift, y_shift), order=5)
+            if fwhm is not None:
+                star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
+                image[i, 0:npix[1], 0:npix[0]] += star
 
-            image[i, 0:npix[j]+2, 0:npix[j]] = star+noise+planet
+            if contrast is not None and sep is not None:
+                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
+                x_shift = sep*math.cos(parang[count]*math.pi/180.)
+                y_shift = sep*math.sin(parang[count]*math.pi/180.)
+                planet = shift(planet, (x_shift, y_shift), order=5)
+                image[i, 0:npix[1], 0:npix[0]] += planet
 
-            p_count += 1
+            count += 1
 
         filename = file_start+str(j+1).zfill(2)+'.fits'
-        create_fits(filename, image, ndit[j], angles[j])
+        create_fits(filename, image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
 def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
     """
@@ -222,15 +238,3 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
         header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
-
-def remove_psf_test_data(path):
-    """
-    Remove FITS files that were created for the test cases of the PSF subtraction.
-    """
-
-    os.remove(os.path.join(path, "test_data/image1.fits"))
-    os.remove(os.path.join(path, "test_data/image2.fits"))
-    os.remove(os.path.join(path, "test_data/image3.fits"))
-    os.remove(os.path.join(path, "test_data/image4.fits"))
-    os.remove(os.path.join(path, "test_data/PynPoint_database.hdf5"))
-    os.remove(os.path.join(path, "test_data/PynPoint_config.ini"))
