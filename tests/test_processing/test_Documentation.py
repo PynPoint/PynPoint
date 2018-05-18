@@ -35,7 +35,17 @@ def setup_module():
 
     # SCIENCE
 
-    create_fake(test_dir + 'adi/adi', 7., 1e-2)
+    create_fake(file_start=test_dir+'adi/adi',
+                ndit=[22, 17, 21, 18],
+                nframes=[23, 18, 22, 19],
+                exp_no=[1, 2, 3, 4],
+                npix=(100, 102),
+                fwhm=3.,
+                x0=[25, 75, 75, 25],
+                y0=[75, 75, 25, 25],
+                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                sep=7.,
+                contrast=1e-2)
 
     # DARK
 
@@ -48,7 +58,7 @@ def setup_module():
         image = np.random.normal(loc=0, scale=2e-4, size=(n, 100, 100))
 
         filename = test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits'
-        create_fits(filename, image, ndit[j], parang[j])
+        create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
 
     # FLAT
 
@@ -61,7 +71,7 @@ def setup_module():
         image = np.random.normal(loc=1, scale=1e-2, size=(n, 100, 100))
 
         filename = test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits'
-        create_fits(filename, image, ndit[j], parang[j])
+        create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
 
     filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
     create_config(filename)
@@ -93,7 +103,6 @@ class TestDocumentation(object):
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def test_docs(self):
-
         read_science = FitsReadingModule(name_in="read_science",
                                          input_dir=self.test_dir+"adi/",
                                          image_tag="im_arr")
@@ -208,48 +217,43 @@ class TestDocumentation(object):
 
         self.pipeline.run()
 
-        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
-        storage.open_connection()
-
-        data = storage.m_data_bank["im_arr"]
+        data = self.pipeline.get_data("im_arr")
         assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["dark_arr"]
+        data = self.pipeline.get_data("dark_arr")
         assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["flat_arr"]
+        data = self.pipeline.get_data("flat_arr")
         assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["im_arr_last"]
+        data = self.pipeline.get_data("im_arr_last")
         assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["im_arr_cut"]
+        data = self.pipeline.get_data("im_arr_cut")
         assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["dark_sub_arr"]
+        data = self.pipeline.get_data("dark_sub_arr")
         assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["flat_sub_arr"]
+        data = self.pipeline.get_data("flat_sub_arr")
         assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["bg_cleaned_arr"]
+        data = self.pipeline.get_data("bg_cleaned_arr")
         assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["bp_cleaned_arr"]
+        data = self.pipeline.get_data("bp_cleaned_arr")
         assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["im_arr_extract"]
+        data = self.pipeline.get_data("im_arr_extract")
         assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["im_arr_aligned"]
+        data = self.pipeline.get_data("im_arr_aligned")
         assert np.allclose(data[0, 10, 10], 1.1307471842831197e-05, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["im_arr_stacked"]
+        data = self.pipeline.get_data("im_arr_stacked")
         assert np.allclose(data[0, 10, 10], 2.5572805947810986e-05, rtol=limit, atol=0.)
 
-        data = storage.m_data_bank["res_mean"]
+        data = self.pipeline.get_data("res_mean")
         assert np.allclose(data[38, 22], 0.00018312083384477404, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), -1.598348168584834e-07, rtol=limit, atol=0.)
         assert data.shape == (44, 44)
-
-        storage.close_connection()
