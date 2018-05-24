@@ -74,7 +74,7 @@ class PcaTaskProcessor(TaskProcessor):
                  star_arr,
                  angles,
                  pca_model,
-                 result_requirements=(False, False, False, False)):
+                 result_requirements=(False, False, False)):
         """
         Constructor of PcaTaskProcessor.
 
