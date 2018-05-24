@@ -593,7 +593,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
     """
     Module for fast (compared to PSFSubtractionModule) PCA subtraction. The multiprocessing
     implementation is only supported for Linux and Windows. Mac only runs in single processing
-    due to a bug in the numpy package.
+    due to a bug in the numpy package. Note that the calculation of the residuals with multi-
+    processing may required a large amount of memory in case the stack of input images is very
+    large. In that case, CPU could be set to a smaller number (or even 1) in the configuration
+    file.
     """
 
     def __init__(self,
@@ -655,7 +658,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self.m_verbose = True
 
         if "basis_out_tag" in kwargs:
-            self.m_basis_out_port = self.add_output_port(basis_out_tag)
+            self.m_basis_out_port = self.add_output_port(kwargs["basis_out_tag"])
         else:
             self.m_basis_out_port = None
 
@@ -803,16 +806,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             stdout.write("Creating residuals... [DONE]\n")
             stdout.flush()
 
-    def run(self):
-        """
-        Run method of the module. Subtracts the mean of the image stack from all images, reshapes
-        the stack of images into a 2D array, uses singular value decomposition to construct the
-        orthogonal basis set, calculates the PCA coefficients for each image, subtracts the PSF
-        model, and writes the residuals as output.
-
-        :return: None
-        """
-
+    def _clear_output_port(self):
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.del_all_data()
             self.m_res_mean_out_port.del_all_attributes()
@@ -829,6 +823,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             for pca_number in self.m_components:
                 self.m_res_arr_out_ports[pca_number].del_all_data()
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
+
+    def run(self):
+        """
+        Run method of the module. Subtracts the mean of the image stack from all images, reshapes
+        the stack of images into a 2D array, uses singular value decomposition to construct the
+        orthogonal basis set, calculates the PCA coefficients for each image, subtracts the PSF
+        model, and writes the residuals as output.
+
+        :return: None
+        """
+
+        self._clear_output_port()
 
         # get all data and subtract the mean
         star_data = self.m_star_in_port.get_all()
