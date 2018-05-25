@@ -89,7 +89,7 @@ class PcaTaskProcessor(TaskProcessor):
         :param pca_model:
         :type pca_model: PCA
         :param result_requirements:
-        :type result_requirements:
+        :type result_queue_innts:
 
         :return: None
         """
@@ -133,23 +133,23 @@ class PcaTaskProcessor(TaskProcessor):
         # create residuals
         res_length = 3
 
-        if self.m_result_requirements[2]:
-            res_length += res_array.shape[0]
+        # if self.m_result_requirements[3]:
+        #     res_length += res_array.shape[0]
 
         residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
 
         # 1.) mean
-        tmp_res_rot_mean = np.mean(res_array, axis=0)
-
-        residual_output[0, :, :] = tmp_res_rot_mean
+        if self.m_result_requirements[0]:
+            tmp_res_rot_mean = np.mean(res_array, axis=0)
+            residual_output[0, :, :] = tmp_res_rot_mean
 
         # 2.) median
-        if self.m_result_requirements[0]:
+        if self.m_result_requirements[1]:
             tmp_res_rot_median = np.median(res_array, axis=0)
             residual_output[1, :, :] = tmp_res_rot_median
 
         # 3.) clipped mean
-        if self.m_result_requirements[1]:
+        if self.m_result_requirements[2]:
             res_rot_mean_clip = np.zeros(self.m_star_arr[0, ].shape)
 
             for i in range(res_rot_mean_clip.shape[0]):
@@ -167,8 +167,8 @@ class PcaTaskProcessor(TaskProcessor):
             residual_output[2, :, :] = res_rot_mean_clip
 
         # 4.) The de-rotated result images
-        if self.m_result_requirements[2]:
-            residual_output[3:, :, :] = res_array
+        # if self.m_result_requirements[3]:
+        #     residual_output[3:, :, :] = res_array
 
         # print "Created Residual with " + str(pca_number) + " components"
 
@@ -227,19 +227,20 @@ class PcaTaskWriter(TaskWriter):
                 continue
 
             with self.m_data_mutex:
-                self.m_data_out_port[to_slice(next_result.m_position)] = \
-                    next_result.m_data_array[0, :, :]
-
                 if self.m_result_requirements[0]:
+                    self.m_data_out_port[to_slice(next_result.m_position)] = \
+                        next_result.m_data_array[0, :, :]
+
+                if self.m_result_requirements[1]:
                     self.m_median_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[1, :, :]
 
-                if self.m_result_requirements[1]:
+                if self.m_result_requirements[2]:
                     self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
-                if self.m_result_requirements[2]:
-                    raise NotImplementedError("Not yet supported.")
+                # if self.m_result_requirements[2]:
+                #     raise NotImplementedError("Not yet supported.")
 
             self.m_result_queue.task_done()
 
@@ -257,8 +258,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_numbers,
                  pca_model,
                  star_arr,
-                 rotations,
-                 result_requirements=(False, False, False)):
+                 rotations):
         """
         Constructor of PcaMultiprocessingCapsule.
 
@@ -276,8 +276,6 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type star_arr:
         :param rotations:
         :type rotations:
-        :param result_requirements:
-        :type result_requirements:
 
         :return: None
         """
@@ -285,11 +283,21 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
         self.m_clip_out_port = clip_out_port
-        self.m_result_requirements = result_requirements
         self.m_pca_numbers = pca_numbers
         self.m_pca_model = pca_model
         self.m_star_arr = star_arr
         self.m_rotations = rotations
+
+        self.m_result_requirements = [False, False, False]
+
+        if self.m_mean_out_port is not None:
+            self.m_result_requirements[0] = True
+
+        if self.m_median_out_port is not None:
+            self.m_result_requirements[1] = True
+
+        if self.m_clip_out_port is not None:
+            self.m_result_requirements[2] = True
 
         super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
 
