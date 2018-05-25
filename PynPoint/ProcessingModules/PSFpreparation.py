@@ -13,7 +13,7 @@ import numpy as np
 from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, ScaleImagesModule
+from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
 from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
@@ -615,10 +615,9 @@ class SDIpreparationModule(ProcessingModule):
 
         self.m_line_wvl = wavelength[0]
         self.m_cnt_wvl = wavelength[1]
+
         self.m_line_width = width[0]
         self.m_cnt_width = width[1]
-        self.m_image_in_tag = image_in_tag
-        self.m_cnt_out_tag = image_out_tag
 
     def run(self):
         """
@@ -632,29 +631,39 @@ class SDIpreparationModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
         width_factor = self.m_line_width/self.m_cnt_width
-
-        im_size = self.m_image_in_port.get_shape()[1]
 
         sys.stdout.write("Running SDIpreparationModule...\n")
         sys.stdout.flush()
 
         scaling = ScaleImagesModule(scaling=(wvl_factor, width_factor),
                                     name_in="scaling",
-                                    image_in_tag=self.m_image_in_tag,
+                                    image_in_tag=self.m_image_in_port.tag,
                                     image_out_tag="sdi_scaled")
 
         scaling.connect_database(self._m_data_base)
         scaling.run()
 
-        crop = CropImagesModule(size=im_size*pixscale,
-                                center=None,
-                                name_in="crop",
-                                image_in_tag="sdi_scaled",
-                                image_out_tag=self.m_cnt_out_tag)
+        sdi_port = self.add_input_port("sdi_scaled")
+
+        npix_del = sdi_port.get_shape()[1] - self.m_image_in_port.get_shape()[1]
+
+        if npix_del%2 == 0:
+            npix_del_a = npix_del/2
+            npix_del_b = npix_del/2
+
+        else:
+            warnings.warn("An unequal number of pixels is removed from both sides of the images. "
+                          "Recentering of the images is therefore required.")
+
+            npix_del_a = (npix_del-1)/2
+            npix_del_b = (npix_del+1)/2
+
+        crop = RemoveLinesModule(lines=(npix_del_a, npix_del_b, npix_del_a, npix_del_b),
+                                 name_in="crop",
+                                 image_in_tag="sdi_scaled",
+                                 image_out_tag=self.m_image_out_port.tag)
 
         crop.connect_database(self._m_data_base)
         crop.run()
