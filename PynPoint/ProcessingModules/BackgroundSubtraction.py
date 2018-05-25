@@ -946,10 +946,10 @@ class DitheringBackgroundModule(ProcessingModule):
 
         def _admin_end(count, n_dither):
             if self.m_combine == "mean":
-                tags.append("star"+str(count+1))
+                tags.append("dither_mean"+str(count+1))
 
             elif self.m_combine == "pca":
-                tags.append("pcabg_res"+str(count+1))
+                tags.append("dither_pca_res"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
                 print "Processing dither position "+str(count+1)+ \
@@ -981,7 +981,8 @@ class DitheringBackgroundModule(ProcessingModule):
                                                          image_in_tag="dither_crop"+str(i+1),
                                                          star_out_tag="dither_star"+str(i+1),
                                                          mean_out_tag="dither_mean"+str(i+1),
-                                                         background_out_tag="dither_background"+str(i+1))
+                                                         background_out_tag="dither_background" \
+                                                                            +str(i+1))
 
                 prepare.connect_database(self._m_data_base)
                 prepare.run()
