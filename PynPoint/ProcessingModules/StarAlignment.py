@@ -31,7 +31,8 @@ class StarExtractionModule(ProcessingModule):
                  index_out_tag=None,
                  image_size=2.,
                  fwhm_star=0.2,
-                 position=None):
+                 position=None,
+                 **kwargs):
         """
         Constructor of StarExtractionModule.
 
@@ -63,13 +64,25 @@ class StarExtractionModule(ProcessingModule):
                          then the center of the image will be used.
         :type position: tuple, float
 
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+             * **position_out_tag** (*str*) -- Tag of the database entry to which the STAR_POSITION
+             attributes are written. The *image_in_tag* is used if set to None.
+
+
         :return: None
         """
+
+        if "position_out_tag" in kwargs:
+            position_out_tag = kwargs["position_out_tag"]
+        else:
+            position_out_tag = None
 
         super(StarExtractionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_position_out_port = self.add_output_port(image_in_tag)
 
         if image_out_tag is None:
             self.m_image_out_port = None
@@ -80,6 +93,11 @@ class StarExtractionModule(ProcessingModule):
             self.m_index_out_port = None
         else:
             self.m_index_out_port = self.add_output_port(index_out_tag)
+
+        if position_out_tag is None:
+            self.m_position_out_port = self.add_output_port(image_in_tag)
+        else:
+            self.m_position_out_port = self.add_output_port(position_out_tag)
 
         self.m_image_size = image_size
         self.m_fwhm_star = fwhm_star
