@@ -625,7 +625,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :param reference_in_tag: Tag of the database entry with the reference images that are
                                  read as input.
         :type reference_in_tag: str
-        :param res_mean_tag: Tag of the database entry with the mean collapsed residuals.
+        :param res_mean_tag: Tag of the database entry with the mean collapsed residuals. Not
+                             calculated if set to *None*.
         :type res_mean_tag: str
         :param res_median_tag: Tag of the database entry with the median collapsed residuals. Not
                                calculated if set to *None*.
