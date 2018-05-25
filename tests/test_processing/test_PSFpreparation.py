@@ -1,13 +1,9 @@
 import os
-import math
 import warnings
 
 import numpy as np
 
-from astropy.io import fits
-
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule, AngleInterpolationModule, \
                                                       SDIpreparationModule
@@ -20,7 +16,7 @@ limit = 1e-10
 def setup_module():
     create_star_data(path=os.path.dirname(__file__)+"/",
                      npix_x=100,
-                     npix_y=100,    
+                     npix_y=100,
                      x0=[50, 50, 50, 50],
                      y0=[50, 50, 50, 50],
                      parang_start=[0., 5., 10., 15.],
