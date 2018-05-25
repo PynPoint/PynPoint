@@ -69,7 +69,8 @@ class StarExtractionModule(ProcessingModule):
 
         :Keyword arguments:
              * **position_out_tag** (*str*) -- Tag of the database entry to which the STAR_POSITION
-             attributes are written. The *image_in_tag* is used if set to None.
+                                               attributes are written. The *image_in_tag* is used
+                                               if set to None.
 
         :return: None
         """
