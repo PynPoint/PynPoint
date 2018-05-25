@@ -76,6 +76,7 @@ class TestPSFpreparation(object):
         data = self.pipeline.get_data("read")
         assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
 
         data = self.pipeline.get_data("prep")
         assert np.allclose(data[0, 25, 25], 0., rtol=limit, atol=0.)
@@ -84,6 +85,6 @@ class TestPSFpreparation(object):
         assert data.shape == (40, 200, 200)
 
         data = self.pipeline.get_data("sdi")
-        assert np.allclose(data[0, 25, 25], 2.8586863287949902e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.719735044879641e-05, rtol=limit, atol=0.)
-        assert data.shape == (40, 108, 108)
+        assert np.allclose(data[0, 25, 25], -2.6648118007008814e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.0042892634995876e-05, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
