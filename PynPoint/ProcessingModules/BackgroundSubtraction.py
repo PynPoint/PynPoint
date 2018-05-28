@@ -1036,13 +1036,13 @@ class DitheringBackgroundModule(ProcessingModule):
             combine = CombineTagsModule(name_in="combine",
                                         check_attr=True,
                                         image_in_tags=tags,
-                                        image_out_tag="combine")
+                                        image_out_tag="dither_combine")
 
             combine.connect_database(self._m_data_base)
             combine.run()
 
             sort = SortParangModule(name_in="sort",
-                                    image_in_tag="combine",
+                                    image_in_tag="dither_combine",
                                     image_out_tag=self.m_image_out_tag)
 
             sort.connect_database(self._m_data_base)
