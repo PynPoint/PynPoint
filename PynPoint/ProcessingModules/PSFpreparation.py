@@ -479,7 +479,7 @@ class AngleCalculationModule(ProcessingModule):
 
         if not np.all(ndit == steps):
             warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. A frame "
-                          "selection should be applied after the derotation angle are "
+                          "selection should be applied after the derotation angles are "
                           "calculated.")
 
         if self.m_instrument == "SPHERE/IFS":
