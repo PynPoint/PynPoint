@@ -1,15 +1,12 @@
 import os
 import warnings
 
-import h5py
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, SimpleBackgroundSubtractionModule, \
-                                                             PCABackgroundPreparationModule, PCABackgroundSubtractionModule, \
-                                                             DitheringBackgroundModule, NoddingBackgroundModule
+                                                             NoddingBackgroundModule, DitheringBackgroundModule
 from PynPoint.Util.TestTools import create_config, create_fake
 
 warnings.simplefilter("always")
@@ -84,8 +81,6 @@ class TestBackgroundSubtraction(object):
 
     def test_simple_background_subraction(self):
 
-        print self.test_dir
-
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
                                  input_dir=self.test_dir+"dither")
@@ -149,6 +144,8 @@ class TestBackgroundSubtraction(object):
                                                 subframe=0.1,
                                                 pca_number=5,
                                                 mask_star=0.1,
+                                                mask_planet=None,
+                                                bad_pixel=None,
                                                 crop=True,
                                                 prepare=True,
                                                 pca_background=True,
@@ -165,6 +162,8 @@ class TestBackgroundSubtraction(object):
                                                 gaussian=0.1,
                                                 pca_number=5,
                                                 mask_star=0.1,
+                                                mask_planet=None,
+                                                bad_pixel=None,
                                                 crop=True,
                                                 prepare=True,
                                                 pca_background=True,
@@ -174,13 +173,41 @@ class TestBackgroundSubtraction(object):
 
         self.pipeline.run()
 
+        data = self.pipeline.get_data("dither_crop1")
+        assert np.allclose(data[0, 13, 13], 0.05304008435511765, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0003195300604219455, rtol=1e-6, atol=0.)
+
+        data = self.pipeline.get_data("dither_star1")
+        assert np.allclose(data[0, 13, 13], 0.05304008435511765, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0012762877089355176, rtol=1e-6, atol=0.)
+
+        data = self.pipeline.get_data("dither_mean1")
+        assert np.allclose(data[0, 13, 13], 0.0530465391626132, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0012768562655335774, rtol=1e-6, atol=0.)
+
+        data = self.pipeline.get_data("dither_background1")
+        assert np.allclose(data[0, 13, 13], -0.00010629310882411674, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 6.108442507548571e-07, rtol=1e-6, atol=0.)
+
+        data = self.pipeline.get_data("dither_pca_fit1")
+        assert np.allclose(data[0, 13, 13], 3.8003879389296064e-05, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), -2.012779401124373e-08, rtol=1e-4, atol=0.)
+
+        data = self.pipeline.get_data("dither_pca_res1")
+        assert np.allclose(data[0, 13, 13], 0.05300208047572835, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0012763078355621557, rtol=1e-6, atol=0.)
+
+        data = self.pipeline.get_data("dither_pca_mask1")
+        assert np.allclose(data[0, 13, 13], 0., rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.9426020408163265, rtol=1e-6, atol=0.)
+
         data = self.pipeline.get_data("pca_dither1")
-        assert np.allclose(data[0, 13, 13], 0.05300595399147854, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012752305968659608, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 13, 13], 0.05300208047572835, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0012755430390138146, rtol=1e-6, atol=0.)
 
         data = self.pipeline.get_data("pca_dither2")
-        assert np.allclose(data[0, 13, 13], 0.05300595400110353, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.001275230597238928, rtol=1e-3, atol=0.)
+        assert np.allclose(data[0, 13, 13], 0.05300208049366906, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0012755430394817146, rtol=1e-3, atol=0.)
 
     def test_nodding_background(self):
 

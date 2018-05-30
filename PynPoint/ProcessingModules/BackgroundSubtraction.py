@@ -10,6 +10,7 @@ from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
@@ -273,6 +274,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                  name_in="separate_star",
                  image_in_tag="im_arr",
                  star_out_tag="im_arr_star",
+                 mean_out_tag="im_arr_mean",
                  background_out_tag="im_arr_background"):
         """
         Constructor of PCABackgroundPreparationModule.
@@ -295,6 +297,10 @@ class PCABackgroundPreparationModule(ProcessingModule):
         :param star_out_tag: Tag of the database entry with frames that include the star. Should be
                              different from *image_in_tag*.
         :type star_out_tag: str
+        :param mean_out_tag: Tag of the database entry with frames that include the star and for
+                             which a mean background subtraction has been applied. Should be
+                             different from *image_in_tag*.
+        :type mean_out_tag: str
         :param background_out_tag: Tag of the the database entry with frames that contain only
                                    background and no star. Should be different from *image_in_tag*.
         :type background_out_tag: str
@@ -306,6 +312,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_star_out_port = self.add_output_port(star_out_tag)
+        self.m_mean_out_port = self.add_output_port(mean_out_tag)
         self.m_background_out_port = self.add_output_port(background_out_tag)
 
         if len(dither) != 3:
@@ -419,7 +426,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
             # Background frames
             if bg_frames[i]:
                 background = cube_mean[i, ]
-                self.m_background_out_port.append(im_tmp-background)
+                self.m_background_out_port.append(im_tmp)
+                # self.m_background_out_port.append(im_tmp-background)
 
                 background_nframes = np.append(background_nframes, nframes[i])
                 background_index = np.append(background_index, index[count:count+item])
@@ -430,7 +438,9 @@ class PCABackgroundPreparationModule(ProcessingModule):
             # Star frames
             else:
                 background = _select_background(i)
-                self.m_star_out_port.append(im_tmp-background)
+
+                self.m_star_out_port.append(im_tmp)
+                self.m_mean_out_port.append(im_tmp-background)
 
                 star_nframes = np.append(star_nframes, nframes[i])
                 star_index = np.append(star_index, index[count:count+item])
@@ -454,6 +464,9 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         self.m_star_out_port.del_all_data()
         self.m_star_out_port.del_all_attributes()
+
+        self.m_mean_out_port.del_all_data()
+        self.m_mean_out_port.del_all_attributes()
 
         self.m_background_out_port.del_all_data()
         self.m_background_out_port.del_all_attributes()
@@ -484,6 +497,18 @@ class PCABackgroundPreparationModule(ProcessingModule):
             self.m_star_out_port.add_attribute("PARANG", star_parang, static=False)
 
         self.m_star_out_port.add_history_information("Star frames separated",
+                                                     str(sum(star_nframes))+"/"+ \
+                                                     str(sum(nframes)))
+
+        self.m_mean_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_mean_out_port.add_attribute("NFRAMES", star_nframes, static=False)
+        self.m_mean_out_port.add_attribute("INDEX", star_index, static=False)
+
+        if parang is not None:
+            self.m_mean_out_port.add_attribute("PARANG", star_parang, static=False)
+
+        self.m_mean_out_port.add_history_information("Star frames separated",
                                                      str(sum(star_nframes))+"/"+ \
                                                      str(sum(nframes)))
 
@@ -812,6 +837,9 @@ class DitheringBackgroundModule(ProcessingModule):
              (deg) measured in counterclockwise direction with respect to upward direction,
              additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
              radius). No mask is used when set to None.
+             **bad_pixel** (*tuple(int, float, int)*) -- Size of the sigma filter, sigma threshold,
+             and number of iterations used for removal of bad pixels before the mask is placed at
+             the position of the stellar PSF.
 
         :return: None
         """
@@ -840,6 +868,11 @@ class DitheringBackgroundModule(ProcessingModule):
             self.m_mask_planet = kwargs["mask_planet"]
         else:
             self.m_mask_planet = None
+
+        if "bad_pixel" in kwargs:
+            self.m_bad_pixel = kwargs["bad_pixel"]
+        else:
+            self.m_bad_pixel = None
 
         super(DitheringBackgroundModule, self).__init__(name_in)
 
@@ -913,10 +946,10 @@ class DitheringBackgroundModule(ProcessingModule):
 
         def _admin_end(count, n_dither):
             if self.m_combine == "mean":
-                tags.append("star"+str(count+1))
+                tags.append("dither_mean"+str(count+1))
 
             elif self.m_combine == "pca":
-                tags.append("pcabg_res"+str(count+1))
+                tags.append("dither_pca_res"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
                 print "Processing dither position "+str(count+1)+ \
@@ -927,7 +960,6 @@ class DitheringBackgroundModule(ProcessingModule):
         tags = []
 
         for i, position in enumerate(self.m_center):
-
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
@@ -935,7 +967,7 @@ class DitheringBackgroundModule(ProcessingModule):
                                         center=position,
                                         name_in="crop"+str(i),
                                         image_in_tag=self.m_image_in_tag,
-                                        image_out_tag="dither"+str(i+1))
+                                        image_out_tag="dither_crop"+str(i+1))
 
                 crop.connect_database(self._m_data_base)
                 crop.run()
@@ -946,18 +978,38 @@ class DitheringBackgroundModule(ProcessingModule):
                                                                  star_pos[i]),
                                                          mean=False,
                                                          name_in="prepare"+str(i),
-                                                         image_in_tag="dither"+str(i+1),
-                                                         star_out_tag="star"+str(i+1),
-                                                         background_out_tag="background"+str(i+1))
+                                                         image_in_tag="dither_crop"+str(i+1),
+                                                         star_out_tag="dither_star"+str(i+1),
+                                                         mean_out_tag="dither_mean"+str(i+1),
+                                                         background_out_tag="dither_background" \
+                                                                            +str(i+1))
 
                 prepare.connect_database(self._m_data_base)
                 prepare.run()
 
             if self.m_pca_background:
 
+                if self.m_bad_pixel is None:
+                    tag_extract = "dither_mean"+str(i+1)
+
+                else:
+                    tag_extract = "dither_bad"+str(i+1)
+
+                    bad = BadPixelSigmaFilterModule(name_in="bad"+str(i),
+                                                    image_in_tag="dither_mean"+str(i+1),
+                                                    image_out_tag="dither_bad"+str(i+1),
+                                                    map_out_tag="dither_bpmap"+str(i+1),
+                                                    box=self.m_bad_pixel[0],
+                                                    sigma=self.m_bad_pixel[1],
+                                                    iterate=self.m_bad_pixel[2])
+
+                    bad.connect_database(self._m_data_base)
+                    bad.run()
+
                 star = StarExtractionModule(name_in="star"+str(i),
-                                            image_in_tag="star"+str(i+1),
+                                            image_in_tag=tag_extract,
                                             image_out_tag=None,
+                                            position_out_tag="dither_star"+str(i+1),
                                             image_size=None,
                                             fwhm_star=self.m_gaussian,
                                             position=self.m_subframe)
@@ -969,11 +1021,11 @@ class DitheringBackgroundModule(ProcessingModule):
                                                      mask_star=self.m_mask_star,
                                                      mask_planet=self.m_mask_planet,
                                                      name_in="pca_background"+str(i),
-                                                     star_in_tag="star"+str(i+1),
-                                                     background_in_tag="background"+str(i+1),
-                                                     residuals_out_tag="pcabg_res"+str(i+1),
-                                                     fit_out_tag="pcabg_fit"+str(i+1),
-                                                     mask_out_tag="pcabg_mask"+str(i+1))
+                                                     star_in_tag="dither_star"+str(i+1),
+                                                     background_in_tag="dither_background"+str(i+1),
+                                                     residuals_out_tag="dither_pca_res"+str(i+1),
+                                                     fit_out_tag="dither_pca_fit"+str(i+1),
+                                                     mask_out_tag="dither_pca_mask"+str(i+1))
 
                 pca.connect_database(self._m_data_base)
                 pca.run()
@@ -984,13 +1036,13 @@ class DitheringBackgroundModule(ProcessingModule):
             combine = CombineTagsModule(name_in="combine",
                                         check_attr=True,
                                         image_in_tags=tags,
-                                        image_out_tag="combine")
+                                        image_out_tag="dither_combine")
 
             combine.connect_database(self._m_data_base)
             combine.run()
 
             sort = SortParangModule(name_in="sort",
-                                    image_in_tag="combine",
+                                    image_in_tag="dither_combine",
                                     image_out_tag=self.m_image_out_tag)
 
             sort.connect_database(self._m_data_base)
