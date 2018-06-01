@@ -323,13 +323,13 @@ class DerotateAndStackModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
+        if self.m_stack:
+            im_tot = np.zeros((npix, npix))
+        else:
+            im_tot = None
+
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
-
-            if self.m_stack:
-                im_tot = np.zeros((npix, npix))
-            else:
-                im_tot = None
 
             if self.m_derotate:
                 im_tot = _derotate(frames, im_tot, parang, i)
