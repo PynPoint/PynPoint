@@ -10,8 +10,7 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
                                                         BadPixelMapModule
 
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
-                                                              FlatCalibrationModule, \
-                                                              SubtractImagesModule
+                                                              FlatCalibrationModule                                                              
 
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, \
                                                          PcaPsfSubtractionModule
@@ -19,7 +18,9 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, \
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule, \
                                                               MeanCubeModule, \
                                                               DerotateAndStackModule, \
-                                                              CombineTagsModule
+                                                              CombineTagsModule, \
+                                                              SubtractImagesModule, \
+                                                              AddImagesModule
 
 from PynPoint.ProcessingModules.StarAlignment import StarAlignmentModule, \
                                                      StarExtractionModule, \
