@@ -275,6 +275,26 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
+        def _initialize(ndim, npix):
+            if ndim == 2:
+                nimages = 1
+            elif ndim == 3:
+                nimages = self.m_image_in_port.get_shape()[0]
+
+            frames = memory_frames(memory, nimages)
+
+            if self.m_stack is None:
+                im_tot = None
+
+            elif self.m_stack == "mean":
+                im_tot = np.zeros((npix, npix))
+
+            elif self.m_stack == "median":
+                im_tot = None
+                frames = [0, nimages]
+
+            return frames, im_tot
+
         def _derotate(frames, im_tot, parang, count):
             for j in range(frames[count+1]-frames[count]):
                 im_rot = rotate(input=self.m_image_in_port[frames[count]+j, ],
@@ -319,22 +339,7 @@ class DerotateAndStackModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[1]
 
-        if ndim == 2:
-            nimages = 1
-        elif ndim == 3:
-            nimages = self.m_image_in_port.get_shape()[0]
-
-        frames = memory_frames(memory, nimages)
-
-        if self.m_stack is None:
-            im_tot = None
-
-        elif self.m_stack == "mean":
-            im_tot = np.zeros((npix, npix))
-
-        elif self.m_stack == "median":
-            im_tot = None
-            frames = [0, nimages]
+        frames, im_tot = _initialize(ndim, npix)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
@@ -354,8 +359,7 @@ class DerotateAndStackModule(ProcessingModule):
 
         if self.m_stack == "mean":
             self.m_image_out_port.set_all(im_tot/float(nimages))
-
-        if self.m_stack == "median":
+        elif self.m_stack == "median":
             self.m_image_out_port.set_all(np.median(im_tot, axis=0))
 
         if self.m_derotate or self.m_stack is not None:
@@ -503,8 +507,8 @@ class SubtractImagesModule(ProcessingModule):
         :type image_in_tags: tuple, str
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tags*.
+        :param image_out_tag: Tag of the database entry with the subtracted images that are written
+                              as output. Should be different from *image_in_tags*.
         :type image_out_tag: str
         :param scaling: Additional scaling factor.
         :type scaling: float
@@ -572,8 +576,8 @@ class AddImagesModule(ProcessingModule):
         :type image_in_tags: tuple, str
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tags*.
+        :param image_out_tag: Tag of the database entry with the added images that are written as
+                              output. Should be different from *image_in_tags*.
         :type image_out_tag: str
         :param scaling: Additional scaling factor.
         :type scaling: float
@@ -603,8 +607,8 @@ class AddImagesModule(ProcessingModule):
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
             raise ValueError("The shape of the two input tags have to be equal.")
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in1_port.get_shape()[0]
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         frames = memory_frames(memory, nimages)
 
