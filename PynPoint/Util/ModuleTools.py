@@ -36,3 +36,16 @@ def memory_frames(memory, nimages):
             frames = np.append(frames, nimages)
 
     return frames
+
+def number_images(port):
+    """
+    Function to get the number of images of an input port.
+    """
+
+    if port.get_ndim() == 2:
+        nimages = 1
+
+    elif port.get_ndim() == 3:
+        nimages = port.get_shape()[0]
+
+    return nimages
