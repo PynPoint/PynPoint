@@ -293,7 +293,7 @@ class DerotateAndStackModule(ProcessingModule):
                 im_tot = None
                 frames = [0, nimages]
 
-            return frames, im_tot
+            return nimages, frames, im_tot
 
         def _derotate(frames, im_tot, parang, count):
             for j in range(frames[count+1]-frames[count]):
@@ -339,7 +339,7 @@ class DerotateAndStackModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[1]
 
-        frames, im_tot = _initialize(ndim, npix)
+        nimages, frames, im_tot = _initialize(ndim, npix)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
@@ -487,142 +487,4 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Database entries combined",
                                                       str(np.size(self.m_image_in_tags)))
 
-        self.m_image_out_port.close_port()
-
-
-class SubtractImagesModule(ProcessingModule):
-    """
-    Module for subtracting two sets of images.
-    """
-
-    def __init__(self,
-                 image_in_tags,
-                 name_in="subtract_images",
-                 image_out_tag="im_arr_subtract",
-                 scaling=1.):
-        """
-        Constructor of SubtractImagesModule.
-
-        :param image_in_tags: Tuple with two tags of the database entry that are read as input.
-        :type image_in_tags: tuple, str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_out_tag: Tag of the database entry with the subtracted images that are written
-                              as output. Should be different from *image_in_tags*.
-        :type image_out_tag: str
-        :param scaling: Additional scaling factor.
-        :type scaling: float
-
-        :return: None
-        """
-
-        super(SubtractImagesModule, self).__init__(name_in=name_in)
-
-        self.m_image_in1_port = self.add_input_port(image_in_tags[0])
-        self.m_image_in2_port = self.add_input_port(image_in_tags[1])
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
-        self.m_scaling = scaling
-
-    def run(self):
-        """
-        Run method of the module. Subtracts the images from the second database tag from the images
-        of the first database tag, on a frame-by-frame basis.
-
-        :return: None
-        """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
-        if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
-            raise ValueError("The shape of the two input tags have to be equal.")
-
-        memory = self._m_config_port.get_attribute("MEMORY")
-        nimages = self.m_image_in1_port.get_shape()[0]
-
-        frames = memory_frames(memory, nimages)
-
-        for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running SubtractImagesModule...")
-
-            images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
-            images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
-
-            self.m_image_out_port.append(self.m_scaling*(images1-images2))
-
-        sys.stdout.write("Running SubtractImagesModule... [DONE]\n")
-        sys.stdout.flush()
-
-        self.m_image_out_port.add_history_information("Images subtracted", "")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
-        self.m_image_out_port.close_port()
-
-
-class AddImagesModule(ProcessingModule):
-    """
-    Module for adding two sets of images.
-    """
-
-    def __init__(self,
-                 image_in_tags,
-                 name_in="add_images",
-                 image_out_tag="im_arr_add",
-                 scaling=1.):
-        """
-        Constructor of AddImagesModule.
-
-        :param image_in_tags: Tuple with two tags of the database entry that are read as input.
-        :type image_in_tags: tuple, str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_out_tag: Tag of the database entry with the added images that are written as
-                              output. Should be different from *image_in_tags*.
-        :type image_out_tag: str
-        :param scaling: Additional scaling factor.
-        :type scaling: float
-
-        :return: None
-        """
-
-        super(AddImagesModule, self).__init__(name_in=name_in)
-
-        self.m_image_in1_port = self.add_input_port(image_in_tags[0])
-        self.m_image_in2_port = self.add_input_port(image_in_tags[1])
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
-        self.m_scaling = scaling
-
-    def run(self):
-        """
-        Run method of the module. Add the images from the two database tags on a frame-by-frame
-        basis.
-
-        :return: None
-        """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
-        if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
-            raise ValueError("The shape of the two input tags have to be equal.")
-
-        nimages = self.m_image_in1_port.get_shape()[0]
-        memory = self._m_config_port.get_attribute("MEMORY")
-
-        frames = memory_frames(memory, nimages)
-
-        for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running AddImagesModule...")
-
-            images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
-            images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
-
-            self.m_image_out_port.append(self.m_scaling*(images1+images2))
-
-        sys.stdout.write("Running AddImagesModule... [DONE]\n")
-        sys.stdout.flush()
-
-        self.m_image_out_port.add_history_information("Images added", "")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
         self.m_image_out_port.close_port()
