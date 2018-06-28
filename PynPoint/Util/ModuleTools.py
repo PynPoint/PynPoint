@@ -56,3 +56,16 @@ def crop_image(image, center, size):
     y_off = int(center[1] - size/2)
 
     return image[y_off:y_off+size, x_off:x_off+size]
+
+def number_images(port):
+    """
+    Function to get the number of images of an input port.
+    """
+
+    if port.get_ndim() == 2:
+        nimages = 1
+
+    elif port.get_ndim() == 3:
+        nimages = port.get_shape()[0]
+
+    return nimages
