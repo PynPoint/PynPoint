@@ -8,10 +8,8 @@ readme = open('README.rst').read()
 packages = ['PynPoint',
             'PynPoint.Core',
             'PynPoint.IOmodules',
-            'PynPoint.OldVersion',
             'PynPoint.ProcessingModules',
-            'PynPoint.Util',
-            'PynPoint.Wrapper']
+            'PynPoint.Util']
 
 requirements = ['configparser',
                 'h5py',
