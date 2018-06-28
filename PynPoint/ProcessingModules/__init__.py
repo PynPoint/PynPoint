@@ -18,9 +18,7 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, \
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule, \
                                                               MeanCubeModule, \
                                                               DerotateAndStackModule, \
-                                                              CombineTagsModule, \
-                                                              SubtractImagesModule, \
-                                                              AddImagesModule
+                                                              CombineTagsModule
 
 from PynPoint.ProcessingModules.StarAlignment import StarAlignmentModule, \
                                                      StarExtractionModule, \
@@ -56,3 +54,7 @@ from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule, \
                                                        AperturePhotometryModule
 
 from PynPoint.ProcessingModules.DetectionLimits import ContrastCurveModule
+
+from PynPoint.ProcessingModules.BasicOperations import SubtractImagesModule, \
+                                                       AddImagesModule, \
+                                                       RotateImagesModule
