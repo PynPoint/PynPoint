@@ -9,8 +9,6 @@ import warnings
 import numpy as np
 import cv2
 
-# import matplotlib.pyplot as plt
-
 from skimage.feature import register_translation
 from skimage.transform import rescale
 from scipy.ndimage import fourier_shift
@@ -831,7 +829,8 @@ class WaffleCenteringModule(ProcessingModule):
                 y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i + 1)))
 
             elif self.m_pattern == "+":
-                # TODO not tested
+                warnings.warn("The '+' pattern has not been tested yet.")
+
                 x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i)))
                 y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
 
@@ -854,12 +853,6 @@ class WaffleCenteringModule(ProcessingModule):
             while dist > 2:
                 y_max_new, x_max_new = np.unravel_index(np.argmax(tmp_center_frame),
                                                         dims=tmp_center_frame.shape)
-
-                # plt.figure()
-                # plt.imshow(tmp_center_frame,origin="lower left")
-                # plt.plot(x_max,y_max,"yx")
-                # plt.plot(x_max_new,y_max_new,"wx")
-                # plt.show()
 
                 # Caculate minimal distance to previous points
                 tmp_center_frame[y_max_new, x_max_new] = 0.
@@ -897,16 +890,6 @@ class WaffleCenteringModule(ProcessingModule):
             x_pos[i] = gauss.x_mean.value
             y_pos[i] = gauss.y_mean.value
 
-            # plt.figure()
-            # plt.imshow(center_frame_unsharp,origin="lower left")
-            # plt.plot(gauss.x_mean, gauss.y_mean,"wx")
-            # plt.plot(x_0, y_0,"gx")
-            # plt.figure()
-            # plt.imshow(ref_center_frame,origin="lower left")
-            # plt.plot(x_pos[i]-x_0+ref_image_size/2,y_pos[i]-y_0+ref_image_size/2,"wx")
-            # plt.plot(ref_image_size/2,ref_image_size/2,"gx")
-            # plt.show()
-
         # Find star position as intersection of two lines
 
         x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) - \
@@ -920,18 +903,6 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.write("Running WaffleCenteringModule... [DONE]\n")
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
-
-        # plt.figure()
-        # plt.plot(x_pos[0],y_pos[0],"wx")
-        # plt.plot(x_pos[1],y_pos[1],"wx")
-        # plt.plot(x_pos[2],y_pos[2],"wx")
-        # plt.plot(x_pos[3],y_pos[3],"wx")
-        # plt.plot(x_center,y_center,"gx")
-        # plt.imshow(center_frame_unsharp,origin="lower left")
-        # plt.xlim(np.amin(x_pos)-5,np.amax(x_pos)+5)
-        # plt.ylim(np.amin(y_pos)-5,np.amax(y_pos)+5)
-        # plt.savefig("center.pdf")
-        # plt.show()
 
         im_shift = ShiftImagesModule(shift_xy=(im_shape[-1] / 2 - .5 - x_center,
                                                im_shape[-2] / 2 - .5 - y_center),
