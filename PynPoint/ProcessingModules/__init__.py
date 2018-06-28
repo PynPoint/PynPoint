@@ -12,8 +12,7 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
                                                               FlatCalibrationModule                                                              
 
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule, \
-                                                         PcaPsfSubtractionModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule, \
                                                               MeanCubeModule, \
