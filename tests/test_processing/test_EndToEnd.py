@@ -10,7 +10,7 @@ from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.Core.DataIO import DataStorage, InputPort
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule, RemoveFramesModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
@@ -219,24 +219,21 @@ class TestEndToEnd(object):
         assert data.shape == (37, 200, 200)
 
     def test_pca(self):
-        pca = PSFSubtractionModule(name_in="pca",
-                                   pca_number=2,
-                                   images_in_tag="im_subset",
-                                   reference_in_tag="im_subset",
-                                   res_arr_out_tag="res_arr",
-                                   res_arr_rot_out_tag="res_rot",
-                                   res_mean_tag="res_mean",
-                                   res_median_tag="res_median",
-                                   res_var_tag="res_var",
-                                   res_rot_mean_clip_tag="res_rot_mean_clip",
-                                   extra_rot=0.0,
-                                   cent_size=0.1)
+        pca = PcaPsfSubtractionModule(pca_numbers=(2, ),
+                                      name_in="pca",
+                                      images_in_tag="im_subset",
+                                      reference_in_tag="im_subset",
+                                      res_mean_tag="res_mean",
+                                      res_median_tag=None,
+                                      res_arr_out_tag=None,
+                                      res_rot_mean_clip_tag=None,
+                                      extra_rot=0.)
 
         self.pipeline.add_module(pca)
         self.pipeline.run_module("pca")
 
         data = self.pipeline.get_data("res_mean")
 
-        assert np.allclose(data[154, 99], 0.0004308570688425797, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.372451154992271e-08, rtol=limit, atol=0.)
-        assert data.shape == (200, 200)
+        assert np.allclose(data[0, 154, 99], 1.9111577813719608e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 4.09783620471945e-09, rtol=limit, atol=0.)
+        assert data.shape == (1, 200, 200)
