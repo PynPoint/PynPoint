@@ -10,10 +10,8 @@ Subpackages
 
     PynPoint.Core
     PynPoint.IOmodules
-    PynPoint.OldVersion
     PynPoint.ProcessingModules
     PynPoint.Util
-    PynPoint.Wrapper
 
 Module contents
 ---------------
