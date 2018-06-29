@@ -17,7 +17,7 @@ from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
 from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PSFSubtractionModule
+from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
 from PynPoint.Util.TestTools import create_config, create_fits, create_fake
@@ -201,13 +201,18 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(subset)
 
-        psf_sub = PSFSubtractionModule(pca_number=5,
-                                       name_in="PSF_subtraction",
-                                       images_in_tag="im_arr_stacked",
-                                       reference_in_tag="im_arr_stacked",
-                                       res_mean_tag="res_mean")
+        pca = PcaPsfSubtractionModule(pca_numbers=(5, ),
+                                      name_in="PSF_subtraction",
+                                      images_in_tag="im_arr_stacked",
+                                      reference_in_tag="im_arr_stacked",
+                                      res_mean_tag="res_mean",
+                                      res_median_tag=None,
+                                      res_arr_out_tag=None,
+                                      res_rot_mean_clip_tag=None,
+                                      extra_rot=0.,
+                                      verbose=True)
 
-        self.pipeline.add_module(psf_sub)
+        self.pipeline.add_module(pca)
 
         writing = FitsWritingModule(name_in="Fits_writing",
                                     file_name="test.fits",
@@ -254,6 +259,6 @@ class TestDocumentation(object):
         assert np.allclose(data[0, 10, 10], 2.5572805947810986e-05, rtol=limit, atol=0.)
 
         data = self.pipeline.get_data("res_mean")
-        assert np.allclose(data[38, 22], 0.00018312083384477404, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -1.598348168584834e-07, rtol=limit, atol=0.)
-        assert data.shape == (44, 44)
+        assert np.allclose(data[0, 38, 22], 2.0195333051172577e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -1.786038471634382e-08, rtol=limit, atol=0.)
+        assert data.shape == (1, 44, 44)

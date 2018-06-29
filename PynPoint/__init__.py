@@ -1,9 +1,6 @@
 import warnings
 
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.Wrapper.BasisWrapper import BasisWrapper as basis
-from PynPoint.Wrapper.ImageWrapper import ImageWrapper as images
-from PynPoint.Wrapper.ResidualsWrapper import ResidualsWrapper as residuals
 
 warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 
