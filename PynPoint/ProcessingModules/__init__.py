@@ -23,7 +23,8 @@ from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModu
 from PynPoint.ProcessingModules.StarAlignment import StarAlignmentModule, \
                                                      StarExtractionModule, \
                                                      StarCenteringModule, \
-                                                     ShiftImagesModule
+                                                     ShiftImagesModule, \
+                                                     WaffleCenteringModule
 
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, \
                                                      ScaleImagesModule, \
