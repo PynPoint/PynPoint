@@ -37,6 +37,26 @@ def memory_frames(memory, nimages):
 
     return frames
 
+def crop_image(image, center, size):
+    """
+    Function to crop a square image around a specified position.
+
+    :param image: Input image.
+    :type image: ndarray
+    :param size: Image size (pix) for both dimensions.
+    :type size: int
+    :param center: Tuple (x0, y0) with the new image center.
+    :type center: tuple, int
+
+    :return: Cropped image.
+    :rtype: ndarray
+    """
+
+    x_off = int(center[0] - size/2)
+    y_off = int(center[1] - size/2)
+
+    return image[y_off:y_off+size, x_off:x_off+size]
+
 def number_images(port):
     """
     Function to get the number of images of an input port.
