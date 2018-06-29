@@ -2,6 +2,7 @@
 Modules for locating, aligning, and centering of the star.
 """
 
+import sys
 import math
 
 import warnings
@@ -12,10 +13,13 @@ from skimage.feature import register_translation
 from skimage.transform import rescale
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
+from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
+from astropy.modeling import models, fitting
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import memory_frames
+from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
+from PynPoint.Util.ModuleTools import memory_frames, crop_image, progress
 
 
 class StarExtractionModule(ProcessingModule):
@@ -721,3 +725,199 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_out_port.add_history_information("Images shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
+
+
+class WaffleCenteringModule(ProcessingModule):
+    """
+    Module for centering of SPHERE data obtained with a Lyot coronagraph for which center frames
+    with waffle pattern are available.
+    """
+
+    def __init__(self,
+                 size,
+                 center,
+                 name_in="center_images",
+                 image_in_tag="im_arr",
+                 center_in_tag="center_frame",
+                 image_out_tag="im_arr_centered_cut",
+                 radius=45.,
+                 pattern="x",
+                 sigma=5.):
+        """
+        Constructor of WaffleCenteringModule.
+
+        :param size: Image size (arcsec) for both dimensions.
+        :type size: float
+        :param center: Approximate position (x0, y0) of the coronagraph.
+        :type center: tuple, int
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with science images that are read as input.
+        :type image_in_tag: str
+        :param center_in_tag: Tag of the database entry with the center frame that is read as
+                              input.
+        :type center_in_tag: str
+        :param image_out_tag: Tag of the database entry with the centered images that are written
+                              as output. Should be different from *image_in_tag*.
+        :type image_out_tag: str
+        :param radius: Approximate separation (pix) of the waffle spots from the star.
+        :type radius: float
+        :param pattern: Waffle pattern that is used (*x* or *+*).
+        :type pattern: str
+        :param sigma: Standard deviation (pix) of the Gaussian kernel that is used for the unsharp
+                      masking.
+        :type sigma: float
+
+        :return: None
+        """
+
+        super(WaffleCenteringModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_center_in_port = self.add_input_port(center_in_tag)
+
+        self.m_image_out_tag = image_out_tag
+
+        self.m_size = size
+        self.m_center = (np.floor(center[0]), np.floor(center[1]))
+        self.m_radius = radius
+        self.m_pattern = pattern
+        self.m_sigma = sigma
+
+    def run(self):
+        """
+        Run method of the module. Locates the position of the calibration spots in the center
+        frame. From the four spots, the position of the star behind the coronagraph is fitted,
+        and the images and shifted and cropped.
+
+        :return: None
+        """
+
+        center_ndim = self.m_center_in_port.get_ndim()
+        center_shape = self.m_center_in_port.get_shape()
+        im_shape = self.m_image_in_port.get_shape()
+
+        if center_ndim == 3 and center_shape[0] == 1:
+            center_frame = self.m_center_in_port.get_all()[0, ]
+
+        elif center_ndim == 2:
+            center_frame = self.m_center_in_port.get_all()
+
+        else:
+            raise ValueError("Center frame needs to be 2D.")
+
+        if im_shape[-2:] != center_shape[-2:]:
+            raise ValueError("Science and center images should have the same shape.")
+
+        center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
+                                                              sigma=self.m_sigma)
+
+        # size of center image
+        ref_image_size = 20
+
+        # Arrays for the positions
+        x_pos = np.zeros(4)
+        y_pos = np.zeros(4)
+
+        # Loop for 4 waffle spots
+        for i in range(4):
+            progress(i, 4, "Running WaffleCenteringModule...")
+
+            # Approximate positions of waffle spots
+            if self.m_pattern == "x":
+                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i + 1)))
+                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i + 1)))
+
+            elif self.m_pattern == "+":
+                warnings.warn("The '+' pattern has not been tested yet.")
+
+                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i)))
+                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
+
+            tmp_center_frame = crop_image(image=center_frame_unsharp,
+                                          center=(int(x_0), int(y_0)),
+                                          size=ref_image_size)
+
+            # find maximum in tmp image
+            y_max, x_max = np.unravel_index(np.argmax(tmp_center_frame),
+                                            dims=tmp_center_frame.shape)
+
+            max_pos = np.array([x_max, y_max]).reshape(1, 2)
+
+            # Check whether it is the correct maximum: second brightest pixel should be nearby
+            tmp_center_frame[y_max, x_max] = 0.
+
+            # introduce distance parameter
+            dist = np.inf
+
+            while dist > 2:
+                y_max_new, x_max_new = np.unravel_index(np.argmax(tmp_center_frame),
+                                                        dims=tmp_center_frame.shape)
+
+                # Caculate minimal distance to previous points
+                tmp_center_frame[y_max_new, x_max_new] = 0.
+                dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
+                                                         max_pos[:, 1]-y_max_new)),
+                                              axis=0))
+                max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
+
+                x_max = x_max_new
+                y_max = y_max_new
+
+            x_0 = x_0-ref_image_size/2+x_max
+            y_0 = y_0-ref_image_size/2+y_max
+
+            # create reference image around determined maximum
+            ref_center_frame = crop_image(image=center_frame_unsharp,
+                                          center=(int(x_0), int(y_0)),
+                                          size=ref_image_size)
+
+            # Fit the data using astropy.modeling
+            gauss_init = models.Gaussian2D(amplitude=np.amax(ref_center_frame),
+                                           x_mean=x_0,
+                                           y_mean=y_0,
+                                           x_stddev=1.,
+                                           y_stddev=1.,
+                                           theta=0.)
+
+            fit_gauss = fitting.LevMarLSQFitter()
+
+            y_grid, x_grid = np.mgrid[y_0-ref_image_size/2:y_0+ref_image_size/2,
+                                      x_0-ref_image_size/2:x_0+ref_image_size/2]
+
+            gauss = fit_gauss(gauss_init, x_grid, y_grid, ref_center_frame)
+
+            x_pos[i] = gauss.x_mean.value
+            y_pos[i] = gauss.y_mean.value
+
+        # Find star position as intersection of two lines
+
+        x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) - \
+                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
+                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) - \
+                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+
+        y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
+                   (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+
+        sys.stdout.write("Running WaffleCenteringModule... [DONE]\n")
+        sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
+        sys.stdout.flush()
+
+        im_shift = ShiftImagesModule(shift_xy=(im_shape[-1] / 2 - .5 - x_center,
+                                               im_shape[-2] / 2 - .5 - y_center),
+                                     name_in="waffle_shift",
+                                     image_in_tag=self.m_image_in_port.tag,
+                                     image_out_tag="waffle_shift")
+
+        im_shift.connect_database(self._m_data_base)
+        im_shift.run()
+
+        im_crop = CropImagesModule(size=self.m_size,
+                                   center=None,
+                                   name_in="waffle_crop",
+                                   image_in_tag="waffle_shift",
+                                   image_out_tag=self.m_image_out_tag)
+
+        im_crop.connect_database(self._m_data_base)
+        im_crop.run()
