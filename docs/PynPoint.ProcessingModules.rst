@@ -20,6 +20,14 @@ PynPoint\.ProcessingModules\.BadPixelCleaning module
     :undoc-members:
     :show-inheritance:
 
+PynPoint\.ProcessingModules\.BasicOperations module
+---------------------------------------------------
+
+.. automodule:: PynPoint.ProcessingModules.BasicOperations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint\.ProcessingModules\.DarkAndFlatCalibration module
 ----------------------------------------------------------
 
