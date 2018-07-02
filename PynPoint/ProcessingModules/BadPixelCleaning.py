@@ -13,48 +13,39 @@ from PynPoint.Core.Processing import ProcessingModule
 
 
 @jit(cache=True)
-def _calc_fast_convolution(f_roof, w_conv, s_conv, n_size, g_conv, n_conv):
-    output = np.zeros(n_conv, dtype=np.complex64)
+def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
+    new = np.zeros(N, dtype=np.complex64)
 
-    if s_conv[0] == 0 and s_conv[1] == 0:
-        check = True
+    if ((tmp_s[0] == 0) and (tmp_s[1] == 0)) or \
+            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
+            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
+            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):
 
-    elif s_conv[0] == n_conv[0]/2 and s_conv[1] == 0:
-        check = True
-
-    elif s_conv[0] == 0 and s_conv[1] == n_conv[1]/2:
-        check = True
-
-    elif s_conv[0] == n_conv[0]/2 and s_conv[1] == n_conv[1]/2:
-        check = True
+        for m in range(0, N[0], 1):
+            for j in range(0, N[1], 1):
+                new[m, j] = F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]]
 
     else:
-        check = False
 
-    if check:
-        for m in range(n_conv[0]):
-            for j in range(n_conv[1]):
-                output[m, j] = f_roof * w_conv[m-s_conv[0], j-s_conv[1]]
+        for m in range(0, N[0], 1):
+            for j in range(0, N[1], 1):
+                new[m, j] = (F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]] +
+                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) % N[0], (j + \
+                             tmp_s[1]) % N[1]])
+
+    if ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
+            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
+            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)): # causes problems, unknown why
+
+        res = new / float(N_size)
 
     else:
-        for m in range(n_conv[0]):
-            for j in range(n_conv[1]):
-                w_tmp_1 = w_conv[m-s_conv[0], j-s_conv[1]]
-                w_tmp_2 = w_conv[(m+s_conv[0])%n_conv[0], (j+s_conv[1])%n_conv[1]]
 
-                output[m, j] = f_roof*w_tmp_1 + np.conjugate(f_roof)*w_tmp_2
+        res = new / float(N_size)
 
-    # Original code by Markus
-    # if ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == 0)) or ((s_conv[0] == 0) and (s_conv[1] == \
-    #         n_conv[1]/2)) or ((s_conv[0] == n_conv[0]/2) and (s_conv[1] == n_conv[1]/2)):
-    #     res = output/float(n_size) # seems to make problems, unclear why
-    #
-    # else:
-    #     res = output/float(n_size)
+    tmp_G = tmp_G - res
 
-    res = output / float(n_size)
-
-    return g_conv - res
+    return tmp_G
 
 
 def _bad_pixel_interpolation(image_in,
@@ -76,6 +67,7 @@ def _bad_pixel_interpolation(image_in,
 
     image_in = image_in * bad_pixel_map
 
+    # for names see ref paper
     g = copy.deepcopy(image_in)
     G = np.fft.fft2(g)
     w = copy.deepcopy(bad_pixel_map)
@@ -90,8 +82,11 @@ def _bad_pixel_interpolation(image_in,
 
     while iteration < iterations:
         # 1.) select line using max search and compute conjugate
-        tmp_s = np.unravel_index(np.argmax(abs(tmp_G.real[:, 0: N[1] / 2])), (N[0], N[1] / 2))
-        tmp_s_conjugate = (np.mod(N[0] - tmp_s[0], N[0]), np.mod(N[1] - tmp_s[1], N[1]))
+        tmp_s = np.unravel_index(np.argmax(abs(tmp_G.real[:, 0: N[1] / 2])),
+                                 (N[0], N[1] / 2))
+
+        tmp_s_conjugate = (np.mod(N[0] - tmp_s[0], N[0]),
+                           np.mod(N[1] - tmp_s[1], N[1]))
 
         # 2.) compute the new F_roof
         # special cases s = 0 or s = N/2 no conjugate line exists
@@ -113,7 +108,8 @@ def _bad_pixel_interpolation(image_in,
                 W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]] += 0.00000000001
 
             a = (np.power(np.abs(W[(0, 0)]), 2))
-            b = np.power(np.abs(W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]]), 2.0) + 0.01
+            b = np.power(np.abs(W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]]),
+                         2.0) + 0.01
             c = a - b
 
             F_roof_tmp = N_size * (tmp_G[tmp_s] * W[(0, 0)] - np.conj(tmp_G[tmp_s]) *
@@ -322,8 +318,10 @@ class BadPixelMapModule(ProcessingModule):
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param dark_in_tag: Tag of the database entry with the dark frames that are read as input.
+                            Not read if set to None.
         :type dark_in_tag: str
         :param flat_in_tag: Tag of the database entry with the flat fields that are read as input.
+                            Not read if set to None.
         :type flat_in_tag: str
         :param bp_map_out_tag: Tag of the database entry with the bad pixel map that is written as
                                output.
@@ -340,8 +338,16 @@ class BadPixelMapModule(ProcessingModule):
 
         super(BadPixelMapModule, self).__init__(name_in)
 
-        self.m_dark_port = self.add_input_port(dark_in_tag)
-        self.m_flat_port = self.add_input_port(flat_in_tag)
+        if dark_in_tag is None:
+            self.m_dark_port = None
+        else:
+            self.m_dark_port = self.add_input_port(dark_in_tag)
+
+        if flat_in_tag is None:
+            self.m_flat_port = None
+        else:
+            self.m_flat_port = self.add_input_port(flat_in_tag)
+
         self.m_bp_map_out_port = self.add_output_port(bp_map_out_tag)
 
         self.m_dark_threshold = dark_threshold
@@ -358,23 +364,35 @@ class BadPixelMapModule(ProcessingModule):
         :return: None
         """
 
-        dark = self.m_dark_port.get_all()
-        flat = self.m_flat_port.get_all()
+        if self.m_dark_port is not None:
+            dark = self.m_dark_port.get_all()
 
-        if dark.ndim == 3:
-            dark = np.mean(dark, axis=0)
-        if flat.ndim == 3:
-            flat = np.mean(flat, axis=0)
+            if dark.ndim == 3:
+                dark = np.mean(dark, axis=0)
 
-        if not dark.shape == flat.shape:
-            raise ValueError("Dark and flat images should have the same shape.")
+            max_dark = np.max(dark)
+            print "Threshold dark frame [counts] =", max_dark*self.m_dark_threshold
 
-        max_dark = np.max(dark)
-        max_flat = np.max(flat)
+            bpmap = np.ones(dark.shape)
+            bpmap[np.where(dark > max_dark*self.m_dark_threshold)] = 0
 
-        bpmap = np.ones(dark.shape)
-        bpmap[np.where(dark > max_dark * self.m_dark_threshold)] = 0
-        bpmap[np.where(flat < max_flat * self.m_flat_threshold)] = 0
+        if self.m_flat_port is not None:
+            flat = self.m_flat_port.get_all()
+
+            if flat.ndim == 3:
+                flat = np.mean(flat, axis=0)
+
+            max_flat = np.max(flat)
+            print "Threshold flat field [counts] =", max_flat*self.m_flat_threshold
+
+            if self.m_dark_port is None:
+                bpmap = np.ones(flat.shape)
+
+            bpmap[np.where(flat < max_flat*self.m_flat_threshold)] = 0
+
+        if self.m_dark_port is not None and self.m_flat_port is not None:
+            if not dark.shape == flat.shape:
+                raise ValueError("Dark and flat images should have the same shape.")
 
         self.m_bp_map_out_port.set_all(bpmap)
         self.m_bp_map_out_port.close_port()
@@ -392,7 +410,7 @@ class BadPixelInterpolationModule(ProcessingModule):
                  image_out_tag="im_arr_bp_clean",
                  iterations=1000):
         """
-        Constructor of BadPixelMapModule.
+        Constructor of BadPixelInterpolationModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
