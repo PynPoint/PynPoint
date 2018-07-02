@@ -29,7 +29,7 @@ requirements = ['configparser',
 
 setup(
     name='PynPoint',
-    version='0.4.0',
+    version='0.5.0',
     description='Python package for processing and analysis of high-contrast imaging data',
     long_description=readme,
     author='Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara',
