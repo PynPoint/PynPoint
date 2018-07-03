@@ -449,3 +449,18 @@ class Pypeline(object):
                 select.append(item)
 
         return np.asarray(select)
+
+    def get_shape(self, tag):
+        """
+        Function getting the shape of a database entry.
+
+        :param tag: Database tag.
+        :type tag: str
+
+        :return: Database tags.
+        :rtype: tuple
+        """
+
+        self.m_data_storage.open_connection()
+
+        return self.m_data_storage.m_data_bank[tag].shape
