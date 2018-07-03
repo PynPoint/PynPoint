@@ -45,7 +45,8 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 
 	from PynPoint import Pypeline
 	from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
-	from PynPoint.ProcessingModules import PSFSubtractionModule
+	from PynPoint.ProcessingModules import PSFpreparationModule, \
+	                                       PcaPsfSubtractionModule
 
 	working_place = "/path/to/working_place/"
 	input_place = "/path/to/input_place/"
@@ -66,15 +67,23 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 
 	pipeline.add_module(read)
 
-	pca = PSFSubtractionModule(pca_number=20,
-                                   svd="arpack",
-                                   name_in="pca",
-                                   images_in_tag="stack",
-                                   reference_in_tag="stack",
-                                   res_mean_tag="residuals",
-                                   norm=False,
-                                   cent_size=0.15,
-                                   edge_size=1.1)
+	prep = PSFpreparationModule(name_in="prep",
+                                    image_in_tag="stack",
+                                    image_out_tag="prep",
+                                    image_mask_out_tag=None,
+                                    mask_out_tag=None,
+                                    norm=False,
+                                    resize=None,
+                                    cent_size=0.15,
+                                    edge_size=1.1)
+
+	pipeline.add_module(prep)
+
+	pca = PcaPsfSubtractionModule(pca_numbers=(20, ),
+                                      name_in="pca",
+                                      images_in_tag="prep",
+                                      reference_in_tag="prep",
+                                      res_mean_tag="residuals")
 
 	pipeline.add_module(pca)
 
@@ -83,9 +92,9 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 	residuals = pipeline.get_data("residuals")
 	pixscale = pipeline.get_attribute("stack", "PIXSCALE")
 
-	size = pixscale*np.size(residuals, 0)/2.
+	size = pixscale*np.size(residuals, 1)/2.
 
-	plt.imshow(residuals, origin='lower', extent=[size, -size, -size, size])
+	plt.imshow(residuals[0, ], origin='lower', extent=[size, -size, -size, size])
 	plt.title("beta Pic b - NACO M' - mean residuals")
 	plt.xlabel('R.A. offset [arcsec]', fontsize=12)
 	plt.ylabel('Dec. offset [arcsec]', fontsize=12)
