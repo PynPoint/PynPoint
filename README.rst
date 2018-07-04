@@ -41,7 +41,7 @@ Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.r
 Attribution
 -----------
 
-If you use the new architecture of PynPoint (v0.3.0 or later) in your publication then please cite Stolker et al. in prep. Please also cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principle component analysis (PCA) as a PSF subtraction method.
+If you use the new architecture of PynPoint (v0.3.0 or later) in your publication then please cite Stolker et al. in prep. Please also cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method.
 
 License
 -------

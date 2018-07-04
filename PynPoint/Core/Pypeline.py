@@ -428,3 +428,39 @@ class Pypeline(object):
             attr = self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
 
         return attr
+
+    def get_tags(self):
+        """
+        Function for listing the database tags, ignoring header and config tags.
+
+        :return: Database tags.
+        :rtype: numpy.asarray
+        """
+
+        self.m_data_storage.open_connection()
+        tags = self.m_data_storage.m_data_bank.keys()
+
+        select = []
+        for _, item in enumerate(tags):
+
+            if item == "config" or item == "fits_header" or item[0:7] == "header_":
+                continue
+            else:
+                select.append(item)
+
+        return np.asarray(select)
+
+    def get_shape(self, tag):
+        """
+        Function getting the shape of a database entry.
+
+        :param tag: Database tag.
+        :type tag: str
+
+        :return: Database tags.
+        :rtype: tuple
+        """
+
+        self.m_data_storage.open_connection()
+
+        return self.m_data_storage.m_data_bank[tag].shape
