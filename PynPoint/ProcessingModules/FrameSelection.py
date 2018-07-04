@@ -498,18 +498,13 @@ class RemoveLastFrameModule(ProcessingModule):
         for i, item in enumerate(ndit):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
 
-            frame_start = np.sum(nframes[0:i])
-
-            if nframes[i] == item+1:
-                frame_end = np.sum(nframes[0:i+1]) - 1
-                nframes_new.append(nframes[i]-1)
-
-            else:
-                frame_end = np.sum(nframes[0:i+1])
-                nframes_new.append(nframes[i])
-
+            if nframes[i] != item+1:
                 warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
 
+            frame_start = np.sum(nframes[0:i])
+            frame_end = np.sum(nframes[0:i+1]) - 1
+
+            nframes_new.append(nframes[i]-1)
             index_new.extend(index[frame_start:frame_end])
 
             images = self.m_image_in_port[frame_start:frame_end, ]
