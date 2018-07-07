@@ -7,10 +7,8 @@ import warnings
 
 import numpy as np
 
-from scipy.ndimage import rotate
-
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ModuleTools import progress, memory_frames, rotate_images
 
 
 class StackAndSubsetModule(ProcessingModule):
@@ -281,49 +279,17 @@ class DerotateAndStackModule(ProcessingModule):
             elif ndim == 3:
                 nimages = self.m_image_in_port.get_shape()[0]
 
-            frames = memory_frames(memory, nimages)
-
-            if self.m_stack is None:
-                im_tot = None
-
-            elif self.m_stack == "mean":
-                im_tot = np.zeros((npix, npix))
-
-            elif self.m_stack == "median":
-                im_tot = None
+            if self.m_stack == "median":
                 frames = [0, nimages]
+            else:
+                frames = memory_frames(memory, nimages)
+
+            if self.m_stack == "mean":
+                im_tot = np.zeros((npix, npix))
+            else:
+                im_tot = None
 
             return nimages, frames, im_tot
-
-        def _derotate(frames, im_tot, parang, count):
-            for j in range(frames[count+1]-frames[count]):
-                im_rot = rotate(input=self.m_image_in_port[frames[count]+j, ],
-                                angle=-parang[frames[count]+j]+self.m_extra_rot,
-                                reshape=False)
-
-                if self.m_stack is None:
-                    if ndim == 2:
-                        self.m_image_out_port.set_all(im_rot)
-                    elif ndim == 3:
-                        self.m_image_out_port.append(im_rot, data_dim=3)
-
-                elif self.m_stack == "mean":
-                    im_tot += im_rot
-
-                elif self.m_stack == "median":
-                    im_tot = im_rot
-
-            return im_tot
-
-        def _stack(frames, im_tot, count):
-            im_tmp = self.m_image_in_port[frames[count]:frames[count+1], ]
-
-            if im_tmp.ndim == 2:
-                im_tot += im_tmp
-            elif im_tmp.ndim == 3:
-                im_tot += np.sum(im_tmp, axis=0)
-
-            return im_tot
 
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
@@ -344,15 +310,26 @@ class DerotateAndStackModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
+
             if self.m_derotate:
-                im_tot = _derotate(frames, im_tot, parang, i)
+                images = rotate_images(images, angles)
 
-            else:
-                if self.m_stack == "mean":
-                    im_tot = _stack(frames, im_tot, i)
+            if self.m_stack is None:
+                if ndim == 2:
+                    self.m_image_out_port.set_all(images)
+                elif ndim == 3:
+                    self.m_image_out_port.append(images, data_dim=3)
 
-                elif self.m_stack == "median":
-                    im_tot = self.m_image_in_port.get_all()
+            elif self.m_stack == "mean":
+                im_tot += np.sum(images, axis=0)
+
+            elif self.m_stack == "median":
+                self.m_image_out_port.set_all(np.median(images, axis=0))
+
+        if self.m_stack == "mean":
+            self.m_image_out_port.set_all(im_tot/float(frames[-1]))
 
         sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()

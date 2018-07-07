@@ -5,6 +5,8 @@ Functions for Pypeline modules.
 import sys
 import numpy as np
 
+from scipy.ndimage import rotate
+
 
 def progress(current, total, message):
     """
@@ -69,3 +71,27 @@ def number_images(port):
         nimages = port.get_shape()[0]
 
     return nimages
+
+def rotate_images(images, angles):
+    """
+    Function to rotate all images in clockwise direction.
+
+    :param images: Stack of images.
+    :type images: ndarray
+    :param angle: Rotation angles (deg).
+    :type angle: ndarray
+
+    :return: Rotated images.
+    :rtype: ndarray
+    """
+
+    im_rot = np.zeros(images.shape)
+
+    if images.ndim == 2:
+        im_rot = rotate(input=images, angle=angles, reshape=False)
+
+    elif images.ndim == 3:
+        for i, item in enumerate(angles):
+            im_rot[i, ] = rotate(input=images[i, ], angle=item, reshape=False)
+
+    return im_rot
