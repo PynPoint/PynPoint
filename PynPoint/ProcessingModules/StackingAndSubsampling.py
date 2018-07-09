@@ -311,9 +311,9 @@ class DerotateAndStackModule(ProcessingModule):
             progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
-            angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
 
             if self.m_derotate:
+                angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
                 images = rotate_images(images, angles)
 
             if self.m_stack is None:
@@ -325,19 +325,14 @@ class DerotateAndStackModule(ProcessingModule):
             elif self.m_stack == "mean":
                 im_tot += np.sum(images, axis=0)
 
-            elif self.m_stack == "median":
-                self.m_image_out_port.set_all(np.median(images, axis=0))
-
-        if self.m_stack == "mean":
-            self.m_image_out_port.set_all(im_tot/float(frames[-1]))
-
         sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
         if self.m_stack == "mean":
             self.m_image_out_port.set_all(im_tot/float(nimages))
+
         elif self.m_stack == "median":
-            self.m_image_out_port.set_all(np.median(im_tot, axis=0))
+            self.m_image_out_port.set_all(np.median(images, axis=0))
 
         if self.m_derotate or self.m_stack is not None:
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
