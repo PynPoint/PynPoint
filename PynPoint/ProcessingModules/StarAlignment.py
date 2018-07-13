@@ -630,6 +630,9 @@ class StarCenteringModule(ProcessingModule):
                 fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
                 im_center = np.fft.ifftn(fft_shift).real
 
+            else:
+                raise ValueError("Interpolation should be spline, bilinear, or fft.")
+
             return im_center
 
         ndim, nimages, npix, frames = _initialize()
@@ -681,6 +684,7 @@ class ShiftImagesModule(ProcessingModule):
 
     def __init__(self,
                  shift_xy,
+                 interpolation="spline",
                  name_in="shift",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_shifted"):
@@ -689,6 +693,9 @@ class ShiftImagesModule(ProcessingModule):
 
         :param shift_xy: Tuple (delta_x, delta_y) with the shift (pix) in both directions.
         :type shift_xy: tuple, float
+        :param interpolation: Type of interpolation that is used for shifting the images (spline,
+                              bilinear, or fft).
+        :type interpolation: str
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -706,16 +713,31 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_shift = shift_xy
+        self.m_interpolation = interpolation
 
     def run(self):
         """
-        Run method of the module. Shifts an image with a fifth order spline interpolation.
+        Run method of the module. Shifts an image with a fifth order spline interpolation, first
+        order bilinear interpolation, or a Fourier shift interpolation.
 
         :return: None
         """
 
         def _image_shift(image_in):
-            return shift(image_in, (self.m_shift[1], self.m_shift[0]), order=5)
+            if self.m_interpolation == "spline":
+                im_center = shift(image_in, (self.m_shift[1], self.m_shift[0]), order=5)
+
+            elif self.m_interpolation == "bilinear":
+                im_center = shift(image_in, (self.m_shift[1], self.m_shift[0]), order=1)
+
+            elif self.m_interpolation == "fft":
+                fft_shift = fourier_shift(np.fft.fftn(image_in), (self.m_shift[1], self.m_shift[0]))
+                im_center = np.fft.ifftn(fft_shift).real
+
+            else:
+                raise ValueError("Interpolation should be spline, bilinear, or fft.")
+
+            return im_center
 
         self.apply_function_to_images(_image_shift,
                                       self.m_image_in_port,
