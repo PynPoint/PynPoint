@@ -717,8 +717,8 @@ class ShiftImagesModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Shifts an image with a fifth order spline interpolation, first
-        order bilinear interpolation, or a Fourier shift interpolation.
+        Run method of the module. Shifts an image with a fifth order spline, bilinear, or a
+        Fourier shift interpolation.
 
         :return: None
         """
