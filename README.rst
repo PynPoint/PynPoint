@@ -50,7 +50,4 @@ Copyright 2014-2018 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and c
 
 PynPoint is free software and distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.
 
-Acknowledgement
----------------
-
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_".
+The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_.
