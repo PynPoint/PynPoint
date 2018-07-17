@@ -21,7 +21,8 @@ from photutils import aperture_photometry, CircularAperture
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, image_size_port, \
+                                      number_images_port, create_mask, crop_image
 from PynPoint.Util.AnalysisTools import false_alarm
 
 
@@ -100,26 +101,15 @@ class FakePlanetModule(ProcessingModule):
         ndim_image = self.m_image_in_port.get_ndim()
         ndim_psf = self.m_psf_in_port.get_ndim()
 
-        if ndim_image == 3:
-            nimages = self.m_image_in_port.get_shape()[0]
-
-            im_size = (self.m_image_in_port.get_shape()[1],
-                       self.m_image_in_port.get_shape()[2])
-
-            frames = memory_frames(memory, nimages)
-
-        else:
+        if ndim_image != 3:
             raise ValueError("The image_in_tag should contain a cube of images.")
 
-        if ndim_psf == 2:
-            npsf = 1
-            psf_size = (self.m_psf_in_port.get_shape()[0],
-                        self.m_psf_in_port.get_shape()[1])
+        nimages = number_images_port(self.m_image_in_port)
+        im_size = image_size_port(self.m_image_in_port)
+        frames = memory_frames(memory, nimages)
 
-        elif ndim_psf == 3:
-            npsf = self.m_psf_in_port.get_shape()[0]
-            psf_size = (self.m_psf_in_port.get_shape()[1],
-                        self.m_psf_in_port.get_shape()[2])
+        npsf = number_images_port(self.m_psf_in_port)
+        psf_size = image_size_port(self.m_psf_in_port)
 
         if psf_size != im_size:
             raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
@@ -255,7 +245,7 @@ class SimplexMinimizationModule(ProcessingModule):
         :param position: Approximate position (x, y) of the planet (pix). This is also the location
                          where the function of merit is calculated with an aperture of radius
                          *aperture*.
-        :type position: tuple
+        :type position: tuple, int
         :param magnitude: Approximate magnitude of the planet relative to the star.
         :type magnitude: float
         :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
@@ -283,8 +273,8 @@ class SimplexMinimizationModule(ProcessingModule):
         :type flux_position_tag: str
         :param merit: Function of merit for the minimization. Can be either *hessian*, to minimize
                       the sum of the absolute values of the determinant of the Hessian matrix,
-                      *sum*, to minimize the sum of the absolute pixel values (Wertz et al. 2017),
-                      or *ttest*, to minimize the SNR as defined by the t-test (Mawet et al. 2014).
+                      or *sum*, to minimize the sum of the absolute pixel values
+                      (Wertz et al. 2017).
         :type merit: str
         :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
         :type aperture: float
@@ -324,7 +314,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        self.m_position = position
+        self.m_position = (int(position[0]), int(position[1]))
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
@@ -421,19 +411,18 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_res_out_port.append(im_res, data_dim=3)
 
-            im_crop = Cutout2D(data=im_res,
-                               position=self.m_position,
-                               size=2*self.m_aperture).data
+            im_crop = crop_image(image=im_res,
+                                 center=self.m_position,
+                                 size=2*int(math.ceil(self.m_aperture)))
 
-            npix = im_crop.shape[0]
+            npix = image_size(im_crop)[0]
+
+            if npix%2 == 0:
+                raise ValueError("An odd-sized image is expected.")
 
             if self.m_merit == "hessian":
 
-                if npix%2 == 0:
-                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                elif npix%2 == 1:
-                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
+                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
                 xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
                 rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
@@ -455,18 +444,6 @@ class SimplexMinimizationModule(ProcessingModule):
                 aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
                 phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
                 merit = phot_table['aperture_sum']
-
-            elif self.m_merit == "ttest":
-
-                if self.m_sigma > 0.:
-                    im_res = gaussian_filter(input=im_res, sigma=self.m_sigma)
-                    im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
-
-                noise, _, _ = false_alarm(im_res, pos_x, pos_y, self.m_aperture, True)
-
-                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
-                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
-                merit = phot_table['aperture_sum']**2 / noise**2
 
             else:
                 raise ValueError("Function of merit not recognized.")
@@ -493,24 +470,12 @@ class SimplexMinimizationModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_aperture /= pixscale
-        self.m_aperture = int(math.ceil(self.m_aperture))
-
         self.m_sigma /= pixscale
 
-        ndim_image = np.size(self.m_image_in_port.get_shape())
-        ndim_psf = np.size(self.m_psf_in_port.get_shape())
-
-        if ndim_image != 3:
+        if self.m_image_in_port.get_ndim() != 3:
             raise ValueError("The image_in_tag should contain a cube of images.")
 
-        if ndim_psf == 2:
-            psf_size = (self.m_psf_in_port.get_shape()[0],
-                        self.m_psf_in_port.get_shape()[1])
-
-        elif ndim_psf == 3:
-            psf_size = (self.m_psf_in_port.get_shape()[1],
-                        self.m_psf_in_port.get_shape()[2])
-
+        psf_size = image_size_port(self.m_psf_in_port)
         center = (psf_size[0]/2., psf_size[1]/2.)
 
         sys.stdout.write("Running SimplexMinimizationModule")
@@ -680,10 +645,7 @@ def _fake_planet(science,
     theta = position[1]*math.pi/180. + math.pi/2.
     flux_ratio = 10.**(-magnitude/2.5)
 
-    if psf.ndim == 2:
-        psf_size = (psf.shape[0], psf.shape[1])
-    elif psf.ndim == 3:
-        psf_size = (psf.shape[1], psf.shape[2])
+    psf_size = image_size(psf)
 
     if psf_size != (science.shape[1], science.shape[2]):
         raise ValueError("The science images should have the same dimensions as the PSF template.")
@@ -883,7 +845,7 @@ class MCMCsamplingModule(ProcessingModule):
                  psf_scaling=-1.,
                  pca_number=20,
                  aperture=0.1,
-                 mask=0.,
+                 mask=None,
                  extra_rot=0.,
                  **kwargs):
         """
@@ -920,8 +882,9 @@ class MCMCsamplingModule(ProcessingModule):
         :type pca_number: int
         :param aperture: Aperture radius (arcsec) at the position specified in *param*.
         :type aperture: float
-        :param mask: Mask radius (arcsec) for the PSF subtraction.
-        :type mask: float
+        :param mask: Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of
+                     the tuple can be set to None.
+        :type mask: tuple, float
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
         :param \**kwargs:
@@ -964,8 +927,12 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_pca_number = pca_number
         self.m_aperture = aperture
-        self.m_mask = mask
         self.m_extra_rot = extra_rot
+
+        if mask is None:
+            self.m_mask = np.asarray((None, None))
+        else:
+            self.m_mask = np.asarray(mask)
 
     def run(self):
         """
@@ -998,24 +965,18 @@ class MCMCsamplingModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
 
         self.m_aperture /= pixscale
-        self.m_mask /= pixscale
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
-        mask = np.ones((images.shape[1], images.shape[2]))
-        npix = images.shape[1]
+        im_shape = image_size_port(self.m_image_in_port)
 
-        if npix%2 == 0:
-            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-        elif npix%2 == 1:
-            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+        if self.m_mask[0] is not None:
+            self.m_mask[0] /= pixscale
+        if self.m_mask[1] is not None:
+            self.m_mask[1] /= pixscale
 
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-        rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
-        mask[rr_grid > float(npix)/2.] = 0.
-        mask[rr_grid < self.m_mask] = 0.
+        mask = create_mask(im_shape, self.m_mask)
 
         center = self.m_image_in_port.get_shape()[1]/2.
         x_pos = center+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
@@ -1120,7 +1081,7 @@ class AperturePhotometryModule(ProcessingModule):
         :return: None
         """
 
-        def photometry(image, aperture):
+        def _photometry(image, aperture):
             photo = aperture_photometry(image, aperture, method='exact')
             return photo['aperture_sum']
 
@@ -1138,7 +1099,7 @@ class AperturePhotometryModule(ProcessingModule):
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture(self.m_position, self.m_radius)
 
-        self.apply_function_to_images(photometry,
+        self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       "Running AperturePhotometryModule...",
