@@ -137,11 +137,11 @@ class TestFluxAndPosition(object):
         assert np.allclose(np.mean(data), 0.0001012983225928772, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["simplex_res"]
-        assert np.allclose(data[46, 49, 31], 3.718481593648487e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -2.8892749617545238e-08, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 49, 31], 6.02309675294837e-06, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.408916491902155e-08, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["flux_position"]
-        assert np.allclose(data[46, 0], 31.276994533457994, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 0], 32.31651815143485, rtol=limit, atol=0.)
         assert np.allclose(data[46, 1], 50.10345749706295, rtol=limit, atol=0.)
         assert np.allclose(data[46, 2], 0.5055288651354779, rtol=limit, atol=0.)
         assert np.allclose(data[46, 3], 89.6834045889695, rtol=limit, atol=0.)

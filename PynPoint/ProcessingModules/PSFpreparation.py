@@ -14,7 +14,7 @@ from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, create_mask
 
 
 class PSFpreparationModule(ProcessingModule):
@@ -127,28 +127,9 @@ class PSFpreparationModule(ProcessingModule):
         Internal method which masks the central and outer parts of the images.
         """
 
-        im_shape = (im_data.shape[1], im_data.shape[2])
+        im_shape = image_size(im_data)
 
-        mask = np.ones(im_shape)
-
-        if self.m_cent_size is not None or self.m_edge_size is not None:
-            npix = im_shape[0]
-
-            if npix%2 == 0:
-                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-            elif npix%2 == 1:
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-            rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
-
-        if self.m_cent_size is not None:
-            mask[rr_grid < self.m_cent_size] = 0.
-
-        if self.m_edge_size is not None:
-            if self.m_edge_size > npix/2.:
-                self.m_edge_size = npix/2.
-            mask[rr_grid > self.m_edge_size] = 0.
+        mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
         if self.m_mask_out_port is not None:
             self.m_mask_out_port.set_all(mask)
