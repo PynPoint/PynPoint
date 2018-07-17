@@ -61,6 +61,8 @@ We would like to thank several people who provided contributions and helped test
 * Gabriele Cugno (ETH Zurich)
 * Silvan Hunziker (ETH Zurich)
 
+The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_.
+
 .. _history:
 
 Changelog
