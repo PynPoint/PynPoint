@@ -7,7 +7,7 @@ import sys
 from scipy.ndimage import rotate
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, number_images
+from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port
 
 
 class SubtractImagesModule(ProcessingModule):
@@ -195,7 +195,7 @@ class RotateImagesModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
-        nimages = number_images(self.m_image_in_port)
+        nimages = number_images_port(self.m_image_in_port)
         frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
