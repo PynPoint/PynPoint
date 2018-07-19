@@ -68,10 +68,17 @@ The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographic
 Changelog
 ---------
 
-0.5.0 (2018-06-19)
+0.5.1 (2018-07-19)
 ++++++++++++++++++
 
 * Release on the PyPI server
+
+0.5.0 (2018-07-02)
+++++++++++++++++++
+
+* Several new pipeline modules
+* Bug fixing and extensive testing
+* OldVersion is removed
 
 0.4.0 (2018-03-15)
 ++++++++++++++++++
