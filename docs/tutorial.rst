@@ -114,16 +114,16 @@ First we need to import the ``Pypeline`` module: ::
 the pipeline modules for reading and writing FITS, HDF5, and text files: ::
 
 	from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule, \
-	                               Hdf5ReadingModule, TextWritingModule
+	                               Hdf5ReadingModule
 
 and all the processing modules that we want to run: ::
 
-	from PynPoint.ProcessingModules import RemoveLastFrameModule, AngleInterpolationModule, \
-                     RemoveLinesModule, RemoveStartFramesModule, DitheringBackgroundModule, \
-                     FrameSelectionModule, BadPixelSigmaFilterModule, StarExtractionModule, \
-                     StarAlignmentModule, StarCenteringModule, StackAndSubsetModule, \
-                     PSFpreparationModule, FastPCAModule, SimplexMinimizationModule, \
-                     MCMCsamplingModule
+	from PynPoint.ProcessingModules import RemoveLastFrameModule, AngleCalculationModule, \
+                     RemoveLinesModule, DarkCalibrationModule, FlatCalibrationModule, \
+                     RemoveStartFramesModule, DitheringBackgroundModule, BadPixelSigmaFilterModule, \
+                     FrameSelectionModule, StarExtractionModule, StarAlignmentModule, \
+                     StarCenteringModule, StackAndSubsetModule, PSFpreparationModule, \
+                     PcaPsfSubtractionModule
 
 Next, we create an instance of :class:`PynPoint.Core.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output: ::
 
