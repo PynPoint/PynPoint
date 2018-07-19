@@ -131,26 +131,48 @@ Next, we create an instance of :class:`PynPoint.Core.Pypeline` with the ``workin
                             input_place_in="/path/to/input_place",
                             output_place_in"/path/to/output_place")
 
+The FWHM of the PSF is defined for simplicity: ::
+
+    fwhm = 0.134 # [arcsec]
+
 Now we are ready to add the different pipeline steps. Have a look at the documentation in the :ref:`pynpoint-package` section for a detailed description of the individual modules and their parameters.
 
-1. Read the raw science data: ::
+1. Import the raw science, flat, and dark data into the database: ::
 
-	read = FitsReadingModule(name_in="read",
-                                 input_dir=None,
-                                 image_tag="im_arr")
+    read1 = FitsReadingModule(name_in="read1",
+                              input_dir="/path/to/science/",
+                              image_tag="science",
+                              overwrite=True,
+                              check=True)
 
-	pipeline.add_module(read)
+    pipeline.add_module(read1)
 
-2. Read the frames with the unsaturated PSF of the star (which has been processed separately): ::
+    read2 = FitsReadingModule(name_in="read2",
+                              input_dir="/path/to/flat/",
+                              image_tag="flat",
+                              overwrite=True,
+                              check=False)
 
-    flux = Hdf5ReadingModule(name_in="flux",
-                             input_filename="flux.hdf5",
-                             input_dir="/path/to/flux",
-                             tag_dictionary={"flux": "flux"})
+    pipeline.add_module(read2)
 
-    pipeline.add_module(flux)
+    read3 = FitsReadingModule(name_in="read4",
+                              input_dir="/path/to/dark/",
+                              image_tag="dark",
+                              overwrite=True,
+                              check=False)
 
-3. Remove the last (NDIT+1) frame of each FITS cube (NACO specific): ::
+    pipeline.add_module(read4)
+
+2. Import the image with the (already processed) unsaturated PSF of the star: ::
+
+    read4 = Hdf5ReadingModule(name_in="read4",
+                              input_filename="flux.hdf5",
+                              input_dir="/path/to/flux/",
+                              tag_dictionary={"flux": "flux"})
+
+    pipeline.add_module(read4)
+
+3. Remove NDIT+1 frames which contain the average of the FITS cube (NACO specific): ::
 
     last = RemoveLastFrameModule(name_in="last",
                                  image_in_tag="science",
@@ -158,10 +180,11 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(last)
 
-4. Calculate the parallactic angles for each image with a linear interpolation: ::
+4. Calculate the parallactic angles which each image: ::
 
-    angle = AngleInterpolationModule(name_in="angle",
-                                     data_tag="last")
+    angle = AngleCalculationModule(name_in="angle",
+                                   data_tag="last",
+                                   instrument="NACO")
 
     pipeline.add_module(angle)
 
@@ -174,30 +197,48 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(cut)
 
-6. Remove the first three frames of each FITS cube because the background is significantly higher: ::
+6. Subtract the dark current from the flat field: ::
 
-    first = RemoveStartFramesModule(frames=3,
+    dark = DarkCalibrationModule(name_in="dark",
+                                 image_in_tag="flat",
+                                 dark_in_tag="dark",
+                                 image_out_tag="flat_cal")
+
+    pipeline.add_module(dark)
+
+7. Divide the science data by the master flat: ::
+
+    flat = FlatCalibrationModule(name_in="flat",
+                                 image_in_tag="science",
+                                 flat_in_tag="flat_cal",
+                                 image_out_tag="science_cal")
+
+    pipeline.add_module(flat)
+
+8. Remove the first 5 frames from each FITS cube because of the systematically higher background emission: ::
+
+    first = RemoveStartFramesModule(frames=5,
                                     name_in="first",
-                                    image_in_tag="cut",
+                                    image_in_tag="science_cal",
                                     image_out_tag="first")
 
     pipeline.add_module(first)
 
-7. Combined mean and PCA-based background subtraction: ::
+9. PCA based background subtraction: ::
 
     background = DitheringBackgroundModule(name_in="background",
                                            image_in_tag="first",
                                            image_out_tag="background",
-                                           center=((263., 263.),
-                                                   (116., 263.),
-                                                   (116., 116.),
-                                                   (263., 116.)),
+                                           center=((263.,263.), (116.,263.), (116.,116.), (263,116.)),
                                            cubes=None,
                                            size=3.5,
-                                           gaussian=0.15,
-                                           subframe=20,
+                                           gaussian=fwhm,
+                                           subframe=10.*fwhm,
                                            pca_number=60,
-                                           mask=0.7,
+                                           mask_star=4.*fwhm,
+                                           mask_planet=None,
+                                           subtract_mean=True,
+                                           bad_pixel=(9, 5., 3),
                                            crop=True,
                                            prepare=True,
                                            pca_background=True,
@@ -205,46 +246,63 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(background)
 
-8. Frame selection: ::
+10. Bad pixel correction:
+    ::
 
-    select = FrameSelectionModule(name_in="select",
-                                  image_in_tag="background",
-                                  selected_out_tag="selected",
-                                  removed_out_tag="removed",
-                                  method="median",
-                                  threshold=2.,
-                                  fwhm=0.2,
-                                  aperture=0.1,
-                                  position=(None, None, 20))
+        bad = BadPixelSigmaFilterModule(name_in="bad",
+                                        image_in_tag="background",
+                                        image_out_tag="bad",
+                                        map_out_tag="bpmap",
+                                        box=9,
+                                        sigma=5.,
+                                        iterate=3)
 
-    pipeline.add_module(select)
+        pipeline.add_module(bad)
 
-8. Bad pixel cleaning: ::
+11. Frame selection:
+    ::
 
-    bad = BadPixelSigmaFilterModule(name_in="bad",
-                                    image_in_tag="selected",
-                                    image_out_tag="bad",
-                                    box=9,
-                                    sigma=5,
-                                    iterate=2)
+        select = FrameSelectionModule(name_in="select",
+                                      image_in_tag="bad",
+                                      selected_out_tag="selected",
+                                      removed_out_tag="removed",
+                                      index_out_tag=None,
+                                      method="median",
+                                      threshold=2.,
+                                      fwhm=fwhm,
+                                      aperture=("circular", fwhm),
+                                      position=(None, None, 4.*fwhm))
 
-    pipeline.add_module(bad)
+        pipeline.add_module(select)
 
-9. Extract the star position and center with pixel precision: ::
+12. Extract the star position and center with pixel precision:
+    ::
 
-    extract = StarExtractionModule(name_in="extract",
-                                   image_in_tag="bad",
-                                   image_out_tag="extract",
-                                   image_size=3.,
-                                   fwhm_star=0.2,
-                                   position=(None, None, 20.))
+        extract = StarExtractionModule(name_in="extract",
+                                       image_in_tag="selected",
+                                       image_out_tag="extract",
+                                       index_out_tag="index",
+                                       image_size=3.,
+                                       fwhm_star=fwhm,
+                                       position=(None, None, 4.*fwhm))
 
-    pipeline.add_module(extract)
+        pipeline.add_module(extract)
 
-10. Align the images with a cross correlation: ::
+13. Make the images odd sized:
+    ::
 
-	align = StarAlignmentModule(name_in="align",
-                                    image_in_tag="extract",
+        odd = RemoveLinesModule(lines=(0,1,0,1),
+                                name_in="odd",
+                                image_in_tag="extract",
+                                image_out_tag="odd")
+
+        pipeline.add_module(odd)
+
+14. Align the images with a cross-correlation:
+    ::
+
+        align = StarAlignmentModule(name_in="align",
+                                    image_in_tag="odd",
                                     ref_image_in_tag=None,
                                     image_out_tag="align",
                                     interpolation="spline",
@@ -252,118 +310,77 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
                                     resize=None,
                                     num_references=10)
 
-	pipeline.add_module(align)
+        pipeline.add_module(align)
 
-11. Center the frames with a constant shift: ::
+15. Center the images with subpixel precision by applying a constant shift:
+    ::
 
-	center = StarCenteringModule(name_in="center",
+        center = StarCenteringModule(name_in="center",
                                      image_in_tag="align",
                                      image_out_tag="center",
+                                     mask_out_tag=None,
                                      fit_out_tag="fit",
                                      method="mean",
                                      interpolation="spline",
-                                     radius=None)
+                                     radius=5.*fwhm,
+                                     sign="positive",
+                                     guess=(0., 0., 1., 1., 100., 0.))
 
-	pipeline.add_module(center)
+        pipeline.add_module(center)
 
-12. Stack by 100 images: ::
+16. Stack by 100 images:
+    ::
 
-	stack = StackAndSubsetModule(name_in="stack",
+        stack = StackAndSubsetModule(name_in="stack",
                                      image_in_tag="center",
                                      image_out_tag="stack",
                                      random=None,
                                      stacking=100)
 
-	pipeline.add_module(stack)
+        pipeline.add_module(stack)
 
-13. Prepare the data for PSF subtraction: ::
+17. Prepare the data for PSF subtraction:
+    ::
 
-	prep = PSFpreparationModule(name_in="prep",
+        prep = PSFpreparationModule(name_in="prep",
                                     image_in_tag="stack",
                                     image_out_tag="prep",
                                     image_mask_out_tag=None,
                                     mask_out_tag=None,
-                                    norm=True,
+                                    norm=False,
                                     resize=None,
-                                    cent_size=0.15,
-                                    edge_size=1.5)
+                                    cent_size=fwhm,
+                                    edge_size=1.)
 
-	pipeline.add_module(prep)
+        pipeline.add_module(prep)
 
-14. Subtract the stellar PSF with PCA: ::
+18. PSF subtraction with PCA:
+    ::
 
-	pca = FastPCAModule(pca_numbers=np.arange(1, 51, 1),
-                            name_in="pca",
-                            images_in_tag="prep",
-                            reference_in_tag="prep",
-                            res_mean_tag="res_mean",
-                            res_median_tag=None,
-                            res_arr_out_tag=None,
-                            res_rot_mean_clip_tag=None,
-                            extra_rot=0.)
+        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 51, 1),
+                                      name_in="pca",
+                                      images_in_tag="prep",
+                                      reference_in_tag="prep",
+                                      res_mean_tag="pca_mean",
+                                      res_median_tag="pca_median",
+                                      res_arr_out_tag=None,
+                                      res_rot_mean_clip_tag=None,
+                                      extra_rot=0.)
 
-	pipeline.add_module(pca)
+        pipeline.add_module(pca)
 
-15. Obtain the position and contrast of the planet: ::
+19. Write the mean residuals to a FITS file:
+    ::
 
-	simplex = SimplexMinimizationModule(position=(64., 40.),
-                                            magnitude=8.,
-                                            psf_scaling=-0.65/0.0233,
-                                            name_in="simplex",
-                                            image_in_tag="stack",
-                                            psf_in_tag="flux",
-                                            res_out_tag="simplex",
-                                            flux_position_tag="fluxpos",
-                                            merit="hessian",
-                                            aperture=0.1,
-                                            sigma=0.027,
-                                            tolerance=0.01,
-                                            pca_number=30,
-                                            mask=0.15,
-                                            extra_rot=0.)
-
-	pipeline.add_module(simplex)
-
-16. Use MCMC sampling to explore the posterior distribution functions: ::
-
-	mcmc = MCMCsamplingModule(param=(0.457, 210., 7.6),
-                                  bounds=((0.400, 0.500), (205., 215.), (7., 9.)),
-                                  name_in="mcmc",
-                                  image_in_tag="stack",
-                                  psf_in_tag="flux",
-                                  chain_out_tag="mcmc",
-                                  nwalkers=200,
-                                  nsteps=1000,
-                                  psf_scaling=-0.65/0.0233,
-                                  pca_number=30,
-                                  aperture=0.1,
-                                  mask=0.15,
-                                  extra_rot=0.,
-                                  scale=2.,
-                                  sigma=(1e-5, 1e-3, 1e-3))
-
-	pipeline.add_module(mcmc)
-
-17. Write the residuals of the PSF subtraction to a FITS file: ::
-
-	write = FitsWritingModule(name_in="write",
+    	write = FitsWritingModule(name_in="write",
                                   file_name="residuals.fits",
                                   output_dir=None,
                                   data_tag="res_mean",
                                   data_range=None)
 
-	pipeline.add_module(write)
+    	pipeline.add_module(write)
 
-18. Write the results from the simplex minimization to a text file: ::
+20. And finally, run the pipeline:
+    ::
 
-	text = TextWritingModule(name_in="text",
-                                 file_name="simplex.dat",
-                                 data_tag="fluxpos",
-                                 output_dir=None,
-                                 header="Position x [pix] - Position y [pix] - Separation [arcsec] - Angle [deg] - Contrast [mag] - Merit")
-
-	pipeline.add_module(text)
-
-19. And finally, run the pipeline: ::
-
-	pipeline.run()
+    	pipeline.run()
