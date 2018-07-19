@@ -23,7 +23,7 @@ class PypelineModule:
         * Writing Module (:class:`PynPoint.core.Processing.WritingModule`)
         * Processing Module (:class:`PynPoint.core.Processing.ProcessingModule`)
 
-    Each PypelinModule has a name as a unique identifier in the Pypeline and has to implement the
+    Each PypelineModule has a name as a unique identifier in the Pypeline and has to implement the
     functions *connect_database* and *run* which are used in the Pypeline methods.
     """
 
