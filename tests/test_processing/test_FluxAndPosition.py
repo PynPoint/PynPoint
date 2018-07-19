@@ -142,10 +142,10 @@ class TestFluxAndPosition(object):
 
         data = storage.m_data_bank["flux_position"]
         assert np.allclose(data[46, 0], 32.31651815143485, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 1], 50.10345749706295, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 2], 0.5055288651354779, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 3], 89.6834045889695, rtol=limit, atol=0.)
-        assert np.allclose(data[46, 4], 4.997674024675655, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 1], 54.29654740209472, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 2], 0.49134499544925503, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 3], 76.34349996, rtol=limit, atol=0.)
+        assert np.allclose(data[46, 4], 4.24884874724, rtol=limit, atol=0.)
 
         data = storage.m_data_bank["res_mean"]
         assert np.allclose(data[0, 49, 31], 9.258255068620805e-05, rtol=limit, atol=0.)
