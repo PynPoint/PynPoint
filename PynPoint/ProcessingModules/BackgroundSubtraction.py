@@ -270,7 +270,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
     def __init__(self,
                  dither,
-                 mean=False,
                  name_in="separate_star",
                  image_in_tag="im_arr",
                  star_out_tag="im_arr_star",
@@ -319,7 +318,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
             raise ValueError("The 'dither' tuple should contain three integer values.")
 
         self.m_dither = dither
-        self.m_mean = mean
 
     def _prepare(self):
         nframes = self.m_image_in_port.get_attribute("NFRAMES")
@@ -419,15 +417,10 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
             im_tmp = self.m_image_in_port[count:count+item, ]
 
-            if self.m_mean:
-                for j in enumerate(item):
-                    im_tmp[j, ] -= np.mean(im_tmp[j, ])
-
             # Background frames
             if bg_frames[i]:
                 background = cube_mean[i, ]
                 self.m_background_out_port.append(im_tmp)
-                # self.m_background_out_port.append(im_tmp-background)
 
                 background_nframes = np.append(background_nframes, nframes[i])
                 background_index = np.append(background_index, index[count:count+item])
@@ -535,6 +528,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  pca_number=60,
                  mask_star=0.7,
                  mask_planet=None,
+                 subtract_mean=False,
                  name_in="pca_background",
                  star_in_tag="im_star",
                  background_in_tag="im_background",
@@ -553,6 +547,9 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                             (deg), and radius (arcsec) of the mask, (sep, angle, extra_rot,
                             radius). No mask is used when set to None.
         :type mask_planet: tuple(float, float, float, float)
+        :param subtract_mean: The mean of the background images is subtracted from both the star
+                              and background images before the PCA basis is constructed.
+        :type subtract_mean: bool
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param star_in_tag: Tag of the database entry with the star images.
@@ -591,6 +588,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
         self.m_mask_planet = mask_planet
+        self.m_subtract_mean = subtract_mean
 
     def run(self):
         """
@@ -625,10 +623,13 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             return mask
 
-        def _create_basis(images, pca_number):
+        def _create_basis(images, bg_mean, pca_number):
             """
             Method for creating a set of principle components for a stack of images.
             """
+
+            if self.m_subtract_mean:
+                images -= bg_mean
 
             _, _, v_svd = svds(images.reshape(images.shape[0],
                                               images.shape[1]*images.shape[2]),
@@ -701,7 +702,13 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write("Creating PCA basis set...")
         sys.stdout.flush()
 
+        if self.m_subtract_mean:
+            bg_mean = np.mean(self.m_background_in_port.get_all(), axis=0)
+        else:
+            bg_mean = None
+
         basis_pca = _create_basis(self.m_background_in_port.get_all(),
+                                  bg_mean,
                                   self.m_pca_number)
 
         sys.stdout.write(" [DONE]\n")
@@ -715,6 +722,9 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             progress(i, len(frames[:-1]), "Calculating background model...")
 
             im_star = self.m_star_in_port[frames[i]:frames[i+1], ]
+
+            if self.m_subtract_mean:
+                im_star -= bg_mean
 
             mask_star = _create_mask(self.m_mask_star,
                                      star[frames[i]:frames[i+1], ],
@@ -785,6 +795,7 @@ class DitheringBackgroundModule(ProcessingModule):
                  subframe=None,
                  pca_number=60,
                  mask_star=0.7,
+                 subtract_mean=False,
                  **kwargs):
         """
         Constructor of DitheringBackgroundModule.
@@ -821,6 +832,9 @@ class DitheringBackgroundModule(ProcessingModule):
         :type pca_number: int
         :param mask_star: Radius of the central mask (arcsec).
         :type mask_star: float
+        :param subtract_mean: The mean of the background images is subtracted from both the star
+                              and background images before the PCA basis is constructed.
+        :type subtract_mean: bool
         :param \**kwargs:
             See below.
 
@@ -884,6 +898,7 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_gaussian = gaussian
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
+        self.m_subtract_mean = subtract_mean
 
         if subframe is None:
             self.m_subframe = subframe
@@ -976,7 +991,6 @@ class DitheringBackgroundModule(ProcessingModule):
                 prepare = PCABackgroundPreparationModule(dither=(n_dither,
                                                                  self.m_cubes,
                                                                  star_pos[i]),
-                                                         mean=False,
                                                          name_in="prepare"+str(i),
                                                          image_in_tag="dither_crop"+str(i+1),
                                                          star_out_tag="dither_star"+str(i+1),
@@ -1020,6 +1034,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                      mask_star=self.m_mask_star,
                                                      mask_planet=self.m_mask_planet,
+                                                     subtract_mean=self.m_subtract_mean,
                                                      name_in="pca_background"+str(i),
                                                      star_in_tag="dither_star"+str(i+1),
                                                      background_in_tag="dither_background"+str(i+1),
@@ -1035,6 +1050,7 @@ class DitheringBackgroundModule(ProcessingModule):
         if self.m_combine is not None:
             combine = CombineTagsModule(name_in="combine",
                                         check_attr=True,
+                                        index_init=False,
                                         image_in_tags=tags,
                                         image_out_tag="dither_combine")
 
