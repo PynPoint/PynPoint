@@ -45,21 +45,27 @@ def crop_image(image, center, size):
 
     :param image: Input image.
     :type image: ndarray
-    :param size: Image size (pix) for both dimensions.
-    :type size: int
     :param center: Tuple (x0, y0) with the new image center.
     :type center: tuple, int
+    :param size: Image size (pix) for both dimensions.
+    :type size: int
 
-    :return: Cropped image.
+    :return: Cropped odd-sized image.
     :rtype: ndarray
     """
 
-    x_off = int(center[0] - size/2)
-    y_off = int(center[1] - size/2)
+    if size%2 == 0:
+        size += 1
 
-    return image[y_off:y_off+size, x_off:x_off+size]
+    x_start = center[0] - (size-1)/2
+    x_end = center[0] + (size-1)/2 + 1
 
-def number_images(port):
+    y_start = center[1] - (size-1)/2
+    y_end = center[1] + (size-1)/2 + 1
+
+    return image[y_start:y_end, x_start:x_end]
+
+def number_images_port(port):
     """
     Function to get the number of images of an input port.
     """
@@ -71,6 +77,32 @@ def number_images(port):
         nimages = port.get_shape()[0]
 
     return nimages
+
+def image_size_port(port):
+    """
+    Function to get the image size of an input port.
+    """
+
+    if port.get_ndim() == 2:
+        size = port.get_shape()
+
+    elif port.get_ndim() == 3:
+        size = (port.get_shape()[1], port.get_shape()[2])
+
+    return size
+
+def image_size(images):
+    """
+    Function to get the image size of an array.
+    """
+
+    if images.ndim == 2:
+        size = images.shape
+
+    elif images.ndim == 3:
+        size = (images.shape[1], images.shape[2])
+
+    return size
 
 def rotate_images(images, angles):
     """
@@ -95,3 +127,32 @@ def rotate_images(images, angles):
             im_rot[i, ] = rotate(input=images[i, ], angle=item, reshape=False)
 
     return im_rot
+
+def create_mask(im_shape, size):
+    """
+    Function to create a mask for the central and outer image regions.
+    """
+
+    mask = np.ones(im_shape)
+    npix = im_shape[0]
+
+    if size[0] is not None or size[1] is not None:
+
+        if npix%2 == 0:
+            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+        elif npix%2 == 1:
+            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
+
+    if size[0] is not None:
+        mask[rr_grid < size[0]] = 0.
+
+    if size[1] is not None:
+        if size[1] > npix/2.:
+            size[1] = npix/2.
+
+        mask[rr_grid > size[1]] = 0.
+
+    return mask

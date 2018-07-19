@@ -68,6 +68,11 @@ The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographic
 Changelog
 ---------
 
+0.5.0 (2018-06-19)
+++++++++++++++++++
+
+* Release on the PyPI server
+
 0.4.0 (2018-03-15)
 ++++++++++++++++++
 
