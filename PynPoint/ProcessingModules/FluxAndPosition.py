@@ -482,6 +482,7 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.flush()
 
         pos_init = _rotate(center, self.m_position, self.m_extra_rot)
+        pos_init = (int(pos_init[0]), int(pos_init[1]))
 
         minimize(fun=_objective,
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],

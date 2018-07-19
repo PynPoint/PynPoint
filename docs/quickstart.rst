@@ -8,9 +8,9 @@ Quickstart
 Installation
 ------------
 
-Installation of PynPoint is achieved from the command line with the |pip| (**not possible yet**): ::
+PynPoint is available in the |pypi| and can be installed from the command line with the |pip|: ::
 
-    $ pip install --user PynPoint
+    $ pip install --user pynpoint
 
 Alternatively, the PynPoint repository can be cloned from Github, which will contain the most recent implementations: ::
 
@@ -19,6 +19,10 @@ Alternatively, the PynPoint repository can be cloned from Github, which will con
 Or the repository can be downloaded from the |Github| as a zip file. If needed, the required Python packages can be installed from the PynPoint folder with: ::
 
     $ pip install -r requirements.txt
+
+.. |pypi| raw:: html
+
+   <a href="https://pypi.org/project/pynpoint/" target="_blank">PyPI repository</a>
 
 .. |pip| raw:: html
 
