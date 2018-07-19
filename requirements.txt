@@ -3,7 +3,7 @@ h5py==2.6.0
 numpy
 numba==0.37.0
 scipy
-astropy
+astropy<3.0.0
 photutils
 scikit-image
 scikit-learn
