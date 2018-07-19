@@ -421,7 +421,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
             if bg_frames[i]:
                 background = cube_mean[i, ]
                 self.m_background_out_port.append(im_tmp)
-                self.m_background_out_port.append(im_tmp)
 
                 background_nframes = np.append(background_nframes, nframes[i])
                 background_index = np.append(background_index, index[count:count+item])
