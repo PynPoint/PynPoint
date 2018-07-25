@@ -281,8 +281,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
             stdout.write("Constructing PSF model...")
             stdout.flush()
 
-        ref_star_sklearn = star_data.reshape((ref_star_data.shape[0],
-                                              ref_star_data.shape[1] * ref_star_data.shape[2]))
+        ref_star_sklearn = ref_star_data.reshape((ref_star_data.shape[0],
+                                                  ref_star_data.shape[1] * ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
 
         if self.m_verbose:
