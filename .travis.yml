@@ -6,7 +6,8 @@ matrix:
 before_install:
   - brew unlink python
   - brew update
-  - brew install python2
+  # - brew install python2
+  - pip2 install virtualenv
   - virtualenv venv -p python2
   - source venv/bin/activate
 install:
