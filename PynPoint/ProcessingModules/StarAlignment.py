@@ -16,6 +16,7 @@ from scipy.ndimage import shift
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
+from astropy.utils.exceptions import AstropyUserWarning
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
@@ -766,7 +767,8 @@ class WaffleCenteringModule(ProcessingModule):
                  image_out_tag="im_arr_centered_cut",
                  radius=45.,
                  pattern="x",
-                 sigma=5.):
+                 sigma=5.,
+                 **kwargs):
         """
         Constructor of WaffleCenteringModule.
 
@@ -791,9 +793,26 @@ class WaffleCenteringModule(ProcessingModule):
         :param sigma: Standard deviation (pix) of the Gaussian kernel that is used for the unsharp
                       masking.
         :type sigma: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+            **maxiter** (*int*) -- Maximum number of iterations.
+
+            **accuracy** (*float*) -- Relative error of the fitting solution.
 
         :return: None
         """
+
+        if "maxiter" in kwargs:
+            self.m_maxiter = kwargs["maxiter"]
+        else:
+            self.m_maxiter = 100
+
+        if "accuracy" in kwargs:
+            self.m_accuracy = kwargs["accuracy"]
+        else:
+            self.m_accuracy = 1e-07
 
         super(WaffleCenteringModule, self).__init__(name_in)
 
@@ -836,8 +855,8 @@ class WaffleCenteringModule(ProcessingModule):
         center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
                                                               sigma=self.m_sigma)
 
-        # size of center image
-        ref_image_size = 20
+        # size of center image, only works if odd value
+        ref_image_size = 21
 
         # Arrays for the positions
         x_pos = np.zeros(4)
@@ -888,8 +907,8 @@ class WaffleCenteringModule(ProcessingModule):
                 x_max = x_max_new
                 y_max = y_max_new
 
-            x_0 = x_0-ref_image_size/2+x_max
-            y_0 = y_0-ref_image_size/2+y_max
+            x_0 = x_0 - (ref_image_size-1)/2 + x_max
+            y_0 = y_0 - (ref_image_size-1)/2 + y_max
 
             # create reference image around determined maximum
             ref_center_frame = crop_image(image=center_frame_unsharp,
@@ -906,10 +925,15 @@ class WaffleCenteringModule(ProcessingModule):
 
             fit_gauss = fitting.LevMarLSQFitter()
 
-            y_grid, x_grid = np.mgrid[y_0-ref_image_size/2:y_0+ref_image_size/2,
-                                      x_0-ref_image_size/2:x_0+ref_image_size/2]
+            y_grid, x_grid = np.mgrid[y_0-(ref_image_size-1)/2:y_0+(ref_image_size-1)/2+1,
+                                      x_0-(ref_image_size-1)/2:x_0+(ref_image_size-1)/2+1]
 
-            gauss = fit_gauss(gauss_init, x_grid, y_grid, ref_center_frame)
+            gauss = fit_gauss(gauss_init,
+                              x_grid,
+                              y_grid,
+                              ref_center_frame,
+                              maxiter=self.m_maxiter,
+                              acc=self.m_accuracy)
 
             x_pos[i] = gauss.x_mean.value
             y_pos[i] = gauss.y_mean.value
