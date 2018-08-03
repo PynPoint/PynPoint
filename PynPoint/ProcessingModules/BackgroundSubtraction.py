@@ -839,21 +839,26 @@ class DitheringBackgroundModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             **crop** (*bool*) -- Skip the step of selecting and cropping of the dithering
-             positions if set to False.
-             **prepare** (*bool*) -- Skip the step of preparing the PCA background subtraction if
-             set to False.
-             **pca_background** (*bool*) -- Skip the step of the PCA background subtraction if set
-             to False.
-             **combine** (*str*) -- Combine the mean background subtracted ("mean") or PCA
-             background subtracted ("pca") frames. This step is ignored if set to None.
-             **mask_planet** (*tuple(float, float, float)*) -- Separation (arcsec), position angle
-             (deg) measured in counterclockwise direction with respect to upward direction,
-             additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
-             radius). No mask is used when set to None.
-             **bad_pixel** (*tuple(int, float, int)*) -- Size of the sigma filter, sigma threshold,
-             and number of iterations used for removal of bad pixels before the mask is placed at
-             the position of the stellar PSF.
+            **crop** (*bool*) -- Skip the step of selecting and cropping of the dithering
+            positions if set to False.
+
+            **prepare** (*bool*) -- Skip the step of preparing the PCA background subtraction if
+            set to False.
+
+            **pca_background** (*bool*) -- Skip the step of the PCA background subtraction if set
+            to False.
+
+            **combine** (*str*) -- Combine the mean background subtracted ("mean") or PCA
+            background subtracted ("pca") frames. This step is ignored if set to None.
+
+            **mask_planet** (*tuple(float, float, float)*) -- Separation (arcsec), position angle
+            (deg) measured in counterclockwise direction with respect to upward direction,
+            additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
+            radius). No mask is used when set to None.
+
+            **bad_pixel** (*tuple(int, float, int)*) -- Size of the sigma filter, sigma threshold,
+            and number of iterations used for removal of bad pixels before the mask is placed at
+            the position of the stellar PSF.
 
         :return: None
         """
