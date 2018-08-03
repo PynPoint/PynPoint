@@ -824,12 +824,11 @@ class WaffleCenteringModule(ProcessingModule):
         if center_ndim == 2:
             center_frame = self.m_center_in_port.get_all()
 
-        elif center_ndim == 3 and center_shape[0] == 1:
+        elif center_ndim == 3:
             center_frame = self.m_center_in_port.get_all()[0, ]
 
-        elif center_ndim == 3 and center_shape[0] > 1:
-            center_frame = self.m_center_in_port.get_all()
-            center_frame = np.mean(center_frame, axis=0)
+            if center_shape[0] > 1:
+                warnings.warn("Multiple center images found. Using the first image of the stack.")
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")
