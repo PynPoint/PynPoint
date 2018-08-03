@@ -16,7 +16,6 @@ from scipy.ndimage import shift
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
-from astropy.utils.exceptions import AstropyUserWarning
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
@@ -855,7 +854,7 @@ class WaffleCenteringModule(ProcessingModule):
         center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
                                                               sigma=self.m_sigma)
 
-        # size of center image, only works if odd value
+        # size of center image, only works with odd value
         ref_image_size = 21
 
         # Arrays for the positions
