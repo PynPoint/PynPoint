@@ -108,7 +108,7 @@ html_static_path = ['_images']
 #
 # html_sidebars = {}
 
-html_logo = '_images/PynPoint_logo_white.png'
+html_logo = '_images/logo.png'
 # html_favicon = '_images/logo.jpg'
 html_search_language = 'en'
 
