@@ -346,7 +346,9 @@ class StarAlignmentModule(ProcessingModule):
                 tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
                                     scale=(self.m_resize, self.m_resize),
                                     order=5,
-                                    mode="reflect")
+                                    mode="reflect",
+                                    anti_aliasing=True,
+                                    multichannel=False)
                 sum_after = np.sum(tmp_image)
 
                 # Conserve flux because the rescale function normalizes all values to [0:1].
@@ -752,7 +754,7 @@ class ShiftImagesModule(ProcessingModule):
 class WaffleCenteringModule(ProcessingModule):
     """
     Module for centering of SPHERE data obtained with a Lyot coronagraph for which center frames
-    with waffle pattern are available.
+    with waffle pattern are available. Written by Alexander Bohn (Leiden University).
     """
 
     def __init__(self,
@@ -819,14 +821,15 @@ class WaffleCenteringModule(ProcessingModule):
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
 
-        if center_ndim == 3 and center_shape[0] == 1:
-            center_frame = self.m_center_in_port.get_all()[0, ]
-
-        elif center_ndim == 2:
+        if center_ndim == 2:
             center_frame = self.m_center_in_port.get_all()
 
-        else:
-            raise ValueError("Center frame needs to be 2D.")
+        elif center_ndim == 3 and center_shape[0] == 1:
+            center_frame = self.m_center_in_port.get_all()[0, ]
+
+        elif center_ndim == 3 and center_shape[0] > 1:
+            center_frame = self.m_center_in_port.get_all()
+            center_frame = np.mean(center_frame, axis=0)
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")

@@ -164,7 +164,9 @@ class ScaleImagesModule(ProcessingModule):
             tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
                                 scale=(scaling_size, scaling_size),
                                 order=5,
-                                mode="reflect")
+                                mode="reflect",
+                                anti_aliasing=True,
+                                multichannel=False)
 
             sum_after = np.sum(tmp_image)
 
