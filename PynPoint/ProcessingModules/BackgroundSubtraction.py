@@ -3,6 +3,7 @@ Modules with background subtraction routines.
 """
 
 import sys
+import math
 
 import numpy as np
 
@@ -14,8 +15,7 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
-from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ModuleTools import progress, memory_frames, locate_star
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -529,6 +529,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  mask_star=0.7,
                  mask_planet=None,
                  subtract_mean=False,
+                 subframe=None,
+                 gaussian=0.15,
                  name_in="pca_background",
                  star_in_tag="im_star",
                  background_in_tag="im_background",
@@ -550,6 +552,13 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         :param subtract_mean: The mean of the background images is subtracted from both the star
                               and background images before the PCA basis is constructed.
         :type subtract_mean: bool
+        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
+                         to smooth the image before the star is located.
+        :type gaussian: float
+        :param subframe: Size (arcsec) of the subframe that is used to search for the star.
+                         Cropping of the subframe is done around the center of the image.
+                         The full images is used if set to None.
+        :type subframe: float
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param star_in_tag: Tag of the database entry with the star images.
@@ -589,6 +598,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         self.m_mask_star = mask_star
         self.m_mask_planet = mask_planet
         self.m_subtract_mean = subtract_mean
+        self.m_gaussian = gaussian
+        self.m_subframe = subframe
 
     def run(self):
         """
@@ -687,9 +698,25 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_star_in_port.get_attribute("PIXSCALE")
-        star = self.m_star_in_port.get_attribute("STAR_POSITION")
+
+        nimages = self.m_star_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         self.m_mask_star /= pixscale
+
+        self.m_gaussian /= pixscale
+        self.m_gaussian = int(math.ceil(self.m_gaussian))
+
+        if self.m_subframe is not None:
+            self.m_subframe /= pixscale
+            self.m_subframe = int(math.ceil(self.m_subframe))
+
+        star = np.zeros((nimages, 2))
+        for i, _ in enumerate(star):
+            star[i, :] = locate_star(image=self.m_star_in_port[i, ],
+                                     center=None,
+                                     width=self.m_subframe,
+                                     fwhm=self.m_gaussian)
 
         if self.m_mask_planet is not None:
             parang = self.m_star_in_port.get_attribute("PARANG")
@@ -713,10 +740,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
-
-        nimages = self.m_star_in_port.get_shape()[0]
-
-        frames = memory_frames(memory, nimages)
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Calculating background model...")
@@ -904,11 +927,7 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
         self.m_subtract_mean = subtract_mean
-
-        if subframe is None:
-            self.m_subframe = subframe
-        else:
-            self.m_subframe = (None, None, subframe)
+        self.m_subframe = subframe
 
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
@@ -984,7 +1003,8 @@ class DitheringBackgroundModule(ProcessingModule):
 
             if self.m_crop:
                 crop = CropImagesModule(size=self.m_size,
-                                        center=position,
+                                        center=(int(math.ceil(position[0])),
+                                                int(math.ceil(position[1]))),
                                         name_in="crop"+str(i),
                                         image_in_tag=self.m_image_in_tag,
                                         image_out_tag="dither_crop"+str(i+1))
@@ -1025,21 +1045,11 @@ class DitheringBackgroundModule(ProcessingModule):
                     bad.connect_database(self._m_data_base)
                     bad.run()
 
-                star = StarExtractionModule(name_in="star"+str(i),
-                                            image_in_tag=tag_extract,
-                                            image_out_tag=None,
-                                            position_out_tag="dither_star"+str(i+1),
-                                            image_size=None,
-                                            fwhm_star=self.m_gaussian,
-                                            position=self.m_subframe)
-
-                star.connect_database(self._m_data_base)
-                star.run()
-
                 pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                      mask_star=self.m_mask_star,
                                                      mask_planet=self.m_mask_planet,
                                                      subtract_mean=self.m_subtract_mean,
+                                                     subframe=self.m_subframe,
                                                      name_in="pca_background"+str(i),
                                                      star_in_tag="dither_star"+str(i+1),
                                                      background_in_tag="dither_background"+str(i+1),

@@ -13,47 +13,66 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-def setup_module():
-    create_fake(file_start=os.path.dirname(__file__)+"/image",
-                ndit=[20, 20, 20, 20],
-                nframes=[20, 20, 20, 20],
-                exp_no=[1, 2, 3, 4],
-                npix=(100, 100),
-                fwhm=3.,
-                x0=[50, 50, 50, 50],
-                y0=[50, 50, 50, 50],
-                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
-                sep=10.,
-                contrast=3e-3)
-
-    create_config(os.path.dirname(__file__)+"/PynPoint_config.ini")
-
-def teardown_module():
-    test_dir = os.path.dirname(__file__) + "/"
-
-    for i in range(4):
-        os.remove(test_dir + 'image'+str(i+1).zfill(2)+'.fits')
-
-    os.remove(test_dir + 'PynPoint_database.hdf5')
-    os.remove(test_dir + 'PynPoint_config.ini')
-
 class TestPSFSubtractionPCA(object):
 
-    def setup(self):
+    def setup_class(self):
+
         self.test_dir = os.path.dirname(__file__) + "/"
+
+        create_fake(file_start=os.path.dirname(__file__)+"/image",
+                    ndit=[20, 20, 20, 20],
+                    nframes=[20, 20, 20, 20],
+                    exp_no=[1, 2, 3, 4],
+                    npix=(100, 100),
+                    fwhm=3.,
+                    x0=[50, 50, 50, 50],
+                    y0=[50, 50, 50, 50],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=10.,
+                    contrast=3e-3)
+
+        create_config(self.test_dir+"PynPoint_config.ini")
+
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def test_psf_subtraction_pca(self):
+    def teardown_class(self):
+
+        for i in range(4):
+            os.remove(self.test_dir+'image'+str(i+1).zfill(2)+'.fits')
+
+        os.remove(self.test_dir+'PynPoint_database.hdf5')
+        os.remove(self.test_dir+'PynPoint_config.ini')
+
+    def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read")
 
         self.pipeline.add_module(read)
 
+        self.pipeline.run_module("read")
+
+        data = self.pipeline.get_data("read")
+        assert np.allclose(data[0, 50, 50], 0.09798413502193708, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010063896953157961, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
+
+    def test_angle_interpolation(self):
+
         angle = AngleInterpolationModule(name_in="angle",
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
+
+        self.pipeline.run_module("angle")
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert np.allclose(data[0], 0., rtol=limit, atol=0.)
+        assert np.allclose(data[15], 19.736842105263158, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 50.0, rtol=limit, atol=0.)
+        assert data.shape == (80, )
+
+    def test_psf_subtraction_pca(self):
 
         pca = PcaPsfSubtractionModule(pca_numbers=(5, ),
                                       name_in="pca",
@@ -69,12 +88,7 @@ class TestPSFSubtractionPCA(object):
 
         self.pipeline.add_module(pca)
 
-        self.pipeline.run()
-
-        data = self.pipeline.get_data("read")
-        assert np.allclose(data[0, 50, 50], 0.09798413502193708, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010063896953157961, rtol=limit, atol=0.)
-        assert data.shape == (80, 100, 100)
+        self.pipeline.run_module("pca")
 
         data = self.pipeline.get_data("res_mean")
         assert np.allclose(data[0, 50, 50], 1.947810457180298e-06, rtol=limit, atol=0.)
