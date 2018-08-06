@@ -951,8 +951,8 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
 
-        im_shift = ShiftImagesModule(shift_xy=(im_shape[-1] / 2 - .5 - x_center,
-                                               im_shape[-2] / 2 - .5 - y_center),
+        im_shift = ShiftImagesModule(shift_xy=((im_shape[-1]-1) / 2 - x_center,
+                                               (im_shape[-2]-1) / 2 - y_center),
                                      name_in="waffle_shift",
                                      image_in_tag=self.m_image_in_port.tag,
                                      image_out_tag="waffle_shift")
