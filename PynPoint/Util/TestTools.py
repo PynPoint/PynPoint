@@ -202,7 +202,7 @@ def create_fake(file_start, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, s
         filename = file_start+str(j+1).zfill(2)+'.fits'
         create_fits(filename, image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
-def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
+def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp_no):
     """
     Create data with a stellar PSF and Gaussian noise.
     """
@@ -210,7 +210,6 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
     fwhm = 3
     ndit = 10
     naxis3 = ndit
-    exp_no = [1, 2, 3, 4]
 
     np.random.seed(1)
 
@@ -225,7 +224,7 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
         for i in range(ndit):
             star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
             noise = np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
-            image[i, 0:npix_x, 0:npix_x] = star+noise
+            image[i, ] = star+noise
 
         hdu = fits.PrimaryHDU()
         header = hdu.header
@@ -238,3 +237,42 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end):
         header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
+
+def create_waffle_data(path):
+    """
+    Create data with waffle spots and Gaussian noise.
+    """
+
+    fwhm = 3
+    ndit = 1
+    npix = 100
+    naxis3 = ndit
+
+    x0 = [20., 20., 80., 80.]
+    y0 = [20., 80., 80., 20.]
+
+    sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
+
+    x = y = np.arange(0., npix, 1.)
+    xx, yy = np.meshgrid(x, y)
+
+    image = np.zeros((naxis3, npix, npix))
+
+    for i in range(ndit):
+        for j, item in enumerate(x0):
+            star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
+            image[i, ] += star
+
+        image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = item
+        header['HIERARCH ESO DET NDIT'] = ndit
+        header['HIERARCH ESO ADA POSANG'] = "None"
+        header['HIERARCH ESO ADA POSANG END'] = "None"
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = "None"
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
+        hdu.data = image
+        hdu.writeto(os.path.join(path, 'image'+str(i+1).zfill(2)+'.fits'))
