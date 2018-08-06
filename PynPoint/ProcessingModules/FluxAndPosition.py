@@ -417,9 +417,6 @@ class SimplexMinimizationModule(ProcessingModule):
 
             npix = image_size(im_crop)[0]
 
-            if npix%2 == 0:
-                raise ValueError("An odd-sized image is expected.")
-
             if self.m_merit == "hessian":
 
                 x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)

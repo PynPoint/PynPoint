@@ -1,22 +1,19 @@
 import os
-import math
 import warnings
 
 import numpy as np
 
-from astropy.io import fits
-from scipy.ndimage import shift
-
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.IOmodules.FitsWriting import FitsWritingModule
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
-from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, FlatCalibrationModule
+from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
+                                                              FlatCalibrationModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule
-from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, StarAlignmentModule
+from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, \
+                                                     StarAlignmentModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
@@ -26,83 +23,76 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-def setup_module():
-    test_dir = os.path.dirname(__file__) + "/"
-
-    os.makedirs(test_dir + "adi")
-    os.makedirs(test_dir + "dark")
-    os.makedirs(test_dir + "flat")
-
-    # SCIENCE
-
-    create_fake(file_start=test_dir+'adi/adi',
-                ndit=[22, 17, 21, 18],
-                nframes=[23, 18, 22, 19],
-                exp_no=[1, 2, 3, 4],
-                npix=(100, 102),
-                fwhm=3.,
-                x0=[25, 75, 75, 25],
-                y0=[75, 75, 25, 25],
-                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
-                sep=7.,
-                contrast=1e-2)
-
-    # DARK
-
-    ndit = [ 3, 3, 5, 5 ]
-    parang = [ [0., 0.], [0., 0.], [0., 0.], [0., 0.] ]
-
-    np.random.seed(2)
-
-    for j, n in enumerate(ndit):
-        image = np.random.normal(loc=0, scale=2e-4, size=(n, 100, 100))
-
-        filename = test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits'
-        create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
-
-    # FLAT
-
-    ndit = [ 3, 3, 5, 5 ]
-    parang = [ [0., 0.], [0., 0.], [0., 0.], [0., 0.] ]
-
-    np.random.seed(3)
-
-    for j, n in enumerate(ndit):
-        image = np.random.normal(loc=1, scale=1e-2, size=(n, 100, 100))
-
-        filename = test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits'
-        create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
-
-    filename = os.path.dirname(__file__) + "/PynPoint_config.ini"
-    create_config(filename)
-
-def teardown_module():
-    test_dir = os.path.dirname(__file__) + "/"
-
-    for i in range(4):
-        file_in = test_dir + 'adi/adi'+str(i+1).zfill(2)+'.fits'
-        dark_in = test_dir + 'dark/dark'+str(i+1).zfill(2)+'.fits'
-        flat_in = test_dir + 'flat/flat'+str(i+1).zfill(2)+'.fits'
-
-        os.remove(file_in)
-        os.remove(dark_in)
-        os.remove(flat_in)
-
-    os.remove(test_dir + 'PynPoint_database.hdf5')
-    os.remove(test_dir + 'test.fits')
-    os.remove(test_dir + 'PynPoint_config.ini')
-
-    os.rmdir(test_dir + 'adi')
-    os.rmdir(test_dir + 'dark')
-    os.rmdir(test_dir + 'flat')
-
 class TestDocumentation(object):
 
-    def setup(self):
+    def setup_class(self):
+
         self.test_dir = os.path.dirname(__file__) + "/"
+
+        os.makedirs(self.test_dir + "adi")
+        os.makedirs(self.test_dir + "dark")
+        os.makedirs(self.test_dir + "flat")
+
+        # SCIENCE
+
+        create_fake(file_start=self.test_dir+'adi/adi',
+                    ndit=[22, 17, 21, 18],
+                    nframes=[23, 18, 22, 19],
+                    exp_no=[1, 2, 3, 4],
+                    npix=(100, 102),
+                    fwhm=3.,
+                    x0=[25, 75, 75, 25],
+                    y0=[75, 75, 25, 25],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=7.,
+                    contrast=1e-2)
+
+        # DARK
+
+        ndit = [3, 3, 5, 5]
+        parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
+
+        np.random.seed(2)
+
+        for j, item in enumerate(ndit):
+            image = np.random.normal(loc=0, scale=2e-4, size=(item, 100, 100))
+
+            filename = self.test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits'
+            create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
+
+        # FLAT
+
+        ndit = [3, 3, 5, 5]
+        parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
+
+        np.random.seed(3)
+
+        for j, item in enumerate(ndit):
+            image = np.random.normal(loc=1, scale=1e-2, size=(item, 100, 100))
+
+            filename = self.test_dir+'flat/flat'+str(j+1).zfill(2)+'.fits'
+            create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
+
+        create_config(self.test_dir+"PynPoint_config.ini")
+
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def test_docs(self):
+    def teardown_class(self):
+
+        for i in range(4):
+            os.remove(self.test_dir+'adi/adi'+str(i+1).zfill(2)+'.fits')
+            os.remove(self.test_dir+'dark/dark'+str(i+1).zfill(2)+'.fits')
+            os.remove(self.test_dir+'flat/flat'+str(i+1).zfill(2)+'.fits')
+
+        os.rmdir(self.test_dir+'adi')
+        os.rmdir(self.test_dir+'dark')
+        os.rmdir(self.test_dir+'flat')
+
+        os.remove(self.test_dir+'test.fits')
+        os.remove(self.test_dir+'PynPoint_database.hdf5')
+        os.remove(self.test_dir+'PynPoint_config.ini')
+
+    def test_read_data(self):
         read_science = FitsReadingModule(name_in="read_science",
                                          input_dir=self.test_dir+"adi/",
                                          image_tag="im_arr")
@@ -121,11 +111,37 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(read_flat)
 
+        self.pipeline.run_module("read_science")
+        self.pipeline.run_module("read_dark")
+        self.pipeline.run_module("read_flat")
+
+        data = self.pipeline.get_data("im_arr")
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
+        assert data.shape == (82, 102, 100)
+
+        data = self.pipeline.get_data("dark_arr")
+        assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit, atol=0.)
+        assert data.shape == (16, 100, 100)
+
+        data = self.pipeline.get_data("flat_arr")
+        assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit, atol=0.)
+        assert data.shape == (16, 100, 100)
+
+    def test_remove_last(self):
+
         remove_last = RemoveLastFrameModule(name_in="last_frame",
                                             image_in_tag="im_arr",
                                             image_out_tag="im_arr_last")
 
         self.pipeline.add_module(remove_last)
+
+        self.pipeline.run_module("last_frame")
+
+        data = self.pipeline.get_data("im_arr_last")
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
+        assert data.shape == (78, 102, 100)
+
+    def test_remove_lines(self):
 
         cutting = RemoveLinesModule(lines=(0, 0, 0, 2),
                                     name_in="cut_lines",
@@ -134,18 +150,44 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(cutting)
 
+        self.pipeline.run_module("cut_lines")
+
+        data = self.pipeline.get_data("im_arr_cut")
+        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
+        assert data.shape == (78, 100, 100)
+
+    def test_dark_calibration(self):
+
         dark_sub = DarkCalibrationModule(name_in="dark_subtraction",
                                          image_in_tag="im_arr_cut",
                                          dark_in_tag="dark_arr",
                                          image_out_tag="dark_sub_arr")
+
+        self.pipeline.add_module(dark_sub)
+
+        self.pipeline.run_module("dark_subtraction")
+
+        data = self.pipeline.get_data("dark_sub_arr")
+        assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit, atol=0.)
+        assert data.shape == (78, 100, 100)
+
+    def test_flat_calibration(self):
 
         flat_sub = FlatCalibrationModule(name_in="flat_subtraction",
                                          image_in_tag="dark_sub_arr",
                                          flat_in_tag="flat_arr",
                                          image_out_tag="flat_sub_arr")
 
-        self.pipeline.add_module(dark_sub)
+
         self.pipeline.add_module(flat_sub)
+
+        self.pipeline.run_module("flat_subtraction")
+
+        data = self.pipeline.get_data("flat_sub_arr")
+        assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit, atol=0.)
+        assert data.shape == (78, 100, 100)
+
+    def test_mean_background(self):
 
         bg_subtraction = MeanBackgroundSubtractionModule(shift=None,
                                                          cubes=1,
@@ -156,11 +198,27 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(bg_subtraction)
 
+        self.pipeline.run_module("background_subtraction")
+
+        data = self.pipeline.get_data("bg_cleaned_arr")
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
+        assert data.shape == (78, 100, 100)
+
+    def test_bad_pixel(self):
+
         bp_cleaning = BadPixelSigmaFilterModule(name_in="sigma_filtering",
                                                 image_in_tag="bg_cleaned_arr",
                                                 image_out_tag="bp_cleaned_arr")
 
         self.pipeline.add_module(bp_cleaning)
+
+        self.pipeline.run_module("sigma_filtering")
+
+        data = self.pipeline.get_data("bp_cleaned_arr")
+        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
+        assert data.shape == (78, 100, 100)
+
+    def test_star_extract(self):
 
         extraction = StarExtractionModule(name_in="star_cutting",
                                           image_in_tag="bp_cleaned_arr",
@@ -168,6 +226,16 @@ class TestDocumentation(object):
                                           image_size=0.6,
                                           fwhm_star=0.1,
                                           position=None)
+
+        self.pipeline.add_module(extraction)
+
+        self.pipeline.run_module("star_cutting")
+
+        data = self.pipeline.get_data("im_arr_extract")
+        assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit, atol=0.)
+        assert data.shape == (78, 23, 23)
+
+    def test_star_alignment(self):
 
         # Required for ref_image_in_tag in StarAlignmentModule, otherwise a random frame is used
         ref_extract = StarExtractionModule(name_in="star_cut_ref",
@@ -177,6 +245,8 @@ class TestDocumentation(object):
                                            fwhm_star=0.1,
                                            position=None)
 
+        self.pipeline.add_module(ref_extract)
+
         alignment = StarAlignmentModule(name_in="star_align",
                                         image_in_tag="im_arr_extract",
                                         ref_image_in_tag="im_arr_ref",
@@ -184,14 +254,29 @@ class TestDocumentation(object):
                                         accuracy=10,
                                         resize=2)
 
-        self.pipeline.add_module(extraction)
-        self.pipeline.add_module(ref_extract)
         self.pipeline.add_module(alignment)
 
-        angle_calc = AngleInterpolationModule(name_in="angle_calculation",
-                                            data_tag="im_arr_aligned")
+        self.pipeline.run_module("star_cut_ref")
+        self.pipeline.run_module("star_align")
+
+        data = self.pipeline.get_data("im_arr_aligned")
+        assert np.allclose(data[0, 10, 10], 1.1309588556526325e-05, rtol=limit, atol=0.)
+        assert data.shape == (78, 46, 46)
+
+    def test_angle_interpolation(self):
+
+        angle_calc = AngleInterpolationModule(name_in="angle_interpolation",
+                                              data_tag="im_arr_aligned")
 
         self.pipeline.add_module(angle_calc)
+
+        self.pipeline.run_module("angle_interpolation")
+
+        data = self.pipeline.get_data("header_im_arr_aligned/PARANG")
+        assert np.allclose(data[5, ], 5.9523809523809526, rtol=limit, atol=0.)
+        assert data.shape == (78, )
+
+    def test_stack(self):
 
         subset = StackAndSubsetModule(name_in="stacking_subset",
                                       image_in_tag="im_arr_aligned",
@@ -201,8 +286,16 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(subset)
 
+        self.pipeline.run_module("stacking_subset")
+
+        data = self.pipeline.get_data("im_arr_stacked")
+        assert np.allclose(data[0, 10, 10], 2.55745339731812e-05, rtol=limit, atol=0.)
+        assert data.shape == (20, 46, 46)
+
+    def test_psf_subtraction(self):
+
         pca = PcaPsfSubtractionModule(pca_numbers=(5, ),
-                                      name_in="PSF_subtraction",
+                                      name_in="psf_subtraction",
                                       images_in_tag="im_arr_stacked",
                                       reference_in_tag="im_arr_stacked",
                                       res_mean_tag="res_mean",
@@ -214,51 +307,21 @@ class TestDocumentation(object):
 
         self.pipeline.add_module(pca)
 
-        writing = FitsWritingModule(name_in="Fits_writing",
+        self.pipeline.run_module("psf_subtraction")
+
+        data = self.pipeline.get_data("res_mean")
+        assert np.allclose(data[0, 38, 22], 2.073746596517549e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -1.5133345435496935e-08, rtol=limit, atol=0.)
+        assert data.shape == (1, 46, 46)
+
+    def test_write_fits(self):
+
+        writing = FitsWritingModule(name_in="fits_writing",
                                     file_name="test.fits",
                                     data_tag="res_mean")
 
         self.pipeline.add_module(writing)
 
-        self.pipeline.run()
+        self.pipeline.run_module("fits_writing")
 
-        data = self.pipeline.get_data("im_arr")
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("dark_arr")
-        assert np.allclose(data[0, 61, 39], 2.368170995592123e-05, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("flat_arr")
-        assert np.allclose(data[0, 61, 39], 0.98703416941301647, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("im_arr_last")
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("im_arr_cut")
-        assert np.allclose(data[0, 61, 39], -0.00022889163546536875, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("dark_sub_arr")
-        assert np.allclose(data[0, 61, 39], -0.00021601281733413911, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("flat_sub_arr")
-        assert np.allclose(data[0, 61, 39], -0.00021647987125847178, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("bg_cleaned_arr")
-        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("bp_cleaned_arr")
-        assert np.allclose(data[0, 61, 39], -0.00013095662386792948, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("im_arr_extract")
-        assert np.allclose(data[0, 10, 10], 0.052958146579313935, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("im_arr_aligned")
-        assert np.allclose(data[0, 10, 10], 1.1307471842831197e-05, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("im_arr_stacked")
-        assert np.allclose(data[0, 10, 10], 2.5572805947810986e-05, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("res_mean")
-        assert np.allclose(data[0, 38, 22], 2.0195333051172577e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -1.786038471634382e-08, rtol=limit, atol=0.)
-        assert data.shape == (1, 44, 44)
+        assert os.path.exists(self.test_dir+"test.fits")

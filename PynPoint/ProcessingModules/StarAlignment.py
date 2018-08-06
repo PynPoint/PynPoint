@@ -4,10 +4,9 @@ Modules for locating, aligning, and centering of the star.
 
 import sys
 import math
-
 import warnings
+
 import numpy as np
-import cv2
 
 from skimage.feature import register_translation
 from skimage.transform import rescale
@@ -18,14 +17,15 @@ from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
-from PynPoint.Util.ModuleTools import memory_frames, crop_image, progress
+from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, AddLinesModule
+from PynPoint.Util.ModuleTools import memory_frames, crop_image, progress, image_center, \
+                                      number_images_port, locate_star
 
 
 class StarExtractionModule(ProcessingModule):
     """
-    Module to locate the position of the star in each image and to crop all the
-    images around this position.
+    Module to locate the position of the star in each image and to crop all the images around
+    this position.
     """
 
     def __init__(self,
@@ -35,8 +35,7 @@ class StarExtractionModule(ProcessingModule):
                  index_out_tag=None,
                  image_size=2.,
                  fwhm_star=0.2,
-                 position=None,
-                 **kwargs):
+                 position=None):
         """
         Constructor of StarExtractionModule.
 
@@ -45,20 +44,16 @@ class StarExtractionModule(ProcessingModule):
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
         :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*. If *image_out_tag* and/or *image_size*
-                              is set to None then only the STAR_POSITION attributes will be written
-                              to *image_in_tag* and *image_out_tag* is not used.
+                              different from *image_in_tag*.
         :type image_out_tag: str
         :param index_out_tag: List with image indices for which the image size is too large to
                               be cropped around the brightest pixel. No data is written if set
                               to None.
         :type index_out_tag: str
-        :param image_size: Cropped image size (arcsec). If *image_out_tag* and/or *image_size* is
-                           set to None then only the STAR_POSITION attributes will be written to
-                           *image_in_tag* and *image_out_tag* is not used.
+        :param image_size: Cropped image size (arcsec).
         :type image_size: float
         :param fwhm_star: Full width at half maximum (arcsec) of the Gaussian kernel that is used
-                          to convolve the images.
+                          to smooth the images to lower contributions of bad pixels.
         :type fwhm_star: float
         :param position: Subframe that is selected to search for the star. The tuple can contain a
                          single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
@@ -66,42 +61,20 @@ class StarExtractionModule(ProcessingModule):
                          the tuple should be 2D (nframes x 3). Setting *position* to None will use
                          the full image to search for the star. If *position=(None, None, size)*
                          then the center of the image will be used.
-        :type position: tuple, float
-
-        :param \**kwargs:
-            See below.
-
-        :Keyword arguments:
-             * **position_out_tag** (*str*) -- Tag of the database entry to which the STAR_POSITION
-                                               attributes are written. The *image_in_tag* is used
-                                               if set to None.
+        :type position: (int, int, float)
 
         :return: None
         """
 
-        if "position_out_tag" in kwargs:
-            position_out_tag = kwargs["position_out_tag"]
-        else:
-            position_out_tag = None
-
         super(StarExtractionModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-
-        if image_out_tag is None:
-            self.m_image_out_port = None
-        else:
-            self.m_image_out_port = self.add_output_port(image_out_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
         if index_out_tag is None:
             self.m_index_out_port = None
         else:
             self.m_index_out_port = self.add_output_port(index_out_tag)
-
-        if position_out_tag is None:
-            self.m_position_out_port = self.add_output_port(image_in_tag)
-        else:
-            self.m_position_out_port = self.add_output_port(position_out_tag)
 
         self.m_image_size = image_size
         self.m_fwhm_star = fwhm_star
@@ -113,7 +86,7 @@ class StarExtractionModule(ProcessingModule):
         """
         Run method of the module. Locates the position of the star (only pixel precision) by
         selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
-        used to smooth away the contribution of bad pixels which may have higher values than the
+        used to lower the contribution of bad pixels which may have higher values than the
         peak of the PSF. Images are cropped and written to an output port. The position of the
         star is attached to the input images as the non-static attribute STAR_POSITION (y, x).
 
@@ -124,112 +97,73 @@ class StarExtractionModule(ProcessingModule):
 
         if self.m_position is not None:
             self.m_position = np.asarray(self.m_position)
+            nimages = number_images_port(self.m_image_in_port)
 
-            if self.m_position.ndim == 2 and \
-                    self.m_position.shape[0] != self.m_image_in_port.get_shape()[0]:
+            if self.m_position.ndim == 2 and self.m_position.shape[0] != nimages:
                 raise ValueError("Either a single 'position' should be specified or an array "
                                  "equal in size to the number of images in 'image_in_tag'.")
 
-            if self.m_position[0] is None and self.m_position[1] is None:
-                npix = self.m_image_in_port.get_shape()[1]
-                self.m_position[0] = npix/2.
-                self.m_position[1] = npix/2.
-
-        if self.m_image_size is not None:
-            psf_radius = int((self.m_image_size/2.)/pixscale)
-
-        self.m_fwhm_star /= pixscale
-        self.m_fwhm_star = int(self.m_fwhm_star)
+        self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
+        self.m_fwhm_star = int(math.ceil(self.m_fwhm_star/pixscale))
 
         star = []
         index = []
 
-        def _crop_image(image):
-            sigma = self.m_fwhm_star/math.sqrt(8.*math.log(2.))
-            kernel = (self.m_fwhm_star*2 + 1, self.m_fwhm_star*2 + 1)
+        def _crop_around_star(image, position, im_size, fwhm):
 
-            if self.m_position is None:
-                subimage = image
-
-            elif self.m_position[2] is None:
-                pos_x = self.m_position[0]
-                pos_y = self.m_position[1]
-                subimage = image
-                width = np.shape(image)[0]
+            if position is None:
+                center = None
+                width = None
 
             else:
-                if self.m_position.ndim == 1:
-                    pos_x = self.m_position[0]
-                    pos_y = self.m_position[1]
-                    width = self.m_position[2]/pixscale
+                if position.ndim == 1:
+                    center = (int(position[1]), int(position[0]))
+                    width = int(math.ceil(position[2]/pixscale))
 
-                    if pos_x > self.m_image_in_port.get_shape()[1] or \
-                            pos_y > self.m_image_in_port.get_shape()[2]:
-                        raise ValueError('The specified position is outside the image.')
+                elif position.ndim == 2:
+                    center = (int(position[self.m_count, 1]), int(position[self.m_count, 0]))
+                    width = int(math.ceil(position[self.m_count, 2]/pixscale))
 
-                elif self.m_position.ndim == 2:
-                    pos_x = self.m_position[self.m_count, 0]
-                    pos_y = self.m_position[self.m_count, 1]
-                    width = self.m_position[self.m_count, 2]/pixscale
+            starpos = locate_star(image, center, width, fwhm)
 
-                if pos_y <= width/2. or pos_x <= width/2. \
-                        or pos_y+width/2. >= self.m_image_in_port.get_shape()[2]\
-                        or pos_x+width/2. >= self.m_image_in_port.get_shape()[1]:
-                    warnings.warn("The region for the star extraction exceeds the image.")
+            try:
+                im_crop = crop_image(image, starpos, im_size)
 
-                subimage = image[int(pos_y-width/2.):int(pos_y+width/2.),
-                                 int(pos_x-width/2.):int(pos_x+width/2.)]
+            except ValueError:
+                warnings.warn("PSF size is too large to crop the image around the brightest "
+                              "pixel (image index = "+str(self.m_count)+", pixel [x, y] = "
+                              +str([starpos[0]]+[starpos[1]])+"). Using the center of the "
+                              "image instead.")
 
-            im_smooth = cv2.GaussianBlur(subimage, kernel, sigma)
+                index.append(self.m_count)
 
-            # argmax[0] is the y position and argmax[1] is the x position
-            argmax = np.asarray(np.unravel_index(im_smooth.argmax(), im_smooth.shape))
+                starpos = image_center(image)
+                im_crop = crop_image(image, starpos, im_size)
 
-            if self.m_position is not None:
-                argmax[0] += pos_y-width/2.
-                argmax[1] += pos_x-width/2.
-
-            if self.m_image_size is not None:
-                if argmax[0] <= psf_radius or argmax[1] <= psf_radius \
-                        or argmax[0] + psf_radius >= image.shape[0] \
-                        or argmax[1] + psf_radius >= image.shape[1]:
-
-                    warnings.warn("PSF size is too large to crop the image around the brightest "
-                                  "pixel (image index = "+str(self.m_count)+", pixel [x, y] = "
-                                  +str([argmax[1]]+[argmax[0]])+"). Using the center of the image "
-                                  "instead.")
-
-                    index.append(self.m_count)
-
-                    argmax = [np.size(image, 0)/2., np.size(image, 0)/2.]
-
-                im_crop = image[int(argmax[0] - psf_radius):int(argmax[0] + psf_radius),
-                                int(argmax[1] - psf_radius):int(argmax[1] + psf_radius)]
-
-            star.append(argmax)
+            star.append((starpos[1], starpos[0]))
 
             self.m_count += 1
 
-            if self.m_image_size is not None:
-                return im_crop
+            return im_crop
 
-        self.apply_function_to_images(_crop_image,
+        self.apply_function_to_images(_crop_around_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarExtractionModule...")
-
-        self.m_position_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
+                                      "Running StarExtractionModule...",
+                                      func_args=(self.m_position,
+                                                 self.m_image_size,
+                                                 self.m_fwhm_star))
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
             self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_index_out_port.add_history_information("Star extract", "maximum")
+            self.m_index_out_port.add_history_information("Extract star", "brightest pixel")
 
-        if self.m_image_size is not None and self.m_image_out_port is not None:
-            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_image_out_port.add_history_information("Star extract", "maximum")
+        self.m_image_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_history_information("Extract star", "brightest pixel")
 
-        self.m_position_out_port.close_port()
+        self.m_image_out_port.close_port()
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -449,10 +383,10 @@ class StarCenteringModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             * **guess** (*tuple*) -- Tuple with the initial parameter values for the least
-                                      squares fit: center x (pix), center y (pix), FWHM x (pix),
-                                      FWHM y (pix), amplitude (counts), angle (deg). Note that the
-                                      center positions are relative to the image center.
+            **guess** (*(float, float, float, float, float, float)*) -- Tuple with the initial
+            parameter values for the least squares fit: center x (pix), center y (pix), FWHM x
+            (pix), FWHM y (pix), amplitude (counts), angle (deg). Note that the center positions
+            are relative to the image center.
 
         :return: None
         """
@@ -482,6 +416,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_interpolation = interpolation
         self.m_radius = radius
         self.m_sign = sign
+
         self.m_count = 0
 
     def run(self):
@@ -694,7 +629,7 @@ class ShiftImagesModule(ProcessingModule):
         Constructor of ShiftImagesModule.
 
         :param shift_xy: Tuple (delta_x, delta_y) with the shift (pix) in both directions.
-        :type shift_xy: tuple, float
+        :type shift_xy: (float, float)
         :param interpolation: Type of interpolation that is used for shifting the images (spline,
                               bilinear, or fft).
         :type interpolation: str
@@ -766,15 +701,14 @@ class WaffleCenteringModule(ProcessingModule):
                  image_out_tag="im_arr_centered_cut",
                  radius=45.,
                  pattern="x",
-                 sigma=5.,
-                 **kwargs):
+                 sigma=5.):
         """
         Constructor of WaffleCenteringModule.
 
         :param size: Image size (arcsec) for both dimensions.
         :type size: float
         :param center: Approximate position (x0, y0) of the coronagraph.
-        :type center: tuple, int
+        :type center: (int, int)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with science images that are read as input.
@@ -792,26 +726,9 @@ class WaffleCenteringModule(ProcessingModule):
         :param sigma: Standard deviation (pix) of the Gaussian kernel that is used for the unsharp
                       masking.
         :type sigma: float
-        :param \**kwargs:
-            See below.
-
-        :Keyword arguments:
-            **maxiter** (*int*) -- Maximum number of iterations.
-
-            **accuracy** (*float*) -- Relative error of the fitting solution.
 
         :return: None
         """
-
-        if "maxiter" in kwargs:
-            self.m_maxiter = kwargs["maxiter"]
-        else:
-            self.m_maxiter = 100
-
-        if "accuracy" in kwargs:
-            self.m_accuracy = kwargs["accuracy"]
-        else:
-            self.m_accuracy = 1e-07
 
         super(WaffleCenteringModule, self).__init__(name_in)
 
@@ -877,13 +794,14 @@ class WaffleCenteringModule(ProcessingModule):
                 y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
 
             tmp_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(x_0), int(y_0)),
+                                          center=(int(y_0), int(x_0)),
                                           size=ref_image_size)
 
             # find maximum in tmp image
             y_max, x_max = np.unravel_index(np.argmax(tmp_center_frame),
                                             dims=tmp_center_frame.shape)
 
+            pixmax = tmp_center_frame[y_max, x_max]
             max_pos = np.array([x_max, y_max]).reshape(1, 2)
 
             # Check whether it is the correct maximum: second brightest pixel should be nearby
@@ -896,22 +814,30 @@ class WaffleCenteringModule(ProcessingModule):
                 y_max_new, x_max_new = np.unravel_index(np.argmax(tmp_center_frame),
                                                         dims=tmp_center_frame.shape)
 
+                pixmax_new = tmp_center_frame[y_max_new, x_max_new]
+
                 # Caculate minimal distance to previous points
                 tmp_center_frame[y_max_new, x_max_new] = 0.
+
                 dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
                                                          max_pos[:, 1]-y_max_new)),
                                               axis=0))
+
+                if dist <= 2 and pixmax_new < pixmax:
+                    break
+
                 max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
 
                 x_max = x_max_new
                 y_max = y_max_new
+                pixmax = pixmax_new
 
             x_0 = x_0 - (ref_image_size-1)/2 + x_max
             y_0 = y_0 - (ref_image_size-1)/2 + y_max
 
             # create reference image around determined maximum
             ref_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(x_0), int(y_0)),
+                                          center=(int(y_0), int(x_0)),
                                           size=ref_image_size)
 
             # Fit the data using astropy.modeling
@@ -930,9 +856,7 @@ class WaffleCenteringModule(ProcessingModule):
             gauss = fit_gauss(gauss_init,
                               x_grid,
                               y_grid,
-                              ref_center_frame,
-                              maxiter=self.m_maxiter,
-                              acc=self.m_accuracy)
+                              ref_center_frame)
 
             x_pos[i] = gauss.x_mean.value
             y_pos[i] = gauss.y_mean.value
@@ -951,10 +875,24 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
 
-        im_shift = ShiftImagesModule(shift_xy=(im_shape[-1] / 2 - .5 - x_center,
-                                               im_shape[-2] / 2 - .5 - y_center),
+        if im_shape[1]%2 == 0:
+            im_add = AddLinesModule(lines=(0, 1, 0, 1),
+                                    name_in="waffle_add",
+                                    image_in_tag=self.m_image_in_port.tag,
+                                    image_out_tag="waffle_add")
+
+            im_add.connect_database(self._m_data_base)
+            im_add.run()
+
+            image_in_tag = "waffle_add"
+
+        else:
+            image_in_tag = self.m_image_in_port.tag
+
+        im_shift = ShiftImagesModule(shift_xy=((im_shape[-1]-1) / 2 - x_center,
+                                               (im_shape[-2]-1) / 2 - y_center),
                                      name_in="waffle_shift",
-                                     image_in_tag=self.m_image_in_port.tag,
+                                     image_in_tag=image_in_tag,
                                      image_out_tag="waffle_shift")
 
         im_shift.connect_database(self._m_data_base)
