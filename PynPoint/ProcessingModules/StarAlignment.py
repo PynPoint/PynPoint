@@ -10,16 +10,14 @@ import numpy as np
 
 from skimage.feature import register_translation
 from skimage.transform import rescale
-from scipy.ndimage import fourier_shift
-from scipy.ndimage import shift
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.ImageResizing import CropImagesModule, AddLinesModule
 from PynPoint.Util.ModuleTools import memory_frames, crop_image, progress, image_center, \
-                                      number_images_port, locate_star
+                                      number_images_port, locate_star, shift_image, \
+                                      image_size_port
 
 
 class StarExtractionModule(ProcessingModule):
@@ -117,7 +115,10 @@ class StarExtractionModule(ProcessingModule):
 
             else:
                 if position.ndim == 1:
-                    center = (int(position[1]), int(position[0]))
+                    if position[0] is None and position[1] is None:
+                        center = None
+                    else:
+                        center = (int(position[1]), int(position[0]))
                     width = int(math.ceil(position[2]/pixscale))
 
                 elif position.ndim == 2:
@@ -291,20 +292,7 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            if self.m_interpolation == "spline":
-                tmp_image = shift(tmp_image, offset, order=5)
-
-            elif self.m_interpolation == "bilinear":
-                tmp_image = shift(tmp_image, offset, order=1)
-
-            elif self.m_interpolation == "fft":
-                tmp_image_spec = fourier_shift(np.fft.fftn(tmp_image), offset)
-                tmp_image = np.fft.ifftn(tmp_image_spec).real
-
-            else:
-                raise ValueError("Interpolation should be spline, bilinear, or fft.")
-
-            return tmp_image
+            return shift_image(tmp_image, offset, self.m_interpolation)
 
         self.apply_function_to_images(_align_image,
                                       self.m_image_in_port,
@@ -557,20 +545,7 @@ class StarCenteringModule(ProcessingModule):
             elif self.m_method == "mean":
                 popt = fit
 
-            if self.m_interpolation == "spline":
-                im_center = shift(image, (-popt[1], -popt[0]), order=5)
-
-            elif self.m_interpolation == "bilinear":
-                im_center = shift(image, (-popt[1], -popt[0]), order=1)
-
-            elif self.m_interpolation == "fft":
-                fft_shift = fourier_shift(np.fft.fftn(image), (-popt[1], -popt[0]))
-                im_center = np.fft.ifftn(fft_shift).real
-
-            else:
-                raise ValueError("Interpolation should be spline, bilinear, or fft.")
-
-            return im_center
+            return shift_image(image, (-popt[1], -popt[0]), self.m_interpolation)
 
         ndim, nimages, npix, frames = _initialize()
 
@@ -649,7 +624,7 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_shift = shift_xy
+        self.m_shift = (shift_xy[1], shift_xy[0])
         self.m_interpolation = interpolation
 
     def run(self):
@@ -660,26 +635,15 @@ class ShiftImagesModule(ProcessingModule):
         :return: None
         """
 
-        def _image_shift(image_in):
-            if self.m_interpolation == "spline":
-                im_center = shift(image_in, (self.m_shift[1], self.m_shift[0]), order=5)
+        def _image_shift(image, shift, interpolation):
 
-            elif self.m_interpolation == "bilinear":
-                im_center = shift(image_in, (self.m_shift[1], self.m_shift[0]), order=1)
-
-            elif self.m_interpolation == "fft":
-                fft_shift = fourier_shift(np.fft.fftn(image_in), (self.m_shift[1], self.m_shift[0]))
-                im_center = np.fft.ifftn(fft_shift).real
-
-            else:
-                raise ValueError("Interpolation should be spline, bilinear, or fft.")
-
-            return im_center
+            return shift_image(image, shift, interpolation)
 
         self.apply_function_to_images(_image_shift,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ShiftImagesModule...")
+                                      "Running ShiftImagesModule...",
+                                      func_args=(self.m_shift, self.m_interpolation))
 
         self.m_image_out_port.add_history_information("Images shifted", str(self.m_shift))
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -734,8 +698,7 @@ class WaffleCenteringModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_center_in_port = self.add_input_port(center_in_tag)
-
-        self.m_image_out_tag = image_out_tag
+        self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_size = size
         self.m_center = (np.floor(center[0]), np.floor(center[1]))
@@ -752,9 +715,15 @@ class WaffleCenteringModule(ProcessingModule):
         :return: None
         """
 
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
         center_ndim = self.m_center_in_port.get_ndim()
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        self.m_size = int(math.ceil(self.m_size/pixscale))
 
         if center_ndim == 2:
             center_frame = self.m_center_in_port.get_all()
@@ -780,8 +749,6 @@ class WaffleCenteringModule(ProcessingModule):
 
         # Loop for 4 waffle spots
         for i in range(4):
-            progress(i, 4, "Running WaffleCenteringModule...")
-
             # Approximate positions of waffle spots
             if self.m_pattern == "x":
                 x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i + 1)))
@@ -871,38 +838,31 @@ class WaffleCenteringModule(ProcessingModule):
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
 
+        nimages = number_images_port(self.m_image_in_port)
+        npix = image_size_port(self.m_image_in_port)[0]
+
+        shift_yx = ((im_shape[-2]-1) / 2 - y_center, (im_shape[-1]-1) / 2 - x_center)
+
+        for i in range(nimages):
+            progress(i, nimages, "Running WaffleCenteringModule...")
+
+            image = self.m_image_in_port[i, ]
+
+            if npix%2 == 0:
+                im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
+                im_tmp[:-1, :-1] = image
+                image = im_tmp
+
+            im_shift = shift_image(image, shift_yx, "spline")
+            im_crop = crop_image(im_shift, None, self.m_size)
+
+            self.m_image_out_port.append(im_crop, data_dim=3)
+
         sys.stdout.write("Running WaffleCenteringModule... [DONE]\n")
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
 
-        if im_shape[1]%2 == 0:
-            im_add = AddLinesModule(lines=(0, 1, 0, 1),
-                                    name_in="waffle_add",
-                                    image_in_tag=self.m_image_in_port.tag,
-                                    image_out_tag="waffle_add")
-
-            im_add.connect_database(self._m_data_base)
-            im_add.run()
-
-            image_in_tag = "waffle_add"
-
-        else:
-            image_in_tag = self.m_image_in_port.tag
-
-        im_shift = ShiftImagesModule(shift_xy=((im_shape[-1]-1) / 2 - x_center,
-                                               (im_shape[-2]-1) / 2 - y_center),
-                                     name_in="waffle_shift",
-                                     image_in_tag=image_in_tag,
-                                     image_out_tag="waffle_shift")
-
-        im_shift.connect_database(self._m_data_base)
-        im_shift.run()
-
-        im_crop = CropImagesModule(size=self.m_size,
-                                   center=None,
-                                   name_in="waffle_crop",
-                                   image_in_tag="waffle_shift",
-                                   image_out_tag=self.m_image_out_tag)
-
-        im_crop.connect_database(self._m_data_base)
-        im_crop.run()
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_history_information("Waffle centering",
+                                                      "position [x,y] = "+str([x_center, y_center]))
+        self.m_image_out_port.close_port()
