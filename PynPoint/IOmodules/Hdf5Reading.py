@@ -1,5 +1,5 @@
 """
-Module for reading HDF5 files that were created using Hdf5WritingModule.
+Module for reading HDF5 files that were created with the Hdf5WritingModule.
 """
 
 import os
@@ -14,12 +14,12 @@ from PynPoint.Util.ModuleTools import progress
 
 class Hdf5ReadingModule(ReadingModule):
     """
-    ***This class was made for reading HDF5 files created by Hdf5WritingModule. Other data can
-    lead to inconsistencies in the PynPoint database.***
-
-    Reads an HDF5 files from the given *input_dir* or the default directory of the Pypeline. A tag
-    dictionary has to be set in order to choose the datasets which will be imported by the module.
-    The module reads static and non-static attributes.
+    Reads an HDF5 file from the given *input_dir* or the default directory of the Pypeline. A tag
+    dictionary has to be set in order to choose the datasets which will be imported into the
+    database. Also the static and non-static attributes are read from the HDF5 file and stored
+    in the database with the corresponding data set. This module should only be used for reading
+    HDF5 files that are created with the Hdf5WritingModule. Reading different type of HDF5 files
+    may lead to inconsistencies in the central database.
     """
 
     def __init__(self,
@@ -32,8 +32,8 @@ class Hdf5ReadingModule(ReadingModule):
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param input_filename: The input file name. It needs to be an HDF5 file. If no HDF5 file is
-                               given all files inside the input location will be imported.
+        :param input_filename: The file name of the HDF5 input file. All files inside the input
+                               location will be imported if no filename is provided.
         :type input_filename: str
         :param input_dir: The directory of the input HDF5 file. If no location is given, the
                           Pypeline default input location is used.
@@ -74,6 +74,7 @@ class Hdf5ReadingModule(ReadingModule):
 
         :return: None
         """
+
         hdf5_file = h5py.File(file_in, mode='r')
 
         for _, entry in enumerate(hdf5_file.keys()):

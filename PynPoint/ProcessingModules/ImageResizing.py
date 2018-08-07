@@ -2,6 +2,7 @@
 Modules with simple pre-processing tools.
 """
 
+import math
 import warnings
 
 import numpy as np
@@ -9,6 +10,7 @@ import numpy as np
 from skimage.transform import rescale
 
 from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.ModuleTools import crop_image
 
 
 class CropImagesModule(ProcessingModule):
@@ -29,7 +31,7 @@ class CropImagesModule(ProcessingModule):
         :type size: float
         :param center: Tuple (x0, y0) with the new image center. Python indexing starts at 0. The
                        center of the input images will be used when *center* is set to *None*.
-        :type center: tuple, int
+        :type center: (int, int)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -49,9 +51,13 @@ class CropImagesModule(ProcessingModule):
         self.m_size = size
         self.m_center = center
 
+        if self.m_center is not None:
+            self.m_center = (self.m_center[1], self.m_center[0]) # (y, x)
+
     def run(self):
         """
-        Run method of the module. Reduces the image size by cropping around an given position.
+        Run method of the module. Decreases the image size by cropping around an given position.
+        The module always returns odd-sized images.
 
         :return: None
         """
@@ -61,35 +67,13 @@ class CropImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_size = int(self.m_size/pixscale)
+        self.m_size = int(math.ceil(self.m_size/pixscale))
 
         def _image_cutting(image_in,
                            size,
                            center):
 
-            if center is None:
-                x_off = (image_in.shape[1] - size) / 2
-                y_off = (image_in.shape[0] - size) / 2
-
-                if size > image_in.shape[0] or size > image_in.shape[1]:
-                    raise ValueError("Input frame resolution smaller than target image resolution.")
-
-                image_out = image_in[y_off:y_off+size, x_off:x_off+size]
-
-            else:
-                x_in = int(center[0] - size/2)
-                y_in = int(center[1] - size/2)
-
-                x_out = int(center[0] + size/2)
-                y_out = int(center[1] + size/2)
-
-                if x_in < 0 or y_in < 0 or x_out > image_in.shape[1] or y_out > image_in.shape[0]:
-                    raise ValueError("Target image resolution does not fit inside the input frame "
-                                     "resolution.")
-
-                image_out = image_in[y_in:y_out, x_in:x_out]
-
-            return image_out
+            return crop_image(image_in, center, size)
 
         self.apply_function_to_images(_image_cutting,
                                       self.m_image_in_port,
@@ -118,7 +102,7 @@ class ScaleImagesModule(ProcessingModule):
         :param scaling: Tuple with the scaling factors for the image shape and pixel values,
                         (scaling_size, scaling_flux). Upsampling and downsampling of the image
                         corresponds to *scaling_size* > 1 and 0 < *scaling_size* < 1, respectively.
-        :type scaling: tuple, float
+        :type scaling: (float, float)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -164,7 +148,9 @@ class ScaleImagesModule(ProcessingModule):
             tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
                                 scale=(scaling_size, scaling_size),
                                 order=5,
-                                mode="reflect")
+                                mode="reflect",
+                                anti_aliasing=True,
+                                multichannel=False)
 
             sum_after = np.sum(tmp_image)
 
@@ -198,7 +184,7 @@ class AddLinesModule(ProcessingModule):
 
         :param lines: Tuple with the number of lines that are added in left, right, bottom, and
                       top direction.
-        :type lines: tuple, int
+        :type lines: (int, int, int, int)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -225,19 +211,9 @@ class AddLinesModule(ProcessingModule):
         """
 
         shape_in = self.m_image_in_port.get_shape()
-        ndim_in = self.m_image_in_port.get_ndim()
 
-        if any(np.asarray(self.m_lines) < 0.):
-            raise ValueError("The lines argument should contain values equal to or larger than "
-                             "zero.")
-
-        if ndim_in == 3:
-            shape_out = (shape_in[1]+int(self.m_lines[2])+int(self.m_lines[3]),
-                         shape_in[2]+int(self.m_lines[0])+int(self.m_lines[1]))
-
-        elif ndim_in == 2:
-            shape_out = (shape_in[0]+int(self.m_lines[2])+int(self.m_lines[3]),
-                         shape_in[1]+int(self.m_lines[0])+int(self.m_lines[1]))
+        shape_out = (shape_in[-2]+int(self.m_lines[2])+int(self.m_lines[3]),
+                     shape_in[-1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
         if shape_out[0] != shape_out[1]:
             warnings.warn("The dimensions of the output images %s are not equal. PynPoint only "
@@ -279,7 +255,7 @@ class RemoveLinesModule(ProcessingModule):
 
         :param lines: Tuple with the number of lines that are removed in left, right, bottom,
                       and top direction.
-        :type lines: tuple, int
+        :type lines: (int, int, int, int)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.

@@ -5,9 +5,9 @@ from setuptools import setup
 setup(
     name='PynPoint',
     version='0.5.1',
-    description='Python package for processing and analysis of high-contrast imaging data',
+    description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
-    author='Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara',
+    author='Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara',
     author_email='tomas.stolker@phys.ethz.ch',
     url='http://pynpoint.ethz.ch',
     packages=['PynPoint',
