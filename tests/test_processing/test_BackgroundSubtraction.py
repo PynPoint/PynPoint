@@ -112,7 +112,6 @@ class TestBackgroundSubtraction(object):
                                                    image_out_tag="simple")
 
         self.pipeline.add_module(simple)
-
         self.pipeline.run_module("simple")
 
         data = self.pipeline.get_data("simple")
@@ -129,7 +128,6 @@ class TestBackgroundSubtraction(object):
                                                image_out_tag="mean2")
 
         self.pipeline.add_module(mean)
-
         self.pipeline.run_module("mean2")
 
         data = self.pipeline.get_data("mean2")
@@ -146,7 +144,6 @@ class TestBackgroundSubtraction(object):
                                                image_out_tag="mean1")
 
         self.pipeline.add_module(mean)
-
         self.pipeline.run_module("mean1")
 
         data = self.pipeline.get_data("mean1")
@@ -174,7 +171,6 @@ class TestBackgroundSubtraction(object):
                                                combine="pca")
 
         self.pipeline.add_module(pca_dither)
-
         self.pipeline.run_module("pca_dither1")
 
         data = self.pipeline.get_data("dither_crop1")
@@ -240,7 +236,6 @@ class TestBackgroundSubtraction(object):
                                                combine="pca")
 
         self.pipeline.add_module(pca_dither)
-
         self.pipeline.run_module("pca_dither2")
 
         data = self.pipeline.get_data("pca_dither2")
@@ -257,7 +252,6 @@ class TestBackgroundSubtraction(object):
                                           mode="both")
 
         self.pipeline.add_module(nodding)
-
         self.pipeline.run_module("nodding")
 
         data = self.pipeline.get_data("nodding")

@@ -20,23 +20,22 @@ class TestPSFpreparation(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir+"star")
+        create_star_data(path=self.test_dir+"data")
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["star"])
+        remove_test_data(self.test_dir, folders=["data"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
-                                 input_dir=self.test_dir+"star")
+                                 input_dir=self.test_dir+"data")
 
         self.pipeline.add_module(read)
-
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -50,7 +49,6 @@ class TestPSFpreparation(object):
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
-
         self.pipeline.run_module("angle")
 
         data = self.pipeline.get_data("header_read/PARANG")
@@ -72,7 +70,6 @@ class TestPSFpreparation(object):
                                     verbose=True)
 
         self.pipeline.add_module(prep)
-
         self.pipeline.run_module("prep")
 
         data = self.pipeline.get_data("prep")
@@ -90,7 +87,6 @@ class TestPSFpreparation(object):
                                    image_out_tag="sdi")
 
         self.pipeline.add_module(sdi)
-
         self.pipeline.run_module("sdi")
 
         data = self.pipeline.get_data("sdi")

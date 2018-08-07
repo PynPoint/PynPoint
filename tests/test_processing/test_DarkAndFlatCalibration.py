@@ -47,7 +47,6 @@ class TestDarkAndFlatCalibration(object):
                                      image_out_tag="dark_cal")
 
         self.pipeline.add_module(dark)
-
         self.pipeline.run_module("dark")
 
         data = self.pipeline.get_data("dark")
@@ -63,7 +62,6 @@ class TestDarkAndFlatCalibration(object):
                                      image_out_tag="flat_cal")
 
         self.pipeline.add_module(flat)
-
         self.pipeline.run_module("flat")
 
         data = self.pipeline.get_data("flat")
