@@ -3,8 +3,13 @@ Functions for Pypeline modules.
 """
 
 import sys
+import math
+
+import cv2
 import numpy as np
 
+from scipy.ndimage import fourier_shift
+from scipy.ndimage import shift
 from scipy.ndimage import rotate
 
 
@@ -41,29 +46,47 @@ def memory_frames(memory, nimages):
 
 def crop_image(image, center, size):
     """
-    Function to crop a square image around a specified position.
+    Function to crop square images around a specified position.
 
-    :param image: Input image.
+    :param image: Input image (2D or 3D).
     :type image: ndarray
-    :param center: Tuple (x0, y0) with the new image center.
-    :type center: tuple, int
-    :param size: Image size (pix) for both dimensions.
+    :param center: Tuple (y, x) with the new image center. The center of the image is used if
+                   set to None.
+    :type center: (int, int)
+    :param size: Image size (pix) for both dimensions. Increased by 1 pixel if size is an even
+                 number.
     :type size: int
 
     :return: Cropped odd-sized image.
     :rtype: ndarray
     """
 
+    if center is None or (center[0] is None and center[1] is None):
+        if image.ndim == 2:
+            center = image_center(image)
+
+        elif image.ndim == 3:
+            center = image_center(image[0, ])
+
     if size%2 == 0:
         size += 1
 
-    x_start = center[0] - (size-1)/2
-    x_end = center[0] + (size-1)/2 + 1
+    x_start = center[1] - (size-1)/2
+    x_end = center[1] + (size-1)/2 + 1
 
-    y_start = center[1] - (size-1)/2
-    y_end = center[1] + (size-1)/2 + 1
+    y_start = center[0] - (size-1)/2
+    y_end = center[0] + (size-1)/2 + 1
 
-    return image[y_start:y_end, x_start:x_end]
+    if x_start < 0 or y_start < 0 or x_end > image.shape[1] or y_end > image.shape[0]:
+        raise ValueError("Target image resolution does not fit inside the input image resolution.")
+
+    if image.ndim == 2:
+        im_crop = np.copy(image[y_start:y_end, x_start:x_end])
+
+    elif image.ndim == 2:
+        im_crop = np.copy(image[:, y_start:y_end, x_start:x_end])
+
+    return im_crop
 
 def number_images_port(port):
     """
@@ -103,6 +126,26 @@ def image_size(images):
         size = (images.shape[1], images.shape[2])
 
     return size
+
+def image_center(image):
+    """
+    Function to get the pixel position of the center of a square image. Note that this position
+    can not be unambiguously defined for an even-sized image.
+
+    :param image: Input image (2D or 3D).
+    :type image: ndarray
+
+    :return: Pixel position of the image center.
+    :rtype: (int, int)
+    """
+
+    if image.shape[-1]%2 == 0:
+        center = (image.shape[-1]/2-1, image.shape[-1]/2-1)
+
+    elif image.shape[-1]%2 == 1:
+        center = ((image.shape[-1]-1)/2, (image.shape[-1]-1)/2)
+
+    return center
 
 def rotate_images(images, angles):
     """
@@ -156,3 +199,65 @@ def create_mask(im_shape, size):
         mask[rr_grid > size[1]] = 0.
 
     return mask
+
+def locate_star(image, center, width, fwhm):
+    """
+    Function to locate the star by finding the brightest pixel.
+
+    :param image: Input image.
+    :type image: ndarray
+    :param center: Pixel center (y, x) of the subframe. The full image is used if set to None.
+    :type center: (int, int)
+    :param width: The width (pixel) of the subframe. The full image is used if set to None.
+    :type fwhm: Full width at half maximum of the Gaussian kernel.
+    :param fwhm: int
+
+    :return: Position (y, x) of the brightest pixel.
+    :rtype: (int, int)
+    """
+
+    if center is not None and width is not None:
+        if center[0] is None and center[1] is None:
+            center = image_center(image)
+
+        image = crop_image(image, center, width)
+
+    sigma = fwhm/math.sqrt(8.*math.log(2.))
+    kernel = (fwhm*2+1, fwhm*2+1)
+    smooth = cv2.GaussianBlur(image, kernel, sigma)
+
+    # argmax[0] is the y position and argmax[1] is the y position
+    argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
+
+    if center is not None and width is not None:
+        argmax[0] += center[0] - (image.shape[0]-1)/2 # y
+        argmax[1] += center[1] - (image.shape[1]-1)/2 # x
+
+    return argmax
+
+def shift_image(image, shift_yx, interpolation, mode='constant'):
+    """
+    Function to shift an image.
+
+    :param images: Input image.
+    :type images: ndarray
+    :param shift_yx: Shift (y, x) to be applied (pixel).
+    :type shift_yx: (float, float)
+    :param interpolation: Interpolation type (spline, bilinear, fft)
+    :type interpolation: str
+
+    :return: Shifted image.
+    :rtype: ndarray
+    """
+
+    if interpolation == "spline":
+        im_center = shift(image, shift_yx, order=5, mode=mode)
+
+    elif interpolation == "bilinear":
+        im_center = shift(image, shift_yx, order=1, mode=mode)
+
+    elif interpolation == "fft":
+        fft_shift = fourier_shift(np.fft.fftn(image), shift_yx)
+        im_center = np.fft.ifftn(fft_shift).real
+
+    return im_center

@@ -3,15 +3,14 @@ Modules with tools for frame selection.
 """
 
 import sys
+import math
 import warnings
 
 import numpy as np
 
-from astropy.nddata import Cutout2D
-
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ModuleTools import progress, memory_frames, locate_star, \
+                                      number_images_port, crop_image
 
 
 class RemoveFramesModule(ProcessingModule):
@@ -264,14 +263,11 @@ class FrameSelectionModule(ProcessingModule):
                          stellar FWHM would be recommended. The position of the aperture has to
                          be specified with *position* when *fwhm=None*.
         :type aperture: float
-        :param position: Subframe that is selected to search for the star. The tuple can contain a
-                         single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
-                         position and size can be defined for each image separately in which case
-                         the tuple should be 2D (nimages x 3). Setting *position* to None will use
-                         the full image to search for the star. If *position=(None, None, size)*
-                         then the center of the image will be used. The value of *size* is not used
-                         when *fwhm=None*.
-        :type position: tuple, float
+        :param position: Subframe that is selected to search for the star. The tuple contains the
+                         center (pix) and size (arcsec) (pos_x, pos_y, size). Setting *position*
+                         to None will use the full image to search for the star. If
+                         *position=(None, None, size)* then the center of the image will be used.
+        :type position: (int, int, float)
 
         :return: None
         """
@@ -293,9 +289,72 @@ class FrameSelectionModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_threshold = threshold
         self.m_position = position
-        self.m_rr_grid = None
 
-    def _initialize(self):
+    def run(self):
+        """
+        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
+        pixel in each image, measures the integrated flux around the brightest pixel, calculates
+        the median and standard deviation of the photometry, and applies sigma clipping to remove
+        low quality images.
+
+        :return: None
+        """
+
+        def _get_aperture(aperture):
+            if aperture[0] == "circular":
+                aperture = (0., aperture[1]/pixscale)
+
+            elif aperture[0] == "annulus" or aperture[0] == "ratio":
+                aperture = (aperture[1]/pixscale, aperture[2]/pixscale)
+
+            return aperture
+
+        def _get_starpos(fwhm, position):
+            starpos = np.zeros((nimages, 2), dtype=np.int64)
+
+            if fwhm is None:
+                starpos[:, 0] = position[0]
+                starpos[:, 1] = position[1]
+
+            else:
+                for i, _ in enumerate(starpos):
+                    starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
+                                                center=position[0:2],
+                                                width=int(math.ceil(position[2]/pixscale)),
+                                                fwhm=int(math.ceil(fwhm/pixscale)))
+
+            return starpos
+
+        def _photometry(images, starpos, aperture):
+            check_pos_in = any(np.floor(starpos[:]-aperture[1]) < 0.)
+            check_pos_out = any(np.ceil(starpos[:]+aperture[1]) > images.shape[0])
+
+            if check_pos_in or check_pos_out:
+                phot = np.nan
+
+            else:
+                im_crop = crop_image(images, starpos, 2*int(math.ceil(aperture[1])))
+
+                npix = im_crop.shape[0]
+
+                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+
+                if self.m_aperture[0] == "circular":
+                    phot = np.sum(im_crop[rr_grid < aperture[1]])
+
+                elif self.m_aperture[0] == "annulus":
+                    phot = np.sum(im_crop[(rr_grid > aperture[0]) &
+                                          (rr_grid < aperture[1])])
+
+                elif self.m_aperture[0] == "ratio":
+                    phot = np.sum(im_crop[rr_grid < aperture[0]]) / \
+                              np.sum(im_crop[(rr_grid > aperture[0]) &
+                                             (rr_grid < aperture[1])])
+
+            return phot
+
         if self.m_image_in_port.tag == self.m_selected_out_tag or \
                 self.m_image_in_port.tag == self.m_removed_out_tag:
             raise ValueError("Input and output ports should have a different tag.")
@@ -305,102 +364,18 @@ class FrameSelectionModule(ProcessingModule):
             self.m_index_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        nimages = number_images_port(self.m_image_in_port)
 
-        if self.m_aperture[0] == "circular":
-            aperture = (0., self.m_aperture[1]/pixscale)
-
-        elif self.m_aperture[0] == "annulus" or self.m_aperture[0] == "ratio":
-            aperture = (self.m_aperture[1]/pixscale, self.m_aperture[2]/pixscale)
-
-        npix = self.m_image_in_port.get_shape()[1]
-
-        if self.m_position is None:
-            self.m_position = (float(npix)/2., float(npix)/2., None)
-
-        elif self.m_position[0] is None and self.m_position[1] is None:
-            self.m_position = (float(npix)/2., float(npix)/2., self.m_position[2])
-
-        return aperture
-
-    def _photometry(self, images, starpos, aperture):
-        check_pos_in = any(np.floor(starpos[:]-aperture[1]) < 0.)
-        check_pos_out = any(np.ceil(starpos[:]+aperture[1]) > images.shape[0])
-
-        if check_pos_in or check_pos_out:
-            phot = np.nan
-
-        else:
-            im_cut = Cutout2D(images,
-                              (starpos[1], starpos[0]),
-                              size=2.*aperture[1]).data
-
-            if self.m_rr_grid is None:
-                npix = im_cut.shape[0]
-
-                if npix%2 == 0:
-                    x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                elif npix%2 == 1:
-                    x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-
-                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-                self.m_rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
-            if self.m_aperture[0] == "circular":
-                phot = np.sum(im_cut[self.m_rr_grid < aperture[1]])
-
-            elif self.m_aperture[0] == "annulus":
-                phot = np.sum(im_cut[(self.m_rr_grid > aperture[0]) &
-                                     (self.m_rr_grid < aperture[1])])
-
-            elif self.m_aperture[0] == "ratio":
-                phot = np.sum(im_cut[self.m_rr_grid < aperture[0]]) / \
-                          np.sum(im_cut[(self.m_rr_grid > aperture[0]) &
-                                        (self.m_rr_grid < aperture[1])])
-
-        return phot
-
-    def run(self):
-        """
-        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
-        pixel in each image, measures the integrated flux around the brightest pixel, calculates
-        the median and standard deviation of the photometry, and applies sigma clipping to remove
-        images that are of poor quality (e.g., due to opening of the AO loop).
-
-        :return: None
-        """
-
-        aperture = self._initialize()
-
-        nimages = self.m_image_in_port.get_shape()[0]
+        aperture = _get_aperture(self.m_aperture)
+        starpos = _get_starpos(self.m_fwhm, self.m_position)
 
         phot = np.zeros(nimages)
-
-        if self.m_fwhm is None:
-            starpos = np.zeros((nimages, 2), dtype=np.int64)
-            starpos[:, 0] = self.m_position[0]
-            starpos[:, 1] = self.m_position[1]
-
-        else:
-            star = StarExtractionModule(name_in="star",
-                                        image_in_tag=self.m_image_in_port.tag,
-                                        image_out_tag=None,
-                                        index_out_tag=None,
-                                        image_size=None,
-                                        fwhm_star=self.m_fwhm,
-                                        position=self.m_position)
-
-            star.connect_database(self._m_data_base)
-            star.run()
-
-            self.m_image_in_port = self.add_input_port(self.m_image_in_port.tag)
-            starpos = self.m_image_in_port.get_attribute("STAR_POSITION")
 
         for i in range(nimages):
             progress(i, nimages, "Running FrameSelectionModule...")
 
             images = self.m_image_in_port[i]
-
-            phot[i] = self._photometry(images, starpos[i, :], aperture)
+            phot[i] = _photometry(images, starpos[i, :], aperture)
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
@@ -409,7 +384,7 @@ class FrameSelectionModule(ProcessingModule):
             phot_ref = np.nanmax(phot)
 
         else:
-            raise ValueError("The method argument should be set to 'median' or 'max'.")
+            raise ValueError("The 'method' should be set to 'median' or 'max'.")
 
         phot_std = np.nanstd(phot)
 
@@ -441,7 +416,7 @@ class FrameSelectionModule(ProcessingModule):
                 remove.run()
 
         else:
-            print "No frames where removed with the frame selection. [WARNING]"
+            print "No frames where removed. [WARNING]"
 
         self.m_image_in_port.close_port()
 
