@@ -841,7 +841,7 @@ class WaffleCenteringModule(ProcessingModule):
         nimages = number_images_port(self.m_image_in_port)
         npix = image_size_port(self.m_image_in_port)[0]
 
-        shift_yx = ((im_shape[-2]-1) / 2 - y_center, (im_shape[-1]-1) / 2 - x_center)
+        shift_yx = ((float(im_shape[-2])-1.)/2. - y_center, (float(im_shape[-1])-1.)/2. - x_center)
 
         for i in range(nimages):
             progress(i, nimages, "Running WaffleCenteringModule...")
@@ -853,6 +853,8 @@ class WaffleCenteringModule(ProcessingModule):
                 im_tmp[:-1, :-1] = image
                 image = im_tmp
 
+                shift_yx = (shift_yx[0] + 0.5, shift_yx[1] + 0.5)
+
             im_shift = shift_image(image, shift_yx, "spline")
             im_crop = crop_image(im_shift, None, self.m_size)
 
@@ -863,6 +865,6 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Waffle centering",
-                                                      "position [x,y] = "+str([x_center, y_center]))
+        history = "position [x, y] = "+str([x_center, y_center])
+        self.m_image_out_port.add_history_information("Waffle centering", history)
         self.m_image_out_port.close_port()
