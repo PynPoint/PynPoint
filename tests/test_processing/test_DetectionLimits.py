@@ -7,7 +7,7 @@ from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.DetectionLimits import ContrastCurveModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
-from PynPoint.Util.TestTools import create_config, create_star_data
+from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -19,34 +19,22 @@ class TestDetectionLimits(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=os.path.dirname(__file__),
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 5., 10., 15.],
-                         parang_end=[5., 10., 15., 20.],
-                         exp_no=[1, 2, 3, 4])
-
+        create_star_data(path=self.test_dir+"data")
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir + 'image'+str(i+1).zfill(2)+'.fits')
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir, folders=["data"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
-                                 image_tag="read")
+                                 image_tag="read",
+                                 input_dir=self.test_dir+"data")
 
         self.pipeline.add_module(read)
-
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -60,7 +48,6 @@ class TestDetectionLimits(object):
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
-
         self.pipeline.run_module("angle")
 
         data = self.pipeline.get_data("header_read/PARANG")

@@ -7,7 +7,7 @@ from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
-from PynPoint.Util.TestTools import create_config, create_fake
+from PynPoint.Util.TestTools import create_config, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -19,7 +19,7 @@ class TestPSFSubtractionPCA(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_fake(file_start=os.path.dirname(__file__)+"/image",
+        create_fake(path=self.test_dir+"data",
                     ndit=[20, 20, 20, 20],
                     nframes=[20, 20, 20, 20],
                     exp_no=[1, 2, 3, 4],
@@ -37,16 +37,13 @@ class TestPSFSubtractionPCA(object):
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir+'image'+str(i+1).zfill(2)+'.fits')
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir, folders=["data"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
-                                 image_tag="read")
+                                 image_tag="read",
+                                 input_dir=self.test_dir+"data")
 
         self.pipeline.add_module(read)
 

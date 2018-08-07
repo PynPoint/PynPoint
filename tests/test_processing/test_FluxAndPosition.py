@@ -11,7 +11,7 @@ from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule, \
                                                        SimplexMinimizationModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
-from PynPoint.Util.TestTools import create_config, create_star_data
+from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -23,31 +23,20 @@ class TestFluxAndPosition(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir,
-                         npix_x=101,
-                         npix_y=101,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 5., 10., 15.],
-                         parang_end=[5., 10., 15., 20.],
-                         exp_no=[1, 2, 3, 4])
-
+        create_star_data(path=self.test_dir+"star", npix_x=101, npix_y=101)
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir+'image'+str(i+1).zfill(2)+'.fits')
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir, folders=["star"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
-                                 image_tag="read")
+                                 image_tag="read",
+                                 input_dir=self.test_dir+"star")
 
         self.pipeline.add_module(read)
 
