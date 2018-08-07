@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 import emcee
 
-from scipy.ndimage import shift, fourier_shift, rotate
+from scipy.ndimage import rotate
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import minimize
 from scipy.stats import t
@@ -22,7 +22,7 @@ from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, image_size_port, \
-                                      number_images_port, create_mask, crop_image
+                                      number_images_port, create_mask, crop_image, shift_image
 from PynPoint.Util.AnalysisTools import false_alarm
 
 
@@ -149,20 +149,7 @@ class FakePlanetModule(ProcessingModule):
         x_shift = radial*math.cos(theta-parang)
         y_shift = radial*math.sin(theta-parang)
 
-        if self.m_interpolation == "spline":
-            psf_shift = shift(psf, (y_shift, x_shift), order=5, mode='reflect')
-
-        elif self.m_interpolation == "bilinear":
-            psf_shift = shift(psf, (y_shift, x_shift), order=1, mode='reflect')
-
-        elif self.m_interpolation == "fft":
-            psf_fft = fourier_shift(np.fft.fftn(psf), (y_shift, x_shift))
-            psf_shift = np.fft.ifftn(psf_fft).real
-
-        else:
-            raise ValueError("Interpolation should be fft, spline, or bilinear.")
-
-        return psf_shift
+        return shift_image(psf, (y_shift, x_shift), self.m_interpolation, mode='reflect')
 
     def run(self):
         """

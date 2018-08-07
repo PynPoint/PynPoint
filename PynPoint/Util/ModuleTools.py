@@ -8,6 +8,8 @@ import math
 import cv2
 import numpy as np
 
+from scipy.ndimage import fourier_shift
+from scipy.ndimage import shift
 from scipy.ndimage import rotate
 
 
@@ -200,7 +202,7 @@ def create_mask(im_shape, size):
 
 def locate_star(image, center, width, fwhm):
     """
-    Locate the star by finding the brightest pixel. Optionally a subframe can be selected.
+    Function to locate the star by finding the brightest pixel.
 
     :param image: Input image.
     :type image: ndarray
@@ -232,3 +234,30 @@ def locate_star(image, center, width, fwhm):
         argmax[1] += center[1] - (image.shape[1]-1)/2 # x
 
     return argmax
+
+def shift_image(image, shift_yx, interpolation, mode='constant'):
+    """
+    Function to shift an image.
+
+    :param images: Input image.
+    :type images: ndarray
+    :param shift_yx: Shift (y, x) to be applied (pixel).
+    :type shift_yx: (float, float)
+    :param interpolation: Interpolation type (spline, bilinear, fft)
+    :type interpolation: str
+
+    :return: Shifted image.
+    :rtype: ndarray
+    """
+
+    if interpolation == "spline":
+        im_center = shift(image, shift_yx, order=5, mode=mode)
+
+    elif interpolation == "bilinear":
+        im_center = shift(image, shift_yx, order=1, mode=mode)
+
+    elif interpolation == "fft":
+        fft_shift = fourier_shift(np.fft.fftn(image), shift_yx)
+        im_center = np.fft.ifftn(fft_shift).real
+
+    return im_center

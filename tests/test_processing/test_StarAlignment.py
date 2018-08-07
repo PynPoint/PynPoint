@@ -247,17 +247,10 @@ class TestStarAlignment(object):
 
         self.pipeline.run_module("waffle")
 
-        data = self.pipeline.get_data("waffle_add")
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 9.905950955586846e-05, rtol=1e-4, atol=0.)
-        assert data.shape == (10, 101, 101)
-
-        data = self.pipeline.get_data("waffle_shift")
-        assert np.allclose(data[0, 49, 49], 0.09798421722910174, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 9.896729989589664e-05, rtol=1e-4, atol=0.)
-        assert data.shape == (10, 101, 101)
-
         data = self.pipeline.get_data("center2")
         assert np.allclose(data[0, 36, 36], 0.09798421722910174, rtol=1e-4, atol=0.)
         assert np.allclose(np.mean(data), 0.00017948513276825522, rtol=1e-4, atol=0.)
         assert data.shape == (10, 75, 75)
+
+        attribute = self.pipeline.get_attribute("center2", "History: Waffle centering")
+        assert attribute == "position [x,y] = [49.9983779225579, 50.00005968818076]"
