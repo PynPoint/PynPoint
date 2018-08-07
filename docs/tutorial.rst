@@ -288,17 +288,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(extract)
 
-13. Make the images odd sized:
-    ::
-
-        odd = RemoveLinesModule(lines=(0,1,0,1),
-                                name_in="odd",
-                                image_in_tag="extract",
-                                image_out_tag="odd")
-
-        pipeline.add_module(odd)
-
-14. Align the images with a cross-correlation:
+13. Align the images with a cross-correlation:
     ::
 
         align = StarAlignmentModule(name_in="align",
@@ -312,7 +302,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(align)
 
-15. Center the images with subpixel precision by applying a constant shift:
+14. Center the images with subpixel precision by applying a constant shift:
     ::
 
         center = StarCenteringModule(name_in="center",
@@ -328,7 +318,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(center)
 
-16. Stack by 100 images:
+15. Stack by 100 images:
     ::
 
         stack = StackAndSubsetModule(name_in="stack",
@@ -339,7 +329,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(stack)
 
-17. Prepare the data for PSF subtraction:
+16. Prepare the data for PSF subtraction:
     ::
 
         prep = PSFpreparationModule(name_in="prep",
@@ -354,7 +344,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(prep)
 
-18. PSF subtraction with PCA:
+17. PSF subtraction with PCA:
     ::
 
         pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 51, 1),
@@ -369,7 +359,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
         pipeline.add_module(pca)
 
-19. Write the mean residuals to a FITS file:
+18. Write the mean residuals to a FITS file:
     ::
 
     	write = FitsWritingModule(name_in="write",
@@ -380,7 +370,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     	pipeline.add_module(write)
 
-20. And finally, run the pipeline:
+19. And finally, run the pipeline:
     ::
 
     	pipeline.run()
