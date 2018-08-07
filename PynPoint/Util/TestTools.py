@@ -5,6 +5,7 @@ Functions for the test cases.
 import os
 import math
 import fileinput
+import shutil
 
 import h5py
 import numpy as np
@@ -159,10 +160,13 @@ def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
     hdu.data = image
     hdu.writeto(filename)
 
-def create_fake(file_start, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, contrast):
+def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, contrast):
     """
     Create ADI test data with fake planets.
     """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     parang = []
     for i, item in enumerate(angles):
@@ -199,10 +203,18 @@ def create_fake(file_start, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, s
 
             count += 1
 
-        filename = file_start+str(j+1).zfill(2)+'.fits'
+        filename = os.path.join(path, "image"+str(j+1).zfill(2)+'.fits')
         create_fits(filename, image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
-def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp_no, noise=True):
+def create_star_data(path,
+                     npix_x=100,
+                     npix_y=100,
+                     x0=[50., 50., 50., 50.],
+                     y0=[50., 50., 50., 50.],
+                     parang_start=[0., 5., 10., 15.],
+                     parang_end=[5., 10., 15., 20.],
+                     exp_no=[1, 2, 3, 4],
+                     noise=True):
     """
     Create data with a stellar PSF and Gaussian noise.
     """
@@ -210,6 +222,9 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp
     fwhm = 3
     ndit = 10
     naxis3 = ndit
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     np.random.seed(1)
 
@@ -243,6 +258,9 @@ def create_waffle_data(path, npix, x_waffle, y_waffle):
     Create data with waffle spots and Gaussian noise.
     """
 
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     fwhm = 3
 
     sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
@@ -267,3 +285,20 @@ def create_waffle_data(path, npix, x_waffle, y_waffle):
     header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
     hdu.data = image
     hdu.writeto(os.path.join(path, 'image01.fits'))
+
+def remove_test_data(path, folders=None, files=None):
+    """
+    Function to remove data created by the test cases.
+    """
+
+    os.remove(path+'PynPoint_database.hdf5')
+    os.remove(path+'PynPoint_config.ini')
+
+    if folders is not None:
+        for item in folders:
+            shutil.rmtree(path+item)
+
+    if files is not None:
+        for item in files:
+            os.remove(path+item)
+            

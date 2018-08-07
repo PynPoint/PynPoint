@@ -9,7 +9,7 @@ from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtr
                                                              SimpleBackgroundSubtractionModule, \
                                                              NoddingBackgroundModule, \
                                                              DitheringBackgroundModule
-from PynPoint.Util.TestTools import create_config, create_fake
+from PynPoint.Util.TestTools import create_config, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -21,11 +21,7 @@ class TestBackgroundSubtraction(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        os.makedirs(self.test_dir+"dither")
-        os.makedirs(self.test_dir+"star")
-        os.makedirs(self.test_dir+"sky")
-
-        create_fake(file_start=self.test_dir+"dither/dither",
+        create_fake(path=self.test_dir+"dither",
                     ndit=[20, 20, 20, 20],
                     nframes=[20, 20, 20, 20],
                     exp_no=[1, 2, 3, 4],
@@ -37,7 +33,7 @@ class TestBackgroundSubtraction(object):
                     sep=None,
                     contrast=None)
 
-        create_fake(file_start=self.test_dir+"star/star",
+        create_fake(path=self.test_dir+"star",
                     ndit=[10, 10, 10, 10],
                     nframes=[10, 10, 10, 10],
                     exp_no=[1, 3, 5, 7],
@@ -49,7 +45,7 @@ class TestBackgroundSubtraction(object):
                     sep=None,
                     contrast=None)
 
-        create_fake(file_start=self.test_dir+"sky/sky",
+        create_fake(path=self.test_dir+"sky",
                     ndit=[5, 5, 5, 5],
                     nframes=[5, 5, 5, 5],
                     exp_no=[2, 4, 6, 8],
@@ -67,17 +63,7 @@ class TestBackgroundSubtraction(object):
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir+'dither/dither'+str(i+1).zfill(2)+'.fits')
-            os.remove(self.test_dir+'star/star'+str(i+1).zfill(2)+'.fits')
-            os.remove(self.test_dir+'sky/sky'+str(i+1).zfill(2)+'.fits')
-
-        os.rmdir(self.test_dir+'dither')
-        os.rmdir(self.test_dir+'star')
-        os.rmdir(self.test_dir+'sky')
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir, folders=["dither", "star", "sky"])
 
     def test_read_data(self):
 

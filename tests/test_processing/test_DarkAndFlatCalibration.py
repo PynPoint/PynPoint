@@ -7,7 +7,7 @@ import numpy as np
 from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
                                                               FlatCalibrationModule
-from PynPoint.Util.TestTools import create_config
+from PynPoint.Util.TestTools import create_config, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -19,15 +19,13 @@ class TestDarkAndFlatCalibration(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-
         np.random.seed(1)
 
         images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
         dark = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
         flat = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
 
-        h5f = h5py.File(file_in, "w")
+        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "w")
         h5f.create_dataset("images", data=images)
         h5f.create_dataset("dark", data=dark)
         h5f.create_dataset("flat", data=flat)
@@ -39,8 +37,7 @@ class TestDarkAndFlatCalibration(object):
 
     def teardown_class(self):
 
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir)
 
     def test_dark_calibration(self):
 

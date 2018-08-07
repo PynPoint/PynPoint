@@ -10,7 +10,8 @@ from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, \
                                                      ShiftImagesModule, \
                                                      StarCenteringModule, \
                                                      WaffleCenteringModule
-from PynPoint.Util.TestTools import create_config, create_star_data, create_waffle_data
+from PynPoint.Util.TestTools import create_config, create_star_data, create_waffle_data, \
+                                    remove_test_data
 
 warnings.simplefilter("always")
 
@@ -21,12 +22,6 @@ class TestStarAlignment(object):
     def setup_class(self):
 
         self.test_dir = os.path.dirname(__file__) + "/"
-
-        os.makedirs(self.test_dir+"dither")
-        os.makedirs(self.test_dir+"star_odd")
-        os.makedirs(self.test_dir+"star_even")
-        os.makedirs(self.test_dir+"waffle_odd")
-        os.makedirs(self.test_dir+"waffle_even")
 
         create_star_data(path=self.test_dir+"dither",
                          npix_x=100,
@@ -73,21 +68,7 @@ class TestStarAlignment(object):
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir+'dither/image'+str(i+1).zfill(2)+'.fits')
-        os.remove(self.test_dir+'star_odd/image01.fits')
-        os.remove(self.test_dir+'star_even/image01.fits')
-        os.remove(self.test_dir+'waffle_odd/image01.fits')
-        os.remove(self.test_dir+'waffle_even/image01.fits')
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
-
-        os.rmdir(self.test_dir+"dither")
-        os.rmdir(self.test_dir+"star_odd")
-        os.rmdir(self.test_dir+"star_even")
-        os.rmdir(self.test_dir+"waffle_odd")
-        os.rmdir(self.test_dir+"waffle_even")
+        remove_test_data(self.test_dir, folders=["dither", "star_odd", "star_even", "waffle_odd", "waffle_even"])
 
     def test_read_data(self):
 
