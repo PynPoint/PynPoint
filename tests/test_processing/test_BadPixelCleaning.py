@@ -8,7 +8,7 @@ from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, \
                                                         BadPixelMapModule, \
                                                         BadPixelInterpolationModule
-from PynPoint.Util.TestTools import create_config
+from PynPoint.Util.TestTools import create_config, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -19,8 +19,6 @@ class TestBadPixelCleaning(object):
     def setup_class(self):
 
         self.test_dir = os.path.dirname(__file__) + "/"
-
-        file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
 
         np.random.seed(1)
         images = np.random.normal(loc=0, scale=2e-4, size=(40, 100, 100))
@@ -40,7 +38,7 @@ class TestBadPixelCleaning(object):
         flat[:, 22, 22] = -1.
         flat[:, 24, 24] = -1.
 
-        h5f = h5py.File(file_in, "w")
+        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "w")
         h5f.create_dataset("images", data=images)
         h5f.create_dataset("dark", data=dark)
         h5f.create_dataset("flat", data=flat)
@@ -53,8 +51,7 @@ class TestBadPixelCleaning(object):
 
     def teardown_class(self):
 
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir)
 
     def test_bad_pixel_sigma_filter(self):
 

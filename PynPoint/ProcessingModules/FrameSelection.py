@@ -300,6 +300,31 @@ class FrameSelectionModule(ProcessingModule):
         :return: None
         """
 
+        def _get_aperture(aperture):
+            if aperture[0] == "circular":
+                aperture = (0., aperture[1]/pixscale)
+
+            elif aperture[0] == "annulus" or aperture[0] == "ratio":
+                aperture = (aperture[1]/pixscale, aperture[2]/pixscale)
+
+            return aperture
+
+        def _get_starpos(fwhm, position):
+            starpos = np.zeros((nimages, 2), dtype=np.int64)
+
+            if fwhm is None:
+                starpos[:, 0] = position[0]
+                starpos[:, 1] = position[1]
+
+            else:
+                for i, _ in enumerate(starpos):
+                    starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
+                                                center=position[0:2],
+                                                width=int(math.ceil(position[2]/pixscale)),
+                                                fwhm=int(math.ceil(fwhm/pixscale)))
+
+            return starpos
+
         def _photometry(images, starpos, aperture):
             check_pos_in = any(np.floor(starpos[:]-aperture[1]) < 0.)
             check_pos_out = any(np.ceil(starpos[:]+aperture[1]) > images.shape[0])
@@ -341,31 +366,15 @@ class FrameSelectionModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         nimages = number_images_port(self.m_image_in_port)
 
-        if self.m_aperture[0] == "circular":
-            aperture = (0., self.m_aperture[1]/pixscale)
-
-        elif self.m_aperture[0] == "annulus" or self.m_aperture[0] == "ratio":
-            aperture = (self.m_aperture[1]/pixscale, self.m_aperture[2]/pixscale)
+        aperture = _get_aperture(self.m_aperture)
+        starpos = _get_starpos(self.m_fwhm, self.m_position)
 
         phot = np.zeros(nimages)
-        starpos = np.zeros((nimages, 2), dtype=np.int64)
-
-        if self.m_fwhm is None:
-            starpos[:, 0] = self.m_position[0]
-            starpos[:, 1] = self.m_position[1]
-
-        else:
-            for i, _ in enumerate(starpos):
-                starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
-                                            center=self.m_position[0:2],
-                                            width=int(math.ceil(self.m_position[2]/pixscale)),
-                                            fwhm=int(math.ceil(self.m_fwhm/pixscale)))
 
         for i in range(nimages):
             progress(i, nimages, "Running FrameSelectionModule...")
 
             images = self.m_image_in_port[i]
-
             phot[i] = _photometry(images, starpos[i, :], aperture)
 
         if self.m_method == "median":

@@ -17,7 +17,7 @@ from PynPoint.ProcessingModules.StarAlignment import StarExtractionModule, \
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.ProcessingModules.FrameSelection import RemoveLastFrameModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule
-from PynPoint.Util.TestTools import create_config, create_fits, create_fake
+from PynPoint.Util.TestTools import create_config, create_fits, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -29,13 +29,9 @@ class TestDocumentation(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        os.makedirs(self.test_dir + "adi")
-        os.makedirs(self.test_dir + "dark")
-        os.makedirs(self.test_dir + "flat")
+        # science
 
-        # SCIENCE
-
-        create_fake(file_start=self.test_dir+'adi/adi',
+        create_fake(path=self.test_dir+'adi',
                     ndit=[22, 17, 21, 18],
                     nframes=[23, 18, 22, 19],
                     exp_no=[1, 2, 3, 4],
@@ -47,7 +43,9 @@ class TestDocumentation(object):
                     sep=7.,
                     contrast=1e-2)
 
-        # DARK
+        # dark
+
+        os.makedirs(self.test_dir + "dark")
 
         ndit = [3, 3, 5, 5]
         parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
@@ -60,7 +58,9 @@ class TestDocumentation(object):
             filename = self.test_dir+'dark/dark'+str(j+1).zfill(2)+'.fits'
             create_fits(filename, image, ndit[j], 0, parang[j], 0., 0.)
 
-        # FLAT
+        # flat
+
+        os.makedirs(self.test_dir + "flat")
 
         ndit = [3, 3, 5, 5]
         parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
@@ -79,34 +79,23 @@ class TestDocumentation(object):
 
     def teardown_class(self):
 
-        for i in range(4):
-            os.remove(self.test_dir+'adi/adi'+str(i+1).zfill(2)+'.fits')
-            os.remove(self.test_dir+'dark/dark'+str(i+1).zfill(2)+'.fits')
-            os.remove(self.test_dir+'flat/flat'+str(i+1).zfill(2)+'.fits')
-
-        os.rmdir(self.test_dir+'adi')
-        os.rmdir(self.test_dir+'dark')
-        os.rmdir(self.test_dir+'flat')
-
-        os.remove(self.test_dir+'test.fits')
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-        os.remove(self.test_dir+'PynPoint_config.ini')
+        remove_test_data(self.test_dir, folders=["adi", "dark", "flat"], files=["test.fits"])
 
     def test_read_data(self):
         read_science = FitsReadingModule(name_in="read_science",
-                                         input_dir=self.test_dir+"adi/",
+                                         input_dir=self.test_dir+"adi",
                                          image_tag="im_arr")
 
         self.pipeline.add_module(read_science)
 
         read_dark = FitsReadingModule(name_in="read_dark",
-                                      input_dir=self.test_dir+"dark/",
+                                      input_dir=self.test_dir+"dark",
                                       image_tag="dark_arr")
 
         self.pipeline.add_module(read_dark)
 
         read_flat = FitsReadingModule(name_in="read_flat",
-                                      input_dir=self.test_dir+"flat/",
+                                      input_dir=self.test_dir+"flat",
                                       image_tag="flat_arr")
 
         self.pipeline.add_module(read_flat)
