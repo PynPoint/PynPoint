@@ -23,8 +23,10 @@ class TestStarAlignment(object):
         self.test_dir = os.path.dirname(__file__) + "/"
 
         os.makedirs(self.test_dir+"dither")
-        os.makedirs(self.test_dir+"star")
-        os.makedirs(self.test_dir+"waffle")
+        os.makedirs(self.test_dir+"star_odd")
+        os.makedirs(self.test_dir+"star_even")
+        os.makedirs(self.test_dir+"waffle_odd")
+        os.makedirs(self.test_dir+"waffle_even")
 
         create_star_data(path=self.test_dir+"dither",
                          npix_x=100,
@@ -35,16 +37,35 @@ class TestStarAlignment(object):
                          parang_end=[25., 50., 75., 100.],
                          exp_no=[1, 2, 3, 4])
 
-        create_star_data(path=self.test_dir+"star",
-                         npix_x=100,
-                         npix_y=100,
+        create_star_data(path=self.test_dir+"star_odd",
+                         npix_x=101,
+                         npix_y=101,
                          x0=[50],
                          y0=[50],
                          parang_start=[0.],
                          parang_end=[25.],
-                         exp_no=[1])
+                         exp_no=[1],
+                         noise=False)
 
-        create_waffle_data(path=self.test_dir+"waffle")
+        create_star_data(path=self.test_dir+"star_even",
+                         npix_x=100,
+                         npix_y=100,
+                         x0=[49.5],
+                         y0=[49.5],
+                         parang_start=[0.],
+                         parang_end=[25.],
+                         exp_no=[1],
+                         noise=False)
+
+        create_waffle_data(path=self.test_dir+"waffle_odd",
+                           npix=101,
+                           x_waffle=[20., 20., 80., 80.],
+                           y_waffle=[20., 80., 80., 20.])
+
+        create_waffle_data(path=self.test_dir+"waffle_even",
+                           npix=100,
+                           x_waffle=[20., 20., 79., 79.],
+                           y_waffle=[20., 79., 79., 20.])
 
         create_config(self.test_dir+"PynPoint_config.ini")
 
@@ -54,15 +75,19 @@ class TestStarAlignment(object):
 
         for i in range(4):
             os.remove(self.test_dir+'dither/image'+str(i+1).zfill(2)+'.fits')
-        os.remove(self.test_dir+'star/image01.fits')
-        os.remove(self.test_dir+'waffle/image01.fits')
+        os.remove(self.test_dir+'star_odd/image01.fits')
+        os.remove(self.test_dir+'star_even/image01.fits')
+        os.remove(self.test_dir+'waffle_odd/image01.fits')
+        os.remove(self.test_dir+'waffle_even/image01.fits')
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
         os.remove(self.test_dir+'PynPoint_config.ini')
 
         os.rmdir(self.test_dir+"dither")
-        os.rmdir(self.test_dir+"star")
-        os.rmdir(self.test_dir+"waffle")
+        os.rmdir(self.test_dir+"star_odd")
+        os.rmdir(self.test_dir+"star_even")
+        os.rmdir(self.test_dir+"waffle_odd")
+        os.rmdir(self.test_dir+"waffle_even")
 
     def test_read_data(self):
 
@@ -75,16 +100,32 @@ class TestStarAlignment(object):
         self.pipeline.add_module(read)
 
         read = FitsReadingModule(name_in="read2",
-                                 image_tag="waffle",
-                                 input_dir=self.test_dir+"waffle",
+                                 image_tag="waffle_odd",
+                                 input_dir=self.test_dir+"waffle_odd",
                                  overwrite=True,
                                  check=True)
 
         self.pipeline.add_module(read)
 
         read = FitsReadingModule(name_in="read3",
-                                 image_tag="star",
-                                 input_dir=self.test_dir+"star",
+                                 image_tag="waffle_even",
+                                 input_dir=self.test_dir+"waffle_even",
+                                 overwrite=True,
+                                 check=True)
+
+        self.pipeline.add_module(read)
+
+        read = FitsReadingModule(name_in="read4",
+                                 image_tag="star_odd",
+                                 input_dir=self.test_dir+"star_odd",
+                                 overwrite=True,
+                                 check=True)
+
+        self.pipeline.add_module(read)
+
+        read = FitsReadingModule(name_in="read5",
+                                 image_tag="star_even",
+                                 input_dir=self.test_dir+"star_even",
                                  overwrite=True,
                                  check=True)
 
@@ -93,24 +134,42 @@ class TestStarAlignment(object):
         self.pipeline.run_module("read1")
         self.pipeline.run_module("read2")
         self.pipeline.run_module("read3")
+        self.pipeline.run_module("read4")
+        self.pipeline.run_module("read5")
 
         data = self.pipeline.get_data("dither")
         assert np.allclose(data[0, 75, 25], 0.09812948027289994, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-        data = self.pipeline.get_data("star")
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010105060569794142, rtol=1e-4, atol=0.)
-        assert data.shape == (10, 100, 100)
+        data = self.pipeline.get_data("waffle_odd")
+        assert np.allclose(data[0, 20, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 20, 80], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 80, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 80, 80], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.0003921184197627874, rtol=1e-4, atol=0.)
+        assert data.shape == (1, 101, 101)
 
-        data = self.pipeline.get_data("waffle")
-        assert np.allclose(data[0, 20, 20], 0.0976950339382612, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 20, 80], 0.09801520849082404, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 80, 20], 0.09805336380096273, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 80, 80], 0.09787928233000306, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.00039799422656987266, rtol=1e-4, atol=0.)
+        data = self.pipeline.get_data("waffle_even")
+        assert np.allclose(data[0, 20, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 20, 79], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 79, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 79, 79], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.00040000000000001953, rtol=1e-4, atol=0.)
         assert data.shape == (1, 100, 100)
+
+        data = self.pipeline.get_data("star_odd")
+        assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 9.80296049406969e-05, rtol=1e-4, atol=0.)
+        assert data.shape == (10, 101, 101)
+
+        data = self.pipeline.get_data("star_even")
+        assert np.allclose(data[0, 49, 49], 0.08406157361512759, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 49, 50], 0.08406157361512759, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 50, 49], 0.08406157361512759, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.08406157361512759, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 9.99999999999951e-05, rtol=1e-4, atol=0.)
+        assert data.shape == (10, 100, 100)
 
     def test_star_extract_full(self):
 
@@ -207,7 +266,7 @@ class TestStarAlignment(object):
 
         center = StarCenteringModule(name_in="center",
                                      image_in_tag="shift",
-                                     image_out_tag="center1",
+                                     image_out_tag="center",
                                      mask_out_tag="mask",
                                      fit_out_tag="center_fit",
                                      method="full",
@@ -220,7 +279,7 @@ class TestStarAlignment(object):
 
         self.pipeline.run_module("center")
 
-        data = self.pipeline.get_data("center1")
+        data = self.pipeline.get_data("center")
         assert np.allclose(data[0, 39, 39], 0.023563039729627436, rtol=1e-4, atol=0.)
         assert np.allclose(np.mean(data), 0.00016430629447868552, rtol=1e-4, atol=0.)
         assert data.shape == (40, 78, 78)
@@ -231,26 +290,59 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00010827527282995304, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_waffle_center(self):
+    def test_waffle_center_odd(self):
 
         waffle = WaffleCenteringModule(size=2.,
                                        center=(50, 50),
-                                       name_in="waffle",
-                                       image_in_tag="star",
-                                       center_in_tag="waffle",
-                                       image_out_tag="center2",
+                                       name_in="waffle_odd",
+                                       image_in_tag="star_odd",
+                                       center_in_tag="waffle_odd",
+                                       image_out_tag="center_odd",
                                        radius=42.5,
                                        pattern="x",
                                        sigma=5.)
 
         self.pipeline.add_module(waffle)
 
-        self.pipeline.run_module("waffle")
+        self.pipeline.run_module("waffle_odd")
 
-        data = self.pipeline.get_data("center2")
-        assert np.allclose(data[0, 36, 36], 0.09798421722910174, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.00017948513276825522, rtol=1e-4, atol=0.)
+        data = self.pipeline.get_data("star_odd")
+        assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=limit, atol=0.)
+
+        data = self.pipeline.get_data("center_odd")
+        assert np.allclose(data[0, 37, 37], 0.0980602667345118, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
         assert data.shape == (10, 75, 75)
 
-        attribute = self.pipeline.get_attribute("center2", "History: Waffle centering")
-        assert attribute == "position [x,y] = [49.9983779225579, 50.00005968818076]"
+        attribute = self.pipeline.get_attribute("center_odd", "History: Waffle centering")
+        assert attribute == "position [x, y] = [50.0, 50.0]"
+
+    def test_waffle_center_even(self):
+
+        waffle = WaffleCenteringModule(size=2.,
+                                       center=(50, 50),
+                                       name_in="waffle_even",
+                                       image_in_tag="star_even",
+                                       center_in_tag="waffle_even",
+                                       image_out_tag="center_even",
+                                       radius=42.5,
+                                       pattern="x",
+                                       sigma=5.)
+
+        self.pipeline.add_module(waffle)
+
+        self.pipeline.run_module("waffle_even")
+
+        data = self.pipeline.get_data("star_even")
+        assert np.allclose(data[0, 49, 49], 0.08406157361512759, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 49, 50], 0.08406157361512759, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 49], 0.08406157361512759, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.08406157361512759, rtol=limit, atol=0.)
+
+        data = self.pipeline.get_data("center_even")
+        assert np.allclose(data[0, 37, 37], 0.09778822940550569, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
+        assert data.shape == (10, 75, 75)
+
+        attribute = self.pipeline.get_attribute("center_even", "History: Waffle centering")
+        assert attribute == "position [x, y] = [49.5, 49.5]"
