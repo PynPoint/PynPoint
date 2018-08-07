@@ -23,20 +23,20 @@ class TestFluxAndPosition(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir+"star", npix_x=101, npix_y=101)
+        create_star_data(path=self.test_dir+"flux", npix_x=101, npix_y=101)
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["star"])
+        remove_test_data(self.test_dir, folders=["flux"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
-                                 input_dir=self.test_dir+"star")
+                                 input_dir=self.test_dir+"flux")
 
         self.pipeline.add_module(read)
         self.pipeline.run_module("read")
