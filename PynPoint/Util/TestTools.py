@@ -202,7 +202,7 @@ def create_fake(file_start, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, s
         filename = file_start+str(j+1).zfill(2)+'.fits'
         create_fits(filename, image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
-def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp_no):
+def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp_no, noise=True):
     """
     Create data with a stellar PSF and Gaussian noise.
     """
@@ -222,9 +222,9 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp
         image = np.zeros((naxis3, npix_x, npix_y))
 
         for i in range(ndit):
-            star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
-            noise = np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
-            image[i, ] = star+noise
+            image[i, ] = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
+            if noise:
+                image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
 
         hdu = fits.PrimaryHDU()
         header = hdu.header
@@ -238,16 +238,12 @@ def create_star_data(path, npix_x, npix_y, x0, y0, parang_start, parang_end, exp
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
 
-def create_waffle_data(path):
+def create_waffle_data(path, npix, x_waffle, y_waffle):
     """
     Create data with waffle spots and Gaussian noise.
     """
 
     fwhm = 3
-    npix = 100
-
-    x0 = [20., 20., 80., 80.]
-    y0 = [20., 80., 80., 20.]
 
     sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
 
@@ -256,11 +252,9 @@ def create_waffle_data(path):
 
     image = np.zeros((npix, npix))
 
-    for j, _ in enumerate(x0):
-        star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
+    for j, _ in enumerate(x_waffle):
+        star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x_waffle[j])**2 + (yy-y_waffle[j])**2) / (2.*sigma**2))
         image += star
-
-    image += np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
 
     hdu = fits.PrimaryHDU()
     header = hdu.header
