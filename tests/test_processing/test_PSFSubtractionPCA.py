@@ -19,7 +19,7 @@ class TestPSFSubtractionPCA(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_fake(path=self.test_dir+"data",
+        create_fake(path=self.test_dir+"star",
                     ndit=[20, 20, 20, 20],
                     nframes=[20, 20, 20, 20],
                     exp_no=[1, 2, 3, 4],
@@ -37,16 +37,15 @@ class TestPSFSubtractionPCA(object):
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["data"])
+        remove_test_data(self.test_dir, folders=["star"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
-                                 input_dir=self.test_dir+"data")
+                                 input_dir=self.test_dir+"star")
 
         self.pipeline.add_module(read)
-
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -60,7 +59,6 @@ class TestPSFSubtractionPCA(object):
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
-
         self.pipeline.run_module("angle")
 
         data = self.pipeline.get_data("header_read/PARANG")
@@ -84,7 +82,6 @@ class TestPSFSubtractionPCA(object):
                                       verbose=True)
 
         self.pipeline.add_module(pca)
-
         self.pipeline.run_module("pca")
 
         data = self.pipeline.get_data("res_mean")

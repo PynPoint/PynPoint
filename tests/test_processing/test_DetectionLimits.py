@@ -77,7 +77,6 @@ class TestDetectionLimits(object):
                                        extra_rot=0.)
 
         self.pipeline.add_module(contrast)
-
         self.pipeline.run_module("contrast")
 
         data = self.pipeline.get_data("pca")

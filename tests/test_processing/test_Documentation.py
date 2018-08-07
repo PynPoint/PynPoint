@@ -123,7 +123,6 @@ class TestDocumentation(object):
                                             image_out_tag="im_arr_last")
 
         self.pipeline.add_module(remove_last)
-
         self.pipeline.run_module("last_frame")
 
         data = self.pipeline.get_data("im_arr_last")
@@ -138,7 +137,6 @@ class TestDocumentation(object):
                                     image_out_tag="im_arr_cut")
 
         self.pipeline.add_module(cutting)
-
         self.pipeline.run_module("cut_lines")
 
         data = self.pipeline.get_data("im_arr_cut")
@@ -153,7 +151,6 @@ class TestDocumentation(object):
                                          image_out_tag="dark_sub_arr")
 
         self.pipeline.add_module(dark_sub)
-
         self.pipeline.run_module("dark_subtraction")
 
         data = self.pipeline.get_data("dark_sub_arr")
@@ -169,7 +166,6 @@ class TestDocumentation(object):
 
 
         self.pipeline.add_module(flat_sub)
-
         self.pipeline.run_module("flat_subtraction")
 
         data = self.pipeline.get_data("flat_sub_arr")
@@ -186,7 +182,6 @@ class TestDocumentation(object):
 
 
         self.pipeline.add_module(bg_subtraction)
-
         self.pipeline.run_module("background_subtraction")
 
         data = self.pipeline.get_data("bg_cleaned_arr")
@@ -200,7 +195,6 @@ class TestDocumentation(object):
                                                 image_out_tag="bp_cleaned_arr")
 
         self.pipeline.add_module(bp_cleaning)
-
         self.pipeline.run_module("sigma_filtering")
 
         data = self.pipeline.get_data("bp_cleaned_arr")
@@ -217,7 +211,6 @@ class TestDocumentation(object):
                                           position=None)
 
         self.pipeline.add_module(extraction)
-
         self.pipeline.run_module("star_cutting")
 
         data = self.pipeline.get_data("im_arr_extract")
@@ -258,7 +251,6 @@ class TestDocumentation(object):
                                               data_tag="im_arr_aligned")
 
         self.pipeline.add_module(angle_calc)
-
         self.pipeline.run_module("angle_interpolation")
 
         data = self.pipeline.get_data("header_im_arr_aligned/PARANG")
@@ -274,7 +266,6 @@ class TestDocumentation(object):
                                       stacking=4)
 
         self.pipeline.add_module(subset)
-
         self.pipeline.run_module("stacking_subset")
 
         data = self.pipeline.get_data("im_arr_stacked")
@@ -295,7 +286,6 @@ class TestDocumentation(object):
                                       verbose=True)
 
         self.pipeline.add_module(pca)
-
         self.pipeline.run_module("psf_subtraction")
 
         data = self.pipeline.get_data("res_mean")
@@ -310,7 +300,6 @@ class TestDocumentation(object):
                                     data_tag="res_mean")
 
         self.pipeline.add_module(writing)
-
         self.pipeline.run_module("fits_writing")
 
         assert os.path.exists(self.test_dir+"test.fits")
