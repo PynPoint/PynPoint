@@ -19,7 +19,7 @@ class TestPSFSubtractionPCA(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_fake(path=self.test_dir+"star",
+        create_fake(path=self.test_dir+"pca",
                     ndit=[20, 20, 20, 20],
                     nframes=[20, 20, 20, 20],
                     exp_no=[1, 2, 3, 4],
@@ -37,13 +37,13 @@ class TestPSFSubtractionPCA(object):
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["star"])
+        remove_test_data(self.test_dir, folders=["pca"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
-                                 input_dir=self.test_dir+"star")
+                                 input_dir=self.test_dir+"pca")
 
         self.pipeline.add_module(read)
         self.pipeline.run_module("read")

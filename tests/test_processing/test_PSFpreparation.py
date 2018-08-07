@@ -20,20 +20,20 @@ class TestPSFpreparation(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir+"data")
+        create_star_data(path=self.test_dir+"prep")
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["data"])
+        remove_test_data(self.test_dir, folders=["prep"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
                                  image_tag="read",
-                                 input_dir=self.test_dir+"data")
+                                 input_dir=self.test_dir+"prep")
 
         self.pipeline.add_module(read)
         self.pipeline.run_module("read")
