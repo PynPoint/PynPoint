@@ -63,7 +63,6 @@ class TestBadPixelCleaning(object):
                                           iterate=1)
 
         self.pipeline.add_module(sigma)
-
         self.pipeline.run_module("sigma")
 
         data = self.pipeline.get_data("sigma")
@@ -83,7 +82,6 @@ class TestBadPixelCleaning(object):
                                    flat_threshold=-0.99)
 
         self.pipeline.add_module(bp_map)
-
         self.pipeline.run_module("bp_map")
 
         data = self.pipeline.get_data("bp_map")
@@ -107,7 +105,6 @@ class TestBadPixelCleaning(object):
                                                     iterations=100)
 
         self.pipeline.add_module(interpolation)
-
         self.pipeline.run_module("interpolation")
 
         data = self.pipeline.get_data("interpolation")

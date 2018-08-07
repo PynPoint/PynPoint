@@ -162,7 +162,6 @@ class TestStarAlignment(object):
                                        position=None)
 
         self.pipeline.add_module(extract)
-
         self.pipeline.run_module("extract1")
 
         data = self.pipeline.get_data("extract1")
@@ -197,7 +196,6 @@ class TestStarAlignment(object):
                                        position=position)
 
         self.pipeline.add_module(extract)
-
         self.pipeline.run_module("extract2")
 
         data = self.pipeline.get_data("extract2")
@@ -218,7 +216,6 @@ class TestStarAlignment(object):
                                     resize=2)
 
         self.pipeline.add_module(align)
-
         self.pipeline.run_module("align")
 
         data = self.pipeline.get_data("align")
@@ -235,7 +232,6 @@ class TestStarAlignment(object):
                                   image_out_tag="shift")
 
         self.pipeline.add_module(shift)
-
         self.pipeline.run_module("shift")
 
         data = self.pipeline.get_data("shift")
@@ -257,7 +253,6 @@ class TestStarAlignment(object):
                                      guess=(6., 4., 1., 1., 1., 0.))
 
         self.pipeline.add_module(center)
-
         self.pipeline.run_module("center")
 
         data = self.pipeline.get_data("center")
@@ -284,7 +279,6 @@ class TestStarAlignment(object):
                                        sigma=5.)
 
         self.pipeline.add_module(waffle)
-
         self.pipeline.run_module("waffle_odd")
 
         data = self.pipeline.get_data("star_odd")
@@ -311,7 +305,6 @@ class TestStarAlignment(object):
                                        sigma=5.)
 
         self.pipeline.add_module(waffle)
-
         self.pipeline.run_module("waffle_even")
 
         data = self.pipeline.get_data("star_even")

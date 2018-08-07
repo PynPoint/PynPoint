@@ -39,7 +39,6 @@ class TestFluxAndPosition(object):
                                  input_dir=self.test_dir+"star")
 
         self.pipeline.add_module(read)
-
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -56,7 +55,6 @@ class TestFluxAndPosition(object):
                                               phot_out_tag="photometry")
 
         self.pipeline.add_module(photometry)
-
         self.pipeline.run_module("photometry")
 
         data = self.pipeline.get_data("photometry")
@@ -71,7 +69,6 @@ class TestFluxAndPosition(object):
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
-
         self.pipeline.run_module("angle")
 
         data = self.pipeline.get_data("header_read/PARANG")
@@ -92,7 +89,6 @@ class TestFluxAndPosition(object):
                                 verbose=True)
 
         self.pipeline.add_module(fake)
-
         self.pipeline.run_module("fake")
 
         data = self.pipeline.get_data("fake")
@@ -113,7 +109,6 @@ class TestFluxAndPosition(object):
                                       extra_rot=0.)
 
         self.pipeline.add_module(pca)
-
         self.pipeline.run_module("pca")
 
         data = self.pipeline.get_data("res_mean")
@@ -131,7 +126,6 @@ class TestFluxAndPosition(object):
                                     snr_out_tag="snr_fpf")
 
         self.pipeline.add_module(false)
-
         self.pipeline.run_module("false")
 
         data = self.pipeline.get_data("snr_fpf")
@@ -160,7 +154,6 @@ class TestFluxAndPosition(object):
                                             extra_rot=0.)
 
         self.pipeline.add_module(simplex)
-
         self.pipeline.run_module("simplex")
 
         data = self.pipeline.get_data("simplex_res")
