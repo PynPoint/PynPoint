@@ -5,223 +5,245 @@ import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
-from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, SimpleBackgroundSubtractionModule, \
-                                                             NoddingBackgroundModule, DitheringBackgroundModule
-from PynPoint.Util.TestTools import create_config, create_fake
+from PynPoint.ProcessingModules.BackgroundSubtraction import MeanBackgroundSubtractionModule, \
+                                                             SimpleBackgroundSubtractionModule, \
+                                                             NoddingBackgroundModule, \
+                                                             DitheringBackgroundModule
+from PynPoint.Util.TestTools import create_config, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
-def setup_module():
-    test_dir = os.path.dirname(__file__)+"/"
-
-    os.makedirs(test_dir+"dither")
-    os.makedirs(test_dir+"star")
-    os.makedirs(test_dir+"sky")
-
-    create_fake(file_start=test_dir+"dither/dither",
-                ndit=[20, 20, 20, 20],
-                nframes=[20, 20, 20, 20],
-                exp_no=[1, 2, 3, 4],
-                npix=(100, 100),
-                fwhm=3.,
-                x0=[25, 75, 75, 25],
-                y0=[75, 75, 25, 25],
-                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
-                sep=None,
-                contrast=None)
-
-    create_fake(file_start=test_dir+"star/star",
-                ndit=[10, 10, 10, 10],
-                nframes=[10, 10, 10, 10],
-                exp_no=[1, 3, 5, 7],
-                npix=(100, 100),
-                fwhm=3.,
-                x0=[50, 50, 50, 50],
-                y0=[50, 50, 50, 50],
-                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
-                sep=None,
-                contrast=None)
-
-    create_fake(file_start=test_dir+"sky/sky",
-                ndit=[5, 5, 5, 5],
-                nframes=[5, 5, 5, 5],
-                exp_no=[2, 4, 6, 8],
-                npix=(100, 100),
-                fwhm=None,
-                x0=[50, 50, 50, 50],
-                y0=[50, 50, 50, 50],
-                angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
-                sep=None,
-                contrast=None)
-
-    create_config(os.path.dirname(__file__)+"/PynPoint_config.ini")
-
-def teardown_module():
-    test_dir = os.path.dirname(__file__)+"/"
-
-    for i in range(4):
-        os.remove(test_dir+'dither/dither'+str(i+1).zfill(2)+'.fits')
-        os.remove(test_dir+'star/star'+str(i+1).zfill(2)+'.fits')
-        os.remove(test_dir+'sky/sky'+str(i+1).zfill(2)+'.fits')
-
-    os.rmdir(test_dir+'dither')
-    os.rmdir(test_dir+'star')
-    os.rmdir(test_dir+'sky')
-
-    os.remove(os.path.dirname(__file__)+"/PynPoint_database.hdf5")
-    os.remove(os.path.dirname(__file__)+"/PynPoint_config.ini")
-
 class TestBackgroundSubtraction(object):
 
-    def setup(self):
+    def setup_class(self):
+
         self.test_dir = os.path.dirname(__file__) + "/"
+
+        create_fake(path=self.test_dir+"dither",
+                    ndit=[20, 20, 20, 20],
+                    nframes=[20, 20, 20, 20],
+                    exp_no=[1, 2, 3, 4],
+                    npix=(100, 100),
+                    fwhm=3.,
+                    x0=[25, 75, 75, 25],
+                    y0=[75, 75, 25, 25],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=None,
+                    contrast=None)
+
+        create_fake(path=self.test_dir+"star",
+                    ndit=[10, 10, 10, 10],
+                    nframes=[10, 10, 10, 10],
+                    exp_no=[1, 3, 5, 7],
+                    npix=(100, 100),
+                    fwhm=3.,
+                    x0=[50, 50, 50, 50],
+                    y0=[50, 50, 50, 50],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=None,
+                    contrast=None)
+
+        create_fake(path=self.test_dir+"sky",
+                    ndit=[5, 5, 5, 5],
+                    nframes=[5, 5, 5, 5],
+                    exp_no=[2, 4, 6, 8],
+                    npix=(100, 100),
+                    fwhm=None,
+                    x0=[50, 50, 50, 50],
+                    y0=[50, 50, 50, 50],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=None,
+                    contrast=None)
+
+        create_config(self.test_dir+"PynPoint_config.ini")
+
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def test_simple_background_subraction(self):
+    def teardown_class(self):
 
-        read = FitsReadingModule(name_in="read",
-                                 image_tag="read",
+        remove_test_data(self.test_dir, folders=["dither", "star", "sky"])
+
+    def test_read_data(self):
+
+        read = FitsReadingModule(name_in="read1",
+                                 image_tag="dither",
                                  input_dir=self.test_dir+"dither")
 
         self.pipeline.add_module(read)
 
+        read = FitsReadingModule(name_in="read2",
+                                 image_tag="star",
+                                 input_dir=self.test_dir+"star")
+
+        self.pipeline.add_module(read)
+
+        read = FitsReadingModule(name_in="read3",
+                                 image_tag="sky",
+                                 input_dir=self.test_dir+"sky")
+
+        self.pipeline.add_module(read)
+
+        self.pipeline.run_module("read1")
+        self.pipeline.run_module("read2")
+        self.pipeline.run_module("read3")
+
+        data = self.pipeline.get_data("dither")
+        assert np.allclose(data[0, 74, 24], 0.05304008435511765, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010033896953157959, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
+
+        data = self.pipeline.get_data("star")
+        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+        data = self.pipeline.get_data("sky")
+        assert np.allclose(data[0, 50, 50], -7.613171257478652e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 8.937360237872607e-07, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
+
+    def test_simple_background(self):
+
         simple = SimpleBackgroundSubtractionModule(shift=20,
                                                    name_in="simple",
-                                                   image_in_tag="read",
+                                                   image_in_tag="dither",
                                                    image_out_tag="simple")
 
         self.pipeline.add_module(simple)
-
-        self.pipeline.run()
-
-        data = self.pipeline.get_data("read")
-        assert np.allclose(data[0, 74, 24], 0.05304008435511765, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010033896953157959, rtol=limit, atol=0.)
+        self.pipeline.run_module("simple")
 
         data = self.pipeline.get_data("simple")
         assert np.allclose(data[0, 74, 74], -0.05288064325101517, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.7755575615628916e-22, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
 
-    def test_mean_background_subraction(self):
+    def test_mean_background_shift(self):
 
-        mean1 = MeanBackgroundSubtractionModule(shift=None,
-                                                cubes=1,
-                                                name_in="mean1",
-                                                image_in_tag="read",
-                                                image_out_tag="mean1")
+        mean = MeanBackgroundSubtractionModule(shift=20,
+                                               cubes=1,
+                                               name_in="mean2",
+                                               image_in_tag="dither",
+                                               image_out_tag="mean2")
 
-        self.pipeline.add_module(mean1)
-
-        mean2 = MeanBackgroundSubtractionModule(shift=20,
-                                                cubes=1,
-                                                name_in="mean2",
-                                                image_in_tag="read",
-                                                image_out_tag="mean2")
-
-        self.pipeline.add_module(mean2)
-
-        self.pipeline.run()
-
-        data = self.pipeline.get_data("mean1")
-        assert np.allclose(data[0, 74, 24], 0.0530465391626132, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.3970872216676808e-07, rtol=limit, atol=0.)
+        self.pipeline.add_module(mean)
+        self.pipeline.run_module("mean2")
 
         data = self.pipeline.get_data("mean2")
         assert np.allclose(data[0, 74, 24], 0.0530465391626132, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.3970872216676808e-07, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
 
-    def test_dithering_background(self):
+    def test_mean_background_nframes(self):
 
-        pca_dither1 = DitheringBackgroundModule(name_in="pca_dither1",
-                                                image_in_tag="read",
-                                                image_out_tag="pca_dither1",
-                                                center=None,
-                                                cubes=None,
-                                                size=0.8,
-                                                gaussian=0.1,
-                                                subframe=0.1,
-                                                pca_number=5,
-                                                mask_star=0.1,
-                                                mask_planet=None,
-                                                bad_pixel=None,
-                                                crop=True,
-                                                prepare=True,
-                                                pca_background=True,
-                                                combine="pca")
+        mean = MeanBackgroundSubtractionModule(shift=None,
+                                               cubes=1,
+                                               name_in="mean1",
+                                               image_in_tag="dither",
+                                               image_out_tag="mean1")
 
-        self.pipeline.add_module(pca_dither1)
+        self.pipeline.add_module(mean)
+        self.pipeline.run_module("mean1")
 
-        pca_dither2 = DitheringBackgroundModule(name_in="pca_dither2",
-                                                image_in_tag="read",
-                                                image_out_tag="pca_dither2",
-                                                center=((25., 75.), (75., 75.), (75., 25.), (25., 25.)),
-                                                cubes=1,
-                                                size=0.8,
-                                                gaussian=0.1,
-                                                pca_number=5,
-                                                mask_star=0.1,
-                                                mask_planet=None,
-                                                bad_pixel=None,
-                                                crop=True,
-                                                prepare=True,
-                                                pca_background=True,
-                                                combine="pca")
+        data = self.pipeline.get_data("mean1")
+        assert np.allclose(data[0, 74, 24], 0.0530465391626132, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.3970872216676808e-07, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
 
-        self.pipeline.add_module(pca_dither2)
+    def test_dithering_attributes(self):
 
-        self.pipeline.run()
+        pca_dither = DitheringBackgroundModule(name_in="pca_dither1",
+                                               image_in_tag="dither",
+                                               image_out_tag="pca_dither1",
+                                               center=None,
+                                               cubes=None,
+                                               size=0.8,
+                                               gaussian=0.1,
+                                               subframe=0.1,
+                                               pca_number=5,
+                                               mask_star=0.1,
+                                               mask_planet=None,
+                                               bad_pixel=None,
+                                               crop=True,
+                                               prepare=True,
+                                               pca_background=True,
+                                               combine="pca")
+
+        self.pipeline.add_module(pca_dither)
+        self.pipeline.run_module("pca_dither1")
 
         data = self.pipeline.get_data("dither_crop1")
-        assert np.allclose(data[0, 13, 13], 0.05304008435511765, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0003195300604219455, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05304008435511765, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0002606205855710527, rtol=1e-6, atol=0.)
+        assert data.shape == (80, 31, 31)
 
         data = self.pipeline.get_data("dither_star1")
-        assert np.allclose(data[0, 13, 13], 0.05304008435511765, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012762877089355176, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05304008435511765, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010414302265833978, rtol=1e-6, atol=0.)
+        assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_mean1")
-        assert np.allclose(data[0, 13, 13], 0.0530465391626132, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012768562655335774, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.0530465391626132, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010426228104479674, rtol=1e-6, atol=0.)
+        assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_background1")
-        assert np.allclose(data[0, 13, 13], -0.00010629310882411674, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 6.108442507548571e-07, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], -0.00010629310882411674, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 3.5070523360436835e-07, rtol=1e-6, atol=0.)
+        assert data.shape == (60, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_fit1")
-        assert np.allclose(data[0, 13, 13], 3.8003879389296064e-05, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), -2.012779401124373e-08, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 14, 14], 1.519641183676098e-05, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 1.977958667148767e-07, rtol=1e-4, atol=0.)
+        assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_res1")
-        assert np.allclose(data[0, 13, 13], 0.05300208047572835, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012763078355621557, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05302488794328089, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010412324307166826, rtol=1e-6, atol=0.)
+        assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_mask1")
-        assert np.allclose(data[0, 13, 13], 0., rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.9426020408163265, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0., rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.9531737773152965, rtol=1e-6, atol=0.)
+        assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("pca_dither1")
-        assert np.allclose(data[0, 13, 13], 0.05300208047572835, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012755430390138146, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05302488794281937, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.001040627977720779, rtol=1e-6, atol=0.)
+        assert data.shape == (80, 31, 31)
+
+    def test_dithering_center(self):
+
+        pca_dither = DitheringBackgroundModule(name_in="pca_dither2",
+                                               image_in_tag="dither",
+                                               image_out_tag="pca_dither2",
+                                               center=((25., 75.),
+                                                       (75., 75.),
+                                                       (75., 25.),
+                                                       (25., 25.)),
+                                               cubes=1,
+                                               size=0.8,
+                                               gaussian=0.1,
+                                               subframe=None,
+                                               pca_number=5,
+                                               mask_star=0.1,
+                                               mask_planet=None,
+                                               bad_pixel=None,
+                                               crop=True,
+                                               prepare=True,
+                                               pca_background=True,
+                                               combine="pca")
+
+        self.pipeline.add_module(pca_dither)
+        self.pipeline.run_module("pca_dither2")
 
         data = self.pipeline.get_data("pca_dither2")
-        assert np.allclose(data[0, 13, 13], 0.05300208049366906, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012755430394817146, rtol=1e-3, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05302488794328089, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010406279782666378, rtol=1e-3, atol=0.)
+        assert data.shape == (80, 31, 31)
 
     def test_nodding_background(self):
-
-        read1 = FitsReadingModule(name_in="read1",
-                                  image_tag="star",
-                                  input_dir=self.test_dir+"star")
-
-        self.pipeline.add_module(read1)
-
-        read2 = FitsReadingModule(name_in="read2",
-                                  image_tag="sky",
-                                  input_dir=self.test_dir+"sky")
-
-        self.pipeline.add_module(read2)
 
         nodding = NoddingBackgroundModule(name_in="nodding",
                                           sky_in_tag="sky",
@@ -230,17 +252,9 @@ class TestBackgroundSubtraction(object):
                                           mode="both")
 
         self.pipeline.add_module(nodding)
-
-        self.pipeline.run()
-
-        data = self.pipeline.get_data("star")
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-
-        data = self.pipeline.get_data("sky")
-        assert np.allclose(data[0, 50, 50], -7.613171257478652e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 8.937360237872607e-07, rtol=limit, atol=0.)
+        self.pipeline.run_module("nodding")
 
         data = self.pipeline.get_data("nodding")
         assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.942251790089106e-05, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)

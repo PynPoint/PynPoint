@@ -370,7 +370,8 @@ class AngleCalculationModule(ProcessingModule):
     """
     Module for calculating the parallactic angles. The start time of the observation is taken and
     multiples of the exposure time are added to derive the parallactic angle of each frame inside
-    the cube. Instrument specific overheads are included.
+    the cube. Instrument specific overheads are included. Written by Alexander Bohn (Leiden
+    University).
     """
 
     def __init__(self,

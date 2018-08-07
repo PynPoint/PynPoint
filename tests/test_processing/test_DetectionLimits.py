@@ -1,59 +1,61 @@
 import os
-import math
 import warnings
 
 import numpy as np
 
-from astropy.io import fits
-
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.Core.DataIO import DataStorage
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.DetectionLimits import ContrastCurveModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
-from PynPoint.Util.TestTools import create_config, create_star_data
+from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
 
 limit = 1e-10
 
-def setup_module():
-    create_star_data(path=os.path.dirname(__file__),
-                     npix_x=100,
-                     npix_y=100,    
-                     x0=[50, 50, 50, 50],
-                     y0=[50, 50, 50, 50],
-                     parang_start=[0., 5., 10., 15.],
-                     parang_end=[5., 10., 15., 20.])
-
-    create_config(os.path.join(os.path.dirname(__file__), "PynPoint_config.ini"))
-
-def teardown_module():
-    test_dir = os.path.dirname(__file__) + "/"
-
-    for i in range(4):
-        os.remove(test_dir + 'image'+str(i+1).zfill(2)+'.fits')
-
-    os.remove(test_dir + 'PynPoint_database.hdf5')
-    os.remove(test_dir + 'PynPoint_config.ini')
-
 class TestDetectionLimits(object):
 
-    def setup(self):
+    def setup_class(self):
+
         self.test_dir = os.path.dirname(__file__) + "/"
+
+        create_star_data(path=self.test_dir+"limits")
+        create_config(self.test_dir+"PynPoint_config.ini")
+
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def test_contrast_curve(self):
+    def teardown_class(self):
+
+        remove_test_data(self.test_dir, folders=["limits"])
+
+    def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
-                                 image_tag="read")
+                                 image_tag="read",
+                                 input_dir=self.test_dir+"limits")
 
         self.pipeline.add_module(read)
+        self.pipeline.run_module("read")
+
+        data = self.pipeline.get_data("read")
+        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+    def test_angle_interpolation(self):
 
         angle = AngleInterpolationModule(name_in="angle",
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
+        self.pipeline.run_module("angle")
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert data[5] == 2.7777777777777777
+        assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
+        assert data.shape == (40, )
+
+    def test_contrast_curve(self):
 
         contrast = ContrastCurveModule(name_in="contrast",
                                        image_in_tag="read",
@@ -75,25 +77,17 @@ class TestDetectionLimits(object):
                                        extra_rot=0.)
 
         self.pipeline.add_module(contrast)
+        self.pipeline.run_module("contrast")
 
-        self.pipeline.run()
-
-        storage = DataStorage(self.test_dir+"/PynPoint_database.hdf5")
-        storage.open_connection()
-
-        data = storage.m_data_bank["read"]
-        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-
-        data = storage.m_data_bank["header_read/PARANG"]
-        assert data[5] == 2.7777777777777777
-
-        data = storage.m_data_bank["pca"]
+        data = self.pipeline.get_data("pca")
         assert np.allclose(data[9, 68, 49], 5.707647718560735e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -3.66890878538392e-08, rtol=limit, atol=0.)
-
-        data = storage.m_data_bank["pca"]
         assert np.allclose(data[21, 31, 50], 5.4392925807364694e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), -3.668908785383954e-08, rtol=limit, atol=0.)
+        assert data.shape == (22, 100, 100)
 
-        storage.close_connection()
+        data = self.pipeline.get_data("limits")
+        assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 6.557218774128667, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.12716145540952048, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 0.0002012649090622487, rtol=limit, atol=0.)
+        assert data.shape == (1, 4)
