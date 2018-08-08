@@ -7,7 +7,8 @@ import numpy as np
 from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, \
                                                         BadPixelMapModule, \
-                                                        BadPixelInterpolationModule
+                                                        BadPixelInterpolationModule, \
+                                                        BadPixelTimeFilterModule
 from PynPoint.Util.TestTools import create_config, remove_test_data
 
 warnings.simplefilter("always")
@@ -112,4 +113,21 @@ class TestBadPixelCleaning(object):
         assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit, atol=0.)
         assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+    def test_bad_pixel_time(self):
+
+        time = BadPixelTimeFilterModule(name_in="time",
+                                        image_in_tag="images",
+                                        image_out_tag="time",
+                                        sigma=(5., 5.))
+
+        self.pipeline.add_module(time)
+        self.pipeline.run_module("time")
+
+        data = self.pipeline.get_data("time")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 8.32053029919322e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -2.3565404332481378e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.9727173024489924e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)

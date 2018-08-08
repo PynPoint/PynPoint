@@ -2,6 +2,7 @@
 Modules for the detection and interpolation of bad pixels.
 """
 
+import sys
 import copy
 
 import cv2
@@ -465,6 +466,90 @@ class BadPixelInterpolationModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Bad pixel interpolation",
                                                       "Iterations = " + str(self.m_iterations))
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_port()
+
+
+class BadPixelTimeFilterModule(ProcessingModule):
+    """
+    Module for finding bad pixels along a pixel line in time with a sigma filter. This module is
+    suitable for removing bad pixels that are only present at a position in a small number of
+    images, for example because a dither pattern has been applied. Pixel lines can be processed
+    in parallel by setting the CPU keyword in the configuration file.
+    """
+
+    def __init__(self,
+                 name_in="bp_dither",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_arr_bp_dither",
+                 sigma=5):
+        """
+        Constructor of BadPixelTimeFilterModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output.
+        :type image_out_tag: str
+        :param sigma: Lower and upper sigma threshold (lower, upper).
+        :type sigma: (float, float)
+
+        :return: None
+        """
+
+        super(BadPixelTimeFilterModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_sigma = sigma
+
+    def run(self):
+        """
+        Run method of the module. Finds bad pixels along a pixel line, replaces the bad pixels with
+        the mean value of the pixels (excluding the bad pixels), and writes the cleaned images to
+        the database.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        def _time_filter(timeline, sigma):
+            median = np.median(timeline)
+            std = np.std(timeline)
+
+            index_lower = np.argwhere(timeline < median-sigma[0]*std)
+            index_upper = np.argwhere(timeline > median+sigma[1]*std)
+
+            if index_lower.size > 0:
+                mask = np.ones(timeline.shape, dtype=bool)
+                mask[index_lower] = False
+                timeline[index_lower] = np.mean(timeline[mask])
+
+            if index_upper.size > 0:
+                mask = np.ones(timeline.shape, dtype=bool)
+                mask[index_upper] = False
+                timeline[index_upper] = np.mean(timeline[mask])
+
+            return timeline
+
+        sys.stdout.write("Running BadPixelTimeFilterModule...")
+        sys.stdout.flush()
+
+        self.apply_function_in_time(_time_filter,
+                                    self.m_image_in_port,
+                                    self.m_image_out_port,
+                                    func_args=(self.m_sigma, ))
+
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
+
+        self.m_image_out_port.add_history_information("BadPixelTimeFilterModule",
+                                                      "sigma = " + str(self.m_sigma))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
