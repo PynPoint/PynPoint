@@ -745,6 +745,9 @@ class WaffleCenteringModule(ProcessingModule):
             dither_x = self.m_image_in_port.get_attribute("DITHER_X")
             dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
 
+            nframes = self.m_image_in_port.get_attribute("NFRAMES")
+            nframes = np.cumsum(nframes) - 1
+
         center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
                                                               sigma=self.m_sigma)
 
@@ -858,8 +861,10 @@ class WaffleCenteringModule(ProcessingModule):
                         (float(im_shape[-1])-1.)/2. - x_center]
 
             if self.m_dither:
-                shift_yx[0] -= dither_y[i]
-                shift_yx[1] -= dither_x[i]
+                index = np.digitize(i, nframes, right==False) - 1
+
+                shift_yx[0] -= dither_y[index]
+                shift_yx[1] -= dither_x[index]
 
             if npix%2 == 0:
                 im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
