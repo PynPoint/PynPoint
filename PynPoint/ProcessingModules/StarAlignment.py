@@ -665,7 +665,8 @@ class WaffleCenteringModule(ProcessingModule):
                  image_out_tag="im_arr_centered_cut",
                  radius=45.,
                  pattern="x",
-                 sigma=5.):
+                 sigma=5.,
+                 dither=False):
         """
         Constructor of WaffleCenteringModule.
 
@@ -690,6 +691,8 @@ class WaffleCenteringModule(ProcessingModule):
         :param sigma: Standard deviation (pix) of the Gaussian kernel that is used for the unsharp
                       masking.
         :type sigma: float
+        :param dither: Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
+        :type dither: bool
 
         :return: None
         """
@@ -705,6 +708,7 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_radius = radius
         self.m_pattern = pattern
         self.m_sigma = sigma
+        self.m_dither = dither
 
     def run(self):
         """
@@ -722,9 +726,6 @@ class WaffleCenteringModule(ProcessingModule):
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        self.m_size = int(math.ceil(self.m_size/pixscale))
-
         if center_ndim == 2:
             center_frame = self.m_center_in_port.get_all()
 
@@ -736,6 +737,13 @@ class WaffleCenteringModule(ProcessingModule):
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        self.m_size = int(math.ceil(self.m_size/pixscale))
+
+        if self.m_dither:
+            dither_x = self.m_image_in_port.get_attribute("DITHER_X")
+            dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
 
         center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
                                                               sigma=self.m_sigma)
@@ -841,19 +849,25 @@ class WaffleCenteringModule(ProcessingModule):
         nimages = number_images_port(self.m_image_in_port)
         npix = image_size_port(self.m_image_in_port)[0]
 
-        shift_yx = ((float(im_shape[-2])-1.)/2. - y_center, (float(im_shape[-1])-1.)/2. - x_center)
-
         for i in range(nimages):
             progress(i, nimages, "Running WaffleCenteringModule...")
 
             image = self.m_image_in_port[i, ]
+
+            shift_yx = [(float(im_shape[-2])-1.)/2. - y_center,
+                        (float(im_shape[-1])-1.)/2. - x_center]
+
+            if self.m_dither:
+                shift_yx[0] -= dither_y[i]
+                shift_yx[1] -= dither_x[i]
 
             if npix%2 == 0:
                 im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
                 im_tmp[:-1, :-1] = image
                 image = im_tmp
 
-                shift_yx = (shift_yx[0] + 0.5, shift_yx[1] + 0.5)
+                shift_yx[0] += 0.5
+                shift_yx[1] += 0.5
 
             im_shift = shift_image(image, shift_yx, "spline")
             im_crop = crop_image(im_shift, None, self.m_size)
@@ -865,6 +879,6 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        history = "position [x, y] = "+str([x_center, y_center])
+        history = "position [x, y] = "+str([round(x_center, 4), round(y_center, 4)])
         self.m_image_out_port.add_history_information("Waffle centering", history)
         self.m_image_out_port.close_port()
