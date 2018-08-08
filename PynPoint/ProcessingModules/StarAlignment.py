@@ -861,7 +861,7 @@ class WaffleCenteringModule(ProcessingModule):
                         (float(im_shape[-1])-1.)/2. - x_center]
 
             if self.m_dither:
-                index = np.digitize(i, nframes, right==False) - 1
+                index = np.digitize(i, nframes, right=False) - 1
 
                 shift_yx[0] -= dither_y[index]
                 shift_yx[1] -= dither_x[index]
