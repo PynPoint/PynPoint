@@ -130,7 +130,7 @@ def image_size(images):
 
 def image_center(image):
     """
-    Function to get the pixel position of the center of a square image. Note that this position
+    Function to get the pixel position of the center of an image. Note that this position
     can not be unambiguously defined for an even-sized image.
 
     :param image: Input image (2D or 3D).
@@ -140,11 +140,14 @@ def image_center(image):
     :rtype: (int, int)
     """
 
-    if image.shape[-2] != image.shape[-1]:
-        warnings.warn("PynPoint only supports processing of square images.")
+    if image.shape[-2]%2 == 0 and image.shape[-1]%2 == 0:
+        center = (image.shape[-2]/2-1, image.shape[-1]/2-1)
 
-    if image.shape[-1]%2 == 0:
-        center = (image.shape[-1]/2-1, image.shape[-1]/2-1)
+    elif image.shape[-2]%2 == 0 and image.shape[-1]%2 == 1:
+        center = (image.shape[-2]/2-1, (image.shape[-1]-1)/2)
+
+    elif image.shape[-2]%2 == 1 and image.shape[-1]%2 == 0:
+        center = ((image.shape[-2]-1)/2, image.shape[-1]/2-1)
 
     elif image.shape[-1]%2 == 1:
         center = ((image.shape[-1]-1)/2, (image.shape[-1]-1)/2)
