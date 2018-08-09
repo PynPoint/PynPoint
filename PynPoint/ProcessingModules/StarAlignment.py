@@ -720,26 +720,31 @@ class WaffleCenteringModule(ProcessingModule):
         :return: None
         """
 
+        def _get_center(ndim, center):
+            if ndim == 2:
+                center_frame = self.m_center_in_port.get_all()
+
+            elif ndim == 3:
+                center_frame = self.m_center_in_port.get_all()[0, ]
+
+                if center_shape[0] > 1:
+                    warnings.warn("Multiple center images found. Using the first image of "
+                                  "the stack.")
+
+            if center is None:
+                center = image_center(center_frame)
+            else:
+                center = (np.floor(center[0]), np.floor(center[1]))
+
+            return center_frame, center
+
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
         center_ndim = self.m_center_in_port.get_ndim()
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
-
-        if center_ndim == 2:
-            center_frame = self.m_center_in_port.get_all()
-
-        elif center_ndim == 3:
-            center_frame = self.m_center_in_port.get_all()[0, ]
-
-            if center_shape[0] > 1:
-                warnings.warn("Multiple center images found. Using the first image of the stack.")
-
-        if self.m_center is None:
-            self.m_center = image_center(center_frame)
-        else:
-            self.m_center = (np.floor(self.m_center[0]), np.floor(self.m_center[1]))
+        center_frame, self.m_center = _get_center(center_ndim, self.m_center)
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")
