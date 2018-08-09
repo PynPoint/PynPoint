@@ -395,7 +395,13 @@ class BadPixelMapModule(ProcessingModule):
             if not dark.shape == flat.shape:
                 raise ValueError("Dark and flat images should have the same shape.")
 
-        self.m_bp_map_out_port.set_all(bpmap)
+        self.m_bp_map_out_port.set_all(bpmap, data_dim=2)
+
+        if self.m_dark_port is not None:
+            self.m_bp_map_out_port.copy_attributes_from_input_port(self.m_dark_port)
+        elif self.m_flat_port is not None:
+            self.m_bp_map_out_port.copy_attributes_from_input_port(self.m_flat_port)
+
         self.m_bp_map_out_port.close_port()
 
 
@@ -450,7 +456,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError("Maximum number of iterations needs to be smaller than the number of "
                              "pixels in the image.")
 
-        if bad_pixel_map.shape[0] != im_shape[1] or bad_pixel_map.shape[1] != im_shape[2]:
+        if bad_pixel_map.shape[0] != im_shape[-2] or bad_pixel_map.shape[1] != im_shape[-1]:
             raise ValueError("The shape of the bad pixel map does not match the shape of the "
                              "images.")
 
@@ -473,16 +479,16 @@ class BadPixelInterpolationModule(ProcessingModule):
 
 class BadPixelTimeFilterModule(ProcessingModule):
     """
-    Module for finding bad pixels along a pixel line in time with a sigma filter. This module is
+    Module for finding bad pixels with a sigma filter along a pixel line in time. This module is
     suitable for removing bad pixels that are only present at a position in a small number of
     images, for example because a dither pattern has been applied. Pixel lines can be processed
     in parallel by setting the CPU keyword in the configuration file.
     """
 
     def __init__(self,
-                 name_in="bp_dither",
+                 name_in="bp_time",
                  image_in_tag="im_arr",
-                 image_out_tag="im_arr_bp_dither",
+                 image_out_tag="im_arr_bp_time",
                  sigma=5):
         """
         Constructor of BadPixelTimeFilterModule.
@@ -550,6 +556,95 @@ class BadPixelTimeFilterModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("BadPixelTimeFilterModule",
                                                       "sigma = " + str(self.m_sigma))
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.close_port()
+
+
+class ReplaceBadPixelsModule(ProcessingModule):
+    """
+    Module for replacing bad pixels with the mean are median value of the surrounding pixels. The
+    bad pixels are selected from the input bad pixel map.
+    """
+
+    def __init__(self,
+                 name_in="bp_replace",
+                 image_in_tag="im_arr",
+                 map_in_tag="bp_map",
+                 image_out_tag="im_arr_bp_replace",
+                 size=2,
+                 replace="mean"):
+        """
+        Constructor of ReplaceBadPixelsModule.
+
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry that is read as input.
+        :type image_in_tag: str
+        :param image_out_tag: Tag of the database entry that is written as output.
+        :type image_out_tag: str
+        :param sigma: Lower and upper sigma threshold (lower, upper).
+        :type sigma: (float, float)
+        :param size: Number of pixel lines around the bad pixel that is used to calculate the
+                     mean or median replacement value. For example, a 5x5 window is used if
+                     _size_=2.
+        :type size: int
+        :param replace: Replace the bad pixel with the mean ('mean') or median ('media') value.
+        :type replace: str
+
+        :return: None
+        """
+
+        super(ReplaceBadPixelsModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_map_in_port = self.add_input_port(map_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_size = size
+        self.m_replace = replace
+
+    def run(self):
+        """
+        Run method of the module. Masks the bad pixels with NaN and replaces the bad pixels with the
+        mean or median value (excluding the bad pixels) within a window centered on the bad pixel.
+        The original value is used if there are only NaNs within the window.
+
+        :return: None
+        """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        bpmap = self.m_map_in_port.get_all()
+        index = np.argwhere(bpmap == 0)
+
+        def _replace_pixels(image, index):
+
+            im_mask = np.copy(image)
+
+            for _, item in enumerate(index):
+                im_mask[item[0], item[1]] = np.nan
+
+            for _, item in enumerate(index):
+                im_tmp = im_mask[item[0]-self.m_size:item[0]+self.m_size+1,
+                                 item[1]-self.m_size:item[1]+self.m_size+1]
+
+                if np.size(np.where(im_tmp != np.nan)[0]) == 0:
+                    im_mask[item[0], item[1]] = image[item[0], item[1]]
+                else:
+                    if self.m_replace == "mean":
+                        im_mask[item[0], item[1]] = np.nanmean(im_tmp)
+                    elif self.m_replace == "median":
+                        im_mask[item[0], item[1]] = np.nanmedian(im_tmp)
+
+            return im_mask
+
+        self.apply_function_to_images(_replace_pixels,
+                                      self.m_image_in_port,
+                                      self.m_image_out_port,
+                                      "Running ReplaceBadPixelsModule...",
+                                      func_args=(index, ))
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_image_out_port.close_port()
