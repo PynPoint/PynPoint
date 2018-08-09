@@ -757,7 +757,8 @@ class WaffleCenteringModule(ProcessingModule):
             dither_y = self.m_image_in_port.get_attribute("DITHER_Y")
 
             nframes = self.m_image_in_port.get_attribute("NFRAMES")
-            nframes = np.cumsum(nframes) - 1
+            nframes = np.cumsum(nframes)
+            nframes = np.insert(nframes, 0, 0)
 
         center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
                                                               sigma=self.m_sigma)
