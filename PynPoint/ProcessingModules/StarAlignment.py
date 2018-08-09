@@ -657,12 +657,12 @@ class WaffleCenteringModule(ProcessingModule):
     """
 
     def __init__(self,
-                 size,
-                 center,
                  name_in="center_images",
                  image_in_tag="im_arr",
                  center_in_tag="center_frame",
                  image_out_tag="im_arr_centered_cut",
+                 size=2.,
+                 center=None,
                  radius=45.,
                  pattern="x",
                  sigma=5.,
@@ -670,10 +670,6 @@ class WaffleCenteringModule(ProcessingModule):
         """
         Constructor of WaffleCenteringModule.
 
-        :param size: Image size (arcsec) for both dimensions.
-        :type size: float
-        :param center: Approximate position (x0, y0) of the coronagraph.
-        :type center: (int, int)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with science images that are read as input.
@@ -684,6 +680,11 @@ class WaffleCenteringModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry with the centered images that are written
                               as output. Should be different from *image_in_tag*.
         :type image_out_tag: str
+        :param size: Image size (arcsec) for both dimensions.
+        :type size: float
+        :param center: Approximate position (x0, y0) of the coronagraph. The center of the image is
+                       used if set to None.
+        :type center: (float, float)
         :param radius: Approximate separation (pix) of the waffle spots from the star.
         :type radius: float
         :param pattern: Waffle pattern that is used (*x* or *+*).
@@ -704,7 +705,7 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_size = size
-        self.m_center = (np.floor(center[0]), np.floor(center[1]))
+        self.m_center = center
         self.m_radius = radius
         self.m_pattern = pattern
         self.m_sigma = sigma
@@ -714,7 +715,7 @@ class WaffleCenteringModule(ProcessingModule):
         """
         Run method of the module. Locates the position of the calibration spots in the center
         frame. From the four spots, the position of the star behind the coronagraph is fitted,
-        and the images and shifted and cropped.
+        and the images are shifted and cropped.
 
         :return: None
         """
@@ -734,6 +735,11 @@ class WaffleCenteringModule(ProcessingModule):
 
             if center_shape[0] > 1:
                 warnings.warn("Multiple center images found. Using the first image of the stack.")
+
+        if self.m_center is None:
+            self.m_center = image_center(center_frame)
+        else:
+            self.m_center = (np.floor(self.m_center[0]), np.floor(self.m_center[1]))
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")
