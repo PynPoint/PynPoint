@@ -4,6 +4,7 @@ Functions for Pypeline modules.
 
 import sys
 import math
+import warnings
 
 import cv2
 import numpy as np
@@ -138,6 +139,9 @@ def image_center(image):
     :return: Pixel position of the image center.
     :rtype: (int, int)
     """
+
+    if image.shape[-2] != image.shape[-1]:
+        warnings.warn("PynPoint only supports processing of square images.")
 
     if image.shape[-1]%2 == 0:
         center = (image.shape[-1]/2-1, image.shape[-1]/2-1)
