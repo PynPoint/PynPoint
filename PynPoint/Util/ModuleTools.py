@@ -83,7 +83,7 @@ def crop_image(image, center, size):
     if image.ndim == 2:
         im_crop = np.copy(image[y_start:y_end, x_start:x_end])
 
-    elif image.ndim == 2:
+    elif image.ndim == 3:
         im_crop = np.copy(image[:, y_start:y_end, x_start:x_end])
 
     return im_crop
