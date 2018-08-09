@@ -149,8 +149,8 @@ def image_center(image):
     elif image.shape[-2]%2 == 1 and image.shape[-1]%2 == 0:
         center = ((image.shape[-2]-1)/2, image.shape[-1]/2-1)
 
-    elif image.shape[-1]%2 == 1:
-        center = ((image.shape[-1]-1)/2, (image.shape[-1]-1)/2)
+    elif image.shape[-2]%2 == 1 and image.shape[-1]%2 == 1:
+        center = ((image.shape[-2]-1)/2, (image.shape[-1]-1)/2)
 
     return center
 
