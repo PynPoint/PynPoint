@@ -15,8 +15,7 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
-from PynPoint.Util.ImageTools import locate_star
+from PynPoint.Util.ModuleTools import progress, memory_frames, locate_star
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
