@@ -8,7 +8,8 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, rotate_images
+from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ImageTools import rotate_images
 
 
 class StackAndSubsetModule(ProcessingModule):
