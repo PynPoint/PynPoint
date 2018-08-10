@@ -7,7 +7,9 @@ from PynPoint.ProcessingModules.BackgroundSubtraction import SimpleBackgroundSub
 
 from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule, \
                                                         BadPixelInterpolationModule, \
-                                                        BadPixelMapModule
+                                                        BadPixelMapModule, \
+                                                        BadPixelTimeFilterModule, \
+                                                        ReplaceBadPixelsModule
 
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
                                                               FlatCalibrationModule                                                              
