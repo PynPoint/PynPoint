@@ -433,7 +433,7 @@ class ProcessingModule(PypelineModule):
                     for k in range(images.shape[0]):
                         result.append(func(images[k], * func_args))
 
-            return result
+            return np.asarray(result)
 
         ndim, frames = _initialize()
 
@@ -451,10 +451,10 @@ class ProcessingModule(PypelineModule):
                 if image_out_port.tag == image_in_port.tag:
                     try:
                         if np.size(frames) == 2:
-                            image_out_port.set_all(np.asarray(result), keep_attributes=True)
+                            image_out_port.set_all(result, keep_attributes=True)
 
                         else:
-                            image_out_port[frames[i]:frames[i+1]] = np.asarray(result)
+                            image_out_port[frames[i]:frames[i+1]] = result
 
                     except TypeError:
                         raise ValueError("Input and output port have the same tag while %s is "
@@ -462,7 +462,10 @@ class ProcessingModule(PypelineModule):
                                          "MEMORY=None." % func)
 
                 else:
-                    image_out_port.append(np.asarray(result))
+                    if ndim == 2:
+                        result = np.squeeze(result, axis=0)
+
+                    image_out_port.append(result)
 
         sys.stdout.write(message+" [DONE]\n")
         sys.stdout.flush()
