@@ -135,41 +135,6 @@ def create_mask(im_shape, size):
 
     return mask
 
-def locate_star(image, center, width, fwhm):
-    """
-    Function to locate the star by finding the brightest pixel.
-
-    :param image: Input image.
-    :type image: ndarray
-    :param center: Pixel center (y, x) of the subframe. The full image is used if set to None.
-    :type center: (int, int)
-    :param width: The width (pixel) of the subframe. The full image is used if set to None.
-    :type fwhm: Full width at half maximum of the Gaussian kernel.
-    :param fwhm: int
-
-    :return: Position (y, x) of the brightest pixel.
-    :rtype: (int, int)
-    """
-
-    if center is not None and width is not None:
-        if center[0] is None and center[1] is None:
-            center = image_center(image)
-
-        image = crop_image(image, center, width)
-
-    sigma = fwhm/math.sqrt(8.*math.log(2.))
-    kernel = (fwhm*2+1, fwhm*2+1)
-    smooth = cv2.GaussianBlur(image, kernel, sigma)
-
-    # argmax[0] is the y position and argmax[1] is the y position
-    argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
-
-    if center is not None and width is not None:
-        argmax[0] += center[0] - (image.shape[0]-1)/2 # y
-        argmax[1] += center[1] - (image.shape[1]-1)/2 # x
-
-    return argmax
-
 def shift_image(image, shift_yx, interpolation, mode='constant'):
     """
     Function to shift an image.

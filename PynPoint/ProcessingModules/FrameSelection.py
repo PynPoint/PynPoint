@@ -9,8 +9,9 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port
-from PynPoint.Util.ImageTools import crop_image, locate_star
+from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port, \
+                                      locate_star
+from PynPoint.Util.ImageTools import crop_image
 
 
 class RemoveFramesModule(ProcessingModule):
