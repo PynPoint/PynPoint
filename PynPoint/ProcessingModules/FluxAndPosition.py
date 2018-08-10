@@ -9,21 +9,19 @@ import warnings
 import numpy as np
 import emcee
 
-from scipy.ndimage import rotate
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import minimize
 from scipy.stats import t
-from sklearn.decomposition import PCA
 from skimage.feature import hessian_matrix
-from astropy.nddata import Cutout2D
 from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, image_size_port, \
-                                      number_images_port, create_mask, crop_image, shift_image
-from PynPoint.Util.AnalysisTools import false_alarm
+                                      number_images_port, rotate_coordinates
+from PynPoint.Util.ImageTools import create_mask, crop_image, shift_image, image_center
+from PynPoint.Util.MCMCtools import lnprob
 
 
 class FakePlanetModule(ProcessingModule):
@@ -47,7 +45,7 @@ class FakePlanetModule(ProcessingModule):
         :param position: Angular separation (arcsec) and position angle (deg) of the fake planet.
                          Angle is measured in counterclockwise direction with respect to the
                          upward direction (i.e., East of North).
-        :type position: tuple
+        :type position: (float, float)
         :param magnitude: Magnitude of the fake planet with respect to the star.
         :type magnitude: float
         :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
@@ -71,7 +69,7 @@ class FakePlanetModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             * **verbose** (*bool*) -- Print progress.
+            **verbose** (*bool*) -- Print progress.
 
         :return: None
         """
@@ -232,7 +230,7 @@ class SimplexMinimizationModule(ProcessingModule):
         :param position: Approximate position (x, y) of the planet (pix). This is also the location
                          where the function of merit is calculated with an aperture of radius
                          *aperture*.
-        :type position: tuple, int
+        :type position: (int, int)
         :param magnitude: Approximate magnitude of the planet relative to the star.
         :type magnitude: float
         :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
@@ -301,7 +299,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        self.m_position = (int(position[0]), int(position[1]))
+        self.m_position = (int(position[1]), int(position[0]))
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
@@ -327,21 +325,12 @@ class SimplexMinimizationModule(ProcessingModule):
         :return: None
         """
 
-        def _rotate(center, position, angle):
-            pos_x = (position[0]-center[0])*math.cos(np.radians(angle)) - \
-                    (position[1]-center[1])*math.sin(np.radians(angle))
-
-            pos_y = (position[0]-center[0])*math.sin(np.radians(angle)) + \
-                    (position[1]-center[1])*math.cos(np.radians(angle))
-
-            return (center[0]+pos_x, center[1]+pos_y)
-
         def _objective(arg):
             sys.stdout.write('.')
             sys.stdout.flush()
 
-            pos_x = arg[0]
-            pos_y = arg[1]
+            pos_y = arg[0]
+            pos_x = arg[1]
             mag = arg[2]
 
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)*pixscale
@@ -432,10 +421,10 @@ class SimplexMinimizationModule(ProcessingModule):
             else:
                 raise ValueError("Function of merit not recognized.")
 
-            position = _rotate(center, (pos_x, pos_y), -self.m_extra_rot)
+            position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
-            res = np.asarray((position[0],
-                              position[1],
+            res = np.asarray((position[1],
+                              position[0],
                               sep,
                               (ang-self.m_extra_rot)%360.,
                               mag,
@@ -456,17 +445,14 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_aperture /= pixscale
         self.m_sigma /= pixscale
 
-        if self.m_image_in_port.get_ndim() != 3:
-            raise ValueError("The image_in_tag should contain a cube of images.")
-
         psf_size = image_size_port(self.m_psf_in_port)
         center = (psf_size[0]/2., psf_size[1]/2.)
 
         sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()
 
-        pos_init = _rotate(center, self.m_position, self.m_extra_rot)
-        pos_init = (int(pos_init[0]), int(pos_init[1]))
+        pos_init = rotate_coordinates(center, self.m_position, self.m_extra_rot)
+        pos_init = (int(pos_init[0]), int(pos_init[1])) # (y, x)
 
         minimize(fun=_objective,
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],
@@ -477,11 +463,11 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        self.m_res_out_port.add_history_information("Flux and position",
-                                                    "Simplex minimization")
+        self.m_res_out_port.add_history_information("SimplexMinimizationModule",
+                                                    "Merit function = "+str(self.m_merit))
 
-        self.m_flux_position_port.add_history_information("Flux and position",
-                                                          "Simplex minimization")
+        self.m_flux_position_port.add_history_information("SimplexMinimizationModule",
+                                                          "Merit function = "+str(self.m_merit))
 
         self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
@@ -509,7 +495,7 @@ class FalsePositiveModule(ProcessingModule):
                          the bottom left of the image is defined as (0, 0) so there is a -0.5
                          offset with respect to the DS9 coordinate system. Aperture photometry
                          corrects for the partial inclusion of pixels at the boundary.
-        :type position: tuple
+        :type position: (float, float)
         :param aperture: Aperture radius (arcsec).
         :type aperture: float
         :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
@@ -614,204 +600,6 @@ class FalsePositiveModule(ProcessingModule):
         sys.stdout.flush()
 
 
-def _fake_planet(science,
-                 psf,
-                 parang,
-                 position,
-                 magnitude,
-                 psf_scaling,
-                 pixscale):
-    """
-    Internal function to inject fake planets into a cube of images. This function is similar to
-    FakePlanetModule but does not require access to the PynPoint database.
-    """
-
-    radial = position[0]/pixscale
-    theta = position[1]*math.pi/180. + math.pi/2.
-    flux_ratio = 10.**(-magnitude/2.5)
-
-    psf_size = image_size(psf)
-
-    if psf_size != (science.shape[1], science.shape[2]):
-        raise ValueError("The science images should have the same dimensions as the PSF template.")
-
-    if psf.ndim == 3 and psf.shape[0] == 1:
-        psf = np.squeeze(psf, axis=0)
-    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
-        psf = np.mean(psf, axis=0)
-
-    fake = np.copy(science)
-
-    for i in range(fake.shape[0]):
-        x_shift = radial*math.cos(theta-math.radians(parang[i]))
-        y_shift = radial*math.sin(theta-math.radians(parang[i]))
-
-        if psf.ndim == 2:
-            psf_tmp = np.copy(psf)
-        elif psf.ndim == 3:
-            psf_tmp = np.copy(psf[i, ])
-
-        psf_tmp = shift(psf_tmp,
-                        (y_shift, x_shift),
-                        order=5,
-                        mode='reflect')
-
-        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
-
-    return fake
-
-
-def _psf_subtraction(images,
-                     parang,
-                     pca_number,
-                     extra_rot):
-    """
-    Internal function for PSF subtraction with PCA.
-
-    :param images: Stack of images, also used as reference images.
-    :type images: ndarray
-    :param parang: Angles (deg) for derotation of the images.
-    :type parang: ndarray
-    :param pca_number: Number of PCA components used for the PSF model.
-    :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
-
-    :return: Mean residuals of the PSF subtraction.
-    :rtype: ndarray
-    """
-
-    pca = PCA(n_components=pca_number, svd_solver="arpack")
-
-    images -= np.mean(images, axis=0)
-    images_reshape = images.reshape((images.shape[0], images.shape[1]*images.shape[2]))
-
-    pca.fit(images_reshape)
-
-    pca_rep = np.matmul(pca.components_[:pca_number], images_reshape.T)
-    pca_rep = np.vstack((pca_rep, np.zeros((0, images.shape[0])))).T
-
-    model = pca.inverse_transform(pca_rep)
-    model = model.reshape(images.shape)
-
-    residuals = images - model
-
-    for j, item in enumerate(-1.*parang):
-        residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
-
-    return np.mean(residuals, axis=0)
-
-
-def _lnprob(param,
-            bounds,
-            images,
-            psf,
-            mask,
-            parang,
-            psf_scaling,
-            pixscale,
-            pca_number,
-            extra_rot,
-            aperture):
-    """
-    Internal function for the log posterior function. Should be placed at the highest level of the
-    Python module in order to be pickled.
-
-    :param param: Tuple with the separation (arcsec), angle (deg), and contrast
-                  (mag). The angle is measured in counterclockwise direction with
-                  respect to the upward direction (i.e., East of North).
-    :type param: tuple, float
-    :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
-                   and contrast (mag). Each set of boundaries is specified as a tuple.
-    :type bounds: tuple, float
-    :param images: Stack with images.
-    :type images: ndarray
-    :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
-                equal to *image_in_tag*.
-    :type psf: ndarray
-    :param mask: Array with the circular mask (zeros) of the central and outer regions.
-    :type mask: ndarray
-    :param parang: Array with the angles for derotation.
-    :type parang: ndarray
-    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
-                        neutral density filter). Should be negative in order to inject negative
-                        fake planets.
-    :type psf_scaling: float
-    :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
-                     density filter). Should be negative in order to inject negative fake planets.
-    :type pixscale: float
-    :param pca_number: Number of principle components used for the PSF subtraction.
-    :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
-    :param aperture: Circular aperture at the position specified in *param*.
-    :type aperture: photutils.CircularAperture
-
-    :return: Log posterior.
-    :rtype float
-    """
-
-    def _lnprior():
-        """
-        Internal function for the log prior function.
-
-        :return: Log prior.
-        :rtype float
-        """
-
-        if bounds[0][0] <= param[0] <= bounds[0][1] and \
-           bounds[1][0] <= param[1] <= bounds[1][1] and \
-           bounds[2][0] <= param[2] <= bounds[2][1]:
-
-            lnprior = 0.
-
-        else:
-
-            lnprior = -np.inf
-
-        return lnprior
-
-    def _lnlike():
-        """
-        Internal function for the log likelihood function. Noise of each pixel is assumed to be
-        given by photon noise only (see Wertz et al. 2017 for details).
-
-        :return: Log likelihood.
-        :rtype float
-        """
-
-        sep, ang, mag = param
-
-        fake = _fake_planet(images,
-                            psf,
-                            parang-extra_rot,
-                            (sep, ang),
-                            mag,
-                            psf_scaling,
-                            pixscale)
-
-        fake *= mask
-
-        im_res = _psf_subtraction(fake,
-                                  parang,
-                                  pca_number,
-                                  extra_rot)
-
-        phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
-
-        return -0.5*phot_table['aperture_sum'][0]
-
-    lnprior = _lnprior()
-
-    if math.isinf(lnprior):
-        lnprob = -np.inf
-
-    else:
-        lnprob = lnprior + _lnlike()
-
-    return lnprob
-
-
 class MCMCsamplingModule(ProcessingModule):
     """
     Module to determine the contrast and position of a planet with an affine invariant Markov chain
@@ -840,10 +628,10 @@ class MCMCsamplingModule(ProcessingModule):
                       angle is measured in counterclockwise direction with respect to the upward
                       direction (i.e., East of North). The specified separation and angle are also
                       used as fixed position for the aperture.
-        :type param: tuple, float
+        :type param: (float, float, float)
         :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
                        contrast (mag). Each set of boundaries is specified as a tuple.
-        :type bounds: tuple, float
+        :type bounds: ((float, float), (float, float), (float, float))
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with images that are read as input.
@@ -869,19 +657,19 @@ class MCMCsamplingModule(ProcessingModule):
         :type aperture: float
         :param mask: Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of
                      the tuple can be set to None.
-        :type mask: tuple, float
+        :type mask: (float, float)
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
         :param \**kwargs:
             See below.
 
         :Keyword arguments:
-             * **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
-             * **sigma** (*tuple*) -- Tuple with the standard deviations that randomly initializes
-                                      the start positions of the walkers in a small ball around the
-                                      a priori preferred position (*param*). The tuple should
-                                      contain three values (*float*): the separation (arcsec),
-                                      position angle (deg), and contrast (mag).
+            **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
+
+            **sigma** (*(float, float, float)*) -- Tuple with the standard deviations that
+            randomly initializes the start positions of the walkers in a small ball around
+            the a priori preferred position. The tuple should contain a value for the
+            separation (arcsec), position angle (deg), and contrast (mag).
 
         :return: None
         """
@@ -962,10 +750,10 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_mask[1] /= pixscale
 
         mask = create_mask(im_shape, self.m_mask)
+        center = image_center(images) # (y, x)
 
-        center = self.m_image_in_port.get_shape()[1]/2.
-        x_pos = center+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
-        y_pos = center+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+        x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
+        y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
 
         circ_ap = CircularAperture((x_pos, y_pos), self.m_aperture)
 
@@ -977,7 +765,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
-                                        lnpostfn=_lnprob,
+                                        lnpostfn=lnprob,
                                         a=self.m_scale,
                                         args=([self.m_bounds,
                                                images,
@@ -998,7 +786,8 @@ class MCMCsamplingModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_chain_out_port.set_all(sampler.chain)
-        self.m_chain_out_port.add_history_information("Flux and position", "MCMC sampling")
+        history = "walkers = "+str(self.m_nwalkers)+", steps = "+str(self.m_nsteps)
+        self.m_chain_out_port.add_history_information("MCMCsamplingModule", history)
         self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_chain_out_port.close_port()
 
@@ -1038,7 +827,7 @@ class AperturePhotometryModule(ProcessingModule):
         :type radius: int
         :param position: Center position (pix) of the aperture, (x, y). The center of the image
                          will be used if set to None.
-        :type position: tuple, float
+        :type position: (float, float)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.

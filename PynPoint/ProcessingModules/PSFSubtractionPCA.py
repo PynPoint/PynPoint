@@ -7,8 +7,8 @@ from sys import platform, stdout
 
 import numpy as np
 
-from sklearn.decomposition import PCA
 from scipy import ndimage
+from sklearn.decomposition import PCA
 
 from PynPoint.Util.ModuleTools import progress
 from PynPoint.Util.MultiprocessingPCA import PcaMultiprocessingCapsule

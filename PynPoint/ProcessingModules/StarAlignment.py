@@ -15,9 +15,9 @@ from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import memory_frames, crop_image, progress, image_center, \
-                                      number_images_port, locate_star, shift_image, \
-                                      image_size_port
+from PynPoint.Util.ModuleTools import memory_frames, progress, locate_star, \
+                                      number_images_port, image_size_port
+from PynPoint.Util.ImageTools import crop_image, shift_image, image_center
 
 
 class StarExtractionModule(ProcessingModule):
