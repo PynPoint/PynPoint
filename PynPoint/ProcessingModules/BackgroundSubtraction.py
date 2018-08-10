@@ -15,7 +15,8 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, locate_star
+from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ImageTools import locate_star
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -285,7 +286,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                        first cube which contains the star (Python indexing starts at zero). Sorting
                        is based on the DITHER_X and DITHER_Y attributes when *cubes* is set to
                        None.
-        :type dither: tuple
+        :type dither: (int, int, int)
         :param mean: Subtract the mean pixel value from each image separately, both star and
                      background frames.
         :type mean: bool
@@ -836,7 +837,7 @@ class DitheringBackgroundModule(ProcessingModule):
                        If *center* is specified and *cubes* is set to None then the DITHER_X and
                        DITHER_Y attributes will be used for sorting and subtracting of the
                        background but not for selecting the dithering positions.
-        :type center: tuple, int
+        :type center: ((int, int), (int, int), )
         :param cubes: Number of consecutive cubes per dither position. If *cubes* is set to None
                       then sorting and subtracting of the background frames is based on DITHER_X
                       and DITHER_Y.
@@ -874,12 +875,12 @@ class DitheringBackgroundModule(ProcessingModule):
             **combine** (*str*) -- Combine the mean background subtracted ("mean") or PCA
             background subtracted ("pca") frames. This step is ignored if set to None.
 
-            **mask_planet** (*tuple(float, float, float)*) -- Separation (arcsec), position angle
+            **mask_planet** (*(float, float, float)*) -- Separation (arcsec), position angle
             (deg) measured in counterclockwise direction with respect to upward direction,
             additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
             radius). No mask is used when set to None.
 
-            **bad_pixel** (*tuple(int, float, int)*) -- Size of the sigma filter, sigma threshold,
+            **bad_pixel** (*(int, float, int)*) -- Size of the sigma filter, sigma threshold,
             and number of iterations used for removal of bad pixels before the mask is placed at
             the position of the stellar PSF.
 

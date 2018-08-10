@@ -14,7 +14,8 @@ from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, create_mask
+from PynPoint.Util.ModuleTools import progress, memory_frames, image_size
+from PynPoint.Util.ImageTools import create_mask
 
 
 class PSFpreparationModule(ProcessingModule):

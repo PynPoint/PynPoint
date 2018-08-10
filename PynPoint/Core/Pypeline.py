@@ -328,11 +328,12 @@ class Pypeline(object):
 
         if name in self._m_modules:
             module = self._m_modules[name]
+            validate = self._validate(module, existing_data_tags)
 
         else:
-            return
+            validate = None
 
-        return self._validate(module, existing_data_tags)
+        return validate
 
     def run(self):
         """

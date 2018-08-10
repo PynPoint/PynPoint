@@ -300,7 +300,7 @@ class TestOutputPort(object):
             out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
 
         assert ex_info.value[0] == "The port tag 'new_data' is already used with a different " \
-                                   "data type. If you want to replace it use force=True."
+                                   "data type. The 'force' parameter can be used to replace the tag."
         out_port.del_all_data()
 
     def test_set_data_using_slicing(self):
