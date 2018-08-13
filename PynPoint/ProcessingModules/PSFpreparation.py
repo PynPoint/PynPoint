@@ -14,7 +14,8 @@ from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, create_mask
+from PynPoint.Util.ModuleTools import progress, memory_frames, image_size
+from PynPoint.Util.ImageTools import create_mask
 
 
 class PSFpreparationModule(ProcessingModule):
@@ -60,7 +61,7 @@ class PSFpreparationModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             * **verbose** (*bool*) -- Print progress to the standard output.
+            **verbose** (*bool*) -- Print progress to the standard output.
 
         :return: None
         """
@@ -575,10 +576,10 @@ class SDIpreparationModule(ProcessingModule):
 
         :param wavelength: Tuple with the central wavelengths of the line and continuum filter,
                            (line, continuum), in arbitrary but identical units.
-        :type wavelength: tuple, float
+        :type wavelength: (float, float)
         :param width: Tuple with the equivalent widths of the line and continuum filter,
                       (line, continuum), in arbitrary but identical units.
-        :type width: tuple, float
+        :type width: (float, float)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
