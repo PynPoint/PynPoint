@@ -66,14 +66,14 @@ class ContrastCurveModule(ProcessingModule):
         :param separation: Range of separations (arcsec) where the contrast is calculated. Should
                            be specified as (lower limit, upper limit, step size). Apertures that
                            fall within the mask radius or beyond the image size are removed.
-        :type separation: tuple
+        :type separation: (float, float, float)
         :param angle: Range of position angles (deg) where the contrast is calculated. Should be
                       specified as (lower limit, upper limit, step size), measured counterclockwise
                       with respect to the vertical image axis, i.e. East of North.
-        :type angle: tuple
+        :type angle: (float, float, float)
         :param magnitude: Initial magnitude value and step size for the fake planet, specified
                           as (planet magnitude, magnitude step size).
-        :type magnitude: tuple
+        :type magnitude: (float, float)
         :param sigma: Detection threshold in units of sigma. Note that as sigma is fixed, the
                       confidence level (and false positive fraction) change with separation.
         :type sigma: float
