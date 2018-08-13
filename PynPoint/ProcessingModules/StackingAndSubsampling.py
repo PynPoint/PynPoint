@@ -356,7 +356,7 @@ class CombineTagsModule(ProcessingModule):
         Constructor of CombineTagsModule.
 
         :param image_in_tags: Tags of the database entries that are read as input and combined.
-        :type image_in_tags: tuple, str
+        :type image_in_tags: (str, str, )
         :param check_attr: Compare non-static attributes between the tags or combine all non-static
                            attributes into the new database tag.
         :type check_attr: bool
