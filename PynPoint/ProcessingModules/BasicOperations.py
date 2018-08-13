@@ -24,7 +24,7 @@ class SubtractImagesModule(ProcessingModule):
         Constructor of SubtractImagesModule.
 
         :param image_in_tags: Tuple with two tags of the database entry that are read as input.
-        :type image_in_tags: tuple, str
+        :type image_in_tags: (str, str)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_out_tag: Tag of the database entry with the subtracted images that are written
@@ -93,7 +93,7 @@ class AddImagesModule(ProcessingModule):
         Constructor of AddImagesModule.
 
         :param image_in_tags: Tuple with two tags of the database entry that are read as input.
-        :type image_in_tags: tuple, str
+        :type image_in_tags: (str, str)
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_out_tag: Tag of the database entry with the added images that are written as
