@@ -318,10 +318,17 @@ class FrameSelectionModule(ProcessingModule):
                 starpos[:, 1] = position[1]
 
             else:
+                if position is None:
+                    center = None
+                    width = None
+                else:
+                    center = position[0:2]
+                    width = int(math.ceil(position[2]/pixscale))
+
                 for i, _ in enumerate(starpos):
                     starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
-                                                center=position[0:2],
-                                                width=int(math.ceil(position[2]/pixscale)),
+                                                center=center,
+                                                width=width,
                                                 fwhm=int(math.ceil(fwhm/pixscale)))
 
             return starpos
@@ -380,12 +387,8 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
-
         elif self.m_method == "max":
             phot_ref = np.nanmax(phot)
-
-        else:
-            raise ValueError("The 'method' should be set to 'median' or 'max'.")
 
         phot_std = np.nanstd(phot)
 
@@ -417,7 +420,7 @@ class FrameSelectionModule(ProcessingModule):
                 remove.run()
 
         else:
-            print "No frames where removed. [WARNING]"
+            print "No frames were removed. [WARNING]"
 
         self.m_image_in_port.close_port()
 
