@@ -213,6 +213,11 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(np.mean(data), 0.001040627977720779, rtol=1e-6, atol=0.)
         assert data.shape == (80, 31, 31)
 
+        data = self.pipeline.get_attribute("pca_dither1", "STAR_POSITION", static=False)
+        assert np.allclose(data[0, 0], [15., 15.], rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 15., rtol=1e-6, atol=0.)
+        assert data.shape == (80, 2)
+
     def test_dithering_center(self):
 
         pca_dither = DitheringBackgroundModule(name_in="pca_dither2",

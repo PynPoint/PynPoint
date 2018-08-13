@@ -8,7 +8,8 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, rotate_images
+from PynPoint.Util.ModuleTools import progress, memory_frames
+from PynPoint.Util.ImageTools import rotate_images
 
 
 class StackAndSubsetModule(ProcessingModule):
@@ -355,7 +356,7 @@ class CombineTagsModule(ProcessingModule):
         Constructor of CombineTagsModule.
 
         :param image_in_tags: Tags of the database entries that are read as input and combined.
-        :type image_in_tags: tuple, str
+        :type image_in_tags: (str, str, )
         :param check_attr: Compare non-static attributes between the tags or combine all non-static
                            attributes into the new database tag.
         :type check_attr: bool

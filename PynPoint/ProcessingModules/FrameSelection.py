@@ -9,8 +9,9 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, locate_star, \
-                                      number_images_port, crop_image
+from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port, \
+                                      locate_star
+from PynPoint.Util.ImageTools import crop_image
 
 
 class RemoveFramesModule(ProcessingModule):
@@ -317,10 +318,17 @@ class FrameSelectionModule(ProcessingModule):
                 starpos[:, 1] = position[1]
 
             else:
+                if position is None:
+                    center = None
+                    width = None
+                else:
+                    center = position[0:2]
+                    width = int(math.ceil(position[2]/pixscale))
+
                 for i, _ in enumerate(starpos):
                     starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
-                                                center=position[0:2],
-                                                width=int(math.ceil(position[2]/pixscale)),
+                                                center=center,
+                                                width=width,
                                                 fwhm=int(math.ceil(fwhm/pixscale)))
 
             return starpos
@@ -379,12 +387,8 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
-
         elif self.m_method == "max":
             phot_ref = np.nanmax(phot)
-
-        else:
-            raise ValueError("The 'method' should be set to 'median' or 'max'.")
 
         phot_std = np.nanstd(phot)
 
@@ -401,6 +405,7 @@ class FrameSelectionModule(ProcessingModule):
         if np.size(indices) > 0:
             if self.m_index_out_port is not None:
                 self.m_index_out_port.set_all(np.transpose(indices))
+                self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
                 self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
                 self.m_index_out_port.add_history_information("Frames removed",
                                                               str(np.size(indices)))
@@ -416,7 +421,7 @@ class FrameSelectionModule(ProcessingModule):
                 remove.run()
 
         else:
-            print "No frames where removed. [WARNING]"
+            print "No frames were removed. [WARNING]"
 
         self.m_image_in_port.close_port()
 

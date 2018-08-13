@@ -328,11 +328,12 @@ class Pypeline(object):
 
         if name in self._m_modules:
             module = self._m_modules[name]
+            validate = self._validate(module, existing_data_tags)
 
         else:
-            return
+            validate = None
 
-        return self._validate(module, existing_data_tags)
+        return validate
 
     def run(self):
         """
@@ -426,6 +427,7 @@ class Pypeline(object):
 
         else:
             attr = self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+            attr = np.asarray(attr)
 
         return attr
 

@@ -750,8 +750,8 @@ class OutputPort(Port):
             return
 
         # NO -> Error message
-        raise ValueError("The port tag '%s' is already used with a different data type. If you want "
-                         "to replace it use force=True." % self._m_tag)
+        raise ValueError("The port tag '%s' is already used with a different data type. The "
+                         "'force' parameter can be used to replace the tag." % self._m_tag)
 
     def __setitem__(self, key, value):
         """
