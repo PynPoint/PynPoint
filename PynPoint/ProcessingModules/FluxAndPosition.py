@@ -275,7 +275,7 @@ class SimplexMinimizationModule(ProcessingModule):
                           and 0.1 pix. The tolerance on the output (i.e., function of merit)
                           is set to np.inf so the condition is always met.
         :type tolerance: float
-        :param pca_number: Number of principle components used for the PSF subtraction.
+        :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
         :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
         :type cent_size: float
@@ -651,7 +651,7 @@ class MCMCsamplingModule(ProcessingModule):
                             neutral density filter). Should be negative in order to inject
                             negative fake planets.
         :type psf_scaling: float
-        :param pca_number: Number of principle components used for the PSF subtraction.
+        :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
         :param aperture: Aperture radius (arcsec) at the position specified in *param*.
         :type aperture: float

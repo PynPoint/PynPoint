@@ -17,7 +17,7 @@ from PynPoint.Core.Processing import ProcessingModule
 
 class PcaPsfSubtractionModule(ProcessingModule):
     """
-    Module for PSF subtraction with principle component analysis (PCA). The multiprocessing
+    Module for PSF subtraction with principal component analysis (PCA). The multiprocessing
     implementation is only supported for Linux and Windows. Mac only runs in single processing
     due to a bug in the numpy package. Note that the calculation of the residuals with multi-
     processing may require a large amount of memory in case the stack of input images is very
@@ -71,8 +71,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             * **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
-             * **verbose** (*bool*) -- Print progress to the standard output.
+            **basis_out_tag** (*str*) -- Tag of the database entry with the basis set.
+
+            **verbose** (*bool*) -- Print progress to the standard output.
 
         :return: None
         """
