@@ -61,7 +61,7 @@ class PSFpreparationModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-             * **verbose** (*bool*) -- Print progress to the standard output.
+            **verbose** (*bool*) -- Print progress to the standard output.
 
         :return: None
         """

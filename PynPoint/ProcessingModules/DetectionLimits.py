@@ -90,7 +90,7 @@ class ContrastCurveModule(ProcessingModule):
         :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
                        the planet.
         :type ignore: bool
-        :param pca_number: Number of principle components used for the PSF subtraction.
+        :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
         :param norm: Normalization of each image by its Frobenius norm.
         :type norm: bool

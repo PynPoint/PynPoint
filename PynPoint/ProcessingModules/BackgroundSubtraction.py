@@ -521,7 +521,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
 class PCABackgroundSubtractionModule(ProcessingModule):
     """
-    Module for PCA-based background subtraction. See Hunziker et al. 2018 for details.
+    Module for PCA based background subtraction. See Hunziker et al. 2018 for details.
     """
 
     def __init__(self,
@@ -540,7 +540,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         """
         Constructor of PCABackgroundSubtractionModule.
 
-        :param pca_number: Number of principle components.
+        :param pca_number: Number of principal components.
         :type pca_number: int
         :param mask_star: Radius of the central mask (arcsec).
         :type mask_star: float
@@ -548,7 +548,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                             direction with respect to upward direction, additional rotation angle
                             (deg), and radius (arcsec) of the mask, (sep, angle, extra_rot,
                             radius). No mask is used when set to None.
-        :type mask_planet: tuple(float, float, float, float)
+        :type mask_planet: (float, float, float, float)
         :param subtract_mean: The mean of the background images is subtracted from both the star
                               and background images before the PCA basis is constructed.
         :type subtract_mean: bool
@@ -605,7 +605,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         """
         Run method of the module. Creates a PCA basis set of the background frames, masks the PSF
         in the star frames and optionally an off-axis point source, fits the star frames with a
-        linear combination of the principle components, and writes the residuals of the background
+        linear combination of the principal components, and writes the residuals of the background
         subtracted images.
 
         :return: None
@@ -636,7 +636,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         def _create_basis(images, bg_mean, pca_number):
             """
-            Method for creating a set of principle components for a stack of images.
+            Method for creating a set of principal components for a stack of images.
             """
 
             if self.m_subtract_mean:
@@ -787,6 +787,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
 
+        self.m_residuals_out_port.add_attribute("STAR_POSITION", star, static=False)
         self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
         self.m_residuals_out_port.add_history_information("Background subtraction", "PCA")
 
@@ -851,7 +852,7 @@ class DitheringBackgroundModule(ProcessingModule):
                          position. If set to None then the full frame size (*size*) will be
                          used.
         :type subframe: float
-        :param pca_number: Number of principle components.
+        :param pca_number: Number of principal components.
         :type pca_number: int
         :param mask_star: Radius of the central mask (arcsec).
         :type mask_star: float
