@@ -427,6 +427,7 @@ class Pypeline(object):
 
         else:
             attr = self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+            attr = np.asarray(attr)
 
         return attr
 

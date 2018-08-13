@@ -405,6 +405,7 @@ class FrameSelectionModule(ProcessingModule):
         if np.size(indices) > 0:
             if self.m_index_out_port is not None:
                 self.m_index_out_port.set_all(np.transpose(indices))
+                self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
                 self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
                 self.m_index_out_port.add_history_information("Frames removed",
                                                               str(np.size(indices)))
