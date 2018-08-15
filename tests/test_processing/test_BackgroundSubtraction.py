@@ -160,11 +160,10 @@ class TestBackgroundSubtraction(object):
                                                cubes=None,
                                                size=0.8,
                                                gaussian=0.1,
-                                               subframe=0.1,
+                                               subframe=0.5,
                                                pca_number=5,
                                                mask_star=0.1,
                                                mask_planet=None,
-                                               bad_pixel=None,
                                                crop=True,
                                                prepare=True,
                                                pca_background=True,
@@ -194,13 +193,13 @@ class TestBackgroundSubtraction(object):
         assert data.shape == (60, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_fit1")
-        assert np.allclose(data[0, 14, 14], 1.519641183676098e-05, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 1.977958667148767e-07, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 14, 14], 1.5196412298279846e-05, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 1.9779802529804516e-07, rtol=1e-4, atol=0.)
         assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_res1")
-        assert np.allclose(data[0, 14, 14], 0.05302488794328089, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0010412324307166826, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05302488794281937, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010412324285580998, rtol=1e-6, atol=0.)
         assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_mask1")
@@ -213,10 +212,10 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(np.mean(data), 0.001040627977720779, rtol=1e-6, atol=0.)
         assert data.shape == (80, 31, 31)
 
-        data = self.pipeline.get_attribute("pca_dither1", "STAR_POSITION", static=False)
+        data = self.pipeline.get_attribute("dither_pca_res1", "STAR_POSITION", static=False)
         assert np.allclose(data[0, 0], [15., 15.], rtol=1e-6, atol=0.)
         assert np.allclose(np.mean(data), 15., rtol=1e-6, atol=0.)
-        assert data.shape == (80, 2)
+        assert data.shape == (20, 2)
 
     def test_dithering_center(self):
 
