@@ -903,9 +903,9 @@ class OutputPort(Port):
                       value,
                       static=True):
         """
-        Adds a attribute to the dataset of the Port with the attribute name = `name` and the value =
-        `value`. If the attribute already exists it will be overwritten. Two different types of
-        attributes are supported:
+        Adds an attribute to the dataset of the Port with the attribute name = `name` and the
+        value = `value`. If the attribute already exists it will be overwritten. Two different
+        types of attributes are supported:
 
             1. **static attributes**:
                Contain a single value or name (e.g. The name of the used Instrument).
@@ -919,10 +919,10 @@ class OutputPort(Port):
         Static attributes will be direct attributes while non-static attributes are stored in a
         group with the name *header_* + name of the dataset.
 
-        :param name: The name of the attribute
+        :param name: Name of the attribute.
         :type name: str
-        :param value: The value of the attribute
-        :param static: If True the attribute will be static (default)
+        :param value: Value of the attribute
+        :param static: Indicate if the attribute is static (True) or non-static (False).
         :type static: bool
 
         :return: None

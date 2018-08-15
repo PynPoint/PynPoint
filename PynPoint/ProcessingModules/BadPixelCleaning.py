@@ -489,7 +489,7 @@ class BadPixelTimeFilterModule(ProcessingModule):
                  name_in="bp_time",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_bp_time",
-                 sigma=5):
+                 sigma=(5., 5.)):
         """
         Constructor of BadPixelTimeFilterModule.
 
@@ -589,7 +589,8 @@ class ReplaceBadPixelsModule(ProcessingModule):
                      mean or median replacement value. For example, a 5x5 window is used if
                      _size_=2.
         :type size: int
-        :param replace: Replace the bad pixel with the mean ('mean') or median ('media') value.
+        :param replace: Replace the bad pixel with the mean ('mean'), median ('media'), or
+                        NaN ('nan').
         :type replace: str
 
         :return: None
@@ -637,6 +638,8 @@ class ReplaceBadPixelsModule(ProcessingModule):
                         im_mask[item[0], item[1]] = np.nanmean(im_tmp)
                     elif self.m_replace == "median":
                         im_mask[item[0], item[1]] = np.nanmedian(im_tmp)
+                    elif self.m_replace == "nan":
+                        im_mask[item[0], item[1]] = np.nan
 
             return im_mask
 

@@ -276,7 +276,7 @@ class TestStarAlignment(object):
                                        image_out_tag="center_odd",
                                        radius=42.5,
                                        pattern="x",
-                                       sigma=5.)
+                                       sigma=0.135)
 
         self.pipeline.add_module(waffle)
         self.pipeline.run_module("waffle_odd")
@@ -302,7 +302,7 @@ class TestStarAlignment(object):
                                        image_out_tag="center_even",
                                        radius=42.5,
                                        pattern="x",
-                                       sigma=5.)
+                                       sigma=0.135)
 
         self.pipeline.add_module(waffle)
         self.pipeline.run_module("waffle_even")
