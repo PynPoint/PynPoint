@@ -703,18 +703,18 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         frames = memory_frames(memory, nimages)
 
         self.m_mask_star /= pixscale
-
-        self.m_gaussian /= pixscale
-        self.m_gaussian = int(math.ceil(self.m_gaussian))
+        self.m_gaussian = int(math.ceil(self.m_gaussian/pixscale))
 
         if self.m_subframe is not None:
             self.m_subframe /= pixscale
             self.m_subframe = int(math.ceil(self.m_subframe))
 
+        bg_mean = np.mean(self.m_background_in_port.get_all(), axis=0)
+
         star = np.zeros((nimages, 2))
         for i, _ in enumerate(star):
-            star[i, :] = locate_star(image=self.m_star_in_port[i, ],
-                                     center=None,
+            star[i, :] = locate_star(image=self.m_star_in_port[i, ]-bg_mean,
+                                     center=(None, None),
                                      width=self.m_subframe,
                                      fwhm=self.m_gaussian)
 
@@ -728,11 +728,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         sys.stdout.write("Creating PCA basis set...")
         sys.stdout.flush()
-
-        if self.m_subtract_mean:
-            bg_mean = np.mean(self.m_background_in_port.get_all(), axis=0)
-        else:
-            bg_mean = None
 
         basis_pca = _create_basis(self.m_background_in_port.get_all(),
                                   bg_mean,
@@ -880,10 +875,6 @@ class DitheringBackgroundModule(ProcessingModule):
             additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
             radius). No mask is used when set to None.
 
-            **bad_pixel** (*(int, float, int)*) -- Size of the sigma filter, sigma threshold,
-            and number of iterations used for removal of bad pixels before the mask is placed at
-            the position of the stellar PSF.
-
         :return: None
         """
 
@@ -911,11 +902,6 @@ class DitheringBackgroundModule(ProcessingModule):
             self.m_mask_planet = kwargs["mask_planet"]
         else:
             self.m_mask_planet = None
-
-        if "bad_pixel" in kwargs:
-            self.m_bad_pixel = kwargs["bad_pixel"]
-        else:
-            self.m_bad_pixel = None
 
         super(DitheringBackgroundModule, self).__init__(name_in)
 
@@ -969,9 +955,9 @@ class DitheringBackgroundModule(ProcessingModule):
     def run(self):
         """
         Run method of the module. Cuts out the detector sections at the different dither positions,
-        prepares the PCA background subtraction, applies a bad pixel correction, locates the star
-        in each image, runs the PCA background subtraction, combines the output from the different
-        dither positions is written to a single database tag.
+        prepares the PCA background subtraction, locates the star in each image, runs the PCA
+        background subtraction, combines the output from the different dither positions is written
+        to a single database tag.
 
         :return: None
         """
@@ -996,7 +982,6 @@ class DitheringBackgroundModule(ProcessingModule):
                       " out of "+str(n_dither)+"... [DONE]"
 
         n_dither, star_pos = self._initialize()
-
         tags = []
 
         for i, position in enumerate(self.m_center):
@@ -1028,24 +1013,6 @@ class DitheringBackgroundModule(ProcessingModule):
                 prepare.run()
 
             if self.m_pca_background:
-
-                if self.m_bad_pixel is None:
-                    tag_extract = "dither_mean"+str(i+1)
-
-                else:
-                    tag_extract = "dither_bad"+str(i+1)
-
-                    bad = BadPixelSigmaFilterModule(name_in="bad"+str(i),
-                                                    image_in_tag="dither_mean"+str(i+1),
-                                                    image_out_tag="dither_bad"+str(i+1),
-                                                    map_out_tag="dither_bpmap"+str(i+1),
-                                                    box=self.m_bad_pixel[0],
-                                                    sigma=self.m_bad_pixel[1],
-                                                    iterate=self.m_bad_pixel[2])
-
-                    bad.connect_database(self._m_data_base)
-                    bad.run()
-
                 pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                      mask_star=self.m_mask_star,
                                                      mask_planet=self.m_mask_planet,
