@@ -68,6 +68,9 @@ class TextWritingModule(WritingModule):
 
         data = self.m_data_port.get_all()
 
+        if data.ndim == 3 and data.shape[0] == 1:
+            data = np.squeeze(data, axis=0)
+
         if data.ndim > 2:
             raise ValueError("Only 1D or 2D arrays can be written to a text file.")
 
@@ -132,6 +135,9 @@ class ParangWritingModule(WritingModule):
 
         sys.stdout.write("Running ParangWritingModule...")
         sys.stdout.flush()
+
+        if self.m_header is None:
+            self.m_header = ""
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
