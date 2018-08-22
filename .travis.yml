@@ -3,6 +3,10 @@ matrix:
     include:
         - os: osx
           language: generic
+        - os: linux
+          sudo: required
+          python: 2.7
+          env: TOXENV=py27
 before_install:
   - brew unlink python
   - brew update

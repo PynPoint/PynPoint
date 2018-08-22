@@ -118,8 +118,8 @@ class TestPSFSubtractionPCA(object):
     def test_psf_subtraction_pca_multi(self):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        config = database['config']
-        config.attrs['CPU'] = 4
+        database['config'].attrs['CPU'] = 4
+        database.close()
 
         pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
                                       name_in="pca_multi",
@@ -138,7 +138,7 @@ class TestPSFSubtractionPCA(object):
 
         data_single = self.pipeline.get_data("res_mean_single")
         data_multi = self.pipeline.get_data("res_mean_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-8, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_median_single")

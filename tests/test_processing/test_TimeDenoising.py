@@ -123,8 +123,8 @@ class TestTimeDenoising(object):
     def test_wavelet_denoising_cwt_multi(self):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        config = database['config']
-        config.attrs['CPU'] = 4
+        database['config'].attrs['CPU'] = 4
+        database.close()
 
         cwt_config = CwtWaveletConfiguration(wavelet="dog",
                                              wavelet_order=2,
