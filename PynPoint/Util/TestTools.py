@@ -125,7 +125,7 @@ def remove_psf_test_data(path):
     os.remove(os.path.join(path, "test_data/PynPoint_database.hdf5"))
     os.remove(os.path.join(path, "test_data/PynPoint_config.ini"))
 
-def create_random(path):
+def create_random(path, ndit=10, parang=np.arange(1, 11, 1)):
     """
     Create a stack of images with Gaussian distributed pixel values.
     """
@@ -133,13 +133,13 @@ def create_random(path):
     file_in = path + "/PynPoint_database.hdf5"
 
     np.random.seed(1)
-    images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-    parang = np.arange(1, 11, 1)
+    images = np.random.normal(loc=0, scale=2e-4, size=(ndit, 100, 100))
 
     h5f = h5py.File(file_in, "w")
     dset = h5f.create_dataset("images", data=images)
     dset.attrs['PIXSCALE'] = 0.01
-    h5f.create_dataset("header_images/PARANG", data=parang)
+    if parang is not None:
+        h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
 def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
