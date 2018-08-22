@@ -138,25 +138,25 @@ class TestPSFSubtractionPCA(object):
 
         data_single = self.pipeline.get_data("res_mean_single")
         data_multi = self.pipeline.get_data("res_mean_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-8, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_median_single")
         data_multi = self.pipeline.get_data("res_median_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_clip_single")
         data_multi = self.pipeline.get_data("res_clip_multi")
-        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_arr_single5")
         data_multi = self.pipeline.get_data("res_arr_multi5")
-        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("basis_single")
         data_multi = self.pipeline.get_data("basis_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
         assert data_single.shape == data_multi.shape
