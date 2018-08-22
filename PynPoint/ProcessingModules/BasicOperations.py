@@ -195,6 +195,7 @@ class RotateImagesModule(ProcessingModule):
             raise ValueError("Input and output port should have a different tag.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
+        ndim = self.m_image_in_port.get_ndim()
         nimages = number_images_port(self.m_image_in_port)
         frames = memory_frames(memory, nimages)
 
@@ -216,7 +217,7 @@ class RotateImagesModule(ProcessingModule):
                 # ndimage.rotate rotates in clockwise direction for positive angles
                 im_tmp = rotate(im_tmp, self.m_angle, reshape=False)
 
-                self.m_image_out_port.append(im_tmp)
+                self.m_image_out_port.append(im_tmp, data_dim=ndim)
 
         sys.stdout.write("Running RotateImagesModule... [DONE]\n")
         sys.stdout.flush()
