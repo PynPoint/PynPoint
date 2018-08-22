@@ -127,7 +127,7 @@ class TestPSFSubtractionPCA(object):
                                       reference_in_tag="read",
                                       res_mean_tag="res_mean_multi",
                                       res_median_tag="res_median_multi",
-                                      res_arr_out_tag="res_arr_multi",
+                                      res_arr_out_tag=None,
                                       res_rot_mean_clip_tag="res_clip_multi",
                                       basis_out_tag="basis_multi",
                                       extra_rot=-15.,
@@ -138,25 +138,20 @@ class TestPSFSubtractionPCA(object):
 
         data_single = self.pipeline.get_data("res_mean_single")
         data_multi = self.pipeline.get_data("res_mean_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_median_single")
         data_multi = self.pipeline.get_data("res_median_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("res_clip_single")
         data_multi = self.pipeline.get_data("res_clip_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("res_arr_single5")
-        data_multi = self.pipeline.get_data("res_arr_multi5")
-        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data("basis_single")
         data_multi = self.pipeline.get_data("basis_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-4, atol=0.)
+        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
