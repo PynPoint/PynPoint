@@ -7,12 +7,6 @@ matrix:
         - os: linux
           python: 2.7
           env: TOXENV=py27
-# before_install:
-#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink python; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-#   - pip2 install virtualenv
-#   - virtualenv venv -p python2
-#   - source venv/bin/activate
 install:
   - pip2 install numpy
   - pip2 install enum34
@@ -22,7 +16,7 @@ install:
   - pip2 install sphinx
   - pip2 install codecov
   - pip2 install sphinx_rtd_theme
-before_script:
+after_install:
   - mkdir $HOME/.matplotlib
   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 script:
