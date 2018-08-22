@@ -16,7 +16,7 @@ install:
   - pip2 install sphinx
   - pip2 install codecov
   - pip2 install sphinx_rtd_theme
-after_install:
+before_script:
   - mkdir $HOME/.matplotlib
   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 script:
