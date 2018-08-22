@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import h5py
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -67,49 +68,95 @@ class TestPSFSubtractionPCA(object):
         assert np.allclose(np.mean(data), 50.0, rtol=limit, atol=0.)
         assert data.shape == (80, )
 
-    def test_psf_subtraction_pca(self):
+    def test_psf_subtraction_pca_single(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=(5, ),
-                                      name_in="pca",
+        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+                                      name_in="pca_single",
                                       images_in_tag="read",
                                       reference_in_tag="read",
-                                      res_mean_tag="res_mean",
-                                      res_median_tag="res_median",
-                                      res_arr_out_tag="res_arr",
-                                      res_rot_mean_clip_tag="res_clip",
-                                      basis_out_tag="basis",
+                                      res_mean_tag="res_mean_single",
+                                      res_median_tag="res_median_single",
+                                      res_arr_out_tag="res_arr_single",
+                                      res_rot_mean_clip_tag="res_clip_single",
+                                      basis_out_tag="basis_single",
                                       extra_rot=-15.,
                                       verbose=True)
 
         self.pipeline.add_module(pca)
-        self.pipeline.run_module("pca")
+        self.pipeline.run_module("pca_single")
 
-        data = self.pipeline.get_data("res_mean")
-        assert np.allclose(data[0, 50, 50], 1.947810457180298e-06, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 59, 46], 0.00016087655925993273, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.184676024912574e-08, rtol=limit, atol=0.)
-        assert data.shape == (1, 100, 100)
+        data = self.pipeline.get_data("res_mean_single")
+        assert np.allclose(data[4, 50, 50], 1.947810457180298e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 59, 46], 0.00016087655925993273, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.6959819771522928e-08, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
 
-        data = self.pipeline.get_data("res_median")
-        assert np.allclose(data[0, 50, 50], -2.223389676715259e-06, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 59, 46], 0.00015493570876347953, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.250907785757355e-07, rtol=limit, atol=0.)
-        assert data.shape == (1, 100, 100)
+        data = self.pipeline.get_data("res_median_single")
+        assert np.allclose(data[4, 50, 50], -2.223389676715259e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 59, 46], 0.00015493570876347953, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.4142571236920345e-08, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
 
-        data = self.pipeline.get_data("res_clip")
-        assert np.allclose(data[0, 50, 50], 2.2828813434810948e-06, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 59, 46], 1.0816254290076103e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 2.052077475694807e-06, rtol=limit, atol=0.)
-        assert data.shape == (1, 100, 100)
+        data = self.pipeline.get_data("res_clip_single")
+        assert np.allclose(data[4, 50, 50], 2.2828813434810948e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 59, 46], 1.0816254290076103e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.8805674720019969e-06, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
 
-        data = self.pipeline.get_data("res_arr5")
+        data = self.pipeline.get_data("res_arr_single5")
         assert np.allclose(data[0, 50, 50], -0.00010775091764735749, rtol=limit, atol=0.)
         assert np.allclose(data[0, 59, 46], 0.0001732810184783699, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.184676024912564e-08, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.184676024912723e-08, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-        data = self.pipeline.get_data("basis")
+        data = self.pipeline.get_data("basis_single")
         assert np.allclose(data[0, 50, 50], -0.005866797940467074, rtol=limit, atol=0.)
         assert np.allclose(data[0, 59, 46], 0.0010154680995154122, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -4.708475279640416e-05, rtol=limit, atol=0.)
-        assert data.shape == (5, 100, 100)
+        assert np.allclose(np.mean(data), -1.593245396350998e-05, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
+
+    def test_psf_subtraction_pca_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        config = database['config']
+        config.attrs['CPU'] = 4
+
+        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+                                      name_in="pca_multi",
+                                      images_in_tag="read",
+                                      reference_in_tag="read",
+                                      res_mean_tag="res_mean_multi",
+                                      res_median_tag="res_median_multi",
+                                      res_arr_out_tag="res_arr_multi",
+                                      res_rot_mean_clip_tag="res_clip_multi",
+                                      basis_out_tag="basis_multi",
+                                      extra_rot=-15.,
+                                      verbose=True)
+
+        self.pipeline.add_module(pca)
+        self.pipeline.run_module("pca_multi")
+
+        data_single = self.pipeline.get_data("res_mean_single")
+        data_multi = self.pipeline.get_data("res_mean_multi")
+        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert data_single.shape == data_multi.shape
+
+        data_single = self.pipeline.get_data("res_median_single")
+        data_multi = self.pipeline.get_data("res_median_multi")
+        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert data_single.shape == data_multi.shape
+
+        data_single = self.pipeline.get_data("res_clip_single")
+        data_multi = self.pipeline.get_data("res_clip_multi")
+        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
+        assert data_single.shape == data_multi.shape
+
+        data_single = self.pipeline.get_data("res_arr_single5")
+        data_multi = self.pipeline.get_data("res_arr_multi5")
+        assert np.allclose(data_single, data_multi, rtol=1e-7, atol=0.)
+        assert data_single.shape == data_multi.shape
+
+        data_single = self.pipeline.get_data("basis_single")
+        data_multi = self.pipeline.get_data("basis_multi")
+        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+        assert data_single.shape == data_multi.shape
