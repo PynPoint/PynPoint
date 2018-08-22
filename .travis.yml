@@ -3,17 +3,16 @@ matrix:
     include:
         - os: osx
           language: generic
+          env: TOXENV=py27
         - os: linux
-          sudo: required
           python: 2.7
           env: TOXENV=py27
-before_install:
-  - echo $TRAVIS_OS_NAME
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink python; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - pip2 install virtualenv
-  - virtualenv venv -p python2
-  - source venv/bin/activate
+# before_install:
+#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink python; fi
+#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+#   - pip2 install virtualenv
+#   - virtualenv venv -p python2
+#   - source venv/bin/activate
 install:
   - pip2 install numpy
   - pip2 install enum34
