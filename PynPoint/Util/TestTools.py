@@ -142,10 +142,13 @@ def create_random(path, ndit=10, parang=np.arange(1, 11, 1)):
         h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
-def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
+def create_fits(path, filename, image, ndit, exp_no, parang, x0, y0):
     """
     Create a FITS file with images and header information
     """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     hdu = fits.PrimaryHDU()
     header = hdu.header
@@ -158,7 +161,7 @@ def create_fits(filename, image, ndit, exp_no, parang, x0, y0):
     header['HIERARCH ESO SEQ CUMOFFSETX'] = x0
     header['HIERARCH ESO SEQ CUMOFFSETY'] = y0
     hdu.data = image
-    hdu.writeto(filename)
+    hdu.writeto(os.path.join(path, filename))
 
 def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, contrast):
     """
@@ -203,8 +206,7 @@ def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, co
 
             count += 1
 
-        filename = os.path.join(path, "image"+str(j+1).zfill(2)+'.fits')
-        create_fits(filename, image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
+        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
 def create_star_data(path,
                      npix_x=100,

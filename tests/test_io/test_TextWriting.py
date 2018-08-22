@@ -4,7 +4,8 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
-from PynPoint.IOmodules.TextWriting import TextWritingModule, ParangWritingModule, \
+from PynPoint.IOmodules.TextWriting import TextWritingModule, \
+                                           ParangWritingModule, \
                                            AttributeWritingModule
 from PynPoint.Util.TestTools import create_config, create_random, remove_test_data
 
