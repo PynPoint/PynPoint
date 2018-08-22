@@ -8,8 +8,8 @@ matrix:
           python: 2.7
           env: TOXENV=py27
 before_install:
-  - brew unlink python
-  - brew update
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; brew unlink python; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; brew update; fi
   - pip2 install virtualenv
   - virtualenv venv -p python2
   - source venv/bin/activate
