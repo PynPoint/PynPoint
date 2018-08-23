@@ -24,6 +24,9 @@ def fake_planet(science,
     """
     Function to inject fake planets into a cube of images. This function is similar to
     FakePlanetModule but does not require access to the PynPoint database.
+
+    :return: Images with a fake planet injected.
+    :rtype: ndarray
     """
 
     radial = position[0]/pixscale
@@ -115,10 +118,10 @@ def lnprob(param,
     :param param: Tuple with the separation (arcsec), angle (deg), and contrast
                   (mag). The angle is measured in counterclockwise direction with
                   respect to the upward direction (i.e., East of North).
-    :type param: tuple, float
+    :type param: (float, float, float)
     :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
                    and contrast (mag). Each set of boundaries is specified as a tuple.
-    :type bounds: tuple, float
+    :type bounds: ((float, float), (float, float), (float, float))
     :param images: Stack with images.
     :type images: ndarray
     :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
@@ -143,7 +146,7 @@ def lnprob(param,
     :type aperture: photutils.CircularAperture
 
     :return: Log posterior.
-    :rtype float
+    :rtype: float
     """
 
     def _lnprior():
@@ -151,7 +154,7 @@ def lnprob(param,
         Internal function for the log prior function.
 
         :return: Log prior.
-        :rtype float
+        :rtype: float
         """
 
         if bounds[0][0] <= param[0] <= bounds[0][1] and \
@@ -172,7 +175,7 @@ def lnprob(param,
         given by photon noise only (see Wertz et al. 2017 for details).
 
         :return: Log likelihood.
-        :rtype float
+        :rtype: float
         """
 
         sep, ang, mag = param
