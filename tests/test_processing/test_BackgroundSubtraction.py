@@ -193,7 +193,7 @@ class TestBackgroundSubtraction(object):
         assert data.shape == (60, 31, 31)
 
         data = self.pipeline.get_data("dither_pca_fit1")
-        assert np.allclose(data[0, 14, 14], 1.5196412298279846e-05, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 1.5196412298279846e-05, rtol=1e-5, atol=0.)
         assert np.allclose(np.mean(data), 1.9779802529804516e-07, rtol=1e-4, atol=0.)
         assert data.shape == (20, 31, 31)
 

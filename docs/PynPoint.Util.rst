@@ -20,6 +20,22 @@ PynPoint.Util.Continuous module
     :undoc-members:
     :show-inheritance:
 
+PynPoint.Util.ImageTools module
+-------------------------------
+
+.. automodule:: PynPoint.Util.ImageTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PynPoint.Util.MCMCtools module
+------------------------------
+
+.. automodule:: PynPoint.Util.MCMCtools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint.Util.ModuleTools module
 --------------------------------
 
