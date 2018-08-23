@@ -3,12 +3,10 @@ matrix:
     include:
         - os: osx
           language: generic
-before_install:
-  - brew unlink python
-  - brew update
-  - pip2 install virtualenv
-  - virtualenv venv -p python2
-  - source venv/bin/activate
+          env: TOXENV=py27
+        - os: linux
+          python: 2.7
+          env: TOXENV=py27
 install:
   - pip2 install numpy
   - pip2 install enum34
