@@ -272,26 +272,25 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # get all data
         star_data = self.m_star_in_port.get_all()
 
-        # subtract mean, if required
-        if self.m_subtract_mean:
-            mean_star = np.mean(star_data, axis=0)
-            star_data -= mean_star
-
         if self.m_reference_in_port.tag == self.m_star_in_port.tag:
             ref_star_data = deepcopy(star_data)
 
         else:
             ref_star_data = self.m_reference_in_port.get_all()
-            mean_ref_star = np.mean(ref_star_data, axis=0)
-            ref_star_data -= mean_ref_star
+
+        # subtract mean from science data, if required
+        if self.m_subtract_mean:
+            mean_star = np.mean(star_data, axis=0)
+            star_data -= mean_star
+
+        # subtract mean from reference data
+        mean_ref_star = np.mean(ref_star_data, axis=0)
+        ref_star_data -= mean_ref_star
 
         # Fit the PCA model
         if self.m_verbose:
             stdout.write("Constructing PSF model...")
             stdout.flush()
-
-        mean_ref_star_sklearn = mean_ref_star.reshape((1,
-                                                       ref_star_data.shape[1] * ref_star_data.shape[2]))
 
         ref_star_sklearn = ref_star_data.reshape((ref_star_data.shape[0],
                                                   ref_star_data.shape[1] * ref_star_data.shape[2]))
@@ -299,6 +298,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # add mean of reference array as first principal component and orthogonalize it wrt the PCA basis
         if not self.m_subtract_mean:
+            mean_ref_star_sklearn = mean_ref_star.reshape((1,
+                                                           ref_star_data.shape[1] * ref_star_data.shape[2]))
+            
             Q, _ = np.linalg.qr(np.vstack((mean_ref_star_sklearn, self.m_pca.components_[:-1,])).T)
             self.m_pca.components_ = Q.T
 
