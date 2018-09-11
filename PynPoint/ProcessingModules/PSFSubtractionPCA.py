@@ -35,6 +35,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  res_arr_out_tag=None,
                  res_rot_mean_clip_tag=None,
                  extra_rot=0.,
+                 subtract_mean=True,
                  **kwargs):
         """
         Constructor of PcaPsfSubtractionModule.
@@ -67,6 +68,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :type res_rot_mean_clip_tag: str
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
+        :param subtract_mean: The mean of the science and reference images is subtracted from
+                              the corresponding stack, before the PCA basis is constructed and
+                              fitted.
+        :type subtract_mean: bool
         :param \**kwargs:
             See below.
 
@@ -94,6 +99,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         self.m_max_pacs = np.max(pca_numbers)
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
         self.m_extra_rot = extra_rot
+        self.m_subtract_mean = subtract_mean
 
         self.m_pca = PCA(n_components=self.m_max_pacs, svd_solver="arpack")
 
@@ -147,7 +153,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute("CPU")
 
         rotations = -1.*self.m_star_in_port.get_attribute("PARANG")
-        rotations += np.ones(rotations.shape[0]) * self.m_extra_rot
+        rotations += np.ones(rotations.shape[0])*self.m_extra_rot
 
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
@@ -264,18 +270,23 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         self._clear_output_ports()
 
-        # get all data and subtract the mean
+        # get all data
         star_data = self.m_star_in_port.get_all()
-        mean_star = np.mean(star_data, axis=0)
-        star_data -= mean_star
 
         if self.m_reference_in_port.tag == self.m_star_in_port.tag:
             ref_star_data = deepcopy(star_data)
 
         else:
             ref_star_data = self.m_reference_in_port.get_all()
-            mean_ref_star = np.mean(ref_star_data, axis=0)
-            ref_star_data -= mean_ref_star
+
+        # subtract mean from science data, if required
+        if self.m_subtract_mean:
+            mean_star = np.mean(star_data, axis=0)
+            star_data -= mean_star
+
+        # subtract mean from reference data
+        mean_ref_star = np.mean(ref_star_data, axis=0)
+        ref_star_data -= mean_ref_star
 
         # Fit the PCA model
         if self.m_verbose:
@@ -283,8 +294,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             stdout.flush()
 
         ref_star_sklearn = ref_star_data.reshape((ref_star_data.shape[0],
-                                                  ref_star_data.shape[1] * ref_star_data.shape[2]))
+                                                  ref_star_data.shape[1]*ref_star_data.shape[2]))
         self.m_pca.fit(ref_star_sklearn)
+
+        # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
+        if not self.m_subtract_mean:
+            mean_ref_star_sklearn = mean_ref_star.reshape((1, ref_star_data.shape[1]* \
+                                                              ref_star_data.shape[2]))
+
+            q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_star_sklearn,
+                                                 self.m_pca.components_[:-1,])).T)
+
+            self.m_pca.components_ = q_ortho.T
 
         if self.m_verbose:
             stdout.write(" [DONE]\n")
@@ -297,7 +318,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # prepare the data for sklearns PCA
         star_sklearn = star_data.reshape((star_data.shape[0],
-                                          star_data.shape[1] * star_data.shape[2]))
+                                          star_data.shape[1]*star_data.shape[2]))
 
         cpu = self._m_config_port.get_attribute("CPU")
 
