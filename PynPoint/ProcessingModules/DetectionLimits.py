@@ -148,12 +148,6 @@ class ContrastCurveModule(ProcessingModule):
         :return: None
         """
 
-        self.m_pca_out_port.del_all_attributes()
-        self.m_pca_out_port.del_all_data()
-
-        self.m_contrast_out_port.del_all_attributes()
-        self.m_contrast_out_port.del_all_data()
-
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
            self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
             raise ValueError("The angular positions of the fake planets should lie between "
