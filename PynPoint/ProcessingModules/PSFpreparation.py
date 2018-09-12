@@ -237,10 +237,10 @@ class AngleInterpolationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute("NDIT")
 
         if not np.all(ndit == steps):
-            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. The derotation "
-                          "angles are calculated with a linear interpolation by using NAXIS3 "
-                          "steps. A frame selection should be applied after the derotation "
-                          "angles are calculated.")
+            warnings.warn("There is a mismatch between the NDIT and NFRAMES values. The "
+                          "derotation angles are calculated with a linear interpolation by using "
+                          "NFRAMES steps. A frame selection should be applied after the "
+                          "derotation angles are calculated.")
 
         new_angles = []
 
@@ -461,7 +461,7 @@ class AngleCalculationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute("NDIT")
 
         if not np.all(ndit == steps):
-            warnings.warn("There is a mismatch between the NDIT and NAXIS3 values. A frame "
+            warnings.warn("There is a mismatch between the NDIT and NFRAMES values. A frame "
                           "selection should be applied after the derotation angles are "
                           "calculated.")
 
