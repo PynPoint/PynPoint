@@ -58,10 +58,10 @@ class ContrastCurveModule(ProcessingModule):
                             subtraction for each position and optimization step. No data is written
                             if set to None.
         :type pca_out_tag: str
-        :param contrast_out_tag: Tag of the database entry that contains the azimuthally averaged
-                                 contrast limits, the azimuthal variance of the contrast limits,
-                                 and the threshold of the false positive fraction associated with
-                                 sigma.
+        :param contrast_out_tag: Tag of the database entry that contains the separation,
+                                 azimuthally averaged contrast limits, the azimuthal variance of
+                                 the contrast limits, and the threshold of the false positive
+                                 fraction associated with sigma.
         :type contrast_out_tag: str
         :param separation: Range of separations (arcsec) where the contrast is calculated. Should
                            be specified as (lower limit, upper limit, step size). Apertures that
