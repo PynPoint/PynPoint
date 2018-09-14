@@ -180,7 +180,8 @@ class StarAlignmentModule(ProcessingModule):
                  interpolation="spline",
                  accuracy=10,
                  resize=None,
-                 num_references=10):
+                 num_references=10,
+                 subframe=None):
         """
         Constructor of StarAlignmentModule.
 
@@ -207,6 +208,9 @@ class StarAlignmentModule(ProcessingModule):
         :type resize: float
         :param num_references: Number of reference images for the cross-correlation.
         :type num_references: int
+        :param subframe: Size (arcsec) of the subframe around the image center that is used for
+                         the cross-correlation. The full image is used if set to None.
+        :type subframe: float
 
         :return: None
         """
@@ -225,6 +229,7 @@ class StarAlignmentModule(ProcessingModule):
         self.m_accuracy = accuracy
         self.m_resize = resize
         self.m_num_references = num_references
+        self.m_subframe = subframe
 
     def run(self):
         """
@@ -234,6 +239,47 @@ class StarAlignmentModule(ProcessingModule):
 
         :return: None
         """
+
+        def _align_image(image_in):
+            offset = np.array([0., 0.])
+
+            for i in range(self.m_num_references):
+                if self.m_subframe is None:
+                    tmp_offset, _, _ = register_translation(ref_images[i, :, :],
+                                                            image_in,
+                                                            upsample_factor=self.m_accuracy)
+
+                else:
+                    sub_in = crop_image(image_in, None, self.m_subframe)
+                    sub_ref = crop_image(ref_images[i, :, :], None, self.m_subframe)
+
+                    tmp_offset, _, _ = register_translation(sub_ref,
+                                                            sub_in,
+                                                            upsample_factor=self.m_accuracy)
+                offset += tmp_offset
+
+            offset /= float(self.m_num_references)
+
+            if self.m_resize is not None:
+                offset *= self.m_resize
+
+            if self.m_resize is not None:
+                sum_before = np.sum(image_in)
+                tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
+                                    scale=(self.m_resize, self.m_resize),
+                                    order=5,
+                                    mode="reflect",
+                                    anti_aliasing=True,
+                                    multichannel=False)
+                sum_after = np.sum(tmp_image)
+
+                # Conserve flux because the rescale function normalizes all values to [0:1].
+                tmp_image = tmp_image*(sum_before/sum_after)
+
+            else:
+                tmp_image = image_in
+
+            return shift_image(tmp_image, offset, self.m_interpolation)
 
         if self.m_ref_image_in_port is not None:
             im_dim = self.m_ref_image_in_port.get_ndim()
@@ -263,36 +309,9 @@ class StarAlignmentModule(ProcessingModule):
             sort = np.sort(random)
             ref_images = self.m_image_in_port[sort, :, :]
 
-        def _align_image(image_in):
-            offset = np.array([0., 0.])
-
-            for i in range(self.m_num_references):
-                tmp_offset, _, _ = register_translation(ref_images[i, :, :],
-                                                        image_in,
-                                                        upsample_factor=self.m_accuracy)
-                offset += tmp_offset
-
-            offset /= float(self.m_num_references)
-            if self.m_resize is not None:
-                offset *= self.m_resize
-
-            if self.m_resize is not None:
-                sum_before = np.sum(image_in)
-                tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
-                                    scale=(self.m_resize, self.m_resize),
-                                    order=5,
-                                    mode="reflect",
-                                    anti_aliasing=True,
-                                    multichannel=False)
-                sum_after = np.sum(tmp_image)
-
-                # Conserve flux because the rescale function normalizes all values to [0:1].
-                tmp_image = tmp_image*(sum_before/sum_after)
-
-            else:
-                tmp_image = image_in
-
-            return shift_image(tmp_image, offset, self.m_interpolation)
+        if self.m_subframe is not None:
+            pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+            self.m_subframe = int(self.m_subframe/pixscale)
 
         self.apply_function_to_images(_align_image,
                                       self.m_image_in_port,
@@ -690,8 +709,8 @@ class WaffleCenteringModule(ProcessingModule):
         :type radius: float
         :param pattern: Waffle pattern that is used (*x* or *+*).
         :type pattern: str
-        :param sigma: Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
-                      masking.
+        :param sigma: Standard deviation (arcsec) of the Gaussian kernel that is used for the
+                      unsharp masking.
         :type sigma: float
         :param dither: Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
         :type dither: bool
