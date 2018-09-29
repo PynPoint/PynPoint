@@ -637,9 +637,6 @@ class SDIpreparationModule(ProcessingModule):
                     npix_del_b = int(npix_del/2)
 
                 else:
-                    warnings.warn("An unequal number of pixels is removed from both sides of the "
-                                  "images. Recentering of the images is therefore required.")
-
                     npix_del_a = int((npix_del-1)/2)
                     npix_del_b = int((npix_del+1)/2)
 
@@ -659,10 +656,12 @@ class SDIpreparationModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.add_history_information("Wavelength center (line, continuum)",
-                                                      (self.m_line_wvl, self.m_cnt_wvl))
+        history = "(line, continuum) = ("+str(self.m_line_wvl)+", "+str(self.m_cnt_wvl)+")"
+        print history
+        self.m_image_out_port.add_history_information("Wavelength center", history)
 
-        self.m_image_out_port.add_history_information("Wavelength width (line, continuum)",
-                                                      (self.m_line_width, self.m_cnt_width))
+        history = "(line, continuum) = ("+str(self.m_line_width)+", "+str(self.m_cnt_width)+")"
+        print history
+        self.m_image_out_port.add_history_information("Wavelength width", history)
 
         self.m_image_in_port.close_port()
