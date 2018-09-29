@@ -643,7 +643,7 @@ class SDIpreparationModule(ProcessingModule):
             im_crop = im_scale[npix_del_a:-npix_del_b, npix_del_a:-npix_del_b]
 
             if npix_del%2 == 1:
-                im_crop = shift_image(im_crop, (0.5, 0.5), interpolation="spline")
+                im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation="spline")
 
             if nimages == 1:
                 self.m_image_out_port.set_all(im_crop)
@@ -657,11 +657,9 @@ class SDIpreparationModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         history = "(line, continuum) = ("+str(self.m_line_wvl)+", "+str(self.m_cnt_wvl)+")"
-        print history
         self.m_image_out_port.add_history_information("Wavelength center", history)
 
         history = "(line, continuum) = ("+str(self.m_line_width)+", "+str(self.m_cnt_width)+")"
-        print history
         self.m_image_out_port.add_history_information("Wavelength width", history)
 
         self.m_image_in_port.close_port()
