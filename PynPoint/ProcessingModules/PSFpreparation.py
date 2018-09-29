@@ -13,9 +13,8 @@ import numpy as np
 from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, image_size
-from PynPoint.Util.ImageTools import create_mask
+from PynPoint.Util.ModuleTools import progress, memory_frames, image_size, number_images_port
+from PynPoint.Util.ImageTools import create_mask, scale_image, shift_image
 
 
 class PSFpreparationModule(ProcessingModule):
@@ -617,41 +616,53 @@ class SDIpreparationModule(ProcessingModule):
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
         width_factor = self.m_line_width/self.m_cnt_width
 
-        sys.stdout.write("Running SDIpreparationModule...\n")
-        sys.stdout.flush()
+        nimages = number_images_port(self.m_image_in_port)
 
-        scaling = ScaleImagesModule(scaling=(wvl_factor, width_factor),
-                                    name_in="scaling",
-                                    image_in_tag=self.m_image_in_port.tag,
-                                    image_out_tag="sdi_scaled")
+        for i in range(nimages):
+            progress(i, nimages, "Running SDIpreparationModule...")
 
-        scaling.connect_database(self._m_data_base)
-        scaling.run()
+            if nimages == 1:
+                image = self.m_image_in_port.get_all()
 
-        sdi_port = self.add_input_port("sdi_scaled")
+            else:
+                image = self.m_image_in_port[i, ]
 
-        npix_del = sdi_port.get_shape()[1] - self.m_image_in_port.get_shape()[1]
+            im_scale = width_factor * scale_image(image, wvl_factor)
 
-        if npix_del%2 == 0:
-            npix_del_a = npix_del/2
-            npix_del_b = npix_del/2
+            if i == 0:
+                npix_del = im_scale.shape[-1] - image.shape[-1]
 
-        else:
-            warnings.warn("An unequal number of pixels is removed from both sides of the images. "
-                          "Recentering of the images is therefore required.")
+                if npix_del%2 == 0:
+                    npix_del_a = int(npix_del/2)
+                    npix_del_b = int(npix_del/2)
 
-            npix_del_a = (npix_del-1)/2
-            npix_del_b = (npix_del+1)/2
+                else:
+                    warnings.warn("An unequal number of pixels is removed from both sides of the "
+                                  "images. Recentering of the images is therefore required.")
 
-        crop = RemoveLinesModule(lines=(npix_del_a, npix_del_b, npix_del_a, npix_del_b),
-                                 name_in="crop",
-                                 image_in_tag="sdi_scaled",
-                                 image_out_tag=self.m_image_out_port.tag)
+                    npix_del_a = int((npix_del-1)/2)
+                    npix_del_b = int((npix_del+1)/2)
 
-        crop.connect_database(self._m_data_base)
-        crop.run()
+            im_crop = im_scale[npix_del_a:-npix_del_b, npix_del_a:-npix_del_b]
+
+            if npix_del%2 == 1:
+                im_crop = shift_image(im_crop, (0.5, 0.5), interpolation="spline")
+
+            if nimages == 1:
+                self.m_image_out_port.set_all(im_crop)
+
+            else:
+                self.m_image_out_port.append(im_crop, data_dim=3)
 
         sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
         sys.stdout.flush()
+
+        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        self.m_image_out_port.add_history_information("Wavelength center (line, continuum)",
+                                                      (self.m_line_wvl, self.m_cnt_wvl))
+
+        self.m_image_out_port.add_history_information("Wavelength width (line, continuum)",
+                                                      (self.m_line_width, self.m_cnt_width))
 
         self.m_image_in_port.close_port()

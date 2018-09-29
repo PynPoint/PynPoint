@@ -93,3 +93,9 @@ class TestPSFpreparation(object):
         assert np.allclose(data[0, 25, 25], -2.6648118007008814e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 2.0042892634995876e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
+
+        attribute = self.pipeline.get_attribute("sdi", "History: Wavelength center (line, continuum)")
+        assert np.allclose(attribute, (0.65, 0.6), rtol=limit, atol=0.)
+
+        attribute = self.pipeline.get_attribute("sdi", "History: Wavelength width (line, continuum)")
+        assert np.allclose(attribute, (0.1, 0.5), rtol=limit, atol=0.)
