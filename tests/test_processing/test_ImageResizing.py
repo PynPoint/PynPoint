@@ -21,15 +21,7 @@ class TestImageResizing(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir+"resize",
-                         npix_x=20,
-                         npix_y=20,
-                         x0=[10, 10, 10, 10],
-                         y0=[10, 10, 10, 10],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
-
+        create_star_data(path=self.test_dir+"resize")
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -51,9 +43,9 @@ class TestImageResizing(object):
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
-        assert np.allclose(data[0, 10, 10], 0.09799496683489618, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0025020285041348557, rtol=limit, atol=0.)
-        assert data.shape == (40, 20, 20)
+        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
 
     def test_crop_images(self):
 
@@ -66,7 +58,7 @@ class TestImageResizing(object):
         self.pipeline.add_module(crop)
 
         crop = CropImagesModule(size=0.3,
-                                center=(6, 6),
+                                center=(10, 10),
                                 name_in="crop2",
                                 image_in_tag="read",
                                 image_out_tag="crop2")
@@ -77,13 +69,13 @@ class TestImageResizing(object):
         self.pipeline.run_module("crop2")
 
         data = self.pipeline.get_data("crop1")
-        assert np.allclose(data[0, 7, 7], 0.09799496683489618, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.005921620406208569, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 7, 7], 0.09798413502193704, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.005917829617688413, rtol=limit, atol=0.)
         assert data.shape == (40, 13, 13)
 
         data = self.pipeline.get_data("crop2")
-        assert np.allclose(data[0, 7, 7], 0.0005067239693313918, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.005664905759498735, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 7, 7], 0.00021012292977345447, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -2.9375442509680414e-06, rtol=limit, atol=0.)
         assert data.shape == (40, 13, 13)
 
     def test_scale_images(self):
@@ -106,14 +98,14 @@ class TestImageResizing(object):
         self.pipeline.run_module("scale2")
 
         data = self.pipeline.get_data("scale1")
-        assert np.allclose(data[0, 20, 20], 0.02362264611391428, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.000625507126033714, rtol=limit, atol=0.)
-        assert data.shape == (40, 40, 40)
+        assert np.allclose(data[0, 100, 100], 0.02356955774929094, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.507373695434516e-05, rtol=limit, atol=0.)
+        assert data.shape == (40, 200, 200)
 
         data = self.pipeline.get_data("scale2")
-        assert np.allclose(data[0, 10, 10], 0.19598993366979467, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.005004057008269711, rtol=limit, atol=0.)
-        assert data.shape == (40, 20, 20)
+        assert np.allclose(data[0, 50, 50], 0.19596827004387415, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00020058989563476127, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
 
     def test_add_lines(self):
 
@@ -126,9 +118,9 @@ class TestImageResizing(object):
         self.pipeline.run_module("add")
 
         data = self.pipeline.get_data("add")
-        assert np.allclose(data[0, 12, 12], 0.028528539751565975, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0012781754810395176, rtol=limit, atol=0.)
-        assert data.shape == (40, 29, 27)
+        assert np.allclose(data[0, 50, 50], 0.02851872141873229, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 8.599412485413757e-05, rtol=limit, atol=0.)
+        assert data.shape == (40, 109, 107)
 
     def test_remove_lines(self):
 
@@ -141,6 +133,6 @@ class TestImageResizing(object):
         self.pipeline.run_module("remove")
 
         data = self.pipeline.get_data("remove")
-        assert np.allclose(data[0, 10, 10], 0.02882041378895293, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.004595775333521642, rtol=limit, atol=0.)
-        assert data.shape == (40, 11, 13)
+        assert np.allclose(data[0, 50, 50], 0.028455980719223083, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00011848528804183087, rtol=limit, atol=0.)
+        assert data.shape == (40, 91, 93)
