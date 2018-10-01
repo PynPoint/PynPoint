@@ -21,7 +21,7 @@ class TestImageResizing(object):
 
         self.test_dir = os.path.dirname(__file__) + "/"
 
-        create_star_data(path=self.test_dir+"images",
+        create_star_data(path=self.test_dir+"resize",
                          npix_x=20,
                          npix_y=20,
                          x0=[10, 10, 10, 10],
@@ -36,13 +36,13 @@ class TestImageResizing(object):
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["images"])
+        remove_test_data(self.test_dir, folders=["resize"])
 
     def test_read_data(self):
 
         read = FitsReadingModule(name_in="read",
-                                 image_tag="images",
-                                 input_dir=self.test_dir+"images",
+                                 image_tag="read",
+                                 input_dir=self.test_dir+"resize",
                                  overwrite=True,
                                  check=True)
 
@@ -50,7 +50,7 @@ class TestImageResizing(object):
 
         self.pipeline.run_module("read")
 
-        data = self.pipeline.get_data("images")
+        data = self.pipeline.get_data("read")
         assert np.allclose(data[0, 10, 10], 0.09799496683489618, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0025020285041348557, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
@@ -60,7 +60,7 @@ class TestImageResizing(object):
         crop = CropImagesModule(size=0.3,
                                 center=None,
                                 name_in="crop1",
-                                image_in_tag="images",
+                                image_in_tag="read",
                                 image_out_tag="crop1")
 
         self.pipeline.add_module(crop)
@@ -68,7 +68,7 @@ class TestImageResizing(object):
         crop = CropImagesModule(size=0.3,
                                 center=(6, 6),
                                 name_in="crop2",
-                                image_in_tag="images",
+                                image_in_tag="read",
                                 image_out_tag="crop2")
 
         self.pipeline.add_module(crop)
@@ -90,14 +90,14 @@ class TestImageResizing(object):
 
         scale = ScaleImagesModule(scaling=(2., None),
                                   name_in="scale1",
-                                  image_in_tag="images",
+                                  image_in_tag="read",
                                   image_out_tag="scale1")
 
         self.pipeline.add_module(scale)
 
         scale = ScaleImagesModule(scaling=(None, 2.),
                                   name_in="scale2",
-                                  image_in_tag="images",
+                                  image_in_tag="read",
                                   image_out_tag="scale2")
 
         self.pipeline.add_module(scale)
@@ -119,7 +119,7 @@ class TestImageResizing(object):
 
         add = AddLinesModule(lines=(2, 5, 0, 9),
                              name_in="add",
-                             image_in_tag="images",
+                             image_in_tag="read",
                              image_out_tag="add")
 
         self.pipeline.add_module(add)
@@ -134,7 +134,7 @@ class TestImageResizing(object):
 
         remove = RemoveLinesModule(lines=(2, 5, 0, 9),
                                    name_in="remove",
-                                   image_in_tag="images",
+                                   image_in_tag="read",
                                    image_out_tag="remove")
 
         self.pipeline.add_module(remove)
