@@ -216,14 +216,14 @@ def create_star_data(path,
                      parang_start=[0., 5., 10., 15.],
                      parang_end=[5., 10., 15., 20.],
                      exp_no=[1, 2, 3, 4],
+                     ndit=10,
+                     nframes=10,
                      noise=True):
     """
     Create data with a stellar PSF and Gaussian noise.
     """
 
     fwhm = 3
-    ndit = 10
-    naxis3 = ndit
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -236,9 +236,9 @@ def create_star_data(path,
         x = y = np.arange(0., npix_x, 1.)
         xx, yy = np.meshgrid(x, y)
 
-        image = np.zeros((naxis3, npix_x, npix_y))
+        image = np.zeros((nframes, npix_x, npix_y))
 
-        for i in range(ndit):
+        for i in range(nframes):
             image[i, ] = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
             if noise:
                 image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
