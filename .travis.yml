@@ -2,7 +2,7 @@ language: python
 matrix:
     include:
         - os: osx
-          python: 2.7
+          language: generic
           env: TOXENV=py27
         - os: linux
           python: 2.7
