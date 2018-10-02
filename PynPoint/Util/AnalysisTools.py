@@ -9,6 +9,8 @@ import numpy as np
 from photutils import aperture_photometry, CircularAperture
 from scipy.stats import t
 
+from PynPoint.Util.ImageTools import shift_image
+
 
 def false_alarm(image, x_pos, y_pos, size, ignore):
     """
@@ -71,3 +73,50 @@ def student_fpf(sigma, radius, size, ignore):
         num_ap -= 2
 
     return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
+
+def fake_planet(images, psf, parang, position, interpolation="spline"):
+    """
+    Function to inject artificial planets in a dataset.
+
+    :param image: Input images.
+    :type image: ndarray
+    :param psf: PSF template.
+    :type psf: ndarray
+    :param parang: Parallactic angles (deg).
+    :type parang: float
+    :param position: Separation (pix) and position angle (deg) measured in counterclockwise
+                     with respect to the upward direction.
+    :type position: (float, float)
+    :param interpolation: Interpolation type (spline, bilinear, fft)
+    :type interpolation: str
+
+    :return: Images with artificial planet injected.
+    :rtype: ndarray
+    """
+
+    sep = position[0]
+    ang = np.radians(position[1] + 90. - parang)
+
+    x_shift = sep*np.cos(ang)
+    y_shift = sep*np.sin(ang)
+
+    im_shift = np.zeros(images.shape)
+
+    if images.ndim == 2:
+        im_shift = shift_image(psf, (y_shift, x_shift), interpolation, mode='reflect')
+
+    elif images.ndim == 3:
+        for i in range(images.shape[0]):
+            if psf.ndim == 2:
+                im_shift[i, ] = shift_image(psf,
+                                            (y_shift[i], x_shift[i]),
+                                            interpolation,
+                                            mode='reflect')
+
+            elif psf.ndim == 3:
+                im_shift[i, ] = shift_image(psf[i, ],
+                                            (y_shift[i], x_shift[i]),
+                                            interpolation,
+                                            mode='reflect')
+
+    return images + im_shift
