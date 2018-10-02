@@ -85,8 +85,7 @@ class TestFluxAndPosition(object):
                                 name_in="fake",
                                 image_in_tag="read",
                                 psf_in_tag="read",
-                                image_out_tag="fake",
-                                verbose=True)
+                                image_out_tag="fake")
 
         self.pipeline.add_module(fake)
         self.pipeline.run_module("fake")
