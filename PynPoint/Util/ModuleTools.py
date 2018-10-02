@@ -68,19 +68,6 @@ def image_size_port(port):
 
     return size
 
-def image_size(images):
-    """
-    Function to get the image size of an array.
-    """
-
-    if images.ndim == 2:
-        size = images.shape
-
-    elif images.ndim == 3:
-        size = (images.shape[1], images.shape[2])
-
-    return size
-
 def locate_star(image, center, width, fwhm):
     """
     Function to locate the star by finding the brightest pixel.
