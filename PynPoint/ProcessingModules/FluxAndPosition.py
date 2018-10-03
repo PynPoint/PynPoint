@@ -17,7 +17,7 @@ from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet
-from PynPoint.Util.ImageTools import create_mask, crop_image, shift_image, image_center
+from PynPoint.Util.ImageTools import create_mask, crop_image, image_center
 from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
@@ -84,7 +84,7 @@ class FakePlanetModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_interpolation = interpolation
 
-    def _images_init(self):
+    def _init(self):
         memory = self._m_config_port.get_attribute("MEMORY")
 
         ndim_image = self.m_image_in_port.get_ndim()
@@ -127,18 +127,7 @@ class FakePlanetModule(ProcessingModule):
         elif ndim_psf == 3 and nimages == npsf:
             psf = None
 
-        return frames, psf, ndim_psf
-
-    def _shift_psf(self, psf, parang):
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
-        radial = self.m_position[0]/pixscale
-        theta = self.m_position[1]*math.pi/180. + math.pi/2.
-
-        x_shift = radial*math.cos(theta-parang)
-        y_shift = radial*math.sin(theta-parang)
-
-        return shift_image(psf, (y_shift, x_shift), self.m_interpolation, mode='reflect')
+        return psf, ndim_psf, ndim_image, frames
 
     def run(self):
         """
@@ -153,28 +142,33 @@ class FakePlanetModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
 
         parang = self.m_image_in_port.get_attribute("PARANG")
-        parang *= math.pi/180.
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        self.m_position = (self.m_position[0]/pixscale, self.m_position[1])
 
         flux_ratio = 10.**(-self.m_magnitude/2.5)
 
-        frames, psf, ndim_psf = self._images_init()
+        psf, ndim_psf, ndim, frames = self._init()
 
         for j, _ in enumerate(frames[:-1]):
             progress(j, len(frames[:-1]), "Running FakePlanetModule...")
 
-            image = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
+            images = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
+            angles = parang[frames[j]:frames[j+1]]
 
-            for i in range(image.shape[0]):
-                if ndim_psf == 2:
-                    psf_tmp = np.copy(psf)
+            if ndim_psf == 3:
+                psf = np.copy(images)
 
-                elif ndim_psf == 3:
-                    psf_tmp = self.m_psf_in_port[frames[j]+i, ]
+            im_fake = fake_planet(images,
+                                  self.m_psf_scaling*flux_ratio*psf,
+                                  angles,
+                                  self.m_position,
+                                  interpolation="spline")
 
-                psf_shift = self._shift_psf(psf_tmp, parang[frames[j]+i])
-                image[i, ] += self.m_psf_scaling*flux_ratio*psf_shift
-
-            self.m_image_out_port.append(image)
+            if ndim == 2:
+                self.m_image_out_port.set_all(im_fake)
+            elif ndim == 3:
+                self.m_image_out_port.append(im_fake, data_dim=3)
 
         sys.stdout.write("Running FakePlanetModule... [DONE]\n")
         sys.stdout.flush()
@@ -183,7 +177,8 @@ class FakePlanetModule(ProcessingModule):
 
         self.m_image_out_port.add_history_information("Fake planet",
                                                       "(sep, angle, mag) = " + "(" + \
-                                                      "{0:.2f}".format(self.m_position[0])+", "+ \
+                                                      "{0:.2f}".format(self.m_position[0]* \
+                                                       pixscale)+", "+ \
                                                       "{0:.2f}".format(self.m_position[1])+", "+ \
                                                       "{0:.2f}".format(self.m_magnitude)+")")
 
@@ -281,10 +276,12 @@ class SimplexMinimizationModule(ProcessingModule):
         super(SimplexMinimizationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+
         if psf_in_tag == image_in_tag:
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
+
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
@@ -655,10 +652,12 @@ class MCMCsamplingModule(ProcessingModule):
         super(MCMCsamplingModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+
         if psf_in_tag == image_in_tag:
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
+
         self.m_chain_out_port = self.add_output_port(chain_out_tag)
 
         self.m_param = param
