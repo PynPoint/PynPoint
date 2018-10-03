@@ -160,8 +160,6 @@ class ContrastCurveModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        print parang
-
         self.m_aperture /= pixscale
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
