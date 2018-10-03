@@ -189,10 +189,7 @@ class WaveletAnalysisCapsule(object):
         :return: None
         """
         self._m_data = icwt(self.m_spectrum,
-                            dt=1,
-                            scales=self._m_scales,
-                            wf=self.m_wavelet,
-                            p=self.m_order)
+                            scales=self._m_scales)
         reconstruction_factor = self.__compute_reconstruction_factor()
         self._m_data *= reconstruction_factor
 
