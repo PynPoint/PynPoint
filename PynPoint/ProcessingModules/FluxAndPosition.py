@@ -342,10 +342,10 @@ class SimplexMinimizationModule(ProcessingModule):
 
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
-            flux_ratio = 10.**(-mag/2.5)
+            contrast = 10.**(-mag/2.5)
 
             fake = fake_planet(self.m_image_in_port.get_all(),
-                               self.m_psf_scaling*flux_ratio*psf,
+                               self.m_psf_scaling*contrast*psf,
                                parang,
                                (sep, ang),
                                interpolation="spline")
@@ -357,12 +357,6 @@ class SimplexMinimizationModule(ProcessingModule):
                                          parang,
                                          self.m_pca_number,
                                          self.m_extra_rot)
-
-            if len(im_res.shape) == 3:
-                if im_res.shape[0] == 1:
-                    im_res = np.squeeze(im_res, axis=0)
-                else:
-                    raise ValueError("Multiple residual images found, expecting only one.")
 
             self.m_res_out_port.append(im_res, data_dim=3)
 

@@ -248,12 +248,6 @@ class ContrastCurveModule(ProcessingModule):
                                                  self.m_pca_number,
                                                  self.m_extra_rot)
 
-                    if len(im_res.shape) == 3:
-                        if im_res.shape[0] == 1:
-                            im_res = np.squeeze(im_res, axis=0)
-                        else:
-                            raise ValueError("Multiple residual images found, expecting only one.")
-
                     if self.m_pca_out_port is not None:
                         if count == 1 and iteration == 1:
                             self.m_pca_out_port.set_all(im_res, data_dim=3)
