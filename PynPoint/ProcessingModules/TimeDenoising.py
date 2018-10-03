@@ -126,9 +126,14 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 :return:
                 """
 
+                if self.m_threshold_function:
+                    threshold_mode = "soft"
+                else:
+                    threshold_mode = "hard"
+
                 coef = pywt.wavedec(signal_in,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    level=6,
+                                    level=None,
                                     mode=self.m_padding)
 
                 sigma = mad(coef[-1])
@@ -137,7 +142,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 denoised = coef[:]
                 denoised[1:] = (pywt.threshold(i,
                                                value=threshold,
-                                               mode=self.m_threshold_function)
+                                               mode=threshold_mode)
                                 for i in denoised[1:])
                 return pywt.waverec(denoised,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
