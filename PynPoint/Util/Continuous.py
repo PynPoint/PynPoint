@@ -239,21 +239,15 @@ def cwt(x, dt, scales, wf='dog', p=2):
     return X_ARR
 
 
-def icwt(X, dt, scales, wf='dog', p=2):
+def icwt(X, scales):
     """Inverse Continuous Wavelet Tranform.
     The reconstruction factor is not applied.
 
     :Parameters:
        X : 2d array_like object
           transformed data
-       dt : float
-          time step
        scales : 1d array_like object
           scales
-       wf : string ('morlet', 'paul', 'dog')
-          wavelet function
-       p : float
-          wavelet function parameter
 
     :Returns:
        x : 1d numpy array
