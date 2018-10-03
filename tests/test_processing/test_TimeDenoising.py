@@ -90,21 +90,21 @@ class TestTimeDenoising(object):
 
         assert dwt_config.m_wavelet == "db8"
 
-        # wavelet_dwt = WaveletTimeDenoisingModule(wavelet_configuration=dwt_config,
-        #                                          name_in="wavelet_dwt",
-        #                                          image_in_tag="images",
-        #                                          image_out_tag="wavelet_dwt",
-        #                                          padding="zero",
-        #                                          median_filter=True,
-        #                                          threshold_function="soft")
-        #
-        # self.pipeline.add_module(wavelet_dwt)
-        # self.pipeline.run_module("wavelet_dwt")
-        #
-        # data = self.pipeline.get_data("wavelet_dwt")
-        # assert np.allclose(data[0, 10, 10], 0.09805577173716859, rtol=limit, atol=0.)
-        # assert np.allclose(np.mean(data), 0.002502083112599873, rtol=limit, atol=0.)
-        # assert data.shape == (40, 20, 20)
+        wavelet_dwt = WaveletTimeDenoisingModule(wavelet_configuration=dwt_config,
+                                                 name_in="wavelet_dwt",
+                                                 image_in_tag="images",
+                                                 image_out_tag="wavelet_dwt",
+                                                 padding="zero",
+                                                 median_filter=True,
+                                                 threshold_function="soft")
+
+        self.pipeline.add_module(wavelet_dwt)
+        self.pipeline.run_module("wavelet_dwt")
+
+        data = self.pipeline.get_data("wavelet_dwt")
+        assert np.allclose(data[0, 10, 10], 0.09650639476873678, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0024998798596330475, rtol=limit, atol=0.)
+        assert data.shape == (40, 20, 20)
 
     def test_time_normalization(self):
 
