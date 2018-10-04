@@ -74,10 +74,12 @@ class PSFpreparationModule(ProcessingModule):
         super(PSFpreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+
         if mask_out_tag is not None:
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
         else:
             self.m_mask_out_port = None
+
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         self.m_resize = resize
@@ -91,15 +93,12 @@ class PSFpreparationModule(ProcessingModule):
         Internal method which normalizes the input data by its Frobenius norm.
         """
 
-        if self.m_norm:
-            im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
-            for i in range(im_data_in.shape[0]):
-                im_data_in[i, ] /= im_norm[i]
+        im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
 
-        else:
-            im_norm = np.ones(im_data_in.shape)
+        for i in range(im_data_in.shape[0]):
+            im_data_in[i, ] /= im_norm[i]
 
-        return im_norm
+        return im_data_in, im_norm
 
     def _im_resizing(self,
                      im_data_in):
@@ -148,6 +147,7 @@ class PSFpreparationModule(ProcessingModule):
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
+
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
@@ -156,21 +156,25 @@ class PSFpreparationModule(ProcessingModule):
             sys.stdout.flush()
 
         im_data = self.m_image_in_port.get_all()
-        im_norm = self._im_norm(im_data)
+
+        if self.m_norm:
+            im_data, im_norm = self._im_norm(np.copy(im_data))
 
         if self.m_resize is not None:
-            im_data = self._im_resizing(im_data)
+            im_data = self._im_resizing(np.copy(im_data))
 
         im_data = self._im_masking(im_data)
 
         self.m_image_out_port.set_all(im_data, keep_attributes=True)
-        self.m_image_out_port.add_attribute("norm", im_norm, static=False)
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        if self.m_resize is not None:
-            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
+
+        if self.m_norm:
+            self.m_image_out_port.add_attribute("norm", im_norm, static=False)
 
         if self.m_resize is None:
             self.m_resize = -1
+        else:
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
         if self.m_cent_size is None:
             self.m_cent_size = -1
