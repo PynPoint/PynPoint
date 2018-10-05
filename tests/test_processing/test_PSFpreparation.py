@@ -59,10 +59,10 @@ class TestPSFpreparation(object):
 
     def test_psf_preparation(self):
 
-        prep = PSFpreparationModule(name_in="prep",
+        prep = PSFpreparationModule(name_in="prep1",
                                     image_in_tag="read",
-                                    image_out_tag="prep",
-                                    mask_out_tag="mask",
+                                    image_out_tag="prep1",
+                                    mask_out_tag="mask1",
                                     norm=True,
                                     resize=2.,
                                     cent_size=0.1,
@@ -70,13 +70,34 @@ class TestPSFpreparation(object):
                                     verbose=True)
 
         self.pipeline.add_module(prep)
-        self.pipeline.run_module("prep")
+        self.pipeline.run_module("prep1")
 
-        data = self.pipeline.get_data("prep")
+        data = self.pipeline.get_data("prep1")
+        assert np.allclose(data[0, 0, 0], 0., rtol=limit, atol=0.)
         assert np.allclose(data[0, 25, 25], 0., rtol=limit, atol=0.)
         assert np.allclose(data[0, 99, 99], 0., rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0001818623671899089, rtol=limit, atol=0.)
         assert data.shape == (40, 200, 200)
+
+        prep = PSFpreparationModule(name_in="prep2",
+                                    image_in_tag="read",
+                                    image_out_tag="prep2",
+                                    mask_out_tag="mask2",
+                                    norm=False,
+                                    resize=None,
+                                    cent_size=None,
+                                    edge_size=None,
+                                    verbose=True)
+
+        self.pipeline.add_module(prep)
+        self.pipeline.run_module("prep2")
+
+        data = self.pipeline.get_data("prep2")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 99, 99], -0.000287573978535779, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
 
     def test_sdi_preparation(self):
 
