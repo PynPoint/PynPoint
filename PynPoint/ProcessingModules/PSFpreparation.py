@@ -14,7 +14,7 @@ from scipy import ndimage
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import RemoveLinesModule, ScaleImagesModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, image_size
+from PynPoint.Util.ModuleTools import progress, memory_frames
 from PynPoint.Util.ImageTools import create_mask
 
 
@@ -131,9 +131,8 @@ class PSFpreparationModule(ProcessingModule):
             Internal method which masks the central and outer parts of the images.
             """
 
-            im_shape = image_size(im_data)
-
-            mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
+            mask = create_mask((im_data.shape[-2], im_data.shape[-1]),
+                               [self.m_cent_size, self.m_edge_size])
 
             if self.m_mask_out_port is not None:
                 self.m_mask_out_port.set_all(mask)
