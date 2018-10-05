@@ -9,13 +9,11 @@ import warnings
 import numpy as np
 
 from scipy.interpolate import interp1d
-from scipy.stats import t
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule
-from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
-from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule
-from PynPoint.Util.AnalysisTools import false_alarm, student_fpf
+from PynPoint.Util.AnalysisTools import false_alarm, student_fpf, fake_planet
+from PynPoint.Util.ImageTools import create_mask
+from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -109,14 +107,17 @@ class ContrastCurveModule(ProcessingModule):
         super(ContrastCurveModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
+
         if psf_in_tag == image_in_tag:
             self.m_psf_in_port = self.m_image_in_port
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
+
         if pca_out_tag is None:
             self.m_pca_out_port = None
         else:
             self.m_pca_out_port = self.add_output_port(pca_out_tag)
+
         self.m_contrast_out_port = self.add_output_port(contrast_out_tag)
 
         self.m_image_in_tag = image_in_tag
@@ -156,6 +157,7 @@ class ContrastCurveModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
+        parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_aperture /= pixscale
@@ -177,14 +179,16 @@ class ContrastCurveModule(ProcessingModule):
         if self.m_cent_size is None:
             index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
         else:
-            index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size/pixscale)
+            self.m_cent_size /= pixscale
+            index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size)
 
         pos_r = np.delete(pos_r, index_del)
 
         if self.m_edge_size is None or self.m_edge_size/pixscale > images.shape[1]/2.:
             index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
         else:
-            index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size/pixscale)
+            self.m_edge_size /= pixscale
+            index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size)
 
         pos_r = np.delete(pos_r, index_del)
 
@@ -228,56 +232,21 @@ class ContrastCurveModule(ProcessingModule):
                     sys.stdout.flush()
 
                     mag = list_mag[-1]
+                    flux_ratio = 10.**(-mag/2.5)
 
-                    fake_planet = FakePlanetModule(position=(sep*pixscale, ang),
-                                                   magnitude=mag,
-                                                   psf_scaling=self.m_psf_scaling,
-                                                   interpolation="spline",
-                                                   name_in="fake_planet",
-                                                   image_in_tag=self.m_image_in_tag,
-                                                   psf_in_tag=self.m_psf_in_tag,
-                                                   image_out_tag="contrast_fake",
-                                                   verbose=False)
+                    fake = fake_planet(self.m_image_in_port.get_all(),
+                                       self.m_psf_scaling*flux_ratio*psf,
+                                       parang,
+                                       (sep, ang),
+                                       interpolation="spline")
 
-                    fake_planet.connect_database(self._m_data_base)
-                    fake_planet.run()
+                    im_shape = (fake.shape[-2], fake.shape[-1])
+                    mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
-                    prep = PSFpreparationModule(name_in="prep",
-                                                image_in_tag="contrast_fake",
-                                                image_out_tag="contrast_prep",
-                                                image_mask_out_tag=None,
-                                                mask_out_tag=None,
-                                                norm=self.m_norm,
-                                                resize=None,
-                                                cent_size=self.m_cent_size,
-                                                edge_size=self.m_edge_size,
-                                                verbose=False)
-
-                    prep.connect_database(self._m_data_base)
-                    prep.run()
-
-                    psf_sub = PcaPsfSubtractionModule(name_in="pca_contrast",
-                                                      pca_numbers=self.m_pca_number,
-                                                      images_in_tag="contrast_prep",
-                                                      reference_in_tag="contrast_prep",
-                                                      res_mean_tag="contrast_res_mean",
-                                                      res_median_tag=None,
-                                                      res_arr_out_tag=None,
-                                                      res_rot_mean_clip_tag=None,
-                                                      extra_rot=self.m_extra_rot,
-                                                      verbose=False)
-
-                    psf_sub.connect_database(self._m_data_base)
-                    psf_sub.run()
-
-                    res_input_port = self.add_input_port("contrast_res_mean")
-                    im_res = res_input_port.get_all()
-
-                    if len(im_res.shape) == 3:
-                        if im_res.shape[0] == 1:
-                            im_res = np.squeeze(im_res, axis=0)
-                        else:
-                            raise ValueError("Multiple residual images found, expecting only one.")
+                    im_res = pca_psf_subtraction(fake*mask,
+                                                 parang,
+                                                 self.m_pca_number,
+                                                 self.m_extra_rot)
 
                     if self.m_pca_out_port is not None:
                         if count == 1 and iteration == 1:
