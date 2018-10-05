@@ -6,12 +6,10 @@ import math
 
 import numpy as np
 
-from scipy.ndimage import rotate
 from photutils import aperture_photometry
-from sklearn.decomposition import PCA
 
 from PynPoint.Util.ImageTools import shift_image
-from PynPoint.Util.ModuleTools import image_size
+from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 
 
 def fake_planet(science,
@@ -33,7 +31,7 @@ def fake_planet(science,
     theta = position[1]*math.pi/180. + math.pi/2.
     flux_ratio = 10.**(-magnitude/2.5)
 
-    psf_size = image_size(psf)
+    psf_size = (psf.shape[-2], psf.shape[-1])
 
     if psf_size != (science.shape[1], science.shape[2]):
         raise ValueError("The science images should have the same dimensions as the PSF template.")
@@ -59,46 +57,6 @@ def fake_planet(science,
         fake[i, ] += psf_scaling*flux_ratio*psf_tmp
 
     return fake
-
-def psf_subtraction(images,
-                    parang,
-                    pca_number,
-                    extra_rot):
-    """
-    Function for PSF subtraction with PCA.
-
-    :param images: Stack of images, also used as reference images.
-    :type images: ndarray
-    :param parang: Angles (deg) for derotation of the images.
-    :type parang: ndarray
-    :param pca_number: Number of PCA components used for the PSF model.
-    :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
-
-    :return: Mean residuals of the PSF subtraction.
-    :rtype: ndarray
-    """
-
-    pca = PCA(n_components=pca_number, svd_solver="arpack")
-
-    images -= np.mean(images, axis=0)
-    images_reshape = images.reshape((images.shape[0], images.shape[1]*images.shape[2]))
-
-    pca.fit(images_reshape)
-
-    pca_rep = np.matmul(pca.components_[:pca_number], images_reshape.T)
-    pca_rep = np.vstack((pca_rep, np.zeros((0, images.shape[0])))).T
-
-    model = pca.inverse_transform(pca_rep)
-    model = model.reshape(images.shape)
-
-    residuals = images - model
-
-    for j, item in enumerate(-1.*parang):
-        residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
-
-    return np.mean(residuals, axis=0)
 
 def lnprob(param,
            bounds,
@@ -190,10 +148,10 @@ def lnprob(param,
 
         fake *= mask
 
-        im_res = psf_subtraction(fake,
-                                 parang,
-                                 pca_number,
-                                 extra_rot)
+        im_res = pca_psf_subtraction(fake,
+                                     parang,
+                                     pca_number,
+                                     extra_rot)
 
         phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
 
