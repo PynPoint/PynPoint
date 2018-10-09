@@ -359,7 +359,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self._run_single_processing(star_sklearn, star_data)
 
         else:
-            sys.stdout.write("Creating residuals...")
+            sys.stdout.write("Creating residuals")
             sys.stdout.flush()
 
             self._run_multi_processing(star_data)

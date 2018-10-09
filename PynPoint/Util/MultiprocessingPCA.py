@@ -105,6 +105,8 @@ class PcaTaskProcessor(TaskProcessor):
         self.m_result_requirements = result_requirements
 
     def run_job(self, tmp_task):
+        sys.stdout.write('.')
+        sys.stdout.flush()
 
         star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
                                                 self.m_star_arr.shape[1]*self.m_star_arr.shape[2]))
@@ -277,11 +279,11 @@ class PcaTaskWriter(TaskWriter):
                     self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
-                if self.m_result_requirements[2]:
+                if self.m_result_requirements[3]:
                     self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
-                        next_result.m_data_array[2, :, :]
+                        next_result.m_data_array[3, :, :]
 
-                # if self.m_result_requirements[2]:
+                # if self.m_result_requirements[4]:
                 #     raise NotImplementedError("Not yet supported.")
 
             self.m_result_queue.task_done()
@@ -334,7 +336,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_star_arr = star_arr
         self.m_rotations = rotations
 
-        self.m_result_requirements = [False, False, False]
+        self.m_result_requirements = [False, False, False, False]
 
         if self.m_mean_out_port is not None:
             self.m_result_requirements[0] = True
