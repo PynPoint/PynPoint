@@ -90,17 +90,21 @@ class ScaleImagesModule(ProcessingModule):
     """
 
     def __init__(self,
-                 scaling=(None, None),
+                 scaling=(None, None, None),
+                 pixscale=False,
                  name_in="scaling",
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_scaled"):
         """
         Constructor of ScaleImagesModule.
 
-        :param scaling: Tuple with the scaling factors for the image shape and pixel values,
-                        (scaling_size, scaling_flux). Upsampling and downsampling of the image
-                        corresponds to *scaling_size* > 1 and 0 < *scaling_size* < 1, respectively.
-        :type scaling: (float, float)
+        :param scaling: Tuple with the scaling factors for the image size and flux,
+                        (scaling_x, scaling_y, scaling_flux). Upsampling and downsampling of the
+                        image corresponds to *scaling_x/y* > 1 and 0 < *scaling_x/y* < 1,
+                        respectively.
+        :type scaling: (float, float, float)
+        :param pixscale: Adjust the pixel scale by the average scaling in x and y direction.
+        :type pixscale: bool
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -117,15 +121,32 @@ class ScaleImagesModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
+        if len(scaling) == 2:
+            warnings.warn("The 'scaling' parameter requires three values: (scaling_x, scaling_y, "
+                          "scaling_flux). Using the same scaling in x and y direction...")
+
+            scaling = (scaling[0], scaling[0], scaling[1])
+
+        elif len(scaling) < 2 or len(scaling) > 3:
+            raise ValueError("The 'scaling' parameter requires three values: (scaling_x, "
+                             "scaling_y, scaling_flux).")
+
         if scaling[0] is None:
-            self.m_scaling_size = 1.
+            self.m_scaling_x = 1.
         else:
-            self.m_scaling_size = scaling[0]
+            self.m_scaling_x = scaling[0]
 
         if scaling[1] is None:
+            self.m_scaling_y = 1.
+        else:
+            self.m_scaling_y = scaling[1]
+
+        if scaling[2] is None:
             self.m_scaling_flux = 1.
         else:
-            self.m_scaling_flux = scaling[1]
+            self.m_scaling_flux = scaling[2]
+
+        self.m_pixscale = pixscale
 
     def run(self):
         """
@@ -138,7 +159,8 @@ class ScaleImagesModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         def _image_scaling(image_in,
-                           scaling_size,
+                           scaling_x,
+                           scaling_y,
                            scaling_flux):
 
             tmp_image = scale_image(image_in, scaling_size)
@@ -149,12 +171,21 @@ class ScaleImagesModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running ScaleImagesModule...",
-                                      func_args=(self.m_scaling_size, self.m_scaling_flux,))
+                                      func_args=(self.m_scaling_x,
+                                                 self.m_scaling_y,
+                                                 self.m_scaling_flux,))
 
-        history = "size  = "+str(self.m_scaling_size)+", flux = "+str(self.m_scaling_flux)
-        self.m_image_out_port.add_history_information("Images scaled", history)
+        history = "size =("+str(self.m_scaling_x)+", "+str(self.m_scaling_y)+ "), flux=" + \
+                  str(self.m_scaling_flux)
+
+        self.m_image_out_port.add_history_information("ScaleImagesModule", history)
+
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_scaling_size)
+
+        if self.m_pixscale:
+            mean_scaling = (self.m_scaling_x+self.m_scaling_y)/2.
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/mean_scaling)
+
         self.m_image_out_port.close_port()
 
 
