@@ -627,7 +627,7 @@ class SDIpreparationModule(ProcessingModule):
             else:
                 image = self.m_image_in_port[i, ]
 
-            im_scale = width_factor * scale_image(image, wvl_factor)
+            im_scale = width_factor * scale_image(image, wvl_factor, wvl_factor)
 
             if i == 0:
                 npix_del = im_scale.shape[-1] - image.shape[-1]
