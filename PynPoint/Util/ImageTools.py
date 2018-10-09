@@ -2,14 +2,12 @@
 Functions for image processing.
 """
 
-import math
-
-import cv2
 import numpy as np
 
 from scipy.ndimage import fourier_shift
 from scipy.ndimage import shift
 from scipy.ndimage import rotate
+from skimage.transform import rescale
 
 
 def image_center(image):
@@ -161,3 +159,31 @@ def shift_image(image, shift_yx, interpolation, mode='constant'):
         im_center = np.fft.ifftn(fft_shift).real
 
     return im_center
+
+def scale_image(image, scaling_x, scaling_y):
+    """
+    Function to spatially scale an image.
+
+    :param images: Input image.
+    :type images: ndarray
+    :param scaling_x: Scaling factor x.
+    :type scaling_x: float
+    :param scaling_y: Scaling factor y.
+    :type scaling_y: float
+
+    :return: Shifted image.
+    :rtype: ndarray
+    """
+
+    sum_before = np.sum(image)
+
+    im_scale = rescale(image=np.asarray(image, dtype=np.float64),
+                       scale=(scaling_y, scaling_x),
+                       order=5,
+                       mode="reflect",
+                       anti_aliasing=True,
+                       multichannel=False)
+
+    sum_after = np.sum(im_scale)
+
+    return im_scale * (sum_before / sum_after)
