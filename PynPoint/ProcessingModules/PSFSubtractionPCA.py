@@ -238,22 +238,16 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                   angle=angle+self.m_extra_rot,
                                                   reshape=False)
 
-                weight1 = np.divide(res_array,
-                                    res_var,
-                                    out=np.zeros_like(res_var),
+                weight1 = np.divide(res_array, res_var, out=np.zeros_like(res_var),
                                     where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
 
-                weight2 = np.divide(1.,
-                                    res_var,
-                                    out=np.zeros_like(res_var),
+                weight2 = np.divide(1., res_var, out=np.zeros_like(res_var),
                                     where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
 
                 sum1 = np.sum(weight1, axis=0)
                 sum2 = np.sum(weight2, axis=0)
 
-                res_rot_weighted = np.divide(sum1,
-                                             sum2,
-                                             out=np.zeros_like(sum2),
+                res_rot_weighted = np.divide(sum1, sum2, out=np.zeros_like(sum2),
                                              where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
 
                 self.m_res_weighted_out_port.append(res_rot_weighted, data_dim=3)
