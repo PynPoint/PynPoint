@@ -800,8 +800,6 @@ class WaffleCenteringModule(ProcessingModule):
                 y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i + 1)))
 
             elif self.m_pattern == "+":
-                warnings.warn("The '+' pattern has not been tested yet.")
-
                 x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i)))
                 y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
 
