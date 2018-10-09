@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import pytest
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -115,7 +116,13 @@ class TestImageResizing(object):
                              image_out_tag="add")
 
         self.pipeline.add_module(add)
-        self.pipeline.run_module("add")
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("add")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "The dimensions of the output images (109, 107) " \
+                                             "are not equal. PynPoint only supports square images."
 
         data = self.pipeline.get_data("add")
         assert np.allclose(data[0, 50, 50], 0.02851872141873229, rtol=limit, atol=0.)

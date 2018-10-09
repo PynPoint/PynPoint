@@ -4,6 +4,8 @@ a range of principle components. The PCA basis is required as input. Note that d
 functionality in numpy the multiprocessing does not run on macOS.
 """
 
+import sys
+
 import numpy as np
 from scipy import ndimage
 
@@ -62,10 +64,11 @@ class PcaTaskProcessor(TaskProcessor):
     scikit-learn PCA model. It does not get data from the TaskCreator but uses its own copy of the
     star data, which are the same and independent for each task. Finally the residuals are created:
 
-    * Mean of the residuals -- default
-    * Median of the residuals -- result_requirements[0] = True
-    * Clipped mean of the residuals -- result_requirements[1] = True
-    * Non-stacked residuals -- result_requirements[2] = True (not implemented for multiprocessing)
+    * Mean of the residuals -- result_requirements[0] = True
+    * Median of the residuals -- result_requirements[1] = True
+    * Noise-weighted residuals -- result_requirements[2] = True
+    * Clipped mean of the residuals -- result_requirements[3] = True
+    * Non-stacked residuals -- result_requirements[4] = True (not implemented for multiprocessing)
     """
 
     def __init__(self,
@@ -74,7 +77,7 @@ class PcaTaskProcessor(TaskProcessor):
                  star_arr,
                  angles,
                  pca_model,
-                 result_requirements=(False, False, False)):
+                 result_requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskProcessor.
 
@@ -128,10 +131,12 @@ class PcaTaskProcessor(TaskProcessor):
         res_array = np.zeros(shape=tmp_without_psf.shape)
         for i, angle in enumerate(self.m_angles):
             res_temp = tmp_without_psf[i, ]
-            res_array[i, ] = ndimage.rotate(res_temp, angle, reshape=False)
+            res_array[i, ] = ndimage.rotate(input=res_temp,
+                                            angle=angle,
+                                            reshape=False)
 
         # create residuals
-        res_length = 3
+        res_length = 4
 
         # if self.m_result_requirements[3]:
         #     res_length += res_array.shape[0]
@@ -141,15 +146,48 @@ class PcaTaskProcessor(TaskProcessor):
         # 1.) mean
         if self.m_result_requirements[0]:
             tmp_res_rot_mean = np.mean(res_array, axis=0)
-            residual_output[0, :, :] = tmp_res_rot_mean
+            residual_output[0, ] = tmp_res_rot_mean
 
         # 2.) median
         if self.m_result_requirements[1]:
             tmp_res_rot_median = np.median(res_array, axis=0)
-            residual_output[1, :, :] = tmp_res_rot_median
+            residual_output[1, ] = tmp_res_rot_median
 
-        # 3.) clipped mean
+        # 3.) noise weighted
         if self.m_result_requirements[2]:
+            tmp_res_var = np.var(tmp_without_psf, axis=0)
+
+            res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
+                                   repeats=tmp_without_psf.shape[0],
+                                   axis=0)
+
+            res_var = np.zeros(res_repeat.shape)
+            for j, angle in enumerate(self.m_angles):
+                # ndimage.rotate rotates in clockwise direction for positive angles
+                res_var[j, ] = ndimage.rotate(input=res_repeat[j, ],
+                                              angle=angle,
+                                              reshape=False)
+
+            weight1 = np.divide(res_array,
+                                res_var,
+                                out=np.zeros_like(res_var),
+                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+
+            weight2 = np.divide(1.,
+                                res_var,
+                                out=np.zeros_like(res_var),
+                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+
+            sum1 = np.sum(weight1, axis=0)
+            sum2 = np.sum(weight2, axis=0)
+
+            residual_output[2, ] = np.divide(sum1,
+                                             sum2,
+                                             out=np.zeros_like(sum2),
+                                             where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
+
+        # 4.) clipped mean
+        if self.m_result_requirements[3]:
             res_rot_mean_clip = np.zeros(self.m_star_arr[0, ].shape)
 
             for i in range(res_rot_mean_clip.shape[0]):
@@ -164,13 +202,16 @@ class PcaTaskProcessor(TaskProcessor):
 
                         res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
 
-            residual_output[2, :, :] = res_rot_mean_clip
+            residual_output[3, ] = res_rot_mean_clip
 
         # 4.) The de-rotated result images
-        # if self.m_result_requirements[3]:
-        #     residual_output[3:, :, :] = res_array
+        # if self.m_result_requirements[4]:
+        #     residual_output[4:, :, :] = res_array
 
-        # print "Created Residual with " + str(pca_number) + " components"
+        sys.stdout.write("PCA residuals created with " + str(pca_number) + " components")
+        sys.stdout.flush()
+
+        # print "PCA residuals created with " + str(pca_number) + " components"
 
         return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 

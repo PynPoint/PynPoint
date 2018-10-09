@@ -4,6 +4,14 @@ PynPoint.Core package
 Submodules
 ----------
 
+PynPoint.Core.Attributes module
+-------------------------------
+
+.. automodule:: PynPoint.Core.Attributes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint.Core.DataIO module
 ---------------------------
 
