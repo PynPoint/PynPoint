@@ -105,8 +105,6 @@ class PcaTaskProcessor(TaskProcessor):
         self.m_result_requirements = result_requirements
 
     def run_job(self, tmp_task):
-        sys.stdout.write('.')
-        sys.stdout.flush()
 
         star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
                                                 self.m_star_arr.shape[1]*self.m_star_arr.shape[2]))
@@ -200,14 +198,12 @@ class PcaTaskProcessor(TaskProcessor):
 
             residual_output[3, ] = res_rot_mean_clip
 
-        # 4.) The de-rotated result images
+        # 5.) The de-rotated result images
         # if self.m_result_requirements[4]:
         #     residual_output[4:, :, :] = res_array
 
-        sys.stdout.write("PCA residuals created with " + str(pca_number) + " components")
+        sys.stdout.write('.')
         sys.stdout.flush()
-
-        # print "PCA residuals created with " + str(pca_number) + " components"
 
         return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 
