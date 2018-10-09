@@ -60,6 +60,14 @@ PynPoint.Util.MultiprocessingPCA module
     :undoc-members:
     :show-inheritance:
 
+PynPoint.Util.PSFSubtractionTools module
+----------------------------------------
+
+.. automodule:: PynPoint.Util.PSFSubtractionTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 PynPoint.Util.TestTools module
 ------------------------------
 
