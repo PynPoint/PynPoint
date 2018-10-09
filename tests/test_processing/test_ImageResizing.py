@@ -80,14 +80,14 @@ class TestImageResizing(object):
 
     def test_scale_images(self):
 
-        scale = ScaleImagesModule(scaling=(2., None),
+        scale = ScaleImagesModule(scaling=(2., 2., None),
                                   name_in="scale1",
                                   image_in_tag="read",
                                   image_out_tag="scale1")
 
         self.pipeline.add_module(scale)
 
-        scale = ScaleImagesModule(scaling=(None, 2.),
+        scale = ScaleImagesModule(scaling=(None, None, 2.),
                                   name_in="scale2",
                                   image_in_tag="read",
                                   image_out_tag="scale2")
