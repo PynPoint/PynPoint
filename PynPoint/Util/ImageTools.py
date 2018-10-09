@@ -160,14 +160,16 @@ def shift_image(image, shift_yx, interpolation, mode='constant'):
 
     return im_center
 
-def scale_image(image, scaling):
+def scale_image(image, scaling_x, scaling_y):
     """
     Function to spatially scale an image.
 
     :param images: Input image.
     :type images: ndarray
-    :param scaling: Scaling factor.
-    :type scaling: float
+    :param scaling_x: Scaling factor x.
+    :type scaling_x: float
+    :param scaling_y: Scaling factor y.
+    :type scaling_y: float
 
     :return: Shifted image.
     :rtype: ndarray
@@ -176,7 +178,7 @@ def scale_image(image, scaling):
     sum_before = np.sum(image)
 
     im_scale = rescale(image=np.asarray(image, dtype=np.float64),
-                       scale=(scaling, scaling),
+                       scale=(scaling_y, scaling_x),
                        order=5,
                        mode="reflect",
                        anti_aliasing=True,

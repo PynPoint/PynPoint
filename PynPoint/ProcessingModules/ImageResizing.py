@@ -163,7 +163,7 @@ class ScaleImagesModule(ProcessingModule):
                            scaling_y,
                            scaling_flux):
 
-            tmp_image = scale_image(image_in, scaling_size)
+            tmp_image = scale_image(image_in, scaling_x, scaling_y)
 
             return scaling_flux * tmp_image
 
