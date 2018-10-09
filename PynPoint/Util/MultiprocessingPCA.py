@@ -342,7 +342,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         if self.m_median_out_port is not None:
             self.m_result_requirements[1] = True
 
-        if self.weighted_out_port is not None:
+        if self.m_weighted_out_port is not None:
             self.m_result_requirements[2] = True
 
         if self.m_clip_out_port is not None:
