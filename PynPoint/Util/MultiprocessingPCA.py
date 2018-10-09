@@ -168,22 +168,16 @@ class PcaTaskProcessor(TaskProcessor):
                                               angle=angle,
                                               reshape=False)
 
-            weight1 = np.divide(res_array,
-                                res_var,
-                                out=np.zeros_like(res_var),
+            weight1 = np.divide(res_array, res_var, out=np.zeros_like(res_var),
                                 where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
 
-            weight2 = np.divide(1.,
-                                res_var,
-                                out=np.zeros_like(res_var),
+            weight2 = np.divide(1., res_var, out=np.zeros_like(res_var),
                                 where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
 
             sum1 = np.sum(weight1, axis=0)
             sum2 = np.sum(weight2, axis=0)
 
-            residual_output[2, ] = np.divide(sum1,
-                                             sum2,
-                                             out=np.zeros_like(sum2),
+            residual_output[2, ] = np.divide(sum1, sum2, out=np.zeros_like(sum2),
                                              where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
 
         # 4.) clipped mean
@@ -226,6 +220,7 @@ class PcaTaskWriter(TaskWriter):
                  result_queue_in,
                  mean_out_port_in,
                  median_out_port_in,
+                 weighted_out_port_in,
                  clip_out_port_in,
                  data_mutex_in,
                  result_requirements=(False, False, False)):
@@ -238,6 +233,8 @@ class PcaTaskWriter(TaskWriter):
         :type mean_out_port:
         :param median_out_port:
         :type median_out_port:
+        :param weighted_out_port:
+        :type weighted_out_port:
         :param clip_out_port:
         :type clip_out_port:
         :param data_mutex_in:
@@ -280,6 +277,10 @@ class PcaTaskWriter(TaskWriter):
                     self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
+                if self.m_result_requirements[2]:
+                    self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
+                        next_result.m_data_array[2, :, :]
+
                 # if self.m_result_requirements[2]:
                 #     raise NotImplementedError("Not yet supported.")
 
@@ -294,6 +295,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
     def __init__(self,
                  mean_out_port,
                  median_out_port,
+                 weighted_out_port,
                  clip_out_port,
                  num_processors,
                  pca_numbers,
@@ -307,6 +309,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type mean_out_port:
         :param median_out_port:
         :type median_out_port:
+        :param weighted_out_port:
+        :type weighted_out_port:
         :param clip_out_port:
         :type clip_out_port:
         :param num_processors:
@@ -323,6 +327,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
+        self.m_weighted_out_port = weighted_out_port
         self.m_clip_out_port = clip_out_port
         self.m_pca_numbers = pca_numbers
         self.m_pca_model = pca_model
@@ -337,8 +342,11 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         if self.m_median_out_port is not None:
             self.m_result_requirements[1] = True
 
-        if self.m_clip_out_port is not None:
+        if self.weighted_out_port is not None:
             self.m_result_requirements[2] = True
+
+        if self.m_clip_out_port is not None:
+            self.m_result_requirements[3] = True
 
         super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
 
@@ -347,6 +355,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         tmp_writer = PcaTaskWriter(self.m_result_queue,
                                    self.m_mean_out_port,
                                    self.m_median_out_port,
+                                   self.m_weighted_out_port,
                                    self.m_clip_out_port,
                                    self.m_data_mutex,
                                    self.m_result_requirements)
