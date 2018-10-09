@@ -7,10 +7,8 @@ import warnings
 
 import numpy as np
 
-from skimage.transform import rescale
-
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ImageTools import crop_image
+from PynPoint.Util.ImageTools import crop_image, scale_image
 
 
 class CropImagesModule(ProcessingModule):
@@ -165,18 +163,9 @@ class ScaleImagesModule(ProcessingModule):
                            scaling_y,
                            scaling_flux):
 
-            sum_before = np.sum(image_in)
+            tmp_image = scale_image(image_in, scaling_x, scaling_y)
 
-            tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
-                                scale=(scaling_y, scaling_x),
-                                order=5,
-                                mode="reflect",
-                                anti_aliasing=True,
-                                multichannel=False)
-
-            sum_after = np.sum(tmp_image)
-
-            return tmp_image * (sum_before / sum_after) * scaling_flux
+            return scaling_flux * tmp_image
 
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,

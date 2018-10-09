@@ -479,7 +479,7 @@ class RemoveLastFrameModule(ProcessingModule):
             progress(i, len(ndit), "Running RemoveLastFrameModule...")
 
             if nframes[i] != item+1:
-                warnings.warn("Number of frames (%s) is smaller than NDIT+1." % nframes[i])
+                warnings.warn("Number of frames (%s) is not equal to NDIT+1." % nframes[i])
 
             frame_start = np.sum(nframes[0:i])
             frame_end = np.sum(nframes[0:i+1]) - 1
