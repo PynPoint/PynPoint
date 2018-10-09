@@ -125,10 +125,13 @@ def remove_psf_test_data(path):
     os.remove(os.path.join(path, "test_data/PynPoint_database.hdf5"))
     os.remove(os.path.join(path, "test_data/PynPoint_config.ini"))
 
-def create_random(path, ndit=10, parang=np.arange(1, 11, 1)):
+def create_random(path, ndit=10, parang=np.arange(1., 11., 1.)):
     """
     Create a stack of images with Gaussian distributed pixel values.
     """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     file_in = path + "/PynPoint_database.hdf5"
 

@@ -2,7 +2,6 @@ import os
 import warnings
 
 import pytest
-import h5py
 import numpy as np
 
 from PynPoint.Core.DataIO import OutputPort, DataStorage, InputPort
@@ -48,8 +47,12 @@ class TestOutputPort(object):
         deactive_port.set_all(np.asarray([0, 1, 2, 3]))
         deactive_port.flush()
 
-        # raises warning
-        assert control_port.get_all() is None
+        with pytest.warns(UserWarning) as warning:
+            control_port.get_all()
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
+                                             "InputPort."
 
         active_port.set_all(np.asarray([0, 1, 2, 3]))
         active_port.flush()
@@ -103,10 +106,7 @@ class TestOutputPort(object):
             out_port = OutputPort("some_data")
             out_port.set_all(data)
 
-        # check that only one warning was raised
         assert len(record) == 1
-
-        # check that the message matches
         assert record[0].message.args[0] == "OutputPort can not store data unless a database is " \
                                             "connected."
 
@@ -300,7 +300,8 @@ class TestOutputPort(object):
             out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
 
         assert ex_info.value[0] == "The port tag 'new_data' is already used with a different " \
-                                   "data type. The 'force' parameter can be used to replace the tag."
+                                   "data type. The 'force' parameter can be used to replace " \
+                                   "the tag."
         out_port.del_all_data()
 
     def test_set_data_using_slicing(self):
@@ -325,7 +326,12 @@ class TestOutputPort(object):
 
         control = self.create_input_port("new_data")
 
-        assert control.get_all() is None
+        with pytest.warns(UserWarning) as warning:
+            control.get_all()
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
+                                             "InputPort."
 
     def test_add_static_attribute(self):
         out_port = self.create_output_port("new_data")
@@ -343,7 +349,12 @@ class TestOutputPort(object):
         out_port.deactivate()
         out_port.add_attribute("attr3", value=33)
 
-        assert control.get_attribute("attr3") is None
+        with pytest.warns(UserWarning) as warning:
+            control.get_attribute("attr3")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No attribute found - requested: attr3."
+
         out_port.activate()
         out_port.del_all_attributes()
         out_port.del_all_data()
@@ -506,9 +517,21 @@ class TestOutputPort(object):
 
         # check is only the chosen attributes are deleted and the rest is still there
         control = self.create_input_port("new_data")
-        assert control.get_attribute("attr1") is None
+
+        with pytest.warns(UserWarning) as warning:
+            control.get_attribute("attr1")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No attribute found - requested: attr1."
+
         assert control.get_attribute("attr2") == 5
-        assert control.get_attribute("attr_non_static_1") is None
+
+        with pytest.warns(UserWarning) as warning:
+            control.get_attribute("attr_non_static_1")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No attribute found - requested: attr_non_static_1."
+
         assert np.array_equal(control.get_attribute("attr_non_static_2"), [2, 4, 6, 8])
 
         out_port.del_all_data()
@@ -548,8 +571,18 @@ class TestOutputPort(object):
         out_port.del_all_attributes()
 
         control = self.create_input_port("new_data")
-        assert control.get_attribute("attr_1") is None
-        assert control.get_attribute("attr_2") is None
+
+        with pytest.warns(UserWarning) as warning:
+            control.get_attribute("attr_1")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No attribute found - requested: attr_1."
+
+        with pytest.warns(UserWarning) as warning:
+            control.get_attribute("attr_2")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No attribute found - requested: attr_2."
 
         out_port.del_all_data()
 

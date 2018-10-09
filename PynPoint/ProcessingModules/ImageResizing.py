@@ -186,8 +186,9 @@ class ScaleImagesModule(ProcessingModule):
                                                  self.m_scaling_y,
                                                  self.m_scaling_flux,))
 
-        history = "size =("+str(self.m_scaling_x)+", "+str(self.m_scaling_y)+ "), flux=" + \
-                  str(self.m_scaling_flux)
+        history = "scaling = ("+str("{:.2f}".format(self.m_scaling_x)) + ", " + \
+                  str("{:.2f}".format(self.m_scaling_y)) + ", " + \
+                  str("{:.2f}".format(self.m_scaling_flux)) + ")"
 
         self.m_image_out_port.add_history_information("ScaleImagesModule", history)
 

@@ -42,8 +42,8 @@ test-all:
 
 coverage:
 	coverage run --source PynPoint -m py.test
-	coverage report -m --omit=PynPoint/OldVersion/*
-	coverage html --omit=PynPoint/OldVersion/*
+	coverage report -m
+	coverage html
 
 docs:
 	rm -f docs/PynPoint.Core.rst
