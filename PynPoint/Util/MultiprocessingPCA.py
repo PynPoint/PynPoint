@@ -138,7 +138,7 @@ class PcaTaskProcessor(TaskProcessor):
         # create residuals
         res_length = 4
 
-        # if self.m_result_requirements[3]:
+        # if self.m_result_requirements[4]:
         #     res_length += res_array.shape[0]
 
         residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
@@ -248,6 +248,7 @@ class PcaTaskWriter(TaskWriter):
                                             data_mutex_in)
 
         self.m_median_out_port_in = median_out_port_in
+        self.m_weighted_out_port_in = weighted_out_port_in
         self.m_clip_out_port_in = clip_out_port_in
         self.m_result_requirements = result_requirements
 
@@ -272,7 +273,7 @@ class PcaTaskWriter(TaskWriter):
                         next_result.m_data_array[1, :, :]
 
                 if self.m_result_requirements[2]:
-                    self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
+                    self.m_weighted_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
                 if self.m_result_requirements[3]:
