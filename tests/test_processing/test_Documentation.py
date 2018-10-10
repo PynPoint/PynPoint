@@ -274,8 +274,7 @@ class TestDocumentation(object):
                                       res_median_tag=None,
                                       res_arr_out_tag=None,
                                       res_rot_mean_clip_tag=None,
-                                      extra_rot=0.,
-                                      verbose=True)
+                                      extra_rot=0.)
 
         self.pipeline.add_module(pca)
         self.pipeline.run_module("psf_subtraction")
