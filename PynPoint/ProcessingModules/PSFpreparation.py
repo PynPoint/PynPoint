@@ -82,13 +82,6 @@ class PSFpreparationModule(ProcessingModule):
         :return: None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
-        if self.m_mask_out_port is not None:
-            self.m_mask_out_port.del_all_data()
-            self.m_mask_out_port.del_all_attributes()
-
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if self.m_cent_size is not None:
@@ -110,8 +103,9 @@ class PSFpreparationModule(ProcessingModule):
                                [self.m_cent_size, self.m_edge_size])
 
         else:
-            x_res, y_res = int(im_shape[-2]*self.m_resize), int(im_shape[-1]*self.m_resize)
-            im_res = np.zeros((nimages, x_res, y_res))
+            im_res = np.zeros((nimages,
+                               int(im_shape[-2]*self.m_resize),
+                               int(im_shape[-1]*self.m_resize)))
 
             mask = create_mask((im_res.shape[-2], im_res.shape[-1]),
                                [self.m_cent_size, self.m_edge_size])
@@ -131,41 +125,36 @@ class PSFpreparationModule(ProcessingModule):
                                                    zoom=[self.m_resize, self.m_resize],
                                                    order=5)
 
-            if nimages == 1:
-                self.m_image_out_port.set_all(image*mask)
-
+            if i == 0:
+                if nimages == 1:
+                    self.m_image_out_port.set_all(image*mask, data_dim=2)
+                else:
+                    self.m_image_out_port.set_all(image*mask, data_dim=3)
             else:
                 self.m_image_out_port.append(image*mask, data_dim=3)
 
         if self.m_mask_out_port is not None:
             self.m_mask_out_port.set_all(mask)
+            self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         if self.m_norm:
             self.m_image_out_port.add_attribute("norm", im_norm, static=False)
 
-        if self.m_resize is None:
-            self.m_resize = -1
-        else:
+        if self.m_resize is not None:
+            self.m_image_out_port.add_attribute("resize", self.m_resize, static=True)
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
-        if self.m_cent_size is None:
-            self.m_cent_size = -1
-        else:
-            self.m_cent_size *= pixscale
+        if self.m_cent_size is not None:
+            self.m_image_out_port.add_attribute("cent_size",
+                                                self.m_cent_size*pixscale,
+                                                static=True)
 
-        if self.m_edge_size is None:
-            self.m_edge_size = -1
-        else:
-            self.m_edge_size *= pixscale
-
-        attributes = {"resize": float(self.m_resize),
-                      "cent_size": float(self.m_cent_size),
-                      "edge_size": float(self.m_edge_size)}
-
-        for key, value in attributes.iteritems():
-            self.m_image_out_port.add_attribute(key, value, static=True)
+        if self.m_edge_size is not None:
+            self.m_image_out_port.add_attribute("edge_size",
+                                                self.m_edge_size*pixscale,
+                                                static=True)
 
         sys.stdout.write("Running PSFpreparationModule... [DONE]\n")
         sys.stdout.flush()
