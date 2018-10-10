@@ -31,8 +31,7 @@ class PSFpreparationModule(ProcessingModule):
                  norm=True,
                  resize=None,
                  cent_size=None,
-                 edge_size=None,
-                 **kwargs):
+                 edge_size=None):
         """
         Constructor of PSFpreparationModule.
 
@@ -56,19 +55,9 @@ class PSFpreparationModule(ProcessingModule):
                           used when set to None. If the value is larger than half the image size
                           then it will be set to half the image size.
         :type edge_size: float
-        :param \**kwargs:
-            See below.
-
-        :Keyword arguments:
-            **verbose** (*bool*) -- Print progress to the standard output.
 
         :return: None
         """
-
-        if "verbose" in kwargs:
-            self.m_verbose = kwargs["verbose"]
-        else:
-            self.m_verbose = True
 
         super(PSFpreparationModule, self).__init__(name_in)
 
@@ -146,9 +135,8 @@ class PSFpreparationModule(ProcessingModule):
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
-        if self.m_verbose:
-            sys.stdout.write("Running PSFpreparationModule...")
-            sys.stdout.flush()
+        sys.stdout.write("Running PSFpreparationModule...")
+        sys.stdout.flush()
 
         im_data = self.m_image_in_port.get_all()
 
@@ -188,9 +176,8 @@ class PSFpreparationModule(ProcessingModule):
         for key, value in attributes.iteritems():
             self.m_image_out_port.add_attribute(key, value, static=True)
 
-        if self.m_verbose:
-            sys.stdout.write(" [DONE]\n")
-            sys.stdout.flush()
+        sys.stdout.write(" [DONE]\n")
+        sys.stdout.flush()
 
 
 class AngleInterpolationModule(ProcessingModule):

@@ -4,6 +4,8 @@ a range of principle components. The PCA basis is required as input. Note that d
 functionality in numpy the multiprocessing does not run on macOS.
 """
 
+import sys
+
 import numpy as np
 from scipy import ndimage
 
@@ -62,10 +64,11 @@ class PcaTaskProcessor(TaskProcessor):
     scikit-learn PCA model. It does not get data from the TaskCreator but uses its own copy of the
     star data, which are the same and independent for each task. Finally the residuals are created:
 
-    * Mean of the residuals -- default
-    * Median of the residuals -- result_requirements[0] = True
-    * Clipped mean of the residuals -- result_requirements[1] = True
-    * Non-stacked residuals -- result_requirements[2] = True (not implemented for multiprocessing)
+    * Mean of the residuals -- result_requirements[0] = True
+    * Median of the residuals -- result_requirements[1] = True
+    * Noise-weighted residuals -- result_requirements[2] = True
+    * Clipped mean of the residuals -- result_requirements[3] = True
+    * Non-stacked residuals -- result_requirements[4] = True (not implemented for multiprocessing)
     """
 
     def __init__(self,
@@ -74,7 +77,7 @@ class PcaTaskProcessor(TaskProcessor):
                  star_arr,
                  angles,
                  pca_model,
-                 result_requirements=(False, False, False)):
+                 result_requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskProcessor.
 
@@ -128,12 +131,14 @@ class PcaTaskProcessor(TaskProcessor):
         res_array = np.zeros(shape=tmp_without_psf.shape)
         for i, angle in enumerate(self.m_angles):
             res_temp = tmp_without_psf[i, ]
-            res_array[i, ] = ndimage.rotate(res_temp, angle, reshape=False)
+            res_array[i, ] = ndimage.rotate(input=res_temp,
+                                            angle=angle,
+                                            reshape=False)
 
         # create residuals
-        res_length = 3
+        res_length = 4
 
-        # if self.m_result_requirements[3]:
+        # if self.m_result_requirements[4]:
         #     res_length += res_array.shape[0]
 
         residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
@@ -141,15 +146,42 @@ class PcaTaskProcessor(TaskProcessor):
         # 1.) mean
         if self.m_result_requirements[0]:
             tmp_res_rot_mean = np.mean(res_array, axis=0)
-            residual_output[0, :, :] = tmp_res_rot_mean
+            residual_output[0, ] = tmp_res_rot_mean
 
         # 2.) median
         if self.m_result_requirements[1]:
             tmp_res_rot_median = np.median(res_array, axis=0)
-            residual_output[1, :, :] = tmp_res_rot_median
+            residual_output[1, ] = tmp_res_rot_median
 
-        # 3.) clipped mean
+        # 3.) noise weighted
         if self.m_result_requirements[2]:
+            tmp_res_var = np.var(tmp_without_psf, axis=0)
+
+            res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
+                                   repeats=tmp_without_psf.shape[0],
+                                   axis=0)
+
+            res_var = np.zeros(res_repeat.shape)
+            for j, angle in enumerate(self.m_angles):
+                # ndimage.rotate rotates in clockwise direction for positive angles
+                res_var[j, ] = ndimage.rotate(input=res_repeat[j, ],
+                                              angle=angle,
+                                              reshape=False)
+
+            weight1 = np.divide(res_array, res_var, out=np.zeros_like(res_var),
+                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+
+            weight2 = np.divide(1., res_var, out=np.zeros_like(res_var),
+                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+
+            sum1 = np.sum(weight1, axis=0)
+            sum2 = np.sum(weight2, axis=0)
+
+            residual_output[2, ] = np.divide(sum1, sum2, out=np.zeros_like(sum2),
+                                             where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
+
+        # 4.) clipped mean
+        if self.m_result_requirements[3]:
             res_rot_mean_clip = np.zeros(self.m_star_arr[0, ].shape)
 
             for i in range(res_rot_mean_clip.shape[0]):
@@ -164,13 +196,14 @@ class PcaTaskProcessor(TaskProcessor):
 
                         res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
 
-            residual_output[2, :, :] = res_rot_mean_clip
+            residual_output[3, ] = res_rot_mean_clip
 
-        # 4.) The de-rotated result images
-        # if self.m_result_requirements[3]:
-        #     residual_output[3:, :, :] = res_array
+        # 5.) The de-rotated result images
+        # if self.m_result_requirements[4]:
+        #     residual_output[4:, :, :] = res_array
 
-        # print "Created Residual with " + str(pca_number) + " components"
+        sys.stdout.write('.')
+        sys.stdout.flush()
 
         return TaskResult(residual_output, tmp_task.m_job_parameter[0])
 
@@ -185,6 +218,7 @@ class PcaTaskWriter(TaskWriter):
                  result_queue_in,
                  mean_out_port_in,
                  median_out_port_in,
+                 weighted_out_port_in,
                  clip_out_port_in,
                  data_mutex_in,
                  result_requirements=(False, False, False)):
@@ -197,6 +231,8 @@ class PcaTaskWriter(TaskWriter):
         :type mean_out_port:
         :param median_out_port:
         :type median_out_port:
+        :param weighted_out_port:
+        :type weighted_out_port:
         :param clip_out_port:
         :type clip_out_port:
         :param data_mutex_in:
@@ -212,6 +248,7 @@ class PcaTaskWriter(TaskWriter):
                                             data_mutex_in)
 
         self.m_median_out_port_in = median_out_port_in
+        self.m_weighted_out_port_in = weighted_out_port_in
         self.m_clip_out_port_in = clip_out_port_in
         self.m_result_requirements = result_requirements
 
@@ -236,10 +273,14 @@ class PcaTaskWriter(TaskWriter):
                         next_result.m_data_array[1, :, :]
 
                 if self.m_result_requirements[2]:
-                    self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
+                    self.m_weighted_out_port_in[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
-                # if self.m_result_requirements[2]:
+                if self.m_result_requirements[3]:
+                    self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
+                        next_result.m_data_array[3, :, :]
+
+                # if self.m_result_requirements[4]:
                 #     raise NotImplementedError("Not yet supported.")
 
             self.m_result_queue.task_done()
@@ -253,6 +294,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
     def __init__(self,
                  mean_out_port,
                  median_out_port,
+                 weighted_out_port,
                  clip_out_port,
                  num_processors,
                  pca_numbers,
@@ -266,6 +308,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type mean_out_port:
         :param median_out_port:
         :type median_out_port:
+        :param weighted_out_port:
+        :type weighted_out_port:
         :param clip_out_port:
         :type clip_out_port:
         :param num_processors:
@@ -282,13 +326,14 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
+        self.m_weighted_out_port = weighted_out_port
         self.m_clip_out_port = clip_out_port
         self.m_pca_numbers = pca_numbers
         self.m_pca_model = pca_model
         self.m_star_arr = star_arr
         self.m_rotations = rotations
 
-        self.m_result_requirements = [False, False, False]
+        self.m_result_requirements = [False, False, False, False]
 
         if self.m_mean_out_port is not None:
             self.m_result_requirements[0] = True
@@ -296,8 +341,11 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         if self.m_median_out_port is not None:
             self.m_result_requirements[1] = True
 
-        if self.m_clip_out_port is not None:
+        if self.m_weighted_out_port is not None:
             self.m_result_requirements[2] = True
+
+        if self.m_clip_out_port is not None:
+            self.m_result_requirements[3] = True
 
         super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
 
@@ -306,6 +354,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         tmp_writer = PcaTaskWriter(self.m_result_queue,
                                    self.m_mean_out_port,
                                    self.m_median_out_port,
+                                   self.m_weighted_out_port,
                                    self.m_clip_out_port,
                                    self.m_data_mutex,
                                    self.m_result_requirements)

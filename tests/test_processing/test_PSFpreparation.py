@@ -1,12 +1,15 @@
 import os
 import warnings
 
+import pytest
+
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.PSFpreparation import PSFpreparationModule, \
                                                       AngleInterpolationModule, \
+                                                      AngleCalculationModule, \
                                                       SDIpreparationModule
 from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
 
@@ -45,16 +48,72 @@ class TestPSFpreparation(object):
 
     def test_angle_interpolation(self):
 
-        angle = AngleInterpolationModule(name_in="angle",
+        angle = AngleInterpolationModule(name_in="angle1",
                                          data_tag="read")
 
         self.pipeline.add_module(angle)
-        self.pipeline.run_module("angle")
+        self.pipeline.run_module("angle1")
 
         data = self.pipeline.get_data("header_read/PARANG")
         assert np.allclose(data[0], 0., rtol=limit, atol=0.)
         assert np.allclose(data[15], 7.777777777777778, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
+        assert data.shape == (40, )
+
+    def test_angle_calculation(self):
+        self.pipeline.set_attribute("read", "LATITUDE", -25.)
+        self.pipeline.set_attribute("read", "LONGITUDE", -70.)
+        self.pipeline.set_attribute("read", "DIT", 1.)
+
+        self.pipeline.set_attribute("read", "RA", (90., 90., 90., 90.), static=False)
+        self.pipeline.set_attribute("read", "DEC", (-51., -51., -51., -51.), static=False)
+        self.pipeline.set_attribute("read", "PUPIL", (90., 90., 90., 90.), static=False)
+
+        date = ("2012-12-01T07:09:00.0000", "2012-12-01T07:09:01.0000", \
+                "2012-12-01T07:09:02.0000", "2012-12-01T07:09:03.0000")
+
+        self.pipeline.set_attribute("read", "DATE", date, static=False)
+
+        angle = AngleCalculationModule(instrument="NACO",
+                                       name_in="angle2",
+                                       data_tag="read")
+
+        self.pipeline.add_module(angle)
+        self.pipeline.run_module("angle2")
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert np.allclose(data[0], -55.0432738327744, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -55.000752378269965, rtol=limit, atol=0.)
+        assert data.shape == (40, )
+
+        angle = AngleCalculationModule(instrument="SPHERE/IRDIS",
+                                       name_in="angle3",
+                                       data_tag="read")
+
+        self.pipeline.add_module(angle)
+        self.pipeline.run_module("angle3")
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert np.allclose(data[0], 170.38885107983538, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 170.46124323291738, rtol=limit, atol=0.)
+        assert data.shape == (40, )
+
+        angle = AngleCalculationModule(instrument="SPHERE/IFS",
+                                       name_in="angle4",
+                                       data_tag="read")
+
+        self.pipeline.add_module(angle)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("angle4")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "AngleCalculationModule has not been tested for " \
+                                             "SPHERE/IFS data."
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert np.allclose(data[0], 270.8688510798354, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 270.9702735149575, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
     def test_psf_preparation(self):
@@ -66,8 +125,7 @@ class TestPSFpreparation(object):
                                     norm=True,
                                     resize=2.,
                                     cent_size=0.1,
-                                    edge_size=1.0,
-                                    verbose=True)
+                                    edge_size=1.0)
 
         self.pipeline.add_module(prep)
         self.pipeline.run_module("prep1")
@@ -86,8 +144,7 @@ class TestPSFpreparation(object):
                                     norm=False,
                                     resize=None,
                                     cent_size=None,
-                                    edge_size=None,
-                                    verbose=True)
+                                    edge_size=None)
 
         self.pipeline.add_module(prep)
         self.pipeline.run_module("prep2")
