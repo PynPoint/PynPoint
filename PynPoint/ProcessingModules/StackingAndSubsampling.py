@@ -33,9 +33,9 @@ class StackAndSubsetModule(ProcessingModule):
         :param image_out_tag: Tag of the database entry that is written as output. Should be
                               different from *image_in_tag*.
         :type image_out_tag: str
-        :param random: Number of random images. All images are used when set to None.
+        :param random: Number of random images. All images are used if set to None.
         :type random: int
-        :param stacking: Number of stacked images per subset. No stacking is applied when set
+        :param stacking: Number of stacked images per subset. No stacking is applied if set
                          to None.
         :type stacking: int
 

@@ -12,6 +12,7 @@ import multiprocessing
 import h5py
 import numpy as np
 
+from PynPoint.Core.Attributes import get_attributes
 from PynPoint.Core.DataIO import DataStorage
 from PynPoint.Core.Processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
 
@@ -129,78 +130,57 @@ class Pypeline(object):
         :return: None
         """
 
-        cpu = multiprocessing.cpu_count()
-
-        default = [('INSTRUMENT', ('header', 'INSTRUME', 'str')),
-                   ('NFRAMES', ('header', 'NAXIS3', 'str')),
-                   ('EXP_NO', ('header', 'ESO DET EXP NO', 'str')),
-                   ('DIT', ('header', 'ESO DET DIT', 'str')),
-                   ('NDIT', ('header', 'ESO DET NDIT', 'str')),
-                   ('PARANG_START', ('header', 'ESO ADA POSANG', 'str')),
-                   ('PARANG_END', ('header', 'ESO ADA POSANG END', 'str')),
-                   ('DITHER_X', ('header', 'ESO SEQ CUMOFFSETX', 'str')),
-                   ('DITHER_Y', ('header', 'ESO SEQ CUMOFFSETY', 'str')),
-                   ('PUPIL', ('header', 'ESO ADA PUPILPOS', 'str')),
-                   ('DATE', ('header', 'DATE-OBS', 'str')),
-                   ('LATITUDE', ('header', 'ESO TEL GEOLAT', 'str')),
-                   ('LONGITUDE', ('header', 'ESO TEL GEOLON', 'str')),
-                   ('RA', ('header', 'RA', 'str')),
-                   ('DEC', ('header', 'DEC', 'str')),
-                   ('PIXSCALE', ('settings', 0.027, 'float')),
-                   ('MEMORY', ('settings', 1000, 'int')),
-                   ('CPU', ('settings', cpu, 'int'))]
-
-        default = collections.OrderedDict(default)
-        config_dict = collections.OrderedDict()
-
-        def _create_config(filename):
-            group = None
-
+        def _create_config(filename, attributes):
             file_obj = open(filename, 'w')
-            for i, item in enumerate(default):
-                if default[item][0] != group:
-                    if i != 0:
-                        file_obj.write('\n')
-                    file_obj.write('['+str(default[item][0])+']\n\n')
+            file_obj.write("[header]\n\n")
 
-                file_obj.write(item+': '+str(default[item][1])+'\n')
-                group = default[item][0]
+            for key, val in attributes.iteritems():
+                if val['config'] == "header":
+                    file_obj.write(key+': '+str(val['value'])+'\n')
+
+            file_obj.write("\n[settings]\n\n")
+
+            for key, val in attributes.iteritems():
+                if val['config'] == "settings":
+                    file_obj.write(key+': '+str(val['value'])+'\n')
 
             file_obj.close()
 
-        def _read_config(config_file):
+        def _read_config(config_file, attributes):
             config = configparser.ConfigParser()
             config.read_file(open(config_file))
 
-            for _, item in enumerate(default):
-                if config.has_option(default[item][0], item):
+            for key, val in attributes.iteritems():
+                if config.has_option(val["config"], key):
+                    if config.get(val["config"], key) == "None":
+                        if val["config"] == "header":
+                            attributes[key]["value"] = "None"
 
-                    if config.get(default[item][0], item) == "None":
-                        if default[item][2] == "str":
-                            config_dict[item] = "None"
+                        elif val["type"] == "str":
+                            attributes[key]["value"] = "None"
 
-                        elif default[item][2] == "float":
-                            config_dict[item] = float(0.)
+                        elif val["type"] == "float":
+                            attributes[key]["value"] = float(0.)
 
-                        elif default[item][2] == "int":
-                            config_dict[item] = int(0)
+                        elif val["type"] == "int":
+                            attributes[key]["value"] = int(0)
 
                     else:
-                        if default[item][2] == "str":
-                            config_dict[item] = str(config.get(default[item][0], item))
+                        if val["config"] == "header":
+                            attributes[key]["value"] = str(config.get(val["config"], key))
 
-                        elif default[item][2] == "float":
-                            config_dict[item] = float(config.get(default[item][0], item))
+                        elif val["type"] == "str":
+                            attributes[key]["value"] = str(config.get(val["config"], key))
 
-                        elif default[item][2] == "int":
-                            config_dict[item] = int(config.get(default[item][0], item))
+                        elif val["type"] == "float":
+                            attributes[key]["value"] = float(config.get(val["config"], key))
 
-                else:
-                    config_dict[item] = default[item][1]
+                        elif val["type"] == "int":
+                            attributes[key]["value"] = int(config.get(val["config"], key))
 
-            return config_dict
+            return attributes
 
-        def _write_config(config_dict):
+        def _write_config(attributes):
             hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
 
             if "config" in hdf:
@@ -208,22 +188,26 @@ class Pypeline(object):
 
             config = hdf.create_group("config")
 
-            for i in config_dict:
-                config.attrs[i] = config_dict[i]
+            for key, _ in attributes.iteritems():
+                if attributes[key]["value"] is not None:
+                    config.attrs[key] = attributes[key]["value"]
 
             hdf.close()
 
         config_file = self._m_working_place+"/PynPoint_config.ini"
 
+        attributes = get_attributes()
+        attributes["CPU"]["value"] = multiprocessing.cpu_count()
+
         if not os.path.isfile(config_file):
             warnings.warn("Configuration file not found. Creating PynPoint_config.ini with "
-                          "default values.")
+                          "default values in the working place.")
 
-            _create_config(config_file)
+            _create_config(config_file, attributes)
 
-        config_dict = _read_config(config_file)
+        attributes = _read_config(config_file, attributes)
 
-        _write_config(config_dict)
+        _write_config(attributes)
 
     def add_module(self,
                    module):
@@ -430,6 +414,40 @@ class Pypeline(object):
             attr = np.asarray(attr)
 
         return attr
+
+    def set_attribute(self,
+                      data_tag,
+                      attr_name,
+                      value,
+                      static=True):
+        """
+        Function for writing attributes to the central database. Existing values will be
+        overwritten.
+
+        :param data_tag: Database tag.
+        :type data_tag: str
+        :param attr_name: Name of the attribute.
+        :type attr_name: str
+        :param value: Attribute value.
+        :type value: float, int, str, tuple, numpy.ndarray
+        :param static: Static or non-static attribute.
+        :type static: bool
+
+        :return: None
+        """
+
+        self.m_data_storage.open_connection()
+
+        if static:
+            self.m_data_storage.m_data_bank[data_tag].attrs[attr_name] = value
+
+        else:
+            if attr_name in self.m_data_storage.m_data_bank["header_"+data_tag].keys():
+                del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+
+            self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(value)
+
+        self.m_data_storage.close_connection()
 
     def get_tags(self):
         """
