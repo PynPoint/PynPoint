@@ -76,11 +76,11 @@ class TestPSFSubtractionPCA(object):
                                       reference_in_tag="read",
                                       res_mean_tag="res_mean_single",
                                       res_median_tag="res_median_single",
-                                      res_arr_out_tag="res_arr_single",
+                                      res_weighted_tag="res_weighted_single",
                                       res_rot_mean_clip_tag="res_clip_single",
+                                      res_arr_out_tag="res_arr_single",
                                       basis_out_tag="basis_single",
-                                      extra_rot=-15.,
-                                      verbose=True)
+                                      extra_rot=-15.)
 
         self.pipeline.add_module(pca)
         self.pipeline.run_module("pca_single")
@@ -95,6 +95,12 @@ class TestPSFSubtractionPCA(object):
         assert np.allclose(data[4, 50, 50], -2.223389676715259e-06, rtol=limit, atol=0.)
         assert np.allclose(data[4, 59, 46], 0.00015493570876347953, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), -2.4142571236920345e-08, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)
+
+        data = self.pipeline.get_data("res_weighted_single")
+        assert np.allclose(data[4, 50, 50], 1.4490761381791374e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 59, 46], 0.00015606506169313803, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -5.293559651636843e-09, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
         data = self.pipeline.get_data("res_clip_single")
@@ -127,11 +133,11 @@ class TestPSFSubtractionPCA(object):
                                       reference_in_tag="read",
                                       res_mean_tag="res_mean_multi",
                                       res_median_tag="res_median_multi",
-                                      res_arr_out_tag=None,
+                                      res_weighted_tag=None,
                                       res_rot_mean_clip_tag=None,
+                                      res_arr_out_tag=None,
                                       basis_out_tag="basis_multi",
-                                      extra_rot=-15.,
-                                      verbose=True)
+                                      extra_rot=-15.)
 
         self.pipeline.add_module(pca)
         self.pipeline.run_module("pca_multi")

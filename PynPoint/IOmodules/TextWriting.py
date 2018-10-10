@@ -41,10 +41,10 @@ class TextWritingModule(WritingModule):
         :return: None
         """
 
-        super(TextWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
+        super(TextWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output filename needs to be a string.")
+            raise ValueError("Output 'filename' needs to be a string.")
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -115,10 +115,10 @@ class ParangWritingModule(WritingModule):
         :return: None
         """
 
-        super(ParangWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
+        super(ParangWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output file_name needs to be a string.")
+            raise ValueError("Output 'file_name' needs to be a string.")
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -188,10 +188,10 @@ class AttributeWritingModule(WritingModule):
         :return: None
         """
 
-        super(AttributeWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
+        super(AttributeWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output file_name needs to be a string.")
+            raise ValueError("Output 'file_name' needs to be a string.")
 
         self.m_data_port = self.add_input_port(data_tag)
 

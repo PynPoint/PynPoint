@@ -4,7 +4,6 @@ Modules for photometric and astrometric measurements of a planet.
 
 import math
 import sys
-import warnings
 
 import numpy as np
 import emcee
@@ -462,7 +461,7 @@ class FalsePositiveModule(ProcessingModule):
         :type ignore: bool
         :param name_in: Unique name of the module instance.
         :type name_in: str
-        :param image_in_tag: Tag of the database entry with images that are read as input.
+        :param image_in_tag: Tag of the database entry with the images that are read as input.
         :type image_in_tag: str
         :param snr_out_tag: Tag of the database entry that is written as output. The output format
                             is: (x position (pix), y position (pix), separation (arcsec), position
@@ -492,25 +491,14 @@ class FalsePositiveModule(ProcessingModule):
         :return: None
         """
 
-        sys.stdout.write("Running FalsePositiveModule...")
-        sys.stdout.flush()
+        self.m_snr_out_port.del_all_data()
+        self.m_snr_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_aperture /= pixscale
 
-        image = self.m_image_in_port.get_all()
-
-        if image.ndim == 3:
-            if image.shape[0] != 1:
-                warnings.warn("Using the first image of %s." % self.m_image_in_port.tag)
-
-            image = image[0, ]
-
-        npix = image.shape[0]
-        center = npix/2.
-
-        if image.ndim > 2:
-            raise ValueError("The image_in_tag should contain a 2D array.")
+        nimages = number_images_port(self.m_image_in_port)
+        center = self.m_image_in_port.get_shape()[-1]/2.
 
         sep = math.sqrt((center-self.m_position[0])**2.+(center-self.m_position[1])**2.)
         ang = (math.atan2(self.m_position[1]-center,
@@ -523,40 +511,52 @@ class FalsePositiveModule(ProcessingModule):
             num_ap -= 2
             ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
 
-        ap_phot = np.zeros(num_ap)
-        for i, theta in enumerate(ap_theta):
-            x_tmp = center + (self.m_position[0]-center)*math.cos(theta) - \
-                             (self.m_position[1]-center)*math.sin(theta)
-            y_tmp = center + (self.m_position[0]-center)*math.sin(theta) + \
-                             (self.m_position[1]-center)*math.cos(theta)
+        for j in range(nimages):
+            progress(j, nimages, "Running FalsePositiveModule...")
 
-            aperture = CircularAperture((x_tmp, y_tmp), self.m_aperture)
-            phot_table = aperture_photometry(image, aperture, method='exact')
-            ap_phot[i] = phot_table['aperture_sum']
+            if nimages == 1:
+                image = self.m_image_in_port.get_all()
+                if image.ndim == 3:
+                    image = np.squeeze(image, axis=0)
 
-        snr = (ap_phot[0] - np.mean(ap_phot[1:])) / \
-              (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
+            else:
+                image = self.m_image_in_port[j, ]
 
-        fpf = 1. - t.cdf(snr, num_ap-2)
+            ap_phot = np.zeros(num_ap)
+            for i, theta in enumerate(ap_theta):
+                x_tmp = center + (self.m_position[0]-center)*math.cos(theta) - \
+                                 (self.m_position[1]-center)*math.sin(theta)
+                y_tmp = center + (self.m_position[0]-center)*math.sin(theta) + \
+                                 (self.m_position[1]-center)*math.cos(theta)
 
-        result = np.column_stack((self.m_position[0],
-                                  self.m_position[1],
-                                  sep*pixscale,
-                                  ang,
-                                  snr,
-                                  fpf))
+                aperture = CircularAperture((x_tmp, y_tmp), self.m_aperture)
+                phot_table = aperture_photometry(image, aperture, method='exact')
+                ap_phot[i] = phot_table['aperture_sum']
 
-        self.m_snr_out_port.set_all(result)
+            snr = (ap_phot[0] - np.mean(ap_phot[1:])) / \
+                  (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
 
-        self.m_snr_out_port.add_history_information("Signal-to-noise ratio",
-                                                    "Student's t-test")
+            fpf = 1. - t.cdf(snr, num_ap-2)
 
-        self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            result = np.column_stack((self.m_position[0],
+                                      self.m_position[1],
+                                      sep*pixscale,
+                                      ang,
+                                      snr,
+                                      fpf))
 
-        self.m_snr_out_port.close_port()
+            if nimages == 1:
+                self.m_snr_out_port.set_all(result)
+            else:
+                self.m_snr_out_port.append(result, data_dim=2)
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write("Running FalsePositiveModule... [DONE]\n")
         sys.stdout.flush()
+
+        history = "aperture [arcsec] = "+str("{:.2f}".format(self.m_aperture*pixscale))
+        self.m_snr_out_port.add_history_information("FalsePositiveModule", history)
+        self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_snr_out_port.close_port()
 
 
 class MCMCsamplingModule(ProcessingModule):
