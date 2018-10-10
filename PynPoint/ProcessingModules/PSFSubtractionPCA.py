@@ -254,18 +254,21 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             # 5.) clipped mean
             if self.m_res_rot_mean_clip_out_port is not None:
-                res_rot_temp = res_array.copy()
+                res_rot_mean_clip = np.zeros(res_array[0, ].shape)
 
-                if self.m_res_mean_out_port is None:
-                    tmp_res_rot_mean = np.mean(res_array, axis=0)
+                for i in range(res_rot_mean_clip.shape[0]):
+                    for j in range(res_rot_mean_clip.shape[1]):
+                        temp = res_array[:, i, j]
 
-                for j in range(res_rot_temp.shape[0]):
-                    res_rot_temp[j, ] -= -tmp_res_rot_mean
+                        if temp.var() > 0.0:
+                            no_mean = temp - temp.mean()
 
-                res_rot_var = (res_rot_temp**2.).sum(axis=0)
-                tmp_res_rot_var = res_rot_var
+                            part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
+                            part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
 
-                self.m_res_rot_mean_clip_out_port.append(tmp_res_rot_var, data_dim=3)
+                            res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
+
+                self.m_res_rot_mean_clip_out_port.append(res_rot_mean_clip, data_dim=3)
 
         sys.stdout.write("Creating residuals... [DONE]\n")
         sys.stdout.flush()
