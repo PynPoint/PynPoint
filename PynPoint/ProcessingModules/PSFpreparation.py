@@ -93,50 +93,12 @@ class PSFpreparationModule(ProcessingModule):
         :return: None
         """
 
-        def _im_norm(im_data_in):
-            """
-            Internal method which normalizes the input data by its Frobenius norm.
-            """
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
 
-            im_norm = np.linalg.norm(im_data_in, ord="fro", axis=(1, 2))
-
-            for i in range(im_data_in.shape[0]):
-                im_data_in[i, ] /= im_norm[i]
-
-            return im_data_in, im_norm
-
-        def _im_resizing(im_data_in):
-            """
-            Internal method which resamples the data with a factor *resize*, using a spline
-            interpolation of the fifth order.
-            """
-
-            x_num_final, y_num_final = int(im_data_in.shape[1] * self.m_resize), \
-                                       int(im_data_in.shape[2] * self.m_resize)
-
-            im_arr_res = np.zeros([im_data_in.shape[0], x_num_final, y_num_final])
-
-            for i in range(im_data_in.shape[0]):
-                im_tmp = im_data_in[i]
-                im_tmp = ndimage.interpolation.zoom(im_tmp,
-                                                    [self.m_resize, self.m_resize],
-                                                    order=5)
-                im_arr_res[i,] = im_tmp
-
-            return im_arr_res
-
-        def _im_masking(im_data):
-            """
-            Internal method which masks the central and outer parts of the images.
-            """
-
-            mask = create_mask((im_data.shape[-2], im_data.shape[-1]),
-                               [self.m_cent_size, self.m_edge_size])
-
-            if self.m_mask_out_port is not None:
-                self.m_mask_out_port.set_all(mask)
-
-            return im_data * mask
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
@@ -146,21 +108,49 @@ class PSFpreparationModule(ProcessingModule):
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
-        if self.m_verbose:
-            sys.stdout.write("Running PSFpreparationModule...")
-            sys.stdout.flush()
-
-        im_data = self.m_image_in_port.get_all()
+        nimages = number_images_port(self.m_image_in_port)
+        im_shape = self.m_image_in_port.get_shape()
 
         if self.m_norm:
-            im_data, im_norm = _im_norm(np.copy(im_data))
+            im_norm = np.linalg.norm(self.m_image_in_port.get_all(),
+                                     ord="fro",
+                                     axis=(1, 2))
 
-        if self.m_resize is not None:
-            im_data = _im_resizing(np.copy(im_data))
+        if self.m_resize is None:
+            mask = create_mask((im_shape[-2], im_shape[-1]),
+                               [self.m_cent_size, self.m_edge_size])
 
-        im_data = _im_masking(im_data)
+        else:
+            x_res, y_res = int(im_shape[-2]*self.m_resize), int(im_shape[-1]*self.m_resize)
+            im_res = np.zeros((nimages, x_res, y_res))
 
-        self.m_image_out_port.set_all(im_data, keep_attributes=True)
+            mask = create_mask((im_res.shape[-2], im_res.shape[-1]),
+                               [self.m_cent_size, self.m_edge_size])
+
+        for i in range(nimages):
+            progress(i, nimages, "Running PSFpreparationModule...")
+
+            image = self.m_image_in_port[i, ]
+
+            if self.m_norm:
+                # Normalize with the Frobenius norma
+                image /= im_norm[i]
+
+            if self.m_resize is not None:
+                # Resample the data with a spline interpolation of the 5th order
+                image = ndimage.interpolation.zoom(image,
+                                                   zoom=[self.m_resize, self.m_resize],
+                                                   order=5)
+
+            if nimages == 1:
+                self.m_image_out_port.set_all(image*mask)
+
+            else:
+                self.m_image_out_port.append(image*mask, data_dim=3)
+
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.set_all(mask)
+
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         if self.m_norm:
@@ -188,9 +178,8 @@ class PSFpreparationModule(ProcessingModule):
         for key, value in attributes.iteritems():
             self.m_image_out_port.add_attribute(key, value, static=True)
 
-        if self.m_verbose:
-            sys.stdout.write(" [DONE]\n")
-            sys.stdout.flush()
+        sys.stdout.write("Running PSFpreparationModule... [DONE]\n")
+        sys.stdout.flush()
 
 
 class AngleInterpolationModule(ProcessingModule):

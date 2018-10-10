@@ -98,9 +98,9 @@ class TestPSFSubtractionPCA(object):
         assert data.shape == (20, 100, 100)
 
         data = self.pipeline.get_data("res_clip_single")
-        assert np.allclose(data[4, 50, 50], 2.2828813434810948e-06, rtol=limit, atol=0.)
-        assert np.allclose(data[4, 59, 46], 1.0816254290076103e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.8805674720019969e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 50, 50], 1.9478104571815297e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[4, 59, 46], 0.0001608765592599352, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.6199554737979536e-08, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
         data = self.pipeline.get_data("res_arr_single5")
