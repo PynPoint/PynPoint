@@ -1,7 +1,7 @@
 .PHONY: help clean clean-build clean-python clean-test test test-all coverage docs
 
 help:
-	@echo "clean-build - remove all artifacts"
+	@echo "clean - remove all artifacts"
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-python - remove Python artifacts"
 	@echo "clean-test - remove test and coverage artifacts"
