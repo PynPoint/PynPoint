@@ -42,7 +42,8 @@ test-all:
 	tox
 
 coverage:
-	coverage run --rcfile .coverage.ini --source PynPoint -m py.test
+	coverage run --rcfile .coveragerc -m py.test
+	coverage combine
 	coverage report -m
 	coverage html
 
