@@ -256,9 +256,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if self.m_res_rot_mean_clip_out_port is not None:
                 res_rot_mean_clip = np.zeros(res_array[0, ].shape)
 
-                for i in range(res_rot_mean_clip.shape[0]):
-                    for j in range(res_rot_mean_clip.shape[1]):
-                        temp = res_array[:, i, j]
+                for j in range(res_rot_mean_clip.shape[0]):
+                    for k in range(res_rot_mean_clip.shape[1]):
+                        temp = res_array[:, j, k]
 
                         if temp.var() > 0.0:
                             no_mean = temp - temp.mean()
@@ -266,7 +266,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                             part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
                             part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
 
-                            res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
+                            res_rot_mean_clip[j, k] = temp.mean() + part2.mean()
 
                 self.m_res_rot_mean_clip_out_port.append(res_rot_mean_clip, data_dim=3)
 
