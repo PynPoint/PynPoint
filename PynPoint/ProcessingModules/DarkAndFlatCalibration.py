@@ -2,13 +2,11 @@
 Modules for dark frame and flat field calibrations.
 """
 
-import sys
 import warnings
 
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames
 
 
 def _master_frame(data,
@@ -91,13 +89,13 @@ class DarkCalibrationModule(ProcessingModule):
         :return: None
         """
 
-        def dark_calibration(image_in, dark_in):
+        def _dark_calibration(image_in, dark_in):
             return image_in - dark_in
 
         dark = self.m_dark_in_port.get_all()
         master = _master_frame(dark, self.m_image_in_port)
 
-        self.apply_function_to_images(dark_calibration,
+        self.apply_function_to_images(_dark_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running DarkCalibrationModule...",
@@ -147,7 +145,7 @@ class FlatCalibrationModule(ProcessingModule):
         :return: None
         """
 
-        def flat_calibration(image_in, flat_in):
+        def _flat_calibration(image_in, flat_in):
             return image_in / flat_in
 
         flat = self.m_flat_in_port.get_all()
@@ -164,7 +162,7 @@ class FlatCalibrationModule(ProcessingModule):
             raise ValueError("Median of the master flat should be equal to unity (value=%s)."
                              % np.median(master))
 
-        self.apply_function_to_images(flat_calibration,
+        self.apply_function_to_images(_flat_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running FlatCalibrationModule...",

@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import h5py
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -8,10 +9,12 @@ from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule, \
                                                        AperturePhotometryModule, \
                                                        FalsePositiveModule, \
-                                                       SimplexMinimizationModule
+                                                       SimplexMinimizationModule, \
+                                                       MCMCsamplingModule
+from PynPoint.ProcessingModules.ImageResizing import ScaleImagesModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
-from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
+from PynPoint.Util.TestTools import create_config, create_star_data, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
@@ -24,27 +27,73 @@ class TestFluxAndPosition(object):
         self.test_dir = os.path.dirname(__file__) + "/"
 
         create_star_data(path=self.test_dir+"flux", npix_x=101, npix_y=101)
+
+        create_star_data(path=self.test_dir+"psf",
+                         npix_x=15,
+                         npix_y=15,
+                         x0=[7., 7., 7., 7.],
+                         y0=[7., 7., 7., 7.],
+                         ndit=1,
+                         nframes=1,
+                         noise=False)
+
+        create_fake(path=self.test_dir+"adi",
+                    ndit=[5, 5, 5, 5],
+                    nframes=[5, 5, 5, 5],
+                    exp_no=[1, 2, 3, 4],
+                    npix=(15, 15),
+                    fwhm=3.,
+                    x0=[7., 7., 7., 7.],
+                    y0=[7., 7., 7., 7.],
+                    angles=[[0., 50.], [50., 100.], [100., 150.], [150., 200.]],
+                    sep=5.5,
+                    contrast=1.)
+
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["flux"])
+        remove_test_data(self.test_dir, folders=["flux", "adi", "psf"])
 
     def test_read_data(self):
 
-        read = FitsReadingModule(name_in="read",
+        read = FitsReadingModule(name_in="read1",
                                  image_tag="read",
                                  input_dir=self.test_dir+"flux")
 
         self.pipeline.add_module(read)
-        self.pipeline.run_module("read")
+        self.pipeline.run_module("read1")
 
         data = self.pipeline.get_data("read")
         assert np.allclose(data[0, 50, 50], 0.0986064357966972, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.827812356946396e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 101, 101)
+
+        read = FitsReadingModule(name_in="read2",
+                                 image_tag="adi",
+                                 input_dir=self.test_dir+"adi")
+
+        self.pipeline.add_module(read)
+        self.pipeline.run_module("read2")
+
+        data = self.pipeline.get_data("adi")
+        assert np.allclose(data[0, 7, 7], 0.09823888178122618, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.008761678820997612, rtol=limit, atol=0.)
+        assert data.shape == (20, 15, 15)
+
+        read = FitsReadingModule(name_in="read3",
+                                 image_tag="psf",
+                                 input_dir=self.test_dir+"psf")
+
+        self.pipeline.add_module(read)
+        self.pipeline.run_module("read3")
+
+        data = self.pipeline.get_data("psf")
+        assert np.allclose(data[0, 7, 7], 0.09806026673451182, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.004444444429123135, rtol=limit, atol=0.)
+        assert data.shape == (4, 15, 15)
 
     def test_aperture_photometry(self):
 
@@ -167,3 +216,71 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[52, 3], 90.72997666033649, rtol=limit, atol=0.)
         assert np.allclose(data[52, 4], 5.957337187612481, rtol=limit, atol=0.)
         assert data.shape == (53, 6)
+
+    def test_mcmc_sampling(self):
+
+        self.pipeline.set_attribute("adi", "PARANG", np.arange(0., 200., 10.), static=False)
+
+        scale = ScaleImagesModule(scaling=(None, None, 100.),
+                                  pixscale=False,
+                                  name_in="scale1",
+                                  image_in_tag="adi",
+                                  image_out_tag="adi_scale")
+
+
+        self.pipeline.add_module(scale)
+        self.pipeline.run_module("scale1")
+
+        data = self.pipeline.get_data("adi_scale")
+        assert np.allclose(data[0, 7, 7], 9.82388817812263, rtol=limit, atol=0.)
+        assert data.shape == (20, 15, 15)
+
+        scale = ScaleImagesModule(scaling=(None, None, 100.),
+                                  pixscale=False,
+                                  name_in="scale2",
+                                  image_in_tag="psf",
+                                  image_out_tag="psf_scale")
+
+
+        self.pipeline.add_module(scale)
+        self.pipeline.run_module("scale2")
+
+        data = self.pipeline.get_data("psf_scale")
+        assert np.allclose(data[0, 7, 7], 9.806026673451198, rtol=limit, atol=0.)
+        assert data.shape == (4, 15, 15)
+
+        mcmc = MCMCsamplingModule(param=(0.1485, 0., 0.),
+                                  bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),
+                                  name_in="mcmc",
+                                  image_in_tag="adi_scale",
+                                  psf_in_tag="psf_scale",
+                                  chain_out_tag="mcmc",
+                                  nwalkers=50,
+                                  nsteps=150,
+                                  psf_scaling=-1.,
+                                  pca_number=1,
+                                  aperture=0.1,
+                                  mask=None,
+                                  extra_rot=0.,
+                                  scale=2.,
+                                  sigma=(1e-3, 1e-1, 1e-2))
+
+        self.pipeline.add_module(mcmc)
+        self.pipeline.run_module("mcmc")
+
+        single = self.pipeline.get_data("mcmc")
+        single = single[:, 20:, :].reshape((-1, 3))
+        assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
+        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.1)
+        assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+        database.close()
+
+        self.pipeline.run_module("mcmc")
+        multi = self.pipeline.get_data("mcmc")
+        multi = multi[:, 20:, :].reshape((-1, 3))
+        assert np.allclose(np.median(multi[:, 0]), 0.148, rtol=0., atol=0.01)
+        assert np.allclose(np.median(multi[:, 1]), 0., rtol=0., atol=0.1)
+        assert np.allclose(np.median(multi[:, 2]), 0., rtol=0., atol=0.1)

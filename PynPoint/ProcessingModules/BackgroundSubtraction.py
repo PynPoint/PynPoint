@@ -11,7 +11,6 @@ from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import CombineTagsModule
 from PynPoint.ProcessingModules.PSFpreparation import SortParangModule
