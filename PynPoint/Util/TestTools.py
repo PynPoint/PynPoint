@@ -201,7 +201,8 @@ def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, co
                 image[i, 0:npix[1], 0:npix[0]] += star
 
             if contrast is not None and sep is not None:
-                planet = contrast*(1./(2.*np.pi*sigma**2))* np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
+                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
+                         (2.*sigma**2))
                 x_shift = sep*math.cos(parang[count]*math.pi/180.)
                 y_shift = sep*math.sin(parang[count]*math.pi/180.)
                 planet = shift(planet, (x_shift, y_shift), order=5)
@@ -209,7 +210,8 @@ def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, co
 
             count += 1
 
-        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j], angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
+        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j],
+                    angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
 def create_star_data(path,
                      npix_x=100,
@@ -226,7 +228,7 @@ def create_star_data(path,
     Create data with a stellar PSF and Gaussian noise.
     """
 
-    fwhm = 3
+    fwhm = 3.
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -242,7 +244,8 @@ def create_star_data(path,
         image = np.zeros((nframes, npix_x, npix_y))
 
         for i in range(nframes):
-            image[i, ] = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x0[j])**2 + (yy-y0[j])**2) / (2.*sigma**2))
+            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
+                         (2.*sigma**2))
             if noise:
                 image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
 
@@ -276,7 +279,8 @@ def create_waffle_data(path, npix, x_waffle, y_waffle):
     image = np.zeros((npix, npix))
 
     for j, _ in enumerate(x_waffle):
-        star = (1./(2.*np.pi*sigma**2)) * np.exp(-((xx-x_waffle[j])**2 + (yy-y_waffle[j])**2) / (2.*sigma**2))
+        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_waffle[j])**2+(yy-y_waffle[j])**2)/ \
+               (2.*sigma**2))
         image += star
 
     hdu = fits.PrimaryHDU()
