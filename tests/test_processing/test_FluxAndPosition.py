@@ -271,7 +271,7 @@ class TestFluxAndPosition(object):
         single = self.pipeline.get_data("mcmc")
         single = single[:, 20:, :].reshape((-1, 3))
         assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.1)
+        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
         assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
@@ -282,5 +282,5 @@ class TestFluxAndPosition(object):
         multi = self.pipeline.get_data("mcmc")
         multi = multi[:, 20:, :].reshape((-1, 3))
         assert np.allclose(np.median(multi[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(multi[:, 1]), 0., rtol=0., atol=0.1)
+        assert np.allclose(np.median(multi[:, 1]), 0., rtol=0., atol=0.2)
         assert np.allclose(np.median(multi[:, 2]), 0., rtol=0., atol=0.1)
