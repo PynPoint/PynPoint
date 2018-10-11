@@ -41,17 +41,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint -m py.test
+	coverage run --rcfile .coverage.ini --source PynPoint -m py.test
 	coverage report -m
 	coverage html
 
 docs:
 	rm -f docs/PynPoint.Core.rst
 	rm -f docs/PynPoint.IOmodules.rst
-	rm -f docs/PynPoint.OldVersion.rst
 	rm -f docs/PynPoint.ProcessingModules.rst
 	rm -f docs/PynPoint.Util.rst
-	rm -f docs/PynPoint.Wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
