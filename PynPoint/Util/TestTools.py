@@ -4,7 +4,6 @@ Functions for the test cases.
 
 import os
 import math
-import fileinput
 import shutil
 
 import h5py
