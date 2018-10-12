@@ -1,6 +1,7 @@
 .PHONY: help clean clean-build clean-python clean-test test test-all coverage docs
 
 help:
+	@echo "clean - remove all artifacts"
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-python - remove Python artifacts"
 	@echo "clean-test - remove test and coverage artifacts"
@@ -41,17 +42,16 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source PynPoint -m py.test
+	coverage run --rcfile .coveragerc -m py.test
+	coverage combine
 	coverage report -m
 	coverage html
 
 docs:
 	rm -f docs/PynPoint.Core.rst
 	rm -f docs/PynPoint.IOmodules.rst
-	rm -f docs/PynPoint.OldVersion.rst
 	rm -f docs/PynPoint.ProcessingModules.rst
 	rm -f docs/PynPoint.Util.rst
-	rm -f docs/PynPoint.Wrapper.rst
 	sphinx-apidoc -o docs/ PynPoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
