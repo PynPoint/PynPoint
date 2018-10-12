@@ -137,57 +137,57 @@ def autoscales(N, dt, dj, wf, p):
     return s
 
 
-def fourier_from_scales(scales, wf, p):
-    """Compute the equivalent fourier period
-    from scales.
+# def fourier_from_scales(scales, wf, p):
+#     """Compute the equivalent fourier period
+#     from scales.
+#
+#     :Parameters:
+#        scales : list or 1d numpy array
+#           scales
+#        wf : string ('morlet', 'paul', 'dog')
+#           wavelet function
+#        p : float
+#           wavelet function parameter ('omega0' for morlet, 'm' for paul
+#           and dog)
+#
+#     :Returns:
+#        fourier wavelengths
+#     """
+#
+#     scales_arr = np.asarray(scales)
+#
+#     if wf == 'dog':
+#         return (2 * np.pi * scales_arr) / np.sqrt(p + 0.5)
+#     elif wf == 'morlet':
+#         return (4 * np.pi * scales_arr) / (p + np.sqrt(2 + p ** 2))
+#     else:
+#         raise ValueError('wavelet function not available')
 
-    :Parameters:
-       scales : list or 1d numpy array
-          scales
-       wf : string ('morlet', 'paul', 'dog')
-          wavelet function
-       p : float
-          wavelet function parameter ('omega0' for morlet, 'm' for paul
-          and dog)
 
-    :Returns:
-       fourier wavelengths
-    """
-
-    scales_arr = np.asarray(scales)
-
-    if wf == 'dog':
-        return (2 * np.pi * scales_arr) / np.sqrt(p + 0.5)
-    elif wf == 'morlet':
-        return (4 * np.pi * scales_arr) / (p + np.sqrt(2 + p ** 2))
-    else:
-        raise ValueError('wavelet function not available')
-
-
-def scales_from_fourier(f, wf, p):
-    """Compute scales from fourier period.
-
-    :Parameters:
-       f : list or 1d numpy array
-          fourier wavelengths
-       wf : string ('morlet', 'paul', 'dog')
-          wavelet function
-       p : float
-          wavelet function parameter ('omega0' for morlet, 'm' for paul
-          and dog)
-
-    :Returns:
-       scales
-    """
-
-    f_arr = np.asarray(f)
-
-    if wf == 'dog':
-        return (f_arr * np.sqrt(p + 0.5)) / (2 * np.pi)
-    elif wf == 'morlet':
-        return (f_arr * (p + np.sqrt(2 + p ** 2))) / (4 * np.pi)
-    else:
-        raise ValueError('wavelet function not available')
+# def scales_from_fourier(f, wf, p):
+#     """Compute scales from fourier period.
+#
+#     :Parameters:
+#        f : list or 1d numpy array
+#           fourier wavelengths
+#        wf : string ('morlet', 'paul', 'dog')
+#           wavelet function
+#        p : float
+#           wavelet function parameter ('omega0' for morlet, 'm' for paul
+#           and dog)
+#
+#     :Returns:
+#        scales
+#     """
+#
+#     f_arr = np.asarray(f)
+#
+#     if wf == 'dog':
+#         return (f_arr * np.sqrt(p + 0.5)) / (2 * np.pi)
+#     elif wf == 'morlet':
+#         return (f_arr * (p + np.sqrt(2 + p ** 2))) / (4 * np.pi)
+#     else:
+#         raise ValueError('wavelet function not available')
 
 
 def cwt(x, dt, scales, wf='dog', p=2):

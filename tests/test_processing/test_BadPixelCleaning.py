@@ -1,4 +1,5 @@
 import os
+import math
 import warnings
 
 import h5py
@@ -135,7 +136,7 @@ class TestBadPixelCleaning(object):
 
     def test_replace_bad_pixels(self):
 
-        replace = ReplaceBadPixelsModule(name_in="replace",
+        replace = ReplaceBadPixelsModule(name_in="replace1",
                                          image_in_tag="images",
                                          map_in_tag="bp_map",
                                          image_out_tag="replace",
@@ -143,11 +144,45 @@ class TestBadPixelCleaning(object):
                                          replace="mean")
 
         self.pipeline.add_module(replace)
-        self.pipeline.run_module("replace")
+        self.pipeline.run_module("replace1")
 
         data = self.pipeline.get_data("replace")
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(data[0, 10, 10], 5.493280938051695e-05, rtol=limit, atol=0.)
         assert np.allclose(data[0, 20, 20], -5.51613113375153e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 3.019578931588861e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+        replace = ReplaceBadPixelsModule(name_in="replace2",
+                                         image_in_tag="images",
+                                         map_in_tag="bp_map",
+                                         image_out_tag="replace",
+                                         size=2,
+                                         replace="median")
+
+        self.pipeline.add_module(replace)
+        self.pipeline.run_module("replace2")
+
+        data = self.pipeline.get_data("replace")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 9.195634004203678e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -6.101079878960902e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.983915326435115e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+        replace = ReplaceBadPixelsModule(name_in="replace3",
+                                         image_in_tag="images",
+                                         map_in_tag="bp_map",
+                                         image_out_tag="replace",
+                                         size=2,
+                                         replace="nan")
+
+        self.pipeline.add_module(replace)
+        self.pipeline.run_module("replace3")
+
+        data = self.pipeline.get_data("replace")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert math.isnan(data[0, 10, 10])
+        assert math.isnan(data[0, 20, 20])
+        assert np.allclose(np.nanmean(data), 3.0516702371516344e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
