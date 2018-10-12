@@ -56,7 +56,7 @@ class TestTimeDenoising(object):
         assert np.allclose(np.mean(data), 0.0025020285041348557, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
-    def test_wavelet_denoising_cwt_single(self):
+    def test_wavelet_denoising_cwt_dog(self):
 
         cwt_config = CwtWaveletConfiguration(wavelet="dog",
                                              wavelet_order=2,
@@ -69,19 +69,61 @@ class TestTimeDenoising(object):
         assert np.allclose(cwt_config.m_resolution, 0.5, rtol=limit, atol=0.)
 
         wavelet_cwt = WaveletTimeDenoisingModule(wavelet_configuration=cwt_config,
-                                                 name_in="wavelet_cwt_single",
+                                                 name_in="wavelet_cwt_dog",
                                                  image_in_tag="images",
-                                                 image_out_tag="wavelet_cwt_single",
+                                                 image_out_tag="wavelet_cwt_dog",
                                                  padding="zero",
                                                  median_filter=True,
                                                  threshold_function="soft")
 
         self.pipeline.add_module(wavelet_cwt)
-        self.pipeline.run_module("wavelet_cwt_single")
+        self.pipeline.run_module("wavelet_cwt_dog")
 
-        data = self.pipeline.get_data("wavelet_cwt_single")
+        data = self.pipeline.get_data("wavelet_cwt_dog")
         assert np.allclose(data[0, 10, 10], 0.09805577173716859, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.002502083112599873, rtol=limit, atol=0.)
+        assert data.shape == (40, 20, 20)
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+        database.close()
+
+        self.pipeline.run_module("wavelet_cwt_dog")
+
+        data_multi = self.pipeline.get_data("wavelet_cwt_dog")
+        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data.shape == data_multi.shape
+
+    def test_wavelet_denoising_cwt_morlet(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+        database.close()
+
+        cwt_config = CwtWaveletConfiguration(wavelet="morlet",
+                                             wavelet_order=5,
+                                             keep_mean=False,
+                                             resolution=0.5)
+
+        assert cwt_config.m_wavelet == "morlet"
+        assert np.allclose(cwt_config.m_wavelet_order, 5, rtol=limit, atol=0.)
+        assert not cwt_config.m_keep_mean
+        assert np.allclose(cwt_config.m_resolution, 0.5, rtol=limit, atol=0.)
+
+        wavelet_cwt = WaveletTimeDenoisingModule(wavelet_configuration=cwt_config,
+                                                 name_in="wavelet_cwt_morlet",
+                                                 image_in_tag="images",
+                                                 image_out_tag="wavelet_cwt_morlet",
+                                                 padding="mirror",
+                                                 median_filter=False,
+                                                 threshold_function="hard")
+
+        self.pipeline.add_module(wavelet_cwt)
+        self.pipeline.run_module("wavelet_cwt_morlet")
+
+        data = self.pipeline.get_data("wavelet_cwt_morlet")
+        assert np.allclose(data[0, 10, 10], 0.09805577173716859, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0025019409784314286, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
     def test_wavelet_denoising_dwt(self):
@@ -119,30 +161,3 @@ class TestTimeDenoising(object):
         assert np.allclose(data[0, 10, 10], 0.09793500165714215, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0024483409033199985, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
-
-    def test_wavelet_denoising_cwt_multi(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-        database.close()
-
-        cwt_config = CwtWaveletConfiguration(wavelet="dog",
-                                             wavelet_order=2,
-                                             keep_mean=False,
-                                             resolution=0.5)
-
-        wavelet_cwt = WaveletTimeDenoisingModule(wavelet_configuration=cwt_config,
-                                                 name_in="wavelet_cwt_multi",
-                                                 image_in_tag="images",
-                                                 image_out_tag="wavelet_cwt_multi",
-                                                 padding="zero",
-                                                 median_filter=True,
-                                                 threshold_function="soft")
-
-        self.pipeline.add_module(wavelet_cwt)
-        self.pipeline.run_module("wavelet_cwt_multi")
-
-        data_single = self.pipeline.get_data("wavelet_cwt_single")
-        data_multi = self.pipeline.get_data("wavelet_cwt_multi")
-        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
-        assert data_single.shape == data_multi.shape

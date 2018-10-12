@@ -2,17 +2,18 @@
 Wrapper utils for the wavelet functions for the mlpy cwt implementation (see continous.py)
 """
 
-import copy
+# import copy
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from numba import jit
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
 
-from PynPoint.Util.Continuous import autoscales, cwt, icwt, fourier_from_scales
+from PynPoint.Util.Continuous import autoscales, cwt, icwt
+# from PynPoint.Util.Continuous import fourier_from_scales
 
 
 @jit(cache=True)
@@ -193,25 +194,25 @@ class WaveletAnalysisCapsule(object):
         reconstruction_factor = self.__compute_reconstruction_factor()
         self._m_data *= reconstruction_factor
 
-    def __transform_period(self,
-                           period):
-
-        tmp_y = fourier_from_scales(self._m_scales,
-                                    self.m_wavelet,
-                                    self.m_order)
-
-        def __transformation(x):
-            return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
-
-        cutoff_scaled = __transformation(period)
-
-        scale_new = tmp_y[-1] - tmp_y[0]
-        scale_old = self.m_spectrum.shape[0]
-
-        factor = scale_old / scale_new
-        cutoff_scaled *= factor
-
-        return cutoff_scaled
+    # def __transform_period(self,
+    #                        period):
+    #
+    #     tmp_y = fourier_from_scales(self._m_scales,
+    #                                 self.m_wavelet,
+    #                                 self.m_order)
+    #
+    #     def __transformation(x):
+    #         return np.log2(x + 1) * tmp_y[-1] / np.log2(tmp_y[-1] + 1)
+    #
+    #     cutoff_scaled = __transformation(period)
+    #
+    #     scale_new = tmp_y[-1] - tmp_y[0]
+    #     scale_old = self.m_spectrum.shape[0]
+    #
+    #     factor = scale_old / scale_new
+    #     cutoff_scaled *= factor
+    #
+    #     return cutoff_scaled
 
     def denoise_spectrum(self,
                          soft=False):
@@ -260,106 +261,106 @@ class WaveletAnalysisCapsule(object):
 
     # ----- plotting functions --------
 
-    def __plot_or_save_spectrum(self):
-        plt.close()
-
-        plt.figure(figsize=(8, 6))
-        plt.subplot(1, 1, 1)
-
-        tmp_y = fourier_from_scales(self._m_scales,
-                                    self.m_wavelet,
-                                    self.m_order)
-
-        tmp_x = np.arange(0, self._m_data_size + 1, 1)
-
-        scaled_spec = copy.deepcopy(self.m_spectrum.real)
-        for i, _ in enumerate(scaled_spec):
-            scaled_spec[i] /= np.sqrt(self._m_scales[i])
-
-        plt.imshow(abs(scaled_spec),
-                   aspect='auto',
-                   extent=[tmp_x[0],
-                           tmp_x[-1],
-                           tmp_y[0],
-                           tmp_y[-1]],
-                   cmap=plt.get_cmap("gist_ncar"),
-                   origin='lower')
-
-        # COI first part (only for DOG) with padding
-
-        inner_frequency = 2.*np.pi/np.sqrt(self.m_order + 0.5)
-        coi = np.append(np.zeros(len(tmp_x)/4),
-                        tmp_x[0:len(tmp_x) / 4])
-        coi = np.append(coi,
-                        tmp_x[0:len(tmp_x) / 4][::-1])
-        coi = np.append(coi,
-                        np.zeros(len(tmp_x) / 4))
-
-        plt.plot(np.arange(0, len(coi), 1.0),
-                 inner_frequency * coi / np.sqrt(2),
-                 color="white")
-
-        plt.ylim([tmp_y[0],
-                  tmp_y[-1]])
-
-        plt.fill_between(np.arange(0, len(coi), 1.0),
-                         inner_frequency * coi / np.sqrt(2),
-                         np.ones(len(coi)) * tmp_y[-1],
-                         facecolor="none",
-                         edgecolor='white',
-                         alpha=0.4,
-                         hatch="x")
-
-        plt.yscale('log', basey=2)
-        plt.ylabel("Period in [s]")
-        plt.xlabel("Time in [s]")
-        plt.title("Spectrum computed with CWT using '" + str(self.m_wavelet) +
-                  "' wavelet of order " + str(self.m_order))
-
-    def plot_spectrum(self):
-        """
-        Shows a plot of the current wavelet space.
-        :return: None
-        """
-
-        self.__plot_or_save_spectrum()
-        plt.show()
-
-    def save_spectrum(self,
-                      location):
-        """
-        Saves a plot of the current wavelet space to a given location.
-        :param location: Save location
-        :type location: str
-        :return: None
-        """
-        self.__plot_or_save_spectrum()
-        plt.savefig(location)
-        plt.close()
-
-    def __plot_or_save_signal(self):
-        plt.close()
-        plt.plot(self._m_data)
-        plt.title("Signal")
-        plt.ylabel("Value of the function")
-        plt.xlim([0, self._m_data_size])
-        plt.xlabel("Time in [s]")
-
-    def plot_signal(self):
-        """
-        Plot the current signal.
-        :return: None
-        """
-        self.__plot_or_save_signal()
-        plt.show()
-
-    def save_signal(self,
-                    location):
-        """
-        Saves a plot of the current signal to a given location.
-        :param location: Save location
-        :type location: str
-        :return: None
-        """
-        self.__plot_or_save_signal()
-        plt.savefig(location)
+    # def __plot_or_save_spectrum(self):
+    #     plt.close()
+    #
+    #     plt.figure(figsize=(8, 6))
+    #     plt.subplot(1, 1, 1)
+    #
+    #     tmp_y = fourier_from_scales(self._m_scales,
+    #                                 self.m_wavelet,
+    #                                 self.m_order)
+    #
+    #     tmp_x = np.arange(0, self._m_data_size + 1, 1)
+    #
+    #     scaled_spec = copy.deepcopy(self.m_spectrum.real)
+    #     for i, _ in enumerate(scaled_spec):
+    #         scaled_spec[i] /= np.sqrt(self._m_scales[i])
+    #
+    #     plt.imshow(abs(scaled_spec),
+    #                aspect='auto',
+    #                extent=[tmp_x[0],
+    #                        tmp_x[-1],
+    #                        tmp_y[0],
+    #                        tmp_y[-1]],
+    #                cmap=plt.get_cmap("gist_ncar"),
+    #                origin='lower')
+    #
+    #     # COI first part (only for DOG) with padding
+    #
+    #     inner_frequency = 2.*np.pi/np.sqrt(self.m_order + 0.5)
+    #     coi = np.append(np.zeros(len(tmp_x)/4),
+    #                     tmp_x[0:len(tmp_x) / 4])
+    #     coi = np.append(coi,
+    #                     tmp_x[0:len(tmp_x) / 4][::-1])
+    #     coi = np.append(coi,
+    #                     np.zeros(len(tmp_x) / 4))
+    #
+    #     plt.plot(np.arange(0, len(coi), 1.0),
+    #              inner_frequency * coi / np.sqrt(2),
+    #              color="white")
+    #
+    #     plt.ylim([tmp_y[0],
+    #               tmp_y[-1]])
+    #
+    #     plt.fill_between(np.arange(0, len(coi), 1.0),
+    #                      inner_frequency * coi / np.sqrt(2),
+    #                      np.ones(len(coi)) * tmp_y[-1],
+    #                      facecolor="none",
+    #                      edgecolor='white',
+    #                      alpha=0.4,
+    #                      hatch="x")
+    #
+    #     plt.yscale('log', basey=2)
+    #     plt.ylabel("Period in [s]")
+    #     plt.xlabel("Time in [s]")
+    #     plt.title("Spectrum computed with CWT using '" + str(self.m_wavelet) +
+    #               "' wavelet of order " + str(self.m_order))
+    #
+    # def plot_spectrum(self):
+    #     """
+    #     Shows a plot of the current wavelet space.
+    #     :return: None
+    #     """
+    #
+    #     self.__plot_or_save_spectrum()
+    #     plt.show()
+    #
+    # def save_spectrum(self,
+    #                   location):
+    #     """
+    #     Saves a plot of the current wavelet space to a given location.
+    #     :param location: Save location
+    #     :type location: str
+    #     :return: None
+    #     """
+    #     self.__plot_or_save_spectrum()
+    #     plt.savefig(location)
+    #     plt.close()
+    #
+    # def __plot_or_save_signal(self):
+    #     plt.close()
+    #     plt.plot(self._m_data)
+    #     plt.title("Signal")
+    #     plt.ylabel("Value of the function")
+    #     plt.xlim([0, self._m_data_size])
+    #     plt.xlabel("Time in [s]")
+    #
+    # def plot_signal(self):
+    #     """
+    #     Plot the current signal.
+    #     :return: None
+    #     """
+    #     self.__plot_or_save_signal()
+    #     plt.show()
+    #
+    # def save_signal(self,
+    #                 location):
+    #     """
+    #     Saves a plot of the current signal to a given location.
+    #     :param location: Save location
+    #     :type location: str
+    #     :return: None
+    #     """
+    #     self.__plot_or_save_signal()
+    #     plt.savefig(location)
