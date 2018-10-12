@@ -223,25 +223,41 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00016446205542266837, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_shift_images(self):
+    def test_shift_images_spline(self):
 
         shift = ShiftImagesModule(shift_xy=(6., 4.),
                                   interpolation="spline",
-                                  name_in="shift",
+                                  name_in="shift1",
                                   image_in_tag="align",
                                   image_out_tag="shift")
 
         self.pipeline.add_module(shift)
-        self.pipeline.run_module("shift")
+        self.pipeline.run_module("shift1")
 
         data = self.pipeline.get_data("shift")
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_star_center(self):
+    def test_shift_images_fft(self):
 
-        center = StarCenteringModule(name_in="center",
+        shift = ShiftImagesModule(shift_xy=(6., 4.),
+                                  interpolation="spline",
+                                  name_in="shift2",
+                                  image_in_tag="align",
+                                  image_out_tag="fft")
+
+        self.pipeline.add_module(shift)
+        self.pipeline.run_module("shift2")
+
+        data = self.pipeline.get_data("fft")
+        assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
+        assert data.shape == (40, 78, 78)
+
+    def test_star_center_full(self):
+
+        center = StarCenteringModule(name_in="center1",
                                      image_in_tag="shift",
                                      image_out_tag="center",
                                      mask_out_tag="mask",
@@ -253,7 +269,7 @@ class TestStarAlignment(object):
                                      guess=(6., 4., 1., 1., 1., 0.))
 
         self.pipeline.add_module(center)
-        self.pipeline.run_module("center")
+        self.pipeline.run_module("center1")
 
         data = self.pipeline.get_data("center")
         assert np.allclose(data[0, 39, 39], 0.023563039729627436, rtol=1e-4, atol=0.)
@@ -264,6 +280,27 @@ class TestStarAlignment(object):
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
         assert np.allclose(data[0, 43, 55], 0.0, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010827527282995304, rtol=limit, atol=0.)
+        assert data.shape == (40, 78, 78)
+
+    def test_star_center_mean(self):
+
+        center = StarCenteringModule(name_in="center2",
+                                     image_in_tag="shift",
+                                     image_out_tag="center",
+                                     mask_out_tag=None,
+                                     fit_out_tag="center_fit",
+                                     method="mean",
+                                     interpolation="bilinear",
+                                     radius=0.05,
+                                     sign="positive",
+                                     guess=(6., 4., 1., 1., 1., 0.))
+
+        self.pipeline.add_module(center)
+        self.pipeline.run_module("center2")
+
+        data = self.pipeline.get_data("center")
+        assert np.allclose(data[0, 39, 39], 0.023556482678860322, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.00016430629447868552, rtol=1e-4, atol=0.)
         assert data.shape == (40, 78, 78)
 
     def test_waffle_center_odd(self):
