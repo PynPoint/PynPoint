@@ -50,6 +50,9 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_random = random
         self.m_stacking = stacking
 
+        if self.m_stacking is None and self.m_random is None:
+            warnings.warn("Both 'stacking' and 'random' are set to None.")
+
     def run(self):
         """
         Run method of the module. Stacks subsets of images and/or selects a random subset.
@@ -65,8 +68,12 @@ class StackAndSubsetModule(ProcessingModule):
                 frames = memory_frames(self.m_stacking, nimages)
 
                 nimages_new = np.size(frames)-1
-                if parang is not None:
+
+                if parang is None:
+                    parang_new = None
+                else:
                     parang_new = np.zeros(nimages_new)
+
                 im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
                 for i in range(nimages_new):
@@ -74,8 +81,8 @@ class StackAndSubsetModule(ProcessingModule):
 
                     if parang is not None:
                         parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
-                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ],
-                                          axis=0)
+
+                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
                 im_shape = im_new.shape
 
@@ -86,21 +93,19 @@ class StackAndSubsetModule(ProcessingModule):
             return im_shape, im_new, parang_new
 
         def _subset(im_shape, im_new, parang_new):
-
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)
                 choice = np.sort(choice)
 
-                if parang_new is not None:
+                if parang_new is None:
+                    parang_new = None
+                else:
                     parang_new = parang_new[choice]
 
                 if self.m_stacking is None:
-                    # This will cause memory problems for large values of random
-                    im_new = self.m_image_in_port[choice, :, :]
-
+                    im_new = self.m_image_in_port[choice, ]
                 else:
-                    # Possibly also here depending on the stacking value
-                    im_new = im_new[choice, :, :]
+                    im_new = im_new[choice, ]
 
             if im_new.ndim == 2:
                 nimages = 1
@@ -108,9 +113,6 @@ class StackAndSubsetModule(ProcessingModule):
                 nimages = im_new.shape[0]
 
             return nimages, im_new, parang_new
-
-        if self.m_stacking is None and self.m_random is None:
-            return
 
         non_static = self.m_image_in_port.get_all_non_static_attributes()
 
@@ -143,8 +145,10 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
+
         if parang is not None:
             self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
         if "NFRAMES" in non_static:
             self.m_image_out_port.del_attribute("NFRAMES")
 
@@ -377,7 +381,10 @@ class CombineTagsModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         if image_out_tag in image_in_tags:
-            raise ValueError("The name of image_out_tag can not be present in image_in_tags.")
+            raise ValueError("The name of 'image_out_tag' can not be present in 'image_in_tags'.")
+
+        if len(image_in_tags) < 2:
+            raise ValueError("The 'image_in_tags' should contain at least two tags.")
 
         self.m_image_in_tags = image_in_tags
         self.m_check_attr = check_attr
@@ -387,16 +394,13 @@ class CombineTagsModule(ProcessingModule):
         """
         Run method of the module. Combines the frames of multiple tags into a single output tag
         and adds the static and non-static attributes. The values of the attributes are compared
-        between the input tags to make sure that the input tags decent from the same data set.
+        between the input tags to make sure that the input tags descent from the same data set.
 
         :return: None
         """
 
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
-
-        if len(self.m_image_in_tags) < 2:
-            raise ValueError("The tuple of image_in_tags should contain at least two tags.")
 
         memory = self._m_config_port.get_attribute("MEMORY")
 

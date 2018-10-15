@@ -12,20 +12,15 @@ warnings.simplefilter("always")
 limit = 1e-10
 
 def setup_module():
-    path = os.path.dirname(__file__)
-    create_random(path)
+    create_random(os.path.dirname(__file__))
 
 def teardown_module():
-    file_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-
-    os.remove(file_in)
+    os.remove(os.path.dirname(__file__) + "/PynPoint_database.hdf5")
 
 class TestOutputPort(object):
 
     def setup(self):
-        dir_in = os.path.dirname(__file__) + "/PynPoint_database.hdf5"
-
-        self.storage = DataStorage(dir_in)
+        self.storage = DataStorage(os.path.dirname(__file__) + "/PynPoint_database.hdf5")
 
     def create_input_port(self, tag_name):
         inport = InputPort(tag_name, self.storage)
@@ -39,6 +34,18 @@ class TestOutputPort(object):
         return outport
 
     def test_create_instance(self):
+        with pytest.raises(ValueError) as error:
+            OutputPort("config", self.storage)
+
+        assert error.value[0] == "The tag name 'config' is reserved for the central " \
+                                 "configuration of PynPoint."
+
+        with pytest.raises(ValueError) as error:
+            OutputPort("fits_header", self.storage)
+
+        assert error.value[0] == "The tag name 'fits_header' is reserved for storage of the " \
+                                 "FITS headers."
+
         active_port = OutputPort("test", self.storage, activate_init=True)
         deactive_port = OutputPort("test", self.storage, activate_init=False)
         control_port = InputPort("test", self.storage)
@@ -116,10 +123,10 @@ class TestOutputPort(object):
 
         data = [[[[2, 2], ], ], ]
 
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=2)
 
-        assert ex_info.value[0] == 'Output port can only save numpy arrays from 1D to 3D. Use ' \
+        assert error.value[0] == 'Output port can only save numpy arrays from 1D to 3D. Use ' \
                                    'Port attributes to save as int, float, or string.'
 
         # ---- Test data dim of data_dim for new data entry is < 1 or > 3
@@ -128,10 +135,10 @@ class TestOutputPort(object):
 
         data = [1, 2, 4]
 
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=0)
 
-        assert ex_info.value[0] == 'The data dimensions should be 1D, 2D, or 3D.'
+        assert error.value[0] == 'The data dimensions should be 1D, 2D, or 3D.'
 
         # ---- Test data_dim for new data entry is smaller than actual data
 
@@ -139,10 +146,10 @@ class TestOutputPort(object):
 
         data = [[1], [2]]
 
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=1)
 
-        assert ex_info.value[0] == 'The dimensions of the data should be equal to or larger than ' \
+        assert error.value[0] == 'The dimensions of the data should be equal to or larger than ' \
                                    'the dimensions of the input data.'
 
         # ---- Test data_dim == 3 and actual size == 1
@@ -151,10 +158,10 @@ class TestOutputPort(object):
 
         data = [1, 2]
 
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=3)
 
-        assert ex_info.value[0] == 'Cannot initialize 1D data in 3D data container.'
+        assert error.value[0] == 'Cannot initialize 1D data in 3D data container.'
 
     def test_set_all_keep_attributes(self):
 
@@ -296,10 +303,10 @@ class TestOutputPort(object):
         # Error case (no force)
         out_port.set_all([2, 3, 5], data_dim=1)
 
-        with pytest.raises(ValueError) as ex_info:
+        with pytest.raises(ValueError) as error:
             out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
 
-        assert ex_info.value[0] == "The port tag 'new_data' is already used with a different " \
+        assert error.value[0] == "The port tag 'new_data' is already used with a different " \
                                    "data type. The 'force' parameter can be used to replace " \
                                    "the tag."
         out_port.del_all_data()
@@ -483,6 +490,19 @@ class TestOutputPort(object):
         out_port.del_all_attributes()
         out_port.del_all_data()
 
+        port = self.create_output_port("test")
+        port.deactivate()
+        assert port.copy_attributes_from_input_port(control) is None
+
+        port = self.create_input_port("test")
+
+        with pytest.warns(UserWarning) as warning:
+            port.get_all_non_static_attributes()
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
+                                             "InputPort."
+
     def test_copy_attributes_from_input_port_same_tag(self):
         out_port1 = self.create_output_port("new_data")
         out_port1.set_all([0, ])
@@ -594,18 +614,24 @@ class TestOutputPort(object):
         control = self.create_input_port("new_data")
         assert control.get_attribute("History: Test") == "history"
 
-    def test_check_static_attribute(self):
+    def test_check_attribute(self):
         out_port = self.create_output_port("new_data")
         out_port.set_all([0, ])
-        out_port.add_attribute("attr", 5)
+        out_port.add_attribute("static", 5, static=True)
+        out_port.add_attribute("non-static", np.arange(1, 11, 1), static=False)
 
-        assert out_port.check_static_attribute("attr", 5) == 0
-        assert out_port.check_static_attribute("attr_bla", 3) == 1
-        assert out_port.check_static_attribute("attr", 33) == -1
+        assert out_port.check_static_attribute("static", 5) == 0
+        assert out_port.check_static_attribute("test", 3) == 1
+        assert out_port.check_static_attribute("static", 33) == -1
+
+        assert out_port.check_non_static_attribute("non-static", np.arange(1, 11, 1)) == 0
+        assert out_port.check_non_static_attribute("test", np.arange(1, 11, 1)) == 1
+        assert out_port.check_non_static_attribute("non-static", np.arange(10, 21, 1)) == -1
 
         out_port.deactivate()
 
-        assert out_port.check_static_attribute("attr", 5) is None
+        assert out_port.check_static_attribute("static", 5) is None
+        assert out_port.check_non_static_attribute("non-static", np.arange(1, 11, 1)) is None
 
         out_port.activate()
         out_port.del_all_data()
