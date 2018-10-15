@@ -1,5 +1,5 @@
 """
-Interfaces for Pypeline modules.
+Interfaces for pipeline modules.
 """
 
 import os
@@ -10,7 +10,7 @@ from abc import abstractmethod, ABCMeta
 
 import numpy as np
 
-from PynPoint.Core.DataIO import OutputPort, InputPort, ConfigPort
+from PynPoint.Core.DataIO import ConfigPort, InputPort, OutputPort
 from PynPoint.Util.Multiprocessing import LineProcessingCapsule, apply_function
 from PynPoint.Util.ModuleTools import progress, memory_frames
 
@@ -19,12 +19,12 @@ class PypelineModule:
     """
     Abstract interface for the PypelineModule:
 
-        * Reading Module (:class:`PynPoint.core.Processing.ReadingModule`)
-        * Writing Module (:class:`PynPoint.core.Processing.WritingModule`)
-        * Processing Module (:class:`PynPoint.core.Processing.ProcessingModule`)
+        * Reading Module (:class:`PynPoint.Core.Processing.ReadingModule`)
+        * Writing Module (:class:`PynPoint.Core.Processing.WritingModule`)
+        * Processing Module (:class:`PynPoint.Core.Processing.ProcessingModule`)
 
-    Each PypelineModule has a name as a unique identifier in the Pypeline and has to implement the
-    functions *connect_database* and *run* which are used in the Pypeline methods.
+    Each PypelineModule has a name as a unique identifier in the Pypeline and requires the
+    *connect_database* and *run* pipeline methods.
     """
 
     __metaclass__ = ABCMeta
@@ -52,7 +52,7 @@ class PypelineModule:
         Returns the name of the PypelineModule. This property makes sure that the internal module
         name can not be changed.
 
-        :return: The name of the PypelineModule/
+        :return: The name of the PypelineModule.
         :rtype: str
         """
 
@@ -69,7 +69,7 @@ class PypelineModule:
         :type data_base_in: DataStorage
         """
 
-        pass
+        # pass
 
     @abstractmethod
     def run(self):
@@ -78,7 +78,7 @@ class PypelineModule:
         algorithm behind the module.
         """
 
-        pass
+        # pass
 
 
 class WritingModule(PypelineModule):
@@ -98,7 +98,7 @@ class WritingModule(PypelineModule):
                  output_dir=None):
         """
         Abstract constructor of a WritingModule which needs the unique name identifier as input
-        (more information: :class:`PynPoint.core.Processing.PypelineModule`). In addition one can
+        (more information: :class:`PynPoint.Core.Processing.PypelineModule`). In addition one can
         specify a output directory where the module will save its results. If no output directory is
         given the Pypeline default directory is used. This function is called in all *__init__()*
         functions inheriting from this class.
@@ -179,7 +179,12 @@ class WritingModule(PypelineModule):
 
     @abstractmethod
     def run(self):
-        pass
+        """
+        Abstract interface for the run method of a WritingModule which inheres the actual
+        algorithm behind the module.
+        """
+
+        # pass
 
 
 class ProcessingModule(PypelineModule):
@@ -196,7 +201,7 @@ class ProcessingModule(PypelineModule):
                  name_in):
         """
         Abstract constructor of a ProcessingModule which needs the unique name identifier as input
-        (more information: :class:`PynPoint.core.Processing.PypelineModule`). Call this function in
+        (more information: :class:`PynPoint.Core.Processing.PypelineModule`). Call this function in
         all __init__() functions inheriting from this class.
 
         :param name_in: The name of the Processing Module
@@ -301,7 +306,7 @@ class ProcessingModule(PypelineModule):
                                image_out_port,
                                func_args=None):
         """
-        Applies a function to all lines in time.
+        Applies a function to all pixel lines in time.
 
         :param func: The input function.
         :type func: function
@@ -319,9 +324,9 @@ class ProcessingModule(PypelineModule):
 
         size = apply_function(init_line, func, func_args).shape[0]
 
-        if image_out_port.tag == image_in_port.tag and size != image_in_port.get_shape()[0]:
-            raise ValueError("Input and output port have the same tag while %s is changing " \
-                "the length of the signal. Use different input and output ports instead." % func)
+        # if image_out_port.tag == image_in_port.tag and size != image_in_port.get_shape()[0]:
+        #     raise ValueError("Input and output port have the same tag while %s is changing " \
+        #         "the length of the signal. Use different input and output ports instead." % func)
 
         image_out_port.set_all(np.zeros((size,
                                          image_in_port.get_shape()[1],
@@ -345,14 +350,12 @@ class ProcessingModule(PypelineModule):
                                  image_in_port,
                                  image_out_port,
                                  message,
-                                 func_args=None,):
+                                 func_args=None):
         """
-        Function which applies a specified function to all images of a 3D data stack. The function
-        requires an InputPort, and OutputPort, and a function with its arguments. Since the input
-        dataset might be larger than the available memory, the MEMORY attribute from the central
-        configuration is used to load images into the memory. Note that the function *func* is not
-        allowed to change the shape of the images if the input and output port have the same tag
-        MEMORY is not None.
+        Function which applies a function to all images of an input port. The MEMORY attribute
+        from the central configuration is used to load subsets of images into the memory. Note
+        that the function *func* is not allowed to change the shape of the images if the input
+        and output port have the same tag and MEMORY is not None.
 
         :param func: The function which is applied to all images. Its definitions should be
                      similar to: ::
@@ -368,13 +371,15 @@ class ProcessingModule(PypelineModule):
         :param image_out_port: OutputPort which is linked to the result place. No data is written
                                if set to None.
         :type image_out_port: OutputPort
-        :param message: Progress message for the standard output.
+        :param message: Progress message that is printed.
         :type message: str
         :param func_args: Additional arguments which are needed by the function *func*.
         :type func_args: tuple
 
         :return: None
         """
+
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         def _initialize():
             """
@@ -385,7 +390,6 @@ class ProcessingModule(PypelineModule):
             :rtype: int, numpy.ndarray
             """
 
-            memory = self._m_config_port.get_attribute("MEMORY")
             ndim = image_in_port.get_ndim()
 
             if ndim == 2:
@@ -408,7 +412,7 @@ class ProcessingModule(PypelineModule):
 
             :param ndim: Number of dimensions.
             :type ndim: int
-            :param images: (Sub)stack of images.
+            :param images: Stack of images.
             :type images: numpy.ndarray
 
             :return: List with results of the function.
@@ -449,17 +453,19 @@ class ProcessingModule(PypelineModule):
 
             if image_out_port is not None:
                 if image_out_port.tag == image_in_port.tag:
-                    try:
+                    if image_in_port.get_shape()[-1] == result.shape[-1] and \
+                        image_in_port.get_shape()[-2] == result.shape[-2]:
+
                         if np.size(frames) == 2:
                             image_out_port.set_all(result, keep_attributes=True)
 
                         else:
                             image_out_port[frames[i]:frames[i+1]] = result
 
-                    except TypeError:
-                        raise ValueError("Input and output port have the same tag while %s is "
-                                         "changing the image shape. This is only possible with "
-                                         "MEMORY=None." % func)
+                    else:
+                        raise ValueError("Input and output port have the same tag while the input "
+                                         "function is changing the image shape. This is only "
+                                         "possible with MEMORY=None.")
 
                 else:
                     if ndim == 2:
@@ -492,7 +498,12 @@ class ProcessingModule(PypelineModule):
 
     @abstractmethod
     def run(self):
-        pass
+        """
+        Abstract interface for the run method of a ProcessingModule which inheres the actual
+        algorithm behind the module.
+        """
+
+        # pass
 
 
 class ReadingModule(PypelineModule):
@@ -511,7 +522,7 @@ class ReadingModule(PypelineModule):
                  input_dir=None):
         """
         Abstract constructor of ReadingModule which needs the unique name identifier as input
-        (more information: :class:`PynPoint.core.Processing.PypelineModule`). An input directory
+        (more information: :class:`PynPoint.Core.Processing.PypelineModule`). An input directory
         can be specified for the location of the data or else the Pypeline default directory is
         used. This function is called in all *__init__()* functions inheriting from this class.
 
@@ -599,4 +610,9 @@ class ReadingModule(PypelineModule):
 
     @abstractmethod
     def run(self):
-        pass
+        """
+        Abstract interface for the run method of a ReadingModule which inheres the actual
+        algorithm behind the module.
+        """
+
+        # pass

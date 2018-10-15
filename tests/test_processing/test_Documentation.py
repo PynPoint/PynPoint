@@ -46,24 +46,22 @@ class TestDocumentation(object):
         # dark
 
         ndit = [3, 3, 5, 5]
-        parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
 
         np.random.seed(2)
 
         for j, item in enumerate(ndit):
             image = np.random.normal(loc=0, scale=2e-4, size=(item, 100, 100))
-            create_fits(self.test_dir+'dark', 'dark'+str(j+1).zfill(2)+'.fits', image, ndit[j], 0, parang[j], 0., 0.)
+            create_fits(self.test_dir+'dark', 'dark'+str(j+1).zfill(2)+'.fits', image, ndit[j])
 
         # flat
 
         ndit = [3, 3, 5, 5]
-        parang = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
 
         np.random.seed(3)
 
         for j, item in enumerate(ndit):
             image = np.random.normal(loc=1, scale=1e-2, size=(item, 100, 100))
-            create_fits(self.test_dir+'flat', 'flat'+str(j+1).zfill(2)+'.fits', image, ndit[j], 0, parang[j], 0., 0.)
+            create_fits(self.test_dir+'flat', 'flat'+str(j+1).zfill(2)+'.fits', image, ndit[j])
 
         create_config(self.test_dir+"PynPoint_config.ini")
 
