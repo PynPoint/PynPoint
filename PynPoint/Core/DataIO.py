@@ -1,5 +1,5 @@
 """
-Modules to access data and attributes in the central HDF5 database.
+Modules to access data and attributes in the central database.
 """
 
 import warnings
@@ -47,7 +47,7 @@ class DataStorage(object):
         """
 
         if self.m_open:
-            return
+            return None
 
         self.m_data_bank = h5py.File(self._m_location, mode='a')
         self.m_open = True
@@ -61,7 +61,7 @@ class DataStorage(object):
         """
 
         if not self.m_open:
-            return
+            return None
 
         self.m_data_bank.close()
         self.m_open = False
@@ -240,7 +240,7 @@ class ConfigPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         if name in self._m_data_storage.m_data_bank["config"].attrs:
             return self._m_data_storage.m_data_bank["config"].attrs[name]
@@ -267,8 +267,8 @@ class InputPort(Port):
             data = in_port[0, :, :] # returns the first 2D image of a 3D image stack.
 
     (More information about how 1D, 2D, and 3D data is organized can be found in the documentation
-    of OutputPort (:func:`PynPoint.core.DataIO.OutputPort.append` and
-    :func:`PynPoint.core.DataIO.OutputPort.set_all`)
+    of OutputPort (:func:`PynPoint.Core.DataIO.OutputPort.append` and
+    :func:`PynPoint.Core.DataIO.OutputPort.set_all`)
 
     InputPorts can load two types of attributes which give additional information about
     a dataset the port is linked to:
@@ -349,7 +349,7 @@ class InputPort(Port):
     def __getitem__(self, item):
         """
         Internal function which handles the data access using slicing. See class documentation for a
-        example (:class:`PynPoint.core.DataIO.InputPort`). None if the data does not exist.
+        example (:class:`PynPoint.Core.DataIO.InputPort`). None if the data does not exist.
 
         :param item: Slicing parameter
         :type item: slice
@@ -360,7 +360,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         return self._m_data_storage.m_data_bank[self._m_tag][item]
 
@@ -374,7 +374,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         self.open_port()
 
@@ -389,7 +389,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         self.open_port()
 
@@ -407,7 +407,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
 
@@ -417,7 +417,7 @@ class InputPort(Port):
         Returns an attribute which is connected to the dataset of the port. The function can return
         static and non-static attributes (But it is first looking for static attributes). See class
         documentation for more information about static and non-static attributes.
-        (:class:`PynPoint.core.DataIO.InputPort`)
+        (:class:`PynPoint.Core.DataIO.InputPort`)
 
         :param name: The name of the attribute to be returned
         :type name: str
@@ -427,7 +427,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
@@ -458,7 +458,7 @@ class InputPort(Port):
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         return self._m_data_storage.m_data_bank[self._m_tag].attrs
 
@@ -466,14 +466,14 @@ class InputPort(Port):
         """
         Returns a list of all non-static attribute keys (Not the actual attribute data). See class
         documentation for more information about static and non-static attributes.
-        (:class:`PynPoint.core.DataIO.InputPort`)
+        (:class:`PynPoint.Core.DataIO.InputPort`)
 
         :return: List of all existing non-static attribute keys
         :rtype: list[str]
         """
 
         if not self._check_error_cases():
-            return
+            return None
 
         result = []
 
@@ -494,7 +494,7 @@ class OutputPort(Port):
 
         * set_all(...) - replaces and sets the whole dataset
         * append(...) - appends data to the existing data set. For more information see
-          function documentation (:func:`PynPoint.core.DataIO.OutputPort.append`).
+          function documentation (:func:`PynPoint.Core.DataIO.OutputPort.append`).
         * slicing - sets a part of the actual dataset. Example:
 
         .. code-block:: python
@@ -507,15 +507,15 @@ class OutputPort(Port):
         * del_attribute(...) - deletes a attribute
         * del_all_attributes(...) - deletes all attributes
         * append_attribute_data(...) - appends information to non-static attributes. See
-          add_attribute() (:func:`PynPoint.core.DataIO.OutputPort.add_attribute`) for more
+          add_attribute() (:func:`PynPoint.Core.DataIO.OutputPort.add_attribute`) for more
           information about static and non-static attributes.
         * check_static_attribute(...) - checks if a static attribute exists and if it is equal to a
           given value
         * other functions listed below
 
     For more information about how data is organized inside the central database have a look at the
-    function documentation of the function :func:`PynPoint.core.DataIO.OutputPort.set_all` and
-    :func:`PynPoint.core.DataIO.OutputPort.append`.
+    function documentation of the function :func:`PynPoint.Core.DataIO.OutputPort.set_all` and
+    :func:`PynPoint.Core.DataIO.OutputPort.append`.
 
     Furthermore it is possible to deactivate a OutputPort to stop him saving data.
     """
@@ -621,9 +621,6 @@ class OutputPort(Port):
             elif first_data.ndim == 3: # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
 
-            else:
-                raise ValueError('Input shape not supported.')
-
         else:
             if data_dim == 2: # case (2,1)
                 data_shape = (None, first_data.shape[0])
@@ -632,9 +629,6 @@ class OutputPort(Port):
             elif data_dim == 3: # case (3,2)
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
-
-            else:
-                raise ValueError('Input shape not supported.')
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
@@ -685,7 +679,7 @@ class OutputPort(Port):
             for key, value in tmp_attributes.iteritems():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
 
-        return
+        return None
 
     def _append_key(self,
                     tag,
@@ -701,7 +695,7 @@ class OutputPort(Port):
         if tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
             self._initialize_database(data, tag, data_dim=data_dim)
-            return
+            return None
 
         # NO -> database entry exists
         # check if the existing data has the same dim and datatype
@@ -740,14 +734,14 @@ class OutputPort(Port):
             self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
 
-            return
+            return None
 
         # NO -> shape or type is different
         # Check force
         if force:
             # YES -> Force is true
             self._set_all_key(tag, data=data)
-            return
+            return None
 
         # NO -> Error message
         raise ValueError("The port tag '%s' is already used with a different data type. The "
@@ -756,7 +750,7 @@ class OutputPort(Port):
     def __setitem__(self, key, value):
         """
         Internal function needed to change data using slicing. See class documentation for an
-        example (:class:`PynPoint.core.DataIO.OutputPort`).
+        example (:class:`PynPoint.Core.DataIO.OutputPort`).
 
         :param key: Slicing indices to be changed
         :param value: New values
@@ -765,7 +759,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
@@ -775,7 +769,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         if self._m_tag in self._m_data_storage.m_data_bank:
             del self._m_data_storage.m_data_bank[self._m_tag]
@@ -801,7 +795,7 @@ class OutputPort(Port):
 
         For 2D and 3D data the first dimension always represents the list / stack (variable size)
         while the second (or third) dimension has a fixed size. After creation it is possible to
-        extend a data set using :func:`PynPoint.core.DataIO.OutputPort.append` along the first
+        extend a data set using :func:`PynPoint.Core.DataIO.OutputPort.append` along the first
         dimension.
 
         **Example 1:**
@@ -833,7 +827,7 @@ class OutputPort(Port):
 
         # check if port is ready to use
         if not self._check_status_and_activate():
-            return
+            return None
 
         self._set_all_key(self._m_tag,
                           data,
@@ -848,7 +842,7 @@ class OutputPort(Port):
         Appends data to an existing dataset with the tag of the Port along the first
         dimension. If no data exists with the tag of the Port a new data set is created.
         For more information about how the dimensions are organized see documentation of
-        the function :func:`PynPoint.core.DataIO.OutputPort.set_all`. Note it is not possible to
+        the function :func:`PynPoint.Core.DataIO.OutputPort.set_all`. Note it is not possible to
         append data with a different shape or data type to the existing dataset.
 
         **Example:** An internal data set is 3D (storing a stack of 2D images) with shape
@@ -873,7 +867,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         self._append_key(self._m_tag,
                          data=data,
@@ -912,7 +906,7 @@ class OutputPort(Port):
             2. **non-static attributes**:
                Contain a dataset which is connected to the actual data set (e.g. Instrument
                temperature). It is possible to append additional information to non-static
-               attributes later (:func:`PynPoint.core.DataIO.OutputPort.append_attribute_data`).
+               attributes later (:func:`PynPoint.Core.DataIO.OutputPort.append_attribute_data`).
                This is not supported by static attributes.
 
         Static and non-static attributes are stored in a different way using the HDF5 file format.
@@ -929,11 +923,11 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         if self._m_tag not in self._m_data_storage.m_data_bank:
             warnings.warn("Can not save attribute while no data exists.")
-            return
+            return None
 
         if static:
             self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
@@ -955,7 +949,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         self._append_key(tag=("header_" + self._m_tag + "/" + name),
                          data=np.asarray([value, ]))
@@ -975,7 +969,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         if not isinstance(value, int) or isinstance(value, float):
             raise ValueError("Only integer and float values can be added to an existing "
@@ -990,7 +984,7 @@ class OutputPort(Port):
                                         input_port):
         """
         Copies all static and non-static attributes from a given InputPort. Attributes which already
-        exist will be overwritten. Non-static attributes will be linked not copied! If the InputPort
+        exist will be overwritten. Non-static attributes will be linked not copied. If the InputPort
         tag = OutputPort tag (self.tag) nothing will be changed. Use this function in all modules
         to keep the header information.
 
@@ -1001,10 +995,10 @@ class OutputPort(Port):
         """
 
         if input_port.tag == self._m_tag:
-            return
+            return None
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         # link non-static attributes
         if "header_" + input_port.tag + "/" in self._m_data_storage.m_data_bank:
@@ -1020,8 +1014,7 @@ class OutputPort(Port):
         # copy static attributes
         attributes = input_port.get_all_static_attributes()
         for attr_name, attr_val in attributes.iteritems():
-            self.add_attribute(attr_name,
-                               attr_val)
+            self.add_attribute(attr_name, attr_val)
 
         self._m_data_storage.m_data_bank.flush()
 
@@ -1038,7 +1031,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         # check if attribute is static
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
@@ -1059,7 +1052,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         # static attributes
         if self._m_tag in self._m_data_storage.m_data_bank:
@@ -1087,7 +1080,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
             if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
@@ -1115,7 +1108,7 @@ class OutputPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return
+            return None
 
         group = "header_" + self._m_tag + "/"
 
