@@ -42,7 +42,9 @@ def create_config(filename):
 
     file_obj.close()
 
-def create_random(path, ndit=10, parang=np.arange(1., 11., 1.)):
+def create_random(path,
+                  ndit=10,
+                  parang=np.arange(1., 11., 1.)):
     """
     Create a stack of images with Gaussian distributed pixel values.
     """
@@ -62,9 +64,16 @@ def create_random(path, ndit=10, parang=np.arange(1., 11., 1.)):
         h5f.create_dataset("header_images/PARANG", data=parang)
     h5f.close()
 
-def create_fits(path, filename, image, ndit, exp_no, parang, x0, y0):
+def create_fits(path,
+                filename,
+                image,
+                ndit,
+                exp_no=0,
+                parang=[0., 0.],
+                x0=0.,
+                y0=0.):
     """
-    Create a FITS file with images and header information
+    Create a FITS file with images and header information.
     """
 
     if not os.path.exists(path):
@@ -83,7 +92,17 @@ def create_fits(path, filename, image, ndit, exp_no, parang, x0, y0):
     hdu.data = image
     hdu.writeto(os.path.join(path, filename))
 
-def create_fake(path, ndit, nframes, exp_no, npix, fwhm, x0, y0, angles, sep, contrast):
+def create_fake(path,
+                ndit,
+                nframes,
+                exp_no,
+                npix,
+                fwhm,
+                x0,
+                y0,
+                angles,
+                sep,
+                contrast):
     """
     Create ADI test data with fake planets.
     """
@@ -178,7 +197,10 @@ def create_star_data(path,
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
 
-def create_waffle_data(path, npix, x_waffle, y_waffle):
+def create_waffle_data(path,
+                       npix,
+                       x_waffle,
+                       y_waffle):
     """
     Create data with waffle spots and Gaussian noise.
     """
@@ -212,7 +234,9 @@ def create_waffle_data(path, npix, x_waffle, y_waffle):
     hdu.data = image
     hdu.writeto(os.path.join(path, 'image01.fits'))
 
-def remove_test_data(path, folders=None, files=None):
+def remove_test_data(path,
+                     folders=None,
+                     files=None):
     """
     Function to remove data created by the test cases.
     """

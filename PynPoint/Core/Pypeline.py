@@ -81,7 +81,7 @@ class Pypeline(object):
         """
 
         if key in ["_m_working_place", "_m_input_place", "_m_output_place"]:
-            assert (os.path.isdir(str(value))), "Input directory for " + str(key) + "does not " \
+            assert (os.path.isdir(str(value))), "Input directory for " + str(key) + " does not " \
                                                 "exist - input requested: %s." % value
 
         super(Pypeline, self).__setattr__(key, value)
@@ -156,8 +156,8 @@ class Pypeline(object):
                         if val["config"] == "header":
                             attributes[key]["value"] = "None"
 
-                        elif val["type"] == "str":
-                            attributes[key]["value"] = "None"
+                        # elif val["type"] == "str":
+                        #     attributes[key]["value"] = "None"
 
                         elif val["type"] == "float":
                             attributes[key]["value"] = float(0.)
@@ -169,8 +169,8 @@ class Pypeline(object):
                         if val["config"] == "header":
                             attributes[key]["value"] = str(config.get(val["config"], key))
 
-                        elif val["type"] == "str":
-                            attributes[key]["value"] = str(config.get(val["config"], key))
+                        # elif val["type"] == "str":
+                        #     attributes[key]["value"] = str(config.get(val["config"], key))
 
                         elif val["type"] == "float":
                             attributes[key]["value"] = float(config.get(val["config"], key))
