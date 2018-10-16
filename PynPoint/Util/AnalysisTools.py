@@ -115,7 +115,7 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
     if psf_size != im_size:
         raise ValueError("The images input to 'fake_planet' should have the same dimensions as the psf."
 
-    if ndim_psf == 3 and images.shape != psf.shape:
+    if ndim_psf == 3 and (images.shape[0] != psf.shape[0]):
         psf = np.average(psf,axis=0)
 
     sep = position[0]
