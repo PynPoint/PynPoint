@@ -95,6 +95,29 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
     :rtype: ndarray
     """
 
+    ndim_image = images.ndim
+    ndim_psf = psf.ndim
+
+    if ndim_image == 2:
+        im_size = images.shape
+    elif ndim_image == 3:
+        im_size = images[0].shape
+    else:
+        raise ValueError("images input to 'fake_planet' is not 2D or 3D.")
+
+    if ndim_psf == 2:
+        psf_size = psf.shape
+    elif ndim_psf == 3:
+        psf_size = psf[0].shape
+    else:
+        raise ValueError("psf input to 'fake_planet' is not 2D or 3D.")
+
+    if psf_size != im_size:
+        raise ValueError("The images input to 'fake_planet' should have the same dimensions as the psf."
+
+    if ndim_psf == 3 and images.shape != psf.shape:
+        psf = np.average(psf,axis=0)
+
     sep = position[0]
     ang = np.radians(position[1] + 90. - parang)
 
@@ -102,11 +125,6 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
     y_shift = sep*np.sin(ang)
 
     im_shift = np.zeros(images.shape)
-
-    if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-        warnings.warn('The number of frames in psf_in_tag does not match with the number of '
-                      'frames in image_in_tag. Using the mean of psf_in_tag as PSF template.')
-        psf = np.average(psf,axis=0)
 
     if images.ndim == 2:
         im_shift = shift_image(psf, (y_shift, x_shift), interpolation, mode='reflect')

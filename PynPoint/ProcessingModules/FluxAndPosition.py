@@ -331,6 +331,12 @@ class SimplexMinimizationModule(ProcessingModule):
         psf = self.m_psf_in_port.get_all()
         center = (psf.shape[-2]/2., psf.shape[-1]/2.)
 
+        images = self.m_image_in_port.get_all()
+
+        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
+            warnings.warn('The number of frames in psf_in_tag does not match with the number of '
+                          'frames in image_in_tag. Using the mean of psf_in_tag as PSF template.')
+
         def _objective(arg):
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -343,7 +349,7 @@ class SimplexMinimizationModule(ProcessingModule):
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
             contrast = 10.**(-mag/2.5)
 
-            fake = fake_planet(self.m_image_in_port.get_all(),
+            fake = fake_planet(images,
                                self.m_psf_scaling*contrast*psf,
                                parang,
                                (sep, ang),
