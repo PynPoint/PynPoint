@@ -711,6 +711,11 @@ class MCMCsamplingModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
+        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
+            warnings.warn('The number of frames in psf_in_tag does not match with the number of '
+                          'frames in image_in_tag. Using the mean of psf_in_tag as PSF template.')
+            psf = np.average(psf,axis=0)
+
         im_shape = image_size_port(self.m_image_in_port)
 
         if self.m_mask[0] is not None:
