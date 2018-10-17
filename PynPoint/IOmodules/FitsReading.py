@@ -10,6 +10,7 @@ import numpy as np
 
 from astropy.io import fits
 
+from PynPoint.Core.Attributes import get_attributes
 from PynPoint.Core.Processing import ReadingModule
 from PynPoint.Util.ModuleTools import progress
 
@@ -62,23 +63,18 @@ class FitsReadingModule(ReadingModule):
         self.m_overwrite = overwrite
         self.m_check = check
 
-        self.m_static = [('INSTRUMENT', True),
-                         ('DIT', True),
-                         ('LATITUDE', False),
-                         ('LONGITUDE', False)]
+        self.m_static = []
+        self.m_non_static = []
 
-        self.m_non_static = [('NFRAMES', True),
-                             ('EXP_NO', True),
-                             ('NDIT', True),
-                             ('DATE', True),
-                             ('PARANG_START', False),
-                             ('PARANG_END', False),
-                             ('PARANG', False),
-                             ('DITHER_X', False),
-                             ('DITHER_Y', False),
-                             ('PUPIL', False),
-                             ('RA', False),
-                             ('DEC', False)]
+        self.m_attributes = get_attributes()
+
+        for key, value in self.m_attributes.iteritems():
+            if value["config"] == "header" and value["attribute"] == "static":
+                self.m_static.append(key)
+
+        for key, value in self.m_attributes.iteritems():
+            if value["attribute"] == "non-static":
+                self.m_non_static.append(key)
 
         self.m_count = 0
 
@@ -102,7 +98,7 @@ class FitsReadingModule(ReadingModule):
         :type overwrite_tags: bool
 
         :return: FITS header and image shape.
-        :rtype: astropy FITS header, int, tuple(int)
+        :rtype: astropy.io.fits.header.Header, tuple
         """
 
         hdulist = fits.open(location + fits_file)
@@ -142,26 +138,25 @@ class FitsReadingModule(ReadingModule):
         :return: None
         """
 
-        for i, item in enumerate(self.m_static):
+        for item in self.m_static:
 
-            if self.m_check or self.m_static[i][1]:
-                fitskey = self._m_config_port.get_attribute(item[0])
+            if self.m_check:
+                fitskey = self._m_config_port.get_attribute(item)
 
                 if fitskey != "None":
-
                     if fitskey in header:
-                        status = self.m_image_out_port.check_static_attribute(item[0],
+                        status = self.m_image_out_port.check_static_attribute(item,
                                                                               header[fitskey])
 
                         if status == 1:
-                            self.m_image_out_port.add_attribute(item[0],
+                            self.m_image_out_port.add_attribute(item,
                                                                 header[fitskey],
                                                                 static=True)
 
                         if status == -1:
-                            warnings.warn('Static attribute %s has changed. Possibly the current '
-                                          'file %s does not belong to the data set %s of the '
-                                          'database. Updating attribute...' \
+                            warnings.warn("Static attribute %s has changed. Possibly the current "
+                                          "file %s does not belong to the data set '%s'. Attribute "
+                                          "value is updated." \
                                           % (fitskey, fits_file, self.m_image_out_port.tag))
 
                         elif status == 0:
@@ -169,7 +164,7 @@ class FitsReadingModule(ReadingModule):
 
                     else:
                         warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
-                                      % (item[0], fitskey))
+                                      % (item, fitskey))
 
     def _non_static_attributes(self, header):
         """
@@ -181,32 +176,27 @@ class FitsReadingModule(ReadingModule):
         :return: None
         """
 
-        for i, item in enumerate(self.m_non_static):
-
-            if self.m_check or self.m_non_static[i][1]:
-
-                if item[0] == 'PARANG':
-                    fitskey = 'PARANG'
+        for item in self.m_non_static:
+            if self.m_check:
+                if item in header:
+                    self.m_image_out_port.append_attribute_data(item, header[item])
 
                 else:
-                    fitskey = self._m_config_port.get_attribute(item[0])
+                    if self.m_attributes[item]["config"] == "header":
+                        fitskey = self._m_config_port.get_attribute(item)
 
-                if fitskey != "None":
+                        if fitskey != "None":
+                            if fitskey in header:
+                                self.m_image_out_port.append_attribute_data(item, header[fitskey])
 
-                    if fitskey in header:
-                        self.m_image_out_port.append_attribute_data(item[0], header[fitskey])
+                            elif header['NAXIS'] == 2 and item == 'NFRAMES':
+                                self.m_image_out_port.append_attribute_data(item, 1)
 
-                    elif header['NAXIS'] == 2 and item[0] == 'NFRAMES':
-                        self.m_image_out_port.append_attribute_data(item[0], 1)
+                            else:
+                                warnings.warn("Non-static attribute %s (=%s) not found in the "
+                                              "FITS header." % (item, fitskey))
 
-                    elif item[0] == 'PARANG':
-                        continue
-
-                    else:
-                        warnings.warn("Non-static attribute %s (=%s) not found in the FITS "
-                                      "header." % (item[0], fitskey))
-
-                        self.m_image_out_port.append_attribute_data(item[0], -1)
+                                self.m_image_out_port.append_attribute_data(item, -1)
 
     def _extra_attributes(self, fits_file, location, shape):
         """
