@@ -4,6 +4,7 @@ Module for writing data as FITS file.
 
 import os
 import sys
+import warnings
 
 from astropy.io import fits
 
@@ -13,8 +14,8 @@ from PynPoint.Core.Processing import WritingModule
 class FitsWritingModule(WritingModule):
     """
     Module for writing a data set of the central HDF5 database as FITS file. The data and all
-    attached attributes will be saved. Beside typical image stacks it is possible to export for
-    example non static header information. To choose the data set from the database its tag
+    attached attributes will be saved. Besides typical image stacks it is possible to export for
+    example non-static header information. To choose the data set from the database its tag
     / key has to be specified. FitsWritingModule is a Writing Module and supports to use the
     Pypeline default output directory as well as a own location. See
     :class:`PynPoint.core.Processing.WritingModule` for more information. Note that per default
@@ -55,10 +56,10 @@ class FitsWritingModule(WritingModule):
         super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output file_name needs to be a string.")
+            raise ValueError("Output 'file_name' needs to be a string.")
 
         if not file_name.endswith(".fits"):
-            raise ValueError("Output file_name requires the FITS extension.")
+            raise ValueError("Output 'file_name' requires the FITS extension.")
 
         self.m_file_name = file_name
         self.m_data_port = self.add_input_port(data_tag)
@@ -79,15 +80,16 @@ class FitsWritingModule(WritingModule):
         sys.stdout.flush()
 
         if os.path.isfile(out_name) and not self.m_overwrite:
-            sys.stdout.write("[NOT OVERWRITTEN]\n")
-            sys.stdout.flush()
+            warnings.warn("Filename already present. Use overwrite=True to overwrite an existing "
+                          "FITS file.")
 
         else:
             prihdr = fits.Header()
             attributes = self.m_data_port.get_all_static_attributes()
+
             for attr in attributes:
                 if len(attr) > 8:
-                    prihdr["hierarch " + attr] = attributes[attr]
+                    prihdr["hierarch "+attr] = attributes[attr]
                 else:
                     prihdr[attr] = attributes[attr]
 
@@ -95,8 +97,9 @@ class FitsWritingModule(WritingModule):
                 hdu = fits.PrimaryHDU(self.m_data_port.get_all(),
                                       header=prihdr)
             else:
-                hdu = fits.PrimaryHDU(self.m_data_port[self.m_range[0]: self.m_range[1], :, :],
+                hdu = fits.PrimaryHDU(self.m_data_port[self.m_range[0]:self.m_range[1], ],
                                       header=prihdr)
+
             hdulist = fits.HDUList([hdu])
             hdulist.writeto(out_name, overwrite=self.m_overwrite)
 
