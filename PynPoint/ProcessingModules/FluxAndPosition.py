@@ -337,6 +337,7 @@ class SimplexMinimizationModule(ProcessingModule):
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             warnings.warn('The number of frames in psf_in_tag does not match with the number of '
                           'frames in image_in_tag. Using the mean of psf_in_tag as PSF template.')
+            psf = np.average(psf,axis=0)
 
         def _objective(arg):
             sys.stdout.write('.')
