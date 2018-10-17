@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import pytest
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -30,29 +31,75 @@ class TestHdf5WritingModule(object):
     def test_hdf5_writing(self):
 
         write = Hdf5WritingModule(file_name="test.hdf5",
-                                  name_in="write",
+                                  name_in="write1",
                                   output_dir=None,
-                                  tag_dictionary={"images":"test"},
+                                  tag_dictionary={"images":"data1"},
+                                  keep_attributes=True,
+                                  overwrite=True)
+
+        self.pipeline.add_module(write)
+        self.pipeline.run_module("write1")
+
+    def test_no_data_tag(self):
+
+        write = Hdf5WritingModule(file_name="test.hdf5",
+                                  name_in="write2",
+                                  output_dir=None,
+                                  tag_dictionary={"empty":"empty"},
                                   keep_attributes=True,
                                   overwrite=False)
 
         self.pipeline.add_module(write)
-        self.pipeline.run_module("write")
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("write2")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
+                                             "InputPort."
+
+    def test_overwrite_false(self):
+
+        write = Hdf5WritingModule(file_name="test.hdf5",
+                                  name_in="write3",
+                                  output_dir=None,
+                                  tag_dictionary={"images":"data2"},
+                                  keep_attributes=True,
+                                  overwrite=False)
+
+        self.pipeline.add_module(write)
+        self.pipeline.run_module("write3")
+
+    def test_dictionary_none(self):
+
+        write = Hdf5WritingModule(file_name="test.hdf5",
+                                  name_in="write4",
+                                  output_dir=None,
+                                  tag_dictionary=None,
+                                  keep_attributes=True,
+                                  overwrite=False)
+
+        self.pipeline.add_module(write)
+        self.pipeline.run_module("write4")
 
     def test_hdf5_reading(self):
 
         read = Hdf5ReadingModule(name_in="read",
                                  input_filename="test.hdf5",
                                  input_dir=self.test_dir,
-                                 tag_dictionary={"test":"test"})
+                                 tag_dictionary={"data1":"data1", "data2":"data2"})
 
         self.pipeline.add_module(read)
         self.pipeline.run_module("read")
 
-        data1 = self.pipeline.get_data("images")
-        data2 = self.pipeline.get_data("test")
+        data1 = self.pipeline.get_data("data1")
+        data2 = self.pipeline.get_data("data2")
+        data3 = self.pipeline.get_data("images")
         assert np.allclose(data1, data2, rtol=limit, atol=0.)
+        assert np.allclose(data2, data3, rtol=limit, atol=0.)
 
         attribute1 = self.pipeline.get_attribute("images", "PARANG", static=False)
-        attribute2 = self.pipeline.get_attribute("test", "PARANG", static=False)
+        attribute2 = self.pipeline.get_attribute("data1", "PARANG", static=False)
+        attribute3 = self.pipeline.get_attribute("data2", "PARANG", static=False)
         assert np.allclose(attribute1, attribute2, rtol=limit, atol=0.)
+        assert np.allclose(attribute2, attribute3, rtol=limit, atol=0.)

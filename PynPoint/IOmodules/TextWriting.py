@@ -44,7 +44,7 @@ class TextWritingModule(WritingModule):
         super(TextWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output 'filename' needs to be a string.")
+            raise ValueError("Output 'file_name' needs to be a string.")
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -142,8 +142,7 @@ class ParangWritingModule(WritingModule):
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         if "PARANG" not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError("The 'PARANG' attribute is not present in '%s'."
-                             % self.m_data_port.tag)
+            raise ValueError("The PARANG attribute is not present in '%s'." % self.m_data_port.tag)
 
         parang = self.m_data_port.get_attribute("PARANG")
 
