@@ -24,7 +24,7 @@ setup(
                       'scipy',
                       'astropy<3.0.0',
                       'photutils',
-                      'scikit-image',
+                      'scikit-image==0.14.0',
                       'scikit-learn',
                       'opencv-python',
                       'statsmodels==0.8.0',
