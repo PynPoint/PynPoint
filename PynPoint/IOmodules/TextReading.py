@@ -68,7 +68,7 @@ class ParangReadingModule(ReadingModule):
             raise ValueError("The input file %s should contain a 1D data set with the parallactic "
                              "angles." % self.m_file_name)
 
-        status = self.m_data_port.check_non_static_attribute("PARANG", None)
+        status = self.m_data_port.check_non_static_attribute("PARANG", parang)
 
         if status == 1:
             self.m_data_port.add_attribute("PARANG", parang, static=False)
@@ -77,7 +77,7 @@ class ParangReadingModule(ReadingModule):
             self.m_data_port.add_attribute("PARANG", parang, static=False)
 
         elif status == -1 and not self.m_overwrite:
-            warnings.warn("The PARANG attribute is already present. Set the overwrite argument "
+            warnings.warn("The PARANG attribute is already present. Set the 'overwrite' parameter "
                           "to True in order to overwrite the values with "+str(self.m_file_name)+
                           ".")
 
@@ -123,6 +123,7 @@ class AttributeReadingModule(ReadingModule):
 
         :return: None
         """
+
         super(AttributeReadingModule, self).__init__(name_in, input_dir)
 
         if not isinstance(file_name, str):
@@ -148,7 +149,7 @@ class AttributeReadingModule(ReadingModule):
         attributes = get_attributes()
 
         if self.m_attribute not in attributes:
-            raise ValueError("%s is not a valid attribute." % self.m_attribute)
+            raise ValueError("'%s' is not a valid attribute." % self.m_attribute)
 
         values = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name),
                             dtype=attributes[self.m_attribute]["type"])
@@ -157,7 +158,7 @@ class AttributeReadingModule(ReadingModule):
             raise ValueError("The input file %s should contain a 1D list with attributes."
                              % self.m_file_name)
 
-        status = self.m_data_port.check_non_static_attribute(self.m_attribute, None)
+        status = self.m_data_port.check_non_static_attribute(self.m_attribute, values)
 
         if status == 1:
             self.m_data_port.add_attribute(self.m_attribute, values, static=False)
@@ -167,7 +168,7 @@ class AttributeReadingModule(ReadingModule):
 
         elif status == -1 and not self.m_overwrite:
             warnings.warn("The attribute '"+str(self.m_attribute)+"' is already present. Set the "
-                          "overwrite argument to True in order to overwrite the values with "
+                          "'overwrite' parameter to True in order to overwrite the values with "
                           +str(self.m_file_name)+".")
 
         elif status == 0:
