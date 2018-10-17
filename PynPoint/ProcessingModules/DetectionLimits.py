@@ -163,9 +163,9 @@ class ContrastCurveModule(ProcessingModule):
         self.m_aperture /= pixscale
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-            warnings.warn('The number of frames in psf_in_tag does not match with the number of '
-                          'frames in image_in_tag. Using the mean of psf_in_tag as PSF template.')
-            psf = np.average(psf,axis=0)
+            raise ValueError('The number of frames in psf_in_tag does not match with the number of '
+                             'frames in image_in_tag. You can use the DerotateAndOrStackModule to average '
+                             'the psf frames before applying the ContrastCurveModule.')
 
         center = np.array([images.shape[2]/2., images.shape[1]/2.])
 
