@@ -4,6 +4,7 @@ Modules for photometric and astrometric measurements of a planet.
 
 import math
 import sys
+import warnings
 
 import numpy as np
 import emcee
