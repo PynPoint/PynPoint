@@ -95,29 +95,6 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
     :rtype: ndarray
     """
 
-    ndim_image = images.ndim
-    ndim_psf = psf.ndim
-
-    if ndim_image == 2:
-        im_size = images.shape
-    elif ndim_image == 3:
-        im_size = images[0].shape
-    else:
-        raise ValueError("images input to 'fake_planet' is not 2D or 3D.")
-
-    if ndim_psf == 2:
-        psf_size = psf.shape
-    elif ndim_psf == 3:
-        psf_size = psf[0].shape
-    else:
-        raise ValueError("psf input to 'fake_planet' is not 2D or 3D.")
-
-    if psf_size != im_size:
-        raise ValueError("The images input to 'fake_planet' should have the same dimensions as the psf.")
-
-    if ndim_psf == 3 and (images.shape[0] != psf.shape[0]):
-        psf = np.average(psf,axis=0)
-
     sep = position[0]
     ang = np.radians(position[1] + 90. - parang)
 
