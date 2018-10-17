@@ -2,9 +2,8 @@
 Functions for analysis of a planet signal.
 """
 
-import warnings
-
 import math
+
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture
