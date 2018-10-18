@@ -111,10 +111,10 @@ class TestBadPixelCleaning(object):
         self.pipeline.run_module("interpolation")
 
         data = self.pipeline.get_data("interpolation")
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=1e-8, atol=0.)
+        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=1e-8, atol=0.)
+        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=1e-8, atol=0.)
+        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=1e-8, atol=0.)
         assert data.shape == (40, 100, 100)
 
     def test_bad_pixel_time(self):
