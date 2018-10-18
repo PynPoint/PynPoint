@@ -5,14 +5,14 @@ matrix:
           language: generic
           env:
             - TOXENV=py27
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
+            # - NUMBA_DISABLE_JIT=1
+            # - COVERALLS_PARALLEL=true
         - os: linux
           python: 2.7
           env:
             - TOXENV=py27
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
+            # - NUMBA_DISABLE_JIT=1
+            # - COVERALLS_PARALLEL=true
 install:
   - pip2 install numpy
   - pip2 install enum34
@@ -20,7 +20,8 @@ install:
   - pip2 install tox
   - pip2 install coverage
   - pip2 install sphinx
-  - pip2 install codecov
+  - pip install coveralls
+  # - pip2 install codecov
   - pip2 install sphinx_rtd_theme
 before_script:
   - mkdir $HOME/.matplotlib
@@ -29,10 +30,9 @@ script:
   - make test
   - make test-all
   - make coverage
-  - sbt clean coverage test
   - make docs
 after_success:
-  - sbt coveralls
+  - coveralls
   # - notifications:
   #    webhooks: https://coveralls.io/webhook
   # - codecov
