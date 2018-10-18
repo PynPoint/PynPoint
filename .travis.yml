@@ -18,7 +18,7 @@ install:
   - pip2 install tox
   - pip2 install coverage
   - pip2 install sphinx
-  - pip2 install codecov
+  - pip2 install coveralls
   - pip2 install sphinx_rtd_theme
 before_script:
   - mkdir $HOME/.matplotlib
@@ -29,6 +29,6 @@ script:
   - make coverage
   - make docs
 after_success:
-  - codecov
+  - coveralls
 notifications:
   email: false
