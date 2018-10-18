@@ -84,8 +84,8 @@ def fake_planet(images,
     """
     Function to inject artificial planets in a dataset.
 
-    :param image: Input images.
-    :type image: ndarray
+    :param images: Input images.
+    :type images: ndarray
     :param psf: PSF template.
     :type psf: ndarray
     :param parang: Parallactic angles (deg).
@@ -93,6 +93,10 @@ def fake_planet(images,
     :param position: Separation (pix) and position angle (deg) measured in counterclockwise
                      with respect to the upward direction.
     :type position: (float, float)
+    :param magnitude: Magnitude difference used to scale input PSF.
+    :type magnitude: float
+    :param psf_scaling: Extra factor used to scale input PSF.
+    :type psf_scaling: float
     :param interpolation: Interpolation type (spline, bilinear, fft)
     :type interpolation: str
 
@@ -102,7 +106,7 @@ def fake_planet(images,
 
     sep = position[0]
     ang = np.radians(position[1] + 90. - parang)
-    
+
     flux_ratio = 10. ** (-magnitude / 2.5)
     psf = psf*psf_scaling*flux_ratio
 
