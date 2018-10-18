@@ -8,55 +8,8 @@ import numpy as np
 
 from photutils import aperture_photometry
 
-from PynPoint.Util.ImageTools import shift_image
+from PynPoint.Util.AnalysisTools import fake_planet
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
-
-
-def fake_planet(science,
-                psf,
-                parang,
-                position,
-                magnitude,
-                psf_scaling,
-                pixscale):
-    """
-    Function to inject fake planets into a cube of images. This function is similar to
-    FakePlanetModule but does not require access to the PynPoint database.
-
-    :return: Images with a fake planet injected.
-    :rtype: ndarray
-    """
-
-    radial = position[0]/pixscale
-    theta = position[1]*math.pi/180. + math.pi/2.
-    flux_ratio = 10.**(-magnitude/2.5)
-
-    psf_size = (psf.shape[-2], psf.shape[-1])
-
-    if psf_size != (science.shape[1], science.shape[2]):
-        raise ValueError("The science images should have the same dimensions as the PSF template.")
-
-    if psf.ndim == 3 and psf.shape[0] == 1:
-        psf = np.squeeze(psf, axis=0)
-    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
-        psf = np.mean(psf, axis=0)
-
-    fake = np.copy(science)
-
-    for i in range(fake.shape[0]):
-        x_shift = radial*math.cos(theta-math.radians(parang[i]))
-        y_shift = radial*math.sin(theta-math.radians(parang[i]))
-
-        if psf.ndim == 2:
-            psf_tmp = np.copy(psf)
-        elif psf.ndim == 3:
-            psf_tmp = np.copy(psf[i, ])
-
-        psf_tmp = shift_image(psf_tmp, (y_shift, x_shift), interpolation="spline", mode='reflect')
-
-        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
-
-    return fake
 
 def lnprob(param,
            bounds,
@@ -141,10 +94,9 @@ def lnprob(param,
         fake = fake_planet(images,
                            psf,
                            parang-extra_rot,
-                           (sep, ang),
+                           (sep/pixscale, ang),
                            mag,
-                           psf_scaling,
-                           pixscale)
+                           psf_scaling)
 
         fake *= mask
 

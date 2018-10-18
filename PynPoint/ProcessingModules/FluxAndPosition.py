@@ -4,7 +4,6 @@ Modules for photometric and astrometric measurements of a planet.
 
 import math
 import sys
-import warnings
 
 import numpy as np
 import emcee
@@ -146,8 +145,6 @@ class FakePlanetModule(ProcessingModule):
 
         self.m_position = (self.m_position[0]/pixscale, self.m_position[1])
 
-        flux_ratio = 10.**(-self.m_magnitude/2.5)
-
         psf, ndim_psf, ndim, frames = self._init()
 
         for j, _ in enumerate(frames[:-1]):
@@ -160,9 +157,11 @@ class FakePlanetModule(ProcessingModule):
                 psf = np.copy(images)
 
             im_fake = fake_planet(images,
-                                  self.m_psf_scaling*flux_ratio*psf,
+                                  psf,
                                   angles,
                                   self.m_position,
+                                  self.m_magnitude,
+                                  self.m_psf_scaling,
                                   interpolation="spline")
 
             if ndim == 2:
@@ -349,12 +348,13 @@ class SimplexMinimizationModule(ProcessingModule):
 
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
-            contrast = 10.**(-mag/2.5)
 
             fake = fake_planet(images,
-                               self.m_psf_scaling*contrast*psf,
+                               psf,
                                parang,
                                (sep, ang),
+                               mag,
+                               self.m_psf_scaling,
                                interpolation="spline")
 
             im_shape = (fake.shape[-2], fake.shape[-1])
@@ -711,10 +711,10 @@ class MCMCsamplingModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
-        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-            raise ValueError('The number of frames in psf_in_tag does not match with the number of '
-                             'frames in image_in_tag. You can use the DerotateAndOrStackModule to average '
-                             'the psf frames before applying the MCMCsamplingModule.')
+        #if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
+        #    raise ValueError('The number of frames in psf_in_tag does not match with the number of '
+        #                     'frames in image_in_tag. You can use the DerotateAndOrStackModule to average '
+        #                     'the psf frames before applying the MCMCsamplingModule.')
 
         im_shape = image_size_port(self.m_image_in_port)
 
