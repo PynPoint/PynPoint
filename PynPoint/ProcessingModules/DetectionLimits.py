@@ -233,12 +233,13 @@ class ContrastCurveModule(ProcessingModule):
                     sys.stdout.flush()
 
                     mag = list_mag[-1]
-                    flux_ratio = 10.**(-mag/2.5)
 
                     fake = fake_planet(self.m_image_in_port.get_all(),
-                                       self.m_psf_scaling*flux_ratio*psf,
+                                       psf,
                                        parang,
                                        (sep, ang),
+                                       mag,
+                                       self.m_psf_scaling,
                                        interpolation="spline")
 
                     im_shape = (fake.shape[-2], fake.shape[-1])
