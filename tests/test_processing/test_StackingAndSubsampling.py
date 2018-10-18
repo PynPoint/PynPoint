@@ -8,7 +8,7 @@ from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule, \
                                                               MeanCubeModule, \
-                                                              DerotateAndStackModule, \
+                                                              DerotateAndOrStackModule, \
                                                               CombineTagsModule
 from PynPoint.Util.TestTools import create_config, create_star_data, remove_test_data
 
@@ -105,7 +105,7 @@ class TestStackingAndSubsampling(object):
 
     def test_derotate_and_stack(self):
 
-        derotate = DerotateAndStackModule(name_in="derotate1",
+        derotate = DerotateAndOrStackModule(name_in="derotate1",
                                           image_in_tag="images",
                                           image_out_tag="derotate1",
                                           derotate=True,
@@ -120,7 +120,7 @@ class TestStackingAndSubsampling(object):
         assert np.allclose(np.mean(data), 0.00010021671152246617, rtol=limit, atol=0.)
         assert data.shape == (100, 100)
 
-        derotate = DerotateAndStackModule(name_in="derotate2",
+        derotate = DerotateAndOrStackModule(name_in="derotate2",
                                           image_in_tag="images",
                                           image_out_tag="derotate2",
                                           derotate=False,
