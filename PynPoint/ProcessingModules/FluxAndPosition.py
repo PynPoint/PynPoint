@@ -349,12 +349,9 @@ class SimplexMinimizationModule(ProcessingModule):
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
 
-            fake = fake_planet(images,
-                               psf,
-                               parang,
-                               (sep, ang),
-                               mag,
-                               self.m_psf_scaling,
+            fake = fake_planet(images, psf,
+                               parang, (sep, ang),
+                               mag, self.m_psf_scaling,
                                interpolation="spline")
 
             im_shape = (fake.shape[-2], fake.shape[-1])
