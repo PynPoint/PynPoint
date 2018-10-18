@@ -6,11 +6,13 @@ matrix:
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
         - os: linux
           python: 2.7
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 install:
   - pip2 install numpy
   - pip2 install enum34
@@ -29,6 +31,8 @@ script:
   - make coverage
   - make docs
 after_success:
-  - codecov
+  -notifications:
+    webhooks: https://coveralls.io/webhook
+  # - codecov
 notifications:
   email: false
