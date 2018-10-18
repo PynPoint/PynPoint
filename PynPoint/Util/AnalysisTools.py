@@ -102,12 +102,7 @@ def fake_planet(images,
 
     sep = position[0]
     ang = np.radians(position[1] + 90. - parang)
-
-    if psf.ndim == 3 and psf.shape[0] == 1:
-        psf = np.squeeze(psf, axis=0)
-    elif psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-        psf = np.mean(psf, axis=0)
-
+    
     flux_ratio = 10. ** (-magnitude / 2.5)
     psf = psf*psf_scaling*flux_ratio
 
