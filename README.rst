@@ -19,7 +19,7 @@ PynPoint
     :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
-    :target: https://pypi.python.org/pypi/PynPoint-exoplanet
+    :target: https://pypi.python.org/pypi/pynpoint
 
 .. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
     :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
@@ -36,7 +36,7 @@ PynPoint is under continuous development and the latest implementations can be p
 Documentation
 -------------
 
-Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, end-to-end examples for data obtained with dithering and nodding, and a description of the various processing modules and parameters.
+Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, and end-to-end example for data obtained with dithering, and a description of the various processing modules and parameters.
 
 Attribution
 -----------

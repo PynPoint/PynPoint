@@ -3,10 +3,14 @@ matrix:
     include:
         - os: osx
           language: generic
-          env: TOXENV=py27
+          env:
+            - TOXENV=py27
+            - NUMBA_DISABLE_JIT=1
         - os: linux
           python: 2.7
-          env: TOXENV=py27
+          env:
+            - TOXENV=py27
+            - NUMBA_DISABLE_JIT=1
 install:
   - pip2 install numpy
   - pip2 install enum34
