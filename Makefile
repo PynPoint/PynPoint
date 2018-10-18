@@ -27,7 +27,7 @@ clean-python:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 clean-test:
-	rm -f .coverage
+	rm -f .coverage.*
 	rm -f coverage.xml
 	rm -rf .tox/
 	rm -rf PynPoint.egg-info/
