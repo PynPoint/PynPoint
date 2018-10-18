@@ -5,13 +5,13 @@ matrix:
           language: generic
           env:
             - TOXENV=py27
-            # - NUMBA_DISABLE_JIT=1
+            - NUMBA_DISABLE_JIT=1
             # - COVERALLS_PARALLEL=true
         - os: linux
           python: 2.7
           env:
             - TOXENV=py27
-            # - NUMBA_DISABLE_JIT=1
+            - NUMBA_DISABLE_JIT=1
             # - COVERALLS_PARALLEL=true
 install:
   - pip2 install numpy
