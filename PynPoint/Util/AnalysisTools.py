@@ -74,7 +74,7 @@ def student_fpf(sigma, radius, size, ignore):
 
     return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
 
-def fake_planet(science,
+def fake_planet(images,
                 psf,
                 parang,
                 position,
@@ -100,33 +100,37 @@ def fake_planet(science,
     :rtype: ndarray
     """
 
-    radial = position[0]
-    theta = position[1]*math.pi/180. + math.pi/2.
-    flux_ratio = 10.**(-magnitude/2.5)
-
-    psf_size = (psf.shape[-2], psf.shape[-1])
-
-    if psf_size != (science.shape[1], science.shape[2]):
-        raise ValueError("The science images should have the same dimensions as the PSF template.")
+    sep = position[0]
+    ang = np.radians(position[1] + 90. - parang)
 
     if psf.ndim == 3 and psf.shape[0] == 1:
         psf = np.squeeze(psf, axis=0)
-    elif psf.ndim == 3 and psf.shape[0] != science.shape[0]:
+    elif psf.ndim == 3 and psf.shape[0] != images.shape[0]:
         psf = np.mean(psf, axis=0)
 
-    fake = np.copy(science)
+    flux_ratio = 10. ** (-magnitude / 2.5)
+    psf = psf*psf_scaling*flux_ratio
 
-    for i in range(fake.shape[0]):
-        x_shift = radial*math.cos(theta-math.radians(parang[i]))
-        y_shift = radial*math.sin(theta-math.radians(parang[i]))
+    x_shift = sep*np.cos(ang)
+    y_shift = sep*np.sin(ang)
 
-        if psf.ndim == 2:
-            psf_tmp = np.copy(psf)
-        elif psf.ndim == 3:
-            psf_tmp = np.copy(psf[i, ])
+    im_shift = np.zeros(images.shape)
 
-        psf_tmp = shift_image(psf_tmp, (y_shift, x_shift), interpolation, mode='reflect')
+    if images.ndim == 2:
+        im_shift = shift_image(psf, (y_shift, x_shift), interpolation, mode='reflect')
 
-        fake[i, ] += psf_scaling*flux_ratio*psf_tmp
+    elif images.ndim == 3:
+        for i in range(images.shape[0]):
+            if psf.ndim == 2:
+                im_shift[i, ] = shift_image(psf,
+                                            (y_shift[i], x_shift[i]),
+                                            interpolation,
+                                            mode='reflect')
 
-    return fake
+            elif psf.ndim == 3:
+                im_shift[i, ] = shift_image(psf[i, ],
+                                            (y_shift[i], x_shift[i]),
+                                            interpolation,
+                                            mode='reflect')
+
+    return images + im_shift
