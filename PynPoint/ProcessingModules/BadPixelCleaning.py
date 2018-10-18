@@ -128,32 +128,32 @@ def _bad_pixel_interpolation(image_in,
     return image_in * bad_pixel_map + np.fft.ifft2(F_roof).real * (1 - bad_pixel_map)
 
 
-@jit(cache=True)
-def _sigma_detection(dev_image,
-                     var_image,
-                     source_image,
-                     out_image):
-    """"
-    Internal function to create a map with ones and zeros.
-
-    :param dev_image: Image of pixel deviations from neighborhood means, squared.
-    :type dev_image: ndarray
-    :param var_image: Image of pixel neighborhood variances * (N_sigma)^2.
-    :type var_image: ndarray
-    :param source_image: Input image.
-    :type source_image: ndarray
-    :param out_image: Bad pixel map.
-    :type out_image: ndarray
-
-    :return: None
-    """
-
-    for i in range(source_image.shape[0]):
-        for j in range(source_image.shape[1]):
-            if dev_image[i][j] < var_image[i][j]:
-                out_image[i][j] = 1
-            else:
-                out_image[i][j] = 0
+# @jit(cache=True)
+# def _sigma_detection(dev_image,
+#                      var_image,
+#                      source_image,
+#                      out_image):
+#     """"
+#     Internal function to create a map with ones and zeros.
+#
+#     :param dev_image: Image of pixel deviations from neighborhood means, squared.
+#     :type dev_image: ndarray
+#     :param var_image: Image of pixel neighborhood variances * (N_sigma)^2.
+#     :type var_image: ndarray
+#     :param source_image: Input image.
+#     :type source_image: ndarray
+#     :param out_image: Bad pixel map.
+#     :type out_image: ndarray
+#
+#     :return: None
+#     """
+#
+#     for i in range(source_image.shape[0]):
+#         for j in range(source_image.shape[1]):
+#             if dev_image[i][j] < var_image[i][j]:
+#                 out_image[i][j] = 1
+#             else:
+#                 out_image[i][j] = 0
 
 
 class BadPixelSigmaFilterModule(ProcessingModule):
