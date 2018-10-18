@@ -36,18 +36,17 @@ class Hdf5ReadingModule(ReadingModule):
                                location will be imported if no filename is provided.
         :type input_filename: str
         :param input_dir: The directory of the input HDF5 file. If no location is given, the
-                          Pypeline default input location is used.
+                          default input location of the Pypeline is used.
         :type input_dir: str
-        :param tag_dictionary: Directory of all dataset keys / tags which will be imported. The
-                               dictionary is used like this:
+        :param tag_dictionary: Dictionary of all data sets that will be imported. The dictionary
+                               format is:
 
-                               { *tag_of_the_dataset_in_the_hdf5_file* :
-                                 *name_of_the_imported_dataset* }
+                               {*tag_name_in_input_file*:*tag_name_in_database*, }
 
-                               All datasets of the external HDF5 file which match one of the
-                               *tag_of_the_dataset_in_the_hdf5_file* tags in the tag_dictionary
-                               will be imported. Their names inside the internal PynPoint database
-                               will be changed to *name_of_the_imported_dataset*.
+                               All data sets in the input HDF5 file that match one of the
+                               *tag_name_in_input_file* will be imported. The tag name inside
+                               the internal Pypeline database will be changed to
+                               *tag_name_in_database*.
         :type tag_dictionary: dict
 
         :return: None
@@ -78,33 +77,27 @@ class Hdf5ReadingModule(ReadingModule):
         hdf5_file = h5py.File(file_in, mode='r')
 
         for _, entry in enumerate(hdf5_file.keys()):
-            # do not read header information groups
-            if entry.startswith("header_"):
-                continue
+            entry = str(entry) # unicode keys cause errors
 
-            entry = str(entry)  # unicode keys cause errors
-
-            if entry in self._m_tag_dictionary:
+            if entry in self._m_tag_dictionary and not entry.startswith("header_"):
                 tmp_tag = self._m_tag_dictionary[entry]
-            else:
-                continue
 
-            # add data
-            tmp_port = self._m_output_ports[tmp_tag]
-            tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
+                # add data
+                tmp_port = self._m_output_ports[tmp_tag]
+                tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
 
-            # add static attributes
-            for attribute_name, attribute_value in hdf5_file[entry].attrs.iteritems():
-                tmp_port.add_attribute(name=attribute_name,
-                                       value=attribute_value)
+                # add static attributes
+                for attribute_name, attribute_value in hdf5_file[entry].attrs.iteritems():
+                    tmp_port.add_attribute(name=attribute_name,
+                                           value=attribute_value)
 
-            # add non static attributes if existing
-            if "header_" + entry in hdf5_file:
-                for non_static_attr in hdf5_file[("header_" + entry)]:
-                    tmp_port.add_attribute(name=non_static_attr,
-                                           value=hdf5_file[("header_" + entry+
-                                                            "/"+non_static_attr)][...],
-                                           static=False)
+                # add non-static attributes
+                if "header_" + entry in hdf5_file:
+                    for non_static_attr in hdf5_file[("header_" + entry)]:
+                        tmp_port.add_attribute(name=non_static_attr,
+                                               value=hdf5_file[("header_" + entry+
+                                                                "/"+non_static_attr)][...],
+                                               static=False)
 
     def run(self):
         """
@@ -122,9 +115,8 @@ class Hdf5ReadingModule(ReadingModule):
         # check if a single input file is given
         if self.m_filename is not None:
             # create file path + filename
-            assert(os.path.isfile((tmp_dir + str(self.m_filename)))), "Error: Input file does not "\
-                                                                      "exist. Input requested: %s"\
-                                                                      % str(self.m_filename)
+            assert(os.path.isfile((tmp_dir + str(self.m_filename)))), \
+                   "Error: Input file does not exist. Input requested: %s" % str(self.m_filename)
 
             files.append((tmp_dir + str(self.m_filename)))
 
