@@ -29,10 +29,12 @@ script:
   - make test
   - make test-all
   - make coverage
+  - sbt clean coverage test
   - make docs
 after_success:
-  -notifications:
-    webhooks: https://coveralls.io/webhook
+  - sbt coveralls
+  # - notifications:
+  #    webhooks: https://coveralls.io/webhook
   # - codecov
 notifications:
   email: false
