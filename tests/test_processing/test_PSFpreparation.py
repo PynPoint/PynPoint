@@ -2,7 +2,6 @@ import os
 import warnings
 
 import pytest
-
 import numpy as np
 
 from PynPoint.Core.Pypeline import Pypeline
@@ -61,6 +60,7 @@ class TestPSFpreparation(object):
         assert data.shape == (40, )
 
     def test_angle_calculation(self):
+
         self.pipeline.set_attribute("read", "LATITUDE", -25.)
         self.pipeline.set_attribute("read", "LONGITUDE", -70.)
         self.pipeline.set_attribute("read", "DIT", 1.)
@@ -116,7 +116,32 @@ class TestPSFpreparation(object):
         assert np.allclose(np.mean(data), 270.9702735149575, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_psf_preparation(self):
+    def test_angle_interpolation_mismatch(self):
+
+        self.pipeline.set_attribute("read", "NDIT", [9, 9, 9, 9], static=False)
+
+        angle = AngleInterpolationModule(name_in="angle5",
+                                         data_tag="read")
+
+        self.pipeline.add_module(angle)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("angle5")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "There is a mismatch between the NDIT and NFRAMES " \
+                                             "values. The derotation angles are calculated with " \
+                                             "a linear interpolation by using NFRAMES steps. A " \
+                                             "frame selection should be applied after the " \
+                                             "derotation angles are calculated."
+
+        data = self.pipeline.get_data("header_read/PARANG")
+        assert np.allclose(data[0], 0., rtol=limit, atol=0.)
+        assert np.allclose(data[15], 7.777777777777778, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
+        assert data.shape == (40, )
+
+    def test_psf_preparation_norm_resize_mask(self):
 
         prep = PSFpreparationModule(name_in="prep1",
                                     image_in_tag="read",
@@ -137,6 +162,15 @@ class TestPSFpreparation(object):
         assert np.allclose(np.mean(data), 0.0001818623671899089, rtol=limit, atol=0.)
         assert data.shape == (40, 200, 200)
 
+        data = self.pipeline.get_data("mask1")
+        assert np.allclose(data[0, 0], 0., rtol=limit, atol=0.)
+        assert np.allclose(data[120, 120], 1., rtol=limit, atol=0.)
+        assert np.allclose(data[100, 100], 0., rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.1067, rtol=limit, atol=0.)
+        assert data.shape == (200, 200)
+
+    def test_psf_preparation_none(self):
+
         prep = PSFpreparationModule(name_in="prep2",
                                     image_in_tag="read",
                                     image_out_tag="prep2",
@@ -150,6 +184,27 @@ class TestPSFpreparation(object):
         self.pipeline.run_module("prep2")
 
         data = self.pipeline.get_data("prep2")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 99, 99], -0.000287573978535779, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+    def test_psf_preparation_no_mask_out(self):
+
+        prep = PSFpreparationModule(name_in="prep3",
+                                    image_in_tag="read",
+                                    image_out_tag="prep3",
+                                    mask_out_tag=None,
+                                    norm=False,
+                                    resize=None,
+                                    cent_size=None,
+                                    edge_size=None)
+
+        self.pipeline.add_module(prep)
+        self.pipeline.run_module("prep3")
+
+        data = self.pipeline.get_data("prep3")
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
         assert np.allclose(data[0, 99, 99], -0.000287573978535779, rtol=limit, atol=0.)
