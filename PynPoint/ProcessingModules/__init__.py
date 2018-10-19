@@ -18,7 +18,7 @@ from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 
 from PynPoint.ProcessingModules.StackingAndSubsampling import StackAndSubsetModule, \
                                                               MeanCubeModule, \
-                                                              DerotateAndStackModule, \
+                                                              DerotateAndOrStackModule, \
                                                               CombineTagsModule
 
 from PynPoint.ProcessingModules.StarAlignment import StarAlignmentModule, \
