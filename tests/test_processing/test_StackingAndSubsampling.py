@@ -106,11 +106,11 @@ class TestStackingAndSubsampling(object):
     def test_derotate_and_stack(self):
 
         derotate = DerotateAndOrStackModule(name_in="derotate1",
-                                          image_in_tag="images",
-                                          image_out_tag="derotate1",
-                                          derotate=True,
-                                          stack="mean",
-                                          extra_rot=10.)
+                                            image_in_tag="images",
+                                            image_out_tag="derotate1",
+                                            derotate=True,
+                                            stack="mean",
+                                            extra_rot=10.)
 
         self.pipeline.add_module(derotate)
         self.pipeline.run_module("derotate1")
@@ -121,11 +121,11 @@ class TestStackingAndSubsampling(object):
         assert data.shape == (100, 100)
 
         derotate = DerotateAndOrStackModule(name_in="derotate2",
-                                          image_in_tag="images",
-                                          image_out_tag="derotate2",
-                                          derotate=False,
-                                          stack="median",
-                                          extra_rot=0.)
+                                            image_in_tag="images",
+                                            image_out_tag="derotate2",
+                                            derotate=False,
+                                            stack="median",
+                                            extra_rot=0.)
 
         self.pipeline.add_module(derotate)
         self.pipeline.run_module("derotate2")

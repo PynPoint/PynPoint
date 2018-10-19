@@ -273,8 +273,8 @@ class DerotateAndOrStackModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Uses the PARANG attributes to derotate the images (if derotate is set to True)
-        and applies an optional mean or median stacking afterwards.
+        Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
+        is set to True) and applies an optional mean or median stacking afterwards.
 
         :return: None
         """
