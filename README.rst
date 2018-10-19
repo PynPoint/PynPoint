@@ -3,26 +3,23 @@ PynPoint
 
 **Python package for processing and analysis of high-contrast imaging data**
 
-.. image:: https://img.shields.io/badge/GitHub-PynPoint-blue.svg?style=flat
-    :target: https://github.com/PynPoint/PynPoint
+.. image:: https://badge.fury.io/py/pynpoint.svg
+    :target: https://badge.fury.io/py/pynpoint
+
+.. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
+    :target: https://pypi.python.org/pypi/pynpoint
 
 .. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master
     :target: https://travis-ci.org/PynPoint/PynPoint
 
-.. .. image:: https://codecov.io/gh/PynPoint/PynPoint/branch/master/graph/badge.svg
-..     :target: https://codecov.io/gh/PynPoint/PynPoint
+.. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
+    :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://coveralls.io/repos/github/PynPoint/PynPoint/badge.svg?branch=master
     :target: https://coveralls.io/github/PynPoint/PynPoint?branch=master
 
 .. image:: https://www.codefactor.io/repository/github/pynpoint/pynpoint/badge
     :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
-
-.. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
-    :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
-
-.. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
-    :target: https://pypi.python.org/pypi/pynpoint
 
 .. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
     :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE

@@ -326,10 +326,9 @@ class SortParangModule(ProcessingModule):
         if star_new is not None:
             self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
 
-        if "NFRAMES" in self.m_image_in_port.get_all_non_static_attributes():
-            self.m_image_out_port.del_attribute("NFRAMES")
+        self.m_image_out_port.add_history_information("SortParangModule",
+                                                      "images sorted by INDEX")
 
-        self.m_image_out_port.add_history_information("Images sorted", "parang")
         self.m_image_out_port.close_port()
 
 
