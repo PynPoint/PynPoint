@@ -229,9 +229,9 @@ class MeanCubeModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
 
-class DerotateAndStackModule(ProcessingModule):
+class DerotateAndOrStackModule(ProcessingModule):
     """
-    Module for derotating and/or stacking of the images.
+    Module for derotating and/or stacking (i.e., taking the median or average) of the images.
     """
 
     def __init__(self,
@@ -242,7 +242,7 @@ class DerotateAndStackModule(ProcessingModule):
                  stack=None,
                  extra_rot=0.):
         """
-        Constructor of DerotateAndStackModule.
+        Constructor of DerotateAndOrStackModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -253,7 +253,8 @@ class DerotateAndStackModule(ProcessingModule):
         :type image_out_tag: str
         :param derotate: Derotate the images with the PARANG attribute.
         :type derotate: bool
-        :param stack: Type of stacking applied after derotation ("mean", or "median").
+        :param stack: Type of stacking applied after optional derotation ("mean", "median",
+                      or None for no stacking).
         :type stack: str
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
@@ -261,7 +262,7 @@ class DerotateAndStackModule(ProcessingModule):
         :return: None
         """
 
-        super(DerotateAndStackModule, self).__init__(name_in=name_in)
+        super(DerotateAndOrStackModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -272,8 +273,8 @@ class DerotateAndStackModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Uses the PARANG attributes to derotate the images and applies
-        an optional mean or median stacking afterwards.
+        Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
+        is set to True) and applies an optional mean or median stacking afterwards.
 
         :return: None
         """
@@ -313,7 +314,7 @@ class DerotateAndStackModule(ProcessingModule):
         nimages, frames, im_tot = _initialize(ndim, npix)
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
+            progress(i, len(frames[:-1]), "Running DerotateAndOrStackModule...")
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -330,7 +331,7 @@ class DerotateAndStackModule(ProcessingModule):
             elif self.m_stack == "mean":
                 im_tot += np.sum(images, axis=0)
 
-        sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
+        sys.stdout.write("Running DerotateAndOrStackModule... [DONE]\n")
         sys.stdout.flush()
 
         if self.m_stack == "mean":
