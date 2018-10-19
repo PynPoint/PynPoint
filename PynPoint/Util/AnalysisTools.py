@@ -74,12 +74,18 @@ def student_fpf(sigma, radius, size, ignore):
 
     return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
 
-def fake_planet(images, psf, parang, position, interpolation="spline"):
+def fake_planet(images,
+                psf,
+                parang,
+                position,
+                magnitude,
+                psf_scaling,
+                interpolation="spline"):
     """
     Function to inject artificial planets in a dataset.
 
-    :param image: Input images.
-    :type image: ndarray
+    :param images: Input images.
+    :type images: ndarray
     :param psf: PSF template.
     :type psf: ndarray
     :param parang: Parallactic angles (deg).
@@ -87,6 +93,10 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
     :param position: Separation (pix) and position angle (deg) measured in counterclockwise
                      with respect to the upward direction.
     :type position: (float, float)
+    :param magnitude: Magnitude difference used to scale input PSF.
+    :type magnitude: float
+    :param psf_scaling: Extra factor used to scale input PSF.
+    :type psf_scaling: float
     :param interpolation: Interpolation type (spline, bilinear, fft)
     :type interpolation: str
 
@@ -96,6 +106,9 @@ def fake_planet(images, psf, parang, position, interpolation="spline"):
 
     sep = position[0]
     ang = np.radians(position[1] + 90. - parang)
+
+    flux_ratio = 10. ** (-magnitude / 2.5)
+    psf = psf*psf_scaling*flux_ratio
 
     x_shift = sep*np.cos(ang)
     y_shift = sep*np.sin(ang)
