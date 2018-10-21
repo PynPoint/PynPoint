@@ -41,7 +41,7 @@ Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.r
 Mailing list
 ------------
 
-The PynPoint mailing list is used to announce new functionalities, pipeline modules, and other updates. Please `subscribe <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to stay informed.
+Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to be informed about new functionalities, pipeline modules, releases, and other PynPoint related news.
 
 Attribution
 -----------
