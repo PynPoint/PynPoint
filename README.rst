@@ -33,15 +33,15 @@ The pipeline has a modular architecture with a central data storage in which the
 
 PynPoint is under continuous development and the latest implementations can be pulled from Github repository. Bug reports, requests for new features, and contributions in the form of new processing modules are highly appreciated. Instructions for writing of modules are provided in the documentation. Bug reports and functionality requests can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
-Mailing list
-------------
-
-The PynPoint mailing list is used to announce new functionalities, pipeline modules, and other updates. Please `subscribe <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to stay informed.
-
 Documentation
 -------------
 
 Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, and end-to-end example for data obtained with dithering, and a description of the various processing modules and parameters.
+
+Mailing list
+------------
+
+The PynPoint mailing list is used to announce new functionalities, pipeline modules, and other updates. Please `subscribe <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to stay informed.
 
 Attribution
 -----------
