@@ -160,6 +160,12 @@ class ContrastCurveModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
+        if self.m_cent_size is not None:
+            self.m_cent_size /= pixscale
+
+        if self.m_edge_size is not None:
+            self.m_edge_size /= pixscale
+
         self.m_aperture /= pixscale
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
@@ -180,15 +186,13 @@ class ContrastCurveModule(ProcessingModule):
         if self.m_cent_size is None:
             index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
         else:
-            self.m_cent_size /= pixscale
             index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size)
 
         pos_r = np.delete(pos_r, index_del)
 
-        if self.m_edge_size is None or self.m_edge_size/pixscale > images.shape[1]/2.:
+        if self.m_edge_size is None or self.m_edge_size > images.shape[1]/2.:
             index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
         else:
-            self.m_edge_size /= pixscale
             index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size)
 
         pos_r = np.delete(pos_r, index_del)
@@ -201,11 +205,11 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.write("Running ContrastCurveModule...\n")
         sys.stdout.flush()
 
-        for m, sep in enumerate(pos_r):
+        for i, sep in enumerate(pos_r):
             fpf_threshold = student_fpf(self.m_sigma, sep, self.m_aperture, self.m_ignore)
-            fake_fpf[m] = fpf_threshold
+            fake_fpf[i] = fpf_threshold
 
-            for n, ang in enumerate(pos_t):
+            for j, ang in enumerate(pos_t):
                 sys.stdout.write("Processing position " + str(count) + " out of " + \
                       str(np.size(fake_mag)))
                 sys.stdout.flush()
@@ -213,15 +217,15 @@ class ContrastCurveModule(ProcessingModule):
                 x_fake = center[0] + sep*math.cos(np.radians(ang+90.-self.m_extra_rot))
                 y_fake = center[1] + sep*math.sin(np.radians(ang+90.-self.m_extra_rot))
 
-                num_mag = np.size(fake_mag[m, 0:n])
-                num_nan = np.size(np.where(np.isnan(fake_mag[m, 0:n])))
+                num_mag = np.size(fake_mag[i, 0:j])
+                num_nan = np.size(np.where(np.isnan(fake_mag[i, 0:j])))
 
-                if n == 0 or num_mag-num_nan == 0:
+                if j == 0 or num_mag-num_nan == 0:
                     list_mag = [self.m_magnitude[0]]
                     mag_step = self.m_magnitude[1]
 
                 else:
-                    list_mag = [np.nanmean(fake_mag[m, 0:n])]
+                    list_mag = [np.nanmean(fake_mag[i, 0:j])]
                     mag_step = 0.1
 
                 list_fpf = []
@@ -259,7 +263,7 @@ class ContrastCurveModule(ProcessingModule):
 
                     if abs(fpf_threshold-list_fpf[-1]) < self.m_accuracy*fpf_threshold:
                         if len(list_fpf) == 1:
-                            fake_mag[m, n] = list_mag[0]
+                            fake_mag[i, j] = list_mag[0]
 
                             sys.stdout.write("\n")
                             sys.stdout.flush()
@@ -270,7 +274,7 @@ class ContrastCurveModule(ProcessingModule):
                                (fpf_threshold < list_fpf[-2] and fpf_threshold > list_fpf[-1]):
 
                                 fpf_interp = interp1d(list_fpf[-2:], list_mag[-2:], 'linear')
-                                fake_mag[m, n] = fpf_interp(fpf_threshold)
+                                fake_mag[i, j] = fpf_interp(fpf_threshold)
 
                                 sys.stdout.write("\n")
                                 sys.stdout.flush()
@@ -317,7 +321,7 @@ class ContrastCurveModule(ProcessingModule):
                         warnings.warn("ContrastModule could not converge at the position of "
                                       "%s arcsec and %s deg." % (sep*pixscale, ang))
 
-                        fake_mag[m, n] = np.nan
+                        fake_mag[i, j] = np.nan
 
                         sys.stdout.write("\n")
                         sys.stdout.flush()

@@ -107,6 +107,14 @@ def rotate_images(images, angles):
 def create_mask(im_shape, size):
     """
     Function to create a mask for the central and outer image regions.
+
+    :param im_shape: Image size in both dimnesions.
+    :type im_shape: (int, int)
+    :param size: Size (pix) of the inner and outer mask.
+    :type size: (float, float)
+
+    :return: Image mask.
+    :rtype: ndarray
     """
 
     mask = np.ones(im_shape)
