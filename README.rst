@@ -38,6 +38,11 @@ Documentation
 
 Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, and end-to-end example for data obtained with dithering, and a description of the various processing modules and parameters.
 
+Mailing list
+------------
+
+Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to be informed about new functionalities, pipeline modules, releases, and other PynPoint related news.
+
 Attribution
 -----------
 
