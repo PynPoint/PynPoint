@@ -35,29 +35,29 @@ PynPoint creates an HDF5 database called ``PynPoin_database.hdf5`` in the ``work
 
 Input data is read into the central database with a :class:`PynPoint.Core.Processing.ReadingModule`. By default, PynPoint will read data from the ``input_place_in`` but setting a manual folder is possible to read data to separate database tags (e.g., dark frames, flat fields, and science data). Here we show an example of how to read FITS files and a list of parallactic angles.
 
-First, we need to create an instance of :class:`PynPoint.Core.Pypeline.Pypeline`: ::
+First, we need to create an instance of :class:`PynPoint.Core.Pypeline.Pypeline`::
 
-	pipeline = Pypeline(working_place_in="/path/to/working_place",
-                            input_place_in="/path/to/input_place",
-                            output_place_in="/path/to/output_place")
+    pipeline = Pypeline(working_place_in="/path/to/working_place",
+                        input_place_in="/path/to/input_place",
+                        output_place_in="/path/to/output_place")
 
-Next, we read the science data from the the default input location: ::
+Next, we read the science data from the the default input location::
 
-	read_science = FitsReadingModule(name_in="read_science",
-                                         input_dir=None,
-                                         image_tag="science")
+    read_science = FitsReadingModule(name_in="read_science",
+                                     input_dir=None,
+                                     image_tag="science")
 
-	pipeline.add_module(read_science)
+    pipeline.add_module(read_science)
 
-And we read the flat fields from a separate location: ::
+And we read the flat fields from a separate location::
 
-	read_flat = FitsReadingModule(name_in="read_flat",
-                                      input_dir="/path/to/flat",
-                                      image_tag="flat")
+    read_flat = FitsReadingModule(name_in="read_flat",
+                                  input_dir="/path/to/flat",
+                                  image_tag="flat")
 
-	pipeline.add_module(read_flat)
+    pipeline.add_module(read_flat)
 
-The parallactic angles are read from a text file in the default input folder and attached as attribute to the science data: ::
+The parallactic angles are read from a text file in the default input folder and attached as attribute to the science data::
 
     parang = ParangReadingModule(file_name,
                                  name_in="parang",
@@ -66,9 +66,9 @@ The parallactic angles are read from a text file in the default input folder and
 
     pipeline.add_module(parang)
 
-Finally, we run all pipeline modules: ::
+Finally, we run all pipeline modules::
 
-	pipeline.run()
+    pipeline.run()
 
 The FITS files of the science data and flat fields are read and stored into the central HDF5 database. The data is labelled with a tag which is used by other pipeline module to access data from the database.
 
@@ -105,39 +105,27 @@ There are several options to access data from the central HDF5 database:
 End-To-End Example
 ------------------
 
-Here we show an end-to-end data reduction example of an ADI data set of beta Pic as presented in Stolker et al. in prep. (see also :ref:`running`). This archival data set was obtained with VLT/NACO in the M' band. A dithering pattern was applied to sample the sky background.
+Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic as presented in Stolker et al. subm. (see also :ref:`running`). This archival data set was obtained with VLT/NACO in the M' band. A dithering pattern was applied to sample the sky background.
 
-First we need to import the ``Pypeline`` module: ::
+First we need to import the pipeline and the I/O and processing modules::
 
-	from PynPoint import Pypeline
+    from PynPoint import Pypeline
+    from PynPoint.IOmodules import *
+    from PynPoint.ProcessingModules import *
 
-the pipeline modules for reading and writing FITS, HDF5, and text files: ::
+Next, we create an instance of :class:`PynPoint.Core.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
 
-	from PynPoint.IOmodules import FitsReadingModule, FitsWritingModule, \
-	                               Hdf5ReadingModule
+    pipeline = Pypeline(working_place_in="/path/to/working_place",
+                        input_place_in="/path/to/input_place",
+                        output_place_in"/path/to/output_place")
 
-and all the processing modules that we want to run: ::
-
-	from PynPoint.ProcessingModules import RemoveLastFrameModule, AngleCalculationModule, \
-                     RemoveLinesModule, DarkCalibrationModule, FlatCalibrationModule, \
-                     RemoveStartFramesModule, DitheringBackgroundModule, BadPixelSigmaFilterModule, \
-                     FrameSelectionModule, StarExtractionModule, StarAlignmentModule, \
-                     StarCenteringModule, StackAndSubsetModule, PSFpreparationModule, \
-                     PcaPsfSubtractionModule
-
-Next, we create an instance of :class:`PynPoint.Core.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output: ::
-
-	pipeline = Pypeline(working_place_in="/path/to/working_place",
-                            input_place_in="/path/to/input_place",
-                            output_place_in"/path/to/output_place")
-
-The FWHM of the PSF is defined for simplicity: ::
+The FWHM of the PSF is defined for simplicity::
 
     fwhm = 0.134 # [arcsec]
 
-Now we are ready to add the different pipeline steps. Have a look at the documentation in the :ref:`pynpoint-package` section for a detailed description of the individual modules and their parameters.
+Now we are ready to add all the pipeline modules that we need. Have a look at the documentation in the :ref:`pynpoint-package` section for a detailed description of the individual modules and their parameters.
 
-1. Import the raw science, flat, and dark data into the database: ::
+1. Import the raw science, flat, and dark images into the database::
 
     read1 = FitsReadingModule(name_in="read1",
                               input_dir="/path/to/science/",
@@ -163,7 +151,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(read4)
 
-2. Import the image with the (already processed) unsaturated PSF of the star: ::
+2. Import the image with the (separately processed) unsaturated PSF of the star::
 
     read4 = Hdf5ReadingModule(name_in="read4",
                               input_filename="flux.hdf5",
@@ -172,7 +160,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(read4)
 
-3. Remove NDIT+1 frames which contain the average of the FITS cube (NACO specific): ::
+3. Remove NDIT+1 frames which contain the average of the FITS cube (NACO specific)::
 
     last = RemoveLastFrameModule(name_in="last",
                                  image_in_tag="science",
@@ -180,7 +168,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(last)
 
-4. Calculate the parallactic angles which each image: ::
+4. Calculate the parallactic angles which each image::
 
     angle = AngleCalculationModule(name_in="angle",
                                    data_tag="last",
@@ -188,7 +176,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(angle)
 
-5. Remove the top two lines to make the images square: ::
+5. Remove the top two lines to make the images square::
 
     cut = RemoveLinesModule(lines=(0,0,0,2),
                             name_in="cut",
@@ -197,7 +185,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(cut)
 
-6. Subtract the dark current from the flat field: ::
+6. Subtract the dark current from the flat field::
 
     dark = DarkCalibrationModule(name_in="dark",
                                  image_in_tag="flat",
@@ -206,7 +194,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(dark)
 
-7. Divide the science data by the master flat: ::
+7. Divide the science data by the master flat::
 
     flat = FlatCalibrationModule(name_in="flat",
                                  image_in_tag="science",
@@ -215,7 +203,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(flat)
 
-8. Remove the first 5 frames from each FITS cube because of the systematically higher background emission: ::
+8. Remove the first 5 frames from each FITS cube because of the systematically higher background emission::
 
     first = RemoveStartFramesModule(frames=5,
                                     name_in="first",
@@ -224,7 +212,7 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(first)
 
-9. PCA based background subtraction: ::
+9. PCA based background subtraction::
 
     background = DitheringBackgroundModule(name_in="background",
                                            image_in_tag="first",
@@ -246,10 +234,9 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
 
     pipeline.add_module(background)
 
-10. Bad pixel correction:
-    ::
+10. Bad pixel correction::
 
-        bad = BadPixelSigmaFilterModule(name_in="bad",
+	bad = BadPixelSigmaFilterModule(name_in="bad",
                                         image_in_tag="background",
                                         image_out_tag="bad",
                                         map_out_tag="bpmap",
@@ -257,12 +244,11 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
                                         sigma=5.,
                                         iterate=3)
 
-        pipeline.add_module(bad)
+	pipeline.add_module(bad)
 
-11. Frame selection:
-    ::
+11. Frame selection::
 
-        select = FrameSelectionModule(name_in="select",
+	select = FrameSelectionModule(name_in="select",
                                       image_in_tag="bad",
                                       selected_out_tag="selected",
                                       removed_out_tag="removed",
@@ -273,12 +259,11 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
                                       aperture=("circular", fwhm),
                                       position=(None, None, 4.*fwhm))
 
-        pipeline.add_module(select)
+	pipeline.add_module(select)
 
-12. Extract the star position and center with pixel precision:
-    ::
+12. Extract the star position and center with pixel precision::
 
-        extract = StarExtractionModule(name_in="extract",
+	extract = StarExtractionModule(name_in="extract",
                                        image_in_tag="selected",
                                        image_out_tag="extract",
                                        index_out_tag="index",
@@ -286,26 +271,25 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
                                        fwhm_star=fwhm,
                                        position=(None, None, 4.*fwhm))
 
-        pipeline.add_module(extract)
+	pipeline.add_module(extract)
 
-13. Align the images with a cross-correlation:
-    ::
+13. Align the images with a cross-correlation of the central 800 mas::
 
-        align = StarAlignmentModule(name_in="align",
+	align = StarAlignmentModule(name_in="align",
                                     image_in_tag="odd",
                                     ref_image_in_tag=None,
                                     image_out_tag="align",
                                     interpolation="spline",
                                     accuracy=10,
                                     resize=None,
-                                    num_references=10)
+                                    num_references=10,
+                                    subframe=0.8)
 
-        pipeline.add_module(align)
+	pipeline.add_module(align)
 
-14. Center the images with subpixel precision by applying a constant shift:
-    ::
+14. Center the images with subpixel precision by applying a constant shift::
 
-        center = StarCenteringModule(name_in="center",
+	center = StarCenteringModule(name_in="center",
                                      image_in_tag="align",
                                      image_out_tag="center",
                                      mask_out_tag=None,
@@ -316,61 +300,67 @@ Now we are ready to add the different pipeline steps. Have a look at the documen
                                      sign="positive",
                                      guess=(0., 0., 1., 1., 100., 0.))
 
-        pipeline.add_module(center)
+	pipeline.add_module(center)
 
-15. Stack by 100 images:
-    ::
+15. Stack by 100 images::
 
-        stack = StackAndSubsetModule(name_in="stack",
+	stack = StackAndSubsetModule(name_in="stack",
                                      image_in_tag="center",
                                      image_out_tag="stack",
                                      random=None,
                                      stacking=100)
 
-        pipeline.add_module(stack)
+	pipeline.add_module(stack)
 
-16. Prepare the data for PSF subtraction:
-    ::
+16. Prepare the data for PSF subtraction::
 
-        prep = PSFpreparationModule(name_in="prep",
+	prep = PSFpreparationModule(name_in="prep",
                                     image_in_tag="stack",
                                     image_out_tag="prep",
-                                    image_mask_out_tag=None,
                                     mask_out_tag=None,
                                     norm=False,
                                     resize=None,
                                     cent_size=fwhm,
                                     edge_size=1.)
 
-        pipeline.add_module(prep)
+	pipeline.add_module(prep)
 
-17. PSF subtraction with PCA:
-    ::
+17. PSF subtraction with PCA::
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 51, 1),
+	pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 51, 1),
                                       name_in="pca",
                                       images_in_tag="prep",
                                       reference_in_tag="prep",
                                       res_mean_tag="pca_mean",
                                       res_median_tag="pca_median",
+                                      res_weighted_tag=None,
                                       res_arr_out_tag=None,
                                       res_rot_mean_clip_tag=None,
                                       extra_rot=0.)
 
-        pipeline.add_module(pca)
+	pipeline.add_module(pca)
 
-18. Write the mean residuals to a FITS file:
-    ::
+18. Measure the signal-to-noise ratio and false positive fraction::
 
-    	write = FitsWritingModule(name_in="write",
+	fpf = FalsePositiveModule(position=(50.5, 26.5),
+                                  aperture=fwhm/2.,
+                                  ignore=True,
+                                  name_in="fpf",
+                                  image_in_tag="pca_median",
+                                  snr_out_tag="fpf")
+
+	pipeline.add_module(fpf)
+
+19. Write the mean residuals to a FITS file::
+
+	write = FitsWritingModule(name_in="write",
                                   file_name="residuals.fits",
                                   output_dir=None,
-                                  data_tag="res_mean",
+                                  data_tag="pca_median",
                                   data_range=None)
 
-    	pipeline.add_module(write)
+	pipeline.add_module(write)
 
-19. And finally, run the pipeline:
-    ::
+20. And finally, run the pipeline::
 
-    	pipeline.run()
+	pipeline.run()
