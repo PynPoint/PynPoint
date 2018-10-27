@@ -229,7 +229,7 @@ class MeanCubeModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
 
-class DerotateAndOrStackModule(ProcessingModule):
+class DerotateAndStackModule(ProcessingModule):
     """
     Module for derotating and/or stacking (i.e., taking the median or average) of the images.
     """
@@ -242,7 +242,7 @@ class DerotateAndOrStackModule(ProcessingModule):
                  stack=None,
                  extra_rot=0.):
         """
-        Constructor of DerotateAndOrStackModule.
+        Constructor of DerotateAndStackModule.
 
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -262,7 +262,7 @@ class DerotateAndOrStackModule(ProcessingModule):
         :return: None
         """
 
-        super(DerotateAndOrStackModule, self).__init__(name_in=name_in)
+        super(DerotateAndStackModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -314,7 +314,7 @@ class DerotateAndOrStackModule(ProcessingModule):
         nimages, frames, im_tot = _initialize(ndim, npix)
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running DerotateAndOrStackModule...")
+            progress(i, len(frames[:-1]), "Running DerotateAndStackModule...")
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -331,7 +331,7 @@ class DerotateAndOrStackModule(ProcessingModule):
             elif self.m_stack == "mean":
                 im_tot += np.sum(images, axis=0)
 
-        sys.stdout.write("Running DerotateAndOrStackModule... [DONE]\n")
+        sys.stdout.write("Running DerotateAndStackModule... [DONE]\n")
         sys.stdout.flush()
 
         if self.m_stack == "mean":

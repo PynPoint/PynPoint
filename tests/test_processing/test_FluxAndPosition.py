@@ -12,7 +12,7 @@ from PynPoint.ProcessingModules.FluxAndPosition import FakePlanetModule, \
                                                        SimplexMinimizationModule, \
                                                        MCMCsamplingModule
 from PynPoint.ProcessingModules.ImageResizing import ScaleImagesModule
-from PynPoint.ProcessingModules.StackingAndSubsampling import DerotateAndOrStackModule
+from PynPoint.ProcessingModules.StackingAndSubsampling import DerotateAndStackModule
 from PynPoint.ProcessingModules.PSFpreparation import AngleInterpolationModule
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 from PynPoint.Util.TestTools import create_config, create_star_data, create_fake, remove_test_data
@@ -250,11 +250,11 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[0, 7, 7], 9.806026673451198, rtol=limit, atol=0.)
         assert data.shape == (4, 15, 15)
 
-        avg_psf = DerotateAndOrStackModule(name_in="take_psf_avg",
-                                           image_in_tag="psf_scale",
-                                           image_out_tag="psf_avg",
-                                           derotate=False,
-                                           stack="mean")
+        avg_psf = DerotateAndStackModule(name_in="take_psf_avg",
+                                         image_in_tag="psf_scale",
+                                         image_out_tag="psf_avg",
+                                         derotate=False,
+                                         stack="mean")
 
         self.pipeline.add_module(avg_psf)
         self.pipeline.run_module("take_psf_avg")
