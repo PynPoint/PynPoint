@@ -14,9 +14,11 @@ The pipeline works with two different components:
 
 1. Pipeline modules which read, write, and process data:
 
-    1.1 :class:`PynPoint.Core.Processing.ReadingModule` - Read data and relevant header information.
-    1.2 :class:`PynPoint.Core.Processing.WritingModule` - Export results of processing modules.
-    1.3 :class:`PynPoint.Core.Processing.ProcessingModule` - Process the data (e.g., background subtraction, frame selection).
+	1.1 :class:`PynPoint.Core.Processing.ReadingModule` - Reading of the data and relevant header information.
+
+	1.2 :class:`PynPoint.Core.Processing.WritingModule` - Exporting of results from the database.
+
+	1.3 :class:`PynPoint.Core.Processing.ProcessingModule` - Processing and analysis of the data.
 
 2. The actual pipeline :class:`PynPoint.Core.Pypeline` which capsules a list of pipeline modules.
 
@@ -351,7 +353,7 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
 
 	pipeline.add_module(fpf)
 
-19. Write the mean residuals to a FITS file::
+19. Write the median residuals to a FITS file::
 
 	write = FitsWritingModule(name_in="write",
                                   file_name="residuals.fits",
