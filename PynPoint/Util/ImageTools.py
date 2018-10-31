@@ -36,7 +36,9 @@ def image_center(image):
 
     return center
 
-def crop_image(image, center, size):
+def crop_image(image,
+               center,
+               size):
     """
     Function to crop square images around a specified position.
 
@@ -80,7 +82,8 @@ def crop_image(image, center, size):
 
     return im_crop
 
-def rotate_images(images, angles):
+def rotate_images(images,
+                  angles):
     """
     Function to rotate all images in clockwise direction.
 
@@ -104,7 +107,8 @@ def rotate_images(images, angles):
 
     return im_rot
 
-def create_mask(im_shape, size):
+def create_mask(im_shape,
+                size):
     """
     Function to create a mask for the central and outer image regions.
 
@@ -141,7 +145,10 @@ def create_mask(im_shape, size):
 
     return mask
 
-def shift_image(image, shift_yx, interpolation, mode='constant'):
+def shift_image(image,
+                shift_yx,
+                interpolation,
+                mode='constant'):
     """
     Function to shift an image.
 
@@ -168,7 +175,9 @@ def shift_image(image, shift_yx, interpolation, mode='constant'):
 
     return im_center
 
-def scale_image(image, scaling_x, scaling_y):
+def scale_image(image,
+                scaling_x,
+                scaling_y):
     """
     Function to spatially scale an image.
 

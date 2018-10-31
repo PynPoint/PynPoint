@@ -335,9 +335,9 @@ class SimplexMinimizationModule(ProcessingModule):
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number '
-                             'of frames in image_in_tag. The DerotateAndOrStackModule can be '
-                             'used to average the PSF frames before applying the '
-                             'SimplexMinimizationModule.')
+                             'of frames in image_in_tag. The DerotateAndStackModule can be '
+                             'used to average the PSF frames (without derotating) before applying '
+                             'the SimplexMinimizationModule.')
 
         def _objective(arg):
             sys.stdout.write('.')
@@ -711,8 +711,9 @@ class MCMCsamplingModule(ProcessingModule):
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number of '
-                             'frames in image_in_tag. The DerotateAndOrStackModule can be used to '
-                             'average the PSF frames before applying the MCMCsamplingModule.')
+                             'frames in image_in_tag. The DerotateAndStackModule can be used to '
+                             'average the PSF frames (without derotating) before applying the '
+                             'MCMCsamplingModule.')
 
         im_shape = image_size_port(self.m_image_in_port)
 
