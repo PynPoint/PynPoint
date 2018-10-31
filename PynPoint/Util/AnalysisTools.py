@@ -12,7 +12,11 @@ from scipy.stats import t
 from PynPoint.Util.ImageTools import shift_image
 
 
-def false_alarm(image, x_pos, y_pos, size, ignore):
+def false_alarm(image,
+                x_pos,
+                y_pos,
+                size,
+                ignore):
     """
     Function for the formal t-test for high-contrast imaging at small working angles, as well as
     the related false positive fraction (Mawet et al. 2014).
@@ -63,7 +67,10 @@ def false_alarm(image, x_pos, y_pos, size, ignore):
 
     return noise, t_test, 1. - t.cdf(t_test, num_ap-2)
 
-def student_fpf(sigma, radius, size, ignore):
+def student_fpf(sigma,
+                radius,
+                size,
+                ignore):
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
     """
