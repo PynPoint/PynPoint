@@ -57,7 +57,7 @@ Class Constructor
 
 First, we need to import the interface (i.e. abstract class) ``ProcessingModule``: ::
 
-    from PynPoint.Core import ProcessingModule
+    from PynPoint.Core.Processing import ProcessingModule
 
 All pipeline modules are classes which contain the parameters of the pipeline step, input ports and/or output ports. So let’s create a simple ExampleModule class using the ProcessingModule interface (inheritance): ::
     
