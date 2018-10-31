@@ -11,7 +11,9 @@ import numpy as np
 from PynPoint.Util.ImageTools import crop_image, image_center
 
 
-def progress(current, total, message):
+def progress(current,
+             total,
+             message):
     """
     Function to show and update the progress as standard output.
     """
@@ -22,7 +24,8 @@ def progress(current, total, message):
     sys.stdout.write("%s %s%s \r" % (message, percentage, "%"))
     sys.stdout.flush()
 
-def memory_frames(memory, nimages):
+def memory_frames(memory,
+                  nimages):
     """
     Function to subdivide the input images is in quantities of MEMORY.
     """
@@ -68,7 +71,10 @@ def image_size_port(port):
 
     return size
 
-def locate_star(image, center, width, fwhm):
+def locate_star(image,
+                center,
+                width,
+                fwhm):
     """
     Function to locate the star by finding the brightest pixel.
 
@@ -104,7 +110,9 @@ def locate_star(image, center, width, fwhm):
 
     return argmax
 
-def rotate_coordinates(center, position, angle):
+def rotate_coordinates(center,
+                       position,
+                       angle):
     """
     Function to rotate coordinates around the image center.
 
