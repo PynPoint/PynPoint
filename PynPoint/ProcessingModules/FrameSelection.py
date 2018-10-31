@@ -365,15 +365,7 @@ class FrameSelectionModule(ProcessingModule):
                                     self.m_selected_out_port,
                                     self.m_removed_out_port)
 
-            if self.m_index_out_port is not None:
-                self.m_index_out_port.set_all(np.transpose(indices))
-                self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         else:
-            self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_index_out_port.add_history_information("FrameSelectionModule",
-                                                          str(np.size(indices)))
-
             warnings.warn("No frames were removed.")
 
         write_selected_attributes(indices,
@@ -384,16 +376,20 @@ class FrameSelectionModule(ProcessingModule):
         history = "number removed ="+str(np.size(indices))
 
         if self.m_index_out_port is not None:
+            self.m_index_out_port.set_all(np.transpose(indices))
+            self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
             self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
             self.m_index_out_port.add_history_information("FrameSelectionModule", history)
 
         if self.m_selected_out_port is not None:
-            self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
-            self.m_index_out_port.add_history_information("FrameSelectionModule", history)
+            self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_selected_out_port.add_attribute("STAR_POSITION", starpos, static=False)
+            self.m_selected_out_port.add_history_information("FrameSelectionModule", history)
 
         if self.m_removed_out_port is not None:
-            self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
-            self.m_index_out_port.add_history_information("FrameSelectionModule", history)
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_removed_out_port.add_attribute("STAR_POSITION", starpos, static=False)
+            self.m_removed_out_port.add_history_information("FrameSelectionModule", history)
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
