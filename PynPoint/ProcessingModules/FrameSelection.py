@@ -9,9 +9,8 @@ import warnings
 import numpy as np
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port, \
-                                      locate_star
 from PynPoint.Util.ImageTools import crop_image
+from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port, locate_star
 from PynPoint.Util.RemoveTools import write_selected_data, write_selected_attributes
 
 
@@ -313,7 +312,7 @@ class FrameSelectionModule(ProcessingModule):
 
                 elif self.m_aperture[0] == "ratio":
                     phot = np.sum(im_crop[rr_grid < aperture[0]]) / \
-                        np.sum(im_crop[(rr_grid > aperture[0]) (rr_grid < aperture[1])])
+                        np.sum(im_crop[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
 
             return phot
 
@@ -375,7 +374,7 @@ class FrameSelectionModule(ProcessingModule):
             self.m_index_out_port.add_history_information("FrameSelectionModule",
                                                           str(np.size(indices)))
 
-            warnings.warn("No frames were removed with the specified threshold.")
+            warnings.warn("No frames were removed.")
 
         write_selected_attributes(indices,
                                   self.m_image_in_port,
