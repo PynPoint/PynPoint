@@ -713,7 +713,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         star = np.zeros((nimages, 2))
         for i, _ in enumerate(star):
             star[i, :] = locate_star(image=self.m_star_in_port[i, ]-bg_mean,
-                                     center=(None, None),
+                                     center=None,
                                      width=self.m_subframe,
                                      fwhm=self.m_gaussian)
 

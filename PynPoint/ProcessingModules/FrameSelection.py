@@ -277,7 +277,11 @@ class FrameSelectionModule(ProcessingModule):
                     width = None
 
                 else:
-                    center = position[0:2]
+                    if position[0] is None and position[1] is None:
+                        center = None
+                    else:
+                        center = position[0:2]
+
                     width = int(math.ceil(position[2]/pixscale))
 
                 for i, _ in enumerate(starpos):
