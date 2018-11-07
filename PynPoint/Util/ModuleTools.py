@@ -91,8 +91,8 @@ def locate_star(image,
     :rtype: (int, int)
     """
 
-    if center is not None and width is not None:
-        if center[0] is None and center[1] is None:
+    if width is not None:
+        if center is None:
             center = image_center(image)
 
         image = crop_image(image, center, width)
