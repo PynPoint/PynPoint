@@ -119,6 +119,7 @@ class StarExtractionModule(ProcessingModule):
                         center = None
                     else:
                         center = (int(position[1]), int(position[0]))
+
                     width = int(math.ceil(position[2]/pixscale))
 
                 elif position.ndim == 2:
