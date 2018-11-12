@@ -258,7 +258,11 @@ class ContrastCurveModule(ProcessingModule):
                         else:
                             self.m_pca_out_port.append(im_res, data_dim=3)
 
-                    _, _, fpf = false_alarm(im_res, x_fake, y_fake, self.m_aperture, self.m_ignore)
+                    _, _, fpf = false_alarm(image=im_res,
+                                            x_pos=x_fake,
+                                            y_pos=y_fake,
+                                            size=self.m_aperture,
+                                            ignore=self.m_ignore)
 
                     list_fpf.append(fpf)
 
@@ -268,6 +272,7 @@ class ContrastCurveModule(ProcessingModule):
 
                             sys.stdout.write("\n")
                             sys.stdout.flush()
+
                             break
 
                         else:
@@ -279,6 +284,7 @@ class ContrastCurveModule(ProcessingModule):
 
                                 sys.stdout.write("\n")
                                 sys.stdout.flush()
+
                                 break
 
                             else:
@@ -342,12 +348,12 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.flush()
 
         if self.m_pca_out_port is not None:
-            self.m_pca_out_port.add_history_information("Contrast limits",
+            self.m_pca_out_port.add_history_information("ContrastCurveModule",
                                                         str(self.m_sigma)+" sigma")
 
             self.m_pca_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_contrast_out_port.add_history_information("Contrast limits",
+        self.m_contrast_out_port.add_history_information("ContrastCurveModule",
                                                          str(self.m_sigma)+" sigma")
 
         self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)

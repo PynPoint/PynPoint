@@ -1,6 +1,6 @@
 """
 Capsule for multiprocessing of the PCA-based PSF subtraction. Residuals are created in parallel for
-a range of principle components. The PCA basis is required as input. Note that due to a missing
+a range of principal components. The PCA basis is required as input. Note that due to a missing
 functionality in numpy the multiprocessing does not run on macOS.
 """
 

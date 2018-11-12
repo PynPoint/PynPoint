@@ -24,8 +24,8 @@ PynPoint
 .. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
     :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
 
-.. image:: http://img.shields.io/badge/arXiv-1207.6637-orange.svg?style=flat
-    :target: http://arxiv.org/abs/1207.6637
+.. image:: http://img.shields.io/badge/arXiv-1811.03336-orange.svg?style=flat
+    :target: http://arxiv.org/abs/1811.03336
 
 PynPoint is an end-to-end pipeline for the data reduction of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light.
 
@@ -58,4 +58,4 @@ PynPoint is free software and distributed under the GNU General Public License v
 Acknowledgements
 ----------------
 
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_.
+The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is available `here <https://www.ethz.ch/content/specialinterest/phys/particle-physics/star-and-planet-formation/en/research/research-and-thesis-projects/pynpoint.html>`_.

@@ -1,14 +1,12 @@
 """
-Functions for image processing.
+Functions for MCMC sampling.
 """
 
 import math
 
 import numpy as np
 
-from photutils import aperture_photometry
-
-from PynPoint.Util.AnalysisTools import fake_planet
+from PynPoint.Util.AnalysisTools import fake_planet, merit_function
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 
 def lnprob(param,
@@ -49,12 +47,12 @@ def lnprob(param,
     :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
                      density filter). Should be negative in order to inject negative fake planets.
     :type pixscale: float
-    :param pca_number: Number of principle components used for the PSF subtraction.
+    :param pca_number: Number of principal components used for the PSF subtraction.
     :type pca_number: int
     :param extra_rot: Additional rotation angle of the images (deg).
     :type extra_rot: float
-    :param aperture: Circular aperture at the position specified in *param*.
-    :type aperture: photutils.CircularAperture
+    :param aperture: Aperture position and radius (pos_y, pos_x, radius) in pixels.
+    :type aperture: (float, float, float)
 
     :return: Log posterior.
     :rtype: float
@@ -82,8 +80,8 @@ def lnprob(param,
 
     def _lnlike():
         """
-        Internal function for the log likelihood function. Noise of each pixel is assumed to be
-        given by photon noise only (see Wertz et al. 2017 for details).
+        Internal function for the log likelihood function. Noise of each pixel is assumed to follow
+        a Poisson distribution (see Wertz et al. 2017 for details).
 
         :return: Log likelihood.
         :rtype: float
@@ -105,9 +103,13 @@ def lnprob(param,
                                      pca_number,
                                      extra_rot)
 
-        phot_table = aperture_photometry(np.abs(im_res), aperture, method='exact')
+        merit = merit_function(residuals=im_res,
+                               function="sum",
+                               position=aperture[0:2],
+                               aperture=aperture[2],
+                               sigma=0.)
 
-        return -0.5*phot_table['aperture_sum'][0]
+        return -0.5*merit
 
     ln_prior = _lnprior()
 
