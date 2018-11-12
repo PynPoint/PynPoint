@@ -8,29 +8,54 @@ Quickstart
 Installation
 ------------
 
-PynPoint is available in the |pypi| and can be installed from the command line with the |pip|::
+PynPoint is available in the |pypi| and on |github|. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv` with the |pip|::
 
-    $ pip install --user pynpoint
+    $ pip install virtualenv
 
-Alternatively, the PynPoint repository can be cloned from Github, which will contain the most recent implementations::
+Then create a virtual environment, for example::
+
+    $ virtualenv folder_name
+
+And activate the environment with::
+
+    $ source folder_name/bin/activate
+
+PynPoint can now be installed with pip::
+
+    $ pip install pynpoint
+
+Alternatively, the repository can be cloned from Github (which contains the most recent implementations)::
 
     $ git clone git@github.com:PynPoint/PynPoint.git
 
-Or the repository can be downloaded from the |Github| as a zip file. If needed, the required Python packages can be installed from the PynPoint folder with::
+In that case, the dependencies can be installed from the PynPoint folder::
 
     $ pip install -r requirements.txt
+
+By adding the path of the repository to the `PYTHONPATH` environment variable enables PynPoint to be imported from any location::
+
+    $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/PynPoint'" >> folder_name/bin/activate
+
+The installation can be tested by starting Python in interactive mode and printing the PynPoint version::
+
+    >>> import PynPoint
+    >>> print PynPoint.__version__
+
+A virtual environment is deactivate with::
+
+    $ deactivate
 
 .. |pypi| raw:: html
 
    <a href="https://pypi.org/project/pynpoint/" target="_blank">PyPI repository</a>
 
+.. |github| raw:: html
+
+   <a href="https://github.com/PynPoint/PynPoint" target="_blank">Github</a>
+
 .. |pip| raw:: html
 
    <a href="https://packaging.python.org/tutorials/installing-packages/" target="_blank">pip package manager</a>
-
-.. |github| raw:: html
-
-   <a href="https://github.com/PynPoint/PynPoint" target="_blank">Github website</a>
 
 .. _running:
 
