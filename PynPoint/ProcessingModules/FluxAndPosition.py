@@ -8,15 +8,13 @@ import sys
 import numpy as np
 import emcee
 
-from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import minimize
 from scipy.stats import t
-from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
-from PynPoint.Util.AnalysisTools import fake_planet
-from PynPoint.Util.ImageTools import create_mask, crop_image, image_center
+from PynPoint.Util.AnalysisTools import fake_planet, merit_function
+from PynPoint.Util.ImageTools import create_mask, image_center
 from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
@@ -213,7 +211,7 @@ class SimplexMinimizationModule(ProcessingModule):
         :param position: Approximate position (x, y) of the planet (pix). This is also the location
                          where the function of merit is calculated with an aperture of radius
                          *aperture*.
-        :type position: (int, int)
+        :type position: (float, float)
         :param magnitude: Approximate magnitude of the planet relative to the star.
         :type magnitude: float
         :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
@@ -248,8 +246,7 @@ class SimplexMinimizationModule(ProcessingModule):
         :type aperture: float
         :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
                       the images before the function of merit is calculated (in order to reduce
-                      small pixel-to-pixel variations). Highest astrometric and photometric
-                      precision is achieved when sigma is optimized.
+                      small pixel-to-pixel variations).
         :type sigma: float
         :param tolerance: Absolute error on the input parameters, position (pix) and
                           contrast (mag), that is used as acceptance level for convergence. Note
@@ -284,7 +281,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        self.m_position = (int(position[1]), int(position[0]))
+        self.m_position = (float(position[1]), float(position[0]))
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
@@ -365,39 +362,11 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_res_out_port.append(im_res, data_dim=3)
 
-            im_crop = crop_image(image=im_res,
-                                 center=self.m_position,
-                                 size=2*int(math.ceil(self.m_aperture)))
-
-            npix = im_crop.shape[-1]
-
-            if self.m_merit == "hessian":
-
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
-                hessian_rr, hessian_rc, hessian_cc = hessian_matrix(im_crop,
-                                                                    sigma=self.m_sigma,
-                                                                    mode='constant',
-                                                                    cval=0.,
-                                                                    order='rc')
-
-                hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-                hes_det[rr_grid > self.m_aperture] = 0.
-                merit = np.sum(np.abs(hes_det))
-
-            elif self.m_merit == "sum":
-
-                if self.m_sigma > 0.:
-                    im_crop = gaussian_filter(input=im_crop, sigma=self.m_sigma)
-
-                aperture = CircularAperture((npix/2., npix/2.), self.m_aperture)
-                phot_table = aperture_photometry(np.abs(im_crop), aperture, method='exact')
-                merit = phot_table['aperture_sum']
-
-            else:
-                raise ValueError("Function of merit not recognized.")
+            merit = merit_function(residuals=im_res,
+                                   function=self.m_merit,
+                                   position=self.m_position,
+                                   aperture=self.m_aperture,
+                                   sigma=self.m_sigma)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -719,6 +688,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         if self.m_mask[0] is not None:
             self.m_mask[0] /= pixscale
+
         if self.m_mask[1] is not None:
             self.m_mask[1] /= pixscale
 
@@ -728,7 +698,7 @@ class MCMCsamplingModule(ProcessingModule):
         x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
         y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
 
-        circ_ap = CircularAperture((x_pos, y_pos), self.m_aperture)
+        aperture = (y_pos, x_pos, self.m_aperture)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -749,7 +719,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                pixscale,
                                                self.m_pca_number,
                                                self.m_extra_rot,
-                                               circ_ap]),
+                                               aperture]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):

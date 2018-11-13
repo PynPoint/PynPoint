@@ -6,8 +6,10 @@ import math
 
 import numpy as np
 
-from photutils import aperture_photometry, CircularAperture
 from scipy.stats import t
+from scipy.ndimage.filters import gaussian_filter
+from skimage.feature import hessian_matrix
+from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Util.ImageTools import shift_image
 
@@ -65,7 +67,7 @@ def false_alarm(image,
     noise = np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1))
     t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
-    return noise, t_test, 1. - t.cdf(t_test, num_ap-2)
+    return noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
 def student_fpf(sigma,
                 radius,
@@ -140,3 +142,63 @@ def fake_planet(images,
                                             mode='reflect')
 
     return images + im_shift
+
+def merit_function(residuals,
+                   function,
+                   position,
+                   aperture,
+                   sigma):
+
+    """
+    Function to calculate the merit function at a given position in the image residuals.
+
+    :param residuals: Residuals of the PSF subtraction.
+    :type residuals: ndarray
+    :param function: Figure of merit ("hessian" or "sum").
+    :type function: str
+    :param position: Center position (y, x) of the circular aperture (pix).
+    :type position: (float, float)
+    :param aperture: Aperture radius (pix).
+    :type aperture: float
+    :param sigma: Standard deviation (pix) of the Gaussian kernel which is used to smooth
+                  the residuals before the function of merit is calculated.
+    :type sigma: float
+
+    :return: Merit value.
+    :rtype: float
+    """
+
+    if function == "hessian":
+
+        npix = residuals.shape[-1]
+
+        x_grid = np.linspace(-(position[1]+0.5), npix-(position[1]+0.5), npix)
+        y_grid = np.linspace(-(position[0]+0.5), npix-(position[0]+0.5), npix)
+
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+
+        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
+                                                            sigma=sigma,
+                                                            mode='constant',
+                                                            cval=0.,
+                                                            order='rc')
+
+        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+        hes_det[rr_grid > aperture] = 0.
+        merit = np.sum(np.abs(hes_det))
+
+    elif function == "sum":
+
+        if sigma > 0.:
+            residuals = gaussian_filter(input=residuals, sigma=sigma)
+
+        aperture = CircularAperture((position[1], position[0]), aperture)
+        phot_table = aperture_photometry(np.abs(residuals), aperture, method='exact')
+        merit = phot_table['aperture_sum']
+
+    else:
+
+        raise ValueError("Merit function not recognized.")
+
+    return merit
