@@ -9,7 +9,7 @@ Development Team
 ----------------
 
 * Tomas Stolker <tomas.stolker@phys.ethz.ch>
-* Markus Bonse <mbonse@phys.ethz.ch>
+* Markus Bonse <markus.bonse@stud.tu-darmstadt.de>
 * Sascha Quanz <sascha.quanz@phys.ethz.ch>
 * Adam Amara <adam.amara@phys.ethz.ch>
 

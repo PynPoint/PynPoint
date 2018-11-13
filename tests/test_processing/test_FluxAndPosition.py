@@ -206,17 +206,18 @@ class TestFluxAndPosition(object):
         self.pipeline.run_module("simplex")
 
         data = self.pipeline.get_data("simplex_res")
-        assert np.allclose(data[52, 49, 31], -5.57733704809696e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.455537503672783e-09, rtol=limit, atol=0.)
-        assert data.shape == (53, 101, 101)
+        assert np.allclose(data[0, 50, 31], 0.00020085220731657478, rtol=limit, atol=0.)
+        assert np.allclose(data[65, 50, 31], 2.5035345163849688e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.416893585673146e-09, rtol=limit, atol=0.)
+        assert data.shape == (66, 101, 101)
 
         data = self.pipeline.get_data("flux_position")
-        assert np.allclose(data[52, 0], 32.35324020839204, rtol=limit, atol=0.)
-        assert np.allclose(data[52, 1], 50.26878876587102, rtol=limit, atol=0.)
-        assert np.allclose(data[52, 2], 0.4900022824802747, rtol=limit, atol=0.)
-        assert np.allclose(data[52, 3], 90.72997666033649, rtol=limit, atol=0.)
-        assert np.allclose(data[52, 4], 5.957337187612481, rtol=limit, atol=0.)
-        assert data.shape == (53, 6)
+        assert np.allclose(data[65, 0], 32.14539423594633, rtol=limit, atol=0.)
+        assert np.allclose(data[65, 1], 50.40994810153265, rtol=limit, atol=0.)
+        assert np.allclose(data[65, 2], 0.4955803200991986, rtol=limit, atol=0.)
+        assert np.allclose(data[65, 3], 90.28110395762462, rtol=limit, atol=0.)
+        assert np.allclose(data[65, 4], 5.744096115502183, rtol=limit, atol=0.)
+        assert data.shape == (66, 6)
 
     def test_mcmc_sampling(self):
 

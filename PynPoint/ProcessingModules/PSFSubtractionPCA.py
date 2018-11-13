@@ -1,5 +1,5 @@
 """
-Modules for PSF subtraction with principle component analysis.
+Modules for PSF subtraction with principal component analysis.
 """
 
 import sys
