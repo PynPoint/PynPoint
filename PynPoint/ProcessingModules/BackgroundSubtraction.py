@@ -971,10 +971,10 @@ class DitheringBackgroundModule(ProcessingModule):
 
         def _admin_end(count, n_dither):
             if self.m_combine == "mean":
-                tags.append("dither_mean"+str(count+1))
+                tags.append(self.m_image_in_tag+"_dither_mean"+str(count+1))
 
             elif self.m_combine == "pca":
-                tags.append("dither_pca_res"+str(count+1))
+                tags.append(self.m_image_in_tag+"_dither_pca_res"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
                 print "Processing dither position "+str(count+1)+ \
@@ -987,64 +987,76 @@ class DitheringBackgroundModule(ProcessingModule):
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
-                crop = CropImagesModule(size=self.m_size,
-                                        center=(int(math.ceil(position[0])),
-                                                int(math.ceil(position[1]))),
-                                        name_in="crop"+str(i),
-                                        image_in_tag=self.m_image_in_tag,
-                                        image_out_tag="dither_crop"+str(i+1))
+                module = CropImagesModule(size=self.m_size,
+                                          center=(int(math.ceil(position[0])),
+                                                  int(math.ceil(position[1]))),
+                                          name_in="crop"+str(i),
+                                          image_in_tag=self.m_image_in_tag,
+                                          image_out_tag=self.m_image_in_tag+ \
+                                                        "_dither_crop"+str(i+1))
 
-                crop.connect_database(self._m_data_base)
-                crop.run()
+                module.connect_database(self._m_data_base)
+                module.run()
 
             if self.m_prepare:
-                prepare = PCABackgroundPreparationModule(dither=(n_dither,
-                                                                 self.m_cubes,
-                                                                 star_pos[i]),
-                                                         name_in="prepare"+str(i),
-                                                         image_in_tag="dither_crop"+str(i+1),
-                                                         star_out_tag="dither_star"+str(i+1),
-                                                         mean_out_tag="dither_mean"+str(i+1),
-                                                         background_out_tag="dither_background" \
-                                                                            +str(i+1))
+                module = PCABackgroundPreparationModule(dither=(n_dither,
+                                                                self.m_cubes,
+                                                                star_pos[i]),
+                                                        name_in="prepare"+str(i),
+                                                        image_in_tag=self.m_image_in_tag+ \
+                                                                     "_dither_crop"+str(i+1),
+                                                        star_out_tag=self.m_image_in_tag+ \
+                                                                     "_dither_star"+str(i+1),
+                                                        mean_out_tag=self.m_image_in_tag+ \
+                                                                     "_dither_mean"+str(i+1),
+                                                        background_out_tag=self.m_image_in_tag+ \
+                                                                           "_dither_background"+ \
+                                                                           str(i+1))
 
-                prepare.connect_database(self._m_data_base)
-                prepare.run()
+                module.connect_database(self._m_data_base)
+                module.run()
 
             if self.m_pca_background:
-                pca = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
-                                                     mask_star=self.m_mask_star,
-                                                     mask_planet=self.m_mask_planet,
-                                                     subtract_mean=self.m_subtract_mean,
-                                                     subframe=self.m_subframe,
-                                                     name_in="pca_background"+str(i),
-                                                     star_in_tag="dither_star"+str(i+1),
-                                                     background_in_tag="dither_background"+str(i+1),
-                                                     residuals_out_tag="dither_pca_res"+str(i+1),
-                                                     fit_out_tag="dither_pca_fit"+str(i+1),
-                                                     mask_out_tag="dither_pca_mask"+str(i+1))
+                module = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
+                                                        mask_star=self.m_mask_star,
+                                                        mask_planet=self.m_mask_planet,
+                                                        subtract_mean=self.m_subtract_mean,
+                                                        subframe=self.m_subframe,
+                                                        name_in="pca_background"+str(i),
+                                                        star_in_tag=self.m_image_in_tag+ \
+                                                                    "_dither_star"+str(i+1),
+                                                        background_in_tag=self.m_image_in_tag+ \
+                                                                          "_dither_background"+ \
+                                                                          str(i+1),
+                                                        residuals_out_tag=self.m_image_in_tag+ \
+                                                                          "_dither_pca_res"+ \
+                                                                          str(i+1),
+                                                        fit_out_tag=self.m_image_in_tag+ \
+                                                                    "_dither_pca_fit"+str(i+1),
+                                                        mask_out_tag=self.m_image_in_tag+ \
+                                                                     "_dither_pca_mask"+str(i+1))
 
-                pca.connect_database(self._m_data_base)
-                pca.run()
+                module.connect_database(self._m_data_base)
+                module.run()
 
             _admin_end(i, n_dither)
 
         if self.m_combine is not None:
-            combine = CombineTagsModule(name_in="combine",
-                                        check_attr=True,
-                                        index_init=False,
-                                        image_in_tags=tags,
-                                        image_out_tag="dither_combine")
+            module = CombineTagsModule(name_in="combine",
+                                       check_attr=True,
+                                       index_init=False,
+                                       image_in_tags=tags,
+                                       image_out_tag=self.m_image_in_tag+"_dither_combine")
 
-            combine.connect_database(self._m_data_base)
-            combine.run()
+            module.connect_database(self._m_data_base)
+            module.run()
 
-            sort = SortParangModule(name_in="sort",
-                                    image_in_tag="dither_combine",
-                                    image_out_tag=self.m_image_out_tag)
+            module = SortParangModule(name_in="sort",
+                                      image_in_tag=self.m_image_in_tag+"_dither_combine",
+                                      image_out_tag=self.m_image_out_tag)
 
-            sort.connect_database(self._m_data_base)
-            sort.run()
+            module.connect_database(self._m_data_base)
+            module.run()
 
 
 class NoddingBackgroundModule(ProcessingModule):
