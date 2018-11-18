@@ -172,7 +172,7 @@ class FakePlanetModule(ProcessingModule):
 
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_image_out_port.add_history_information("Fake planet",
+        self.m_image_out_port.add_history_information("FakePlanetModule",
                                                       "(sep, angle, mag) = " + "(" + \
                                                       "{0:.2f}".format(self.m_position[0]* \
                                                        pixscale)+", "+ \
@@ -823,6 +823,6 @@ class AperturePhotometryModule(ProcessingModule):
                                       func_args=(aperture,))
 
         self.m_phot_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_phot_out_port.add_history_information("Aperture photometry",
+        self.m_phot_out_port.add_history_information("AperturePhotometryModule",
                                                      "radius = "+str(self.m_radius*pixscale))
         self.m_phot_out_port.close_port()

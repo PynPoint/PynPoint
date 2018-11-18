@@ -1,8 +1,4 @@
-import warnings
-
 from PynPoint.Core.Pypeline import Pypeline
-
-warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __copyright__ = '2014-2018, ETH Zurich'
