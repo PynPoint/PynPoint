@@ -822,7 +822,8 @@ class DitheringBackgroundModule(ProcessingModule):
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
         :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output.
+        :param image_out_tag: Tag of the database entry that is written as output. Not written if
+                              set to None.
         :type image_out_tag: str
         :param center: Tuple with the centers of the dithering positions, e.g. ((x0,y0), (x1,y1)).
                        The order of the coordinates should correspond to the order in which the
@@ -1041,7 +1042,7 @@ class DitheringBackgroundModule(ProcessingModule):
 
             _admin_end(i, n_dither)
 
-        if self.m_combine is not None:
+        if self.m_combine is not None and self.m_image_out_tag is not None:
             module = CombineTagsModule(name_in="combine",
                                        check_attr=True,
                                        index_init=False,
