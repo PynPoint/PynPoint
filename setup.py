@@ -17,7 +17,7 @@ setup(
               'PynPoint.Util'],
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
-    install_requires=['configparser=3.5.0',
+    install_requires=['configparser==3.5.0',
                       'h5py==2.6.0',
                       'numpy==1.15.4',
                       'numba==0.40.1',
