@@ -103,6 +103,14 @@ class TestStackingAndSubsampling(object):
         assert np.allclose(np.mean(data), 0.00010029494781738069, rtol=limit, atol=0.)
         assert data.shape == (4, 100, 100)
 
+        attribute = self.pipeline.get_attribute("mean", "INDEX", static=False)
+        assert np.allclose(np.mean(attribute), 1.5, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
+        attribute = self.pipeline.get_attribute("mean", "NFRAMES", static=False)
+        assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
     def test_derotate_and_stack(self):
 
         derotate = DerotateAndStackModule(name_in="derotate1",
