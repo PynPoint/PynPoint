@@ -1049,7 +1049,9 @@ class DitheringBackgroundModule(ProcessingModule):
 
 class NoddingBackgroundModule(ProcessingModule):
     """
-    Module for background subtraction of data obtained with nodding (e.g., NACO AGPM data).
+    Module for background subtraction of data obtained with nodding (e.g., NACO AGPM data). Before
+    using this module, the sky images should be stacked with the MeanCubeModule such that each image
+    in the stack of sky images corresponds to the mean combination of a single FITS data cube.
     """
 
     def __init__(self,
@@ -1066,7 +1068,8 @@ class NoddingBackgroundModule(ProcessingModule):
         :param science_in_tag: Tag of the database entry with science images that are read as
                                input.
         :type science_in_tag: str
-        :param sky_in_tag: Tag of the database entry with sky images that are read as input.
+        :param sky_in_tag: Tag of the database entry with sky images that are read as input. The
+                           MeanCubeModule should be used on the sky images beforehand.
         :type sky_in_tag: str
         :param image_out_tag: Tag of the database entry with sky subtracted images that are written
                               as output.
@@ -1117,7 +1120,14 @@ class NoddingBackgroundModule(ProcessingModule):
 
         exp_no_sky = self.m_sky_in_port.get_attribute("EXP_NO")
         exp_no_science = self.m_science_in_port.get_attribute("EXP_NO")
+
+        nframes_sky = self.m_sky_in_port.get_attribute("NFRAMES")
         nframes_science = self.m_science_in_port.get_attribute("NFRAMES")
+
+        if np.all(nframes_sky != 1):
+            warnings.warn("The NFRAMES values of the sky images are not all equal to unity. "
+                          "The MeanCubeModule should be applied on the sky images before the "
+                          "NoddingBackgroundModule is used.")
 
         for i, item in enumerate(exp_no_sky):
             self.m_time_stamps.append(TimeStamp(item, "SKY", i))
