@@ -221,11 +221,18 @@ class MeanCubeModule(ProcessingModule):
         sys.stdout.write("Running MeanCubeModule... [DONE]\n")
         sys.stdout.flush()
 
+        nimages = np.size(nframes)
+
         self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        if "NFRAMES" in non_static:
-            self.m_image_out_port.del_attribute("NFRAMES")
+
         if "INDEX" in non_static:
-            self.m_image_out_port.del_attribute("INDEX")
+            index = np.arange(0, nimages, 1, dtype=np.int)
+            self.m_image_out_port.add_attribute("INDEX", index, static=False)
+
+        if "NFRAMES" in non_static:
+            nframes = np.ones(nimages, dtype=np.int)
+            self.m_image_out_port.add_attribute("NFRAMES", nframes, static=False)
+
         self.m_image_out_port.close_port()
 
 
