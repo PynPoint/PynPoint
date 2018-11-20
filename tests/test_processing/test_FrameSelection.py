@@ -60,6 +60,22 @@ class TestFrameSelection(object):
         assert np.allclose(np.mean(data), 0.00010020258903646778, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
+        self.pipeline.set_attribute("last", "PARANG", np.arange(0., 40., 1.), static=False)
+
+        star = np.zeros((40, 2))
+        star[:, 0] = np.arange(40., 80., 1.)
+        star[:, 1] = np.arange(40., 80., 1.)
+
+        self.pipeline.set_attribute("last", "STAR_POSITION", star, static=False)
+
+        attribute = self.pipeline.get_attribute("last", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 19.5, rtol=limit, atol=0.)
+        assert attribute.shape == (40, )
+
+        attribute = self.pipeline.get_attribute("last", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 59.5, rtol=limit, atol=0.)
+        assert attribute.shape == (40, 2)
+
     def test_remove_start_frame(self):
 
         start = RemoveStartFramesModule(frames=2,
@@ -74,6 +90,14 @@ class TestFrameSelection(object):
         assert np.allclose(data[0, 50, 50], 0.09797376304048713, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010011298467340513, rtol=limit, atol=0.)
         assert data.shape == (32, 100, 100)
+
+        attribute = self.pipeline.get_attribute("start", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 20.5, rtol=limit, atol=0.)
+        assert attribute.shape == (32, )
+
+        attribute = self.pipeline.get_attribute("start", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 60.5, rtol=limit, atol=0.)
+        assert attribute.shape == (32, 2)
 
     def test_remove_frames(self):
 
@@ -95,6 +119,22 @@ class TestFrameSelection(object):
         assert np.allclose(data[0, 50, 50], 0.09818692015286978, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010155025747035087, rtol=limit, atol=0.)
         assert data.shape == (5, 100, 100)
+
+        attribute = self.pipeline.get_attribute("selected", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 20.296296296296298, rtol=limit, atol=0.)
+        assert attribute.shape == (27, )
+
+        attribute = self.pipeline.get_attribute("selected", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 60.2962962962963, rtol=limit, atol=0.)
+        assert attribute.shape == (27, 2)
+
+        attribute = self.pipeline.get_attribute("removed", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 21.6, rtol=limit, atol=0.)
+        assert attribute.shape == (5, )
+
+        attribute = self.pipeline.get_attribute("removed", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 61.6, rtol=limit, atol=0.)
+        assert attribute.shape == (5, 2)
 
     def test_frame_selection(self):
 
@@ -125,7 +165,23 @@ class TestFrameSelection(object):
         data = self.pipeline.get_data("index1")
         assert data[-1] == 28
         assert np.sum(data) == 115
-        assert data.shape == (10, 1)
+        assert data.shape == (10, )
+
+        attribute = self.pipeline.get_attribute("selected1", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 22.681818181818183, rtol=limit, atol=0.)
+        assert attribute.shape == (22, )
+
+        attribute = self.pipeline.get_attribute("selected1", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
+        assert attribute.shape == (22, 2)
+
+        attribute = self.pipeline.get_attribute("removed1", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 15.7, rtol=limit, atol=0.)
+        assert attribute.shape == (10, )
+
+        attribute = self.pipeline.get_attribute("removed1", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
+        assert attribute.shape == (10, 2)
 
         select = FrameSelectionModule(name_in="select2",
                                       image_in_tag="start",
@@ -154,4 +210,20 @@ class TestFrameSelection(object):
         data = self.pipeline.get_data("index2")
         assert data[-1] == 30
         assert np.sum(data) == 230
-        assert data.shape == (12, 1)
+        assert data.shape == (12, )
+
+        attribute = self.pipeline.get_attribute("selected2", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 17.8, rtol=limit, atol=0.)
+        assert attribute.shape == (20, )
+
+        attribute = self.pipeline.get_attribute("selected2", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
+        assert attribute.shape == (20, 2)
+
+        attribute = self.pipeline.get_attribute("removed2", "PARANG", static=False)
+        assert np.allclose(np.mean(attribute), 25.0, rtol=limit, atol=0.)
+        assert attribute.shape == (12, )
+
+        attribute = self.pipeline.get_attribute("removed2", "STAR_POSITION", static=False)
+        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
+        assert attribute.shape == (12, 2)
