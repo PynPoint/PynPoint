@@ -126,18 +126,22 @@ class RemoveFramesModule(ProcessingModule):
         sys.stdout.write("Running RemoveFramesModule... [DONE]\n")
         sys.stdout.flush()
 
+        history = "frames removed = "+str(np.size(self.m_frames))
+
+        if self.m_selected_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
+            self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_selected_out_port.add_history_information("RemoveFramesModule", history)
+
+        if self.m_removed_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_removed_out_port.add_history_information("RemoveFramesModule", history)
+
         write_selected_attributes(self.m_frames,
                                   self.m_image_in_port,
                                   self.m_selected_out_port,
                                   self.m_removed_out_port)
-
-        history = "number removed ="+str(np.size(self.m_frames))
-
-        if self.m_selected_out_port is not None:
-            self.m_selected_out_port.add_history_information("RemoveFramesModule", history)
-
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.add_history_information("RemoveFramesModule", history)
 
         self.m_image_in_port.close_port()
 
@@ -348,7 +352,7 @@ class FrameSelectionModule(ProcessingModule):
 
         index_rm[np.isnan(phot)] = True
 
-        indices = np.where(index_rm)
+        indices = np.where(index_rm)[0]
         indices = np.asarray(indices, dtype=np.int)
 
         if np.size(indices) > 0:
@@ -372,12 +376,7 @@ class FrameSelectionModule(ProcessingModule):
         else:
             warnings.warn("No frames were removed.")
 
-        write_selected_attributes(indices,
-                                  self.m_image_in_port,
-                                  self.m_selected_out_port,
-                                  self.m_removed_out_port)
-
-        history = "number removed ="+str(np.size(indices))
+        history = "frames removed = "+str(np.size(indices))
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(indices))
@@ -386,13 +385,34 @@ class FrameSelectionModule(ProcessingModule):
             self.m_index_out_port.add_history_information("FrameSelectionModule", history)
 
         if self.m_selected_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
             self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_selected_out_port.add_attribute("STAR_POSITION", starpos, static=False)
+
+        if self.m_removed_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
+            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+
+        write_selected_attributes(indices,
+                                  self.m_image_in_port,
+                                  self.m_selected_out_port,
+                                  self.m_removed_out_port)
+
+        if self.m_selected_out_port is not None:
+            indices_select = np.ones(nimages, dtype=bool)
+            indices_select[indices] = False
+            indices_select = np.where(indices_select)
+
+            self.m_selected_out_port.add_attribute("STAR_POSITION",
+                                                   starpos[indices_select],
+                                                   static=False)
+
             self.m_selected_out_port.add_history_information("FrameSelectionModule", history)
 
         if self.m_removed_out_port is not None:
-            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_removed_out_port.add_attribute("STAR_POSITION", starpos, static=False)
+            self.m_removed_out_port.add_attribute("STAR_POSITION",
+                                                  starpos[indices],
+                                                  static=False)
+
             self.m_removed_out_port.add_history_information("FrameSelectionModule", history)
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
@@ -475,7 +495,9 @@ class RemoveLastFrameModule(ProcessingModule):
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
-        self.m_image_out_port.add_history_information("Frames removed", "NDIT+1")
+
+        history = "frames removed = NDIT+1"
+        self.m_image_out_port.add_history_information("RemoveLastFrameModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -541,6 +563,13 @@ class RemoveStartFramesModule(ProcessingModule):
         else:
             parang = None
 
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            star = self.m_image_in_port.get_attribute("STAR_POSITION")
+            star_new = []
+
+        else:
+            star = None
+
         for i, _ in enumerate(nframes):
             progress(i, len(nframes), "Running RemoveStartFramesModule...")
 
@@ -548,8 +577,12 @@ class RemoveStartFramesModule(ProcessingModule):
             frame_end = np.sum(nframes[0:i+1])
 
             index_new.extend(index[frame_start:frame_end])
+
             if parang is not None:
                 parang_new.extend(parang[frame_start:frame_end])
+
+            if star is not None:
+                star_new.extend(star[frame_start:frame_end])
 
             images = self.m_image_in_port[frame_start:frame_end, ]
             self.m_image_out_port.append(images)
@@ -565,6 +598,10 @@ class RemoveStartFramesModule(ProcessingModule):
         if parang is not None:
             self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
 
-        self.m_image_out_port.add_history_information("Frames removed", str(self.m_frames))
+        if star is not None:
+            self.m_image_out_port.add_attribute("STAR_POSITION", np.asarray(star_new), static=False)
+
+        history = "frames removed = "+str(self.m_frames)
+        self.m_image_out_port.add_history_information("RemoveStartFramesModule", history)
 
         self.m_image_out_port.close_port()

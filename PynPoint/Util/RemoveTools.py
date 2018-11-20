@@ -44,17 +44,16 @@ def write_selected_attributes(indices,
                               port_selected,
                               port_removed):
     """
-    Function to write a selected number of images from a data set.
+    Function to write the attributes of a selected number of images.
 
-    :param non_static: List of the non-static attributes of the input port.
-    :type non_static: list
     :param indices: Indices that are removed.
     :type indices: ndarray
     :param port_input: Port to the input data.
     :type port_input: InputPort
     :param port_selected: Port to store the attributes of the selected images.
     :type port_selected: OutputPort
-    :param port_removed: Port to store the attributes of the removed images.
+    :param port_removed: Port to store the attributes of the removed images. Not written if
+                         set to None.
     :type port_removed: OutputPort
 
     :return: None
@@ -80,13 +79,11 @@ def write_selected_attributes(indices,
                 else:
                     selected = values
 
-                port_selected.copy_attributes_from_input_port(port_input)
                 port_selected.add_attribute(item, selected, static=False)
 
             if port_removed is not None and np.size(indices) > 0:
                 removed = values[indices]
 
-                port_removed.copy_attributes_from_input_port(port_input)
                 port_removed.add_attribute(item, removed, static=False)
 
     if "NFRAMES" in non_static:
