@@ -412,5 +412,5 @@ class TestPSFSubtractionPCA(object):
         assert data.shape == (20, 100, 100)
 
         data = self.pipeline.get_data("basis_ref_no_mean_mask")
-        assert np.allclose(np.mean(data), 1.2803775799889502e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(np.abs(data)), 1026.3329224435665, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
