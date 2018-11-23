@@ -253,47 +253,47 @@ class TestPSFSubtractionPCA(object):
         assert np.allclose(np.mean(data), 2.3755682312090375e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_multi(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-        database.close()
-
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
-                                      name_in="pca_multi",
-                                      images_in_tag="science",
-                                      reference_in_tag="science",
-                                      res_mean_tag="res_mean_multi",
-                                      res_median_tag="res_median_multi",
-                                      res_weighted_tag="res_weighted_multi",
-                                      res_rot_mean_clip_tag="res_clip_multi",
-                                      res_arr_out_tag=None,
-                                      basis_out_tag="basis_multi",
-                                      extra_rot=-15.,
-                                      subtract_mean=True)
-
-        self.pipeline.add_module(pca)
-        self.pipeline.run_module("pca_multi")
-
-        data_single = self.pipeline.get_data("res_mean_single")
-        data_multi = self.pipeline.get_data("res_mean_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("res_median_single")
-        data_multi = self.pipeline.get_data("res_median_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("res_weighted_single")
-        data_multi = self.pipeline.get_data("res_weighted_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("basis_single")
-        data_multi = self.pipeline.get_data("basis_multi")
-        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
-        assert data_single.shape == data_multi.shape
+    # def test_psf_subtraction_pca_multi(self):
+    #
+    #     database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+    #     database['config'].attrs['CPU'] = 4
+    #     database.close()
+    #
+    #     pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+    #                                   name_in="pca_multi",
+    #                                   images_in_tag="science",
+    #                                   reference_in_tag="science",
+    #                                   res_mean_tag="res_mean_multi",
+    #                                   res_median_tag="res_median_multi",
+    #                                   res_weighted_tag="res_weighted_multi",
+    #                                   res_rot_mean_clip_tag="res_clip_multi",
+    #                                   res_arr_out_tag=None,
+    #                                   basis_out_tag="basis_multi",
+    #                                   extra_rot=-15.,
+    #                                   subtract_mean=True)
+    #
+    #     self.pipeline.add_module(pca)
+    #     self.pipeline.run_module("pca_multi")
+    #
+    #     data_single = self.pipeline.get_data("res_mean_single")
+    #     data_multi = self.pipeline.get_data("res_mean_multi")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("res_median_single")
+    #     data_multi = self.pipeline.get_data("res_median_multi")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("res_weighted_single")
+    #     data_multi = self.pipeline.get_data("res_weighted_multi")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("basis_single")
+    #     data_multi = self.pipeline.get_data("basis_multi")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
+    #     assert data_single.shape == data_multi.shape
 
     def test_psf_subtraction_pca_single_mask(self):
 
@@ -337,47 +337,47 @@ class TestPSFSubtractionPCA(object):
         assert np.allclose(np.mean(data), 5.584100479595007e-06, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_multi_mask(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-        database.close()
-
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
-                                      name_in="pca_multi_mask",
-                                      images_in_tag="science_mask",
-                                      reference_in_tag="ref_mask",
-                                      res_mean_tag="res_mean_multi_mask",
-                                      res_median_tag="res_median_multi_mask",
-                                      res_weighted_tag="res_weighted_multi_mask",
-                                      res_rot_mean_clip_tag="res_clip_multi_mask",
-                                      res_arr_out_tag=None,
-                                      basis_out_tag="basis_multi_mask",
-                                      extra_rot=-15.,
-                                      subtract_mean=True)
-
-        self.pipeline.add_module(pca)
-        self.pipeline.run_module("pca_multi_mask")
-
-        data_single = self.pipeline.get_data("res_mean_single_mask")
-        data_multi = self.pipeline.get_data("res_mean_multi_mask")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("res_median_single_mask")
-        data_multi = self.pipeline.get_data("res_median_multi_mask")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("res_weighted_single_mask")
-        data_multi = self.pipeline.get_data("res_weighted_multi_mask")
-        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
-        assert data_single.shape == data_multi.shape
-
-        data_single = self.pipeline.get_data("basis_single_mask")
-        data_multi = self.pipeline.get_data("basis_multi_mask")
-        assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
-        assert data_single.shape == data_multi.shape
+    # def test_psf_subtraction_pca_multi_mask(self):
+    #
+    #     database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+    #     database['config'].attrs['CPU'] = 4
+    #     database.close()
+    #
+    #     pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+    #                                   name_in="pca_multi_mask",
+    #                                   images_in_tag="science_mask",
+    #                                   reference_in_tag="ref_mask",
+    #                                   res_mean_tag="res_mean_multi_mask",
+    #                                   res_median_tag="res_median_multi_mask",
+    #                                   res_weighted_tag="res_weighted_multi_mask",
+    #                                   res_rot_mean_clip_tag="res_clip_multi_mask",
+    #                                   res_arr_out_tag=None,
+    #                                   basis_out_tag="basis_multi_mask",
+    #                                   extra_rot=-15.,
+    #                                   subtract_mean=True)
+    #
+    #     self.pipeline.add_module(pca)
+    #     self.pipeline.run_module("pca_multi_mask")
+    #
+    #     data_single = self.pipeline.get_data("res_mean_single_mask")
+    #     data_multi = self.pipeline.get_data("res_mean_multi_mask")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("res_median_single_mask")
+    #     data_multi = self.pipeline.get_data("res_median_multi_mask")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("res_weighted_single_mask")
+    #     data_multi = self.pipeline.get_data("res_weighted_multi_mask")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+    #     assert data_single.shape == data_multi.shape
+    #
+    #     data_single = self.pipeline.get_data("basis_single_mask")
+    #     data_multi = self.pipeline.get_data("basis_multi_mask")
+    #     assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
+    #     assert data_single.shape == data_multi.shape
 
     def test_psf_subtraction_no_mean_mask(self):
 

@@ -353,12 +353,12 @@ class SimplexMinimizationModule(ProcessingModule):
                                interpolation="spline")
 
             im_shape = (fake.shape[-2], fake.shape[-1])
+
             mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
-            im_res = pca_psf_subtraction(fake*mask,
-                                         parang,
-                                         self.m_pca_number,
-                                         self.m_extra_rot)
+            im_res = pca_psf_subtraction(images=fake*mask,
+                                         angles=-1.*parang+self.m_extra_rot,
+                                         pca_number=self.m_pca_number)
 
             self.m_res_out_port.append(im_res, data_dim=3)
 
