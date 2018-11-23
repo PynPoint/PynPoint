@@ -136,7 +136,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :return: None
         """
 
-        tmp_output = np.zeros((len(self.m_components), star_data.shape[1], star_data.shape[2]))
+        tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
 
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
@@ -152,8 +152,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         cpu = self._m_config_port.get_attribute("CPU")
 
-        rotations = -1.*self.m_star_in_port.get_attribute("PARANG")
-        rotations += np.ones(rotations.shape[0])*self.m_extra_rot
+        rotations = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
@@ -162,8 +161,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                 cpu,
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
-                                                deepcopy(star_data),
-                                                deepcopy(rotations))
+                                                deepcopy(star_reshape),
+                                                deepcopy(rotations),
+                                                deepcopy(im_shape),
+                                                deepcopy(indices))
 
         pca_capsule.run()
 
@@ -197,7 +198,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             # inverse rotation
             parang = -1.*self.m_star_in_port.get_attribute("PARANG")
 
-            res_array = np.zeros(shape=residuals.shape)
+            res_array = np.zeros(residuals.shape)
             for j, angle in enumerate(parang):
                 # ndimage.rotate rotates in clockwise direction for positive angles
                 res_array[j, ] = ndimage.rotate(input=residuals[j, ],
