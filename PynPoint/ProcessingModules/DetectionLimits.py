@@ -247,10 +247,9 @@ class ContrastCurveModule(ProcessingModule):
                     im_shape = (fake.shape[-2], fake.shape[-1])
                     mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
-                    im_res = pca_psf_subtraction(fake*mask,
-                                                 parang,
-                                                 self.m_pca_number,
-                                                 self.m_extra_rot)
+                    im_res = pca_psf_subtraction(images=fake*mask,
+                                                 angles=-1.*parang+self.m_extra_rot,
+                                                 pca_number=self.m_pca_number)
 
                     if self.m_pca_out_port is not None:
                         if count == 1 and iteration == 1:
