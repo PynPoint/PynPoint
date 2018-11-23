@@ -9,20 +9,17 @@ from sklearn.decomposition import PCA
 
 
 def pca_psf_subtraction(images,
-                        parang,
-                        pca_number,
-                        extra_rot):
+                        angles,
+                        pca_number):
     """
     Function for PSF subtraction with PCA.
 
     :param images: Stack of images, also used as reference images.
     :type images: ndarray
-    :param parang: Angles (deg) for derotation of the images.
+    :param parang: Derotation angles (deg).
     :type parang: ndarray
-    :param pca_number: Number of PCA components used for the PSF model.
+    :param pca_number: Number of principle components used for the PSF model.
     :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
 
     :return: Mean residuals of the PSF subtraction.
     :rtype: ndarray
@@ -30,20 +27,39 @@ def pca_psf_subtraction(images,
 
     pca = PCA(n_components=pca_number, svd_solver="arpack")
 
-    images -= np.mean(images, axis=0)
-    images_reshape = images.reshape((images.shape[0], images.shape[1]*images.shape[2]))
+    # original image shape
+    im_shape = images.shape
 
-    pca.fit(images_reshape)
+    # select the first image and get the unmasked image indices
+    im_star = images[0, ].reshape(-1)
+    indices = np.where(im_star != 0.)[0]
 
-    pca_rep = np.matmul(pca.components_[:pca_number], images_reshape.T)
-    pca_rep = np.vstack((pca_rep, np.zeros((0, images.shape[0])))).T
+    # reshape the images and select the unmasked pixels
+    im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
+    im_reshape = im_reshape[:, indices]
 
-    model = pca.inverse_transform(pca_rep)
-    model = model.reshape(images.shape)
+    # subtract mean image
+    im_reshape -= np.mean(im_reshape, axis=0)
 
-    residuals = images - model
+    pca.fit(im_reshape)
 
-    for j, item in enumerate(-1.*parang):
-        residuals[j, ] = rotate(residuals[j, ], item+extra_rot, reshape=False)
+    # create pca representation
+    pca_rep = np.matmul(pca.components_[:pca_number], im_reshape.T)
+    pca_rep = np.vstack((pca_rep, np.zeros((0, im_reshape.shape[0])))).T
+
+    # create PSF model
+    psf_model = pca.inverse_transform(pca_rep)
+
+    # create original array size
+    residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
+
+    # subtract the psf model
+    residuals[:, indices] = im_reshape - psf_model
+
+    # reshape to the original image size
+    residuals = residuals.reshape(im_shape)
+
+    for j, item in enumerate(angles):
+        residuals[j, ] = rotate(residuals[j, ], item, reshape=False)
 
     return np.mean(residuals, axis=0)
