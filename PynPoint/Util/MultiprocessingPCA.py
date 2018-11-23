@@ -74,9 +74,11 @@ class PcaTaskProcessor(TaskProcessor):
     def __init__(self,
                  tasks_queue_in,
                  result_queue_in,
-                 star_arr,
+                 star_reshape,
                  angles,
                  pca_model,
+                 im_shape,
+                 indices,
                  result_requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskProcessor.
@@ -85,53 +87,56 @@ class PcaTaskProcessor(TaskProcessor):
         :type tasks_queue_in:
         :param result_queue_in:
         :type result_queue_in:
+        :param star_reshape:
+        :type star_reshape:
         :param angles:
         :type angles:
-        :param star_arr:
-        :type star_arr:
         :param pca_model:
-        :type pca_model: PCA
+        :type pca_model:
+        :param im_shape:
+        :type im_shape:
+        :param indices:
+        :type indices:
         :param result_requirements:
-        :type result_queue_innts:
+        :type result_requirements:
 
         :return: None
         """
 
         super(PcaTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
 
-        self.m_star_arr = star_arr
+        self.m_star_reshape = star_reshape
         self.m_pca_model = pca_model
         self.m_angles = angles
+        self.m_im_shape = im_shape
+        self.m_indices = indices
         self.m_result_requirements = result_requirements
 
     def run_job(self, tmp_task):
 
-        star_sklearn = self.m_star_arr.reshape((self.m_star_arr.shape[0],
-                                                self.m_star_arr.shape[1]*self.m_star_arr.shape[2]))
+        pc_number = tmp_task.m_input_data
 
-        pca_number = tmp_task.m_input_data
+        # create pca representation
+        pca_rep = np.matmul(self.m_pca_model.components_[:pc_number], self.m_star_reshape.T)
+        pca_rep = np.vstack((pca_rep, np.zeros((self.m_pca_model.n_components - pc_number,
+                                                self.m_im_shape[0])))).T
 
-        tmp_pca_representation = np.matmul(self.m_pca_model.components_[:pca_number],
-                                           star_sklearn.T)
+        # create PSF model
+        psf_model = self.m_pca_model.inverse_transform(pca_rep)
 
-        tmp_pca_representation = np.vstack((tmp_pca_representation,
-                                            np.zeros((self.m_pca_model.n_components - pca_number,
-                                                      self.m_star_arr.shape[0])))).T
+        # create original array size
+        residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
-        tmp_psf_images = self.m_pca_model.inverse_transform(tmp_pca_representation)
+        # subtract the psf model
+        residuals[:, self.m_indices] = self.m_star_reshape - psf_model
 
-        tmp_psf_images = tmp_psf_images.reshape((self.m_star_arr.shape[0],
-                                                 self.m_star_arr.shape[1],
-                                                 self.m_star_arr.shape[2]))
-
-        # subtract the psf model of the star
-        tmp_without_psf = self.m_star_arr - tmp_psf_images
+        # reshape to the original image size
+        residuals = residuals.reshape(self.m_im_shape)
 
         # inverse rotation
-        res_array = np.zeros(shape=tmp_without_psf.shape)
+        res_array = np.zeros(residuals.shape)
         for i, angle in enumerate(self.m_angles):
-            res_temp = tmp_without_psf[i, ]
-            res_array[i, ] = ndimage.rotate(input=res_temp,
+            res_array[i, ] = ndimage.rotate(input=residuals[i, ],
                                             angle=angle,
                                             reshape=False)
 
@@ -155,10 +160,10 @@ class PcaTaskProcessor(TaskProcessor):
 
         # 3.) noise weighted
         if self.m_result_requirements[2]:
-            tmp_res_var = np.var(tmp_without_psf, axis=0)
+            tmp_res_var = np.var(residuals, axis=0)
 
             res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
-                                   repeats=tmp_without_psf.shape[0],
+                                   repeats=residuals.shape[0],
                                    axis=0)
 
             res_var = np.zeros(res_repeat.shape)
@@ -300,7 +305,9 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_numbers,
                  pca_model,
                  star_arr,
-                 rotations):
+                 rotations,
+                 im_shape,
+                 indices):
         """
         Constructor of PcaMultiprocessingCapsule.
 
@@ -320,6 +327,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type star_arr:
         :param rotations:
         :type rotations:
+        :param im_shape:
+        :type im_shape:
+        :param indices:
+        :type indices:
 
         :return: None
         """
@@ -332,6 +343,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_pca_model = pca_model
         self.m_star_arr = star_arr
         self.m_rotations = rotations
+        self.m_im_shape = im_shape
+        self.m_indices = indices
 
         self.m_result_requirements = [False, False, False, False]
 
@@ -376,6 +389,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                                            self.m_star_arr,
                                            self.m_rotations,
                                            self.m_pca_model,
+                                           self.m_im_shape,
+                                           self.m_indices,
                                            self.m_result_requirements)
 
                           for _ in xrange(self.m_num_processors)]
