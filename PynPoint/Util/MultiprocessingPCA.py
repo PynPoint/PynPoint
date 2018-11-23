@@ -125,7 +125,7 @@ class PcaTaskProcessor(TaskProcessor):
         psf_model = self.m_pca_model.inverse_transform(pca_rep)
 
         # create original array size
-        residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
+        residuals = np.zeros((self.m_im_shape[0], self.m_im_shape[1]*self.m_im_shape[2]))
 
         # subtract the psf model
         residuals[:, self.m_indices] = self.m_star_reshape - psf_model
@@ -187,7 +187,7 @@ class PcaTaskProcessor(TaskProcessor):
 
         # 4.) clipped mean
         if self.m_result_requirements[3]:
-            res_rot_mean_clip = np.zeros(self.m_star_arr[0, ].shape)
+            res_rot_mean_clip = np.zeros(self.m_im_shape[1:3].shape)
 
             for i in range(res_rot_mean_clip.shape[0]):
                 for j in range(res_rot_mean_clip.shape[1]):
@@ -304,7 +304,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  num_processors,
                  pca_numbers,
                  pca_model,
-                 star_arr,
+                 star_reshape,
                  rotations,
                  im_shape,
                  indices):
@@ -323,8 +323,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type num_processors:
         :param pca_numbers:
         :type pca_numbers:
-        :param star_arr:
-        :type star_arr:
+        :param star_reshape:
+        :type star_reshape:
         :param rotations:
         :type rotations:
         :param im_shape:
@@ -341,7 +341,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_clip_out_port = clip_out_port
         self.m_pca_numbers = pca_numbers
         self.m_pca_model = pca_model
-        self.m_star_arr = star_arr
+        self.m_star_reshape = star_reshape
         self.m_rotations = rotations
         self.m_im_shape = im_shape
         self.m_indices = indices
@@ -386,7 +386,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         tmp_processors = [PcaTaskProcessor(self.m_tasks_queue,
                                            self.m_result_queue,
-                                           self.m_star_arr,
+                                           self.m_star_reshape,
                                            self.m_rotations,
                                            self.m_pca_model,
                                            self.m_im_shape,
