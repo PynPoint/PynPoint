@@ -104,7 +104,7 @@ class TaskCreator(multiprocessing.Process):
         :return: None
         """
 
-        pass
+        # pass
 
     def create_poison_pills(self):
         """
