@@ -4,6 +4,7 @@ implementation needed to process lines in time as used in the wavelet time denoi
 """
 
 import multiprocessing
+
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -103,7 +104,7 @@ class TaskCreator(multiprocessing.Process):
         :return: None
         """
 
-        pass
+        # pass
 
     def create_poison_pills(self):
         """
@@ -213,7 +214,7 @@ class TaskProcessor(multiprocessing.Process):
         :rtype:
         """
 
-        pass
+        # pass
 
 
 class TaskWriter(multiprocessing.Process):
