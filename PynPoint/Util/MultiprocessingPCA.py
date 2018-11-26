@@ -1,263 +1,225 @@
 """
-Capsule for multiprocessing of the PCA-based PSF subtraction. Residuals are created in parallel for
-a range of principal components. The PCA basis is required as input. Note that due to a missing
-functionality in numpy the multiprocessing does not run on macOS.
+Capsule for multiprocessing of the PSF subtraction with PCA. Residuals are created in parallel for
+a range of principal components for which the PCA basis is required as input. Note that the
+multiprocessing does not run on macOS due to a missing functionality in numpy.
 """
 
 import sys
 
 import numpy as np
-from scipy import ndimage
 
 from PynPoint.Util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                           TaskInput, MultiprocessingCapsule, to_slice
+from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
+from PynPoint.Util.Residuals import combine_residuals
 
 
 class PcaTaskCreator(TaskCreator):
     """
-    Task Creator of the PCA multiprocessing. This Creator does not need an input port since the data
-    is directly given to the Task Processors. It creates one task for each PCA component number
-    required.
+    The TaskCreator of the PCA multiprocessing. Creates one task for each principal component
+    number. Does not require an input port since the data is directly given to the task processors.
     """
 
     def __init__(self,
-                 tasks_queue_in,
-                 number_of_processors,
+                 tasks_queue,
+                 cpu,
                  pca_numbers):
         """
         Constructor of PcaTaskCreator.
 
-        :param tasks_queue_in:
-        :type tasks_queue_in:
-        :param number_of_processors:
-        :type number_of_processors:
-        :param pca_numbers:
-        :type pca_numbers:
+        :param tasks_queue: Input task queue.
+        :type tasks_queue: multiprocessing.queues.JoinableQueue
+        :param cpu: Number of processors.
+        :type cpu: int
+        :param pca_numbers: Principal components for which the residuals are computed.
+        :type pca_numbers: numpy.ndarray
 
         :return: None
         """
 
-        super(PcaTaskCreator, self).__init__(None, tasks_queue_in, None, number_of_processors)
+        super(PcaTaskCreator, self).__init__(None, tasks_queue, None, cpu)
 
         self.m_pca_numbers = pca_numbers
 
     def run(self):
+        """
+        Run method of PcaTaskCreator.
 
-        tmp_result_position = 0
+        :return: None
+        """
+
+        res_position = 0
 
         for pca_number in self.m_pca_numbers:
+            parameters = (((res_position, res_position+1, None),
+                           (None, None, None), (None, None, None)), )
 
-            self.m_task_queue.put(TaskInput(pca_number,
-                                            (((tmp_result_position, tmp_result_position+1, None),
-                                              (None, None, None),
-                                              (None, None, None)),)))
+            self.m_task_queue.put(TaskInput(pca_number, parameters))
 
-            tmp_result_position += 1
+            res_position += 1
 
         self.create_poison_pills()
 
 
 class PcaTaskProcessor(TaskProcessor):
     """
-    The TaskProcessor of the PCA multiprocessing is the core of the parallelization. One instance
+    The TaskProcessor of the PCA multiprocessing is the core of the parallelization. An instance
     of this class will calculate one forward and backward PCA transformation given the pre-trained
     scikit-learn PCA model. It does not get data from the TaskCreator but uses its own copy of the
-    star data, which are the same and independent for each task. Finally the residuals are created:
+    input data, which are the same and independent for each task. The following residuals can be
+    created:
 
-    * Mean of the residuals -- result_requirements[0] = True
-    * Median of the residuals -- result_requirements[1] = True
-    * Noise-weighted residuals -- result_requirements[2] = True
-    * Clipped mean of the residuals -- result_requirements[3] = True
-    * Non-stacked residuals -- result_requirements[4] = True (not implemented for multiprocessing)
+    * Mean residuals -- requirements[0] = True
+    * Median residuals -- requirements[1] = True
+    * Noise-weighted residuals -- requirements[2] = True
+    * Clipped mean of the residuals -- requirements[3] = True
     """
 
     def __init__(self,
-                 tasks_queue_in,
-                 result_queue_in,
+                 tasks_queue,
+                 result_queue,
                  star_reshape,
                  angles,
                  pca_model,
                  im_shape,
                  indices,
-                 result_requirements=(False, False, False, False)):
+                 requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskProcessor.
 
-        :param tasks_queue_in:
-        :type tasks_queue_in:
-        :param result_queue_in:
-        :type result_queue_in:
-        :param star_reshape:
-        :type star_reshape:
-        :param angles:
-        :type angles:
-        :param pca_model:
-        :type pca_model:
-        :param im_shape:
-        :type im_shape:
-        :param indices:
-        :type indices:
-        :param result_requirements:
-        :type result_requirements:
+        :param tasks_queue: Input task queue.
+        :type tasks_queue: multiprocessing.queues.JoinableQueue
+        :param result_queue: Input result queue.
+        :type result_queue: multiprocessing.queues.JoinableQueue
+        :param star_reshape: Reshaped (2D) stack of images.
+        :type star_reshape: numpy.ndarray
+        :param angles: Derotation angles (deg).
+        :type angles: numpy.ndarray
+        :param pca_model: PCA object with the basis.
+        :type pca_model: sklearn.decomposition.pca.PCA
+        :param im_shape: Original shape of the stack of images.
+        :type im_shape: tuple(int, int, int)
+        :param indices: Non-masked image indices.
+        :type indices: numpy.ndarray
+        :param requirements: Required output residuals.
+        :type requirements: tuple(bool, bool, bool, bool)
 
         :return: None
         """
 
-        super(PcaTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
+        super(PcaTaskProcessor, self).__init__(tasks_queue, result_queue)
 
         self.m_star_reshape = star_reshape
         self.m_pca_model = pca_model
         self.m_angles = angles
         self.m_im_shape = im_shape
         self.m_indices = indices
-        self.m_result_requirements = result_requirements
+        self.m_requirements = requirements
 
     def run_job(self, tmp_task):
+        """
+        Run method of PcaTaskProcessor.
 
-        pc_number = tmp_task.m_input_data
+        :param tmp_task: Input task.
+        :type tmp_task: PynPoint.Util.Multiprocessing.TaskInput
 
-        # create pca representation
-        pca_rep = np.matmul(self.m_pca_model.components_[:pc_number], self.m_star_reshape.T)
-        pca_rep = np.vstack((pca_rep, np.zeros((self.m_pca_model.n_components - pc_number,
-                                                self.m_im_shape[0])))).T
+        :return: Output residuals.
+        :rtype: PynPoint.Util.Multiprocessing.TaskResult
+        """
 
-        # create PSF model
-        psf_model = self.m_pca_model.inverse_transform(pca_rep)
+        residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
+                                                 angles=self.m_angles,
+                                                 pca_number=tmp_task.m_input_data,
+                                                 pca_sklearn=self.m_pca_model,
+                                                 im_shape=self.m_im_shape,
+                                                 indices=self.m_indices)
 
-        # create original array size
-        residuals = np.zeros((self.m_im_shape[0], self.m_im_shape[1]*self.m_im_shape[2]))
+        res_output = np.zeros((4, res_rot.shape[1], res_rot.shape[2]))
 
-        # subtract the psf model
-        residuals[:, self.m_indices] = self.m_star_reshape - psf_model
+        if self.m_requirements[0]:
+            res_output[0, ] = combine_residuals(method="mean", res_rot=res_rot)
 
-        # reshape to the original image size
-        residuals = residuals.reshape(self.m_im_shape)
+        if self.m_requirements[1]:
+            res_output[1, ] = combine_residuals(method="median", res_rot=res_rot)
 
-        # inverse rotation
-        res_array = np.zeros(residuals.shape)
-        for i, angle in enumerate(self.m_angles):
-            res_array[i, ] = ndimage.rotate(input=residuals[i, ],
-                                            angle=angle,
-                                            reshape=False)
+        if self.m_requirements[2]:
+            res_output[2, ] = combine_residuals(method="weighted",
+                                                res_rot=res_rot,
+                                                residuals=residuals,
+                                                angles=self.m_angles)
 
-        # create residuals
-        res_length = 4
-
-        # if self.m_result_requirements[4]:
-        #     res_length += res_array.shape[0]
-
-        residual_output = np.zeros((res_length, res_array.shape[1], res_array.shape[2]))
-
-        # 1.) mean
-        if self.m_result_requirements[0]:
-            tmp_res_rot_mean = np.mean(res_array, axis=0)
-            residual_output[0, ] = tmp_res_rot_mean
-
-        # 2.) median
-        if self.m_result_requirements[1]:
-            tmp_res_rot_median = np.median(res_array, axis=0)
-            residual_output[1, ] = tmp_res_rot_median
-
-        # 3.) noise weighted
-        if self.m_result_requirements[2]:
-            tmp_res_var = np.var(residuals, axis=0)
-
-            res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
-                                   repeats=residuals.shape[0],
-                                   axis=0)
-
-            res_var = np.zeros(res_repeat.shape)
-            for j, angle in enumerate(self.m_angles):
-                # ndimage.rotate rotates in clockwise direction for positive angles
-                res_var[j, ] = ndimage.rotate(input=res_repeat[j, ],
-                                              angle=angle,
-                                              reshape=False)
-
-            weight1 = np.divide(res_array, res_var, out=np.zeros_like(res_var),
-                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
-
-            weight2 = np.divide(1., res_var, out=np.zeros_like(res_var),
-                                where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
-
-            sum1 = np.sum(weight1, axis=0)
-            sum2 = np.sum(weight2, axis=0)
-
-            residual_output[2, ] = np.divide(sum1, sum2, out=np.zeros_like(sum2),
-                                             where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
-
-        # 4.) clipped mean
-        if self.m_result_requirements[3]:
-            res_rot_mean_clip = np.zeros(self.m_im_shape[1:3].shape)
-
-            for i in range(res_rot_mean_clip.shape[0]):
-                for j in range(res_rot_mean_clip.shape[1]):
-                    temp = res_array[:, i, j]
-
-                    if temp.var() > 0.0:
-                        no_mean = temp - temp.mean()
-
-                        part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
-                        part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
-
-                        res_rot_mean_clip[i, j] = temp.mean() + part2.mean()
-
-            residual_output[3, ] = res_rot_mean_clip
-
-        # 5.) The de-rotated result images
-        # if self.m_result_requirements[4]:
-        #     residual_output[4:, :, :] = res_array
+        if self.m_requirements[3]:
+            res_output[3, ] = combine_residuals(method="clipped", res_rot=res_rot)
 
         sys.stdout.write('.')
         sys.stdout.flush()
 
-        return TaskResult(residual_output, tmp_task.m_job_parameter[0])
+        return TaskResult(res_output, tmp_task.m_job_parameter[0])
 
 
 class PcaTaskWriter(TaskWriter):
     """
-    The Writer of the PCA parallelization uses three different ports to save the results of the
-    Task Processors (mean, median, clipped). If they are not reburied they can be None.
+    The TaskWriter of the PCA parallelization. Four different ports are used to save the
+    results of the task processors (mean, median, weighted, and clipped).
     """
 
     def __init__(self,
-                 result_queue_in,
-                 mean_out_port_in,
-                 median_out_port_in,
-                 weighted_out_port_in,
-                 clip_out_port_in,
-                 data_mutex_in,
-                 result_requirements=(False, False, False)):
+                 result_queue,
+                 mean_out_port,
+                 median_out_port,
+                 weighted_out_port,
+                 clip_out_port,
+                 data_mutex,
+                 requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskWriter.
 
-        :param result_queue_in:
-        :type result_queue_in:
-        :param mean_out_port:
-        :type mean_out_port:
-        :param median_out_port:
-        :type median_out_port:
-        :param weighted_out_port:
-        :type weighted_out_port:
-        :param clip_out_port:
-        :type clip_out_port:
-        :param data_mutex_in:
-        :type data_mutex_in:
-        :param result_requirements:
-        :type result_requirements:
+        :param result_queue: Input result queue.
+        :type result_queue: multiprocessing.queues.JoinableQueue
+        :param mean_out_port: Output port with the mean residuals. Not used if set to None.
+        :type mean_out_port: PynPoint.Core.DataIO.OutputPort
+        :param median_out_port: Output port with the median residuals. Not used if set to None.
+        :type median_out_port: PynPoint.Core.DataIO.OutputPort
+        :param weighted_out_port: Output port with the noise-weighted residuals. Not used if set
+                                  to None.
+        :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
+        :param clip_out_port: Output port with the clipped mean residuals. Not used if set to None.
+        :type clip_out_port: PynPoint.Core.DataIO.OutputPort
+        :param data_mutex: A mutual exclusion variable which ensure that no read and write
+                           simultaneously occur.
+        :type data_mutex: multiprocessing.synchronize.Lock
+        :param requirements: Required output residuals.
+        :type requirements: tuple(bool, bool, bool, bool)
 
         :return: None
         """
 
-        super(PcaTaskWriter, self).__init__(result_queue_in,
-                                            mean_out_port_in,
-                                            data_mutex_in)
+        if mean_out_port is not None:
+            data_out_port = mean_out_port
 
-        self.m_median_out_port_in = median_out_port_in
-        self.m_weighted_out_port_in = weighted_out_port_in
-        self.m_clip_out_port_in = clip_out_port_in
-        self.m_result_requirements = result_requirements
+        elif median_out_port is not None:
+            data_out_port = median_out_port
+
+        elif weighted_out_port is not None:
+            data_out_port = weighted_out_port
+
+        elif clip_out_port is not None:
+            data_out_port = clip_out_port
+
+        super(PcaTaskWriter, self).__init__(result_queue, data_out_port, data_mutex)
+
+        self.m_mean_out_port = mean_out_port
+        self.m_median_out_port = median_out_port
+        self.m_weighted_out_port = weighted_out_port
+        self.m_clip_out_port = clip_out_port
+        self.m_requirements = requirements
 
     def run(self):
+        """
+        Run method of PcaTaskWriter. Writes the residuals to the output ports.
+
+        :return: None
+        """
 
         while True:
             next_result = self.m_result_queue.get()
@@ -265,28 +227,26 @@ class PcaTaskWriter(TaskWriter):
 
             if poison_pill_case == 1:
                 break
-            if poison_pill_case == 2:
+
+            elif poison_pill_case == 2:
                 continue
 
             with self.m_data_mutex:
-                if self.m_result_requirements[0]:
-                    self.m_data_out_port[to_slice(next_result.m_position)] = \
+                if self.m_requirements[0]:
+                    self.m_mean_out_port[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[0, :, :]
 
-                if self.m_result_requirements[1]:
-                    self.m_median_out_port_in[to_slice(next_result.m_position)] = \
+                if self.m_requirements[1]:
+                    self.m_median_out_port[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[1, :, :]
 
-                if self.m_result_requirements[2]:
-                    self.m_weighted_out_port_in[to_slice(next_result.m_position)] = \
+                if self.m_requirements[2]:
+                    self.m_weighted_out_port[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[2, :, :]
 
-                if self.m_result_requirements[3]:
-                    self.m_clip_out_port_in[to_slice(next_result.m_position)] = \
+                if self.m_requirements[3]:
+                    self.m_clip_out_port[to_slice(next_result.m_position)] = \
                         next_result.m_data_array[3, :, :]
-
-                # if self.m_result_requirements[4]:
-                #     raise NotImplementedError("Not yet supported.")
 
             self.m_result_queue.task_done()
 
@@ -301,36 +261,38 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  median_out_port,
                  weighted_out_port,
                  clip_out_port,
-                 num_processors,
+                 cpu,
                  pca_numbers,
                  pca_model,
                  star_reshape,
-                 rotations,
+                 angles,
                  im_shape,
                  indices):
         """
         Constructor of PcaMultiprocessingCapsule.
 
-        :param mean_out_port:
-        :type mean_out_port:
-        :param median_out_port:
-        :type median_out_port:
-        :param weighted_out_port:
-        :type weighted_out_port:
-        :param clip_out_port:
-        :type clip_out_port:
-        :param num_processors:
-        :type num_processors:
-        :param pca_numbers:
-        :type pca_numbers:
-        :param star_reshape:
-        :type star_reshape:
-        :param rotations:
-        :type rotations:
-        :param im_shape:
-        :type im_shape:
-        :param indices:
-        :type indices:
+        :param mean_out_port: Output port for the mean residuals.
+        :type mean_out_port: PynPoint.Core.DataIO.OutputPort
+        :param median_out_port: Output port for the median residuals.
+        :type median_out_port: PynPoint.Core.DataIO.OutputPort
+        :param weighted_out_port: Output port for the noise-weighted residuals.
+        :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
+        :param clip_out_port: Output port for the mean clipped residuals.
+        :type clip_out_port: PynPoint.Core.DataIO.OutputPort
+        :param cpu: Number of processors.
+        :type cpu: int
+        :param pca_numbers: Number of principal components.
+        :type pca_numbers: numpy.ndarray
+        :param pca_model: PCA object with the basis.
+        :type pca_model: sklearn.decomposition.pca.PCA
+        :param star_reshape: Reshaped (2D) input images.
+        :type star_reshape: numpy.ndarray
+        :param angles: Derotation angles (deg).
+        :type angles: numpy.ndarray
+        :param im_shape: Original shape of the input images.
+        :type im_shape: tuple(int, int, int)
+        :param indices: Non-masked pixel indices.
+        :type indices: numpy.ndarray
 
         :return: None
         """
@@ -342,57 +304,84 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_pca_numbers = pca_numbers
         self.m_pca_model = pca_model
         self.m_star_reshape = star_reshape
-        self.m_rotations = rotations
+        self.m_angles = angles
         self.m_im_shape = im_shape
         self.m_indices = indices
 
-        self.m_result_requirements = [False, False, False, False]
+        self.m_requirements = [False, False, False, False]
 
         if self.m_mean_out_port is not None:
-            self.m_result_requirements[0] = True
+            self.m_requirements[0] = True
 
         if self.m_median_out_port is not None:
-            self.m_result_requirements[1] = True
+            self.m_requirements[1] = True
 
         if self.m_weighted_out_port is not None:
-            self.m_result_requirements[2] = True
+            self.m_requirements[2] = True
 
         if self.m_clip_out_port is not None:
-            self.m_result_requirements[3] = True
+            self.m_requirements[3] = True
 
-        super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
+        self.m_requirements = tuple(self.m_requirements)
+
+        super(PcaMultiprocessingCapsule, self).__init__(None, None, cpu)
 
     def create_writer(self, image_out_port):
+        """
+        Method to create an instance of PcaTaskWriter.
 
-        tmp_writer = PcaTaskWriter(self.m_result_queue,
-                                   self.m_mean_out_port,
-                                   self.m_median_out_port,
-                                   self.m_weighted_out_port,
-                                   self.m_clip_out_port,
-                                   self.m_data_mutex,
-                                   self.m_result_requirements)
+        :param image_out_port: Input task.
+        :type image_out_port: PynPoint.Util.Multiprocessing.TaskInput
 
-        return tmp_writer
+        :return: PCA task writer.
+        :rtype: PynPoint.Util.MultiprocessingPCA.PcaTaskWriter
+        """
+
+        writer = PcaTaskWriter(self.m_result_queue,
+                               self.m_mean_out_port,
+                               self.m_median_out_port,
+                               self.m_weighted_out_port,
+                               self.m_clip_out_port,
+                               self.m_data_mutex,
+                               self.m_requirements)
+
+        return writer
 
     def init_creator(self, image_in_port):
+        """
+        Method to create an instance of PcaTaskCreator.
 
-        tmp_creator = PcaTaskCreator(self.m_tasks_queue,
-                                     self.m_num_processors,
-                                     self.m_pca_numbers)
+        :param image_in_port: Input task.
+        :type image_in_port: PynPoint.Util.Multiprocessing.TaskInput
 
-        return tmp_creator
+        :return: PCA task creator.
+        :rtype: PynPoint.Util.MultiprocessingPCA.PcaTaskCreator
+        """
+
+        creator = PcaTaskCreator(self.m_tasks_queue,
+                                 self.m_num_processors,
+                                 self.m_pca_numbers)
+
+        return creator
 
     def create_processors(self):
+        """
+        Method to create a list of instances of PcaTaskProcessor.
 
-        tmp_processors = [PcaTaskProcessor(self.m_tasks_queue,
-                                           self.m_result_queue,
-                                           self.m_star_reshape,
-                                           self.m_rotations,
-                                           self.m_pca_model,
-                                           self.m_im_shape,
-                                           self.m_indices,
-                                           self.m_result_requirements)
+        :return: PCA task processors.
+        :rtype: list of PynPoint.Util.MultiprocessingPCA.PcaTaskProcessor
+        """
 
-                          for _ in xrange(self.m_num_processors)]
+        processors = []
 
-        return tmp_processors
+        for _ in range(self.m_num_processors):
+            processors.append(PcaTaskProcessor(self.m_tasks_queue,
+                                               self.m_result_queue,
+                                               self.m_star_reshape,
+                                               self.m_angles,
+                                               self.m_pca_model,
+                                               self.m_im_shape,
+                                               self.m_indices,
+                                               self.m_requirements))
+
+        return processors

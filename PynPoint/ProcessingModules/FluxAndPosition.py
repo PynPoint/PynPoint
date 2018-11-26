@@ -19,6 +19,7 @@ from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
+from PynPoint.Util.Residuals import combine_residuals
 
 
 class FakePlanetModule(ProcessingModule):
@@ -356,13 +357,15 @@ class SimplexMinimizationModule(ProcessingModule):
 
             mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
-            im_res = pca_psf_subtraction(images=fake*mask,
-                                         angles=-1.*parang+self.m_extra_rot,
-                                         pca_number=self.m_pca_number)
+            _, im_res = pca_psf_subtraction(images=fake*mask,
+                                            angles=-1.*parang+self.m_extra_rot,
+                                            pca_number=self.m_pca_number)
 
-            self.m_res_out_port.append(im_res, data_dim=3)
+            stack = combine_residuals(method="mean", res_rot=im_res)
 
-            merit = merit_function(residuals=im_res,
+            self.m_res_out_port.append(stack, data_dim=3)
+
+            merit = merit_function(residuals=stack,
                                    function=self.m_merit,
                                    position=self.m_position,
                                    aperture=self.m_aperture,

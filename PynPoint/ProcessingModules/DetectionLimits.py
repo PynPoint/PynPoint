@@ -14,6 +14,7 @@ from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import false_alarm, student_fpf, fake_planet
 from PynPoint.Util.ImageTools import create_mask
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
+from PynPoint.Util.Residuals import combine_residuals
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -247,17 +248,19 @@ class ContrastCurveModule(ProcessingModule):
                     im_shape = (fake.shape[-2], fake.shape[-1])
                     mask = create_mask(im_shape, [self.m_cent_size, self.m_edge_size])
 
-                    im_res = pca_psf_subtraction(images=fake*mask,
-                                                 angles=-1.*parang+self.m_extra_rot,
-                                                 pca_number=self.m_pca_number)
+                    _, im_res = pca_psf_subtraction(images=fake*mask,
+                                                    angles=-1.*parang+self.m_extra_rot,
+                                                    pca_number=self.m_pca_number)
+
+                    stack = combine_residuals(method="mean", res_rot=im_res)
 
                     if self.m_pca_out_port is not None:
                         if count == 1 and iteration == 1:
-                            self.m_pca_out_port.set_all(im_res, data_dim=3)
+                            self.m_pca_out_port.set_all(stack, data_dim=3)
                         else:
-                            self.m_pca_out_port.append(im_res, data_dim=3)
+                            self.m_pca_out_port.append(stack, data_dim=3)
 
-                    _, _, fpf = false_alarm(image=im_res,
+                    _, _, fpf = false_alarm(image=stack,
                                             x_pos=x_fake,
                                             y_pos=y_fake,
                                             size=self.m_aperture,
