@@ -8,6 +8,7 @@ import numpy as np
 
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
+from PynPoint.Util.Residuals import combine_residuals
 
 def lnprob(param,
            bounds,
@@ -89,21 +90,22 @@ def lnprob(param,
 
         sep, ang, mag = param
 
-        fake = fake_planet(images,
-                           psf,
-                           parang-extra_rot,
-                           (sep/pixscale, ang),
-                           mag,
-                           psf_scaling)
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang-extra_rot,
+                           position=(sep/pixscale, ang),
+                           magnitude=mag,
+                           psf_scaling=psf_scaling)
 
         fake *= mask
 
-        im_res = pca_psf_subtraction(fake,
-                                     parang,
-                                     pca_number,
-                                     extra_rot)
+        _, im_res = pca_psf_subtraction(images=fake,
+                                        angles=-1.*parang+extra_rot,
+                                        pca_number=pca_number)
 
-        merit = merit_function(residuals=im_res,
+        stack = combine_residuals(method="mean", res_rot=im_res)
+
+        merit = merit_function(residuals=stack,
                                function="sum",
                                position=aperture[0:2],
                                aperture=aperture[2],
