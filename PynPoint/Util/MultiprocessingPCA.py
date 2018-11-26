@@ -21,23 +21,23 @@ class PcaTaskCreator(TaskCreator):
     """
 
     def __init__(self,
-                 tasks_queue,
-                 cpu,
+                 tasks_queue_in,
+                 number_of_processors,
                  pca_numbers):
         """
         Constructor of PcaTaskCreator.
 
-        :param tasks_queue: Input task queue.
-        :type tasks_queue: multiprocessing.queues.JoinableQueue
-        :param cpu: Number of processors.
-        :type cpu: int
+        :param tasks_queue_in: Input task queue.
+        :type tasks_queue_in: multiprocessing.queues.JoinableQueue
+        :param number_of_processors: Number of processors.
+        :type number_of_processors: int
         :param pca_numbers: Principal components for which the residuals are computed.
         :type pca_numbers: numpy.ndarray
 
         :return: None
         """
 
-        super(PcaTaskCreator, self).__init__(None, tasks_queue, None, cpu)
+        super(PcaTaskCreator, self).__init__(None, tasks_queue_in, None, number_of_processors)
 
         self.m_pca_numbers = pca_numbers
 
@@ -76,8 +76,8 @@ class PcaTaskProcessor(TaskProcessor):
     """
 
     def __init__(self,
-                 tasks_queue,
-                 result_queue,
+                 tasks_queue_in,
+                 result_queue_in,
                  star_reshape,
                  angles,
                  pca_model,
@@ -87,10 +87,10 @@ class PcaTaskProcessor(TaskProcessor):
         """
         Constructor of PcaTaskProcessor.
 
-        :param tasks_queue: Input task queue.
-        :type tasks_queue: multiprocessing.queues.JoinableQueue
-        :param result_queue: Input result queue.
-        :type result_queue: multiprocessing.queues.JoinableQueue
+        :param tasks_queue_in: Input task queue.
+        :type tasks_queue_in: multiprocessing.queues.JoinableQueue
+        :param result_queue_in: Input result queue.
+        :type result_queue_in: multiprocessing.queues.JoinableQueue
         :param star_reshape: Reshaped (2D) stack of images.
         :type star_reshape: numpy.ndarray
         :param angles: Derotation angles (deg).
@@ -107,7 +107,7 @@ class PcaTaskProcessor(TaskProcessor):
         :return: None
         """
 
-        super(PcaTaskProcessor, self).__init__(tasks_queue, result_queue)
+        super(PcaTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
 
         self.m_star_reshape = star_reshape
         self.m_pca_model = pca_model
@@ -164,18 +164,18 @@ class PcaTaskWriter(TaskWriter):
     """
 
     def __init__(self,
-                 result_queue,
+                 result_queue_in,
                  mean_out_port,
                  median_out_port,
                  weighted_out_port,
                  clip_out_port,
-                 data_mutex,
+                 data_mutex_in,
                  requirements=(False, False, False, False)):
         """
         Constructor of PcaTaskWriter.
 
-        :param result_queue: Input result queue.
-        :type result_queue: multiprocessing.queues.JoinableQueue
+        :param result_queue_in: Input result queue.
+        :type result_queue_in: multiprocessing.queues.JoinableQueue
         :param mean_out_port: Output port with the mean residuals. Not used if set to None.
         :type mean_out_port: PynPoint.Core.DataIO.OutputPort
         :param median_out_port: Output port with the median residuals. Not used if set to None.
@@ -185,9 +185,9 @@ class PcaTaskWriter(TaskWriter):
         :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
         :param clip_out_port: Output port with the clipped mean residuals. Not used if set to None.
         :type clip_out_port: PynPoint.Core.DataIO.OutputPort
-        :param data_mutex: A mutual exclusion variable which ensure that no read and write
+        :param data_mutex_in: A mutual exclusion variable which ensure that no read and write
                            simultaneously occur.
-        :type data_mutex: multiprocessing.synchronize.Lock
+        :type data_mutex_in: multiprocessing.synchronize.Lock
         :param requirements: Required output residuals.
         :type requirements: tuple(bool, bool, bool, bool)
 
@@ -195,18 +195,18 @@ class PcaTaskWriter(TaskWriter):
         """
 
         if mean_out_port is not None:
-            data_out_port = mean_out_port
+            data_out_port_in = mean_out_port
 
         elif median_out_port is not None:
-            data_out_port = median_out_port
+            data_out_port_in = median_out_port
 
         elif weighted_out_port is not None:
-            data_out_port = weighted_out_port
+            data_out_port_in = weighted_out_port
 
         elif clip_out_port is not None:
-            data_out_port = clip_out_port
+            data_out_port_in = clip_out_port
 
-        super(PcaTaskWriter, self).__init__(result_queue, data_out_port, data_mutex)
+        super(PcaTaskWriter, self).__init__(result_queue_in, data_out_port_in, data_mutex_in)
 
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
@@ -261,7 +261,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  median_out_port,
                  weighted_out_port,
                  clip_out_port,
-                 cpu,
+                 num_processors,
                  pca_numbers,
                  pca_model,
                  star_reshape,
@@ -279,8 +279,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
         :param clip_out_port: Output port for the mean clipped residuals.
         :type clip_out_port: PynPoint.Core.DataIO.OutputPort
-        :param cpu: Number of processors.
-        :type cpu: int
+        :param num_processors: Number of processors.
+        :type num_processors: int
         :param pca_numbers: Number of principal components.
         :type pca_numbers: numpy.ndarray
         :param pca_model: PCA object with the basis.
@@ -324,7 +324,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         self.m_requirements = tuple(self.m_requirements)
 
-        super(PcaMultiprocessingCapsule, self).__init__(None, None, cpu)
+        super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
 
     def create_writer(self, image_out_port):
         """

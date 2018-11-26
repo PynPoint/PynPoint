@@ -150,15 +150,13 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        cpu = self._m_config_port.get_attribute("CPU")
-
         angles = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
                                                 self.m_res_weighted_out_port,
                                                 self.m_res_rot_mean_clip_out_port,
-                                                cpu,
+                                                self._m_config_port.get_attribute("CPU"),
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
                                                 deepcopy(star_reshape),
