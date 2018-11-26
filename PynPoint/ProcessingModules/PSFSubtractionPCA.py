@@ -7,12 +7,13 @@ from copy import deepcopy
 
 import numpy as np
 
-from scipy import ndimage
 from sklearn.decomposition import PCA
 
+from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import progress
 from PynPoint.Util.MultiprocessingPCA import PcaMultiprocessingCapsule
-from PynPoint.Core.Processing import ProcessingModule
+from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
+from PynPoint.Util.Residuals import combine_residuals
 
 
 class PcaPsfSubtractionModule(ProcessingModule):
@@ -27,7 +28,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
     def __init__(self,
                  pca_numbers,
-                 name_in="PSF_subtraction",
+                 name_in="psf_subtraction",
                  images_in_tag="im_arr",
                  reference_in_tag="ref_arr",
                  res_mean_tag="res_mean",
@@ -85,12 +86,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         super(PcaPsfSubtractionModule, self).__init__(name_in)
 
-        self.m_max_pc = np.max(pca_numbers)
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
 
-        self.m_pca = PCA(n_components=self.m_max_pc, svd_solver="arpack")
+        self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver="arpack")
 
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
         self.m_star_in_port = self.add_input_port(images_in_tag)
@@ -152,7 +152,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         cpu = self._m_config_port.get_attribute("CPU")
 
-        rotations = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
+        angles = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                                 self.m_res_median_out_port,
@@ -162,9 +162,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                 deepcopy(self.m_components),
                                                 deepcopy(self.m_pca),
                                                 deepcopy(star_reshape),
-                                                deepcopy(rotations),
-                                                deepcopy(im_shape),
-                                                deepcopy(indices))
+                                                deepcopy(angles),
+                                                im_shape,
+                                                indices)
 
         pca_capsule.run()
 
@@ -176,102 +176,51 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :return: None
         """
 
-        for i, pc_number in enumerate(self.m_components):
+        for i, pca_number in enumerate(self.m_components):
             progress(i, len(self.m_components), "Creating residuals...")
 
-            # create pca representation
-            pca_rep = np.matmul(self.m_pca.components_[:pc_number], star_reshape.T)
-            pca_rep = np.vstack((pca_rep, np.zeros((self.m_max_pc - pc_number, im_shape[0])))).T
+            parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
-            # create PSF model
-            psf_model = self.m_pca.inverse_transform(pca_rep)
+            residuals, res_rot = pca_psf_subtraction(images=star_reshape,
+                                                     angles=parang,
+                                                     pca_number=pca_number,
+                                                     pca_sklearn=self.m_pca,
+                                                     im_shape=im_shape,
+                                                     indices=indices)
 
-            # create original array size
-            residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
+            history = "max PC number = "+str(np.amax(self.m_components))
 
-            # subtract the psf model
-            residuals[:, indices] = star_reshape - psf_model
-
-            # reshape to the original image size
-            residuals = residuals.reshape(im_shape)
-
-            # inverse rotation
-            parang = -1.*self.m_star_in_port.get_attribute("PARANG")
-
-            res_array = np.zeros(residuals.shape)
-            for j, angle in enumerate(parang):
-                # ndimage.rotate rotates in clockwise direction for positive angles
-                res_array[j, ] = ndimage.rotate(input=residuals[j, ],
-                                                angle=angle+self.m_extra_rot,
-                                                reshape=False)
-
-            history = "max PC number = "+str(self.m_max_pc)
-
-            # create residuals
             # 1.) derotated residuals
             if self.m_res_arr_out_ports is not None:
-                self.m_res_arr_out_ports[pc_number].set_all(res_array)
-                self.m_res_arr_out_ports[pc_number].copy_attributes_from_input_port(
+                self.m_res_arr_out_ports[pca_number].set_all(res_rot)
+                self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
                     self.m_star_in_port)
-                self.m_res_arr_out_ports[pc_number].add_history_information( \
+                self.m_res_arr_out_ports[pca_number].add_history_information( \
                     "PcaPsfSubtractionModule", history)
 
-            # 2.) mean
+            # 2.) mean residuals
             if self.m_res_mean_out_port is not None:
-                tmp_res_rot_mean = np.mean(res_array, axis=0)
-                self.m_res_mean_out_port.append(tmp_res_rot_mean, data_dim=3)
+                stack = combine_residuals(method="mean", res_rot=res_rot)
+                self.m_res_mean_out_port.append(stack, data_dim=3)
 
-            # 3.) median
+            # 3.) median residuals
             if self.m_res_median_out_port is not None:
-                tmp_res_rot_median = np.median(res_array, axis=0)
-                self.m_res_median_out_port.append(tmp_res_rot_median, data_dim=3)
+                stack = combine_residuals(method="median", res_rot=res_rot)
+                self.m_res_median_out_port.append(stack, data_dim=3)
 
-            # 4.) noise weighted
+            # 4.) noise-weighted residuals
             if self.m_res_weighted_out_port is not None:
-                tmp_res_var = np.var(residuals, axis=0)
+                stack = combine_residuals(method="weighted",
+                                          res_rot=res_rot,
+                                          residuals=residuals,
+                                          angles=parang)
 
-                res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
-                                       repeats=residuals.shape[0],
-                                       axis=0)
+                self.m_res_weighted_out_port.append(stack, data_dim=3)
 
-                res_var = np.zeros(res_repeat.shape)
-                for j, angle in enumerate(parang):
-                    # ndimage.rotate rotates in clockwise direction for positive angles
-                    res_var[j, ] = ndimage.rotate(input=res_repeat[j, ],
-                                                  angle=angle+self.m_extra_rot,
-                                                  reshape=False)
-
-                weight1 = np.divide(res_array, res_var, out=np.zeros_like(res_var),
-                                    where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
-
-                weight2 = np.divide(1., res_var, out=np.zeros_like(res_var),
-                                    where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
-
-                sum1 = np.sum(weight1, axis=0)
-                sum2 = np.sum(weight2, axis=0)
-
-                res_rot_weighted = np.divide(sum1, sum2, out=np.zeros_like(sum2),
-                                             where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
-
-                self.m_res_weighted_out_port.append(res_rot_weighted, data_dim=3)
-
-            # 5.) clipped mean
+            # 5.) clipped mean residuals
             if self.m_res_rot_mean_clip_out_port is not None:
-                res_rot_mean_clip = np.zeros(res_array[0, ].shape)
-
-                for j in range(res_rot_mean_clip.shape[0]):
-                    for k in range(res_rot_mean_clip.shape[1]):
-                        temp = res_array[:, j, k]
-
-                        if temp.var() > 0.0:
-                            no_mean = temp - temp.mean()
-
-                            part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
-                            part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
-
-                            res_rot_mean_clip[j, k] = temp.mean() + part2.mean()
-
-                self.m_res_rot_mean_clip_out_port.append(res_rot_mean_clip, data_dim=3)
+                stack = combine_residuals(method="clipped", res_rot=res_rot)
+                self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
 
         sys.stdout.write("Creating residuals... [DONE]\n")
         sys.stdout.flush()
@@ -294,9 +243,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self.m_res_rot_mean_clip_out_port.del_all_attributes()
 
         if self.m_res_arr_out_ports is not None:
-            for pc_number in self.m_components:
-                self.m_res_arr_out_ports[pc_number].del_all_data()
-                self.m_res_arr_out_ports[pc_number].del_all_attributes()
+            for pca_number in self.m_components:
+                self.m_res_arr_out_ports[pca_number].del_all_data()
+                self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
     def run(self):
         """
@@ -388,7 +337,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             sys.stdout.write(" [DONE]\n")
             sys.stdout.flush()
 
-        history = "max PC number = "+str(self.m_max_pc)
+        history = "max PC number = "+str(np.amax(self.m_components))
 
         # save history for all other ports
         if self.m_res_mean_out_port is not None:
