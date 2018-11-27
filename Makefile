@@ -39,7 +39,7 @@ clean-test:
 	rm -rf .pytest_cache/
 
 test:
-	py.test
+	pytest
 
 test-all:
 	tox
