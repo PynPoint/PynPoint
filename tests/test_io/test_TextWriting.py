@@ -86,7 +86,7 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("write_4d")
 
-        assert str(error.value), "Only 1D or 2D arrays can be written to a text file."
+        assert str(error.value) == "Only 1D or 2D arrays can be written to a text file."
 
     def test_text_writing_int(self):
 
@@ -137,7 +137,7 @@ class TestTextReading(object):
                                 data_tag="images",
                                 header=None)
 
-        assert str(error.value), "Output 'file_name' needs to be a string."
+        assert str(error.value) == "Output 'file_name' needs to be a string."
 
     def test_attribute_writing(self):
 
@@ -168,7 +168,7 @@ class TestTextReading(object):
                                    attribute="PARANG",
                                    header=None)
 
-        assert str(error.value), "Output 'file_name' needs to be a string."
+        assert str(error.value) == "Output 'file_name' needs to be a string."
 
     def test_attribute_not_present(self):
 
@@ -184,7 +184,7 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("attr_write3")
 
-        assert str(error.value), "The 'test' attribute is not present in 'images'."
+        assert str(error.value) == "The 'test' attribute is not present in 'images'."
 
     def test_parang_writing_not_present(self):
 
@@ -203,4 +203,4 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("parang_write3")
 
-        assert str(error.value), "The PARANG attribute is not present in 'images'."
+        assert str(error.value) == "The PARANG attribute is not present in 'images'."
