@@ -55,18 +55,13 @@ before_install:
     fi
 
 install:
-  # - pip install numpy
-  # - pip install enum34
   - pip install -r requirements.txt
   - pip install tox
-  # - pip install coverage
   - pip install coveralls
-  # - pip install sphinx
-  # - pip install sphinx_rtd_theme
 
-before_script:
-  - mkdir $HOME/.matplotlib
-  - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
+# before_script:
+#   - mkdir $HOME/.matplotlib
+#   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 
 script:
   - tox
