@@ -1,4 +1,5 @@
 language: python
+
 matrix:
     include:
         - os: osx
@@ -33,25 +34,26 @@ matrix:
           env:
             - TOXENV=py37
             - NUMBA_DISABLE_JIT=1
+
 install:
-  - pip2 install numpy
-  - pip2 install enum34
-  - pip2 install -r requirements.txt
-  - pip2 install tox
-  - pip2 install detox
-  - pip2 install coverage
-  - pip2 install coveralls
-  - pip2 install sphinx
-  - pip2 install sphinx_rtd_theme
+  - pip install numpy
+  - pip install enum34
+  - pip install -r requirements.txt
+  - pip install tox
+  - pip install coverage
+  - pip install coveralls
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
+
 before_script:
   - mkdir $HOME/.matplotlib
   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
+
 script:
-  - make test
-  - make test-all
-  - make coverage
-  - make docs
+  - tox
+
 after_success:
   - coveralls
+
 notifications:
   email: false
