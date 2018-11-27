@@ -50,13 +50,13 @@ before_install:
       pyenv which python
       export PYENV_VERSION=$PYTHON
       pyenv which python
-      eval "$(pyenv init -)"
-      eval "$(pyenv virtualenv-init -)"
-      pyenv which python
-      pyenv virtualenv $PYTHON venv
-      pyenv which python
-      pyenv activate venv
-      pyenv which python
+      # eval "$(pyenv init -)"
+      # eval "$(pyenv virtualenv-init -)"
+      # pyenv which python
+      # pyenv virtualenv $PYTHON venv
+      # pyenv which python
+      # pyenv activate venv
+      # pyenv which python
     fi
 
 install:
