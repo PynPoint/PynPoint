@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from PynPoint.ProcessingModules.BackgroundSubtraction import SimpleBackgroundSubtractionModule, \
                                                              MeanBackgroundSubtractionModule, \
                                                              PCABackgroundPreparationModule, \

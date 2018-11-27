@@ -4,9 +4,12 @@ a range of principal components for which the PCA basis is required as input. No
 multiprocessing does not run on macOS due to a missing functionality in numpy.
 """
 
+from __future__ import absolute_import
+
 import sys
 
 import numpy as np
+from six.moves import range
 
 from PynPoint.Util.Multiprocessing import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                           TaskInput, MultiprocessingCapsule, to_slice

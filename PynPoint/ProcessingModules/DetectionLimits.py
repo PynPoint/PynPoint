@@ -2,6 +2,8 @@
 Modules for determining detection limits.
 """
 
+from __future__ import absolute_import
+
 import math
 import sys
 import warnings

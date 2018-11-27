@@ -2,9 +2,12 @@
 Modules for basic image operations.
 """
 
+from __future__ import absolute_import
+
 import sys
 
 from scipy.ndimage import rotate
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port

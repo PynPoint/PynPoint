@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -27,7 +29,7 @@ class TestConfigPort(object):
         with pytest.raises(ValueError) as error:
             ConfigPort("images", storage)
 
-        assert error.value[0] == "The tag name of the central configuration should be 'config'."
+        assert str(error.value) == "The tag name of the central configuration should be 'config'."
 
         port = ConfigPort("config", None)
 

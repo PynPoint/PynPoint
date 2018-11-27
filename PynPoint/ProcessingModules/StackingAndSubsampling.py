@@ -2,10 +2,14 @@
 Modules for stacking and subsampling of images.
 """
 
+from __future__ import absolute_import
+
 import sys
 import warnings
 
 import numpy as np
+
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import progress, memory_frames
