@@ -47,21 +47,14 @@ before_install:
     if [ $TRAVIS_OS_NAME == "osx" ] && [ $PYTHON == "3.7.0" ]; then
       brew install pyenv-virtualenv
       pyenv install $PYTHON
+      pyenv which python
       export PYENV_VERSION=$PYTHON
-      eval "$(pyenv init -)"
-      eval "$(pyenv virtualenv-init -)"
-      pyenv virtualenv $PYTHON venv
-      pyenv activate venv
     fi
 
 install:
   - pip install -r requirements.txt
   - pip install tox
   - pip install coveralls
-
-# before_script:
-#   - mkdir $HOME/.matplotlib
-#   - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
 
 script:
   - tox
