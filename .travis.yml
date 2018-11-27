@@ -46,18 +46,20 @@ before_install:
   - echo $TRAVIS_OS_NAME
   - echo $PYTHON
   - |
-    if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$PYTHON" == "3.7.0" ]; then
-      brew update
-      brew upgrade openssl
-      brew upgrade readline
-      brew upgrade pyenv
+    if [ $TRAVIS_OS_NAME == "osx" && $PYTHON == "3.7.0" ]; then
+      # brew update
+      # brew upgrade openssl
       brew install pyenv-virtualenv
       python --version
       pyenv install $PYTHON
+      pyenv versions
+      pyenv which python
       export PYENV_VERSION=$PYTHON
       python --version
-      ls -l .pyenv
-      ls -l .pyenv/shims
+      pwd
+      ls -l .pyenv/
+      ls -l .pyenv/shims/
+      exec bash -l
       export PATH="/Users/travis/.pyenv/shims:${PATH}"
       pyenv virtualenv venv
       pyenv activate venv
