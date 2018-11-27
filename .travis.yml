@@ -42,10 +42,6 @@ matrix:
         #     - TOXENV=py37
         #     - NUMBA_DISABLE_JIT=1
 
-# brew update
-# brew upgrade openssl
-
-
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $PYTHON
@@ -59,11 +55,7 @@ before_install:
       export PYENV_VERSION=$PYTHON
       python --version
       pwd
-      ls -l .pyenv/
-      ls -l .pyenv/shims/
-      exec bash -l
-      export PATH="/Users/travis/.pyenv/shims:${PATH}"
-      pyenv virtualenv venv
+      pyenv virtualenv $PYTHON venv
       pyenv activate venv
       pyenv which python
       python --version
