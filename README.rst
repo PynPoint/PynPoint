@@ -6,7 +6,7 @@ PynPoint
 .. image:: https://badge.fury.io/py/pynpoint.svg
     :target: https://badge.fury.io/py/pynpoint
 
-.. image:: https://img.shields.io/badge/Python-2.7-yellow.svg?style=flat
+.. image:: https://img.shields.io/badge/Python-2.7%2C%203.6%2C%203.7-yellow.svg?style=flat
     :target: https://pypi.python.org/pypi/pynpoint
 
 .. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -31,14 +33,14 @@ class TestInputPort(object):
         with pytest.raises(ValueError) as error:
             InputPort("config", self.storage)
 
-        assert error.value[0] == "The tag name 'config' is reserved for the central " \
-                                 "configuration of PynPoint."
+        assert str(error.value) == "The tag name 'config' is reserved for the central " \
+                                   "configuration of PynPoint."
 
         with pytest.raises(ValueError) as error:
             InputPort("fits_header", self.storage)
 
-        assert error.value[0] == "The tag name 'fits_header' is reserved for storage of the " \
-                                 "FITS headers."
+        assert str(error.value) == "The tag name 'fits_header' is reserved for storage of the " \
+                                   "FITS headers."
 
         port = InputPort("images", self.storage)
 

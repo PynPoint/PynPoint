@@ -2,6 +2,8 @@
 Modules for dark frame and flat field calibrations.
 """
 
+from __future__ import absolute_import
+
 import warnings
 
 import numpy as np

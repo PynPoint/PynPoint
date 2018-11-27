@@ -136,7 +136,7 @@ class TestFrameSelection(object):
         assert np.allclose(np.mean(attribute), 61.6, rtol=limit, atol=0.)
         assert attribute.shape == (5, 2)
 
-    def test_frame_selection(self):
+    # def test_frame_selection(self):
 
         select = FrameSelectionModule(name_in="select1",
                                       image_in_tag="start",

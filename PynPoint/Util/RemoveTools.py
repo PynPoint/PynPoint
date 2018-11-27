@@ -2,6 +2,8 @@
 Functions to write selected data and attributes to the central database.
 """
 
+from __future__ import absolute_import
+
 import numpy as np
 
 from PynPoint.Util.ModuleTools import number_images_port

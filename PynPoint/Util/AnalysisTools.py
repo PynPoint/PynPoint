@@ -2,6 +2,8 @@
 Functions for analysis of a planet signal.
 """
 
+from __future__ import absolute_import
+
 import math
 
 import numpy as np
@@ -10,6 +12,7 @@ from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
+from six.moves import range
 
 from PynPoint.Util.ImageTools import shift_image
 

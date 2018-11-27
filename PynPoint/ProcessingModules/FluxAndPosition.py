@@ -2,6 +2,9 @@
 Modules for photometric and astrometric measurements of a planet.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import math
 import sys
 
@@ -11,6 +14,7 @@ import emcee
 from scipy.optimize import minimize
 from scipy.stats import t
 from photutils import aperture_photometry, CircularAperture
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
@@ -737,7 +741,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         self.m_chain_out_port.close_port()
 
-        print "Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction))
+        print("Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction)))
 
         try:
             autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
@@ -749,10 +753,10 @@ class MCMCsamplingModule(ProcessingModule):
                                                       axis=0,
                                                       fast=False)
 
-            print "Integrated autocorrelation time =", autocorr
+            print("Integrated autocorrelation time =", autocorr)
 
         except emcee.autocorr.AutocorrError:
-            print "The chain is too short to reliably estimate the autocorrelation time. [WARNING]"
+            print("The chain is too short to reliably estimate the autocorrelation time. [WARNING]")
 
 
 class AperturePhotometryModule(ProcessingModule):

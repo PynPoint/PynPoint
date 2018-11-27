@@ -6,19 +6,40 @@ matrix:
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+        - os: osx
+          language: generic
+          env:
+            - TOXENV=py36
+            - NUMBA_DISABLE_JIT=1
+        - os: osx
+          language: generic
+          env:
+            - TOXENV=py37
+            - NUMBA_DISABLE_JIT=1
         - os: linux
           python: 2.7
           env:
             - TOXENV=py27
+            - NUMBA_DISABLE_JIT=1
+        - os: linux
+          python: 3.6
+          env:
+            - TOXENV=py36
+            - NUMBA_DISABLE_JIT=1
+        - os: linux
+          python: 3.7
+          env:
+            - TOXENV=py36
             - NUMBA_DISABLE_JIT=1
 install:
   - pip2 install numpy
   - pip2 install enum34
   - pip2 install -r requirements.txt
   - pip2 install tox
+  - pip2 install detox
   - pip2 install coverage
-  - pip2 install sphinx
   - pip2 install coveralls
+  - pip2 install sphinx
   - pip2 install sphinx_rtd_theme
 before_script:
   - mkdir $HOME/.matplotlib

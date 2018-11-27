@@ -2,6 +2,8 @@
 Module which capsules the methods of the Pypeline.
 """
 
+from __future__ import absolute_import
+
 import os
 import sys
 import warnings
@@ -9,6 +11,7 @@ import configparser
 import collections
 import multiprocessing
 
+import six
 import h5py
 import numpy as np
 
@@ -134,13 +137,13 @@ class Pypeline(object):
             file_obj = open(filename, 'w')
             file_obj.write("[header]\n\n")
 
-            for key, val in attributes.iteritems():
+            for key, val in six.iteritems(attributes):
                 if val['config'] == "header":
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
             file_obj.write("\n[settings]\n\n")
 
-            for key, val in attributes.iteritems():
+            for key, val in six.iteritems(attributes):
                 if val['config'] == "settings":
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
@@ -150,7 +153,7 @@ class Pypeline(object):
             config = configparser.ConfigParser()
             config.read_file(open(config_file))
 
-            for key, val in attributes.iteritems():
+            for key, val in six.iteritems(attributes):
                 if config.has_option(val["config"], key):
                     if config.get(val["config"], key) == "None":
                         if val["config"] == "header":
@@ -188,7 +191,7 @@ class Pypeline(object):
 
             config = hdf.create_group("config")
 
-            for key, _ in attributes.iteritems():
+            for key, _ in six.iteritems(attributes):
                 if attributes[key]["value"] is not None:
                     config.attrs[key] = attributes[key]["value"]
 
@@ -270,7 +273,7 @@ class Pypeline(object):
         :rtype: list[str]
         """
 
-        return self._m_modules.keys()
+        return list(self._m_modules.keys())
 
     def validate_pipeline(self):
         """
@@ -284,9 +287,9 @@ class Pypeline(object):
 
         self.m_data_storage.open_connection()
 
-        existing_data_tags = self.m_data_storage.m_data_bank.keys()
+        existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
 
-        for module in self._m_modules.itervalues():
+        for module in six.itervalues(self._m_modules):
             validation = self._validate(module, existing_data_tags)
 
             if not validation[0]:
@@ -308,7 +311,7 @@ class Pypeline(object):
 
         self.m_data_storage.open_connection()
 
-        existing_data_tags = self.m_data_storage.m_data_bank.keys()
+        existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
 
         if name in self._m_modules:
             module = self._m_modules[name]
@@ -442,7 +445,10 @@ class Pypeline(object):
             self.m_data_storage.m_data_bank[data_tag].attrs[attr_name] = value
 
         else:
-            if attr_name in self.m_data_storage.m_data_bank["header_"+data_tag].keys():
+            if isinstance(value[0], str):
+                value = np.array(value, dtype="|S")
+
+            if attr_name in list(self.m_data_storage.m_data_bank["header_"+data_tag].keys()):
                 del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
 
             self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(value)
@@ -458,7 +464,7 @@ class Pypeline(object):
         """
 
         self.m_data_storage.open_connection()
-        tags = self.m_data_storage.m_data_bank.keys()
+        tags = list(self.m_data_storage.m_data_bank.keys())
 
         select = []
         for _, item in enumerate(tags):
