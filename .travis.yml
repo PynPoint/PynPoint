@@ -17,10 +17,11 @@ matrix:
 
         - os: osx
           language: generic
+          python: 3.7
           env:
-            - PYTHON=3.7.0
+            - TOXENV=py37
             - NUMBA_DISABLE_JIT=1
-            - BREW_PYTHON_PACKAGE=python@3
+            # - BREW_PYTHON_PACKAGE=python@3
 
         # - os: linux
         #   python: 2.7
@@ -41,6 +42,29 @@ matrix:
         #   env:
         #     - TOXENV=py37
         #     - NUMBA_DISABLE_JIT=1
+before_install: |
+  if [ "$TRAVIS_OS_NAME" == "osx" & "$TOXENV" == "py37"]; then
+    brew update
+    # Per the `pyenv homebrew recommendations <https://github.com/yyuu/pyenv/wiki#suggested-build-environment>`_.
+    brew install openssl readline
+    # See https://docs.travis-ci.com/user/osx-ci-environment/#A-note-on-upgrading-packages.
+    # I didn't do this above because it works and I'm lazy.
+    brew outdated pyenv || brew upgrade pyenv
+    # virtualenv doesn't work without pyenv knowledge. venv in Python 3.3
+    # doesn't provide Pip by default. So, use `pyenv-virtualenv <https://github.com/yyuu/pyenv-virtualenv/blob/master/README.md>`_.
+    echo $PYTHON
+    brew install pyenv-virtualenv
+    pyenv install $PYTHON
+    # I would expect something like ``pyenv init; pyenv local $PYTHON`` or
+    # ``pyenv shell $PYTHON`` would work, but ``pyenv init`` doesn't seem to
+    # modify the Bash environment. ??? So, I hand-set the variables instead.
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    pyenv-virtualenv venv
+    source venv/bin/activate
+    # A manual check that the correct version of Python is running.
+    python --version
+  fi
 
 install:
   - pip install numpy
