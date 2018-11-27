@@ -47,25 +47,26 @@ before_install:
     if [ $TRAVIS_OS_NAME == "osx" ] && [ $PYTHON == "3.7.0" ]; then
       brew install pyenv-virtualenv
       pyenv install $PYTHON
-      pyenv which python
       export PYENV_VERSION=$PYTHON
+      eval "$(pyenv init -)"
+      eval "$(pyenv virtualenv-init -)"
       pyenv which python
-      # eval "$(pyenv init -)"
-      # eval "$(pyenv virtualenv-init -)"
-      # pyenv which python
-      # pyenv virtualenv $PYTHON venv
-      # pyenv which python
-      # pyenv activate venv
-      # pyenv which python
+      pyenv virtualenv $PYTHON venv
+      pyenv which python
+      pyenv activate venv
+      pyenv which python
     fi
 
 install:
   - pip install -r requirements.txt
   - pip install tox
   - pip install coveralls
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
 
 script:
-  - tox
+  - make docs
+  - make test-all
 
 after_success:
   - coveralls
