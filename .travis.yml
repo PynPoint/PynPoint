@@ -58,7 +58,7 @@ before_install:
       python --version
       ls -l .pyenv
       ls -l .pyenv/shims
-      # export PATH="/Users/travis/.pyenv/shims:${PATH}"
+      export PATH="/Users/travis/.pyenv/shims:${PATH}"
       pyenv virtualenv venv
       pyenv activate venv
       python --version
