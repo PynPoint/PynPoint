@@ -18,7 +18,7 @@ matrix:
         - os: osx
           language: generic
           env:
-            - TOXENV=py37
+            - PYTHON=3.7.0
             - NUMBA_DISABLE_JIT=1
             - BREW_PYTHON_PACKAGE=python@3
 
