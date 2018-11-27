@@ -42,10 +42,11 @@ matrix:
         #     - TOXENV=py37
         #     - NUMBA_DISABLE_JIT=1
 
+# && [ "$PYTHON" == "py37"]
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $PYTHON
-  # - "if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$PYTHON" == "py37"]; then brew update; brew install openssl readline; brew outdated pyenv || brew upgrade pyenv; echo $PYTHON; brew install pyenv-virtualenv; pyenv install $PYTHON; export PYENV_VERSION=$PYTHON; export PATH="/Users/travis/.pyenv/shims:${PATH}"; pyenv-virtualenv venv; source venv/bin/activate; python --version; fi"
+  - "if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install openssl readline; brew outdated pyenv || brew upgrade pyenv; echo $PYTHON; brew install pyenv-virtualenv; pyenv install $PYTHON; export PYENV_VERSION=$PYTHON; export PATH="/Users/travis/.pyenv/shims:${PATH}"; pyenv-virtualenv venv; source venv/bin/activate; python --version; fi"
 
 install:
   - python -m pip install -U pip
