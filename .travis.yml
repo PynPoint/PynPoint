@@ -46,25 +46,19 @@ before_install:
   - echo $TRAVIS_OS_NAME
   - echo $PYTHON
   - |
-    if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$PYTHON" == "3.7.0" ]; then
+    if [ "$TRAVIS_OS_NAME" == "osx" && "$PYTHON" == "3.7.0" ]; then
       brew update
-      # Per the `pyenv homebrew recommendations <https://github.com/yyuu/pyenv/wiki#suggested-build-environment>`_.
-      brew install openssl readline
-      # See https://docs.travis-ci.com/user/osx-ci-environment/#A-note-on-upgrading-packages.
-      # I didn't do this above because it works and I'm lazy.
-      brew outdated pyenv || brew upgrade pyenv
-      # virtualenv doesn't work without pyenv knowledge. venv in Python 3.3
-      # doesn't provide Pip by default. So, use `pyenv-virtualenv <https://github.com/yyuu/pyenv-virtualenv/blob/master/README.md>`_.
+      brew upgrade openssl readline pyenv
       brew install pyenv-virtualenv
+      python --version
       pyenv install $PYTHON
-      # I would expect something like ``pyenv init; pyenv local $PYTHON`` or
-      # ``pyenv shell $PYTHON`` would work, but ``pyenv init`` doesn't seem to
-      # modify the Bash environment. ??? So, I hand-set the variables instead.
       export PYENV_VERSION=$PYTHON
-      export PATH="/Users/travis/.pyenv/shims:${PATH}"
-      pyenv-virtualenv venv
-      source venv/bin/activate
-      # A manual check that the correct version of Python is running.
+      python --version
+      ls -l .pyenv
+      ls -l .pyenv/shims
+      # export PATH="/Users/travis/.pyenv/shims:${PATH}"
+      pyenv virtualenv venv
+      pyenv activate venv
       python --version
     fi
 
