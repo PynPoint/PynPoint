@@ -48,7 +48,9 @@ before_install:
   - |
     if [ "$TRAVIS_OS_NAME" == "osx" && "$PYTHON" == "3.7.0" ]; then
       brew update
-      brew upgrade openssl readline pyenv
+      brew upgrade openssl
+      brew upgrade readline
+      brew upgrade pyenv
       brew install pyenv-virtualenv
       python --version
       pyenv install $PYTHON
