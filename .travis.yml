@@ -43,8 +43,6 @@ matrix:
         #     - NUMBA_DISABLE_JIT=1
 
 before_install:
-  - echo $TRAVIS_OS_NAME
-  - echo $PYTHON
   - |
     if [ $TRAVIS_OS_NAME == "osx" ] && [ $PYTHON == "3.7.0" ]; then
       brew install pyenv-virtualenv
@@ -55,6 +53,8 @@ before_install:
       export PYENV_VERSION=$PYTHON
       python --version
       pwd
+      eval "$(pyenv init -)"
+      eval "$(pyenv virtualenv-init -)"
       pyenv virtualenv $PYTHON venv
       pyenv activate venv
       pyenv which python
@@ -62,7 +62,6 @@ before_install:
     fi
 
 install:
-  - python -m pip install -U pip
   - pip install numpy
   - pip install enum34
   - pip install -r requirements.txt
