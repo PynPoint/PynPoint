@@ -8,10 +8,10 @@ Subpackages
 
 .. toctree::
 
-    PynPoint.Core
-    PynPoint.IOmodules
-    PynPoint.ProcessingModules
-    PynPoint.Util
+   PynPoint.Core
+   PynPoint.IOmodules
+   PynPoint.ProcessingModules
+   PynPoint.Util
 
 Module contents
 ---------------

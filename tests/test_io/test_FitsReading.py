@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -5,6 +7,7 @@ import pytest
 import numpy as np
 
 from astropy.io import fits
+from six.moves import range
 
 from PynPoint.Core.Pypeline import Pypeline
 from PynPoint.IOmodules.FitsReading import FitsReadingModule

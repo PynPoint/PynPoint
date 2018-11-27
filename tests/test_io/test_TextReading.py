@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import warnings
 
@@ -115,7 +116,7 @@ class TestTextReading(object):
                                 data_tag="images",
                                 overwrite=False)
 
-        assert error.value[0] == "Input 'file_name' needs to be a string."
+        assert str(error.value) == "Input 'file_name' needs to be a string."
 
     def test_parang_reading_2d(self):
 
@@ -130,8 +131,8 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("parang6")
 
-        assert error.value[0] == "The input file data_2d.dat should contain a 1D data set with " \
-                                 "the parallactic angles."
+        assert str(error.value) == "The input file data_2d.dat should contain a 1D data set with " \
+                                   "the parallactic angles."
 
     def test_attribute_reading(self):
 
@@ -160,7 +161,7 @@ class TestTextReading(object):
                                    data_tag="images",
                                    overwrite=False)
 
-        assert error.value[0] == "Input 'file_name' needs to be a string."
+        assert str(error.value) == "Input 'file_name' needs to be a string."
 
     def test_attribute_reading_present(self):
 
@@ -194,7 +195,7 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("attribute4")
 
-        assert error.value[0] == "'test' is not a valid attribute."
+        assert str(error.value) == "'test' is not a valid attribute."
 
     def test_attribute_reading_2d(self):
 
@@ -210,8 +211,8 @@ class TestTextReading(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("attribute5")
 
-        assert error.value[0] == "The input file data_2d.dat should contain a 1D list with " \
-                                 "attributes."
+        assert str(error.value) == "The input file data_2d.dat should contain a 1D list with " \
+                                   "attributes."
 
     def test_attribute_reading_same(self):
 

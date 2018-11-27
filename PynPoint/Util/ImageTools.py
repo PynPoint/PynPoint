@@ -2,6 +2,8 @@
 Functions for image processing.
 """
 
+from __future__ import absolute_import
+
 import numpy as np
 
 from scipy.ndimage import fourier_shift
@@ -23,16 +25,16 @@ def image_center(image):
     """
 
     if image.shape[-2]%2 == 0 and image.shape[-1]%2 == 0:
-        center = (image.shape[-2]/2-1, image.shape[-1]/2-1)
+        center = (image.shape[-2] // 2 - 1, image.shape[-1] // 2 - 1)
 
     elif image.shape[-2]%2 == 0 and image.shape[-1]%2 == 1:
-        center = (image.shape[-2]/2-1, (image.shape[-1]-1)/2)
+        center = (image.shape[-2] // 2 - 1, (image.shape[-1]-1) // 2)
 
     elif image.shape[-2]%2 == 1 and image.shape[-1]%2 == 0:
-        center = ((image.shape[-2]-1)/2, image.shape[-1]/2-1)
+        center = ((image.shape[-2]-1) // 2, image.shape[-1] // 2 - 1)
 
     elif image.shape[-2]%2 == 1 and image.shape[-1]%2 == 1:
-        center = ((image.shape[-2]-1)/2, (image.shape[-1]-1)/2)
+        center = ((image.shape[-2]-1) // 2, (image.shape[-1]-1) // 2)
 
     return center
 
@@ -65,11 +67,11 @@ def crop_image(image,
     if size%2 == 0:
         size += 1
 
-    x_start = center[1] - (size-1)/2
-    x_end = center[1] + (size-1)/2 + 1
+    x_start = center[1] - (size-1) // 2
+    x_end = center[1] + (size-1) // 2 + 1
 
-    y_start = center[0] - (size-1)/2
-    y_end = center[0] + (size-1)/2 + 1
+    y_start = center[0] - (size-1) // 2
+    y_end = center[0] + (size-1) // 2 + 1
 
     if x_start < 0 or y_start < 0 or x_end > image.shape[1] or y_end > image.shape[0]:
         raise ValueError("Target image resolution does not fit inside the input image resolution.")
@@ -77,7 +79,7 @@ def crop_image(image,
     if image.ndim == 2:
         im_crop = np.copy(image[y_start:y_end, x_start:x_end])
 
-    elif image.ndim == 2:
+    elif image.ndim == 3:
         im_crop = np.copy(image[:, y_start:y_end, x_start:x_end])
 
     return im_crop

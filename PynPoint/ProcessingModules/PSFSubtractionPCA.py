@@ -2,7 +2,10 @@
 Modules for PSF subtraction with principal component analysis.
 """
 
+from __future__ import absolute_import
+
 import sys
+
 from copy import deepcopy
 
 import numpy as np

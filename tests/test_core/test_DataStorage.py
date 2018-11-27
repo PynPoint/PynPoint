@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -39,7 +41,7 @@ class TestDataStorage(object):
         storage.m_data_bank["data"] = [0, 1, 2, 5, 7]
 
         assert storage.m_data_bank["data"][2] == 2
-        assert storage.m_data_bank.keys() == ["data", ]
+        assert list(storage.m_data_bank.keys()) == ["data", ]
 
         storage.close_connection()
 

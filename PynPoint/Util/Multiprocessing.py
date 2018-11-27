@@ -3,11 +3,17 @@ Utilities for poison pill multiprocessing. Provides abstract interfaces as well 
 implementation needed to process lines in time as used in the wavelet time denoising.
 """
 
+from __future__ import absolute_import
+
 import multiprocessing
 
 from abc import ABCMeta, abstractmethod
+# from . import multiprocessing
 
+import six
 import numpy as np
+
+from six.moves import range
 
 
 # ----- General Multiprocessing classes using the poison pill pattern ------
@@ -58,7 +64,7 @@ class TaskInput(object):
         self.m_job_parameter = job_parameter
 
 
-class TaskCreator(multiprocessing.Process):
+class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
     """
     Abstract Interface for all TaskCreator classes. A TaskCreator is supposed to create instances
     of TaskInput which can be processed by a TaskProcessor and appends them to a central task
@@ -66,8 +72,6 @@ class TaskCreator(multiprocessing.Process):
     application. A TaskCreator needs to communicate to the writer in order to avoid simultaneously
     access to the central database.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self,
                  data_port_in,
@@ -123,7 +127,7 @@ class TaskCreator(multiprocessing.Process):
         self.m_task_queue.put(None)
 
 
-class TaskProcessor(multiprocessing.Process):
+class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
     """
     Abstract interface for a TaskProcessor. There are up to CPU count instances of TaskProcessor
     running at the same time in a poison pill multiprocessing application. There is no guarantee
@@ -131,8 +135,6 @@ class TaskProcessor(multiprocessing.Process):
     analysis and stores the result back into a result-queue. If the next task is a poison pill it
     is should down.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self,
                  tasks_queue_in,
@@ -287,13 +289,11 @@ class TaskWriter(multiprocessing.Process):
 
 
 # ------ Multiprocessing Capsule -------
-class MultiprocessingCapsule(object):
+class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
     """
     Abstract interface for multiprocessing capsules based on the poison pill patter. It consists
     of a TaskCreator, a result writer as well as a list of Task Processors.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self,
                  image_in_port,
@@ -535,11 +535,14 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
     def create_processors(self):
 
-        tmp_processors = [LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
-                                            result_queue_in=self.m_result_queue,
-                                            function=self.m_function,
-                                            function_args=self.m_function_args)
-                          for _ in xrange(self.m_num_processors)]
+        tmp_processors = []
+
+        for _ in range(self.m_num_processors):
+
+            tmp_processors.append(LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
+                                                    result_queue_in=self.m_result_queue,
+                                                    function=self.m_function,
+                                                    function_args=self.m_function_args))
 
         return tmp_processors
 

@@ -290,7 +290,6 @@ class TestFluxAndPosition(object):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
-        database.close()
 
         self.pipeline.run_module("mcmc")
         multi = self.pipeline.get_data("mcmc")
