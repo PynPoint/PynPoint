@@ -459,8 +459,7 @@ class CombineTagsModule(ProcessingModule):
                 if key != "INDEX" or (key == "INDEX" and not self.m_index_init):
 
                     if self.m_check_attr:
-                        if key == "PARANG" or key == "STAR_POSITION" or key == "INDEX" or \
-                           key == "NFRAMES":
+                        if key in ('PARANG', 'STAR_POSITION', 'INDEX', 'NFRAMES'):
                             if status == 1:
                                 self.m_image_out_port.add_attribute(key, values, static=False)
 
