@@ -8,18 +8,21 @@ matrix:
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 
         - os: osx
           language: generic
           env:
             - TOXENV=py36
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 
         - os: osx
           language: generic
           env:
             - TOXENV=py37
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
             - PYTHON=3.7.0
 
         - os: linux
@@ -27,12 +30,14 @@ matrix:
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 
         - os: linux
           python: 3.6
           env:
             - TOXENV=py36
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 
         - os: linux
           python: 3.7
@@ -41,6 +46,7 @@ matrix:
           env:
             - TOXENV=py37
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
 
 before_install:
   - |
@@ -57,7 +63,7 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install tox
-  - pip install coveralls
+  # - pip install coveralls
   - pip install sphinx
   - pip install sphinx_rtd_theme
 
@@ -69,4 +75,5 @@ after_success:
   - coveralls
 
 notifications:
-  email: false
+  - webhooks: https://coveralls.io/webhook
+  - email: false
