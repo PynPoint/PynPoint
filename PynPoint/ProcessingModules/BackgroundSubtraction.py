@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import sys
 import math
+import warnings
 
 import numpy as np
 
@@ -993,7 +994,6 @@ class DitheringBackgroundModule(ProcessingModule):
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
-                print ("size", self.m_size)
                 module = CropImagesModule(size=self.m_size,
                                           center=(int(math.ceil(position[0])),
                                                   int(math.ceil(position[1]))),
