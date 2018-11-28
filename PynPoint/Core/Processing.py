@@ -13,8 +13,6 @@ from abc import abstractmethod, ABCMeta
 import six
 import numpy as np
 
-from six.moves import range
-
 from PynPoint.Core.DataIO import ConfigPort, InputPort, OutputPort
 from PynPoint.Util.Multiprocessing import LineProcessingCapsule, apply_function
 from PynPoint.Util.ModuleTools import progress, memory_frames
@@ -425,7 +423,7 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
                     result.append(func(images))
 
                 elif ndim == 3:
-                    for k in range(images.shape[0]):
+                    for k in six.moves.range(images.shape[0]):
                         result.append(func(images[k]))
 
             else:
@@ -433,7 +431,7 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
                     result.append(func(images, * func_args))
 
                 elif ndim == 3:
-                    for k in range(images.shape[0]):
+                    for k in six.moves.range(images.shape[0]):
                         result.append(func(images[k], * func_args))
 
             return np.asarray(result)

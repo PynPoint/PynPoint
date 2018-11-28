@@ -14,7 +14,7 @@ from PynPoint.ProcessingModules.BadPixelCleaning import BadPixelSigmaFilterModul
                                                         ReplaceBadPixelsModule
 
 from PynPoint.ProcessingModules.DarkAndFlatCalibration import DarkCalibrationModule, \
-                                                              FlatCalibrationModule                                                              
+                                                              FlatCalibrationModule
 
 from PynPoint.ProcessingModules.PSFSubtractionPCA import PcaPsfSubtractionModule
 
