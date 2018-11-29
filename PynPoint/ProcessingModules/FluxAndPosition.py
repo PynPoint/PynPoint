@@ -722,28 +722,24 @@ class MCMCsamplingModule(ProcessingModule):
 
         mask = create_mask(im_shape, self.m_mask)
 
-        print self.m_aperture
-
         if isinstance(self.m_aperture, float):
             center = image_center(images) # (y, x)
 
             x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
             y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
 
-            aperture = {'type':'circular',
-                        'pos_x':x_pos,
-                        'pos_y':y_pos,
-                        'radius':self.m_aperture/pixscale}
+            self.m_aperture = {'type':'circular',
+                               'pos_x':x_pos,
+                               'pos_y':y_pos,
+                               'radius':self.m_aperture/pixscale}
 
         elif isinstance(self.m_aperture, dict):
-            print self.m_aperture
+            if self.m_aperture['type'] == 'circular':
+                self.m_aperture['radius'] /= pixscale
 
-            if aperture['type'] == 'circular':
-                aperture['radius'] /= pixscale
-
-            elif aperture['type'] == 'elliptical':
-                aperture['semimajor'] /= pixscale
-                aperture['semiminor'] /= pixscale
+            elif self.m_aperture['type'] == 'elliptical':
+                self.m_aperture['semimajor'] /= pixscale
+                self.m_aperture['semiminor'] /= pixscale
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -764,7 +760,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                pixscale,
                                                self.m_pca_number,
                                                self.m_extra_rot,
-                                               aperture]),
+                                               self.m_aperture]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
