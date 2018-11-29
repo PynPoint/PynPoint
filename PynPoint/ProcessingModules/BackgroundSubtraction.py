@@ -2,13 +2,19 @@
 Modules with background subtraction routines.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
 import math
+import warnings
 
 import numpy as np
 
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
+from six.moves import map
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.ProcessingModules.ImageResizing import CropImagesModule
@@ -664,7 +670,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             basis_reshaped = basis.reshape(basis.shape[0], -1)
 
-            for i in xrange(im_arr.shape[0]):
+            for i in range(im_arr.shape[0]):
                 basis_reshaped_masked = (basis*mask[i]).reshape(basis.shape[0], -1)
 
                 data_to_fit = im_arr[i, ]
@@ -964,11 +970,11 @@ class DitheringBackgroundModule(ProcessingModule):
 
         def _admin_start(count, n_dither, position, star_pos):
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(count+1)+" out of "+str(n_dither)+"..."
-                print "Center position =", position
+                print("Processing dither position "+str(count+1)+" out of "+str(n_dither)+"...")
+                print("Center position =", position)
 
                 if self.m_cubes is None and self.m_center is not None:
-                    print "DITHER_X, DITHER_Y =", tuple(star_pos)
+                    print("DITHER_X, DITHER_Y =", tuple(star_pos))
 
         def _admin_end(count, n_dither):
             if self.m_combine == "mean":
@@ -978,8 +984,8 @@ class DitheringBackgroundModule(ProcessingModule):
                 tags.append(self.m_image_in_tag+"_dither_pca_res"+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print "Processing dither position "+str(count+1)+ \
-                      " out of "+str(n_dither)+"... [DONE]"
+                print("Processing dither position "+str(count+1)+ \
+                      " out of "+str(n_dither)+"... [DONE]")
 
         n_dither, star_pos = self._initialize()
         tags = []
@@ -1173,7 +1179,7 @@ class NoddingBackgroundModule(ProcessingModule):
             return search_for_previous_sky()
 
         def search_for_previous_sky():
-            for i in reversed(range(0, index_of_science_data)):
+            for i in reversed(list(range(0, index_of_science_data))):
                 if self.m_time_stamps[i].m_im_type == "SKY":
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
 

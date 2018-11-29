@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import warnings
 
@@ -66,7 +67,7 @@ class TestFitsWritingModule(object):
                               data_range=None,
                               overwrite=True)
 
-        assert error.value[0] == "Output 'file_name' needs to be a string."
+        assert str(error.value) == "Output 'file_name' needs to be a string."
 
     def test_filename_extension(self):
 
@@ -78,7 +79,7 @@ class TestFitsWritingModule(object):
                               data_range=None,
                               overwrite=True)
 
-        assert error.value[0] == "Output 'file_name' requires the FITS extension."
+        assert str(error.value) == "Output 'file_name' requires the FITS extension."
 
     def test_data_range(self):
 

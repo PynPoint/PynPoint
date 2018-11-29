@@ -2,6 +2,8 @@
 Modules with simple pre-processing tools.
 """
 
+from __future__ import absolute_import
+
 import math
 import warnings
 

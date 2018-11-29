@@ -2,6 +2,8 @@
 Module for writing data as FITS file.
 """
 
+from __future__ import absolute_import
+
 import os
 import sys
 import warnings

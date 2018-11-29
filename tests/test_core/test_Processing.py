@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -142,9 +144,9 @@ class TestPypeline(object):
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module("remove3")
 
-        assert error.value[0] == "Input and output port have the same tag while the input " \
-                                 "function is changing the image shape. This is only " \
-                                 "possible with MEMORY=None."
+        assert str(error.value) == "Input and output port have the same tag while the input " \
+                                   "function is changing the image shape. This is only " \
+                                   "possible with MEMORY=None."
 
     def test_apply_function_to_images_memory_none(self):
         remove = RemoveLinesModule(lines=(1, 0, 0, 0),

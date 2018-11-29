@@ -27,16 +27,19 @@ clean-python:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 clean-test:
-	rm -f .coverage.*
 	rm -f coverage.xml
+	rm -f .coverage
+	rm -f .coverage.*
 	rm -rf .tox/
 	rm -rf PynPoint.egg-info/
 	rm -f junit-docs-ci.xml
 	rm -f junit-py27.xml
+	rm -f junit-py36.xml
+	rm -f junit-py37.xml
 	rm -rf .pytest_cache/
 
 test:
-	py.test
+	pytest
 
 test-all:
 	tox

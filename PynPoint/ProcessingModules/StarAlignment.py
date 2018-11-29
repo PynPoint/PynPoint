@@ -2,6 +2,9 @@
 Modules for locating, aligning, and centering of the star.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
 import math
 import warnings
@@ -13,6 +16,7 @@ from skimage.transform import rescale
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import memory_frames, progress, locate_star, \
@@ -474,13 +478,14 @@ class StarCenteringModule(ProcessingModule):
 
             return ndim, nimages, npix, frames
 
-        def _2d_gaussian((x_grid, y_grid, rr_ap_1d, npix),
+        def _2d_gaussian(variables,
                          x_center,
                          y_center,
                          fwhm_x,
                          fwhm_y,
                          amp,
                          theta):
+            (x_grid, y_grid, rr_ap_1d, npix) = variables
             rr_ap = np.reshape(rr_ap_1d, (npix, npix))
 
             xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
@@ -593,7 +598,7 @@ class StarCenteringModule(ProcessingModule):
                                       func_args=(fit, ))
 
         if self.m_count > 0:
-            print "2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count
+            print("2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count)
 
         if self.m_image_out_port is not None:
             self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")

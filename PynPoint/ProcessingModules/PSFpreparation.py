@@ -3,6 +3,7 @@ Modules to prepare the data for the PSF subtraction.
 """
 
 from __future__ import division
+from __future__ import absolute_import
 
 import sys
 import warnings
@@ -11,6 +12,7 @@ import ephem
 import numpy as np
 
 from scipy import ndimage
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ModuleTools import progress, memory_frames, number_images_port
@@ -472,7 +474,7 @@ class AngleCalculationModule(ProcessingModule):
             obs.lat = ephem.degrees(str(tel_lat))
             obs.long = ephem.degrees(str(tel_lon))
 
-            obs.date = obs_dates[i].replace('T', ' ')
+            obs.date = str(obs_dates[i].replace(b'T', b' ').decode("utf-8"))
 
             # Get sideral time in hours
             sid_time = str(obs.sidereal_time())
