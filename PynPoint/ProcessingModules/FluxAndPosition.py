@@ -11,10 +11,10 @@ import sys
 import numpy as np
 import emcee
 
-from scipy.optimize import minimize
-from scipy.stats import t
-from photutils import aperture_photometry, CircularAperture
 from six.moves import range
+from scipy.stats import t
+from scipy.optimize import minimize
+from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
@@ -286,7 +286,8 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        self.m_position = (float(position[1]), float(position[0]))
+        # self.m_position = (float(position[1]), float(position[0]))
+        self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
@@ -321,7 +322,20 @@ class SimplexMinimizationModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_aperture /= pixscale
+        if isinstance(self.m_aperture, float):
+            aperture = {'type':'circular',
+                        'pos_x':self.m_position[0],
+                        'pos_y':self.m_position[1],
+                        'radius':self.m_aperture/pixscale}
+
+        elif isinstance(self.m_aperture, dict):
+            if aperture['type'] == 'circular':
+                aperture['radius'] /= pixscale
+
+            elif aperture['type'] == 'elliptical':
+                aperture['semimajor'] /= pixscale
+                aperture['semiminor'] /= pixscale
+
         self.m_sigma /= pixscale
 
         if self.m_cent_size is not None:
@@ -371,8 +385,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack,
                                    function=self.m_merit,
-                                   position=self.m_position,
-                                   aperture=self.m_aperture,
+                                   aperture=aperture,
                                    sigma=self.m_sigma)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
@@ -391,7 +404,11 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()
 
-        pos_init = rotate_coordinates(center, self.m_position, self.m_extra_rot)
+        pos_init = rotate_coordinates(center,
+                                      (self.m_position[1], self.m_position[0]),
+                                      self.m_extra_rot)
+
+        # Change integer to float?
         pos_init = (int(pos_init[0]), int(pos_init[1])) # (y, x)
 
         minimize(fun=_objective,
@@ -598,9 +615,9 @@ class MCMCsamplingModule(ProcessingModule):
         :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
         :param aperture: Either the aperture radius (arcsec) at the position specified in *param*
-                         or a tuple with the position (pix) and aperture radius (arcsec) as
-                         (pos_x, pos_y, radius).
-        :type aperture: float or tuple(float, float, float)
+                         or a dictionary with the aperture properties. See
+                         Util.AnalysisTools.create_aperture for details.
+        :type aperture: float or dict
         :param mask: Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of
                      the tuple can be set to None. Masked pixels are excluded from the PCA
                      computation, resulting in a smaller runtime.
@@ -711,10 +728,19 @@ class MCMCsamplingModule(ProcessingModule):
             x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
             y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
 
-            aperture = (y_pos, x_pos, self.m_aperture/pixscale)
+            aperture = {'type':'circular',
+                        'pos_x':x_pos,
+                        'pos_y':y_pos,
+                        'radius':self.m_aperture/pixscale}
 
-        elif isinstance(self.m_aperture, (tuple, list, np.ndarray)):
-            aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
+        elif isinstance(self.m_aperture, dict):
+            if aperture['type'] == 'circular':
+                aperture['radius'] /= pixscale
+
+            elif aperture['type'] == 'elliptical':
+                aperture['semimajor'] /= pixscale
+                aperture['semiminor'] /= pixscale
+            # aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 

@@ -55,8 +55,9 @@ def lnprob(param,
     :type pca_number: int
     :param extra_rot: Additional rotation angle of the images (deg).
     :type extra_rot: float
-    :param aperture: Aperture position and radius (pos_y, pos_x, radius) in pixels.
-    :type aperture: (float, float, float)
+    :param aperture: Dictionary with the aperture properties. See
+                     Util.AnalysisTools.create_aperture for details.
+    :type aperture: dict
 
     :return: Log posterior.
     :rtype: float
@@ -110,8 +111,7 @@ def lnprob(param,
 
         merit = merit_function(residuals=stack,
                                function="sum",
-                               position=aperture[0:2],
-                               aperture=aperture[2],
+                               aperture=aperture,
                                sigma=0.)
 
         return -0.5*merit
