@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import warnings
 
@@ -37,14 +39,14 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             OutputPort("config", self.storage)
 
-        assert error.value[0] == "The tag name 'config' is reserved for the central " \
-                                 "configuration of PynPoint."
+        assert str(error.value) == "The tag name 'config' is reserved for the central " \
+                                   "configuration of PynPoint."
 
         with pytest.raises(ValueError) as error:
             OutputPort("fits_header", self.storage)
 
-        assert error.value[0] == "The tag name 'fits_header' is reserved for storage of the " \
-                                 "FITS headers."
+        assert str(error.value) == "The tag name 'fits_header' is reserved for storage of the " \
+                                   "FITS headers."
 
         active_port = OutputPort("test", self.storage, activate_init=True)
         deactive_port = OutputPort("test", self.storage, activate_init=False)
@@ -126,7 +128,7 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=2)
 
-        assert error.value[0] == 'Output port can only save numpy arrays from 1D to 3D. Use ' \
+        assert str(error.value) == 'Output port can only save numpy arrays from 1D to 3D. Use ' \
                                    'Port attributes to save as int, float, or string.'
 
         # ---- Test data dim of data_dim for new data entry is < 1 or > 3
@@ -138,7 +140,7 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=0)
 
-        assert error.value[0] == 'The data dimensions should be 1D, 2D, or 3D.'
+        assert str(error.value) == 'The data dimensions should be 1D, 2D, or 3D.'
 
         # ---- Test data_dim for new data entry is smaller than actual data
 
@@ -149,8 +151,8 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=1)
 
-        assert error.value[0] == 'The dimensions of the data should be equal to or larger than ' \
-                                   'the dimensions of the input data.'
+        assert str(error.value) == 'The dimensions of the data should be equal to or larger ' \
+                                   'than the dimensions of the input data.'
 
         # ---- Test data_dim == 3 and actual size == 1
 
@@ -161,7 +163,7 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=3)
 
-        assert error.value[0] == 'Cannot initialize 1D data in 3D data container.'
+        assert str(error.value) == 'Cannot initialize 1D data in 3D data container.'
 
     def test_set_all_keep_attributes(self):
 
@@ -306,7 +308,7 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
 
-        assert error.value[0] == "The port tag 'new_data' is already used with a different " \
+        assert str(error.value) == "The port tag 'new_data' is already used with a different " \
                                    "data type. The 'force' parameter can be used to replace " \
                                    "the tag."
         out_port.del_all_data()
@@ -441,13 +443,13 @@ class TestOutputPort(object):
         with pytest.raises(ValueError) as error:
             out_port.add_value_to_static_attribute("attr1", value="test")
 
-        assert error.value[0] == "Only integer and float values can be added to an existing " \
-                                 "attribute."
+        assert str(error.value) == "Only integer and float values can be added to an existing " \
+                                   "attribute."
 
         # add data to not existing attribute
         with pytest.raises(AttributeError) as error2:
             out_port.add_value_to_static_attribute("attr42", value=3)
-        assert error2.value[0] == "Value can not be added to a not existing attribute."
+        assert error2.value, "Value can not be added to a not existing attribute."
 
         out_port.del_all_attributes()
         out_port.del_all_data()

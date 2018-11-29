@@ -2,6 +2,8 @@
 Functions for MCMC sampling.
 """
 
+from __future__ import absolute_import
+
 import math
 
 import numpy as np
@@ -9,6 +11,7 @@ import numpy as np
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 from PynPoint.Util.Residuals import combine_residuals
+
 
 def lnprob(param,
            bounds,

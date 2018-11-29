@@ -2,6 +2,8 @@
 Wrapper utils for the wavelet functions for the mlpy cwt implementation (see continous.py)
 """
 
+from __future__ import absolute_import
+
 # import copy
 
 import numpy as np
@@ -11,6 +13,7 @@ from numba import jit
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
+from six.moves import range
 
 from PynPoint.Util.Continuous import autoscales, cwt, icwt
 # from PynPoint.Util.Continuous import fourier_from_scales
@@ -225,7 +228,10 @@ class WaveletAnalysisCapsule(object):
         """
 
         if self.m_padding != "none":
-            noise_length_4 = len(self._m_data) / 4
+            # Python 2
+            # noise_length_4 = len(self._m_data) / 4
+            # Python 2+3?
+            noise_length_4 = len(self._m_data) // 4
             noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
         else:
             noise_spectrum = self.m_spectrum[0, :].real
@@ -257,7 +263,10 @@ class WaveletAnalysisCapsule(object):
         if self.m_padding == "none":
             return tmp_data
 
-        return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
+        # Python 2
+        # return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
+        # Python 2+3?
+        return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
 
     # ----- plotting functions --------
 

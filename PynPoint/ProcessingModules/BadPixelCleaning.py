@@ -2,6 +2,9 @@
 Modules for the detection and interpolation of bad pixels.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
 import copy
 
@@ -9,6 +12,7 @@ import cv2
 import numpy as np
 
 from numba import jit
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 
@@ -83,8 +87,8 @@ def _bad_pixel_interpolation(image_in,
 
     while iteration < iterations:
         # 1.) select line using max search and compute conjugate
-        tmp_s = np.unravel_index(np.argmax(abs(tmp_G.real[:, 0: N[1] / 2])),
-                                 (N[0], N[1] / 2))
+        tmp_s = np.unravel_index(np.argmax(abs(tmp_G.real[:, 0: N[1] // 2])),
+                                 (N[0], N[1] // 2))
 
         tmp_s_conjugate = (np.mod(N[0] - tmp_s[0], N[0]),
                            np.mod(N[1] - tmp_s[1], N[1]))
@@ -372,7 +376,7 @@ class BadPixelMapModule(ProcessingModule):
                 dark = np.mean(dark, axis=0)
 
             max_dark = np.max(dark)
-            print "Threshold dark frame [counts] =", max_dark*self.m_dark_threshold
+            print("Threshold dark frame [counts] =", max_dark*self.m_dark_threshold)
 
             bpmap = np.ones(dark.shape)
             bpmap[np.where(dark > max_dark*self.m_dark_threshold)] = 0
@@ -384,7 +388,7 @@ class BadPixelMapModule(ProcessingModule):
                 flat = np.mean(flat, axis=0)
 
             max_flat = np.max(flat)
-            print "Threshold flat field [counts] =", max_flat*self.m_flat_threshold
+            print("Threshold flat field [counts] =", max_flat*self.m_flat_threshold)
 
             if self.m_dark_port is None:
                 bpmap = np.ones(flat.shape)

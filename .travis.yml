@@ -1,34 +1,79 @@
 language: python
+
 matrix:
     include:
+
         - os: osx
           language: generic
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+
+        - os: osx
+          language: generic
+          env:
+            - TOXENV=py36
+            - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+
+        - os: osx
+          language: generic
+          env:
+            - TOXENV=py37
+            - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+            - PYTHON=3.7.0
+
         - os: linux
           python: 2.7
           env:
             - TOXENV=py27
             - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+
+        - os: linux
+          python: 3.6
+          env:
+            - TOXENV=py36
+            - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+
+        - os: linux
+          python: 3.7
+          dist: xenial
+          sudo: true
+          env:
+            - TOXENV=py37
+            - NUMBA_DISABLE_JIT=1
+            - COVERALLS_PARALLEL=true
+
+before_install:
+  - |
+    if [ $TRAVIS_OS_NAME == "osx" ] && [ $PYTHON == "3.7.0" ]; then
+      brew install pyenv-virtualenv
+      pyenv install $PYTHON
+      export PYENV_VERSION=$PYTHON
+      eval "$(pyenv init -)"
+      eval "$(pyenv virtualenv-init -)"
+      pyenv virtualenv $PYTHON venv
+      pyenv activate venv
+    fi
+
 install:
-  - pip2 install numpy
-  - pip2 install enum34
-  - pip2 install -r requirements.txt
-  - pip2 install tox
-  - pip2 install coverage
-  - pip2 install sphinx
-  - pip2 install coveralls
-  - pip2 install sphinx_rtd_theme
-before_script:
-  - mkdir $HOME/.matplotlib
-  - "echo 'backend: Agg' > $HOME/.matplotlib/matplotlibrc"
+  - pip install -r requirements.txt
+  - pip install tox
+  - pip install coveralls
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
+
 script:
-  - make test
-  - make test-all
-  - make coverage
   - make docs
+  - make test-all
+
 after_success:
   - coveralls
+
 notifications:
-  email: false
+  - webhooks: https://coveralls.io/webhook
+  - email: false

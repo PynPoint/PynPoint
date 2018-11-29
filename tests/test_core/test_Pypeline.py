@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import warnings
 
@@ -45,7 +48,7 @@ class TestPypeline(object):
         with pytest.warns(UserWarning) as warning:
             Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        assert len(warning) == 1
+        # assert len(warning) == 2
         assert warning[0].message.args[0] == "Configuration file not found. Creating " \
                                              "PynPoint_config.ini with default values " \
                                              "in the working place."
@@ -104,26 +107,26 @@ class TestPypeline(object):
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_non_exists, dir_exists, dir_exists)
 
-        assert error.value[0] == "Input directory for _m_working_place does not exist " \
-                                 "- input requested: "+self.test_dir+"none/."
+        assert str(error.value) == "Input directory for _m_working_place does not exist " \
+                                   "- input requested: "+self.test_dir+"none/."
 
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_exists, dir_non_exists, dir_exists)
 
-        assert error.value[0] == "Input directory for _m_input_place does not exist " \
-                                 "- input requested: "+self.test_dir+"none/."
+        assert str(error.value) == "Input directory for _m_input_place does not exist " \
+                                   "- input requested: "+self.test_dir+"none/."
 
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_exists, dir_exists, dir_non_exists)
 
-        assert error.value[0] == "Input directory for _m_output_place does not exist " \
-                                 "- input requested: "+self.test_dir+"none/."
+        assert str(error.value) == "Input directory for _m_output_place does not exist " \
+                                   "- input requested: "+self.test_dir+"none/."
 
         with pytest.raises(AssertionError) as error:
             Pypeline()
 
-        assert error.value[0] == "Input directory for _m_working_place does not exist " \
-                                 "- input requested: None."
+        assert str(error.value) == "Input directory for _m_working_place does not exist " \
+                                   "- input requested: None."
 
     def test_create_pipeline_existing_database(self):
         np.random.seed(1)
@@ -201,7 +204,7 @@ class TestPypeline(object):
         with pytest.raises(AssertionError) as error:
             pipeline.add_module(None)
 
-        assert error.value[0] == "The added module is not a valid Pypeline module."
+        assert str(error.value) == "The added module is not a valid Pypeline module."
 
         os.remove(self.test_dir+"PynPoint_database.hdf5")
 
@@ -220,21 +223,21 @@ class TestPypeline(object):
         with pytest.raises(AttributeError) as error:
             pipeline.run_module("badpixel")
 
-        assert error.value[0] == "Pipeline module 'badpixel' is looking for data under a tag " \
-                                 "which does not exist in the database."
+        assert str(error.value) == "Pipeline module 'badpixel' is looking for data under a tag " \
+                                   "which does not exist in the database."
 
         with pytest.raises(AttributeError) as error:
             pipeline.run_module("write")
 
-        assert error.value[0] == "Pipeline module 'write' is looking for data under a tag which " \
-                                 "does not exist in the database."
+        assert str(error.value) == "Pipeline module 'write' is looking for data under a tag " \
+                                   "which does not exist in the database."
 
         with pytest.raises(AttributeError) as error:
             pipeline.run()
 
-        assert error.value[0] == "Pipeline module 'write' is looking for data under a tag " \
-                                 "which is not created by a previous module or does not exist " \
-                                 "in the database."
+        assert str(error.value) == "Pipeline module 'write' is looking for data under a tag " \
+                                   "which is not created by a previous module or does not exist " \
+                                   "in the database."
 
         assert pipeline.validate_pipeline_module("test") is None
         assert pipeline._validate("module", "tag") == (False, None)
@@ -287,8 +290,6 @@ class TestPypeline(object):
 
     def test_get_tags(self):
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
-
-        print pipeline.get_tags()
 
         assert pipeline.get_tags() == "images"
 
