@@ -2,6 +2,14 @@
 
 from setuptools import setup
 
+try:
+    from pip._internal.req import parse_requirements
+except ImportError:
+    from pip.req import parse_requirements
+
+reqs = parse_requirements('requirements.txt', session='hack')
+reqs = [str(ir.req) for ir in reqs]
+
 setup(
     name='PynPoint',
     version='0.5.3',
@@ -17,21 +25,7 @@ setup(
               'PynPoint.Util'],
     package_dir={'PynPoint': 'PynPoint'},
     include_package_data=True,
-    install_requires=['configparser==3.5.0',
-                      'h5py==2.6.0',
-                      'numpy==1.15.4',
-                      'numba==0.40.1',
-                      'scipy==1.1.0',
-                      'astropy==2.0.9',
-                      'photutils==0.4.1',
-                      'scikit-image==0.14.1',
-                      'scikit-learn==0.20.0',
-                      'opencv-python==3.4.3.18',
-                      'statsmodels==0.9.0',
-                      'PyWavelets==1.0.1',
-                      'matplotlib==2.2.3',
-                      'emcee==2.2.1',
-                      'ephem==3.7.6.0'],
+    install_requires=reqs,
     license='GPLv3',
     zip_safe=False,
     keywords='PynPoint',
@@ -42,6 +36,8 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     tests_require=['pytest'],
 )

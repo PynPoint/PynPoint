@@ -377,7 +377,6 @@ class TestPSFSubtractionPCA(object):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
-        database.close()
 
         pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
                                       name_in="pca_multi",
@@ -419,7 +418,6 @@ class TestPSFSubtractionPCA(object):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
-        database.close()
 
         pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
                                       name_in="pca_multi_mask",

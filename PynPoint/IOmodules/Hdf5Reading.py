@@ -2,9 +2,12 @@
 Module for reading HDF5 files that were created with the Hdf5WritingModule.
 """
 
+from __future__ import absolute_import
+
 import os
 import sys
 
+import six
 import h5py
 import numpy as np
 
@@ -57,7 +60,7 @@ class Hdf5ReadingModule(ReadingModule):
         if tag_dictionary is None:
             tag_dictionary = {}
 
-        for out_tag in tag_dictionary.itervalues():
+        for out_tag in six.itervalues(tag_dictionary):
             self.add_output_port(out_tag)
 
         self.m_filename = input_filename
@@ -87,7 +90,7 @@ class Hdf5ReadingModule(ReadingModule):
                 tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
 
                 # add static attributes
-                for attribute_name, attribute_value in hdf5_file[entry].attrs.iteritems():
+                for attribute_name, attribute_value in six.iteritems(hdf5_file[entry].attrs):
                     tmp_port.add_attribute(name=attribute_name,
                                            value=attribute_value)
 

@@ -2,9 +2,12 @@
 Functions for combining the residuals of the PSF subtraction.
 """
 
+from __future__ import absolute_import
+
 import numpy as np
 
 from scipy.ndimage import rotate
+from six.moves import range
 
 
 def combine_residuals(method, res_rot, residuals=None, angles=None):

@@ -3,6 +3,8 @@ CWT based wavelet de-noising for speckle suppression in the time domain. The mod
 additional pre-processing step. For more information see Bonse et al. 2018.
 """
 
+from __future__ import absolute_import
+
 import pywt
 import numpy as np
 

@@ -2,11 +2,15 @@
 Modules with tools for frame selection.
 """
 
+from __future__ import absolute_import
+
 import sys
 import math
 import warnings
 
 import numpy as np
+
+from six.moves import range
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.ImageTools import crop_image
