@@ -543,8 +543,9 @@ class FalsePositiveModule(ProcessingModule):
 
 class MCMCsamplingModule(ProcessingModule):
     """
-    Module to determine the contrast and position of a planet with an affine invariant Markov chain
-    Monte Carlo (MCMC) ensemble sampler.
+    Module to measure the separation, position angle, and contrast of a planet with injection of
+    negative artificial planets and sampling of the posterior distributions with emcee, an
+    affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
     """
 
     def __init__(self,
@@ -553,7 +554,7 @@ class MCMCsamplingModule(ProcessingModule):
                  name_in="mcmc_sampling",
                  image_in_tag="im_arr",
                  psf_in_tag="im_arr",
-                 chain_out_tag="chain",
+                 chain_out_tag="samples",
                  nwalkers=100,
                  nsteps=200,
                  psf_scaling=-1.,
@@ -565,14 +566,16 @@ class MCMCsamplingModule(ProcessingModule):
         """
         Constructor of MCMCsamplingModule.
 
-        :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The
+        :param param: Tuple with the approximate separation (arcsec), angle (deg), and contrast
+                      (mag), for example obtained with the SimplexMinimizationModule. The
                       angle is measured in counterclockwise direction with respect to the upward
                       direction (i.e., East of North). The specified separation and angle are also
-                      used as fixed position for the aperture.
-        :type param: (float, float, float)
+                      used as fixed position for the aperture if *aperture* contains a single
+                      value.
+        :type param: tuple(float, float, float)
         :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
                        contrast (mag). Each set of boundaries is specified as a tuple.
-        :type bounds: ((float, float), (float, float), (float, float))
+        :type bounds: tuple(tuple(float, float), tuple(float, float), tuple(float, float))
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with images that are read as input.
@@ -594,11 +597,14 @@ class MCMCsamplingModule(ProcessingModule):
         :type psf_scaling: float
         :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
-        :param aperture: Aperture radius (arcsec) at the position specified in *param*.
-        :type aperture: float
+        :param aperture: Either the aperture radius (arcsec) at the position specified in *param*
+                         or a tuple with the position (pix) and aperture radius (arcsec) as
+                         (pos_x, pos_y, radius).
+        :type aperture: float or tuple(float, float, float)
         :param mask: Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of
-                     the tuple can be set to None.
-        :type mask: (float, float)
+                     the tuple can be set to None. Masked pixels are excluded from the PCA
+                     computation, resulting in a smaller runtime.
+        :type mask: tuple(float, float)
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
         :param \**kwargs:
@@ -607,7 +613,7 @@ class MCMCsamplingModule(ProcessingModule):
         :Keyword arguments:
             **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
 
-            **sigma** (*(float, float, float)*) -- Tuple with the standard deviations that
+            **sigma** (*tuple(float, float, float)*) -- Tuple with the standard deviations that
             randomly initializes the start positions of the walkers in a small ball around
             the a priori preferred position. The tuple should contain a value for the
             separation (arcsec), position angle (deg), and contrast (mag).
@@ -646,9 +652,9 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_extra_rot = extra_rot
 
         if mask is None:
-            self.m_mask = np.asarray((None, None))
+            self.m_mask = np.array((None, None))
         else:
-            self.m_mask = np.asarray(mask)
+            self.m_mask = np.array(mask)
 
     def run(self):
         """
@@ -680,8 +686,6 @@ class MCMCsamplingModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         parang = self.m_image_in_port.get_attribute("PARANG")
 
-        self.m_aperture /= pixscale
-
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -700,12 +704,17 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_mask[1] /= pixscale
 
         mask = create_mask(im_shape, self.m_mask)
-        center = image_center(images) # (y, x)
 
-        x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
-        y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+        if isinstance(self.m_aperture, float):
+            center = image_center(images) # (y, x)
 
-        aperture = (y_pos, x_pos, self.m_aperture)
+            x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
+            y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+
+            aperture = (y_pos, x_pos, self.m_aperture/pixscale)
+
+        elif isinstance(self.m_aperture, (tuple, list, np.ndarray)):
+            aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
