@@ -722,6 +722,8 @@ class MCMCsamplingModule(ProcessingModule):
 
         mask = create_mask(im_shape, self.m_mask)
 
+        print self.m_aperture
+
         if isinstance(self.m_aperture, float):
             center = image_center(images) # (y, x)
 
@@ -734,13 +736,14 @@ class MCMCsamplingModule(ProcessingModule):
                         'radius':self.m_aperture/pixscale}
 
         elif isinstance(self.m_aperture, dict):
+            print self.m_aperture
+
             if aperture['type'] == 'circular':
                 aperture['radius'] /= pixscale
 
             elif aperture['type'] == 'elliptical':
                 aperture['semimajor'] /= pixscale
                 aperture['semiminor'] /= pixscale
-            # aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
