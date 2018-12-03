@@ -217,11 +217,12 @@ def create_aperture(aperture):
     Function to create a circular or elliptical aperture.
 
     :param aperture: Dictionary with the aperture properties. The aperture 'type' can be
-                     'circular' or 'elliptical'. Both types of apertures require a position
-                     'pos_x' and 'pos_y' (float) where the aperture is placed. The circular
+                     'circular' or 'elliptical' (str). Both types of apertures require a position,
+                     'pos_x' and 'pos_y' (float), where the aperture is placed. The circular
                      aperture requires a 'radius' (in pixels, float) and the elliptical
                      aperture requires a 'semimajor' and 'semiminor' axis (in pixels, float),
-                     and an 'angle' (deg).
+                     and an 'angle' (deg). The rotation angle in degrees of the semimajor axis
+                     from the positive x axis. The rotation angle increases counterclockwise.
     :type aperture: dict
 
     :return: Aperture object.
@@ -239,7 +240,7 @@ def create_aperture(aperture):
         phot_ap = EllipticalAperture((aperture['pos_x'], aperture['pos_y']),
                                      aperture['semimajor'],
                                      aperture['semiminor'],
-                                     math.degrees(aperture['angle']))
+                                     math.radians(aperture['angle']))
 
     else:
 
