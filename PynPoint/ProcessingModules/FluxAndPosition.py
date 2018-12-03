@@ -579,6 +579,7 @@ class MCMCsamplingModule(ProcessingModule):
                  aperture=0.1,
                  mask=None,
                  extra_rot=0.,
+                 prior="flat",
                  **kwargs):
         """
         Constructor of MCMCsamplingModule.
@@ -624,6 +625,10 @@ class MCMCsamplingModule(ProcessingModule):
         :type mask: tuple(float, float)
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
+        :param prior: Prior can be set to "flat" or "aperture". With "flat", the values of *bounds*
+                      are used as uniform priors. With "aperture", the prior probability is set to
+                      zero beyond the aperture and unity within the aperture.
+        :type prior: str
         :param \**kwargs:
             See below.
 
@@ -667,6 +672,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_aperture = aperture
         self.m_extra_rot = extra_rot
+        self.m_prior = prior
 
         if mask is None:
             self.m_mask = np.array((None, None))
@@ -763,7 +769,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_pca_number,
                                                self.m_extra_rot,
                                                self.m_aperture,
-                                               indices]),
+                                               indices,
+                                               self.m_prior]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
