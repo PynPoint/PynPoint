@@ -23,7 +23,8 @@ def lnprob(param,
            pixscale,
            pca_number,
            extra_rot,
-           aperture):
+           aperture,
+           indices):
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module in order to be pickled.
@@ -58,6 +59,8 @@ def lnprob(param,
     :param aperture: Dictionary with the aperture properties. See
                      Util.AnalysisTools.create_aperture for details.
     :type aperture: dict
+    :param indices: Non-masked image indices.
+    :type indices: numpy.ndarray
 
     :return: Log posterior.
     :rtype: float
@@ -105,7 +108,8 @@ def lnprob(param,
 
         _, im_res = pca_psf_subtraction(images=fake,
                                         angles=-1.*parang+extra_rot,
-                                        pca_number=pca_number)
+                                        pca_number=pca_number,
+                                        indices=indices)
 
         stack = combine_residuals(method="mean", res_rot=im_res)
 
