@@ -9,6 +9,7 @@ import math
 import numpy as np
 
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
+from PynPoint.Util.ImageTools import image_center
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 from PynPoint.Util.Residuals import combine_residuals
 
@@ -24,7 +25,8 @@ def lnprob(param,
            pca_number,
            extra_rot,
            aperture,
-           indices):
+           indices,
+           prior):
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module in order to be pickled.
@@ -61,6 +63,10 @@ def lnprob(param,
     :type aperture: dict
     :param indices: Non-masked image indices.
     :type indices: numpy.ndarray
+    :param prior: Prior can be set to "flat" or "aperture". With "flat", the values of *bounds*
+                  are used as uniform priors. With "aperture", the prior probability is set to
+                  zero beyond the aperture and unity within the aperture.
+    :type prior: str
 
     :return: Log posterior.
     :rtype: float
@@ -74,15 +80,38 @@ def lnprob(param,
         :rtype: float
         """
 
-        if bounds[0][0] <= param[0] <= bounds[0][1] and \
-           bounds[1][0] <= param[1] <= bounds[1][1] and \
-           bounds[2][0] <= param[2] <= bounds[2][1]:
+        if prior == "flat":
 
-            ln_prior = 0.
+            if bounds[0][0] <= param[0] <= bounds[0][1] and \
+               bounds[1][0] <= param[1] <= bounds[1][1] and \
+               bounds[2][0] <= param[2] <= bounds[2][1]:
+
+                ln_prior = 0.
+
+            else:
+
+                ln_prior = -np.inf
+
+        elif prior == "aperture":
+            center = image_center(images) # (y, x)
+
+            x_pos = center[1]+(param[0]/pixscale)*math.sin(math.radians(param[1]))
+            y_pos = center[0]+(param[0]/pixscale)*math.cos(math.radians(param[1]))
+
+            delta_x = aperture['pos_x'] - x_pos
+            delta_y = aperture['pos_y'] - y_pos
+
+            if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
+               bounds[2][0] <= param[2] <= bounds[2][1]:
+
+                ln_prior = 0.
+
+            else:
+
+                ln_prior = -np.inf
 
         else:
-
-            ln_prior = -np.inf
+            raise ValueError("Prior type not recognized.")
 
         return ln_prior
 
