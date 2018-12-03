@@ -720,7 +720,9 @@ class MCMCsamplingModule(ProcessingModule):
         if self.m_mask[1] is not None:
             self.m_mask[1] /= pixscale
 
-        mask = create_mask(im_shape, self.m_mask)
+        # create the mask and get the unmasked image indices
+        mask = create_mask(im_shape[-2:], self.m_mask)
+        indices = np.where(mask.reshape(-1) != 0.)[0]
 
         if isinstance(self.m_aperture, float):
             center = image_center(images) # (y, x)
@@ -760,7 +762,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                pixscale,
                                                self.m_pca_number,
                                                self.m_extra_rot,
-                                               self.m_aperture]),
+                                               self.m_aperture,
+                                               indices]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
