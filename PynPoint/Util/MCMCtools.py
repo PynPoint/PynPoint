@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
-from PynPoint.Util.ImageTools import image_center
+from PynPoint.Util.ImageTools import polar_to_cartesian
 from PynPoint.Util.PSFSubtractionTools import pca_psf_subtraction
 from PynPoint.Util.Residuals import combine_residuals
 
@@ -93,15 +93,12 @@ def lnprob(param,
                 ln_prior = -np.inf
 
         elif prior == "aperture":
-            center = image_center(images) # (y, x)
-
-            x_pos = center[1]+(param[0]/pixscale)*math.sin(math.radians(param[1]))
-            y_pos = center[0]+(param[0]/pixscale)*math.cos(math.radians(param[1]))
+            x_pos, y_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
 
             delta_x = aperture['pos_x'] - x_pos
             delta_y = aperture['pos_y'] - y_pos
 
-            if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
+            if math.sqrt(delta_x**2+delta_y**2)*pixscale < aperture['radius'] and \
                bounds[2][0] <= param[2] <= bounds[2][1]:
 
                 ln_prior = 0.
