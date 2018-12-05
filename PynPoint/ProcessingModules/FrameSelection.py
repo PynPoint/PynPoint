@@ -34,7 +34,7 @@ class RemoveFramesModule(ProcessingModule):
 
         :param frames: A tuple or array with the frame indices that have to be removed or a
                        database tag pointing to a list of frame indices.
-        :type frames: int or str
+        :type frames: str or tuple or numpy.ndarray
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry that is read as input.
@@ -69,7 +69,9 @@ class RemoveFramesModule(ProcessingModule):
             self.m_index_in_port = self.add_input_port(frames)
         else:
             self.m_index_in_port = None
-            self.m_frames = np.asarray(frames, dtype=np.int)
+
+            if isinstance(frames, (tuple, list)):
+                self.m_frames = np.asarray(frames, dtype=np.int)
 
     def _initialize(self):
 

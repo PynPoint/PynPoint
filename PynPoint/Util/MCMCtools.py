@@ -29,24 +29,24 @@ def lnprob(param,
            prior):
     """
     Function for the log posterior function. Should be placed at the highest level of the
-    Python module in order to be pickled.
+    Python module to be pickable for the multiprocessing.
 
     :param param: Tuple with the separation (arcsec), angle (deg), and contrast
                   (mag). The angle is measured in counterclockwise direction with
-                  respect to the upward direction (i.e., East of North).
+                  respect to the positive y-axis.
     :type param: (float, float, float)
     :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
                    and contrast (mag). Each set of boundaries is specified as a tuple.
     :type bounds: ((float, float), (float, float), (float, float))
     :param images: Stack with images.
-    :type images: ndarray
+    :type images: numpy.ndarray
     :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
-                equal to *image_in_tag*.
-    :type psf: ndarray
+                equal to *images*.
+    :type psf: numpy.ndarray
     :param mask: Array with the circular mask (zeros) of the central and outer regions.
-    :type mask: ndarray
+    :type mask: numpy.ndarray
     :param parang: Array with the angles for derotation.
-    :type parang: ndarray
+    :type parang: numpy.ndarray
     :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
                         neutral density filter). Should be negative in order to inject negative
                         fake planets.
@@ -68,7 +68,7 @@ def lnprob(param,
                   zero beyond the aperture and unity within the aperture.
     :type prior: str
 
-    :return: Log posterior.
+    :return: Log posterior probability.
     :rtype: float
     """
 
@@ -93,19 +93,39 @@ def lnprob(param,
                 ln_prior = -np.inf
 
         elif prior == "aperture":
+
             x_pos, y_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
 
-            delta_x = aperture['pos_x'] - x_pos
-            delta_y = aperture['pos_y'] - y_pos
+            delta_x = x_pos - aperture['pos_x']
+            delta_y = y_pos - aperture['pos_y']
 
-            if math.sqrt(delta_x**2+delta_y**2)*pixscale < aperture['radius'] and \
-               bounds[2][0] <= param[2] <= bounds[2][1]:
+            if aperture['type'] == "circular":
 
-                ln_prior = 0.
+                if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
+                   bounds[2][0] <= param[2] <= bounds[2][1]:
 
-            else:
+                    ln_prior = 0.
 
-                ln_prior = -np.inf
+                else:
+
+                    ln_prior = -np.inf
+
+            elif aperture['type'] == "elliptical":
+
+                cos_ang = math.cos(math.radians(180.-aperture['angle']))
+                sin_ang = math.sin(math.radians(180.-aperture['angle']))
+
+                x_rot = delta_x*cos_ang - delta_y*sin_ang
+                y_rot = delta_x*sin_ang + delta_y*cos_ang
+
+                r_check = (x_rot/aperture['semimajor'])**2 + (y_rot/aperture['semiminor'])**2
+
+                if r_check <= 1. and bounds[2][0] <= param[2] <= bounds[2][1]:
+                    ln_prior = 0.
+
+                else:
+                    ln_prior = -np.inf
+
 
         else:
             raise ValueError("Prior type not recognized.")
@@ -130,9 +150,7 @@ def lnprob(param,
                            magnitude=mag,
                            psf_scaling=psf_scaling)
 
-        fake *= mask
-
-        _, im_res = pca_psf_subtraction(images=fake,
+        _, im_res = pca_psf_subtraction(images=fake*mask,
                                         angles=-1.*parang+extra_rot,
                                         pca_number=pca_number,
                                         indices=indices)
