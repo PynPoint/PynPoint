@@ -18,7 +18,7 @@ from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
-from PynPoint.Util.ImageTools import create_mask, image_center
+from PynPoint.Util.ImageTools import create_mask, image_center, polar_to_cartesian
 from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
@@ -366,10 +366,12 @@ class SimplexMinimizationModule(ProcessingModule):
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
 
-            fake = fake_planet(images, psf,
-                               parang, (sep, ang),
-                               mag, self.m_psf_scaling,
-                               interpolation="spline")
+            fake = fake_planet(images=images,
+                               psf=psf,
+                               parang=parang,
+                               position=(sep, ang),
+                               magnitude=mag,
+                               psf_scaling=self.m_psf_scaling)
 
             im_shape = (fake.shape[-2], fake.shape[-1])
 
@@ -731,10 +733,7 @@ class MCMCsamplingModule(ProcessingModule):
         indices = np.where(mask.reshape(-1) != 0.)[0]
 
         if isinstance(self.m_aperture, float):
-            center = image_center(images) # (y, x)
-
-            x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
-            y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
+            x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
 
             self.m_aperture = {'type':'circular',
                                'pos_x':x_pos,
