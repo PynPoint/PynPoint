@@ -227,7 +227,7 @@ def polar_to_cartesian(image, sep, ang):
 
     center = image_center(image) # (y, x)
 
-    x_pos = center[1] + sep*math.cos(math.radians(ang-90.))
-    y_pos = center[0] + sep*math.sin(math.radians(ang-90.))
+    x_pos = center[1] + sep*math.cos(math.radians(ang+90.))
+    y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
     return x_pos, y_pos
