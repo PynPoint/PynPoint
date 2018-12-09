@@ -18,7 +18,7 @@ from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
-from PynPoint.Util.ImageTools import create_mask, image_center, polar_to_cartesian
+from PynPoint.Util.ImageTools import create_mask, polar_to_cartesian
 from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
