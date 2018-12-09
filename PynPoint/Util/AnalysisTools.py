@@ -27,7 +27,7 @@ def false_alarm(image,
     the related false positive fraction (Mawet et al. 2014).
 
     :param image: Input image.
-    :type image: ndarray
+    :type image: numpy.ndarray
     :param x_pos: Position (pix) along the x-axis.
     :type x_pos: float
     :param y_pos: Position (pix) along the y-axis.
@@ -97,9 +97,9 @@ def fake_planet(images,
     Function to inject artificial planets in a dataset.
 
     :param images: Input images.
-    :type images: ndarray
+    :type images: numpy.ndarray
     :param psf: PSF template.
-    :type psf: ndarray
+    :type psf: numpy.ndarray
     :param parang: Parallactic angles (deg).
     :type parang: float
     :param position: Separation (pix) and position angle (deg) measured in counterclockwise
@@ -113,7 +113,7 @@ def fake_planet(images,
     :type interpolation: str
 
     :return: Images with artificial planet injected.
-    :rtype: ndarray
+    :rtype: numpy.ndarray
     """
 
     sep = position[0]

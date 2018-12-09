@@ -160,7 +160,7 @@ def lnprob(param,
         merit = merit_function(residuals=stack,
                                function="sum",
                                aperture=aperture,
-                               sigma=0.)
+                               sigma=0.)[0]
 
         return -0.5*merit
 
