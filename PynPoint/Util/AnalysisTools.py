@@ -11,7 +11,7 @@ import numpy as np
 from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
-from photutils import aperture_photometry, CircularAperture
+from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 from six.moves import range
 
 from PynPoint.Util.ImageTools import shift_image
@@ -27,7 +27,7 @@ def false_alarm(image,
     the related false positive fraction (Mawet et al. 2014).
 
     :param image: Input image.
-    :type image: ndarray
+    :type image: numpy.ndarray
     :param x_pos: Position (pix) along the x-axis.
     :type x_pos: float
     :param y_pos: Position (pix) along the y-axis.
@@ -97,9 +97,9 @@ def fake_planet(images,
     Function to inject artificial planets in a dataset.
 
     :param images: Input images.
-    :type images: ndarray
+    :type images: numpy.ndarray
     :param psf: PSF template.
-    :type psf: ndarray
+    :type psf: numpy.ndarray
     :param parang: Parallactic angles (deg).
     :type parang: float
     :param position: Separation (pix) and position angle (deg) measured in counterclockwise
@@ -113,7 +113,7 @@ def fake_planet(images,
     :type interpolation: str
 
     :return: Images with artificial planet injected.
-    :rtype: ndarray
+    :rtype: numpy.ndarray
     """
 
     sep = position[0]
@@ -148,7 +148,6 @@ def fake_planet(images,
 
 def merit_function(residuals,
                    function,
-                   position,
                    aperture,
                    sigma):
 
@@ -159,10 +158,9 @@ def merit_function(residuals,
     :type residuals: ndarray
     :param function: Figure of merit ("hessian" or "sum").
     :type function: str
-    :param position: Center position (y, x) of the circular aperture (pix).
-    :type position: (float, float)
-    :param aperture: Aperture radius (pix).
-    :type aperture: float
+    :param aperture: Dictionary with the aperture properties. See
+                     Util.AnalysisTools.create_aperture for details.
+    :type aperture: dict
     :param sigma: Standard deviation (pix) of the Gaussian kernel which is used to smooth
                   the residuals before the function of merit is calculated.
     :type sigma: float
@@ -173,10 +171,16 @@ def merit_function(residuals,
 
     if function == "hessian":
 
+        if aperture['type'] != 'circular':
+            raise ValueError("Measuring the Hessian is only possible with a circular aperture.")
+
         npix = residuals.shape[-1]
 
-        x_grid = np.linspace(-(position[1]+0.5), npix-(position[1]+0.5), npix)
-        y_grid = np.linspace(-(position[0]+0.5), npix-(position[0]+0.5), npix)
+        pos_x = aperture['pos_x']
+        pos_y = aperture['pos_y']
+
+        x_grid = np.linspace(-(pos_x+0.5), npix-(pos_x+0.5), npix)
+        y_grid = np.linspace(-(pos_y+0.5), npix-(pos_y+0.5), npix)
 
         xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
         rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
@@ -188,7 +192,7 @@ def merit_function(residuals,
                                                             order='rc')
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-        hes_det[rr_grid > aperture] = 0.
+        hes_det[rr_grid > aperture['radius']] = 0.
         merit = np.sum(np.abs(hes_det))
 
     elif function == "sum":
@@ -196,8 +200,10 @@ def merit_function(residuals,
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        aperture = CircularAperture((position[1], position[0]), aperture)
-        phot_table = aperture_photometry(np.abs(residuals), aperture, method='exact')
+        phot_table = aperture_photometry(np.abs(residuals),
+                                         create_aperture(aperture),
+                                         method='exact')
+
         merit = phot_table['aperture_sum']
 
     else:
@@ -205,3 +211,39 @@ def merit_function(residuals,
         raise ValueError("Merit function not recognized.")
 
     return merit
+
+def create_aperture(aperture):
+    """
+    Function to create a circular or elliptical aperture.
+
+    :param aperture: Dictionary with the aperture properties. The aperture 'type' can be
+                     'circular' or 'elliptical' (str). Both types of apertures require a position,
+                     'pos_x' and 'pos_y' (float), where the aperture is placed. The circular
+                     aperture requires a 'radius' (in pixels, float) and the elliptical
+                     aperture requires a 'semimajor' and 'semiminor' axis (in pixels, float),
+                     and an 'angle' (deg). The rotation angle in degrees of the semimajor axis
+                     from the positive x axis. The rotation angle increases counterclockwise.
+    :type aperture: dict
+
+    :return: Aperture object.
+    :rtype: photutils.aperture.circle.CircularAperture or
+            photutils.aperture.circle.EllipticalAperture
+    """
+
+    if aperture['type'] == "circular":
+
+        phot_ap = CircularAperture((aperture['pos_x'], aperture['pos_y']),
+                                   aperture['radius'])
+
+    elif aperture['type'] == "elliptical":
+
+        phot_ap = EllipticalAperture((aperture['pos_x'], aperture['pos_y']),
+                                     aperture['semimajor'],
+                                     aperture['semiminor'],
+                                     math.radians(aperture['angle']))
+
+    else:
+
+        raise ValueError("Aperture type not recognized.")
+
+    return phot_ap
