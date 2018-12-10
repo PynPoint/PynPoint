@@ -247,7 +247,9 @@ class SimplexMinimizationModule(ProcessingModule):
                       or *sum*, to minimize the sum of the absolute pixel values
                       (Wertz et al. 2017).
         :type merit: str
-        :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
+        :param aperture: Either the aperture radius (arcsec) at the position specified at *position*
+                         or a dictionary with the aperture properties. See
+                         Util.AnalysisTools.create_aperture for details.
         :type aperture: float
         :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
                       the images before the function of merit is calculated (in order to reduce
