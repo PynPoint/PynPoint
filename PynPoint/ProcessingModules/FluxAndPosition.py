@@ -683,6 +683,29 @@ class MCMCsamplingModule(ProcessingModule):
         else:
             self.m_mask = np.array(mask)
 
+    def aperture_dict(self, images, pixscale):
+        """
+        Function to create or update the dictionary with aperture properties.
+
+        :return: None
+        """
+
+        if isinstance(self.m_aperture, float):
+            x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
+
+            self.m_aperture = {'type':'circular',
+                               'pos_x':x_pos,
+                               'pos_y':y_pos,
+                               'radius':self.m_aperture/pixscale}
+
+        elif isinstance(self.m_aperture, dict):
+            if self.m_aperture['type'] == 'circular':
+                self.m_aperture['radius'] /= pixscale
+
+            elif self.m_aperture['type'] == 'elliptical':
+                self.m_aperture['semimajor'] /= pixscale
+                self.m_aperture['semiminor'] /= pixscale
+
     def run(self):
         """
         Run method of the module. Shifts the reference PSF to the location of the fake planet
@@ -734,21 +757,7 @@ class MCMCsamplingModule(ProcessingModule):
         mask = create_mask(im_shape[-2:], self.m_mask)
         indices = np.where(mask.reshape(-1) != 0.)[0]
 
-        if isinstance(self.m_aperture, float):
-            x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
-
-            self.m_aperture = {'type':'circular',
-                               'pos_x':x_pos,
-                               'pos_y':y_pos,
-                               'radius':self.m_aperture/pixscale}
-
-        elif isinstance(self.m_aperture, dict):
-            if self.m_aperture['type'] == 'circular':
-                self.m_aperture['radius'] /= pixscale
-
-            elif self.m_aperture['type'] == 'elliptical':
-                self.m_aperture['semimajor'] /= pixscale
-                self.m_aperture['semiminor'] /= pixscale
+        self.aperture_dict(images, pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
