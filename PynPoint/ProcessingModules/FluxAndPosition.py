@@ -288,7 +288,6 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        # self.m_position = (float(position[1]), float(position[0]))
         self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
