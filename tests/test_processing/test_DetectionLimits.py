@@ -65,7 +65,7 @@ class TestDetectionLimits(object):
                                        separation=(0.5, 0.6, 0.1),
                                        angle=(0., 360., 180.),
                                        magnitude=(7.5, 1.),
-                                       sigma=5.,
+                                       threshold=("sigma", 5.),
                                        accuracy=1e-1,
                                        psf_scaling=1.,
                                        aperture=0.1,
