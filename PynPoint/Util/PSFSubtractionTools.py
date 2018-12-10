@@ -32,7 +32,8 @@ def pca_psf_subtraction(images,
     :param im_shape: Original shape of the stack with images. Required if pca_sklearn is not
                      set to None.
     :type im_shape: tuple(int, int, int)
-    :param indices: Non-masked image indices, required if pca_sklearn is not set to None.
+    :param indices: Non-masked image indices, required if pca_sklearn is not set to None. Optional
+                    if pca_sklearn is set to None.
     :type indices: numpy.ndarray
 
     :return: Mean residuals of the PSF subtraction.
@@ -44,9 +45,10 @@ def pca_psf_subtraction(images,
 
         im_shape = images.shape
 
-        # select the first image and get the unmasked image indices
-        im_star = images[0, ].reshape(-1)
-        indices = np.where(im_star != 0.)[0]
+        if indices is None:
+            # select the first image and get the unmasked image indices
+            im_star = images[0, ].reshape(-1)
+            indices = np.where(im_star != 0.)[0]
 
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])

@@ -631,8 +631,8 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
 
-        if isinstance(first_data[0], str):
-            first_data = np.array(first_data, dtype="|S")
+        if np.size(first_data) > 0 and isinstance(first_data[0], str):
+                first_data = np.array(first_data, dtype="|S")
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
