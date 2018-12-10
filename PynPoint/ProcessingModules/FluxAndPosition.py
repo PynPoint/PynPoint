@@ -11,14 +11,14 @@ import sys
 import numpy as np
 import emcee
 
-from scipy.optimize import minimize
-from scipy.stats import t
-from photutils import aperture_photometry, CircularAperture
 from six.moves import range
+from scipy.stats import t
+from scipy.optimize import minimize
+from photutils import aperture_photometry, CircularAperture
 
 from PynPoint.Core.Processing import ProcessingModule
 from PynPoint.Util.AnalysisTools import fake_planet, merit_function
-from PynPoint.Util.ImageTools import create_mask, image_center
+from PynPoint.Util.ImageTools import create_mask, polar_to_cartesian
 from PynPoint.Util.MCMCtools import lnprob
 from PynPoint.Util.ModuleTools import progress, memory_frames, image_size_port, \
                                       number_images_port, rotate_coordinates
@@ -247,7 +247,9 @@ class SimplexMinimizationModule(ProcessingModule):
                       or *sum*, to minimize the sum of the absolute pixel values
                       (Wertz et al. 2017).
         :type merit: str
-        :param aperture: Aperture radius (arcsec) used for the minimization at *position*.
+        :param aperture: Either the aperture radius (arcsec) at the position specified at *position*
+                         or a dictionary with the aperture properties. See
+                         Util.AnalysisTools.create_aperture for details.
         :type aperture: float
         :param sigma: Standard deviation (arcsec) of the Gaussian kernel which is used to smooth
                       the images before the function of merit is calculated (in order to reduce
@@ -286,7 +288,8 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_flux_position_port = self.add_output_port(flux_position_tag)
 
-        self.m_position = (float(position[1]), float(position[0]))
+        # self.m_position = (float(position[1]), float(position[0]))
+        self.m_position = position
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
@@ -321,7 +324,20 @@ class SimplexMinimizationModule(ProcessingModule):
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_aperture /= pixscale
+        if isinstance(self.m_aperture, float):
+            aperture = {'type':'circular',
+                        'pos_x':self.m_position[0],
+                        'pos_y':self.m_position[1],
+                        'radius':self.m_aperture/pixscale}
+
+        elif isinstance(self.m_aperture, dict):
+            if aperture['type'] == 'circular':
+                aperture['radius'] /= pixscale
+
+            elif aperture['type'] == 'elliptical':
+                aperture['semimajor'] /= pixscale
+                aperture['semiminor'] /= pixscale
+
         self.m_sigma /= pixscale
 
         if self.m_cent_size is not None:
@@ -352,10 +368,12 @@ class SimplexMinimizationModule(ProcessingModule):
             sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
             ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
 
-            fake = fake_planet(images, psf,
-                               parang, (sep, ang),
-                               mag, self.m_psf_scaling,
-                               interpolation="spline")
+            fake = fake_planet(images=images,
+                               psf=psf,
+                               parang=parang,
+                               position=(sep, ang),
+                               magnitude=mag,
+                               psf_scaling=self.m_psf_scaling)
 
             im_shape = (fake.shape[-2], fake.shape[-1])
 
@@ -371,8 +389,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack,
                                    function=self.m_merit,
-                                   position=self.m_position,
-                                   aperture=self.m_aperture,
+                                   aperture=aperture,
                                    sigma=self.m_sigma)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
@@ -391,7 +408,11 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.write("Running SimplexMinimizationModule")
         sys.stdout.flush()
 
-        pos_init = rotate_coordinates(center, self.m_position, self.m_extra_rot)
+        pos_init = rotate_coordinates(center,
+                                      (self.m_position[1], self.m_position[0]),
+                                      self.m_extra_rot)
+
+        # Change integer to float?
         pos_init = (int(pos_init[0]), int(pos_init[1])) # (y, x)
 
         minimize(fun=_objective,
@@ -543,8 +564,9 @@ class FalsePositiveModule(ProcessingModule):
 
 class MCMCsamplingModule(ProcessingModule):
     """
-    Module to determine the contrast and position of a planet with an affine invariant Markov chain
-    Monte Carlo (MCMC) ensemble sampler.
+    Module to measure the separation, position angle, and contrast of a planet with injection of
+    negative artificial planets and sampling of the posterior distributions with emcee, an
+    affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
     """
 
     def __init__(self,
@@ -553,7 +575,7 @@ class MCMCsamplingModule(ProcessingModule):
                  name_in="mcmc_sampling",
                  image_in_tag="im_arr",
                  psf_in_tag="im_arr",
-                 chain_out_tag="chain",
+                 chain_out_tag="samples",
                  nwalkers=100,
                  nsteps=200,
                  psf_scaling=-1.,
@@ -561,18 +583,21 @@ class MCMCsamplingModule(ProcessingModule):
                  aperture=0.1,
                  mask=None,
                  extra_rot=0.,
+                 prior="flat",
                  **kwargs):
         """
         Constructor of MCMCsamplingModule.
 
-        :param param: Tuple with the separation (arcsec), angle (deg), and contrast (mag). The
+        :param param: Tuple with the approximate separation (arcsec), angle (deg), and contrast
+                      (mag), for example obtained with the SimplexMinimizationModule. The
                       angle is measured in counterclockwise direction with respect to the upward
                       direction (i.e., East of North). The specified separation and angle are also
-                      used as fixed position for the aperture.
-        :type param: (float, float, float)
+                      used as fixed position for the aperture if *aperture* contains a single
+                      value.
+        :type param: tuple(float, float, float)
         :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
                        contrast (mag). Each set of boundaries is specified as a tuple.
-        :type bounds: ((float, float), (float, float), (float, float))
+        :type bounds: tuple(tuple(float, float), tuple(float, float), tuple(float, float))
         :param name_in: Unique name of the module instance.
         :type name_in: str
         :param image_in_tag: Tag of the database entry with images that are read as input.
@@ -594,20 +619,27 @@ class MCMCsamplingModule(ProcessingModule):
         :type psf_scaling: float
         :param pca_number: Number of principal components used for the PSF subtraction.
         :type pca_number: int
-        :param aperture: Aperture radius (arcsec) at the position specified in *param*.
-        :type aperture: float
+        :param aperture: Either the aperture radius (arcsec) at the position specified in *param*
+                         or a dictionary with the aperture properties. See
+                         Util.AnalysisTools.create_aperture for details.
+        :type aperture: float or dict
         :param mask: Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of
-                     the tuple can be set to None.
-        :type mask: (float, float)
+                     the tuple can be set to None. Masked pixels are excluded from the PCA
+                     computation, resulting in a smaller runtime.
+        :type mask: tuple(float, float)
         :param extra_rot: Additional rotation angle of the images (deg).
         :type extra_rot: float
+        :param prior: Prior can be set to "flat" or "aperture". With "flat", the values of *bounds*
+                      are used as uniform priors. With "aperture", the prior probability is set to
+                      zero beyond the aperture and unity within the aperture.
+        :type prior: str
         :param \**kwargs:
             See below.
 
         :Keyword arguments:
             **scale** (*float*) -- The proposal scale parameter (Goodman & Weare 2010).
 
-            **sigma** (*(float, float, float)*) -- Tuple with the standard deviations that
+            **sigma** (*tuple(float, float, float)*) -- Tuple with the standard deviations that
             randomly initializes the start positions of the walkers in a small ball around
             the a priori preferred position. The tuple should contain a value for the
             separation (arcsec), position angle (deg), and contrast (mag).
@@ -644,11 +676,35 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_pca_number = pca_number
         self.m_aperture = aperture
         self.m_extra_rot = extra_rot
+        self.m_prior = prior
 
         if mask is None:
-            self.m_mask = np.asarray((None, None))
+            self.m_mask = np.array((None, None))
         else:
-            self.m_mask = np.asarray(mask)
+            self.m_mask = np.array(mask)
+
+    def aperture_dict(self, images, pixscale):
+        """
+        Function to create or update the dictionary with aperture properties.
+
+        :return: None
+        """
+
+        if isinstance(self.m_aperture, float):
+            x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
+
+            self.m_aperture = {'type':'circular',
+                               'pos_x':x_pos,
+                               'pos_y':y_pos,
+                               'radius':self.m_aperture/pixscale}
+
+        elif isinstance(self.m_aperture, dict):
+            if self.m_aperture['type'] == 'circular':
+                self.m_aperture['radius'] /= pixscale
+
+            elif self.m_aperture['type'] == 'elliptical':
+                self.m_aperture['semimajor'] /= pixscale
+                self.m_aperture['semiminor'] /= pixscale
 
     def run(self):
         """
@@ -680,8 +736,6 @@ class MCMCsamplingModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         parang = self.m_image_in_port.get_attribute("PARANG")
 
-        self.m_aperture /= pixscale
-
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -699,13 +753,11 @@ class MCMCsamplingModule(ProcessingModule):
         if self.m_mask[1] is not None:
             self.m_mask[1] /= pixscale
 
-        mask = create_mask(im_shape, self.m_mask)
-        center = image_center(images) # (y, x)
+        # create the mask and get the unmasked image indices
+        mask = create_mask(im_shape[-2:], self.m_mask)
+        indices = np.where(mask.reshape(-1) != 0.)[0]
 
-        x_pos = center[1]+self.m_param[0]*math.cos(math.radians(self.m_param[1]+90.))/pixscale
-        y_pos = center[0]+self.m_param[0]*math.sin(math.radians(self.m_param[1]+90.))/pixscale
-
-        aperture = (y_pos, x_pos, self.m_aperture)
+        self.aperture_dict(images, pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -726,7 +778,9 @@ class MCMCsamplingModule(ProcessingModule):
                                                pixscale,
                                                self.m_pca_number,
                                                self.m_extra_rot,
-                                               aperture]),
+                                               self.m_aperture,
+                                               indices,
+                                               self.m_prior]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):

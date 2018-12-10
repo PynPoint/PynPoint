@@ -277,7 +277,8 @@ class TestFluxAndPosition(object):
                                   mask=None,
                                   extra_rot=0.,
                                   scale=2.,
-                                  sigma=(1e-3, 1e-1, 1e-2))
+                                  sigma=(1e-3, 1e-1, 1e-2),
+                                  prior="flat")
 
         self.pipeline.add_module(mcmc)
         self.pipeline.run_module("mcmc")
