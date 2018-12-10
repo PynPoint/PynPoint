@@ -34,7 +34,7 @@ class ContrastCurveModule(ProcessingModule):
                  separation=(0.1, 1., 0.01),
                  angle=(0., 360., 60.),
                  magnitude=(7.5, 1.),
-                 sigma=5.,
+                 threshold=("sigma", 5.),
                  accuracy=1e-1,
                  psf_scaling=1.,
                  aperture=0.05,
@@ -43,7 +43,8 @@ class ContrastCurveModule(ProcessingModule):
                  norm=False,
                  cent_size=None,
                  edge_size=None,
-                 extra_rot=0.):
+                 extra_rot=0.,
+                 **kwargs):
         """
         Constructor of ContrastCurveModule.
 
@@ -75,9 +76,13 @@ class ContrastCurveModule(ProcessingModule):
         :param magnitude: Initial magnitude value and step size for the fake planet, specified
                           as (planet magnitude, magnitude step size).
         :type magnitude: (float, float)
-        :param sigma: Detection threshold in units of sigma. Note that as sigma is fixed, the
-                      confidence level (and false positive fraction) change with separation.
-        :type sigma: float
+        :param threshold: Detection threshold for the contrast curve, either in terms of "sigma"
+                          or the false positive fraction (FPF). The value is a tuple, for example
+                          provided as ("sigma", 5.) or ("fpf", 1e-6). Note that when sigma is fixed,
+                          the false positive fraction will change with separation. Also, sigma only
+                          corresponds to the standard deviation of a normal distribution at large
+                          separations (i.e., large number of samples).
+        :type threshold: tuple(str, float)
         :param accuracy: Fractional accuracy of the false positive fraction. When the
                          accuracy condition is met, the final magnitude is calculated with a
                          linear interpolation.
@@ -103,9 +108,23 @@ class ContrastCurveModule(ProcessingModule):
         :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
+        :param \**kwargs:
+            See below.
+
+        :Keyword arguments:
+            **sigma** (*float*) -- Detection threshold in units of sigma. Note that as sigma is
+            fixed, the confidence level (and false positive fraction) change with separation. This
+            parameter will be deprecated. Please use the *threshold* parameter instead.
 
         :return: None
         """
+
+        if "sigma" in kwargs:
+            self.m_theshold = ("sigma", kwargs["sigma"])
+
+            warnings.warn("The 'sigma' parameter will be deprecated in a future release. It is "
+                          "recommended to use the 'threshold' parameter instead.",
+                          DeprecationWarning)
 
         super(ContrastCurveModule, self).__init__(name_in)
 
@@ -128,10 +147,10 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_separation = separation
         self.m_angle = angle
-        self.m_sigma = sigma
         self.m_accuracy = accuracy
         self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
+        self.m_threshold = threshold
         self.m_aperture = aperture
         self.m_ignore = ignore
         self.m_pca_number = pca_number
@@ -210,7 +229,19 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.flush()
 
         for i, sep in enumerate(pos_r):
-            fpf_threshold = student_fpf(self.m_sigma, sep, self.m_aperture, self.m_ignore)
+
+            if self.m_threshold[0] == "sigma":
+                fpf_threshold = student_fpf(sigma=self.m_threshold[1],
+                                            radius=sep,
+                                            size=self.m_aperture,
+                                            ignore=self.m_ignore)
+
+            elif self.m_threshold[0] == "fpf":
+                fpf_threshold = self.m_threshold[1]
+
+            else:
+                raise ValueError("Threshold type not recognized.")
+
             fake_fpf[i] = fpf_threshold
 
             for j, ang in enumerate(pos_t):
@@ -351,15 +382,13 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.write("Running ContrastCurveModule... [DONE]\n")
         sys.stdout.flush()
 
-        if self.m_pca_out_port is not None:
-            self.m_pca_out_port.add_history_information("ContrastCurveModule",
-                                                        str(self.m_sigma)+" sigma")
+        history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
 
+        if self.m_pca_out_port is not None:
+            self.m_pca_out_port.add_history_information("ContrastCurveModule", history)
             self.m_pca_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_contrast_out_port.add_history_information("ContrastCurveModule",
-                                                         str(self.m_sigma)+" sigma")
-
+        self.m_contrast_out_port.add_history_information("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_contrast_out_port.close_port()
