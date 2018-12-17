@@ -324,18 +324,18 @@ class SimplexMinimizationModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if isinstance(self.m_aperture, float):
-            aperture = {'type':'circular',
-                        'pos_x':self.m_position[0],
-                        'pos_y':self.m_position[1],
-                        'radius':self.m_aperture/pixscale}
+            self.m_aperture = {'type':'circular',
+                               'pos_x':self.m_position[0],
+                               'pos_y':self.m_position[1],
+                               'radius':self.m_aperture/pixscale}
 
         elif isinstance(self.m_aperture, dict):
-            if aperture['type'] == 'circular':
-                aperture['radius'] /= pixscale
+            if self.m_aperture['type'] == 'circular':
+                self.m_aperture['radius'] /= pixscale
 
-            elif aperture['type'] == 'elliptical':
-                aperture['semimajor'] /= pixscale
-                aperture['semiminor'] /= pixscale
+            elif self.m_aperture['type'] == 'elliptical':
+                self.m_aperture['semimajor'] /= pixscale
+                self.m_aperture['semiminor'] /= pixscale
 
         self.m_sigma /= pixscale
 
@@ -388,7 +388,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack,
                                    function=self.m_merit,
-                                   aperture=aperture,
+                                   aperture=self.m_aperture,
                                    sigma=self.m_sigma)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
