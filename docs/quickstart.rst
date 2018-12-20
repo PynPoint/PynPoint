@@ -34,12 +34,12 @@ In that case, the dependencies can be installed from the PynPoint folder::
 
 By adding the path of the repository to the `PYTHONPATH` environment variable enables PynPoint to be imported from any location::
 
-    $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/PynPoint'" >> folder_name/bin/activate
+    $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/pynpoint'" >> folder_name/bin/activate
 
 The installation can be tested by starting Python in interactive mode and printing the PynPoint version::
 
-    >>> import PynPoint
-    >>> print PynPoint.__version__
+    >>> import pynpoint
+    >>> print pynpoint.__version__
 
 A virtual environment is deactivate with::
 
@@ -70,55 +70,53 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
     import numpy as np
     import matplotlib.pyplot as plt
 
-    import PynPoint
-
-    from PynPoint import Pypeline
-    from PynPoint.IOmodules.Hdf5Reading import Hdf5ReadingModule
-    from PynPoint.ProcessingModules import PSFpreparationModule, \
-                                           PcaPsfSubtractionModule
+    from pynpoint import Pypeline, \
+                         Hdf5ReadingModule, \
+                         PSFpreparationModule, \
+                         PcaPsfSubtractionModule
 
     working_place = "/path/to/working_place/"
     input_place = "/path/to/input_place/"
     output_place = "/path/to/output_place/"
 
     # Python 2
-    url = urllib.URLopener()
-    url.retrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
-                 input_place+"betapic_naco_mp.hdf5")
+    # url = urllib.URLopener()
+    # url.retrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
+    #              input_place+"betapic_naco_mp.hdf5")
 
     # Python 3
-    # urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
-    #                            input_place+"betapic_naco_mp.hdf5")
+    urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
+                               input_place+"betapic_naco_mp.hdf5")
 
     pipeline = Pypeline(working_place_in=working_place,
                         input_place_in=input_place,
                         output_place_in=output_place)
 
-    read = Hdf5ReadingModule(name_in="read",
-                             input_filename="betapic_naco_mp.hdf5",
-                             input_dir=None,
-                             tag_dictionary={"stack":"stack"})
+    module = Hdf5ReadingModule(name_in="read",
+                               input_filename="betapic_naco_mp.hdf5",
+                               input_dir=None,
+                               tag_dictionary={"stack":"stack"})
 
-    pipeline.add_module(read)
+    pipeline.add_module(module)
 
-    prep = PSFpreparationModule(name_in="prep",
-                                image_in_tag="stack",
-                                image_out_tag="prep",
-                                mask_out_tag=None,
-                                norm=False,
-                                resize=None,
-                                cent_size=0.15,
-                                edge_size=1.1)
+    module = PSFpreparationModule(name_in="prep",
+                                  image_in_tag="stack",
+                                  image_out_tag="prep",
+                                  mask_out_tag=None,
+                                  norm=False,
+                                  resize=None,
+                                  cent_size=0.15,
+                                  edge_size=1.1)
 
-    pipeline.add_module(prep)
+    pipeline.add_module(module)
 
-    pca = PcaPsfSubtractionModule(pca_numbers=(20, ),
-                                  name_in="pca",
-                                  images_in_tag="prep",
-                                  reference_in_tag="prep",
-                                  res_median_tag="residuals")
+    module = PcaPsfSubtractionModule(pca_numbers=(20, ),
+                                     name_in="pca",
+                                     images_in_tag="prep",
+                                     reference_in_tag="prep",
+                                     res_median_tag="residuals")
 
-    pipeline.add_module(pca)
+    pipeline.add_module(module)
 
     pipeline.run()
 
