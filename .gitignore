@@ -2,7 +2,6 @@
 *.py[cod]
 
 # Distribution
-PynPoint_exoplanet.egg-info
 dist/
 build/
 htmlcov/
