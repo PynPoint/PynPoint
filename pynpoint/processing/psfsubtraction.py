@@ -1,5 +1,5 @@
 """
-Modules for PSF subtraction with principal component analysis.
+Modules for PSF subtraction.
 """
 
 from __future__ import absolute_import
@@ -21,12 +21,10 @@ from pynpoint.util.residuals import combine_residuals
 
 class PcaPsfSubtractionModule(ProcessingModule):
     """
-    Module for PSF subtraction with principal component analysis (PCA). The multiprocessing
-    implementation is only supported for Linux and Windows. Mac only runs in single processing
-    due to a bug in the numpy package. Note that the calculation of the residuals with multi-
-    processing may require a large amount of memory in case the stack of input images is very
-    large. In that case, CPU could be set to a smaller number (or even 1) in the configuration
-    file.
+    Module for PSF subtraction with principal component analysis (PCA). The residuals are
+    calculated in parallel for the selected numbers of principal components. This may
+    require a large amount of memory in case the stack of input images is very large.
+    The number of processes can be set with the CPU keyword in the configuration file.
     """
 
     def __init__(self,
@@ -45,9 +43,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         Constructor of PcaPsfSubtractionModule.
 
-        :param pca_numbers: Number of PCA components used for the PSF model. Can be a single value
-                            or a list of integers. A list of PCAs will be processed (if supported)
-                            using multiprocessing.
+        :param pca_numbers: Number of principal components used for the PSF model. Can be a single
+                            value or a list of integers.
         :type pca_numbers: int
         :param name_in: Unique name of the module instance.
         :type name_in: str
@@ -258,6 +255,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
         :return: None
         """
 
+        cpu = self._m_config_port.get_attribute("CPU")
+
+        if cpu > 1 and self.m_res_arr_out_ports is not None:
+            warnings.warn("Multiprocessing not possible if 'res_arr_out_tag' is not set to None.")
+
         self._clear_output_ports()
 
         # get all data
@@ -323,10 +325,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             self.m_basis_out_port.set_all(basis)
 
-        cpu = self._m_config_port.get_attribute("CPU")
-
-        # multiprocessing crashes on osx due to a bug in numpy
-        if sys.platform == "darwin" or self.m_res_arr_out_ports is not None or cpu == 1:
+        if cpu == 1 or self.m_res_arr_out_ports is not None:
             self._run_single_processing(star_reshape, im_shape, indices)
 
         else:

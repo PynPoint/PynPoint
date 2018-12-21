@@ -10,7 +10,7 @@ import math
 import cv2
 import numpy as np
 
-from pynpoint.util.image import crop_image, image_center
+from pynpoint.util.image import crop_image, image_center_pixel
 
 
 def progress(current,
@@ -95,7 +95,7 @@ def locate_star(image,
 
     if width is not None:
         if center is None:
-            center = image_center(image)
+            center = image_center_pixel(image)
 
         image = crop_image(image, center, width)
 

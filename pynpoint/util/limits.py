@@ -3,7 +3,6 @@ Functions for calculating detection limits.
 """
 
 import sys
-import math
 import warnings
 
 import numpy as np
@@ -11,7 +10,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from pynpoint.util.analysis import student_fpf, fake_planet, false_alarm
-from pynpoint.util.image import create_mask
+from pynpoint.util.image import create_mask, polar_to_cartesian
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
@@ -22,8 +21,8 @@ def contrast_limit(images,
                    psf_scaling,
                    extra_rot,
                    magnitude,
-                   threshold,
                    pca_number,
+                   threshold,
                    accuracy,
                    aperture,
                    ignore,
@@ -36,12 +35,12 @@ def contrast_limit(images,
     Function for calculating the contrast limit at a specified position by iterating towards
     a threshold for the false positive fraction, with a correction for small sample statistics.
 
-    :param images:
-    :type images:
-    :param psf:
-    :type psf:
-    :param parang:
-    :type parang:
+    :param images: Stack of images.
+    :type images: numpy.ndarray
+    :param psf: PSF template for the fake planet (2D or 3D).
+    :type psf: numpy.ndarray
+    :param parang: Derotation angles (deg).
+    :type parang: numpy.ndarray
     :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
                         neutral density filter). Should have a positive value.
     :type psf_scaling: float
@@ -50,6 +49,8 @@ def contrast_limit(images,
     :param magnitude: Initial magnitude value and step size for the fake planet, specified
                       as (planet magnitude, magnitude step size).
     :type magnitude: (float, float)
+    :param pca_number: Number of principal components used for the PSF subtraction.
+    :type pca_number: int
     :param threshold: Detection threshold for the contrast curve, either in terms of "sigma"
                       or the false positive fraction (FPF). The value is a tuple, for example
                       provided as ("sigma", 5.) or ("fpf", 1e-6). Note that when sigma is fixed,
@@ -57,8 +58,6 @@ def contrast_limit(images,
                       corresponds to the standard deviation of a normal distribution at large
                       separations (i.e., large number of samples).
     :type threshold: tuple(str, float)
-    :param pca_number: Number of principal components used for the PSF subtraction.
-    :type pca_number: int
     :param accuracy: Fractional accuracy of the false positive fraction. When the
                      accuracy condition is met, the final magnitude is calculated with a
                      linear interpolation.
@@ -75,10 +74,10 @@ def contrast_limit(images,
                       is used when set to None. If the value is larger than half the image size
                       then it will be set to half the image size.
     :type edge_size: float
-    :param pixscale:
-    :type pixscale:
-    :param position:
-    :type position:
+    :param pixscale: Pixel scale (arcsec pix-1).
+    :type pixscale: float
+    :param position: Tuple with the separation (pix) and position angle (deg) of the fake planet.
+    :type position: tuple(float, float)
 
     :return:
     :rtype: float, float, float, float
@@ -96,10 +95,7 @@ def contrast_limit(images,
     else:
         raise ValueError("Threshold type not recognized.")
 
-    center = np.array([images.shape[2]/2., images.shape[1]/2.])
-
-    x_fake = center[0] + position[0]*math.cos(np.radians(position[1]+90.-extra_rot))
-    y_fake = center[1] + position[0]*math.sin(np.radians(position[1]+90.-extra_rot))
+    x_fake, y_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     list_fpf = []
     list_mag = [magnitude[0]]
