@@ -81,7 +81,7 @@ from pynpoint.processing.basic import SubtractImagesModule, \
 warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
-__copyright__ = '2014-2018, ETH Zurich'
+__copyright__ = '2014-2019, ETH Zurich'
 __license__ = 'GPL'
 __version__ = '0.6.0'
 __maintainer__ = 'Tomas Stolker'

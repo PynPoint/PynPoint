@@ -18,12 +18,12 @@ def _master_frame(data,
     cropping the frames to the shape of the science images if needed.
 
     :param data: Input array (2D or 3D) with dark or flat frames.
-    :type data: ndarray
+    :type data: numpy.ndarray
     :param image_in_port: Input port with the science images.
-    :type image_in_port: ndarray
+    :type image_in_port: numpy.ndarray
 
     :return: Master dark/flat frame.
-    :rtype: ndarray
+    :rtype: numpy.ndarray
     """
 
     if data.ndim == 3:

@@ -204,8 +204,8 @@ class FrameSelectionModule(ProcessingModule):
                          aperture type ("circular", "annulus", or "ratio"). For a
                          circular aperture, the second element contains the aperture radius
                          (arcsec). For the other two types, the second and third element are the
-                         inner and outer radii for the aperture. The position of the aperture has
-                         to be specified with *position* when *fwhm=None*.
+                         inner and outer radii (arcsec) of the aperture. The position of the
+                         aperture has to be specified with *position* when *fwhm=None*.
         :type aperture: tuple(str, float, float)
         :param position: Subframe that is selected to search for the star. The tuple contains the
                          center (pix) and size (arcsec) (pos_x, pos_y, size). Setting *position*

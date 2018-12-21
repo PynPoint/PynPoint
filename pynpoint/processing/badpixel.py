@@ -60,14 +60,14 @@ def _bad_pixel_interpolation(image_in,
     Internal function to interpolate bad pixels.
 
     :param image_in: Input image.
-    :type image_in: ndarray
+    :type image_in: numpy.ndarray
     :param bad_pixel_map: Bad pixel map.
-    :type bad_pixel_map: ndarray
+    :type bad_pixel_map: numpy.ndarray
     :param iterations: Number of iterations.
     :type iterations: int
 
     :return: Image in which the bad pixels have been interpolated.
-    :rtype: ndarray
+    :rtype: numpy.ndarray
     """
 
     image_in = image_in * bad_pixel_map
@@ -141,13 +141,13 @@ def _bad_pixel_interpolation(image_in,
 #     Internal function to create a map with ones and zeros.
 #
 #     :param dev_image: Image of pixel deviations from neighborhood means, squared.
-#     :type dev_image: ndarray
+#     :type dev_image: numpy.ndarray
 #     :param var_image: Image of pixel neighborhood variances * (N_sigma)^2.
-#     :type var_image: ndarray
+#     :type var_image: numpy.ndarray
 #     :param source_image: Input image.
-#     :type source_image: ndarray
+#     :type source_image: numpy.ndarray
 #     :param out_image: Bad pixel map.
-#     :type out_image: ndarray
+#     :type out_image: numpy.ndarray
 #
 #     :return: None
 #     """

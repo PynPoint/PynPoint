@@ -60,7 +60,6 @@ class TestDetectionLimits(object):
         contrast = ContrastCurveModule(name_in="contrast",
                                        image_in_tag="read",
                                        psf_in_tag="read",
-                                       # pca_out_tag="pca",
                                        contrast_out_tag="limits",
                                        separation=(0.5, 0.6, 0.1),
                                        angle=(0., 360., 180.),
@@ -79,15 +78,9 @@ class TestDetectionLimits(object):
         self.pipeline.add_module(contrast)
         self.pipeline.run_module("contrast")
 
-        # data = self.pipeline.get_data("pca")
-        # assert np.allclose(data[9, 68, 49], 5.707647718560735e-05, rtol=limit, atol=0.)
-        # assert np.allclose(data[21, 31, 50], 5.4392925807364694e-05, rtol=limit, atol=0.)
-        # assert np.allclose(np.mean(data), -3.668908785383954e-08, rtol=limit, atol=0.)
-        # assert data.shape == (22, 100, 100)
-
         data = self.pipeline.get_data("limits")
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 6.557182442261607, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.12713554505632138, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 6.647211555936695, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.07837070875760642, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 0.0002012649090622487, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
