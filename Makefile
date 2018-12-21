@@ -15,16 +15,16 @@ pypi:
 	twine upload dist/*
 
 docs:
-	rm -f docs/PynPoint.Core.rst
-	rm -f docs/PynPoint.IOmodules.rst
-	rm -f docs/PynPoint.ProcessingModules.rst
-	rm -f docs/PynPoint.Util.rst
-	sphinx-apidoc -o docs/ PynPoint
+	rm -f docs/pynpoint.core.rst
+	rm -f docs/pynpoint.readwrite.rst
+	rm -f docs/pynpoint.processing.rst
+	rm -f docs/pynpoint.util.rst
+	sphinx-apidoc -o docs/ pynpoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
 test:
-	pytest --cov=PynPoint
+	pytest --cov=pynpoint
 
 coverage:
 	coverage run --rcfile .coveragerc -m py.test
@@ -35,7 +35,6 @@ coverage:
 clean: clean-build clean-python clean-test
 
 clean-build:
-	rm -rf PynPoint_exoplanet.egg-info/
 	rm -rf dist/
 	rm -rf build/
 	rm -rf htmlcov/
@@ -53,7 +52,7 @@ clean-test:
 	rm -f .coverage
 	rm -f .coverage.*
 	rm -rf .tox/
-	rm -rf PynPoint.egg-info/
+	rm -rf pynpoint.egg-info/
 	rm -f junit-docs-ci.xml
 	rm -f junit-py27.xml
 	rm -f junit-py36.xml

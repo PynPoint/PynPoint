@@ -14,13 +14,13 @@ The pipeline works with two different components:
 
 1. Pipeline modules which read, write, and process data:
 
-	1.1 :class:`PynPoint.Core.Processing.ReadingModule` - Reading of the data and relevant header information.
+	1.1 :class:`pynpoint.core.processing.ReadingModule` - Reading of the data and relevant header information.
 
-	1.2 :class:`PynPoint.Core.Processing.WritingModule` - Exporting of results from the database.
+	1.2 :class:`pynpoint.core.processing.WritingModule` - Exporting of results from the database.
 
-	1.3 :class:`PynPoint.Core.Processing.ProcessingModule` - Processing and analysis of the data.
+	1.3 :class:`pynpoint.core.processing.ProcessingModule` - Processing and analysis of the data.
 
-2. The actual pipeline :class:`PynPoint.Core.Pypeline` which capsules a list of pipeline modules.
+2. The actual pipeline :class:`pynpoint.core.pypeline` which capsules a list of pipeline modules.
 
 .. _data-types:
 
@@ -35,9 +35,9 @@ PynPoint currently works with three types of input and output data:
 
 PynPoint creates an HDF5 database called ``PynPoin_database.hdf5`` in the ``working_place_in`` of the pipeline. This is the central data storage in which the results of the processing steps are saved. The advantage of the HDF5 data format is that reading of data is much faster compared to the FITS data format and it is possible to quickly read subsets from very large datasets.
 
-Input data is read into the central database with a :class:`PynPoint.Core.Processing.ReadingModule`. By default, PynPoint will read data from the ``input_place_in`` but setting a manual folder is possible to read data to separate database tags (e.g., dark frames, flat fields, and science data). Here we show an example of how to read FITS files and a list of parallactic angles.
+Input data is read into the central database with a :class:`pynpoint.core.processing.ReadingModule`. By default, PynPoint will read data from the ``input_place_in`` but setting a manual folder is possible to read data to separate database tags (e.g., dark frames, flat fields, and science data). Here we show an example of how to read FITS files and a list of parallactic angles.
 
-First, we need to create an instance of :class:`PynPoint.Core.Pypeline.Pypeline`::
+First, we need to create an instance of :class:`pynpoint.core.pypeline.Pypeline`::
 
     pipeline = Pypeline(working_place_in="/path/to/working_place",
                         input_place_in="/path/to/input_place",
@@ -80,9 +80,9 @@ Alternatively, it is also possible to run the modules individually by their ``na
 
 The FITS files of the science data and flat fields are read and stored into the central HDF5 database. The data is labelled with a tag which is used by other pipeline module to access data from the database.
 
-Restoring data from an already existing pipeline database can be done by creating an instance of :class:`PynPoint.Core.Pypeline.Pypeline` with the ``working_place_in`` pointing to the path of the ``PynPoint_database.hdf5`` file.
+Restoring data from an already existing pipeline database can be done by creating an instance of :class:`pynpoint.core.pypeline.Pypeline` with the ``working_place_in`` pointing to the path of the ``PynPoint_database.hdf5`` file.
 
-PynPoint can also handle the HDF5 format as input and output data. Data and corresponding attributes can be exported as HDF5 file with the  :class:`PynPoint.IOmodules.Hdf5Writing` module. This data format can be imported into the central database with the :class:`PynPoint.IOmodules.Hdf5Reading` module. Have a look at the :ref:`pynpoint-package` section for more information.
+PynPoint can also handle the HDF5 format as input and output data. Data and corresponding attributes can be exported as HDF5 file with the  :class:`pynpoint.readwrite.hdf5writing` module. This data format can be imported into the central database with the :class:`pynpoint.readwrite.hdf5reading` module. Have a look at the :ref:`pynpoint-package` section for more information.
 
 .. _hdf5-files:
 
@@ -91,8 +91,8 @@ HDF5 Files
 
 There are several options to access data from the central HDF5 database:
 
-	* Use :class:`PynPoint.IOmodules.FitsWriting.FitsWritingModule` to export data to a FITS file, as shown in the :ref:`end-to-end` section.
-	* Use the easy access functions of the :class:`PynPoint.Core.Pypeline` class to retrieve data and attributes from the database:
+	* Use :class:`pynpoint.readwrite.fitswriting.FitsWritingModule` to export data to a FITS file, as shown in the :ref:`end-to-end` section.
+	* Use the easy access functions of the :class:`pynpoint.core.pypeline` class to retrieve data and attributes from the database:
 
 		* ``pipeline.get_data(tag='tag_name')``
 
@@ -116,20 +116,18 @@ End-To-End Examples
 VLT/SPHERE H-alpha data
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see Cugno et al., in press.) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://arxiv.org/abs/1812.06993>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/hd142527_zimpol_h-alpha.tgz>`_.
 
 VLT/NACO M' dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2018) <http://adsabs.harvard.edu/abs/2018arXiv181103336S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
 
-First we need to import the pipeline and the I/O and processing modules::
+First we need to import the Pypeline, as well as the I/O and processing modules::
 
-    from PynPoint import Pypeline
-    from PynPoint.IOmodules import *
-    from PynPoint.ProcessingModules import *
+    from PynPoint import *
 
-Next, we create an instance of :class:`PynPoint.Core.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
+Next, we create an instance of :class:`pynpoint.core.pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
 
     pipeline = Pypeline(working_place_in="/path/to/working_place",
                         input_place_in="/path/to/input_place",
