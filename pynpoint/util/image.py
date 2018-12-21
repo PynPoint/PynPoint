@@ -14,16 +14,17 @@ from scipy.ndimage import rotate
 from skimage.transform import rescale
 
 
-def image_center(image):
+def image_center_pixel(image):
     """
-    Function to get the pixel position of the center of an image. Note that this position
-    can not be unambiguously defined for an even-sized image.
+    Function to get the pixel position of the image center. Note that this position
+    can not be unambiguously defined for an even-sized image. Python indexing starts
+    at 0 so the coordinates of the pixel in the bottom left corner are (0, 0).
 
     :param image: Input image (2D or 3D).
     :type image: numpy.ndarray
 
     :return: Pixel position (y, x) of the image center.
-    :rtype: (int, int)
+    :rtype: tuple(int, int)
     """
 
     if image.shape[-2]%2 == 0 and image.shape[-1]%2 == 0:
@@ -39,6 +40,24 @@ def image_center(image):
         center = ((image.shape[-2]-1) // 2, (image.shape[-1]-1) // 2)
 
     return center
+
+def image_center_subpixel(image):
+    """
+    Function to get the precise position of the image center. The center of the pixel in the
+    bottom left corner of the image is defined as (0, 0), so the bottom left corner of the
+    image is located at (-0.5, -0.5).
+
+    :param image: Input image (2D or 3D).
+    :type image: numpy.ndarray
+
+    :return: Subpixel position (y, x) of the image center.
+    :rtype: tuple(float, float)
+    """
+
+    center_x = float(image.shape[-1])/2. - 0.5
+    center_y = float(image.shape[-2])/2. - 0.5
+
+    return (center_y, center_x)
 
 def crop_image(image,
                center,
@@ -61,10 +80,10 @@ def crop_image(image,
 
     if center is None or (center[0] is None and center[1] is None):
         if image.ndim == 2:
-            center = image_center(image)
+            center = image_center_pixel(image)
 
         elif image.ndim == 3:
-            center = image_center(image[0, ])
+            center = image_center_pixel(image[0, ])
 
     if size%2 == 0:
         size += 1
@@ -217,15 +236,15 @@ def polar_to_cartesian(image, sep, ang):
     :type image: numpy.ndarray
     :param sep: Separation (pix).
     :type sep: float
-    :param ang: Position angle (deg), measured counterclockwise with respect to the positive
-                y-axis.
+    :param ang: Position angle (deg), measured counterclockwise with respect to the
+                positive y-axis.
     :type ang: float
 
-    :return: Pixel position (y, x) of the image center.
-    :rtype: (int, int)
+    :return: Cartesian coordinates (x, y). The bottom left corner of the image is (-0.5, -0.5).
+    :rtype: float, float
     """
 
-    center = image_center(image) # (y, x)
+    center = image_center_subpixel(image) # (y, x)
 
     x_pos = center[1] + sep*math.cos(math.radians(ang+90.))
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))

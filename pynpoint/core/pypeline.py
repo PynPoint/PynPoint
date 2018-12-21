@@ -15,6 +15,8 @@ import six
 import h5py
 import numpy as np
 
+import pynpoint
+
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
@@ -55,7 +57,7 @@ class Pypeline(object):
         :return: None
         """
 
-        sys.stdout.write("Initiating PynPoint...")
+        sys.stdout.write("Initiating PynPoint v"+pynpoint.__version__+"...")
         sys.stdout.flush()
 
         self._m_working_place = working_place_in

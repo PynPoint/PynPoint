@@ -130,15 +130,7 @@ class ContrastCurveModule(ProcessingModule):
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
 
-        # if pca_out_tag is None:
-        #     self.m_pca_out_port = None
-        # else:
-        #     self.m_pca_out_port = self.add_output_port(pca_out_tag)
-
         self.m_contrast_out_port = self.add_output_port(contrast_out_tag)
-
-        self.m_image_in_tag = image_in_tag
-        self.m_psf_in_tag = psf_in_tag
 
         self.m_separation = separation
         self.m_angle = angle
@@ -225,8 +217,8 @@ class ContrastCurveModule(ProcessingModule):
         pool = multiprocessing.Pool(processes=cpu)
 
         func = functools.partial(contrast_limit, images, psf, parang, self.m_psf_scaling, \
-                                 self.m_extra_rot, self.m_magnitude, self.m_threshold, \
-                                 self.m_pca_number, self.m_accuracy, self.m_aperture, \
+                                 self.m_extra_rot, self.m_magnitude, self.m_pca_number, \
+                                 self.m_threshold, self.m_accuracy, self.m_aperture, \
                                  self.m_ignore, self.m_cent_size, self.m_edge_size, pixscale)
 
         result = pool.map(func, positions)
@@ -258,10 +250,6 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
-
-        # if self.m_pca_out_port is not None:
-        #     self.m_pca_out_port.add_history_information("ContrastCurveModule", history)
-        #     self.m_pca_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_contrast_out_port.add_history_information("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)
