@@ -57,7 +57,7 @@ Class Constructor
 
 First, we need to import the interface (i.e. abstract class) ``ProcessingModule``: ::
 
-    from PynPoint.Core.Processing import ProcessingModule
+    from pynpoint.core.processing import ProcessingModule
 
 All pipeline modules are classes which contain the parameters of the pipeline step, input ports and/or output ports. So let’s create a simple ExampleModule class using the ProcessingModule interface (inheritance): ::
     
@@ -121,7 +121,7 @@ And attributes of the central configuration are accessed through the ``ConfigPor
         memory = self._m_config_port.get_attribute("MEMORY")
         cpu = self._m_config_port.get_attribute("CPU")
 
-More information on importing of data can be found in the package documentation of :class:`PynPoint.Core.DataIO.InputPort`. 
+More information on importing of data can be found in the package documentation of :class:`pynpoint.core.dataio.InputPort`. 
 
 Next, the processing steps are implemented: ::
 
@@ -140,7 +140,7 @@ The output ports are used to write the results to the central database: ::
         self.m_out_port_2.add_attribute(name="new_attribute",
                                         value=attribute)
 
-More information on storing of data can be found in the package documentation of :class:`PynPoint.Core.DataIO.OutputPort`.
+More information on storing of data can be found in the package documentation of :class:`pynpoint.core.dataio.OutputPort`.
 
 The attribute information has to be copied from the input port and history information has to be added. This step should be repeated for all the output ports: ::
 
@@ -230,4 +230,4 @@ The full code for the ExampleModule from above is: ::
 Apply Function To Images
 ------------------------
 
-A processing module often applies a specific method to each image of an input port. For example, subtraction of a dark frame, fitting of a 2D Gaussian, or cleaning of bad pixels. Therefore, we have implemented the ``apply_function_to_images()`` function which applies a function to all images of an input port. More details are provided in the package documentation of :func:`PynPoint.Core.Processing.ProcessingModule.apply_function_to_images`. An example of the implementation can be found in the code of the bad pixel cleaning with a sigma filter: :class:`PynPoint.ProcessingModules.BadPixelCleaning.BadPixelSigmaFilterModule`.
+A processing module often applies a specific method to each image of an input port. For example, subtraction of a dark frame, fitting of a 2D Gaussian, or cleaning of bad pixels. Therefore, we have implemented the ``apply_function_to_images()`` function which applies a function to all images of an input port. More details are provided in the package documentation of :func:`pynpoint.core.processing.ProcessingModule.apply_function_to_images`. An example of the implementation can be found in the code of the bad pixel cleaning with a sigma filter: :class:`pynpoint.processing.badpixel.BadPixelSigmaFilterModule`.

@@ -44,7 +44,7 @@ A central configuration file has to be stored in the ``working_place_in`` with t
 
 The file contains two different sections of configuration parameters. The ``header`` section is used to link attributes in PynPoint with header values in the FITS files that will be imported into the database. For example, some of the pipeline modules require values for the dithering position. These attributes are stored as ``DITHER_X`` and ``DITHER_Y`` in the central database and are for example provided by the ``ESO SEQ CUMOFFSETX`` and ``ESO SEQ CUMOFFSETY`` values in the FITS header. Setting ``DITHER_X: ESO SEQ CUMOFFSETX`` in the ``header`` section of the configuration file makes sure that the relevant FITS header values are imported when :class:`PynPoint.IOmodules.FitsReading.FitsReadingModule` is executed. Therefore, FITS files have to be imported again if values in the ``header`` section are changes. Values can be set to ``None`` since ``header`` values are only required for some of the pipeline modules.
 
-The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`PynPoint.ProcessingModules.PSFSubtractionPCA.PcaPsfSubtractionModule`, :class:`PynPoint.ProcessingModules.FluxAndPosition.MCMCsamplingModule`, and :class:`PynPoint.ProcessingModules.TimeDenoising.WaveletTimeDenoisingModule`.
+The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`pynpoint.processing.PSFSubtractionPCA.PcaPsfSubtractionModule`, :class:`pynpoint.processing.FluxAndPosition.MCMCsamplingModule`, and :class:`pynpoint.processing.TimeDenoising.WaveletTimeDenoisingModule`.
 
 Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable::
 
@@ -81,7 +81,7 @@ An complete example of the configuration file looks like::
 Modules
 -------
 
-A pipeline module has a specific task that is appended to the internal queue of pipeline tasks. A module can read and write data tags from and to the central database through dedicated input and output connections. As illustration, this is the input and output structure of the :class:`PynPoint.ProcessingModules.PSFSubtractionPCA.PSFSubtractionModule`:
+A pipeline module has a specific task that is appended to the internal queue of pipeline tasks. A module can read and write data tags from and to the central database through dedicated input and output connections. As illustration, this is the input and output structure of the :class:`pynpoint.processing.PSFSubtractionPCA.PSFSubtractionModule`:
 
 .. image:: _images/module.jpg
    :width: 70%
@@ -97,16 +97,16 @@ In order to create a valid pipeline one should check that the required input tag
 
 There are three types of pipeline modules:
 
-	1. :class:`PynPoint.Core.Processing.ReadingModule` - A module with only output tags/ports, used to read data to the central database.
-	2. :class:`PynPoint.Core.Processing.WritingModule` - A module with only input tags/ports, used to export data from the central database.
-	3. :class:`PynPoint.Core.Processing.ProcessingModule` - A module with both input and output tags/ports, used for processing of the data.
+	1. :class:`pynpoint.core.processing.ReadingModule` - A module with only output tags/ports, used to read data to the central database.
+	2. :class:`pynpoint.core.processing.WritingModule` - A module with only input tags/ports, used to export data from the central database.
+	3. :class:`pynpoint.core.processing.ProcessingModule` - A module with both input and output tags/ports, used for processing of the data.
 
 .. _pipeline:
 
 Pipeline
 --------
 
-The :class:`PynPoint.Core.Pypeline` module is the central component which manages the order and execution of the different pipeline modules. Each ``Pypeline`` instance has an ``working_place_in`` path which is where the central database and configuration file are stored, an ``input_place_in`` path which is the default data location for reading modules, and an ``output_place_in`` path which is the default output path where the data will be saved by the writing modules: ::
+The :class:`pynpoint.core.pypeline` module is the central component which manages the order and execution of the different pipeline modules. Each ``Pypeline`` instance has an ``working_place_in`` path which is where the central database and configuration file are stored, an ``input_place_in`` path which is the default data location for reading modules, and an ``output_place_in`` path which is the default output path where the data will be saved by the writing modules: ::
 
     pipeline = Pypeline(working_place_in="/path/to/working_place",
                         input_place_in="/path/to/input_place",
