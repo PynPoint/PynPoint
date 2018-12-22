@@ -116,7 +116,7 @@ End-To-End Examples
 VLT/SPHERE H-alpha data
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://arxiv.org/abs/1812.06993>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://arxiv.org/abs/1812.06993>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 VLT/NACO M' dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
