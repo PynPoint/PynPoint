@@ -12,21 +12,25 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # 
-# import os
-# import sys
+import os
+import sys
 
 # sys.path.insert(0, os.path.abspath('..'))
+# causes error on rtd
 # import pynpoint
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = 'test'
-author = 'test'
+copyright = '2014-2019, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+author = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 
 # The short X.Y version
-version = '0.6.0'
+with open('../pynpoint/__init__.py') as initfile:
+    for line in initfile:
+        if '__version__' in line:
+            version = line.split("'")[1]
 # The full version, including alpha/beta/rc tags
 release = '0.6.0'
 
@@ -68,8 +72,17 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# If true, sectionauthor and moduleauthor directives will be shown in the
+# output. They are ignored by default.
+#
+show_authors = False
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+#
+html_show_copyright = True
+
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'sphinx'
 
 
 # -- Options for HTML output -------------------------------------------------
