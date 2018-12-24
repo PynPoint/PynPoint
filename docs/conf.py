@@ -4,11 +4,7 @@
 #
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
-# http://www.sphinx-doc.org/en/stable/config
-
-import sys
-import os
-
+# http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
 
@@ -16,13 +12,16 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import os
+import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 from pynpoint import __author__, __copyright__, __version__
 
 
 # -- Project information -----------------------------------------------------
 
-project = u'PynPoint'
+project = 'PynPoint'
 copyright = __copyright__
 author = __author__
 
@@ -43,7 +42,6 @@ release = __version__
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,11 +65,11 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
+# This pattern also affects html_static_path and html_extra_path.
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = None
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -79,13 +77,12 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-
+#
 html_theme_options = {"collapse_navigation": False,
                       "display_version": False,
                       "sticky_navigation": True,
@@ -119,10 +116,12 @@ html_context = {'display_github': True,
 
 autoclass_content = 'both'
 
+
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'PynPointdoc'
+
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -148,8 +147,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PynPoint.tex', u'PynPoint Documentation',
-     u'Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara', 'manual'),
+    (master_doc, 'PynPoint.tex', 'PynPoint Documentation',
+     __author__, 'manual'),
 ]
 
 
@@ -158,7 +157,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pynpoint', u'PynPoint Documentation',
+    (master_doc, 'pynpoint', 'PynPoint Documentation',
      [author], 1)
 ]
 
@@ -169,10 +168,28 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'PynPoint', u'PynPoint Documentation',
+    (master_doc, 'PynPoint', 'PynPoint Documentation',
      author, 'PynPoint', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+
+# -- Options for Epub output -------------------------------------------------
+
+# Bibliographic Dublin Core info.
+epub_title = project
+
+# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#
+# epub_identifier = ''
+
+# A unique identification for the text.
+#
+# epub_uid = ''
+
+# A list of files that should not be packed into the epub file.
+epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
