@@ -22,13 +22,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = "test"
-author = "test"
+copyright = 'test'
+author = 'test'
 
 # The short X.Y version
-version = "0.6.0"
+version = '0.6.0'
 # The full version, including alpha/beta/rc tags
-release = "0.6.0"
+release = '0.6.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -83,12 +83,12 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {"collapse_navigation": False,
-                      "display_version": False,
-                      "sticky_navigation": True,
-                      "prev_next_buttons_location": "bottom",
-                      "navigation_depth": 5,
-                      "logo_only": True}
+html_theme_options = {'collapse_navigation': False,
+                      'display_version': False,
+                      'sticky_navigation': True,
+                      'prev_next_buttons_location': 'bottom',
+                      'navigation_depth': 5,
+                      'logo_only': True}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
