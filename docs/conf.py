@@ -11,24 +11,24 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+# 
+# import os
+# import sys
 
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath('..'))
-import pynpoint
+# sys.path.insert(0, os.path.abspath('..'))
+# import pynpoint
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = pynpoint.__copyright__
-author = pynpoint.__author__
+copyright = "test"
+author = "test"
 
 # The short X.Y version
-version = pynpoint.__version__
+version = "0.6.0"
 # The full version, including alpha/beta/rc tags
-release = pynpoint.__version__
+release = "0.6.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -148,7 +148,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PynPoint.tex', 'PynPoint Documentation',
-     pynpoint.__author__, 'manual'),
+     author, 'manual'),
 ]
 
 
