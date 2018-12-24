@@ -16,19 +16,19 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('..'))
-from pynpoint import __author__, __copyright__, __version__
+import pynpoint
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = __copyright__
-author = __author__
+copyright = pynpoint.__copyright__
+author = pynpoint.__author__
 
 # The short X.Y version
-version = __version__
+version = pynpoint.__version__
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = pynpoint.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -148,7 +148,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PynPoint.tex', 'PynPoint Documentation',
-     __author__, 'manual'),
+     pynpoint.__author__, 'manual'),
 ]
 
 
