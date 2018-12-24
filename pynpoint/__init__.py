@@ -81,7 +81,6 @@ from pynpoint.readwrite.textreading import ParangReadingModule
 warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
-__copyright__ = '2014-2019, ETH Zurich'
 __license__ = 'GPLv3'
 __version__ = '0.6.0'
 __maintainer__ = 'Tomas Stolker'
