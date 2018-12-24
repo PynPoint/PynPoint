@@ -7,16 +7,18 @@ try:
 except ImportError:
     from pip.req import parse_requirements
 
+from pynpoint import __author__, __version__, __license__, __email__
+
 reqs = parse_requirements('requirements.txt', session='hack')
 reqs = [str(ir.req) for ir in reqs]
 
 setup(
     name='pynpoint',
-    version='0.6.0',
+    version=__version__,
     description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
-    author='Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara',
-    author_email='tomas.stolker@phys.ethz.ch',
+    author=__author__,
+    author_email=__email__,
     url='http://pynpoint.ethz.ch',
     packages=['pynpoint',
               'pynpoint.core',
@@ -25,7 +27,7 @@ setup(
               'pynpoint.util'],
     include_package_data=True,
     install_requires=reqs,
-    license='GPLv3',
+    license=__license__,
     zip_safe=False,
     keywords='pynpoint',
     classifiers=[
