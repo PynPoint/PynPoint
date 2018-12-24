@@ -116,16 +116,20 @@ End-To-End Examples
 VLT/SPHERE H-alpha data
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://arxiv.org/abs/1812.06993>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://arxiv.org/abs/1812.06993>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 VLT/NACO M' dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2018) <http://adsabs.harvard.edu/abs/2018arXiv181103336S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
 
-First we need to import the Pypeline, as well as the I/O and processing modules::
+First we need to import the Pypeline, as well as the I/O and processing modules. These can be directly imported from the package, for example::
 
-    from PynPoint import *
+    from pynpoint import Pypeline, FitsReadingModule
+
+Or all at once::
+
+    from pynpoint import *
 
 Next, we create an instance of :class:`pynpoint.core.pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
 
