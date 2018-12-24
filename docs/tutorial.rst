@@ -123,9 +123,13 @@ VLT/NACO M' dithering data
 
 Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2018) <http://adsabs.harvard.edu/abs/2018arXiv181103336S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
 
-First we need to import the Pypeline, as well as the I/O and processing modules::
+First we need to import the Pypeline, as well as the I/O and processing modules. These can be directly imported from the package, for example::
 
-    from PynPoint import *
+    from pynpoint import Pypeline, FitsReadingModule
+
+Or all at once::
+
+    from pynpoint import *
 
 Next, we create an instance of :class:`pynpoint.core.pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
 

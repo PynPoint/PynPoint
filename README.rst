@@ -33,7 +33,7 @@ The pipeline has a modular architecture with a central data storage in which all
 
 PynPoint is under continuous development and the latest implementations can be pulled from Github repository. Bug reports, requests for new features, and contributions in the form of new functionalities and pipeline modules are highly appreciated. Instructions for writing of modules are provided in the documentation. Bug reports and functionality requests can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 can be downloaded `here <https://people.phys.ethz.ch/~stolkert/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 Documentation
 -------------
