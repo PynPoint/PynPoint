@@ -81,11 +81,11 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
 
     # Python 2
     # url = urllib.URLopener()
-    # url.retrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
+    # url.retrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
     #              input_place+"betapic_naco_mp.hdf5")
 
     # Python 3
-    urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/betapic_naco_mp.hdf5",
+    urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
                                input_place+"betapic_naco_mp.hdf5")
 
     pipeline = Pypeline(working_place_in=working_place,
