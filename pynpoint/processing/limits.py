@@ -4,15 +4,18 @@ Modules for determining detection limits.
 
 from __future__ import absolute_import
 
-import sys
+import sys, os
 import functools
 import warnings
 import multiprocessing
+import sharedmem
 
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.limits import contrast_limit
+
+#os.system('taskset -p 0x48 %d' % os.getpid())
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -214,9 +217,14 @@ class ContrastCurveModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
+        print("Size of images array: ", np.round(images.nbytes/(1e9),2), "GB")
+
+        image = sharedmem.empty(images.shape)
+        image[:,:,:] = images[:,:,:]
+
         pool = multiprocessing.Pool(processes=cpu)
 
-        func = functools.partial(contrast_limit, images, psf, parang, self.m_psf_scaling, \
+        func = functools.partial(contrast_limit, image, psf, parang, self.m_psf_scaling, \
                                  self.m_extra_rot, self.m_magnitude, self.m_pca_number, \
                                  self.m_threshold, self.m_accuracy, self.m_aperture, \
                                  self.m_ignore, self.m_cent_size, self.m_edge_size, pixscale)
