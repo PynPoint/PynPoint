@@ -121,7 +121,7 @@ An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/pa
 VLT/NACO M' dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2018) <http://adsabs.harvard.edu/abs/2018arXiv181103336S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
+Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2019) <http://adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
 
 First we need to import the Pypeline, as well as the I/O and processing modules. These can be directly imported from the package, for example::
 
