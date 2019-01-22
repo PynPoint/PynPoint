@@ -1,64 +1,15 @@
 language: python
 
-matrix:
-    include:
+dist: xenial
 
-        - os: osx
-          language: generic
-          env:
-            - TOXENV=py27
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
+python:
+  - 2.7
+  - 3.6
+  - 3.7
 
-        - os: osx
-          language: generic
-          env:
-            - TOXENV=py36
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
-
-        - os: osx
-          language: generic
-          env:
-            - TOXENV=py37
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
-            - PYTHON=3.7.0
-
-        - os: linux
-          python: 2.7
-          env:
-            - TOXENV=py27
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
-
-        - os: linux
-          python: 3.6
-          env:
-            - TOXENV=py36
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
-
-        - os: linux
-          python: 3.7
-          dist: xenial
-          sudo: true
-          env:
-            - TOXENV=py37
-            - NUMBA_DISABLE_JIT=1
-            - COVERALLS_PARALLEL=true
-
-before_install:
-  - |
-    if [ $TRAVIS_OS_NAME == "osx" ] && [ $PYTHON == "3.7.0" ]; then
-      brew install pyenv-virtualenv
-      pyenv install $PYTHON
-      export PYENV_VERSION=$PYTHON
-      eval "$(pyenv init -)"
-      eval "$(pyenv virtualenv-init -)"
-      pyenv virtualenv $PYTHON venv
-      pyenv activate venv
-    fi
+env:
+  - NUMBA_DISABLE_JIT=1
+  # - COVERALLS_PARALLEL=true
 
 install:
   - pip install -r requirements.txt
