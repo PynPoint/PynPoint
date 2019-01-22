@@ -9,6 +9,7 @@ import functools
 import warnings
 import multiprocessing
 
+import sharedmem
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
@@ -214,9 +215,12 @@ class ContrastCurveModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
+        image = sharedmem.empty(images.shape)
+        image[:, :, :] = images[:, :, :]
+
         pool = multiprocessing.Pool(processes=cpu)
 
-        func = functools.partial(contrast_limit, images, psf, parang, self.m_psf_scaling, \
+        func = functools.partial(contrast_limit, image, psf, parang, self.m_psf_scaling, \
                                  self.m_extra_rot, self.m_magnitude, self.m_pca_number, \
                                  self.m_threshold, self.m_accuracy, self.m_aperture, \
                                  self.m_ignore, self.m_cent_size, self.m_edge_size, pixscale)
