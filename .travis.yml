@@ -1,6 +1,5 @@
 language: python
 
-# sudo: true
 dist: xenial
 
 python:
