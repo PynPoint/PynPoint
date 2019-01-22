@@ -8,8 +8,8 @@ import sys
 import functools
 import warnings
 import multiprocessing
-import sharedmem
 
+import sharedmem
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
@@ -216,7 +216,7 @@ class ContrastCurveModule(ProcessingModule):
                 positions.append((sep, ang))
 
         image = sharedmem.empty(images.shape)
-        image[:,:,:] = images[:,:,:]
+        image[:, :, :] = images[:, :, :]
 
         pool = multiprocessing.Pool(processes=cpu)
 
