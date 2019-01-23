@@ -396,9 +396,9 @@ class StarCenteringModule(ProcessingModule):
 
         :Keyword arguments:
             **guess** (*(float, float, float, float, float, float)*) -- Tuple with the initial
-            parameter values for the least squares fit: center x (pix), center y (pix), FWHM x
-            (pix), FWHM y (pix), amplitude (counts), angle (deg). Note that the center positions
-            are relative to the image center.
+            parameter values for the least squares fit: x offset with respect to center (pix),
+            y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude (counts),
+            angle (deg).
 
         :return: None
         """
@@ -441,54 +441,48 @@ class StarCenteringModule(ProcessingModule):
         :return: None
         """
 
-        if self.m_image_out_port is not None:
-            self.m_image_out_port.del_all_data()
-            self.m_image_out_port.del_all_attributes()
-
         self.m_fit_out_port.del_all_data()
         self.m_fit_out_port.del_all_attributes()
 
-        if self.m_mask_out_port is not None:
+        if self.m_image_out_port:
+            self.m_image_out_port.del_all_data()
+            self.m_image_out_port.del_all_attributes()
+
+        if self.m_mask_out_port:
             self.m_mask_out_port.del_all_data()
             self.m_mask_out_port.del_all_attributes()
 
+        npix = self.m_image_in_port.get_shape()[-1]
         memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        def _initialize():
-            if self.m_radius is not None:
-                self.m_radius /= pixscale
+        if self.m_radius:
+            self.m_radius /= pixscale
 
-            ndim = self.m_image_in_port.get_ndim()
+        if npix%2 == 0:
+            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+            x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
+            y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
 
-            if ndim == 2:
-                nimages = 1
-            elif ndim == 3:
-                nimages = self.m_image_in_port.get_shape()[0]
+        elif npix%2 == 1:
+            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+            x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
+            y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
 
-            npix = self.m_image_in_port.get_shape()[1]
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
+        rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
-            if npix/2.+self.m_guess[0]+self.m_radius > npix or \
-                    npix/2.+self.m_guess[1]+self.m_radius > npix or \
-                    npix/2.+self.m_guess[1]-self.m_radius < 0. or \
-                    npix/2.+self.m_guess[1]-self.m_radius < 0.:
-                raise ValueError("Mask radius extends beyond the size of the image.")
-
-            frames = memory_frames(memory, nimages)
-
-            return ndim, nimages, npix, frames
-
-        def _2d_gaussian(variables,
+        def _2d_gaussian(grid,
                          x_center,
                          y_center,
                          fwhm_x,
                          fwhm_y,
                          amp,
                          theta):
-            (x_grid, y_grid, rr_ap_1d, npix) = variables
-            rr_ap = np.reshape(rr_ap_1d, (npix, npix))
 
-            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+            (xx_grid, yy_grid) = grid
+
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
@@ -500,30 +494,21 @@ class StarCenteringModule(ProcessingModule):
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
             gaussian = amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
-            gaussian = gaussian[rr_ap < self.m_radius]
 
-            return np.ravel(gaussian)
+            if self.m_radius:
+                gaussian = gaussian[rr_ap < self.m_radius]
+            else:
+                gaussian = np.ravel(gaussian)
+
+            return gaussian
 
         def _least_squares(image):
-            npix = image.shape[0]
 
-            if npix%2 == 0:
-                x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-                x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
-                y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
-
-            elif npix%2 == 1:
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-                x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
-                y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
-
-            xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
-            rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
-            rr_ap_1d = np.ravel(rr_ap)
-
-            if self.m_mask_out_port is not None:
+            if self.m_mask_out_port:
                 mask = np.copy(image)
-                mask[rr_ap > self.m_radius] = 0.
+
+                if self.m_radius:
+                    mask[rr_ap > self.m_radius] = 0.
 
                 if self.m_method == "mean":
                     self.m_mask_out_port.set_all(mask)
@@ -533,11 +518,14 @@ class StarCenteringModule(ProcessingModule):
             if self.m_sign == "negative":
                 image = -image + np.abs(np.min(-image))
 
-            image = image[rr_ap < self.m_radius]
+            if self.m_radius:
+                image = image[rr_ap < self.m_radius]
+            else:
+                image = np.ravel(image)
 
             try:
                 popt, pcov = curve_fit(_2d_gaussian,
-                                       (x_grid, y_grid, rr_ap_1d, npix),
+                                       (xx_grid, yy_grid),
                                        image,
                                        p0=self.m_guess,
                                        sigma=None,
@@ -562,53 +550,56 @@ class StarCenteringModule(ProcessingModule):
             return popt
 
         def _centering(image,
-                       fit):
+                       popt):
 
             if self.m_method == "full":
                 popt = _least_squares(np.copy(image))
 
-            elif self.m_method == "mean":
-                popt = fit
-
             return shift_image(image, (-popt[1], -popt[0]), self.m_interpolation)
 
-        ndim, nimages, npix, frames = _initialize()
+        ndim = self.m_image_in_port.get_ndim()
+        npix = self.m_image_in_port.get_shape()[-1]
+
+        nimages = number_images_port(self.m_image_in_port)
+        frames = memory_frames(memory, nimages)
 
         if self.m_method == "full":
-            fit = None
+            popt = None
 
         elif self.m_method == "mean":
-            im_mean = np.zeros((npix, npix))
-
             if ndim == 2:
-                im_mean += self.m_image_in_port[:, :]
+                im_mean = self.m_image_in_port[:, :]
 
             elif ndim == 3:
+                im_mean = np.zeros((npix, npix))
+
                 for i, _ in enumerate(frames[:-1]):
                     im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
                 im_mean /= float(nimages)
 
-            fit = _least_squares(im_mean)
+            popt = _least_squares(im_mean)
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       "Running StarCenteringModule...",
-                                      func_args=(fit, ))
+                                      func_args=(popt, ))
 
         if self.m_count > 0:
             print("2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count)
 
-        if self.m_image_out_port is not None:
-            self.m_image_out_port.add_history_information("Centering", "2D Gaussian fit")
+        history = "method = "+self.m_method
+
+        if self.m_image_out_port:
+            self.m_image_out_port.add_history_information("StarCenteringModule", history)
             self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        self.m_fit_out_port.add_history_information("Centering", "2D Gaussian fit")
+        self.m_fit_out_port.add_history_information("StarCenteringModule", history)
         self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
-        if self.m_mask_out_port is not None:
-            self.m_mask_out_port.add_history_information("Centering", "2D Gaussian fit")
+        if self.m_mask_out_port:
+            self.m_mask_out_port.add_history_information("StarCenteringModule", history)
             self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
 
         self.m_fit_out_port.close_port()
