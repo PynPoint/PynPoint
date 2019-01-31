@@ -388,6 +388,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack,
                                    function=self.m_merit,
+                                   variance="poisson",
                                    aperture=self.m_aperture,
                                    sigma=self.m_sigma)
 
@@ -583,6 +584,7 @@ class MCMCsamplingModule(ProcessingModule):
                  mask=None,
                  extra_rot=0.,
                  prior="flat",
+                 variance="poisson",
                  **kwargs):
         """
         Constructor of MCMCsamplingModule.
@@ -632,6 +634,8 @@ class MCMCsamplingModule(ProcessingModule):
                       are used as uniform priors. With "aperture", the prior probability is set to
                       zero beyond the aperture and unity within the aperture.
         :type prior: str
+        :param variance: Variance used in the likelihood function ("poisson" or "gaussian").
+        :type variance: str
         :param kwargs:
             See below.
 
@@ -676,6 +680,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_extra_rot = extra_rot
         self.m_prior = prior
+        self.m_variance = variance
 
         if mask is None:
             self.m_mask = np.array((None, None))
@@ -779,7 +784,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_extra_rot,
                                                self.m_aperture,
                                                indices,
-                                               self.m_prior]),
+                                               self.m_prior,
+                                               self.m_variance]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
