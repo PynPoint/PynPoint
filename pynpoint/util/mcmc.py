@@ -26,7 +26,8 @@ def lnprob(param,
            extra_rot,
            aperture,
            indices,
-           prior):
+           prior,
+           variance):
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -67,6 +68,8 @@ def lnprob(param,
                   are used as uniform priors. With "aperture", the prior probability is set to
                   zero beyond the aperture and unity within the aperture.
     :type prior: str
+    :param variance: Variance used in the likelihood function ("poisson" or "gaussian").
+    :type variance: str
 
     :return: Log posterior probability.
     :rtype: float
@@ -159,6 +162,7 @@ def lnprob(param,
 
         merit = merit_function(residuals=stack,
                                function="sum",
+                               variance=variance,
                                aperture=aperture,
                                sigma=0.)[0]
 
