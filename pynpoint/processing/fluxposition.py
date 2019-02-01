@@ -687,7 +687,9 @@ class MCMCsamplingModule(ProcessingModule):
         else:
             self.m_mask = np.array(mask)
 
-    def aperture_dict(self, images, pixscale):
+    def aperture_dict(self,
+                      images,
+                      pixscale):
         """
         Function to create or update the dictionary with aperture properties.
 
@@ -709,6 +711,34 @@ class MCMCsamplingModule(ProcessingModule):
             elif self.m_aperture['type'] == 'elliptical':
                 self.m_aperture['semimajor'] /= pixscale
                 self.m_aperture['semiminor'] /= pixscale
+
+    def gaussian_noise(self,
+                       images,
+                       parang,
+                       aperture):
+        """
+        Function to compute the (constant) variance for the likelihood function when
+        the variance parameter is set to gaussian (see Mawet et al. 2014).
+
+        :return: Variance.
+        :rtype: float
+        """
+
+        print(aperture)
+
+        _, residuals = pca_psf_subtraction(images=images,
+                                           angles=-1.*parang+self.m_extra_rot,
+                                           pca_number=self.m_pca_number)
+
+        noise, _, _ = false_alarm(image=residuals,
+                                  x_pos=aperture['pos_x'],
+                                  y_pos=aperture['pos_y'],
+                                  size=aperture['radius'],
+                                  ignore=False)
+
+        print(noise)
+
+        return noise**2
 
     def run(self):
         """
@@ -769,6 +799,11 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
+        if self.m_variance == "gaussian":
+            variance = (self.m_variance, self.gaussian_noise(images*mask, parang, self.m_aperture))
+        else:
+            variance = (self.m_variance, None)
+
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
                                         lnpostfn=lnprob,
@@ -785,7 +820,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_aperture,
                                                indices,
                                                self.m_prior,
-                                               self.m_variance]),
+                                               variance]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
