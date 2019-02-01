@@ -36,8 +36,8 @@ def pca_psf_subtraction(images,
                     if pca_sklearn is set to None.
     :type indices: numpy.ndarray
 
-    :return: Mean residuals of the PSF subtraction.
-    :rtype: ndarray
+    :return: Mean residuals of the PSF subtraction and the derotated but non-stacked residuals.
+    :rtype: numpy.ndarray, numpy.ndarray
     """
 
     if pca_sklearn is None:
