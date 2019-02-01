@@ -17,7 +17,7 @@ from scipy.optimize import minimize
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.analysis import fake_planet, merit_function
+from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames, image_size_port, number_images_port, \
@@ -724,8 +724,6 @@ class MCMCsamplingModule(ProcessingModule):
         :rtype: float
         """
 
-        print(aperture)
-
         _, residuals = pca_psf_subtraction(images=images,
                                            angles=-1.*parang+self.m_extra_rot,
                                            pca_number=self.m_pca_number)
@@ -735,8 +733,6 @@ class MCMCsamplingModule(ProcessingModule):
                                   y_pos=aperture['pos_y'],
                                   size=aperture['radius'],
                                   ignore=False)
-
-        print(noise)
 
         return noise**2
 
