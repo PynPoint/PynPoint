@@ -210,8 +210,6 @@ def merit_function(residuals,
 
         merit = phot_table['aperture_sum'][0]
 
-        print(merit, variance[1])
-
         if variance[0] == "gaussian":
             merit = merit**2/variance[1]
 

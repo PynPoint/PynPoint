@@ -728,7 +728,9 @@ class MCMCsamplingModule(ProcessingModule):
                                            angles=-1.*parang+self.m_extra_rot,
                                            pca_number=self.m_pca_number)
 
-        noise, _, _ = false_alarm(image=residuals,
+        stack = combine_residuals(method="mean", res_rot=residuals)
+
+        noise, _, _ = false_alarm(image=stack,
                                   x_pos=aperture['pos_x'],
                                   y_pos=aperture['pos_y'],
                                   size=aperture['radius'],
