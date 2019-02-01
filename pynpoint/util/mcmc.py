@@ -68,8 +68,9 @@ def lnprob(param,
                   are used as uniform priors. With "aperture", the prior probability is set to
                   zero beyond the aperture and unity within the aperture.
     :type prior: str
-    :param variance: Variance used in the likelihood function ("poisson" or "gaussian").
-    :type variance: str
+    :param variance: Variance type and value for the likelihood function. The value is set to None
+                     in case a Poisson distribution is assumed.
+    :type variance: tuple(str, float)
 
     :return: Log posterior probability.
     :rtype: float
@@ -164,7 +165,7 @@ def lnprob(param,
                                function="sum",
                                variance=variance,
                                aperture=aperture,
-                               sigma=0.)[0]
+                               sigma=0.)
 
         return -0.5*merit
 
