@@ -40,8 +40,8 @@ def _master_frame(data,
     if data.shape != shape_in:
         cal_shape = data.shape
 
-        x_off = (cal_shape[0] - shape_in[0]) / 2
-        y_off = (cal_shape[1] - shape_in[1]) / 2
+        x_off = (cal_shape[0] - shape_in[0]) // 2
+        y_off = (cal_shape[1] - shape_in[1]) // 2
 
         data = data[x_off:x_off+shape_in[0], y_off:y_off+shape_in[1]]
 
