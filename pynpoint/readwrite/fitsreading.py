@@ -253,7 +253,7 @@ class FitsReadingModule(ReadingModule):
 
         files = []
         for filename in os.listdir(location):
-            if filename.endswith('.fits'):
+            if filename.endswith('.fits') and not filename.startswith('._'):
                 files.append(filename)
 
         files.sort()
