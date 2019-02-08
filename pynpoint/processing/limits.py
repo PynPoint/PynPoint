@@ -5,11 +5,11 @@ Modules for determining detection limits.
 from __future__ import absolute_import
 
 import sys
+import os
 import functools
 import warnings
-import multiprocessing
+import multiprocessing as mp
 
-import sharedmem
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
@@ -215,32 +215,54 @@ class ContrastCurveModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
-        image = sharedmem.empty(images.shape)
-        image[:, :, :] = images[:, :, :]
+        # Create a queue object which will contain the results
+        q = mp.Queue()
+        result = []
 
-        pool = multiprocessing.Pool(processes=cpu)
+        # Create temporary files
+        working_place = str(self._m_config_port.get_attribute("WORKING_PLACE"))
+        tmp_im_str = working_place + "/tmp_images.npy"
+        tmp_psf_str = working_place + "/tmp_psf.npy"
 
-        func = functools.partial(contrast_limit, image, psf, parang, self.m_psf_scaling, \
-                                 self.m_extra_rot, self.m_magnitude, self.m_pca_number, \
-                                 self.m_threshold, self.m_accuracy, self.m_aperture, \
-                                 self.m_ignore, self.m_cent_size, self.m_edge_size, pixscale)
+        np.save(tmp_im_str, images)
+        np.save(tmp_psf_str, psf)
+
+        pool = mp.Pool(processes=cpu)
+
+        func = functools.partial(contrast_limit, tmp_im_str, tmp_psf_str, parang,
+                                 self.m_psf_scaling, self.m_extra_rot, self.m_magnitude,
+                                 self.m_pca_number, self.m_threshold, self.m_accuracy,
+                                 self.m_aperture, self.m_ignore, self.m_cent_size,
+                                 self.m_edge_size, pixscale, q)
 
         result = pool.map(func, positions)
 
         pool.close()
         pool.join()
 
-        result = np.asarray(result)
+        # Send termination sentinel to queue and block till all tasks are done
+        q.put(None)
+
+        while True:
+            item = q.get()
+
+            if item is None:
+                break
+            else:
+                result.append(item)
+
+        os.remove(tmp_im_str)
+        os.remove(tmp_psf_str)
 
         res_mag = np.zeros((len(pos_r), len(pos_t)))
         res_fpf = np.zeros((len(pos_r)))
 
         count = 0
         for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t), 3]
+            res_fpf[i] = result[i*len(pos_t)][3]
 
             for j in range(len(pos_t)):
-                res_mag[i, j] = result[count, 2]
+                res_mag[i, j] = result[count][2]
                 count += 1
 
         limits = np.column_stack((pos_r*pixscale,
