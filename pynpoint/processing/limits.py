@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 import sys
 import os
-import functools
 import warnings
 import multiprocessing as mp
 
@@ -218,6 +217,7 @@ class ContrastCurveModule(ProcessingModule):
         # Create a queue object which will contain the results
         q = mp.Queue()
         result = []
+        jobs = []
 
         # Create temporary files
         working_place = str(self._m_config_port.get_attribute("WORKING_PLACE"))
@@ -227,18 +227,35 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
-        pool = mp.Pool(processes=cpu)
+        for i, pos in enumerate(positions):
+            process = mp.Process(target=contrast_limit,
+                                 args=(tmp_im_str, tmp_psf_str, parang, self.m_psf_scaling,
+                                       self.m_extra_rot, self.m_magnitude, self.m_pca_number,
+                                       self.m_threshold, self.m_accuracy, self.m_aperture,
+                                       self.m_ignore, self.m_cent_size, self.m_edge_size,
+                                       pixscale, pos, q, ),
+                                 name=(str(os.path.basename(__file__)) + '_radius=' +
+                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                                       str(np.round(pos[1], 1))))
+            jobs.append(process)
 
-        func = functools.partial(contrast_limit, tmp_im_str, tmp_psf_str, parang,
-                                 self.m_psf_scaling, self.m_extra_rot, self.m_magnitude,
-                                 self.m_pca_number, self.m_threshold, self.m_accuracy,
-                                 self.m_aperture, self.m_ignore, self.m_cent_size,
-                                 self.m_edge_size, pixscale, q)
+        for i, j in enumerate(jobs):
+            j.start()
+            print("Starting ", j.name)
 
-        result = pool.map(func, positions)
+            if (i+1) % cpu == 0:
+                # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
+                # number of processes.
 
-        pool.close()
-        pool.join()
+                for k in jobs[i+1-cpu:(i+1)]:
+                    k.join()
+
+            elif (i+1) == len(jobs) and (i+1) % cpu != 0:
+                # Wait for the last processes to finish if number of processes is not a multiple
+                # of *cpu*
+
+                for k in jobs[(i+1 - (i+1) % cpu):]:
+                    k.join()
 
         # Send termination sentinel to queue and block till all tasks are done
         q.put(None)
@@ -248,6 +265,7 @@ class ContrastCurveModule(ProcessingModule):
 
             if item is None:
                 break
+
             else:
                 result.append(item)
 
