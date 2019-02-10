@@ -13,6 +13,7 @@ import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.limits import contrast_limit
+from pynpoint.util.module import progress
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -206,7 +207,7 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule")
+        sys.stdout.write("Running ContrastCurveModule\r")
         sys.stdout.flush()
 
         positions = []
@@ -241,7 +242,7 @@ class ContrastCurveModule(ProcessingModule):
 
         for i, j in enumerate(jobs):
             j.start()
-            print("Starting ", j.name)
+            # print("Starting ", j.name)
 
             if (i+1) % cpu == 0:
                 # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
@@ -256,6 +257,8 @@ class ContrastCurveModule(ProcessingModule):
 
                 for k in jobs[(i+1 - (i+1) % cpu):]:
                     k.join()
+
+            progress(i, len(jobs), "Running ConstrastCurveModule...")
 
         # Send termination sentinel to queue and block till all tasks are done
         q.put(None)
@@ -290,7 +293,7 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write("\rRunning ConstrastCurveModule...[DONE]\n")
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
