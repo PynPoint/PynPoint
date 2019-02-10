@@ -222,8 +222,11 @@ class ContrastCurveModule(ProcessingModule):
 
         # Create temporary files
         working_place = str(self._m_config_port.get_attribute("WORKING_PLACE"))
-        tmp_im_str = working_place + "/tmp_images.npy"
-        tmp_psf_str = working_place + "/tmp_psf.npy"
+        tmp_image_filename = "tmp_images.npy"
+        tmp_psf_filename = "tmp_psf.npy"
+
+        tmp_im_str = os.path.join(working_place, tmp_image_filename)
+        tmp_psf_str = os.path.join(working_place, tmp_psf_filename)
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
