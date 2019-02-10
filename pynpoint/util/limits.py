@@ -198,9 +198,6 @@ def contrast_limit(tmp_images,
 
             break
 
-    sys.stdout.write('.')
-    sys.stdout.flush()
-
     result = (position[0], position[1], fake_mag, fpf_threshold)
     queue.put(result)
 
