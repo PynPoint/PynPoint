@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import h5py
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -84,3 +85,34 @@ class TestDetectionLimits(object):
         assert np.allclose(data[0, 2], 0.07837070875760642, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 0.0002012649090622487, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
+
+    def test_contrast_curve_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        contrast = ContrastCurveModule(name_in="contrast_multi",
+                                       image_in_tag="read",
+                                       psf_in_tag="read",
+                                       contrast_out_tag="limits_multi",
+                                       separation=(0.5, 0.6, 0.1),
+                                       angle=(0., 360., 180.),
+                                       magnitude=(7.5, 1.),
+                                       threshold=("sigma", 5.),
+                                       accuracy=1e-1,
+                                       psf_scaling=1.,
+                                       aperture=0.1,
+                                       ignore=True,
+                                       pca_number=15,
+                                       norm=False,
+                                       cent_size=None,
+                                       edge_size=None,
+                                       extra_rot=0.)
+
+        self.pipeline.add_module(contrast)
+        self.pipeline.run_module("contrast_multi")
+
+        data_single = self.pipeline.get_data("limits")
+        data_multi = self.pipeline.get_data("limits_multi")
+        assert np.allclose(data_single, data_multi, rtol=1e-6, atol=0.)
+        assert data_single.shape == data_multi.shape
