@@ -712,6 +712,10 @@ class MCMCsamplingModule(ProcessingModule):
                 self.m_aperture['semimajor'] /= pixscale
                 self.m_aperture['semiminor'] /= pixscale
 
+        if self.m_variance == 'gaussian' and self.m_aperture['type'] != 'circular':
+            raise ValueError('Gaussian variance can only be used in combination with a'
+                             'circular aperture.')
+
     def gaussian_noise(self,
                        images,
                        parang,
