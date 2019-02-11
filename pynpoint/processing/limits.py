@@ -216,17 +216,16 @@ class ContrastCurveModule(ProcessingModule):
                 positions.append((sep, ang))
 
         # Create a queue object which will contain the results
-        q = mp.Queue()
+        queue = mp.Queue()
+
         result = []
         jobs = []
 
-        # Create temporary files
-        working_place = str(self._m_config_port.get_attribute("WORKING_PLACE"))
-        tmp_image_filename = "tmp_images.npy"
-        tmp_psf_filename = "tmp_psf.npy"
+        working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
-        tmp_im_str = os.path.join(working_place, tmp_image_filename)
-        tmp_psf_str = os.path.join(working_place, tmp_psf_filename)
+        # Create temporary files
+        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
+        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
@@ -237,41 +236,40 @@ class ContrastCurveModule(ProcessingModule):
                                        self.m_extra_rot, self.m_magnitude, self.m_pca_number,
                                        self.m_threshold, self.m_accuracy, self.m_aperture,
                                        self.m_ignore, self.m_cent_size, self.m_edge_size,
-                                       pixscale, pos, q, ),
+                                       pixscale, pos, queue, ),
                                  name=(str(os.path.basename(__file__)) + '_radius=' +
                                        str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
                                        str(np.round(pos[1], 1))))
+
             jobs.append(process)
 
-        for i, j in enumerate(jobs):
-            j.start()
-            # print("Starting ", j.name)
+        for i, job in enumerate(jobs):
+            job.start()
 
-            if (i+1) % cpu == 0:
+            if (i+1)%cpu == 0:
                 # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
                 # number of processes.
 
                 for k in jobs[i+1-cpu:(i+1)]:
                     k.join()
 
-            elif (i+1) == len(jobs) and (i+1) % cpu != 0:
+            elif (i+1) == len(jobs) and (i+1)%cpu != 0:
                 # Wait for the last processes to finish if number of processes is not a multiple
                 # of *cpu*
 
-                for k in jobs[(i+1 - (i+1) % cpu):]:
+                for k in jobs[(i + 1 - (i+1)%cpu):]:
                     k.join()
 
             progress(i, len(jobs), "Running ConstrastCurveModule...")
 
         # Send termination sentinel to queue and block till all tasks are done
-        q.put(None)
+        queue.put(None)
 
         while True:
-            item = q.get()
+            item = queue.get()
 
             if item is None:
                 break
-
             else:
                 result.append(item)
 
