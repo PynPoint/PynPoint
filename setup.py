@@ -12,7 +12,7 @@ reqs = [str(ir.req) for ir in reqs]
 
 setup(
     name='pynpoint',
-    version='0.6.0',
+    version='0.6.1',
     description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
     author='Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara',
