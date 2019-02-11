@@ -70,11 +70,7 @@ class TestDetectionLimits(object):
                                        psf_scaling=1.,
                                        aperture=0.1,
                                        ignore=True,
-                                       pca_number=15,
-                                       norm=False,
-                                       cent_size=None,
-                                       edge_size=None,
-                                       extra_rot=0.)
+                                       pca_number=15)
 
         self.pipeline.add_module(contrast)
         self.pipeline.run_module("contrast")
@@ -103,11 +99,7 @@ class TestDetectionLimits(object):
                                        psf_scaling=1.,
                                        aperture=0.1,
                                        ignore=True,
-                                       pca_number=15,
-                                       norm=False,
-                                       cent_size=None,
-                                       edge_size=None,
-                                       extra_rot=0.)
+                                       pca_number=15)
 
         self.pipeline.add_module(contrast)
         self.pipeline.run_module("contrast_multi")
