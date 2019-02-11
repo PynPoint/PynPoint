@@ -15,8 +15,8 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def contrast_limit(images,
-                   psf,
+def contrast_limit(tmp_images,
+                   tmp_psf,
                    parang,
                    psf_scaling,
                    extra_rot,
@@ -29,7 +29,8 @@ def contrast_limit(images,
                    cent_size,
                    edge_size,
                    pixscale,
-                   position):
+                   position,
+                   queue):
 
     """
     Function for calculating the contrast limit at a specified position by iterating towards
@@ -82,6 +83,9 @@ def contrast_limit(images,
     :return:
     :rtype: float, float, float, float
     """
+
+    images = np.load(tmp_images)
+    psf = np.load(tmp_psf)
 
     if threshold[0] == "sigma":
         fpf_threshold = student_fpf(sigma=threshold[1],
@@ -194,7 +198,7 @@ def contrast_limit(images,
 
             break
 
-    sys.stdout.write('.')
-    sys.stdout.flush()
+    result = (position[0], position[1], fake_mag, fpf_threshold)
+    queue.put(result)
 
     return position[0], position[1], fake_mag, fpf_threshold
