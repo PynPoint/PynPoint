@@ -148,6 +148,7 @@ def fake_planet(images,
 
 def merit_function(residuals,
                    function,
+                   variance,
                    aperture,
                    sigma):
 
@@ -158,6 +159,9 @@ def merit_function(residuals,
     :type residuals: ndarray
     :param function: Figure of merit ("hessian" or "sum").
     :type function: str
+    :param variance: Variance type and value for the likelihood function. The value is set to None
+                     in case a Poisson distribution is assumed.
+    :type variance: tuple(str, float)
     :param aperture: Dictionary with the aperture properties. See
                      Util.AnalysisTools.create_aperture for details.
     :type aperture: dict
@@ -204,7 +208,10 @@ def merit_function(residuals,
                                          create_aperture(aperture),
                                          method='exact')
 
-        merit = phot_table['aperture_sum']
+        merit = phot_table['aperture_sum'][0]
+
+        if variance[0] == "gaussian":
+            merit = merit**2/variance[1]
 
     else:
 
