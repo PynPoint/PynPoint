@@ -3,12 +3,9 @@ Utilities for poison pill multiprocessing. Provides abstract interfaces as well 
 implementation needed to process lines in time as used in the wavelet time denoising.
 """
 
-from __future__ import absolute_import
-
 import multiprocessing
 
 from abc import ABCMeta, abstractmethod
-# from . import multiprocessing
 
 import six
 import numpy as np
@@ -202,7 +199,8 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
             self.m_result_queue.put(result)
 
     @abstractmethod
-    def run_job(self, tmp_task):
+    def run_job(self,
+                tmp_task):
         """
         Abstract interface for the run_job method which is called from run() for each task
         individually.
@@ -235,7 +233,8 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_mutex = data_mutex_in
         self.m_data_out_port = data_out_port_in
 
-    def check_poison_pill(self, next_result):
+    def check_poison_pill(self,
+                          next_result):
         """
         Checks if the next result is a poison pill.
 
@@ -355,7 +354,8 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
         return tmp_processors
 
     @abstractmethod
-    def init_creator(self, image_in_port):
+    def init_creator(self,
+                     image_in_port):
         """
         Called from the constructor to create a creator object.
 
@@ -397,7 +397,9 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
 
 
 # ----- Handler to apply a function ------
-def apply_function(tmp_data, func, func_args):
+def apply_function(tmp_data,
+                   func,
+                   func_args):
     """
     Applies the function func with its arguments func_args to the tmp_data
 
@@ -544,7 +546,8 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         return tmp_processors
 
-    def init_creator(self, image_in_port):
+    def init_creator(self,
+                     image_in_port):
 
         reader = LineReader(image_in_port,
                             self.m_tasks_queue,
