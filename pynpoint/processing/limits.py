@@ -5,15 +5,15 @@ Modules for determining detection limits.
 from __future__ import absolute_import
 
 import sys
-import functools
+import os
 import warnings
-import multiprocessing
+import multiprocessing as mp
 
-import sharedmem
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.limits import contrast_limit
+from pynpoint.util.module import progress
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -207,7 +207,7 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule")
+        sys.stdout.write("Running ContrastCurveModule\r")
         sys.stdout.flush()
 
         positions = []
@@ -215,32 +215,76 @@ class ContrastCurveModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
-        image = sharedmem.empty(images.shape)
-        image[:, :, :] = images[:, :, :]
+        # Create a queue object which will contain the results
+        queue = mp.Queue()
 
-        pool = multiprocessing.Pool(processes=cpu)
+        result = []
+        jobs = []
 
-        func = functools.partial(contrast_limit, image, psf, parang, self.m_psf_scaling, \
-                                 self.m_extra_rot, self.m_magnitude, self.m_pca_number, \
-                                 self.m_threshold, self.m_accuracy, self.m_aperture, \
-                                 self.m_ignore, self.m_cent_size, self.m_edge_size, pixscale)
+        working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
-        result = pool.map(func, positions)
+        # Create temporary files
+        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
+        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
-        pool.close()
-        pool.join()
+        np.save(tmp_im_str, images)
+        np.save(tmp_psf_str, psf)
 
-        result = np.asarray(result)
+        for i, pos in enumerate(positions):
+            process = mp.Process(target=contrast_limit,
+                                 args=(tmp_im_str, tmp_psf_str, parang, self.m_psf_scaling,
+                                       self.m_extra_rot, self.m_magnitude, self.m_pca_number,
+                                       self.m_threshold, self.m_accuracy, self.m_aperture,
+                                       self.m_ignore, self.m_cent_size, self.m_edge_size,
+                                       pixscale, pos, queue, ),
+                                 name=(str(os.path.basename(__file__)) + '_radius=' +
+                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                                       str(np.round(pos[1], 1))))
+
+            jobs.append(process)
+
+        for i, job in enumerate(jobs):
+            job.start()
+
+            if (i+1)%cpu == 0:
+                # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
+                # number of processes.
+
+                for k in jobs[i+1-cpu:(i+1)]:
+                    k.join()
+
+            elif (i+1) == len(jobs) and (i+1)%cpu != 0:
+                # Wait for the last processes to finish if number of processes is not a multiple
+                # of *cpu*
+
+                for k in jobs[(i + 1 - (i+1)%cpu):]:
+                    k.join()
+
+            progress(i, len(jobs), "Running ConstrastCurveModule...")
+
+        # Send termination sentinel to queue and block till all tasks are done
+        queue.put(None)
+
+        while True:
+            item = queue.get()
+
+            if item is None:
+                break
+            else:
+                result.append(item)
+
+        os.remove(tmp_im_str)
+        os.remove(tmp_psf_str)
 
         res_mag = np.zeros((len(pos_r), len(pos_t)))
         res_fpf = np.zeros((len(pos_r)))
 
         count = 0
         for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t), 3]
+            res_fpf[i] = result[i*len(pos_t)][3]
 
             for j in range(len(pos_t)):
-                res_mag[i, j] = result[count, 2]
+                res_mag[i, j] = result[count][2]
                 count += 1
 
         limits = np.column_stack((pos_r*pixscale,
@@ -250,7 +294,7 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write("\rRunning ConstrastCurveModule...[DONE]\n")
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
