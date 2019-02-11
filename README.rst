@@ -60,4 +60,4 @@ PynPoint is free software and distributed under the GNU General Public License v
 Acknowledgements
 ----------------
 
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is available `here <https://www.ethz.ch/content/specialinterest/phys/particle-physics/star-and-planet-formation/en/research/research-and-thesis-projects/pynpoint.html>`_.
+The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is `available <https://www.ethz.ch/content/specialinterest/phys/particle-physics/star-and-planet-formation/en/research/research-and-thesis-projects/pynpoint.html>`_ for use in presentations.
