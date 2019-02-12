@@ -32,7 +32,7 @@ with open('../pynpoint/__init__.py') as initfile:
         if '__version__' in line:
             version = line.split("'")[1]
 # The full version, including alpha/beta/rc tags
-release = '0.6.0'
+release = '0.6.1'
 
 
 # -- General configuration ---------------------------------------------------
