@@ -271,9 +271,9 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
 class LineSubtractionModule(ProcessingModule):
     """
-    Module for subtracting a background offset from each pixel by computing the mean or median of
-    all values in the row and column of the pixel. The module can be used if no background data
-    is available.
+    Module for subtracting the background emission from each pixel by computing the mean or
+    median of all values in the row and column of the pixel. The module can for example be
+    used if no background data is available or to remove a detector bias.
     """
 
     def __init__(self,
@@ -295,7 +295,8 @@ class LineSubtractionModule(ProcessingModule):
                         ("median" or "mean"). Using a mean-combination is computationally
                         faster than a median-combination.
         :type combine: str
-        :param mask: The radius of the mask that can be used. No mask is used if set to None.
+        :param mask: The radius of the mask within which pixel values are ignored. No mask
+                     is used if set to None.
         :type mask: float
 
         :return: None
@@ -311,9 +312,9 @@ class LineSubtractionModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Selects the pixel values in the column and row add each pixel
+        Run method of the module. Selects the pixel values in the column and row at each pixel
         position, computes the mean or median value while excluding pixels within the radius of
-        the mask, and subtract the mean or median value from each pixel separately.
+        the mask, and subtracts the mean or median value from each pixel separately.
 
         :return: None
         """
@@ -343,7 +344,7 @@ class LineSubtractionModule(ProcessingModule):
 
                 row_median = np.nanmedian(image_tmp, axis=1)
                 row_2d = np.tile(row_median, (im_shape[0], 1))
-                row_2d = np.transpose(row_2d)
+                row_2d = np.rot90(row_2d) # 90 deg in clockwise direction
 
                 subtract = col_2d + row_2d
 
