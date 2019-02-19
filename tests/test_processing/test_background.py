@@ -325,18 +325,18 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(np.mean(data), 0.0024245904637616735, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
 
-    def test_line_background(self):
+    def test_line_background_median(self):
 
         module = LineSubtractionModule(name_in="line2",
                                        image_in_tag="line",
                                        image_out_tag="line_median",
                                        combine="median",
-                                       mask=None)
+                                       mask=0.1)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module("line2")
 
         data = self.pipeline.get_data("line_median")
-        assert np.allclose(data[0, 10, 10], 0.09797739994636405, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0024994653890923098, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.0978721066240881, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0024723022374338196, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
