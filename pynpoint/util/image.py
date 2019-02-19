@@ -135,7 +135,7 @@ def create_mask(im_shape,
     """
     Function to create a mask for the central and outer image regions.
 
-    :param im_shape: Image size in both dimnesions.
+    :param im_shape: Image size in both dimensions.
     :type im_shape: (int, int)
     :param size: Size (pix) of the inner and outer mask.
     :type size: (float, float)
