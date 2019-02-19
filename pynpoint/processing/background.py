@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 
+from astropy.io import fits
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
@@ -325,22 +326,26 @@ class LineSubtractionModule(ProcessingModule):
             image_tmp[mask == 0.] = np.nan
 
             if self.m_combine == "mean":
-                row = np.nanmean(image_tmp, axis=1)
-                col = np.nanmean(image_tmp, axis=0)
+                row_mean = np.nanmean(image_tmp, axis=1)
+                col_mean = np.nanmean(image_tmp, axis=0)
 
-                x_grid, y_grid = np.meshgrid(row, col)
+                x_grid, y_grid = np.meshgrid(col_mean, row_mean)
                 subtract = (x_grid+y_grid)/2.
 
             elif self.m_combine == "median":
                 subtract = np.zeros(im_shape)
 
-                for i in range(im_shape[0]):
-                    for j in range(im_shape[1]):
-                        row = image_in[:, j]
-                        col = image_in[i, :]
+                col_median = np.nanmedian(image_tmp, axis=0)
+                col_2d = np.tile(col_median, (im_shape[1], 1))
 
-                        rowcol = np.concatenate((row, col))
-                        subtract = np.nanmedian(rowcol)
+                image_tmp -= col_2d
+                image_tmp[mask == 0.] = np.nan
+
+                row_median = np.nanmedian(image_tmp, axis=1)
+                row_2d = np.tile(row_median, (im_shape[0], 1))
+                row_2d = np.transpose(row_2d)
+
+                subtract = col_2d + row_2d
 
             return image_in - subtract
 
@@ -356,9 +361,6 @@ class LineSubtractionModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running LineSubtractionModule...",
                                       func_args=(mask, ))
-
-        sys.stdout.write("Running LineSubtractionModule... [DONE]\n")
-        sys.stdout.flush()
 
         history = "combine = "+str(self.m_combine)
 
