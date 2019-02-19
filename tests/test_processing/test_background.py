@@ -337,6 +337,6 @@ class TestBackgroundSubtraction(object):
         self.pipeline.run_module("line2")
 
         data = self.pipeline.get_data("line_median")
-        assert np.allclose(data[0, 10, 10], 0.0978721066240881, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.09782789699611127, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0024723022374338196, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
