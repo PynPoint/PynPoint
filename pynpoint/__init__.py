@@ -4,9 +4,7 @@ from pynpoint.core.pypeline import Pypeline
 
 from pynpoint.processing.background import SimpleBackgroundSubtractionModule, \
                                            MeanBackgroundSubtractionModule, \
-                                           PCABackgroundPreparationModule, \
-                                           PCABackgroundSubtractionModule, \
-                                           DitheringBackgroundModule, \
+                                           LineSubtractionModule, \
                                            NoddingBackgroundModule
 
 from pynpoint.processing.badpixel import BadPixelSigmaFilterModule, \
@@ -40,6 +38,10 @@ from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              AperturePhotometryModule
 
 from pynpoint.processing.limits import ContrastCurveModule
+
+from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \
+                                              PCABackgroundSubtractionModule, \
+                                              DitheringBackgroundModule
 
 from pynpoint.processing.psfpreparation import PSFpreparationModule, \
                                                AngleInterpolationModule, \
