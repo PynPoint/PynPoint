@@ -1,4 +1,4 @@
-six ~= 1.12
+six ~= 1.11
 configparser ~= 3.5
 h5py ~= 2.8
 numpy ~= 1.15
@@ -13,4 +13,3 @@ statsmodels ~= 0.9
 PyWavelets ~= 1.0
 matplotlib ~= 2.2
 emcee ~= 2.2
-ephem == 3.7.6.0
