@@ -7,8 +7,9 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.background import MeanBackgroundSubtractionModule, \
                                            SimpleBackgroundSubtractionModule, \
-                                           NoddingBackgroundModule, \
-                                           DitheringBackgroundModule
+                                           LineSubtractionModule, \
+                                           NoddingBackgroundModule
+from pynpoint.processing.pcabackground import DitheringBackgroundModule
 from pynpoint.processing.stacksubset import MeanCubeModule
 from pynpoint.util.tests import create_config, create_fake, remove_test_data
 
@@ -58,13 +59,25 @@ class TestBackgroundSubtraction(object):
                     sep=None,
                     contrast=None)
 
+        create_fake(path=self.test_dir+"line",
+                    ndit=[4, 4, 4, 4],
+                    nframes=[4, 4, 4, 4],
+                    exp_no=[1, 3, 5, 7],
+                    npix=(20, 20),
+                    fwhm=3.,
+                    x0=[10, 10, 10, 10],
+                    y0=[10, 10, 10, 10],
+                    angles=[[0., 25.], [25., 50.], [50., 75.], [75., 100.]],
+                    sep=None,
+                    contrast=None)
+
         create_config(self.test_dir+"PynPoint_config.ini")
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["dither", "star", "sky"])
+        remove_test_data(self.test_dir, folders=["dither", "star", "sky", "line"])
 
     def test_read_data(self):
 
@@ -86,9 +99,16 @@ class TestBackgroundSubtraction(object):
 
         self.pipeline.add_module(read)
 
+        read = FitsReadingModule(name_in="read4",
+                                 image_tag="line",
+                                 input_dir=self.test_dir+"line")
+
+        self.pipeline.add_module(read)
+
         self.pipeline.run_module("read1")
         self.pipeline.run_module("read2")
         self.pipeline.run_module("read3")
+        self.pipeline.run_module("read4")
 
         data = self.pipeline.get_data("dither")
         assert np.allclose(data[0, 74, 24], 0.05304008435511765, rtol=limit, atol=0.)
@@ -104,6 +124,11 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(data[0, 50, 50], -7.613171257478652e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 8.937360237872607e-07, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
+
+        data = self.pipeline.get_data("line")
+        assert np.allclose(data[0, 10, 10], 0.09799496683489618, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.002502384977510189, rtol=limit, atol=0.)
+        assert data.shape == (16, 20, 20)
 
     def test_simple_background(self):
 
@@ -283,3 +308,35 @@ class TestBackgroundSubtraction(object):
         assert np.allclose(data[0, 50, 50], 0.09797142624717381, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 9.945087327935862e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
+
+    def test_line_background_mean(self):
+
+        module = LineSubtractionModule(name_in="line1",
+                                       image_in_tag="line",
+                                       image_out_tag="line_mean",
+                                       combine="mean",
+                                       mask=0.1)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("line1")
+
+        data = self.pipeline.get_data("line_mean")
+        assert np.allclose(data[0, 10, 10], 0.09792388324443534, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0024245904637616735, rtol=limit, atol=0.)
+        assert data.shape == (16, 20, 20)
+
+    def test_line_background_median(self):
+
+        module = LineSubtractionModule(name_in="line2",
+                                       image_in_tag="line",
+                                       image_out_tag="line_median",
+                                       combine="median",
+                                       mask=0.1)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("line2")
+
+        data = self.pipeline.get_data("line_median")
+        assert np.allclose(data[0, 10, 10], 0.09782789699611127, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0024723022374338196, rtol=limit, atol=0.)
+        assert data.shape == (16, 20, 20)
