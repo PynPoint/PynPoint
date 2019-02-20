@@ -209,7 +209,8 @@ class SimplexMinimizationModule(ProcessingModule):
                  pca_number=20,
                  cent_size=None,
                  edge_size=None,
-                 extra_rot=0.):
+                 extra_rot=0.,
+                 residuals="mean"):
         """
         Constructor of SimplexMinimizationModule.
 
@@ -272,6 +273,9 @@ class SimplexMinimizationModule(ProcessingModule):
         :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
+        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
+                          or "clipped").
+        :type residuals: str
 
         :return: None
         """
@@ -299,9 +303,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
-
-        self.m_image_in_tag = image_in_tag
-        self.m_psf_in_tag = psf_in_tag
+        self.m_residuals = residuals
 
     def run(self):
         """
@@ -382,7 +384,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                             angles=-1.*parang+self.m_extra_rot,
                                             pca_number=self.m_pca_number)
 
-            stack = combine_residuals(method="mean", res_rot=im_res)
+            stack = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
             self.m_res_out_port.append(stack, data_dim=3)
 
@@ -585,6 +587,7 @@ class MCMCsamplingModule(ProcessingModule):
                  extra_rot=0.,
                  prior="flat",
                  variance="poisson",
+                 residuals="mean",
                  **kwargs):
         """
         Constructor of MCMCsamplingModule.
@@ -636,6 +639,9 @@ class MCMCsamplingModule(ProcessingModule):
         :type prior: str
         :param variance: Variance used in the likelihood function ("poisson" or "gaussian").
         :type variance: str
+        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
+                          or "clipped").
+        :type residuals: str
         :param kwargs:
             See below.
 
@@ -681,6 +687,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_prior = prior
         self.m_variance = variance
+        self.m_residuals = residuals
 
         if mask is None:
             self.m_mask = np.array((None, None))
@@ -728,11 +735,11 @@ class MCMCsamplingModule(ProcessingModule):
         :rtype: float
         """
 
-        _, residuals = pca_psf_subtraction(images=images,
-                                           angles=-1.*parang+self.m_extra_rot,
-                                           pca_number=self.m_pca_number)
+        _, res_arr = pca_psf_subtraction(images=images,
+                                         angles=-1.*parang+self.m_extra_rot,
+                                         pca_number=self.m_pca_number)
 
-        stack = combine_residuals(method="mean", res_rot=residuals)
+        stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
 
         noise, _, _ = false_alarm(image=stack,
                                   x_pos=aperture['pos_x'],
@@ -822,7 +829,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_aperture,
                                                indices,
                                                self.m_prior,
-                                               variance]),
+                                               variance,
+                                               self.m_residuals]),
                                         threads=cpu)
 
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
