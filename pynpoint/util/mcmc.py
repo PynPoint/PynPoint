@@ -27,7 +27,8 @@ def lnprob(param,
            aperture,
            indices,
            prior,
-           variance):
+           variance,
+           residuals):
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -71,6 +72,9 @@ def lnprob(param,
     :param variance: Variance type and value for the likelihood function. The value is set to None
                      in case a Poisson distribution is assumed.
     :type variance: tuple(str, float)
+    :param residuals: Method used for combining the residuals ("mean", "median", "weighted", or
+                      "clipped").
+    :type residuals: str
 
     :return: Log posterior probability.
     :rtype: float
@@ -139,7 +143,8 @@ def lnprob(param,
     def _lnlike():
         """
         Internal function for the log likelihood function. Noise of each pixel is assumed to follow
-        a Poisson distribution (see Wertz et al. 2017 for details).
+        either a Poisson distribution (see Wertz et al. 2017) or a Gaussian distribution with a
+        correction for small sample statistics (see Mawet et al. 2014).
 
         :return: Log likelihood.
         :rtype: float
@@ -159,7 +164,7 @@ def lnprob(param,
                                         pca_number=pca_number,
                                         indices=indices)
 
-        stack = combine_residuals(method="mean", res_rot=im_res)
+        stack = combine_residuals(method=residuals, res_rot=im_res)
 
         merit = merit_function(residuals=stack,
                                function="sum",
