@@ -494,7 +494,7 @@ class AngleCalculationModule(ProcessingModule):
 
         # Calculate parallactic angles for each cube
         for i, tmp_steps in enumerate(steps):
-            t = Time(obs_dates[i],
+            t = Time(obs_dates[i].decode('utf-8') ,
                      location=EarthLocation(lat=tel_lat,
                                             lon=tel_lon))
 
