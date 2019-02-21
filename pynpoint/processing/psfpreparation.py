@@ -435,6 +435,11 @@ class AngleCalculationModule(ProcessingModule):
         if self.m_instrument == "SPHERE/IFS":
             warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
 
+            warnings.warn("For SPHERE data it is recommended to use the header keywords "
+                          "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. "
+                          "The input will be parsed accordingly. Using the regular "
+                          "RA/DEC parameters will lead to wrong parallactic angles.")
+
         # Load exposure time [hours]
         exptime = self.m_data_in_port.get_attribute("DIT")/3600.
 
@@ -448,10 +453,6 @@ class AngleCalculationModule(ProcessingModule):
 
         # Parse to degree depending on instrument
         if "SPHERE" in self.m_instrument:
-            warnings.warn("For SPHERE data it is recommended to use the header keywords "
-                          "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. "
-                          "The input will be parsed accordingly. Using the regular "
-                          "RA/DEC parameters will lead to wrong parallactic angles.")
 
             # get sign of declination
             tmp_dec_sign = np.sign(tmp_dec)
