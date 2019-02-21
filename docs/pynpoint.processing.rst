@@ -68,6 +68,14 @@ pynpoint.processing.limits module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.processing.pcabackground module
+----------------------------------------
+
+.. automodule:: pynpoint.processing.pcabackground
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.processing.psfpreparation module
 -----------------------------------------
 
