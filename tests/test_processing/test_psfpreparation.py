@@ -80,9 +80,12 @@ class TestPSFpreparation(object):
         self.pipeline.run_module("angle2")
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], -55.0432738327744, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -55.000752378269965, rtol=limit, atol=0.)
+        assert np.allclose(data[0], -55.041097524594186, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -54.99858342139904, rtol=limit, atol=0.)
         assert data.shape == (40, )
+
+        self.pipeline.set_attribute("read", "RA", (60000.0, 60000.0, 60000.0, 60000.0), static=False)
+        self.pipeline.set_attribute("read", "DEC", (-510000., -510000., -510000., -510000.), static=False)
 
         angle = AngleCalculationModule(instrument="SPHERE/IRDIS",
                                        name_in="angle3",
@@ -92,8 +95,8 @@ class TestPSFpreparation(object):
         self.pipeline.run_module("angle3")
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], 170.38885107983538, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 170.46124323291738, rtol=limit, atol=0.)
+        assert np.allclose(data[0], 170.39102733657813, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 170.46341141667205, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
         angle = AngleCalculationModule(instrument="SPHERE/IFS",
@@ -105,13 +108,17 @@ class TestPSFpreparation(object):
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module("angle4")
 
-        assert len(warning) == 1
+        assert len(warning) == 2
         assert warning[0].message.args[0] == "AngleCalculationModule has not been tested for " \
                                              "SPHERE/IFS data."
+        assert warning[1].message.args[0] == "For SPHERE data it is recommended to use the header keywords " \
+                          "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. " \
+                          "The input will be parsed accordingly. Using the regular " \
+                          "RA/DEC parameters will lead to wrong parallactic angles." \
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], 270.8688510798354, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 270.9702735149575, rtol=limit, atol=0.)
+        assert np.allclose(data[0], 270.87102733657815, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 270.9724409967988, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
     def test_angle_interpolation_mismatch(self):
