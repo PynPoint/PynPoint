@@ -597,7 +597,9 @@ class MCMCsamplingModule(ProcessingModule):
                       angle is measured in counterclockwise direction with respect to the upward
                       direction (i.e., East of North). The specified separation and angle are also
                       used as fixed position for the aperture if *aperture* contains a single
-                      value.
+                      value. Furthermore, the values are used to remove the planet signal before
+                      the noise is estimated when *variance* is set to "gaussian" to prevent
+                      that self-subtraction lobes bias the noise measurement.
         :type param: tuple(float, float, float)
         :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg), and
                        contrast (mag). Each set of boundaries is specified as a tuple.
@@ -695,13 +697,17 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_mask = np.array(mask)
 
     def aperture_dict(self,
-                      images,
-                      pixscale):
+                      images):
         """
         Function to create or update the dictionary with aperture properties.
 
+        :param images: Input images.
+        :type images: numpy.ndarray
+
         :return: None
         """
+
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if isinstance(self.m_aperture, float):
             x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
@@ -725,17 +731,38 @@ class MCMCsamplingModule(ProcessingModule):
 
     def gaussian_noise(self,
                        images,
+                       psf,
                        parang,
                        aperture):
         """
-        Function to compute the (constant) variance for the likelihood function when
-        the variance parameter is set to gaussian (see Mawet et al. 2014).
+        Function to compute the (constant) variance for the likelihood function when the
+        variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
+        from the dataset with the values specified as *param* in the constructor of the instance.
+
+        :param images: Input images.
+        :type images: numpy.ndarray
+        :param psf: PSF template.
+        :type psf: numpy.ndarray
+        :param parang: Parallactic angles (deg).
+        :type parang: numpy.ndarray
+        :param aperture: Properties of the circular aperture. The radius recommended to be larger
+                         or equal to 0.5*lambda/D.
+        :type aperture: dict
 
         :return: Variance.
         :rtype: float
         """
 
-        _, res_arr = pca_psf_subtraction(images=images,
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang,
+                           position=(self.m_param[0]/pixscale, self.m_param[1]),
+                           magnitude=self.m_param[2],
+                           psf_scaling=self.m_psf_scaling)
+
+        _, res_arr = pca_psf_subtraction(images=fake,
                                          angles=-1.*parang+self.m_extra_rot,
                                          pca_number=self.m_pca_number)
 
@@ -800,7 +827,7 @@ class MCMCsamplingModule(ProcessingModule):
         mask = create_mask(im_shape[-2:], self.m_mask)
         indices = np.where(mask.reshape(-1) != 0.)[0]
 
-        self.aperture_dict(images, pixscale)
+        self.aperture_dict(images)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -809,7 +836,9 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
         if self.m_variance == "gaussian":
-            variance = (self.m_variance, self.gaussian_noise(images*mask, parang, self.m_aperture))
+            student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
+            variance = (self.m_variance, student_t)
+
         else:
             variance = (self.m_variance, None)
 

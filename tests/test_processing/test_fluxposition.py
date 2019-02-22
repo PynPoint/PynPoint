@@ -217,7 +217,7 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[65, 4], 5.744096115502183, rtol=limit, atol=0.)
         assert data.shape == (66, 6)
 
-    def test_mcmc_sampling(self):
+    def test_mcmc_sampling_poisson(self):
 
         self.pipeline.set_attribute("adi", "PARANG", np.arange(0., 200., 10.), static=False)
 
@@ -276,7 +276,8 @@ class TestFluxAndPosition(object):
                                   extra_rot=0.,
                                   scale=2.,
                                   sigma=(1e-3, 1e-1, 1e-2),
-                                  prior="flat")
+                                  prior="flat",
+                                  variance="poisson")
 
         self.pipeline.add_module(mcmc)
         self.pipeline.run_module("mcmc")
@@ -287,12 +288,34 @@ class TestFluxAndPosition(object):
         assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
         assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
 
+    def test_mcmc_sampling_gaussian(self):
+
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
 
-        self.pipeline.run_module("mcmc")
-        multi = self.pipeline.get_data("mcmc")
-        multi = multi[:, 20:, :].reshape((-1, 3))
-        assert np.allclose(np.median(multi[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(multi[:, 1]), 0., rtol=0., atol=0.2)
-        assert np.allclose(np.median(multi[:, 2]), 0., rtol=0., atol=0.1)
+        mcmc = MCMCsamplingModule(param=(0.1485, 0., 0.),
+                                  bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),
+                                  name_in="mcmc_gaussian",
+                                  image_in_tag="adi_scale",
+                                  psf_in_tag="psf_avg",
+                                  chain_out_tag="mcmc_gaussian",
+                                  nwalkers=50,
+                                  nsteps=150,
+                                  psf_scaling=-1.,
+                                  pca_number=1,
+                                  aperture=0.1,
+                                  mask=None,
+                                  extra_rot=0.,
+                                  scale=2.,
+                                  sigma=(1e-3, 1e-1, 1e-2),
+                                  prior="flat",
+                                  variance="gaussian")
+
+        self.pipeline.add_module(mcmc)
+        self.pipeline.run_module("mcmc_gaussian")
+
+        single = self.pipeline.get_data("mcmc_gaussian")
+        single = single[:, 20:, :].reshape((-1, 3))
+        assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
+        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
+        assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
