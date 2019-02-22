@@ -1,7 +1,7 @@
 PynPoint
 ========
 
-**Python package for processing and analysis of high-contrast imaging data**
+**Pipeline for processing and analysis of high-contrast imaging data**
 
 .. image:: https://badge.fury.io/py/pynpoint.svg
     :target: https://pypi.python.org/pypi/pynpoint
@@ -53,9 +53,9 @@ If you use PynPoint in your publication then please cite `Stolker et al. (2019) 
 License
 -------
 
-Copyright 2014-2018 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
+Copyright 2014-2019 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
 
-PynPoint is free software and distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.
+PynPoint is distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.
 
 Acknowledgements
 ----------------
