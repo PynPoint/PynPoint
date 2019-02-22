@@ -8,9 +8,9 @@ from __future__ import absolute_import
 import sys
 import warnings
 
-import ephem
 import numpy as np
-
+from astropy.coordinates import EarthLocation
+from astropy.time import Time
 from scipy import ndimage
 from six.moves import range
 
@@ -435,6 +435,11 @@ class AngleCalculationModule(ProcessingModule):
         if self.m_instrument == "SPHERE/IFS":
             warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
 
+            warnings.warn("For SPHERE data it is recommended to use the header keywords "
+                          "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. "
+                          "The input will be parsed accordingly. Using the regular "
+                          "RA/DEC parameters will lead to wrong parallactic angles.")
+
         # Load exposure time [hours]
         exptime = self.m_data_in_port.get_attribute("DIT")/3600.
 
@@ -442,12 +447,34 @@ class AngleCalculationModule(ProcessingModule):
         tel_lat = self.m_data_in_port.get_attribute("LATITUDE")
         tel_lon = self.m_data_in_port.get_attribute("LONGITUDE")
 
-        # Load target position [deg]
-        ra = self.m_data_in_port.get_attribute("RA")
-        dec = self.m_data_in_port.get_attribute("DEC")
+        # Load temporary target position
+        tmp_ra = self.m_data_in_port.get_attribute("RA")
+        tmp_dec = self.m_data_in_port.get_attribute("DEC")
 
-        ra = np.mean(ra)
-        dec = np.mean(dec)
+        # Parse to degree depending on instrument
+        if "SPHERE" in self.m_instrument:
+
+            # get sign of declination
+            tmp_dec_sign = np.sign(tmp_dec)
+            tmp_dec = np.abs(tmp_dec)
+
+            # parse RA
+            tmp_ra_s = tmp_ra % 100
+            tmp_ra_m = ((tmp_ra - tmp_ra_s) / 1e2) % 100
+            tmp_ra_h = ((tmp_ra - tmp_ra_s - tmp_ra_m * 1e2) / 1e4)
+
+            # parse DEC
+            tmp_dec_s = tmp_dec % 100
+            tmp_dec_m = ((tmp_dec - tmp_dec_s) / 1e2) % 100
+            tmp_dec_d = ((tmp_dec - tmp_dec_s - tmp_dec_m * 1e2) / 1e4)
+
+            # get RA and DEC in degree
+            ra = (tmp_ra_h + tmp_ra_m / 60. + tmp_ra_s / 3600.) * 15.
+            dec = tmp_dec_sign * (tmp_dec_d + tmp_dec_m / 60. + tmp_dec_s / 3600.)
+
+        else:
+            ra = tmp_ra
+            dec = tmp_dec
 
         # Load start times of exposures
         obs_dates = self.m_data_in_port.get_attribute("DATE")
@@ -467,22 +494,11 @@ class AngleCalculationModule(ProcessingModule):
 
         # Calculate parallactic angles for each cube
         for i, tmp_steps in enumerate(steps):
+            t = Time(obs_dates[i].decode('utf-8') ,
+                     location=EarthLocation(lat=tel_lat,
+                                            lon=tel_lon))
 
-            # Create an ephem observer class to calculate local sidereal time
-            obs = ephem.Observer()
-
-            obs.lat = ephem.degrees(str(tel_lat))
-            obs.long = ephem.degrees(str(tel_lon))
-
-            obs.date = str(obs_dates[i].replace(b'T', b' ').decode("utf-8"))
-
-            # Get sideral time in hours
-            sid_time = str(obs.sidereal_time())
-
-            # Get hours minutes and seconds
-            h, m, s = sid_time.split(":")
-
-            sid_time = (float(h) + (float(m) / 60.) + (float(s) / 3600.))
+            sid_time = t.sidereal_time("apparent").value
 
             # Extrapolate sideral times from start time of the cube for each frame of it
             sid_time_arr = np.linspace(sid_time+self.m_O_START,
@@ -494,11 +510,11 @@ class AngleCalculationModule(ProcessingModule):
             sid_time_arr_deg = sid_time_arr * 15.
 
             # Calculate hour angle in degrees
-            hour_angle = sid_time_arr_deg - ra
+            hour_angle = sid_time_arr_deg - ra[i]
 
             # Conversion to radians:
             hour_angle_rad = np.deg2rad(hour_angle)
-            dec_rad = np.deg2rad(dec)
+            dec_rad = np.deg2rad(dec[i])
             lat_rad = np.deg2rad(tel_lat)
 
             p_angle = np.arctan2(np.sin(hour_angle_rad),
