@@ -51,7 +51,7 @@ If you use PynPoint in your publication then please cite `Stolker et al. (2019) 
 Contributing
 ------------
 
-Contributions in the form of new functionalities and pipeline modules are highly appreciated. Please consider forking the repository and creating a pull request to help improve and extend the pipeline package. Instructions for writing of modules are provided in the documentation. Bug reports can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
+Contributions in the form of bug fixes, new or improved functionalities, and additional pipeline modules are highly appreciated. Please consider forking the repository and creating a pull request to help improve and extend the package. Instructions for writing of modules are provided in the documentation. Bug reports can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
 License
 -------
