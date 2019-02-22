@@ -27,11 +27,11 @@ PynPoint
 .. image:: http://img.shields.io/badge/arXiv-1811.03336-orange.svg?style=flat
     :target: http://arxiv.org/abs/1811.03336
 
-PynPoint is an end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light.
+PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light. The package is stable and has been extensively tested.
 
-The pipeline has a modular architecture with a central data storage in which all results are stored by the processing modules. These modules have specific tasks such as the subtraction of the thermal background emission, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available IO modules.
+The pipeline has a modular architecture with a central data storage in which all results are stored by the processing modules. These modules have specific tasks such as the subtraction of the thermal background emission, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available I/O modules.
 
-PynPoint is under continuous development and the latest implementations can be pulled from Github repository. Bug reports, requests for new features, and contributions in the form of new functionalities and pipeline modules are highly appreciated. Instructions for writing of modules are provided in the documentation. Bug reports and functionality requests can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
+PynPoint is under continuous development and the latest implementations can be pulled from Github repository. Contributions in the form of new functionalities and pipeline modules are highly appreciated. Please consider forking the repository and creating pull requests to help improving and extending the package. Instructions for writing of modules are provided in the documentation. Bug reports can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
 An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
