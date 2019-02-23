@@ -284,13 +284,13 @@ class TestStarAlignment(object):
 
         data = self.pipeline.get_data("center_fit")
         data = np.mean(data, axis=0)
-        assert np.allclose(data[0], 0.08098742455577371, rtol=1e-4, atol=0.)
-        assert np.allclose(data[2], 0.054000744773086654, rtol=1e-4, atol=0.)
-        assert np.allclose(data[4], 0.08106861680270988, rtol=1e-4, atol=0.)
-        assert np.allclose(data[6], 0.08099539991651539, rtol=1e-4, atol=0.)
-        assert np.allclose(data[8], 0.024462593185980753, rtol=1e-4, atol=0.)
-        assert np.allclose(data[10], 194.22401610001688, rtol=1e-4, atol=0.)
-        assert np.allclose(data[12], 3.0282512914826835e-05, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0], 0.08098742455577371, rtol=1e-3, atol=0.)
+        assert np.allclose(data[2], 0.054000744773086654, rtol=1e-3, atol=0.)
+        assert np.allclose(data[4], 0.08106861680270988, rtol=1e-3, atol=0.)
+        assert np.allclose(data[6], 0.08099539991651539, rtol=1e-3, atol=0.)
+        assert np.allclose(data[8], 0.024462593185980753, rtol=1e-3, atol=0.)
+        assert np.allclose(data[10], 194.22401610001688, rtol=1e-3, atol=0.)
+        assert np.allclose(data[12], 3.0282512914826835e-05, rtol=1e-3, atol=0.)
 
     def test_star_center_mean(self):
 
@@ -346,14 +346,14 @@ class TestStarAlignment(object):
 
         data = self.pipeline.get_data("center_fit")
         data = np.mean(data, axis=0)
-        assert np.allclose(data[0], 0.08098747985685777, rtol=1e-4, atol=0.)
-        assert np.allclose(data[2], 0.0540007002495565, rtol=1e-4, atol=0.)
-        assert np.allclose(data[4], 0.08379341889077103, rtol=1e-4, atol=0.)
-        assert np.allclose(data[6], 0.0838406498463373, rtol=1e-4, atol=0.)
-        assert np.allclose(data[8], 0.025631446335395824, rtol=1e-4, atol=0.)
-        assert np.allclose(data[10], 99.52894847048447, rtol=1e-4, atol=0.)
-        assert np.allclose(data[12], -0.0011276451504281496, rtol=1e-4, atol=0.)
-        assert np.allclose(data[14], 12.666692851849238, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0], 0.08098747985685777, rtol=1e-3, atol=0.)
+        assert np.allclose(data[2], 0.0540007002495565, rtol=1e-3, atol=0.)
+        assert np.allclose(data[4], 0.08379341889077103, rtol=1e-3, atol=0.)
+        assert np.allclose(data[6], 0.0838406498463373, rtol=1e-3, atol=0.)
+        assert np.allclose(data[8], 0.025631446335395824, rtol=1e-3, atol=0.)
+        assert np.allclose(data[10], 99.52894847048447, rtol=1e-3, atol=0.)
+        assert np.allclose(data[12], -0.0011276451504281496, rtol=1e-3, atol=0.)
+        assert np.allclose(data[14], 12.666692851849238, rtol=1e-3, atol=0.)
 
     def test_waffle_center_odd(self):
 
