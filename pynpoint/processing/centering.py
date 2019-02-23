@@ -339,7 +339,7 @@ class StarAlignmentModule(ProcessingModule):
 
 class StarCenteringModule(ProcessingModule):
     """
-    Module for centering the star by fitting a 2D Gaussian profile.
+    Module for centering the star by fitting the PSF with a 2D Gaussian or Moffat function.
     """
 
     def __init__(self,
@@ -352,6 +352,7 @@ class StarCenteringModule(ProcessingModule):
                  interpolation="spline",
                  radius=0.1,
                  sign="positive",
+                 model="gaussian",
                  **kwargs):
         """
         Constructor of StarCenteringModule.
@@ -368,14 +369,16 @@ class StarCenteringModule(ProcessingModule):
                              output. The unmasked part of the images is used for the fit. Data is
                              not written when set to *None*.
         :type mask_out_tag: str
-        :param fit_out_tag: Tag of the database entry with the best-fit results of the 2D Gaussian
+        :param fit_out_tag: Tag of the database entry with the best-fit results of the model
                             fit and the 1-sigma errors. Data is written in the following format:
                             x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
                             error (arcsec), FWHM major axis (arcsec), FWHM major axis error
                             (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
                             (arcsec), amplitude (counts), amplitude error (counts), angle (deg),
                             angle error (deg) measured in counterclockwise direction with respect
-                            to the upward direction (i.e., East of North).
+                            to the upward direction (i.e., East of North), offset (counts), offset
+                            error (counts), power index (only for Moffat function), and power index
+                            error (only for Moffat function).
         :type fit_out_tag: str
         :param method: Fit and shift all the images individually ("full") or only fit the mean of
                        the cube and shift all images to that location ("mean"). The "mean" method
@@ -388,25 +391,40 @@ class StarCenteringModule(ProcessingModule):
                        neglected with the fit. The radius is centered on the position specified
                        in *guess*, which is the center of the image by default.
         :type radius: float
-        :param sign: Fit a *"positive"* or *"negative"* Gaussian. A negative Gaussian can be
+        :param sign: Fit a *"positive"* or *"negative"* Gaussian/Moffat. A negative model can be
                      used to center coronagraphic data in which a dark hole is present.
         :type sign: str
+        :param model: Type of 2D model used to fit the PSF ("gaussian" or "moffat"). Both models
+                      are elliptical in shape.
+        :type model: str
         :param kwargs:
             See below.
 
         :Keyword arguments:
-            **guess** (*(float, float, float, float, float, float)*) -- Tuple with the initial
-            parameter values for the least squares fit: x offset with respect to center (pix),
-            y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude (counts),
-            angle (deg).
+            **guess** (*(float, float, float, float, float, float, float)*) -- Tuple with the
+            initial parameter values for the least squares fit: x offset with respect to center
+            (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
+            (counts), angle (deg), offset (counts).
 
         :return: None
         """
 
         if "guess" in kwargs:
             self.m_guess = kwargs["guess"]
+
+            if model == "gaussian" and len(self.m_guess) == 6:
+                warnings.warn("The 'guess' parameter is missing one value. The guessed offset "
+                              "value is set to zero.")
+
+                self.m_guess = (self.m_guess[0], self.m_guess[1], self.m_guess[2], self.m_guess[3],
+                                self.m_guess[4], self.m_guess[5], 0.)
+
         else:
-            self.m_guess = (0., 0., 1., 1., 1., 0.)
+            if model == "gaussian":
+                self.m_guess = (0., 0., 1., 1., 1., 0., 0.)
+
+            elif model == "moffat":
+                self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
         super(StarCenteringModule, self).__init__(name_in)
 
@@ -428,15 +446,16 @@ class StarCenteringModule(ProcessingModule):
         self.m_interpolation = interpolation
         self.m_radius = radius
         self.m_sign = sign
+        self.m_model = model
 
         self.m_count = 0
 
     def run(self):
         """
         Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
-        the individual images or the mean of the stack with a 2D Gaussian profile, shifts the
-        images with subpixel precision, and writes the centered images and the fitting results. The
-        fitting results contain zeros in case the algorithm could not converge.
+        the individual images or the mean of the stack with a 2D Gaussian or Moffat function,
+        shifts the images with subpixel precision, and writes the centered images and the fitting
+        results. The fitting results contain zeros in case the algorithm could not converge.
 
         :return: None
         """
@@ -473,13 +492,37 @@ class StarCenteringModule(ProcessingModule):
         xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
         rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
-        def _2d_gaussian(grid,
-                         x_center,
-                         y_center,
-                         fwhm_x,
-                         fwhm_y,
-                         amp,
-                         theta):
+        def gaussian_2d(grid,
+                        x_center,
+                        y_center,
+                        fwhm_x,
+                        fwhm_y,
+                        amp,
+                        theta,
+                        offset):
+            """
+            Function to create a 2D elliptical Gaussian model.
+
+            :param grid: Two 2D arrays with the mesh grid points in x and y direction.
+            :type grid: numpy.ndarray            
+            :param x_center: Offset of the model center along the x axis (pix).
+            :type x_center: float
+            :param y_center: Offset of the model center along the y axis (pix).
+            :type y_center: float
+            :param fwhm_x: Full width at half maximum along the x axis (pix).
+            :type fwhm_x: float
+            :param fwhm_y: Full width at half maximum along the y axis (pix).
+            :type fwhm_y: float
+            :param amp: Peak flux.
+            :type amp: float
+            :param theta: Rotation angle in counterclockwise direction (rad).
+            :type theta: float
+            :param offset: Flux offset.
+            :type offset: float
+
+            :return: Raveled 2D elliptical Gaussian model.
+            :rtype: numpy.ndimage
+            """
 
             (xx_grid, yy_grid) = grid
 
@@ -493,7 +536,7 @@ class StarCenteringModule(ProcessingModule):
             b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
-            gaussian = amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
+            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -501,6 +544,66 @@ class StarCenteringModule(ProcessingModule):
                 gaussian = np.ravel(gaussian)
 
             return gaussian
+
+        def moffat_2d(grid,
+                      x_center,
+                      y_center,
+                      fwhm_x,
+                      fwhm_y,
+                      amp,
+                      theta,
+                      offset,
+                      beta):
+            """
+            Function to create a 2D elliptical Moffat model.
+
+            :param grid: Two 2D arrays with the mesh grid points in x and y direction.
+            :type grid: numpy.ndarray            
+            :param x_center: Offset of the model center along the x axis (pix).
+            :type x_center: float
+            :param y_center: Offset of the model center along the y axis (pix).
+            :type y_center: float
+            :param fwhm_x: Full width at half maximum along the x axis (pix).
+            :type fwhm_x: float
+            :param fwhm_y: Full width at half maximum along the y axis (pix).
+            :type fwhm_y: float
+            :param amp: Peak flux.
+            :type amp: float
+            :param theta: Rotation angle in counterclockwise direction (rad).
+            :type theta: float
+            :param offset: Flux offset.
+            :type offset: float
+            :param beta: Power index.
+            :type beta: float
+
+            :return: Raveled 2D elliptical Moffat model.
+            :rtype: numpy.ndimage
+            """
+
+            (xx_grid, yy_grid) = grid
+
+            x_diff = xx_grid - x_center
+            y_diff = yy_grid - y_center
+
+            alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
+            alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
+
+            a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
+            b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
+            c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
+
+            a_term = a_moffat*x_diff**2
+            b_term = b_moffat*y_diff**2
+            c_term = c_moffat*x_diff*y_diff
+
+            moffat = offset + amp / (1.+a_term+b_term+c_term)**beta
+
+            if self.m_radius:
+                moffat = moffat[rr_ap < self.m_radius]
+            else:
+                moffat = np.ravel(moffat)
+
+            return moffat
 
         def _least_squares(image):
 
@@ -523,8 +626,14 @@ class StarCenteringModule(ProcessingModule):
             else:
                 image = np.ravel(image)
 
+            if self.m_model == "gaussian":
+                self.m_model_func = gaussian_2d
+
+            elif self.m_model == "moffat":
+                self.m_model_func = moffat_2d
+
             try:
-                popt, pcov = curve_fit(_2d_gaussian,
+                popt, pcov = curve_fit(self.m_model_func,
                                        (xx_grid, yy_grid),
                                        image,
                                        p0=self.m_guess,
@@ -534,16 +643,36 @@ class StarCenteringModule(ProcessingModule):
                 perr = np.sqrt(np.diag(pcov))
 
             except RuntimeError:
-                popt = np.zeros(6)
-                perr = np.zeros(6)
+                if self.m_model == "gaussian":
+                    popt = np.zeros(7)
+                    perr = np.zeros(7)
+
+                elif self.m_model == "moffat":
+                    popt = np.zeros(8)
+                    perr = np.zeros(8)
+
                 self.m_count += 1
 
-            res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
-                              popt[1]*pixscale, perr[1]*pixscale,
-                              popt[2]*pixscale, perr[2]*pixscale,
-                              popt[3]*pixscale, perr[3]*pixscale,
-                              popt[4], perr[4],
-                              math.degrees(popt[5])%360., math.degrees(perr[5])))
+            if self.m_model == "gaussian":
+
+                res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
+                                  popt[1]*pixscale, perr[1]*pixscale,
+                                  popt[2]*pixscale, perr[2]*pixscale,
+                                  popt[3]*pixscale, perr[3]*pixscale,
+                                  popt[4], perr[4],
+                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                  popt[6], perr[6]))
+
+            elif self.m_model == "moffat":
+
+                res = np.asarray((popt[0]*pixscale, perr[0]*pixscale,
+                                  popt[1]*pixscale, perr[1]*pixscale,
+                                  popt[2]*pixscale, perr[2]*pixscale,
+                                  popt[3]*pixscale, perr[3]*pixscale,
+                                  popt[4], perr[4],
+                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                  popt[6], perr[6],
+                                  popt[7], perr[7]))
 
             self.m_fit_out_port.append(res, data_dim=2)
 
