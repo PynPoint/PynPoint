@@ -382,7 +382,7 @@ class ClassicalADIModule(ProcessingModule):
                           (arcsec), FWHM of the PSF (arcsec), and the threshold (FWHM) for the
                           the reference images. No threshold is used if set to None.
         :type threshold: tuple(float, float, float)
-        :param nreference: Number of reference image, closest in time to the science image. All
+        :param nreference: Number of reference image, closest in line to the science image. All
                            images are used if *threshold* is None or *nreference* is None.
         :type nreference: int
         :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
@@ -422,7 +422,7 @@ class ClassicalADIModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Selects for each image the reference images closest in time while
+        Run method of the module. Selects for each image the reference images closest in line while
         taking into account a rotation threshold for a fixed separation, median-combines the
         references images, and subtracts the reference image from each image separately.
         Alternatively, a single, median-combined reference image can be created and subtracted from
