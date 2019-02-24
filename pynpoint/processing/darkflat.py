@@ -103,8 +103,9 @@ class DarkCalibrationModule(ProcessingModule):
                                       "Running DarkCalibrationModule...",
                                       func_args=(master, ))
 
-        self.m_image_out_port.add_history_information("Calibration", "dark")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "dark_in_tag = "+self.m_dark_in_port.tag
+        self.m_image_out_port.add_history("DarkCalibrationModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
 
@@ -170,6 +171,7 @@ class FlatCalibrationModule(ProcessingModule):
                                       "Running FlatCalibrationModule...",
                                       func_args=(master, ))
 
-        self.m_image_out_port.add_history_information("Calibration", "flat")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "flat_in_tag = "+self.m_flat_in_port.tag
+        self.m_image_out_port.add_history("FlatCalibrationModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

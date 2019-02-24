@@ -303,7 +303,6 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
-
-        self.m_contrast_out_port.add_history_information("ContrastCurveModule", history)
-        self.m_contrast_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_contrast_out_port.add_history("ContrastCurveModule", history)
+        self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()

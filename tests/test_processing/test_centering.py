@@ -212,7 +212,7 @@ class TestStarAlignment(object):
                                     ref_image_in_tag="extract2",
                                     image_out_tag="align",
                                     accuracy=10,
-                                    resize=2)
+                                    resize=2.)
 
         self.pipeline.add_module(align)
         self.pipeline.run_module("align")
@@ -357,7 +357,7 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
         assert data.shape == (10, 75, 75)
 
-        attribute = self.pipeline.get_attribute("center_odd", "History: Waffle centering")
+        attribute = self.pipeline.get_attribute("center_odd", "History: WaffleCenteringModule")
         assert attribute == "position [x, y] = [50.0, 50.0]"
 
     def test_waffle_center_even(self):
@@ -386,5 +386,5 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
         assert data.shape == (10, 75, 75)
 
-        attribute = self.pipeline.get_attribute("center_even", "History: Waffle centering")
+        attribute = self.pipeline.get_attribute("center_even", "History: WaffleCenteringModule")
         assert attribute == "position [x, y] = [49.5, 49.5]"

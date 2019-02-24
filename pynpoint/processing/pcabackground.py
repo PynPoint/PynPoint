@@ -223,8 +223,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_background_out_port.del_all_data()
         self.m_background_out_port.del_all_attributes()
 
-        nframes = self.m_image_in_port.get_attribute("NFRAMES")
-
         if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute("PARANG")
         else:
@@ -240,40 +238,30 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_star_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        history = "star = "+str(sum(star_nframes))+", background"+str(len(background_nframes))
+        self.m_star_out_port.copy_attributes(self.m_image_in_port)
+        self.m_star_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
         self.m_star_out_port.add_attribute("INDEX", star_index, static=False)
 
         if parang is not None:
             self.m_star_out_port.add_attribute("PARANG", star_parang, static=False)
 
-        self.m_star_out_port.add_history_information("Star frames separated",
-                                                     str(sum(star_nframes))+"/"+ \
-                                                     str(sum(nframes)))
-
-        self.m_mean_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        self.m_mean_out_port.copy_attributes(self.m_image_in_port)
+        self.m_mean_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_mean_out_port.add_attribute("NFRAMES", star_nframes, static=False)
         self.m_mean_out_port.add_attribute("INDEX", star_index, static=False)
 
         if parang is not None:
             self.m_mean_out_port.add_attribute("PARANG", star_parang, static=False)
 
-        self.m_mean_out_port.add_history_information("Star frames separated",
-                                                     str(sum(star_nframes))+"/"+ \
-                                                     str(sum(nframes)))
-
-        self.m_background_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_background_out_port.copy_attributes(self.m_image_in_port)
+        self.m_background_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_background_out_port.add_attribute("NFRAMES", background_nframes, static=False)
         self.m_background_out_port.add_attribute("INDEX", background_index, static=False)
 
         if parang is not None:
             self.m_background_out_port.add_attribute("PARANG", background_parang, static=False)
-
-        self.m_background_out_port.add_history_information("Background frames separated",
-                                                           str(len(background_nframes))+"/"+ \
-                                                           str(len(nframes)))
 
         self.m_star_out_port.close_port()
 
@@ -541,17 +529,18 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
 
+        history = "PC number = "+str(self.m_pca_number)
+        self.m_residuals_out_port.copy_attributes(self.m_star_in_port)
+        self.m_residuals_out_port.add_history("PCABackgroundSubtractionModule", history)
         self.m_residuals_out_port.add_attribute("STAR_POSITION", star, static=False)
-        self.m_residuals_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-        self.m_residuals_out_port.add_history_information("Background subtraction", "PCA")
 
         if self.m_fit_out_port is not None:
-            self.m_fit_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_fit_out_port.add_history_information("Background subtraction", "PCA")
+            self.m_fit_out_port.copy_attributes(self.m_star_in_port)
+            self.m_fit_out_port.add_history("PCABackgroundSubtractionModule", history)
 
         if self.m_mask_out_port is not None:
-            self.m_mask_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_mask_out_port.add_history_information("Background subtraction", "PCA")
+            self.m_mask_out_port.copy_attributes(self.m_star_in_port)
+            self.m_mask_out_port.add_history("PCABackgroundSubtractionModule", history)
 
         self.m_residuals_out_port.close_port()
 
