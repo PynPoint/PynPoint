@@ -30,6 +30,7 @@ def contrast_limit(tmp_images,
                    edge_size,
                    pixscale,
                    position,
+                   residuals,
                    queue):
 
     """
@@ -79,6 +80,9 @@ def contrast_limit(tmp_images,
     :type pixscale: float
     :param position: Tuple with the separation (pix) and position angle (deg) of the fake planet.
     :type position: tuple(float, float)
+    :param residuals: Method used for combining the residuals ("mean", "median", "weighted", or
+                      "clipped").
+    :type residuals: str
 
     :return:
     :rtype: float, float, float, float
@@ -127,7 +131,7 @@ def contrast_limit(tmp_images,
                                         angles=-1.*parang+extra_rot,
                                         pca_number=pca_number)
 
-        stack = combine_residuals(method="mean", res_rot=im_res)
+        stack = combine_residuals(method=residuals, res_rot=im_res)
 
         _, _, fpf = false_alarm(image=stack,
                                 x_pos=x_fake,

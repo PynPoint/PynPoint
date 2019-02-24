@@ -41,6 +41,7 @@ class ContrastCurveModule(ProcessingModule):
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
+                 residuals="mean",
                  **kwargs):
         """
         Constructor of ContrastCurveModule.
@@ -101,6 +102,9 @@ class ContrastCurveModule(ProcessingModule):
         :type edge_size: float
         :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
         :type extra_rot: float
+        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
+                          or "clipped").
+        :type residuals: str
         :param kwargs:
             See below.
 
@@ -146,6 +150,7 @@ class ContrastCurveModule(ProcessingModule):
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
+        self.m_residuals = residuals
 
     def run(self):
         """
@@ -236,7 +241,7 @@ class ContrastCurveModule(ProcessingModule):
                                        self.m_extra_rot, self.m_magnitude, self.m_pca_number,
                                        self.m_threshold, self.m_accuracy, self.m_aperture,
                                        self.m_ignore, self.m_cent_size, self.m_edge_size,
-                                       pixscale, pos, queue, ),
+                                       pixscale, pos, self.m_residuals, queue, ),
                                  name=(str(os.path.basename(__file__)) + '_radius=' +
                                        str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
                                        str(np.round(pos[1], 1))))
