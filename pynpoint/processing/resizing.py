@@ -81,8 +81,9 @@ class CropImagesModule(ProcessingModule):
                                       "Running CropImagesModule...",
                                       func_args=(self.m_size, self.m_center))
 
-        self.m_image_out_port.add_history_information("Image cropped", str(self.m_size))
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "image size [pix] = "+str(self.m_size)
+        self.m_image_out_port.add_history("CropImagesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
 
@@ -181,9 +182,8 @@ class ScaleImagesModule(ProcessingModule):
                   str("{:.2f}".format(self.m_scaling_y)) + ", " + \
                   str("{:.2f}".format(self.m_scaling_flux)) + ")"
 
-        self.m_image_out_port.add_history_information("ScaleImagesModule", history)
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.add_history("ScaleImagesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_pixscale:
             mean_scaling = (self.m_scaling_x+self.m_scaling_y)/2.
@@ -258,8 +258,9 @@ class AddLinesModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running AddLinesModule...")
 
-        self.m_image_out_port.add_history_information("Lines added", str(self.m_lines))
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "number of lines = "+str(self.m_lines)
+        self.m_image_out_port.add_history("AddLinesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
 
@@ -315,6 +316,7 @@ class RemoveLinesModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running RemoveLinesModule...")
 
-        self.m_image_out_port.add_history_information("Lines removed", str(self.m_lines))
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "number of lines = "+str(self.m_lines)
+        self.m_image_out_port.add_history("RemoveLinesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

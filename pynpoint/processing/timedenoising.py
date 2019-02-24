@@ -92,20 +92,16 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-
-        # Ports
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        # Parameters
         self.m_wavelet_configuration = wavelet_configuration
+        self.m_median_filter = median_filter
 
         assert padding in ["zero", "mirror", "none"]
         self.m_padding = padding
 
         assert threshold_function in ["soft", "hard"]
         self.m_threshold_function = threshold_function == "soft"
-
-        self.m_median_filter = median_filter
 
     def run(self):
         """
@@ -183,10 +179,13 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                     self.m_image_in_port,
                                     self.m_image_out_port)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Wavelet time de-noising",
-                                                      "universal threshold")
+        if self.m_threshold_function:
+            history = "threshold_function = soft"
+        else:
+            history = "threshold_function = hard"
 
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("WaveletTimeDenoisingModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -226,9 +225,6 @@ class TimeNormalizationModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running TimeNormalizationModule...")
 
-        self.m_image_out_port.add_history_information("Frame normalization",
-                                                      "using median")
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("TimeNormalizationModule", "normalization = median")
         self.m_image_out_port.close_port()

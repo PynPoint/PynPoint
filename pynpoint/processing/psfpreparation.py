@@ -137,9 +137,9 @@ class PSFpreparationModule(ProcessingModule):
 
         if self.m_mask_out_port is not None:
             self.m_mask_out_port.set_all(mask)
-            self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_mask_out_port.copy_attributes(self.m_image_in_port)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_norm:
             self.m_image_out_port.add_attribute("norm", im_norm, static=False)
@@ -318,8 +318,8 @@ class SortParangModule(ProcessingModule):
         sys.stdout.write("Running SortParangModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("SortParangModule", "sorted by INDEX")
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
 
         if parang_new is not None:
@@ -327,9 +327,6 @@ class SortParangModule(ProcessingModule):
 
         if star_new is not None:
             self.m_image_out_port.add_attribute("STAR_POSITION", star_new, static=False)
-
-        self.m_image_out_port.add_history_information("SortParangModule",
-                                                      "images sorted by INDEX")
 
         self.m_image_out_port.close_port()
 
@@ -494,9 +491,8 @@ class AngleCalculationModule(ProcessingModule):
 
         # Calculate parallactic angles for each cube
         for i, tmp_steps in enumerate(steps):
-            t = Time(obs_dates[i].decode('utf-8') ,
-                     location=EarthLocation(lat=tel_lat,
-                                            lon=tel_lon))
+            t = Time(obs_dates[i].decode('utf-8'),
+                     location=EarthLocation(lat=tel_lat, lon=tel_lon))
 
             sid_time = t.sidereal_time("apparent").value
 
@@ -638,12 +634,7 @@ class SDIpreparationModule(ProcessingModule):
         sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
         history = "(line, continuum) = ("+str(self.m_line_wvl)+", "+str(self.m_cnt_wvl)+")"
-        self.m_image_out_port.add_history_information("Wavelength center", history)
-
-        history = "(line, continuum) = ("+str(self.m_line_width)+", "+str(self.m_cnt_width)+")"
-        self.m_image_out_port.add_history_information("Wavelength width", history)
-
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("SDIpreparationModule", history)
         self.m_image_in_port.close_port()

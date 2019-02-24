@@ -160,14 +160,16 @@ class StarExtractionModule(ProcessingModule):
                                                  self.m_image_size,
                                                  self.m_fwhm_star))
 
+        history = "fwhm_star [pix] = "+str(self.m_fwhm_star)
+
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
-            self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_index_out_port.add_history_information("Extract star", "brightest pixel")
+            self.m_index_out_port.copy_attributes(self.m_image_in_port)
+            self.m_index_out_port.add_history("StarExtractionModule", history)
 
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("StarExtractionModule", history)
         self.m_image_out_port.add_attribute("STAR_POSITION", np.asarray(star), static=False)
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("Extract star", "brightest pixel")
 
         self.m_image_out_port.close_port()
 
@@ -323,17 +325,14 @@ class StarAlignmentModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running StarAlignmentModule...")
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_resize is not None:
             pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
-        if self.m_resize is None:
-            history = "cross-correlation, no upsampling"
-        else:
-            history = "cross-correlation, upsampling factor =" + str(self.m_resize)
-        self.m_image_out_port.add_history_information("PSF alignment", history)
+        history = "resize = "+str(self.m_resize)
+        self.m_image_out_port.add_history("StarAlignmentModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -447,6 +446,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_radius = radius
         self.m_sign = sign
         self.m_model = model
+        self.m_model_func = None
 
         self.m_count = 0
 
@@ -504,7 +504,7 @@ class StarCenteringModule(ProcessingModule):
             Function to create a 2D elliptical Gaussian model.
 
             :param grid: Two 2D arrays with the mesh grid points in x and y direction.
-            :type grid: numpy.ndarray            
+            :type grid: numpy.ndarray
             :param x_center: Offset of the model center along the x axis (pix).
             :type x_center: float
             :param y_center: Offset of the model center along the y axis (pix).
@@ -536,7 +536,8 @@ class StarCenteringModule(ProcessingModule):
             b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
-            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + c_gauss*y_diff**2))
+            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + \
+                c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -558,7 +559,7 @@ class StarCenteringModule(ProcessingModule):
             Function to create a 2D elliptical Moffat model.
 
             :param grid: Two 2D arrays with the mesh grid points in x and y direction.
-            :type grid: numpy.ndarray            
+            :type grid: numpy.ndarray
             :param x_center: Offset of the model center along the x axis (pix).
             :type x_center: float
             :param y_center: Offset of the model center along the y axis (pix).
@@ -721,15 +722,15 @@ class StarCenteringModule(ProcessingModule):
         history = "method = "+self.m_method
 
         if self.m_image_out_port:
-            self.m_image_out_port.add_history_information("StarCenteringModule", history)
-            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_image_out_port.copy_attributes(self.m_image_in_port)
+            self.m_image_out_port.add_history("StarCenteringModule", history)
 
-        self.m_fit_out_port.add_history_information("StarCenteringModule", history)
-        self.m_fit_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_fit_out_port.copy_attributes(self.m_image_in_port)
+        self.m_fit_out_port.add_history("StarCenteringModule", history)
 
         if self.m_mask_out_port:
-            self.m_mask_out_port.add_history_information("StarCenteringModule", history)
-            self.m_mask_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_mask_out_port.copy_attributes(self.m_image_in_port)
+            self.m_mask_out_port.add_history("StarCenteringModule", history)
 
         self.m_fit_out_port.close_port()
 
@@ -790,8 +791,9 @@ class ShiftImagesModule(ProcessingModule):
                                       "Running ShiftImagesModule...",
                                       func_args=(self.m_shift, self.m_interpolation))
 
-        self.m_image_out_port.add_history_information("Images shifted", str(self.m_shift))
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "shift_xy = "+str(self.m_shift)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("ShiftImagesModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -1044,7 +1046,7 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
         history = "position [x, y] = "+str([round(x_center, 4), round(y_center, 4)])
-        self.m_image_out_port.add_history_information("Waffle centering", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("WaffleCenteringModule", history)
         self.m_image_out_port.close_port()

@@ -290,17 +290,13 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                                                  self.m_sigma,
                                                  self.m_iterate))
 
-        self.m_image_out_port.add_history_information("Bad pixel cleaning",
-                                                      "Sigma filter = " + str(self.m_sigma))
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "sigma = "+str(self.m_sigma)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("BadPixelSigmaFilterModule", history)
 
         if self.m_map_out_port is not None:
-
-            self.m_map_out_port.add_history_information("Bad pixel cleaning",
-                                                        "Sigma filter = " + str(self.m_sigma))
-
-            self.m_map_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_map_out_port.copy_attributes(self.m_image_in_port)
+            self.m_map_out_port.add_history("BadPixelSigmaFilterModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -402,9 +398,12 @@ class BadPixelMapModule(ProcessingModule):
         self.m_bp_map_out_port.set_all(bpmap, data_dim=2)
 
         if self.m_dark_port is not None:
-            self.m_bp_map_out_port.copy_attributes_from_input_port(self.m_dark_port)
+            self.m_bp_map_out_port.copy_attributes(self.m_dark_port)
         elif self.m_flat_port is not None:
-            self.m_bp_map_out_port.copy_attributes_from_input_port(self.m_flat_port)
+            self.m_bp_map_out_port.copy_attributes(self.m_flat_port)
+
+        history = "dark = "+str(self.m_dark_threshold)+", flat = "+str(self.m_flat_threshold)
+        self.m_bp_map_out_port.add_history("BadPixelMapModule", history)
 
         self.m_bp_map_out_port.close_port()
 
@@ -474,10 +473,9 @@ class BadPixelInterpolationModule(ProcessingModule):
                                       self.m_image_out_port,
                                       "Running BadPixelInterpolationModule...")
 
-        self.m_image_out_port.add_history_information("Bad pixel interpolation",
-                                                      "Iterations = " + str(self.m_iterations))
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "iterations = "+str(self.m_iterations)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("BadPixelInterpolationModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -558,10 +556,9 @@ class BadPixelTimeFilterModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.add_history_information("BadPixelTimeFilterModule",
-                                                      "sigma = " + str(self.m_sigma))
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "sigma = "+str(self.m_sigma)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("BadPixelTimeFilterModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -653,5 +650,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
                                       "Running ReplaceBadPixelsModule...",
                                       func_args=(index, ))
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "replace = "+self.m_replace
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("ReplaceBadPixelsModule", history)
         self.m_image_out_port.close_port()

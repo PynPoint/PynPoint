@@ -232,8 +232,5 @@ class TestPSFpreparation(object):
         assert np.allclose(np.mean(data), 2.0042892634995876e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-        attribute = self.pipeline.get_attribute("sdi", "History: Wavelength center")
+        attribute = self.pipeline.get_attribute("sdi", "History: SDIpreparationModule")
         assert attribute == "(line, continuum) = (0.65, 0.6)"
-
-        attribute = self.pipeline.get_attribute("sdi", "History: Wavelength width")
-        assert attribute == "(line, continuum) = (0.1, 0.5)"

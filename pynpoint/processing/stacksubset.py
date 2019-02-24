@@ -145,9 +145,7 @@ class StackAndSubsetModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_image_out_port.set_all(im_new, keep_attributes=True)
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
 
         if parang is not None:
@@ -156,10 +154,8 @@ class StackAndSubsetModule(ProcessingModule):
         if "NFRAMES" in non_static:
             self.m_image_out_port.del_attribute("NFRAMES")
 
-        self.m_image_out_port.add_history_information("Stack and subset",
-                                                      "stacking ="+str(self.m_stacking)+
-                                                      "random ="+str(self.m_random))
-
+        history = "stacking ="+str(self.m_stacking)+", random ="+str(self.m_random)
+        self.m_image_out_port.add_history("StackAndSubsetModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -227,7 +223,7 @@ class MeanCubeModule(ProcessingModule):
 
         nimages = np.size(nframes)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if "INDEX" in non_static:
             index = np.arange(0, nimages, 1, dtype=np.int)
@@ -352,7 +348,7 @@ class DerotateAndStackModule(ProcessingModule):
             self.m_image_out_port.set_all(np.median(images, axis=0))
 
         if self.m_derotate or self.m_stack is not None:
-            self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         self.m_image_out_port.close_port()
 
@@ -489,7 +485,6 @@ class CombineTagsModule(ProcessingModule):
         sys.stdout.write("Running CombineTagsModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.add_history_information("Database entries combined",
-                                                      str(np.size(self.m_image_in_tags)))
-
+        history = "number of input tags = "+str(np.size(self.m_image_in_tags))
+        self.m_image_out_port.add_history("CombineTagsModule", history)
         self.m_image_out_port.close_port()

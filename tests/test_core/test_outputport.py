@@ -454,7 +454,7 @@ class TestOutputPort(object):
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_copy_attributes_from_input_port(self):
+    def test_copy_attributes(self):
         out_port = self.create_output_port("new_data")
         out_port.del_all_attributes()
         out_port.del_all_data()
@@ -477,7 +477,7 @@ class TestOutputPort(object):
         copy_port.add_attribute("attr_non_static", [3, 4, 44, 6], static=False)
 
         control = self.create_input_port("new_data")
-        copy_port.copy_attributes_from_input_port(control)
+        copy_port.copy_attributes(control)
 
         copy_control = self.create_input_port("other_data")
 
@@ -494,7 +494,7 @@ class TestOutputPort(object):
 
         port = self.create_output_port("test")
         port.deactivate()
-        assert port.copy_attributes_from_input_port(control) is None
+        assert port.copy_attributes(control) is None
 
         port = self.create_input_port("test")
 
@@ -505,7 +505,7 @@ class TestOutputPort(object):
         assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
                                              "InputPort."
 
-    def test_copy_attributes_from_input_port_same_tag(self):
+    def test_copy_attributes_same_tag(self):
         out_port1 = self.create_output_port("new_data")
         out_port1.set_all([0, ])
 
@@ -515,7 +515,7 @@ class TestOutputPort(object):
         out_port1.add_attribute("attr1", 2)
 
         control1 = self.create_input_port("new_data")
-        out_port2.copy_attributes_from_input_port(control1)
+        out_port2.copy_attributes(control1)
 
         control2 = self.create_input_port("new_data")
         assert control2.get_attribute("attr1") == 2
@@ -608,10 +608,10 @@ class TestOutputPort(object):
 
         out_port.del_all_data()
 
-    def test_add_history_information(self):
+    def test_add_history(self):
         out_port = self.create_output_port("new_data")
         out_port.set_all([0, ])
-        out_port.add_history_information("Test", "history")
+        out_port.add_history("Test", "history")
 
         control = self.create_input_port("new_data")
         assert control.get_attribute("History: Test") == "history"

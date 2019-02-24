@@ -49,7 +49,8 @@ from pynpoint.processing.psfpreparation import PSFpreparationModule, \
                                                SortParangModule, \
                                                SDIpreparationModule
 
-from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule
+from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule, \
+                                               ClassicalADIModule
 
 from pynpoint.processing.resizing import CropImagesModule, \
                                          ScaleImagesModule, \

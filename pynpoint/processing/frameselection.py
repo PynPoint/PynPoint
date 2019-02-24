@@ -136,13 +136,13 @@ class RemoveFramesModule(ProcessingModule):
 
         if self.m_selected_out_port is not None:
             # Copy attributes before write_selected_attributes is used
-            self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_selected_out_port.add_history_information("RemoveFramesModule", history)
+            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
+            self.m_selected_out_port.add_history("RemoveFramesModule", history)
 
         if self.m_removed_out_port is not None:
             # Copy attributes before write_selected_attributes is used
-            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-            self.m_removed_out_port.add_history_information("RemoveFramesModule", history)
+            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
+            self.m_removed_out_port.add_history("RemoveFramesModule", history)
 
         write_selected_attributes(self.m_frames,
                                   self.m_image_in_port,
@@ -389,17 +389,17 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(indices))
-            self.m_index_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_index_out_port.copy_attributes(self.m_image_in_port)
             self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
-            self.m_index_out_port.add_history_information("FrameSelectionModule", history)
+            self.m_index_out_port.add_history("FrameSelectionModule", history)
 
         if self.m_selected_out_port is not None:
             # Copy attributes before write_selected_attributes is used
-            self.m_selected_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_removed_out_port is not None:
             # Copy attributes before write_selected_attributes is used
-            self.m_removed_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
 
         write_selected_attributes(indices,
                                   self.m_image_in_port,
@@ -415,14 +415,14 @@ class FrameSelectionModule(ProcessingModule):
                                                    starpos[indices_select],
                                                    static=False)
 
-            self.m_selected_out_port.add_history_information("FrameSelectionModule", history)
+            self.m_selected_out_port.add_history("FrameSelectionModule", history)
 
         if self.m_removed_out_port is not None:
             self.m_removed_out_port.add_attribute("STAR_POSITION",
                                                   starpos[indices],
                                                   static=False)
 
-            self.m_removed_out_port.add_history_information("FrameSelectionModule", history)
+            self.m_removed_out_port.add_history("FrameSelectionModule", history)
 
         sys.stdout.write("Running FrameSelectionModule... [DONE]\n")
         sys.stdout.flush()
@@ -500,13 +500,13 @@ class RemoveLastFrameModule(ProcessingModule):
         sys.stdout.write("Running RemoveLastFrameModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
 
         history = "frames removed = NDIT+1"
-        self.m_image_out_port.add_history_information("RemoveLastFrameModule", history)
+        self.m_image_out_port.add_history("RemoveLastFrameModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -599,7 +599,7 @@ class RemoveStartFramesModule(ProcessingModule):
         sys.stdout.write("Running RemoveStartFramesModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         self.m_image_out_port.add_attribute("NFRAMES", nframes-self.m_frames, static=False)
         self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
@@ -611,6 +611,6 @@ class RemoveStartFramesModule(ProcessingModule):
             self.m_image_out_port.add_attribute("STAR_POSITION", np.asarray(star_new), static=False)
 
         history = "frames removed = "+str(self.m_frames)
-        self.m_image_out_port.add_history_information("RemoveStartFramesModule", history)
+        self.m_image_out_port.add_history("RemoveStartFramesModule", history)
 
         self.m_image_out_port.close_port()

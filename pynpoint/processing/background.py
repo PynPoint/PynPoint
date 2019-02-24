@@ -79,9 +79,8 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         sys.stdout.flush()
 
         history = "shift = "+str(self.m_shift)
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("SimpleBackgroundSubtractionModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("SimpleBackgroundSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -263,8 +262,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         else:
             history = "shift = "+str(self.m_shift)+", cubes = "+str(self.m_cubes)
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("MeanBackgroundSubtractionModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("MeanBackgroundSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -363,9 +362,8 @@ class LineSubtractionModule(ProcessingModule):
                                       func_args=(mask, ))
 
         history = "combine = "+str(self.m_combine)
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_image_out_port.add_history_information("LineSubtractionModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("LineSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -532,7 +530,6 @@ class NoddingBackgroundModule(ProcessingModule):
         sys.stdout.flush()
 
         history = "mode = "+self.m_mode
-
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_science_in_port)
-        self.m_image_out_port.add_history_information("NoddingBackgroundModule", history)
+        self.m_image_out_port.copy_attributes(self.m_science_in_port)
+        self.m_image_out_port.add_history("NoddingBackgroundModule", history)
         self.m_image_out_port.close_port()
