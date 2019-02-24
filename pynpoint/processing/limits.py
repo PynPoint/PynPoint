@@ -299,7 +299,7 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        sys.stdout.write("\rRunning ConstrastCurveModule...[DONE]\n")
+        sys.stdout.write("\rRunning ConstrastCurveModule... [DONE]\n")
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
