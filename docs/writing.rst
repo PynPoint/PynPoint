@@ -160,7 +160,7 @@ Finally, the central database and all the open ports should be closed: ::
 
    It is enough to close only one port because all other ports will be closed automatically.
 
-.. important::
+.. warning::
 
    It is not recommended to use the same tag name for the input and output port because that would only be possible when data is read and     written at once with the ``get_all()`` and ``set_all()`` functionalities, respectively. Instead image should be read and written in        amounts of ``MEMORY`` so an error should be raised when ``in_tag=out_tag``.
 
