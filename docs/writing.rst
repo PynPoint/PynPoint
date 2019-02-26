@@ -8,7 +8,7 @@ Writing Modules
 Getting Started
 ---------------
 
-The modular architecture of PynPoint allows for easy implementations of new processing modules and we welcome contributions from users. Before writing own PynPoint modules, it is helpful to have a look at the :ref:`architecture` section. In addition, some basic knowledge on Python is required as well as an understanding of the following items:
+The modular architecture of PynPoint allows for easy implementations of new pipeline modules and we welcome contributions from users. Before writing a new PynPoint module, it is helpful to have a look at the :ref:`architecture` section. In addition, some basic knowledge on Python is required and some understanding on the following items can be helpful:
 
     * Python |types| such as lists, tuples, and dictionaries
     * |classes|, in particular the concept of inheritance
@@ -26,7 +26,7 @@ The modular architecture of PynPoint allows for easy implementations of new proc
 
    <a href="https://docs.python.org/2/library/abc.html" target="_blank">Abstract classes</a>
 
-There are three different types of pipeline modules: ``ReadingModule``, ``WritingModule``, and ``ProcessingModule``. Before implementing a new module, one should choose which interface to use. The concept is similar for the three types of module so here we will explain only how to write a processing module.
+There are three different types of pipeline modules: ``ReadingModule``, ``WritingModule``, and ``ProcessingModule``. Before implementing a new module, one should choose which interface to use. The concept is similar for the three types of modules so here we will explain only how to write a processing module.
 
 .. _conventions:
 
@@ -74,7 +74,7 @@ When an IDE like PyCharm is used, a warning will appear that all abstract method
                  parameter_1=0,
                  parameter_2="value"):
 
-Each ``__init__()`` function of a ``PypelineModule`` requires a ``name_in`` argument (and default value) which is used by the pipeline to run individual modules by name. Furthermore, the input and output tags have to be defined which are used to to access data from the central database. The constructor starts with a call of the ``ProcessingModule`` constructor: ::
+Each ``__init__()`` function of a ``PypelineModule`` requires a ``name_in`` argument (and default value) which is used by the pipeline to run individual modules by name. Furthermore, the input and output tags have to be defined which are used to to access data from the central database. The constructor starts with a call of the ``ProcessingModule`` interface: ::
    
     super(ExampleModule, self).__init__(name_in)
 
@@ -156,11 +156,13 @@ Finally, the central database and all the open ports should be closed: ::
 
         self.m_out_port_1.close_port()
 
-It is enough to close only one port because all other ports will be closed automatically.
+.. important::
 
-**Note on tag names and storing data:**
+   It is enough to close only one port because all other ports will be closed automatically.
 
-It is not recommended to use the same tag name for the input and output port because that would only be possible when data is read and written at once with the ``get_all()`` and ``set_all()`` functionalities, respectively. Instead image should be read and written in amounts of ``MEMORY`` so an error should be raised when ``in_tag=out_tag``.
+.. important::
+
+   It is not recommended to use the same tag name for the input and output port because that would only be possible when data is read and     written at once with the ``get_all()`` and ``set_all()`` functionalities, respectively. Instead image should be read and written in        amounts of ``MEMORY`` so an error should be raised when ``in_tag=out_tag``.
 
 .. _example-module:
 
@@ -169,7 +171,7 @@ Example Module
 
 The full code for the ExampleModule from above is: ::
 
-    from PynPoint.Core import ProcessingModule
+    from pynpoint.core import ProcessingModule
 
     class ExampleModule(ProcessingModule):
 
