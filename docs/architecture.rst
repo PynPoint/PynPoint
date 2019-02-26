@@ -29,11 +29,11 @@ The new architecture of PynPoint separates the data management from the data red
 	2. Some data is used in different steps of the pipeline. A central database makes it easy to access that data without making a copy.
 	3. The central data storage on the hard drive will remain updated after each step. Therefore, processing steps that already finished remain unaffected if an error occurs or the data reduction is interrupted by the user.
 
-Understanding the central data storage classes is important if you plan to write your own Pipeline modules (see :ref:`writing`). When running the pipeline, it is enough to understand the concept of database tags.
+Understanding the central data storage classes can be helpful if you plan to write your own Pipeline modules (see :ref:`writing`). When running the pipeline, it is enough to understand the concept of database tags.
 
-As already encountered in the :ref:`end-to-end` section, each pipeline module has input and/or output tags. A tag is a label of a specific dataset in the central database. A module with ``image_in_tag=im_arr`` will look for a stack of input images in the central database under the tag name `im_arr`. Similarly, a module with ``image_out_tag=im_arr_processed`` will a stack of processed images to the central database under the tag `im_arr_processed`. Note that input tags will never change the data in the database.
+Each pipeline module has input and/or output tags which point to specific dataset in the central database. A module with ``image_in_tag=im_arr`` will look for a stack of input images in the central database under the tag name `im_arr`. Similarly, a module with ``image_out_tag=im_arr_processed`` will a stack of processed images to the central database under the tag `im_arr_processed`. Note that input tags will never change the data in the database.
 
-Accessing the data storage occurs through instances of :class:`PynPoint.Core.DataIO.Port` which allow pipeline modules to read data from and write data to central database.
+Accessing the data storage occurs through instances of :class:`pynpoint.core.dataio.Port` which allow pipeline modules to read data from and write data to central database.
 
 .. _modules:
 
@@ -42,9 +42,9 @@ Central configuration
 
 A central configuration file has to be stored in the ``working_place_in`` with the name ``PynPoint_config.ini``. The file will be created with default values in case it does not exist when the pipeline is initiated. The values of the configuration file are stored in a separate group of the central database, each time the pipeline is initiated.
 
-The file contains two different sections of configuration parameters. The ``header`` section is used to link attributes in PynPoint with header values in the FITS files that will be imported into the database. For example, some of the pipeline modules require values for the dithering position. These attributes are stored as ``DITHER_X`` and ``DITHER_Y`` in the central database and are for example provided by the ``ESO SEQ CUMOFFSETX`` and ``ESO SEQ CUMOFFSETY`` values in the FITS header. Setting ``DITHER_X: ESO SEQ CUMOFFSETX`` in the ``header`` section of the configuration file makes sure that the relevant FITS header values are imported when :class:`PynPoint.IOmodules.FitsReading.FitsReadingModule` is executed. Therefore, FITS files have to be imported again if values in the ``header`` section are changes. Values can be set to ``None`` since ``header`` values are only required for some of the pipeline modules.
+The file contains two different sections of configuration parameters. The ``header`` section is used to link attributes in PynPoint with header values in the FITS files that will be imported into the database. For example, some of the pipeline modules require values for the dithering position. These attributes are stored as ``DITHER_X`` and ``DITHER_Y`` in the central database and are for example provided by the ``ESO SEQ CUMOFFSETX`` and ``ESO SEQ CUMOFFSETY`` values in the FITS header. Setting ``DITHER_X: ESO SEQ CUMOFFSETX`` in the ``header`` section of the configuration file makes sure that the relevant FITS header values are imported when :class:`pynpoint.readwrite.fitsreading.FitsReadingModule` is executed. Therefore, FITS files have to be imported again if values in the ``header`` section are changes. Values can be set to ``None`` since ``header`` values are only required for some of the pipeline modules.
 
-The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`pynpoint.processing.PSFSubtractionPCA.PcaPsfSubtractionModule`, :class:`pynpoint.processing.FluxAndPosition.MCMCsamplingModule`, and :class:`pynpoint.processing.TimeDenoising.WaveletTimeDenoisingModule`.
+The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule`, :class:`pynpoint.processing.fluxposition.MCMCsamplingModule`, and :class:`pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`.
 
 Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable::
 
@@ -81,7 +81,7 @@ An complete example of the configuration file looks like::
 Modules
 -------
 
-A pipeline module has a specific task that is appended to the internal queue of pipeline tasks. A module can read and write data tags from and to the central database through dedicated input and output connections. As illustration, this is the input and output structure of the :class:`pynpoint.processing.PSFSubtractionPCA.PSFSubtractionModule`:
+A pipeline module has a specific task that is appended to the internal queue of pipeline tasks. A module can read and write data tags from and to the central database through dedicated input and output connections. As illustration, this is the input and output structure of the :class:`pynpoint.processing.psfsubtraction.PSFSubtractionModule`:
 
 .. image:: _images/module.jpg
    :width: 70%

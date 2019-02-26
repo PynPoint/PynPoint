@@ -7,7 +7,7 @@ import numpy as np
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule, PSFpreparationModule
-from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule
+from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule, ClassicalADIModule
 from pynpoint.util.tests import create_config, create_fake, remove_test_data
 
 warnings.simplefilter("always")
@@ -131,6 +131,50 @@ class TestPSFSubtractionPCA(object):
         assert np.allclose(data[0, 99, 99], 0.0, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.227592050148539e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
+
+    def test_classical_adi(self):
+
+        module = ClassicalADIModule(threshold=None,
+                                    nreference=None,
+                                    residuals="mean",
+                                    extra_rot=0.,
+                                    name_in="cadi2",
+                                    image_in_tag="science",
+                                    res_out_tag="cadi_res",
+                                    stack_out_tag="cadi_stack")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("cadi2")
+
+        data = self.pipeline.get_data("cadi_res")
+        assert np.allclose(np.mean(data), -6.359018260066029e-08, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
+
+        data = self.pipeline.get_data("cadi_stack")
+        assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
+        assert data.shape == (100, 100)
+
+    def test_classical_adi_threshold(self):
+
+        module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
+                                    nreference=5,
+                                    residuals="median",
+                                    extra_rot=0.,
+                                    name_in="cadi1",
+                                    image_in_tag="science",
+                                    res_out_tag="cadi_res",
+                                    stack_out_tag="cadi_stack")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("cadi1")
+
+        data = self.pipeline.get_data("cadi_res")
+        assert np.allclose(np.mean(data), 1.6523183877608216e-07, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
+
+        data = self.pipeline.get_data("cadi_stack")
+        assert np.allclose(np.mean(data), 1.413437242880268e-07, rtol=limit, atol=0.)
+        assert data.shape == (100, 100)
 
     def test_psf_subtraction_pca_single(self):
 
