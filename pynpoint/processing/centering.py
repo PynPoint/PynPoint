@@ -717,7 +717,7 @@ class StarCenteringModule(ProcessingModule):
                                       func_args=(popt, ))
 
         if self.m_count > 0:
-            print("2D Gaussian fit could not converge on %s image(s). [WARNING]" % self.m_count)
+            print("Fit could not converge on %s image(s). [WARNING]" % self.m_count)
 
         history = "method = "+self.m_method
 

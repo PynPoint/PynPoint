@@ -426,8 +426,8 @@ class ClassicalADIModule(ProcessingModule):
         taking into account a rotation threshold for a fixed separation, median-combines the
         references images, and subtracts the reference image from each image separately.
         Alternatively, a single, median-combined reference image can be created and subtracted from
-        all images. Both the individual residuals (before derotation) and the stacked residuals
-        are stored.
+        all images. All images are used if the rotation condition can not be met. Both the
+        individual residuals (before derotation) and the stacked residuals are stored.
 
         :return: None
         """
@@ -441,14 +441,20 @@ class ClassicalADIModule(ProcessingModule):
                 ang_diff = np.abs(parang[self.m_count]-parang)
                 index_thres = np.where(ang_diff > parang_thres)[0]
 
-                if nref:
-                    index_diff = np.abs(self.m_count - index_thres)
-                    index_near = np.argsort(index_diff)[:nref]
-                    index_sort = np.sort(index_thres[index_near])
-                    reference = self.m_image_in_port[index_sort, :, :]
+                if index_thres.size == 0:
+                    reference = self.m_image_in_port.get_all()
+                    warnings.warn("No images meet the rotation threshold. Creating a reference "
+                                  "PSF from the median of all images instead.")
 
                 else:
-                    reference = self.m_image_in_port[index_thres, :, :]
+                    if nref:
+                        index_diff = np.abs(self.m_count - index_thres)
+                        index_near = np.argsort(index_diff)[:nref]
+                        index_sort = np.sort(index_thres[index_near])
+                        reference = self.m_image_in_port[index_sort, :, :]
+
+                    else:
+                        reference = self.m_image_in_port[index_thres, :, :]
 
                 reference = np.median(reference, axis=0)
 

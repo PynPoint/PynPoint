@@ -32,8 +32,9 @@ User Guide
    :maxdepth: 2
 
    quickstart
-   tutorial
    architecture
+   tutorial
+   examples
    writing
 
 API Documentation
