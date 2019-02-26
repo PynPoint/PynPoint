@@ -18,7 +18,7 @@ Development Team
 Contributing
 ------------
 
-If you encounter errors or problems when using PynPoint then please contact Tomas Stolker (ETH Zurich). Bug reports and functionality requests can be provided by creating an |issue| on the Github page. We also welcome active help with bug fixing and the development of new functionalities and processing modules which can be done be creating a |pull|.
+If you encounter errors or problems when using PynPoint then please contact Tomas Stolker (ETH Zurich). Bug reports and functionality requests can be provided by creating an |issue| on the Github page. We also welcome active help with bug fixing and the development of new functionalities and pipeline modules. Please consider forking the Github repository and creating a |pull| for implementations that could be of interest for other users.
 
 .. |issue| raw:: html
 
@@ -47,4 +47,4 @@ We would like to thank several people who provided contributions and helped test
 * Gabriele Cugno (ETH Zurich)
 * Silvan Hunziker (ETH Zurich)
 
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is available `here <https://www.ethz.ch/content/specialinterest/phys/particle-physics/star-and-planet-formation/en/research/research-and-thesis-projects/pynpoint.html>`_.
+The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is `available <https://www.ethz.ch/content/specialinterest/phys/particle-physics/star-and-planet-formation/en/research/research-and-thesis-projects/pynpoint.html>`_ for use in presentations.

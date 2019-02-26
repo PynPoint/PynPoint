@@ -987,8 +987,8 @@ class OutputPort(Port):
 
         self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
-    def copy_attributes_from_input_port(self,
-                                        input_port):
+    def copy_attributes(self,
+                        input_port):
         """
         Copies all static and non-static attributes from a given InputPort. Attributes which already
         exist will be overwritten. Non-static attributes will be linked not copied. If the InputPort
@@ -1131,22 +1131,21 @@ class OutputPort(Port):
 
         return 1
 
-    def add_history_information(self,
-                                pipeline_step,
-                                history_information):
+    def add_history(self,
+                    module,
+                    history):
         """
-        Adds an attribute which contains history information. Call this function at the end of all
-        modules
+        Adds an attribute with history information about the pipeline module.
 
-        :param pipeline_step: Name of the pipeline step which was performed.
-        :type pipeline_step: str
-        :param history_information: Extra information about the step e.g. parameters
-        :type history_information: str
+        :param module: Name of the pipeline module which was executed.
+        :type module: str
+        :param history: History information.
+        :type history: str
 
         :return: None
         """
 
-        self.add_attribute("History: " + pipeline_step, history_information)
+        self.add_attribute("History: " + module, history)
 
     def flush(self):
         """

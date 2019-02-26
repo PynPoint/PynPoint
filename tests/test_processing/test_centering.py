@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -211,7 +212,7 @@ class TestStarAlignment(object):
                                     ref_image_in_tag="extract2",
                                     image_out_tag="align",
                                     accuracy=10,
-                                    resize=2)
+                                    resize=2.)
 
         self.pipeline.add_module(align)
         self.pipeline.run_module("align")
@@ -264,14 +265,15 @@ class TestStarAlignment(object):
                                      interpolation="spline",
                                      radius=0.05,
                                      sign="positive",
-                                     guess=(6., 4., 1., 1., 1., 0.))
+                                     model="gaussian",
+                                     guess=(6., 4., 3., 3., 1., 0., 0.))
 
         self.pipeline.add_module(center)
         self.pipeline.run_module("center1")
 
         data = self.pipeline.get_data("center")
-        assert np.allclose(data[0, 39, 39], 0.023563039729627436, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016430629447868552, rtol=1e-4, atol=0.)
+        assert np.allclose(data[0, 39, 39], 0.02356308097293422, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.000164306294368963, rtol=1e-4, atol=0.)
         assert data.shape == (40, 78, 78)
 
         data = self.pipeline.get_data("mask")
@@ -291,10 +293,41 @@ class TestStarAlignment(object):
                                      interpolation="bilinear",
                                      radius=0.05,
                                      sign="positive",
-                                     guess=(6., 4., 1., 1., 1., 0.))
+                                     model="gaussian",
+                                     guess=(6., 4., 3., 3., 1., 0., 0.))
 
         self.pipeline.add_module(center)
         self.pipeline.run_module("center2")
+
+        data = self.pipeline.get_data("center")
+        assert np.allclose(data[0, 39, 39], 0.023556482678860322, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data), 0.00016430629447868552, rtol=1e-4, atol=0.)
+        assert data.shape == (40, 78, 78)
+
+    def test_star_center_moffat(self):
+
+        center = StarCenteringModule(name_in="center3",
+                                     image_in_tag="shift",
+                                     image_out_tag="center",
+                                     mask_out_tag=None,
+                                     fit_out_tag="center_fit",
+                                     method="mean",
+                                     interpolation="spline",
+                                     radius=0.05,
+                                     sign="positive",
+                                     model="moffat",
+                                     guess=(6., 4., 3., 3., 1., 0., 0., 1.))
+
+        self.pipeline.add_module(center)
+
+        with pytest.warns(RuntimeWarning) as warning:
+            self.pipeline.run_module("center3")
+
+        assert len(warning) == 4
+        assert warning[0].message.args[0] == "invalid value encountered in sqrt"
+        assert warning[1].message.args[0] == "invalid value encountered in sqrt"
+        assert warning[2].message.args[0] == "invalid value encountered in sqrt"
+        assert warning[3].message.args[0] == "invalid value encountered in sqrt"
 
         data = self.pipeline.get_data("center")
         assert np.allclose(data[0, 39, 39], 0.023556482678860322, rtol=1e-4, atol=0.)
@@ -324,7 +357,7 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
         assert data.shape == (10, 75, 75)
 
-        attribute = self.pipeline.get_attribute("center_odd", "History: Waffle centering")
+        attribute = self.pipeline.get_attribute("center_odd", "History: WaffleCenteringModule")
         assert attribute == "position [x, y] = [50.0, 50.0]"
 
     def test_waffle_center_even(self):
@@ -353,5 +386,5 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
         assert data.shape == (10, 75, 75)
 
-        attribute = self.pipeline.get_attribute("center_even", "History: Waffle centering")
+        attribute = self.pipeline.get_attribute("center_even", "History: WaffleCenteringModule")
         assert attribute == "position [x, y] = [49.5, 49.5]"

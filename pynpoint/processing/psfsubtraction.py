@@ -5,11 +5,14 @@ Modules for PSF subtraction.
 from __future__ import absolute_import
 
 import sys
+import math
+import warnings
 
 from copy import deepcopy
 
 import numpy as np
 
+from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 
 from pynpoint.core.processing import ProcessingModule
@@ -186,15 +189,13 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                      im_shape=im_shape,
                                                      indices=indices)
 
-            history = "max PC number = "+str(np.amax(self.m_components))
+            hist = "max PC number = "+str(np.amax(self.m_components))
 
             # 1.) derotated residuals
             if self.m_res_arr_out_ports is not None:
                 self.m_res_arr_out_ports[pca_number].set_all(res_rot)
-                self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
-                    self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history_information( \
-                    "PcaPsfSubtractionModule", history)
+                self.m_res_arr_out_ports[pca_number].copy_attributes(self.m_star_in_port)
+                self.m_res_arr_out_ports[pca_number].add_history("PcaPsfSubtractionModule", hist)
 
             # 2.) mean residuals
             if self.m_res_mean_out_port is not None:
@@ -341,21 +342,167 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # save history for all other ports
         if self.m_res_mean_out_port is not None:
-            self.m_res_mean_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_res_mean_out_port.add_history_information("PcaPsfSubtractionModule", history)
+            self.m_res_mean_out_port.copy_attributes(self.m_star_in_port)
+            self.m_res_mean_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_median_out_port is not None:
-            self.m_res_median_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_res_median_out_port.add_history_information("PcaPsfSubtractionModule", history)
+            self.m_res_median_out_port.copy_attributes(self.m_star_in_port)
+            self.m_res_median_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_weighted_out_port is not None:
-            self.m_res_weighted_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_res_weighted_out_port.add_history_information("PcaPsfSubtractionModule",
-                                                                 history)
+            self.m_res_weighted_out_port.copy_attributes(self.m_star_in_port)
+            self.m_res_weighted_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_rot_mean_clip_out_port is not None:
-            self.m_res_rot_mean_clip_out_port.copy_attributes_from_input_port(self.m_star_in_port)
-            self.m_res_rot_mean_clip_out_port.add_history_information("PcaPsfSubtractionModule",
-                                                                      history)
+            self.m_res_rot_mean_clip_out_port.copy_attributes(self.m_star_in_port)
+            self.m_res_rot_mean_clip_out_port.add_history("PcaPsfSubtractionModule", history)
 
         self.m_star_in_port.close_port()
+
+
+class ClassicalADIModule(ProcessingModule):
+    """
+    Module for PSF subtraction with classical ADI by subtracting a median-combined reference
+    image. A rotation threshold can be set for a fixed separation to prevent self-subtraction.
+    """
+
+    def __init__(self,
+                 threshold,
+                 nreference=5,
+                 residuals="median",
+                 extra_rot=0.,
+                 name_in="cadi",
+                 image_in_tag="im_arr",
+                 res_out_tag="residuals",
+                 stack_out_tag="stacked"):
+        """
+        Constructor of ClassicalADIModule.
+
+        :param threshold: Tuple with the separation for which the angle threshold is optimized
+                          (arcsec), FWHM of the PSF (arcsec), and the threshold (FWHM) for the
+                          the reference images. No threshold is used if set to None.
+        :type threshold: tuple(float, float, float)
+        :param nreference: Number of reference image, closest in line to the science image. All
+                           images are used if *threshold* is None or *nreference* is None.
+        :type nreference: int
+        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
+                          or "clipped").
+        :type residuals: str
+        :param extra_rot: Additional rotation angle of the images (deg).
+        :type extra_rot: float
+        :param name_in: Unique name of the module instance.
+        :type name_in: str
+        :param image_in_tag: Tag of the database entry with the science images that are read
+                             as input.
+        :type image_in_tag: str
+        :param res_out_tag: Tag of the database entry with the residuals of the PSF subtraction
+                            that are written as output.
+        :type res_out_tag: str
+        :param stack_out_tag: Tag of the database entry with the stacked residuals that are written
+                              as output.
+        :type stack_out_tag: str
+
+        :return: None
+        """
+
+        super(ClassicalADIModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_res_inout_port = self.add_input_port(res_out_tag)
+
+        self.m_res_out_port = self.add_output_port(res_out_tag)
+        self.m_stack_out_port = self.add_output_port(stack_out_tag)
+
+        self.m_threshold = threshold
+        self.m_nreference = nreference
+        self.m_extra_rot = extra_rot
+        self.m_residuals = residuals
+
+        self.m_count = 0
+
+    def run(self):
+        """
+        Run method of the module. Selects for each image the reference images closest in line while
+        taking into account a rotation threshold for a fixed separation, median-combines the
+        references images, and subtracts the reference image from each image separately.
+        Alternatively, a single, median-combined reference image can be created and subtracted from
+        all images. All images are used if the rotation condition can not be met. Both the
+        individual residuals (before derotation) and the stacked residuals are stored.
+
+        :return: None
+        """
+
+        def _subtract_psf(image,
+                          parang_thres,
+                          nref,
+                          reference):
+
+            if parang_thres:
+                ang_diff = np.abs(parang[self.m_count]-parang)
+                index_thres = np.where(ang_diff > parang_thres)[0]
+
+                if index_thres.size == 0:
+                    reference = self.m_image_in_port.get_all()
+                    warnings.warn("No images meet the rotation threshold. Creating a reference "
+                                  "PSF from the median of all images instead.")
+
+                else:
+                    if nref:
+                        index_diff = np.abs(self.m_count - index_thres)
+                        index_near = np.argsort(index_diff)[:nref]
+                        index_sort = np.sort(index_thres[index_near])
+                        reference = self.m_image_in_port[index_sort, :, :]
+
+                    else:
+                        reference = self.m_image_in_port[index_thres, :, :]
+
+                reference = np.median(reference, axis=0)
+
+            self.m_count += 1
+
+            return image-reference
+
+        parang = -1.*self.m_image_in_port.get_attribute("PARANG") + self.m_extra_rot
+
+        if self.m_threshold:
+            parang_thres = 2.*math.atan2(self.m_threshold[2]*self.m_threshold[1],
+                                         2.*self.m_threshold[0])
+            parang_thres = math.degrees(parang_thres)
+            reference = None
+
+        else:
+            parang_thres = None
+            reference = self.m_image_in_port.get_all()
+            reference = np.median(reference, axis=0)
+
+        self.apply_function_to_images(_subtract_psf,
+                                      self.m_image_in_port,
+                                      self.m_res_out_port,
+                                      "Running ClassicalADIModule...",
+                                      func_args=(parang_thres, self.m_nreference, reference))
+
+        im_res = self.m_res_inout_port.get_all()
+
+        res_rot = np.zeros(im_res.shape)
+        for i, item in enumerate(parang):
+            res_rot[i, ] = rotate(im_res[i, ], item, reshape=False)
+
+        stack = combine_residuals(self.m_residuals,
+                                  res_rot,
+                                  residuals=im_res,
+                                  angles=parang)
+
+        self.m_stack_out_port.set_all(stack)
+
+        if self.m_threshold:
+            history = "threshold [deg] = "+'{0:.2f}'.format(parang_thres)
+        else:
+            history = "threshold [deg] = None"
+
+        self.m_res_out_port.copy_attributes(self.m_image_in_port)
+        self.m_res_out_port.add_history("ClassicalADIModule", history)
+
+        self.m_stack_out_port.copy_attributes(self.m_image_in_port)
+        self.m_stack_out_port.add_history("ClassicalADIModule", history)
+
+        self.m_res_out_port.close_port()

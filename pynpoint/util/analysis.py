@@ -204,6 +204,12 @@ def merit_function(residuals,
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
+        # https://photutils.readthedocs.io/en/stable/overview.html
+        # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
+        # corresponds to the center of the lowest, leftmost array element. This means that
+        # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
+        # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
+
         phot_table = aperture_photometry(np.abs(residuals),
                                          create_aperture(aperture),
                                          method='exact')

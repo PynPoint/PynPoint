@@ -175,15 +175,11 @@ class FakePlanetModule(ProcessingModule):
         sys.stdout.write("Running FakePlanetModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "(sep, angle, mag) = ("+"{0:.2f}".format(self.m_position[0]*pixscale)+", "+ \
+                  "{0:.2f}".format(self.m_position[1])+", "+"{0:.2f}".format(self.m_magnitude)+")"
 
-        self.m_image_out_port.add_history_information("FakePlanetModule",
-                                                      "(sep, angle, mag) = " + "(" + \
-                                                      "{0:.2f}".format(self.m_position[0]* \
-                                                       pixscale)+", "+ \
-                                                      "{0:.2f}".format(self.m_position[1])+", "+ \
-                                                      "{0:.2f}".format(self.m_magnitude)+")")
-
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+        self.m_image_out_port.add_history("FakePlanetModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -426,15 +422,12 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        self.m_res_out_port.add_history_information("SimplexMinimizationModule",
-                                                    "Merit function = "+str(self.m_merit))
+        history = "merit = "+str(self.m_merit)
+        self.m_flux_position_port.copy_attributes(self.m_image_in_port)
+        self.m_flux_position_port.add_history("SimplexMinimizationModule", history)
 
-        self.m_flux_position_port.add_history_information("SimplexMinimizationModule",
-                                                          "Merit function = "+str(self.m_merit))
-
-        self.m_res_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_flux_position_port.copy_attributes_from_input_port(self.m_image_in_port)
-
+        self.m_res_out_port.copy_attributes(self.m_image_in_port)
+        self.m_res_out_port.add_history("SimplexMinimizationModule", history)
         self.m_res_out_port.close_port()
 
 
@@ -559,8 +552,8 @@ class FalsePositiveModule(ProcessingModule):
         sys.stdout.flush()
 
         history = "aperture [arcsec] = "+str("{:.2f}".format(self.m_aperture*pixscale))
-        self.m_snr_out_port.add_history_information("FalsePositiveModule", history)
-        self.m_snr_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_snr_out_port.copy_attributes(self.m_image_in_port)
+        self.m_snr_out_port.add_history("FalsePositiveModule", history)
         self.m_snr_out_port.close_port()
 
 
@@ -869,9 +862,10 @@ class MCMCsamplingModule(ProcessingModule):
         sys.stdout.flush()
 
         self.m_chain_out_port.set_all(sampler.chain)
+
         history = "walkers = "+str(self.m_nwalkers)+", steps = "+str(self.m_nsteps)
-        self.m_chain_out_port.add_history_information("MCMCsamplingModule", history)
-        self.m_chain_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        self.m_chain_out_port.copy_attributes(self.m_image_in_port)
+        self.m_chain_out_port.add_history("MCMCsamplingModule", history)
         self.m_chain_out_port.close_port()
 
         print("Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction)))
@@ -962,7 +956,7 @@ class AperturePhotometryModule(ProcessingModule):
                                       "Running AperturePhotometryModule...",
                                       func_args=(aperture,))
 
-        self.m_phot_out_port.copy_attributes_from_input_port(self.m_image_in_port)
-        self.m_phot_out_port.add_history_information("AperturePhotometryModule",
-                                                     "radius = "+str(self.m_radius*pixscale))
+        history = "radius [arcsec] = "+str(self.m_radius*pixscale)
+        self.m_phot_out_port.copy_attributes(self.m_image_in_port)
+        self.m_phot_out_port.add_history("AperturePhotometryModule", history)
         self.m_phot_out_port.close_port()

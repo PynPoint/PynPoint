@@ -77,8 +77,9 @@ class SubtractImagesModule(ProcessingModule):
         sys.stdout.write("Running SubtractImagesModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.add_history_information("Images subtracted", "")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
+        history = "scaling = "+str(self.m_scaling)
+        self.m_image_out_port.add_history("SubtractImagesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in1_port)
         self.m_image_out_port.close_port()
 
 
@@ -146,8 +147,9 @@ class AddImagesModule(ProcessingModule):
         sys.stdout.write("Running AddImagesModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.add_history_information("Images added", "")
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in1_port)
+        history = "scaling = "+str(self.m_scaling)
+        self.m_image_out_port.add_history("AddImagesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in1_port)
         self.m_image_out_port.close_port()
 
 
@@ -225,6 +227,7 @@ class RotateImagesModule(ProcessingModule):
         sys.stdout.write("Running RotateImagesModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.add_history_information("Images rotated", self.m_angle)
-        self.m_image_out_port.copy_attributes_from_input_port(self.m_image_in_port)
+        history = "angle [deg] = "+str(self.m_angle)
+        self.m_image_out_port.add_history("RotateImagesModule", history)
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
