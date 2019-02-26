@@ -31,7 +31,7 @@ PynPoint is a generic, end-to-end pipeline for the data reduction and analysis o
 
 The pipeline has a modular architecture with a central data storage in which all results are stored by the processing modules. These modules have specific tasks such as the subtraction of the thermal background emission, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available I/O modules.
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the `accreting M dwarf companion <http://adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ of HD 142527 can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of `HD 142527 <http://adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 Documentation
 -------------
