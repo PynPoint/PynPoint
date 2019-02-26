@@ -23,7 +23,7 @@ The pipeline works with two different components:
 2. The actual pipeline :class:`pynpoint.core.pypeline` which capsules a list of pipeline modules.
 
 .. important::
-   In PynPoint, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0) corresponds to the center of the pixel in the bottom-left corner of the image. The coordinate of the bottom-left corner is therefore (x, y) = (-0.5, -0.5). Note that there is an offset of unity in both directions with respect to the pixel coordinates of DS9, for which the bottom-left corner is (x, y) = (-0.5, -0.5).
+   Pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0) corresponds to the center of the pixel in the bottom-left corner of the image. The coordinate of the bottom-left corner is therefore (x, y) = (-0.5, -0.5). This means that there is an offset of 1.0 in both directions with respect to the pixel coordinates of DS9, for which the bottom-left corner is (x, y) = (0.5, 0.5).
 
 .. _data-types:
 
