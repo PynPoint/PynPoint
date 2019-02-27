@@ -14,7 +14,7 @@ from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 from six.moves import range
 
-from pynpoint.util.image import shift_image
+from pynpoint.util.image import shift_image, image_center_subpixel
 
 
 def false_alarm(image,
@@ -23,14 +23,16 @@ def false_alarm(image,
                 size,
                 ignore):
     """
-    Function for the formal t-test for high-contrast imaging at small working angles, as well as
-    the related false positive fraction (Mawet et al. 2014).
+    Function for the formal t-test for high-contrast imaging at small working angles and the
+    related false positive fraction (Mawet et al. 2014).
 
     :param image: Input image.
     :type image: numpy.ndarray
-    :param x_pos: Position (pix) along the x-axis.
+    :param x_pos: Position (pix) along the horizontal axis. The pixel coordinates of the
+                  bottom-left corner of the image are (-0.5, -0.5).
     :type x_pos: float
-    :param y_pos: Position (pix) along the y-axis.
+    :param y_pos: Position (pix) along the vertical axis. The pixel coordinates of the
+                  bottom-left corner of the image are (-0.5, -0.5).
     :type y_pos: float
     :param size: Aperture radius (pix).
     :type size: float
@@ -41,7 +43,7 @@ def false_alarm(image,
     :rtype: float, float, float
     """
 
-    center = (np.size(image, 0)/2., np.size(image, 1)/2.)
+    center = image_center_subpixel(image)
     radius = math.sqrt((center[0]-y_pos)**2.+(center[1]-x_pos)**2.)
 
     num_ap = int(math.pi*radius/size)
@@ -53,13 +55,13 @@ def false_alarm(image,
 
     if num_ap < 3:
         raise ValueError("Number of apertures (num_ap=%s) is too small to calculate the "
-                         "false positive fraction. Increase the lower limit of the "
-                         "separation argument." % num_ap)
+                         "false positive fraction." % num_ap)
 
     ap_phot = np.zeros(num_ap)
     for i, theta in enumerate(ap_theta):
         x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
                             (y_pos-center[0])*math.sin(theta)
+
         y_tmp = center[0] + (x_pos-center[1])*math.sin(theta) + \
                             (y_pos-center[0])*math.cos(theta)
 
