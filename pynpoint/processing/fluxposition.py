@@ -444,7 +444,8 @@ class FalsePositiveModule(ProcessingModule):
                  name_in="snr",
                  image_in_tag="im_arr",
                  snr_out_tag="snr_fpf",
-                 optimize=False):
+                 optimize=False,
+                 **kwargs):
         """
         Constructor of FalsePositiveModule.
 
@@ -471,9 +472,20 @@ class FalsePositiveModule(ProcessingModule):
         :param optimize: Optimize the SNR. The aperture position is written in the history. The
                          size of the aperture is kept fixed.
         :type optimize: bool
+        :param kwargs:
+            See below.
+
+        :Keyword arguments:
+            **tolerance** (*float*) -- The absolute tolerance (pix) on the position for the
+                                       optimization to end. Default is set to 0.01 pix.
 
         :return: None
         """
+
+        if "tolerance" in kwargs:
+            self.m_tolerance = kwargs["tolerance"]
+        else:
+            self.m_tolerance = 1e-2
 
         super(FalsePositiveModule, self).__init__(name_in)
 
@@ -523,7 +535,7 @@ class FalsePositiveModule(ProcessingModule):
                                   x0=[self.m_position[0], self.m_position[1]],
                                   method="Nelder-Mead",
                                   tol=None,
-                                  options={'fatol':float("inf"), 'ftol':1e-6})
+                                  options={'xatol':self.m_tolerance, 'fatol':float("inf")})
 
                 _, snr, fpf = false_alarm(image=image,
                                           x_pos=result.x[0],
