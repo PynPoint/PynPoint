@@ -12,13 +12,12 @@ import numpy as np
 import emcee
 
 from six.moves import range
-from scipy.stats import t
 from scipy.optimize import minimize
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
-from pynpoint.util.image import create_mask, polar_to_cartesian
+from pynpoint.util.image import create_mask, polar_to_cartesian, get_image, cartesian_to_polar
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames, image_size_port, number_images_port, \
                                  rotate_coordinates
@@ -417,7 +416,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],
                  method="Nelder-Mead",
                  tol=None,
-                 options={'xatol': self.m_tolerance, 'fatol': float("inf")})
+                 options={'xatol':self.m_tolerance, 'fatol':float("inf")})
 
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
@@ -434,7 +433,8 @@ class SimplexMinimizationModule(ProcessingModule):
 class FalsePositiveModule(ProcessingModule):
     """
     Module to calculate the signal-to-noise ratio (SNR) and false positive fraction (FPF) at a
-    specified location in an image by using the Student's t-test (Mawet et al. 2014).
+    specified location in an image by using the Student's t-test (Mawet et al. 2014). Optionally,
+    the SNR can be optimized with the aperture position as free parameter.
     """
 
     def __init__(self,
@@ -443,12 +443,13 @@ class FalsePositiveModule(ProcessingModule):
                  ignore=False,
                  name_in="snr",
                  image_in_tag="im_arr",
-                 snr_out_tag="snr_fpf"):
+                 snr_out_tag="snr_fpf",
+                 optimize=False):
         """
         Constructor of FalsePositiveModule.
 
         :param position: The x and y position (pix) where the SNR and FPF is calculated. Note that
-                         the bottom left of the image is defined as (0, 0) so there is a -0.5
+                         the bottom left of the image is defined as (-0.5, -0.5) so there is a -1.0
                          offset with respect to the DS9 coordinate system. Aperture photometry
                          corrects for the partial inclusion of pixels at the boundary.
         :type position: (float, float)
@@ -467,6 +468,9 @@ class FalsePositiveModule(ProcessingModule):
                             counterclockwise direction with respect to the upward direction (i.e.,
                             East of North).
         :type snr_out_tag: str
+        :param optimize: Optimize the SNR. The aperture position is written in the history. The
+                         size of the aperture is kept fixed.
+        :type optimize: bool
 
         :return: None
         """
@@ -479,15 +483,27 @@ class FalsePositiveModule(ProcessingModule):
         self.m_position = position
         self.m_aperture = aperture
         self.m_ignore = ignore
+        self.m_optimize = optimize
 
     def run(self):
         """
         Run method of the module. Calculates the SNR and FPF for a specified position in a post-
-        processed image with the Student's t-test (Mawet et al. 2014). This approach accounts
-        for small sample statistics.
+        processed image with the Student's t-test (Mawet et al. 2014). This approach assumes
+        Gaussian noise but accounts for small sample statistics.
 
         :return: None
         """
+
+        def _fpf_minimize(arg):
+            pos_x, pos_y = arg
+
+            _, _, fpf = false_alarm(image=image,
+                                    x_pos=pos_x,
+                                    y_pos=pos_y,
+                                    size=self.m_aperture,
+                                    ignore=self.m_ignore)
+
+            return fpf
 
         self.m_snr_out_port.del_all_data()
         self.m_snr_out_port.del_all_attributes()
@@ -496,45 +512,35 @@ class FalsePositiveModule(ProcessingModule):
         self.m_aperture /= pixscale
 
         nimages = number_images_port(self.m_image_in_port)
-        center = self.m_image_in_port.get_shape()[-1]/2.
-
-        sep = math.sqrt((center-self.m_position[0])**2.+(center-self.m_position[1])**2.)
-        ang = (math.atan2(self.m_position[1]-center,
-                          self.m_position[0]-center)*180./math.pi - 90.)%360.
-
-        num_ap = int(math.pi*sep/self.m_aperture)
-        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
-
-        if self.m_ignore:
-            num_ap -= 2
-            ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
 
         for j in range(nimages):
             progress(j, nimages, "Running FalsePositiveModule...")
 
-            if nimages == 1:
-                image = self.m_image_in_port.get_all()
-                if image.ndim == 3:
-                    image = np.squeeze(image, axis=0)
+            image = get_image(self.m_image_in_port, j, nimages)
+
+            if self.m_optimize:
+                result = minimize(fun=_fpf_minimize,
+                                  x0=[self.m_position[0], self.m_position[1]],
+                                  method="Nelder-Mead",
+                                  tol=None,
+                                  options={'fatol':float("inf"), 'ftol':1e-6})
+
+                _, snr, fpf = false_alarm(image=image,
+                                          x_pos=result.x[0],
+                                          y_pos=result.x[1],
+                                          size=self.m_aperture,
+                                          ignore=self.m_ignore)
+
+                sep, ang = cartesian_to_polar(image, result.x[0], result.x[1])
 
             else:
-                image = self.m_image_in_port[j, ]
+                _, snr, fpf = false_alarm(image=image,
+                                          x_pos=self.m_position[0],
+                                          y_pos=self.m_position[1],
+                                          size=self.m_aperture,
+                                          ignore=self.m_ignore)
 
-            ap_phot = np.zeros(num_ap)
-            for i, theta in enumerate(ap_theta):
-                x_tmp = center + (self.m_position[0]-center)*math.cos(theta) - \
-                                 (self.m_position[1]-center)*math.sin(theta)
-                y_tmp = center + (self.m_position[0]-center)*math.sin(theta) + \
-                                 (self.m_position[1]-center)*math.cos(theta)
-
-                aperture = CircularAperture((x_tmp, y_tmp), self.m_aperture)
-                phot_table = aperture_photometry(image, aperture, method='exact')
-                ap_phot[i] = phot_table['aperture_sum']
-
-            snr = (ap_phot[0] - np.mean(ap_phot[1:])) / \
-                  (np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1)))
-
-            fpf = 1. - t.cdf(snr, num_ap-2)
+                sep, ang = cartesian_to_polar(image, self.m_position[0], self.m_position[1])
 
             result = np.column_stack((self.m_position[0],
                                       self.m_position[1],

@@ -228,6 +228,31 @@ def scale_image(image,
 
     return im_scale * (sum_before / sum_after)
 
+def cartesian_to_polar(image, x_pos, y_pos):
+    """
+    Function to convert pixel coordinates to polar coordinates.
+
+    :param image: Input image (2D or 3D).
+    :type image: numpy.ndarray
+    :param x_pos: Pixel coordinate along the horizontal axis. The bottom left corner of the image
+                  is (-0.5, -0.5).
+    :type x_pos: float
+    :param y_pos: Pixel coordinate along the vertical axis. The bottom left corner of the image
+                  is (-0.5, -0.5).
+    :type y_pos: float
+
+    :return: Polar coordinates as separation (pix) and position angle (deg). The angle is measured
+             counterclockwise with respect to the positive y-axis.
+    :rtype: float, float
+    """
+
+    center = image_center_subpixel(image) # (y, x)
+
+    sep = math.sqrt((center[1]-x_pos)**2.+(center[0]-y_pos)**2.)
+    ang = (math.atan2(y_pos-center[1], x_pos-center[0])*180./math.pi - 90.)%360.
+
+    return sep, ang
+
 def polar_to_cartesian(image, sep, ang):
     """
     Function to convert polar coordinates to pixel coordinates.
@@ -250,3 +275,29 @@ def polar_to_cartesian(image, sep, ang):
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
     return x_pos, y_pos
+
+def get_image(input_port, index, nimages):
+    """
+    Function to get an image from an input port based on its index.
+
+    :param input_port: Input port with the stack of images.
+    :type input_port: pynpoint.core.dataio.InputPort
+    :param index: Index in the stack of images.
+    :type index: int
+    :param nimages: Total number of images in the stack.
+    :type nimages: int
+
+    :return: Selected image.
+    :rtype: numpy.ndarray
+    """
+
+    if nimages == 1:
+        image = input_port.get_all()
+
+        if image.ndim == 3:
+            image = np.squeeze(image, axis=0)
+
+    else:
+        image = input_port[index, ]
+
+    return image
