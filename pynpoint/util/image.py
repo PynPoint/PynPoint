@@ -18,7 +18,7 @@ def image_center_pixel(image):
     """
     Function to get the pixel position of the image center. Note that this position
     can not be unambiguously defined for an even-sized image. Python indexing starts
-    at 0 so the coordinates of the pixel in the bottom left corner are (0, 0).
+    at 0 so the coordinates of the pixel in the bottom-left corner are (0, 0).
 
     :param image: Input image (2D or 3D).
     :type image: numpy.ndarray
@@ -88,11 +88,11 @@ def crop_image(image,
     if size%2 == 0:
         size += 1
 
-    x_start = center[1] - (size-1) // 2
-    x_end = center[1] + (size-1) // 2 + 1
+    x_start = center[1] - (size-1)//2
+    x_end = center[1] + (size-1)//2 + 1
 
-    y_start = center[0] - (size-1) // 2
-    y_end = center[0] + (size-1) // 2 + 1
+    y_start = center[0] - (size-1)//2
+    y_end = center[0] + (size-1)//2 + 1
 
     if x_start < 0 or y_start < 0 or x_end > image.shape[1] or y_end > image.shape[0]:
         raise ValueError("Target image resolution does not fit inside the input image resolution.")
@@ -249,7 +249,8 @@ def cartesian_to_polar(image, x_pos, y_pos):
     center = image_center_subpixel(image) # (y, x)
 
     sep = math.sqrt((center[1]-x_pos)**2.+(center[0]-y_pos)**2.)
-    ang = (math.atan2(y_pos-center[1], x_pos-center[0])*180./math.pi - 90.)%360.
+    ang = math.atan2(y_pos-center[1], x_pos-center[0])
+    ang = (math.degrees(ang)-90.)%360.
 
     return sep, ang
 
