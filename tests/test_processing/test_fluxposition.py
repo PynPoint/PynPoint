@@ -176,10 +176,12 @@ class TestFluxAndPosition(object):
         self.pipeline.run_module("false")
 
         data = self.pipeline.get_data("snr_fpf")
-        assert np.allclose(data[0, 2], 0.5280553948214145, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 3], 94.39870535499551, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 4], 8.542166952478182, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 5], 9.54772666372783e-07, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 0], 31.0, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 49.0, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.513710034941892, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 93.01278750418334, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 4], 7.633199090133858, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 5], 3.029521252528866e-06, rtol=limit, atol=0.)
 
     def test_simplex_minimization(self):
 

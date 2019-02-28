@@ -89,7 +89,7 @@ class TestDetectionLimits(object):
 
             data = self.pipeline.get_data("limits_"+item)
             assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 1], 6.647211555936695, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 2], 0.07837070875760642, rtol=limit, atol=0.)
+            assert np.allclose(data[0, 1], 6.791207747570333, rtol=limit, atol=0.)
+            assert np.allclose(data[0, 2], 0.09527007675032029, rtol=limit, atol=0.)
             assert np.allclose(data[0, 3], 0.0002012649090622487, rtol=limit, atol=0.)
             assert data.shape == (1, 4)
