@@ -4,10 +4,7 @@ Wrapper utils for the wavelet functions for the mlpy cwt implementation (see con
 
 from __future__ import absolute_import
 
-# import copy
-
 import numpy as np
-# import matplotlib.pyplot as plt
 
 from numba import jit
 from scipy.special import gamma, hermite
