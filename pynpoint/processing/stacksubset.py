@@ -5,6 +5,8 @@ Modules for stacking and subsampling of images.
 from __future__ import absolute_import
 
 import sys
+import math
+import cmath
 import warnings
 
 import numpy as np
@@ -12,7 +14,7 @@ import numpy as np
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.module import progress, memory_frames, number_images_port
 from pynpoint.util.image import rotate_images
 
 
@@ -55,14 +57,22 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_stacking = stacking
 
         if self.m_stacking is None and self.m_random is None:
-            warnings.warn("Both 'stacking' and 'random' are set to None.")
+            warnings.warn("Both 'stacking' and 'random' are set to None. No data will be written.")
 
     def run(self):
         """
-        Run method of the module. Stacks subsets of images and/or selects a random subset.
+        Run method of the module. Stacks subsets of images and/or selects a random subset. Also
+        the parallactic angles are mean-combined if images are stacked.
 
         :return: None
         """
+
+        def _mean_angle(angles):
+            cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
+            cmath_phase = cmath.phase(cmath_rect/len(angles))
+
+            return math.degrees(cmath_phase)
+
 
         def _stack(nimages, im_shape, parang):
             im_new = None
@@ -84,7 +94,8 @@ class StackAndSubsetModule(ProcessingModule):
                     progress(i, nimages_new, "Running StackAndSubsetModule...")
 
                     if parang is not None:
-                        parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                        # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                        parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
 
                     im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
@@ -99,7 +110,7 @@ class StackAndSubsetModule(ProcessingModule):
         def _subset(im_shape, im_new, parang_new):
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)
-                choice = np.sort(choice)
+                choice = list(np.sort(choice))
 
                 if parang_new is None:
                     parang_new = None
@@ -107,11 +118,13 @@ class StackAndSubsetModule(ProcessingModule):
                     parang_new = parang_new[choice]
 
                 if self.m_stacking is None:
-                    im_new = self.m_image_in_port[choice, ]
+                    im_new = self.m_image_in_port[list(choice), ]
                 else:
                     im_new = im_new[choice, ]
 
-            if im_new.ndim == 2:
+            if self.m_random is None and self.m_stacking is None:
+                nimages = 0
+            elif im_new.ndim == 2:
                 nimages = 1
             elif im_new.ndim == 3:
                 nimages = im_new.shape[0]
@@ -121,7 +134,7 @@ class StackAndSubsetModule(ProcessingModule):
         non_static = self.m_image_in_port.get_all_non_static_attributes()
 
         im_shape = self.m_image_in_port.get_shape()
-        nimages = im_shape[0]
+        nimages = number_images_port(self.m_image_in_port)
 
         if self.m_random is not None:
             if self.m_stacking is None and im_shape[0] < self.m_random:
@@ -144,18 +157,20 @@ class StackAndSubsetModule(ProcessingModule):
         sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.set_all(im_new, keep_attributes=True)
-        self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
+        if self.m_random or self.m_stacking:
+            self.m_image_out_port.set_all(im_new, keep_attributes=True)
+            self.m_image_out_port.copy_attributes(self.m_image_in_port)
+            self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
 
-        if parang is not None:
-            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+            if parang_new is not None:
+                self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
 
-        if "NFRAMES" in non_static:
-            self.m_image_out_port.del_attribute("NFRAMES")
+            if "NFRAMES" in non_static:
+                self.m_image_out_port.del_attribute("NFRAMES")
 
-        history = "stacking ="+str(self.m_stacking)+", random ="+str(self.m_random)
-        self.m_image_out_port.add_history("StackAndSubsetModule", history)
+            history = "stacking ="+str(self.m_stacking)+", random ="+str(self.m_random)
+            self.m_image_out_port.add_history("StackAndSubsetModule", history)
+
         self.m_image_out_port.close_port()
 
 
