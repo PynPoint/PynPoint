@@ -91,7 +91,7 @@ class FitsWritingModule(WritingModule):
 
             for attr in attributes:
                 if len(attr) > 8:
-                    prihdr["hierarch "+attr] = attributes[attr]
+                    prihdr["hierarch "+attr] = str(attributes[attr])
                 else:
                     prihdr[attr] = attributes[attr]
 
