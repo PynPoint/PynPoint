@@ -378,7 +378,7 @@ class TestOutputPort(object):
         # check that only one warning was raised
         assert len(warning) == 1
         # check that the message matches
-        assert warning[0].message.args[0] == "Can not save attribute while no data exists."
+        assert warning[0].message.args[0] == "Can not store attribute if data tag does not exist."
 
         out_port.del_all_attributes()
         out_port.del_all_data()
