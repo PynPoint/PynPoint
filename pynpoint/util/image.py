@@ -14,7 +14,7 @@ from scipy.ndimage import rotate
 from skimage.transform import rescale
 
 
-def image_center_pixel(image):
+def center_pixel(image):
     """
     Function to get the pixel position of the image center. Note that this position
     can not be unambiguously defined for an even-sized image. Python indexing starts
@@ -41,7 +41,7 @@ def image_center_pixel(image):
 
     return center
 
-def image_center_subpixel(image):
+def center_subpixel(image):
     """
     Function to get the precise position of the image center. The center of the pixel in the
     bottom left corner of the image is defined as (0, 0), so the bottom left corner of the
@@ -80,10 +80,10 @@ def crop_image(image,
 
     if center is None or (center[0] is None and center[1] is None):
         if image.ndim == 2:
-            center = image_center_pixel(image)
+            center = center_pixel(image)
 
         elif image.ndim == 3:
-            center = image_center_pixel(image[0, ])
+            center = center_pixel(image[0, ])
 
     if size%2 == 0:
         size += 1
@@ -228,12 +228,12 @@ def scale_image(image,
 
     return im_scale * (sum_before / sum_after)
 
-def cartesian_to_polar(image, x_pos, y_pos):
+def cartesian_to_polar(center, x_pos, y_pos):
     """
     Function to convert pixel coordinates to polar coordinates.
 
-    :param image: Input image (2D or 3D).
-    :type image: numpy.ndarray
+    :param center: Image center (y, x) from :meth:`pynpoint.util.image.center_subpixel`.
+    :type center: tuple(float, float)
     :param x_pos: Pixel coordinate along the horizontal axis. The bottom left corner of the image
                   is (-0.5, -0.5).
     :type x_pos: float
@@ -245,8 +245,6 @@ def cartesian_to_polar(image, x_pos, y_pos):
              counterclockwise with respect to the positive y-axis.
     :rtype: float, float
     """
-
-    center = image_center_subpixel(image) # (y, x)
 
     sep = math.sqrt((center[1]-x_pos)**2.+(center[0]-y_pos)**2.)
     ang = math.atan2(y_pos-center[1], x_pos-center[0])
@@ -270,7 +268,7 @@ def polar_to_cartesian(image, sep, ang):
     :rtype: float, float
     """
 
-    center = image_center_subpixel(image) # (y, x)
+    center = center_subpixel(image) # (y, x)
 
     x_pos = center[1] + sep*math.cos(math.radians(ang+90.))
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))

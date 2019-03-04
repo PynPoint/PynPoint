@@ -21,7 +21,7 @@ from six.moves import range
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import memory_frames, progress, locate_star, number_images_port, \
                                  image_size_port
-from pynpoint.util.image import crop_image, shift_image, image_center_pixel
+from pynpoint.util.image import crop_image, shift_image, center_pixel
 
 
 class StarExtractionModule(ProcessingModule):
@@ -143,7 +143,7 @@ class StarExtractionModule(ProcessingModule):
 
                 index.append(self.m_count)
 
-                starpos = image_center_pixel(image)
+                starpos = center_pixel(image)
                 im_crop = crop_image(image, starpos, im_size)
 
             star.append((starpos[1], starpos[0]))
@@ -880,7 +880,7 @@ class WaffleCenteringModule(ProcessingModule):
                                   "the stack.")
 
             if center is None:
-                center = image_center_pixel(center_frame)
+                center = center_pixel(center_frame)
             else:
                 center = (np.floor(center[0]), np.floor(center[1]))
 

@@ -28,7 +28,8 @@ class StackAndSubsetModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
                  random=None,
-                 stacking=None):
+                 stacking=None,
+                 combine="mean"):
         """
         Constructor of StackAndSubsetModule.
 
@@ -44,6 +45,9 @@ class StackAndSubsetModule(ProcessingModule):
         :param stacking: Number of stacked images per subset. No stacking is applied if set
                          to None.
         :type stacking: int
+        :param combine: Method for combining images ("mean" or "median"). The angles are always
+                        mean-combined.
+        :type combine: str
 
         :return: None
         """
@@ -55,6 +59,7 @@ class StackAndSubsetModule(ProcessingModule):
 
         self.m_random = random
         self.m_stacking = stacking
+        self.m_combine = combine
 
         if self.m_stacking is None and self.m_random is None:
             warnings.warn("Both 'stacking' and 'random' are set to None. No data will be written.")
@@ -97,7 +102,10 @@ class StackAndSubsetModule(ProcessingModule):
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
                         parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
 
-                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                    if self.m_combine == "mean":
+                        im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                    elif self.m_combine == "median":
+                        im_new[i, ] = np.median(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
                 im_shape = im_new.shape
 

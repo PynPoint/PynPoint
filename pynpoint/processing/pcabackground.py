@@ -683,8 +683,7 @@ class DitheringBackgroundModule(ProcessingModule):
             npix = self.m_image_in_port.get_shape()[1]
 
             if self.m_center is None:
-                self.m_center = np.copy(dither)
-                self.m_center += float(npix)/2.
+                self.m_center = np.copy(dither) + float(npix)/2.
                 self.m_center = tuple(map(tuple, self.m_center))
 
             else:

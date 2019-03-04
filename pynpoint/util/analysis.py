@@ -14,7 +14,7 @@ from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 from six.moves import range
 
-from pynpoint.util.image import shift_image, image_center_subpixel
+from pynpoint.util.image import shift_image, center_subpixel
 
 
 def false_alarm(image,
@@ -43,7 +43,7 @@ def false_alarm(image,
     :rtype: float, float, float
     """
 
-    center = image_center_subpixel(image)
+    center = center_subpixel(image)
     radius = math.sqrt((center[0]-y_pos)**2.+(center[1]-x_pos)**2.)
 
     num_ap = int(math.pi*radius/size)

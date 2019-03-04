@@ -5,7 +5,6 @@ Modules for photometric and astrometric measurements of a planet.
 from __future__ import absolute_import
 from __future__ import print_function
 
-import math
 import sys
 
 import numpy as np
@@ -17,7 +16,8 @@ from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
-from pynpoint.util.image import create_mask, polar_to_cartesian, get_image, cartesian_to_polar
+from pynpoint.util.image import create_mask, polar_to_cartesian, get_image, cartesian_to_polar, \
+                                center_subpixel
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames, image_size_port, number_images_port, \
                                  rotate_coordinates
@@ -343,9 +343,9 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_edge_size /= pixscale
 
         psf = self.m_psf_in_port.get_all()
-        center = (psf.shape[-2]/2., psf.shape[-1]/2.)
-
         images = self.m_image_in_port.get_all()
+
+        center = center_subpixel(psf)
 
         if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number '
@@ -361,8 +361,7 @@ class SimplexMinimizationModule(ProcessingModule):
             pos_x = arg[1]
             mag = arg[2]
 
-            sep = math.sqrt((pos_y-center[0])**2+(pos_x-center[1])**2)
-            ang = math.atan2(pos_y-center[0], pos_x-center[1])*180./math.pi - 90.
+            sep, ang = cartesian_to_polar(center, pos_x, pos_y)
 
             fake = fake_planet(images=images,
                                psf=psf,
@@ -509,11 +508,15 @@ class FalsePositiveModule(ProcessingModule):
         def _fpf_minimize(arg):
             pos_x, pos_y = arg
 
-            _, _, fpf = false_alarm(image=image,
-                                    x_pos=pos_x,
-                                    y_pos=pos_y,
-                                    size=self.m_aperture,
-                                    ignore=self.m_ignore)
+            try:
+                _, _, fpf = false_alarm(image=image,
+                                        x_pos=pos_x,
+                                        y_pos=pos_y,
+                                        size=self.m_aperture,
+                                        ignore=self.m_ignore)
+
+            except ValueError:
+                fpf = float('inf')
 
             return fpf
 
@@ -529,6 +532,7 @@ class FalsePositiveModule(ProcessingModule):
             progress(j, nimages, "Running FalsePositiveModule...")
 
             image = get_image(self.m_image_in_port, j, nimages)
+            center = center_subpixel(image)
 
             if self.m_optimize:
                 result = minimize(fun=_fpf_minimize,
@@ -543,7 +547,7 @@ class FalsePositiveModule(ProcessingModule):
                                           size=self.m_aperture,
                                           ignore=self.m_ignore)
 
-                sep, ang = cartesian_to_polar(image, result.x[0], result.x[1])
+                sep, ang = cartesian_to_polar(center, result.x[0], result.x[1])
 
             else:
                 _, snr, fpf = false_alarm(image=image,
@@ -552,7 +556,7 @@ class FalsePositiveModule(ProcessingModule):
                                           size=self.m_aperture,
                                           ignore=self.m_ignore)
 
-                sep, ang = cartesian_to_polar(image, self.m_position[0], self.m_position[1])
+                sep, ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
 
             result = np.column_stack((self.m_position[0],
                                       self.m_position[1],
@@ -944,8 +948,8 @@ class AperturePhotometryModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Calculates the counts for each frames and saves the values
-        in the database.
+        Run method of the module. Computes the flux within a circular aperture for each
+        frame and saves the values in the database.
 
         :return: None
         """
@@ -960,10 +964,11 @@ class AperturePhotometryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
-        size = self.m_image_in_port.get_shape()[1]
+        nimages = number_images_port(self.m_image_in_port)
+        image = get_image(self.m_image_in_port, 0, nimages)
 
         if self.m_position is None:
-            self.m_position = (size/2., size/2.)
+            self.m_position = center_subpixel(image)
 
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture(self.m_position, self.m_radius)
