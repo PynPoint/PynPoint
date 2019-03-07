@@ -400,10 +400,10 @@ class StarCenteringModule(ProcessingModule):
             See below.
 
         :Keyword arguments:
-            **guess** (*(float, float, float, float, float, float, float)*) -- Tuple with the
-            initial parameter values for the least squares fit: x offset with respect to center
+            **guess** (*(float, float, float, float, float, float, float, float)*) -- Tuple with
+            the initial parameter values for the least squares fit: x offset with respect to center
             (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
-            (counts), angle (deg), offset (counts).
+            (counts), angle (deg), offset (counts), and power index (only for Moffat function).
 
         :return: None
         """

@@ -66,6 +66,7 @@ As a quick start example, we provide a preprocessed data cube of beta Pic in the
 
 Each image in the data cube has been obtained with a pre-stacking of every 200 images. The data is stored in an HDF5 database (see :ref:`hdf5-files`) which contains a stack of 263 images of 80x80 in size, the parallactic angles, and the pixel scale of the detector. The following script downloads the data (13 MB), runs the PSF subtraction with PynPoint, and plots an image of the median residuals (make sure to adjust the path of ``working_place``, ``input_place``, and ``output_place``)::
 
+    import os
     import urllib
     import numpy as np
     import matplotlib.pyplot as plt
@@ -82,11 +83,11 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
     # Python 2
     # url = urllib.URLopener()
     # url.retrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
-    #              input_place+"betapic_naco_mp.hdf5")
+    #              os.path.join(input_place, "betapic_naco_mp.hdf5"))
 
     # Python 3
     urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
-                               input_place+"betapic_naco_mp.hdf5")
+                               os.path.join(input_place, "betapic_naco_mp.hdf5"))
 
     pipeline = Pypeline(working_place_in=working_place,
                         input_place_in=input_place,
@@ -130,7 +131,7 @@ Each image in the data cube has been obtained with a pre-stacking of every 200 i
     plt.xlabel('R.A. offset [arcsec]', fontsize=12)
     plt.ylabel('Dec. offset [arcsec]', fontsize=12)
     plt.colorbar()
-    plt.savefig(output_place+"residuals.png", bbox_inches='tight')
+    plt.savefig(os.path.join(output_place, "residuals.png"), bbox_inches='tight')
 
 .. |id| raw:: html
 
