@@ -21,11 +21,11 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = '2019, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+copyright = '2014-2019, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 author = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 
 # The short X.Y version
-with open('../species/__init__.py') as initfile:
+with open('../pynpoint/__init__.py') as initfile:
     for line in initfile:
         if '__version__' in line:
             version = line.split("'")[1]
@@ -87,12 +87,12 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {"collapse_navigation": False,
-                      "display_version": False,
-                      "sticky_navigation": True,
-                      "prev_next_buttons_location": "bottom",
-                      "navigation_depth": 5,
-                      "logo_only": False}
+html_theme_options = {'collapse_navigation': False,
+                      'display_version': False,
+                      'sticky_navigation': True,
+                      'prev_next_buttons_location': 'bottom',
+                      'navigation_depth': 5,
+                      'logo_only': False}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
