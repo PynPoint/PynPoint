@@ -11,13 +11,11 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# 
+
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
-# causes error on rtd
-# import pynpoint
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
@@ -47,6 +45,7 @@ release = version
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -73,17 +72,8 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# If true, sectionauthor and moduleauthor directives will be shown in the
-# output. They are ignored by default.
-#
-show_authors = False
-
-# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-#
-html_show_copyright = True
-
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = None
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -162,7 +152,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PynPoint.tex', 'PynPoint Documentation',
-     author, 'manual'),
+     'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara', 'manual'),
 ]
 
 
@@ -183,7 +173,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'PynPoint', 'PynPoint Documentation',
-     author, 'PynPoint', 'One line description of project.',
+     author, 'PynPoint', 'Pipeline for processing and analysis of high-contrast imaging data',
      'Miscellaneous'),
 ]
 
