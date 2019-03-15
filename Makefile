@@ -25,7 +25,7 @@ docs:
 	rm -f docs/pynpoint.readwrite.rst
 	rm -f docs/pynpoint.processing.rst
 	rm -f docs/pynpoint.util.rst
-	sphinx-apidoc -o docs/ pynpoint
+	sphinx-apidoc -o docs pynpoint
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
