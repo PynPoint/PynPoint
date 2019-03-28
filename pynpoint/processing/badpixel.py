@@ -205,7 +205,8 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         :param map_out_tag: Tag of the database entry with the bad pixel map that is written as
                             output. No data is written if set to None.
         :type map_out_tag: str
-        :param box: Size of the sigma filter.
+        :param box: Size of the sigma filter. The area of the filter is equal to the squared value
+                    of *box*.
         :type box: int
         :param sigma: Sigma threshold.
         :type sigma: float
@@ -590,7 +591,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
                      mean or median replacement value. For example, a 5x5 window is used if
                      _size_=2.
         :type size: int
-        :param replace: Replace the bad pixel with the mean ('mean'), median ('media'), or
+        :param replace: Replace the bad pixel with the mean ('mean'), median ('median'), or
                         NaN ('nan').
         :type replace: str
 
