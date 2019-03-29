@@ -37,13 +37,6 @@ User Guide
    examples
    writing
 
-API Documentation
------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   modules
 
 Mailing List
 ------------
@@ -60,3 +53,11 @@ About
    :maxdepth: 2
 
    about
+
+API Documentation
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   modules
