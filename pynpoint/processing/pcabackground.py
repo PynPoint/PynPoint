@@ -1,5 +1,5 @@
 """
-Modules for PCA-based background subtraction.
+Pipeline modules for PCA-based background subtraction.
 """
 
 from __future__ import absolute_import

@@ -37,7 +37,7 @@ Accessing the data storage occurs through instances of :class:`pynpoint.core.dat
 
 .. _modules:
 
-Central configuration
+Central Configuration
 ---------------------
 
 A central configuration file has to be stored in the ``working_place_in`` with the name ``PynPoint_config.ini``. The file will be created with default values in case it does not exist when the pipeline is initiated. The values of the configuration file are stored in a separate group of the central database, each time the pipeline is initiated.

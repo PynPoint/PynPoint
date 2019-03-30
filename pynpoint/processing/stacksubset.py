@@ -1,5 +1,5 @@
 """
-Modules for stacking and subsampling of images.
+Pipeline modules for stacking and subsampling of images.
 """
 
 from __future__ import absolute_import
@@ -33,23 +33,25 @@ class StackAndSubsetModule(ProcessingModule):
         """
         Constructor of StackAndSubsetModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
-        :param random: Number of random images. All images are used if set to None.
-        :type random: int
-        :param stacking: Number of stacked images per subset. No stacking is applied if set
-                         to None.
-        :type stacking: int
-        :param combine: Method for combining images ("mean" or "median"). The angles are always
-                        mean-combined.
-        :type combine: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
+        random : int
+            Number of random images. All images are used if set to None.
+        stacking : int
+            Number of stacked images per subset. No stacking is applied if set to None.
+        combine : str
+            Method for combining images ("mean" or "median"). The angles are always mean-combined.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(StackAndSubsetModule, self).__init__(name_in)
@@ -69,7 +71,9 @@ class StackAndSubsetModule(ProcessingModule):
         Run method of the module. Stacks subsets of images and/or selects a random subset. Also
         the parallactic angles are mean-combined if images are stacked.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         def _mean_angle(angles):
@@ -194,15 +198,19 @@ class MeanCubeModule(ProcessingModule):
         """
         Constructor of MeanCubeModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the mean collapsed images that are
-                              written as output. Should be different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry with the mean collapsed images that are written as output.
+            Should be different from *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(MeanCubeModule, self).__init__(name_in=name_in)
@@ -215,7 +223,9 @@ class MeanCubeModule(ProcessingModule):
         Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
         calculates the mean of each cube, and saves the data and attributes.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
@@ -274,22 +284,26 @@ class DerotateAndStackModule(ProcessingModule):
         """
         Constructor of DerotateAndStackModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. The output is
-                              either 2D (*stack=False*) or 3D (*stack=True*).
-        :type image_out_tag: str
-        :param derotate: Derotate the images with the PARANG attribute.
-        :type derotate: bool
-        :param stack: Type of stacking applied after optional derotation ("mean", "median",
-                      or None for no stacking).
-        :type stack: str
-        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
-        :type extra_rot: float
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. The output is either 2D
+            (*stack=False*) or 3D (*stack=True*).
+        derotate : bool
+            Derotate the images with the PARANG attribute.
+        stack : str
+            Type of stacking applied after optional derotation ("mean", "median", or None for no
+            stacking).
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(DerotateAndStackModule, self).__init__(name_in=name_in)
@@ -306,7 +320,9 @@ class DerotateAndStackModule(ProcessingModule):
         Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
         is set to True) and applies an optional mean or median stacking afterwards.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         def _initialize(ndim, npix):
@@ -390,21 +406,24 @@ class CombineTagsModule(ProcessingModule):
         """
         Constructor of CombineTagsModule.
 
-        :param image_in_tags: Tags of the database entries that are read as input and combined.
-        :type image_in_tags: (str, str, )
-        :param check_attr: Compare non-static attributes between the tags or combine all non-static
-                           attributes into the new database tag.
-        :type check_attr: bool
-        :param index_init: Reinitialize the INDEX attribute. Index frames in the order of the input
-                           tags.
-        :type: index_init: bool
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should not be
-                              present in *image_in_tags*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        image_in_tags : tuple(str, )
+            Tags of the database entries that are read as input and combined.
+        check_attr : bool
+            Compare non-static attributes between the tags or combine all non-static attributes
+            into the new database tag.
+        index_init : bool
+            Reinitialize the INDEX attribute. Index frames in the order of the input tags.
+        name_in : str
+            Unique name of the module instance.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should not be present in
+            *image_in_tags*.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(CombineTagsModule, self).__init__(name_in=name_in)
@@ -427,7 +446,9 @@ class CombineTagsModule(ProcessingModule):
         and adds the static and non-static attributes. The values of the attributes are compared
         between the input tags to make sure that the input tags descent from the same data set.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         self.m_image_out_port.del_all_data()

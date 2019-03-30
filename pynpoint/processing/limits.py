@@ -1,5 +1,5 @@
 """
-Modules for determining detection limits.
+Pipeline modules for estimating detection limits.
 """
 
 from __future__ import absolute_import

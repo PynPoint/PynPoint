@@ -17,8 +17,8 @@ from pynpoint.processing.basic import SubtractImagesModule, \
                                       AddImagesModule, \
                                       RotateImagesModule
 
-from pynpoint.processing.centering import StarAlignmentModule, \
-                                          StarExtractionModule, \
+from pynpoint.processing.centering import StarExtractionModule, \
+                                          StarAlignmentModule, \
                                           StarCenteringModule, \
                                           ShiftImagesModule, \
                                           WaffleCenteringModule
@@ -26,16 +26,16 @@ from pynpoint.processing.centering import StarAlignmentModule, \
 from pynpoint.processing.darkflat import DarkCalibrationModule, \
                                          FlatCalibrationModule
 
-from pynpoint.processing.frameselection import RemoveFramesModule, \
-                                               FrameSelectionModule, \
-                                               RemoveLastFrameModule, \
-                                               RemoveStartFramesModule
-
 from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              SimplexMinimizationModule, \
                                              FalsePositiveModule, \
                                              MCMCsamplingModule, \
                                              AperturePhotometryModule
+
+from pynpoint.processing.frameselection import RemoveFramesModule, \
+                                               FrameSelectionModule, \
+                                               RemoveLastFrameModule, \
+                                               RemoveStartFramesModule
 
 from pynpoint.processing.limits import ContrastCurveModule
 
@@ -79,7 +79,8 @@ from pynpoint.readwrite.textwriting import AttributeWritingModule, \
                                            ParangWritingModule, \
                                            TextWritingModule
 
-from pynpoint.readwrite.textreading import ParangReadingModule
+from pynpoint.readwrite.textreading import ParangReadingModule, \
+                                           AttributeReadingModule
 
 warnings.simplefilter('always', DeprecationWarning)
 

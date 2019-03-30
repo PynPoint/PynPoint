@@ -1,5 +1,5 @@
 """
-Modules for locating, aligning, and centering of the star.
+Pipeline modules for locating, aligning, and centering of the star.
 """
 
 from __future__ import absolute_import

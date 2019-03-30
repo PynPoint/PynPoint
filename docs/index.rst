@@ -32,6 +32,7 @@ User Guide
    :maxdepth: 2
 
    quickstart
+   overview
    architecture
    tutorial
    examples
