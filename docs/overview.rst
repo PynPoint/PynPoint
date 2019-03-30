@@ -128,7 +128,6 @@ PSF Subtraction
 * :class:`PcaPsfSubtractionModule`: PSF subtraction with PCA.
 * :class:`ClassicalADIModule`: PSF subtraction with classical ADI.
 
-
 Stacking
 ~~~~~~~~
 
