@@ -10,10 +10,10 @@ Here you find a list of all available pipeline modules with a very short descrip
 Reading Modules
 ---------------
 
-* :class:`FitsReadingModule`: Imports FITS files and relevant header information into the database.
-* :class:`Hdf5ReadingModule`: Imports datasets and attributes from an HDF5 file (as created by PynPoint).
-* :class:`ParangReadingModule`: Imports a list of parallactic angles as dataset attribute.
-* :class:`AttributeReadingModule`: Imports a list of values as dataset attribute.
+* :class:`FitsReadingModule`: Import FITS files and relevant header information into the database.
+* :class:`Hdf5ReadingModule`: Import datasets and attributes from an HDF5 file (as created by PynPoint).
+* :class:`ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
+* :class:`AttributeReadingModule`: Import a list of values as dataset attribute.
 
 .. _writemodule:
 
