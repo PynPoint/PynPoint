@@ -1,5 +1,5 @@
 """
-Modules with background subtraction routines.
+Pipeline modules for subtraction of the background emission.
 """
 
 from __future__ import absolute_import

@@ -33,26 +33,25 @@ class Hdf5ReadingModule(ReadingModule):
         """
         Constructor of Hdf5ReadingModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param input_filename: The file name of the HDF5 input file. All files inside the input
-                               location will be imported if no filename is provided.
-        :type input_filename: str
-        :param input_dir: The directory of the input HDF5 file. If no location is given, the
-                          default input location of the Pypeline is used.
-        :type input_dir: str
-        :param tag_dictionary: Dictionary of all data sets that will be imported. The dictionary
-                               format is:
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        input_filename : str
+            The file name of the HDF5 input file. All files inside the input location will be
+            imported if no filename is provided.
+        input_dir : str
+            The directory of the input HDF5 file. If no location is given, the default input
+            location of the Pypeline is used.
+        tag_dictionary : dict
+            Dictionary of all data sets that will be imported. The dictionary format is
+            {*tag_name_in_input_file*:*tag_name_in_database*, }. All data sets in the input HDF5
+            file that match one of the *tag_name_in_input_file* will be imported. The tag name
+            inside the internal Pypeline database will be changed to *tag_name_in_database*.
 
-                               {*tag_name_in_input_file*:*tag_name_in_database*, }
-
-                               All data sets in the input HDF5 file that match one of the
-                               *tag_name_in_input_file* will be imported. The tag name inside
-                               the internal Pypeline database will be changed to
-                               *tag_name_in_database*.
-        :type tag_dictionary: dict
-
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(Hdf5ReadingModule, self).__init__(name_in, input_dir)
@@ -71,10 +70,14 @@ class Hdf5ReadingModule(ReadingModule):
         """
         Internal function which reads a single HDF5 file.
 
-        :param file_in: name of the HDF5 file.
-        :type file_in: str
+        Parameters
+        ----------
+        file_in : str
+            Name of the HDF5 file.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         hdf5_file = h5py.File(file_in, mode='r')
@@ -107,7 +110,9 @@ class Hdf5ReadingModule(ReadingModule):
         Run method of the module. Looks for all HDF5 files in the input directory and reads them
         using the internal function _read_single_hdf5().
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         # create list of files to be read

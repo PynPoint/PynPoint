@@ -27,16 +27,20 @@ class CwtWaveletConfiguration(object):
                  keep_mean=False,
                  resolution=0.5):
         """
-        :param wavelet: Wavelet.
-        :type wavelet: str
-        :param wavelet_order: Wavelet order.
-        :type wavelet_order: int
-        :param keep_mean: Keep mean.
-        :type keep_mean: bool
-        :param resolution: Resolution.
-        :type resolution: float
+        Parameters
+        ----------
+        wavelet : str
+            Wavelet.
+        wavelet_order : int
+            Wavelet order.
+        keep_mean : bool
+            Keep mean.
+        resolution : float
+            Resolution.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         if wavelet not in ["dog", "morlet"]:
@@ -58,10 +62,14 @@ class DwtWaveletConfiguration(object):
     def __init__(self,
                  wavelet="db8"):
         """
-        :param wavelet: Wavelet.
-        :type wavelet: str
+        Parameters
+        ----------
+        wavelet : str
+            Wavelet.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         # create list of supported wavelets
@@ -93,27 +101,29 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         """
         Constructor of WaveletTimeDenoisingModule.
 
-        :param wavelet_configuration: Instance of DwtWaveletConfiguration or CwtWaveletConfiguration
-                                      which gives the parameters of the wavelet transformation to be
-                                      used.
-        :type wavelet_configuration: pynpoint.processing.timedenoising.CwtWaveletConfiguration or
-                                     pynpoint.processing.timedenoising.DwtWaveletConfiguration
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output.
-        :type image_out_tag: str
-        :param padding: Padding method ("zero", "mirror", or "none").
-        :type padding: str
-        :param median_filter: If true a median filter in time is applied which removes outliers
-                              in time like cosmic rays.
-        :type median_filter: bool
-        :param threshold_function: Threshold function used for wavelet shrinkage in the wavelet
-                                   space ("soft" or "hard").
-        :type threshold_function: str
+        Parameters
+        ----------
+        wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
+                                pynpoint.processing.timedenoising.DwtWaveletConfiguration
+            Instance of DwtWaveletConfiguration or CwtWaveletConfiguration which gives the
+            parameters of the wavelet transformation to be used.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output.
+        padding : str
+            Padding method ("zero", "mirror", or "none").
+        median_filter : bool
+            If true a median filter in time is applied which removes outliers in time like cosmic
+            rays.
+        threshold_function : str
+            Threshold function used for wavelet shrinkage in the wavelet space ("soft" or "hard").
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
@@ -134,7 +144,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         """
         Run method of the module. Applies the time denoising for the lines in time in parallel.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         if isinstance(self.m_wavelet_configuration, DwtWaveletConfiguration):
@@ -149,11 +161,15 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 """
                 Definition of the temporal denoising for DWT.
 
-                :param signal_in: 1D input signal.
-                :type signal_in:
+                Parameters
+                ----------
+                signal_in :
+                    1D input signal.
 
-                :return: Multilevel 1D inverse discrete wavelet transform.
-                :rtype: numpy.ndarray
+                Returns
+                -------
+                numpy.ndarray
+                    Multilevel 1D inverse discrete wavelet transform.
                 """
 
                 if self.m_threshold_function:
@@ -186,11 +202,15 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 """
                 Definition of temporal denoising for CWT.
 
-                :param signal_in: 1D input signal.
-                :type signal_in:
+                Parameters
+                ----------
+                signal_in :
+                    1D input signal.
 
-                :return: 1D output signal.
-                :rtype: numpy.ndarray
+                Returns
+                -------
+                numpy.ndarray
+                    1D output signal.
                 """
 
                 cwt_capsule = WaveletAnalysisCapsule(
@@ -238,14 +258,18 @@ class TimeNormalizationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_normalized"):
         """
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         super(TimeNormalizationModule, self).__init__(name_in=name_in)
@@ -257,7 +281,9 @@ class TimeNormalizationModule(ProcessingModule):
         """
         Run method of the module.
 
-        :return: None
+        Returns
+        -------
+        None
         """
 
         def _normalization(image_in):

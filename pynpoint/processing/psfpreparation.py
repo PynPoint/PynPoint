@@ -1,5 +1,5 @@
 """
-Modules to prepare the data for the PSF subtraction.
+Pipeline modules to prepare the data for the PSF subtraction.
 """
 
 from __future__ import division

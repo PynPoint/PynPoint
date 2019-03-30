@@ -1,5 +1,5 @@
 """
-Modules for dark frame and flat field calibrations.
+Pipeline modules for dark frame and flat field calibrations.
 """
 
 from __future__ import absolute_import

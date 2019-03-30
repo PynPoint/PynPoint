@@ -1,5 +1,5 @@
 """
-Modules for photometric and astrometric measurements of a planet.
+Pipeline modules for photometric and astrometric measurements.
 """
 
 from __future__ import absolute_import

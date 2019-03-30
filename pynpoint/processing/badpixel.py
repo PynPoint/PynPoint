@@ -1,5 +1,5 @@
 """
-Modules for the detection and interpolation of bad pixels.
+Pipeline modules for the detection and interpolation of bad pixels.
 """
 
 from __future__ import absolute_import

@@ -1,5 +1,5 @@
 """
-Modules for PSF subtraction.
+Pipeline modules for PSF subtraction.
 """
 
 from __future__ import absolute_import

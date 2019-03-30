@@ -1,5 +1,5 @@
 """
-Modules with tools for frame selection.
+Pipeline modules for frame selection.
 """
 
 from __future__ import absolute_import

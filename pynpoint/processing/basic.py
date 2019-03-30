@@ -1,5 +1,5 @@
 """
-Modules for basic image operations.
+Pipeline modules for basic image operations.
 """
 
 from __future__ import absolute_import
