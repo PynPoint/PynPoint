@@ -20,11 +20,11 @@ Reading Modules
 Writing Modules
 ---------------
 
-* :class:`FitsWritingModule`: Exports a dataset from the database to a FITS file.
-* :class:`Hdf5WritingModule`: Exports part of the database to a new HDF5 file.
-* :class:`TextWritingModule`: Exports a dataset to an ASCII file.
-* :class:`ParangWritingModule`: Exports the parallactic angles of a dataset to an ASCII file.
-* :class:`AttributeWritingModule`: Exports a list of attribute values to an ASCII file.
+* :class:`FitsWritingModule`: Export a dataset from the database to a FITS file.
+* :class:`Hdf5WritingModule`: Export part of the database to a new HDF5 file.
+* :class:`TextWritingModule`: Export a dataset to an ASCII file.
+* :class:`ParangWritingModule`: Export the parallactic angles of a dataset to an ASCII file.
+* :class:`AttributeWritingModule`: Export a list of attribute values to an ASCII file.
 
 .. _procmodule:
 
@@ -42,27 +42,27 @@ Background Subtraction
 Bad Pixel Cleaning
 ~~~~~~~~~~~~~~~~~~
 
-* :class:`BadPixelSigmaFilterModule`: Finds and replaces bad pixels with a sigma filter
-* :class:`BadPixelInterpolationModule`: Interpolates bad pixels with a spectral deconvolution technique.
-* :class:`BadPixelMapModule`: Creates a bad pixel map from dark and flat images.
+* :class:`BadPixelSigmaFilterModule`: Find and replace bad pixels with a sigma filter
+* :class:`BadPixelInterpolationModule`: Interpolate bad pixels with a spectral deconvolution technique.
+* :class:`BadPixelMapModule`: Create a bad pixel map from dark and flat images.
 * :class:`BadPixelTimeFilterModule`: Sigma clipping of bad pixels along the time dimension.
-* :class:`ReplaceBadPixelsModule`: Replaces bad pixels based on a bad pixel map.
+* :class:`ReplaceBadPixelsModule`: Replace bad pixels based on a bad pixel map.
 
 Basic Processing
 ~~~~~~~~~~~~~~~~
 
-* :class:`SubtractImagesModule`: Subtracts two stacks of images.
-* :class:`AddImagesModule`: Adds two stacks of images
-* :class:`RotateImagesModule`: Rotates a stack of images.
+* :class:`SubtractImagesModule`: Subtract two stacks of images.
+* :class:`AddImagesModule`: Add two stacks of images
+* :class:`RotateImagesModule`: Rotate a stack of images.
 
 Centering
 ~~~~~~~~~
 
-* :class:`StarExtractionModule`: Locates the position of the star.
-* :class:`StarAlignmentModule`: Aligns the images with a cross-correlation.
-* :class:`StarCenteringModule`: Centers the images by fitting a 2D Gaussian or Moffat function.
-* :class:`ShiftImagesModule`: Shifts a stack of images.
-* :class:`WaffleCenteringModule`: Uses waffle spots to center the images.
+* :class:`StarExtractionModule`: Locate the position of the star.
+* :class:`StarAlignmentModule`: Align the images with a cross-correlation.
+* :class:`StarCenteringModule`: Center the images by fitting a 2D Gaussian or Moffat function.
+* :class:`ShiftImagesModule`: Shift a stack of images.
+* :class:`WaffleCenteringModule`: Use the waffle spots to center the images.
 
 Dark and Flat Correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,37 +74,37 @@ Denoising
 ~~~~~~~~~
 
 * :class:`WaveletTimeDenoisingModule`: Wavelet-based denoising in the time domain.
-* :class:`TimeNormalizationModule`: Normalizes the images.
+* :class:`TimeNormalizationModule`: Normalize a stack of images.
 
 Detection Limits
 ~~~~~~~~~~~~~~~~
 
-* :class:`ContrastCurveModule`: Computes a contrast curve.
+* :class:`ContrastCurveModule`: Compute a contrast curve.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
 
-* :class:`FakePlanetModule`: Injects an artificial planet in a dataset.
-* :class:`SimplexMinimizationModule`: Determines the flux and position with a simplex minimization.
-* :class:`FalsePositiveModule`: Computes the signal-to-noise ratio and false positive fraction.
-* :class:`MCMCsamplingModule`: Estimates the flux and position of a planet with MCMC sampling.
-* :class:`AperturePhotometryModule`: Measures the integrated flux at a position.
+* :class:`FakePlanetModule`: Inject an artificial planet in a dataset.
+* :class:`SimplexMinimizationModule`: Determine the flux and position with a simplex minimization.
+* :class:`FalsePositiveModule`: Compute the signal-to-noise ratio and false positive fraction.
+* :class:`MCMCsamplingModule`: Estimate the flux and position of a planet with MCMC sampling.
+* :class:`AperturePhotometryModule`: Compute the integrated flux at a position.
 
 Frame Selection
 ~~~~~~~~~~~~~~~
 
-* :class:`RemoveFramesModule`: Removes images by their index number.
+* :class:`RemoveFramesModule`: Remove images by their index number.
 * :class:`FrameSelectionModule`: Frame selection to remove low-quality image.
-* :class:`RemoveLastFrameModule`: Removes the last image of a VLT/NACO dataset.
-* :class:`RemoveStartFramesModule`: Removes images at the beginning of each original data cube.
+* :class:`RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
+* :class:`RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
 
 Image Resizing
 ~~~~~~~~~~~~~~
 
-* :class:`CropImagesModule`: Crops the images.
-* :class:`ScaleImagesModule`: Resamples the images (spatially and/or in flux).
-* :class:`AddLinesModule`: Adds pixel lines on the sides of the images.
-* :class:`RemoveLinesModule`: Resmoves pixel lines from the sides of the images.
+* :class:`CropImagesModule`: Crop the images.
+* :class:`ScaleImagesModule`: Resample the images (spatially and/or in flux).
+* :class:`AddLinesModule`: Add pixel lines on the sides of the images.
+* :class:`RemoveLinesModule`: Remove pixel lines from the sides of the images.
 
 PCA Background Subtraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,11 +116,11 @@ PCA Background Subtraction
 PSF Preparation
 ~~~~~~~~~~~~~~~
 
-* :class:`PSFpreparationModule`: Masks the images before the PSF subtraction.
-* :class:`AngleInterpolationModule`: Interpolates the parallactic angles between the start and end values.
-* :class:`AngleCalculationModule`: Calculates the parallactic angles.
-* :class:`SortParangModule`: Sorts the images by parallactic angle.
-* :class:`SDIpreparationModule`: Prepares the images for SDI.
+* :class:`PSFpreparationModule`: Mask the images before the PSF subtraction.
+* :class:`AngleInterpolationModule`: Interpolate the parallactic angles between the start and end values.
+* :class:`AngleCalculationModule`: Calculate the parallactic angles.
+* :class:`SortParangModule`: Sort the images by parallactic angle.
+* :class:`SDIpreparationModule`: Prepare the images for SDI.
 
 PSF Subtraction
 ~~~~~~~~~~~~~~~
@@ -131,7 +131,7 @@ PSF Subtraction
 Stacking
 ~~~~~~~~
 
-* :class:`StackAndSubsetModule`: Stacks and/or selects a random subset of the images.
-* :class:`MeanCubeModule`: Computes the mean of each original data cube.
-* :class:`DerotateAndStackModule`: Derotates and/or stacks the images.
-* :class:`CombineTagsModule`: Combines multiple database tags into a single dataset.
+* :class:`StackAndSubsetModule`: Stack and/or select a random subset of the images.
+* :class:`MeanCubeModule`: Compute the mean of each original data cube.
+* :class:`DerotateAndStackModule`: Derotate and/or stack the images.
+* :class:`CombineTagsModule`: Combine multiple database tags into a single dataset.
