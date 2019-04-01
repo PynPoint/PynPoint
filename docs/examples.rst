@@ -231,7 +231,7 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
 
 17. PSF subtraction with PCA::
 
-	module = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 51, 1),
+	module = PcaPsfSubtractionModule(pca_numbers=range(1, 51),
                                          name_in="pca",
                                          images_in_tag="prep",
                                          reference_in_tag="prep",

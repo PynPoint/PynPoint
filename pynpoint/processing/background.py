@@ -108,9 +108,9 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         shift : int
             Image index offset for the background subtraction. Typically equal to the number of
-            frames per dither location. If set to *None*, the NFRAMES attribute will be used to
-            select the background frames automatically. The *cubes* argument should also be set
-            with *shift=None*.
+            frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
+            select the background frames automatically. The *cubes* parameters should be set when
+            *shift* is set to None.
         cubes : int
             Number of consecutive cubes per dithering position.
         name_in : str
@@ -138,8 +138,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
     def run(self):
         """
         Run method of the module. Mean background subtraction which uses either a constant index
-        offset or the NFRAMES attributes. The mean background is calculated from the cubes before
-        and after the science cube.
+        offset or the ``NFRAMES`` attributes. The mean background is calculated from the cubes
+        before and after the science cube.
 
         Returns
         -------

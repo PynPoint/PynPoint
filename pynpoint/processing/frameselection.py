@@ -612,8 +612,8 @@ class RemoveStartFramesModule(ProcessingModule):
             frame_end = np.sum(nframes[0:i+1])
 
             if frame_start >= frame_end:
-                raise ValueError("The number of frames in original data cube is equal or smaller "
-                                 "than the number of frames that have to be removed.")
+                raise ValueError("The number of frames in the original data cube is equal or "
+                                 "smaller than the number of frames that have to be removed.")
 
             index_new.extend(index[frame_start:frame_end])
 

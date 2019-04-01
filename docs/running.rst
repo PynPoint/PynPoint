@@ -15,7 +15,6 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
 
     import os
     import urllib
-    import numpy as np
     import matplotlib.pyplot as plt
 
     from pynpoint import Pypeline, \
