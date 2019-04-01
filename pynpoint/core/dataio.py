@@ -1,5 +1,5 @@
 """
-Modules to access data and attributes in the central database.
+Modules for accessing data and attributes in the central database.
 """
 
 from __future__ import absolute_import
@@ -95,7 +95,7 @@ class Port(six.with_metaclass(ABCMeta)):
         the connection to the database entry with the same tag / key. It is possible to give the
         Port a DataStorage. If this storage is not given the Pypeline module has to set it or the
         connection needs to be added manually using
-        :func:`~pynpoint.core.dataio.Port.set_database_connection()`.
+        :func:`~pynpoint.core.dataio.Port.set_database_connection`.
 
         Parameters
         ----------
@@ -205,7 +205,8 @@ class ConfigPort(Port):
         data_storage_in : pynpoint.core.dataio.DataStorage
             The input DataStorage. It is possible to give the constructor of an ConfigPort a
             DataStorage instance which will link the port to that DataStorage. Usually the
-            DataStorage is set later by calling set_database_connection().
+            DataStorage is set later by calling
+            :func:`~pynpoint.core.dataio.Port.set_database_connection`.
 
         Returns
         -------
@@ -272,12 +273,12 @@ class ConfigPort(Port):
     def get_attribute(self,
                       name):
         """
-        Returns a (static) attribute which is connected to the dataset of the ConfigPort.
+        Returns a static attribute which is connected to the dataset of the ConfigPort.
 
         Parameters
         ----------
         name : str
-            The name of the attribute to be returned.
+            The name of the attribute.
 
         Returns
         -------
@@ -315,8 +316,8 @@ class InputPort(Port):
             data = in_port[0, :, :] # returns the first 2D image of a 3D image stack.
 
     (More information about how 1D, 2D, and 3D data is organized can be found in the documentation
-    of OutputPort (:func:`pynpoint.core.dataio.OutputPort.append` and
-    :func:`pynpoint.core.dataio.OutputPort.set_all`)
+    of OutputPort (:func:`~pynpoint.core.dataio.OutputPort.append` and
+    :func:`~pynpoint.core.dataio.OutputPort.set_all`)
 
     InputPorts can load two types of attributes which give additional information about
     a dataset the port is linked to:
@@ -343,7 +344,7 @@ class InputPort(Port):
         data_storage_in : pynpoint.core.dataio.DataStorage
             It is possible to give the constructor of an InputPort a DataStorage instance which
             will link the port to that DataStorage. Usually the DataStorage is set later by calling
-            set_database_connection().
+            :func:`~pynpoint.core.dataio.Port.set_database_connection`.
 
         Returns
         -------
@@ -413,7 +414,7 @@ class InputPort(Port):
                     item):
         """
         Internal function which handles the data access using slicing. See class documentation for a
-        example (:class:`pynpoint.core.dataio.InputPort`). None if the data does not exist.
+        example (:class:`~pynpoint.core.dataio.InputPort`). None if the data does not exist.
 
         Parameters
         ----------
@@ -500,7 +501,7 @@ class InputPort(Port):
         Returns an attribute which is connected to the dataset of the port. The function can return
         static and non-static attributes (static attributes have priority). More information about
         static and non-static attributes can be found in the class documentation of
-        :class:`pynpoint.core.dataio.InputPort`.
+        :class:`~pynpoint.core.dataio.InputPort`.
 
         Parameters
         ----------
@@ -554,7 +555,7 @@ class InputPort(Port):
         """
         Returns a list of all non-static attribute keys.  More information about
         static and non-static attributes can be found in the class documentation of
-        :class:`pynpoint.core.dataio.InputPort`.
+        :class:`~pynpoint.core.dataio.InputPort`.
 
         Returns
         -------
@@ -586,7 +587,7 @@ class OutputPort(Port):
 
         * set_all(...) - replaces and sets the whole dataset
         * append(...) - appends data to the existing data set. For more information see
-          function documentation (:func:`pynpoint.core.dataio.OutputPort.append`).
+          function documentation (:func:`~pynpoint.core.dataio.OutputPort.append`).
         * slicing - sets a part of the actual dataset. Example:
 
         .. code-block:: python
@@ -599,15 +600,15 @@ class OutputPort(Port):
         * del_attribute(...) - deletes a attribute
         * del_all_attributes(...) - deletes all attributes
         * append_attribute_data(...) - appends information to non-static attributes. See
-          add_attribute() (:func:`pynpoint.core.dataio.OutputPort.add_attribute`) for more
+          add_attribute() (:func:`~pynpoint.core.dataio.OutputPort.add_attribute`) for more
           information about static and non-static attributes.
         * check_static_attribute(...) - checks if a static attribute exists and if it is equal to a
           given value
         * other functions listed below
 
     For more information about how data is organized inside the central database have a look at the
-    function documentation of the function :func:`pynpoint.core.dataio.OutputPort.set_all` and
-    :func:`pynpoint.core.dataio.OutputPort.append`.
+    function documentation of the function :func:`~pynpoint.core.dataio.OutputPort.set_all` and
+    :func:`~pynpoint.core.dataio.OutputPort.append`.
 
     Furthermore it is possible to deactivate a OutputPort to stop him saving data.
     """
@@ -629,7 +630,7 @@ class OutputPort(Port):
         data_storage_in : pynpoint.core.dataio.DataStorage
             It is possible to give the constructor of an OutputPort a DataStorage instance which
             will link the port to that DataStorage. Usually the DataStorage is set later by calling
-            set_database_connection().
+            :func:`~pynpoint.core.dataio.Port.set_database_connection`.
 
         Returns
         -------
@@ -685,8 +686,10 @@ class OutputPort(Port):
         ----------
         first_data : numpy.ndarray
             The initial data.
+        tag : str
+            Database tag.
         data_dim : int
-            Number of data dimensions. The dimensions of *first_data* is used if set to None.
+            Number of dimensions. The dimensions of *first_data* is used if set to None.
 
         Returns
         -------
@@ -735,8 +738,12 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
 
-        if isinstance(first_data[0], str):
-            first_data = np.array(first_data, dtype="|S")
+        try:
+            if isinstance(first_data[0], str):
+                first_data = np.array(first_data, dtype="|S")
+
+        except IndexError:
+            warnings.warn("The dataset that is stored under the tag name '"+tag+"' is empty.")
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
@@ -748,21 +755,21 @@ class OutputPort(Port):
                      data_dim=None,
                      keep_attributes=False):
         """
-        Internal function which sets the values of a data set under the tag "tag" using the data
-        of the input "data". If old data exists it will be overwritten. This function is used in
-        set_all() as well as for setting non-static attributes.
+        Internal function which sets the values of a dataset under the *tag* name in the database.
+        If old data exists it will be overwritten. This function is used by
+        :func:`~pynpoint.core.dataio.OutputPort.set_all` and for setting non-static attributes.
 
         Parameters
         ----------
         tag : str
             Database tag of the data that will be modified.
         data : numpy.ndarray
-            The data which is used to replace the old data.
+            The data that will be stored and replace any old data.
         data_dim : int
-            Dimension of the data that is saved.
+            Number of dimension of the data.
         keep_attributes : bool
             Keep all static attributes of the dataset if set to True. Non-static attributes will be
-            kept so not needed for setting non-static attributes.
+            kept anyway so not needed for setting non-static attributes.
 
         Returns
         -------
@@ -797,7 +804,23 @@ class OutputPort(Port):
                     force=False):
         """
         Internal function for appending data to a dataset or appending non-static attribute
-        information. See append() for more information.
+        information. See :func:`~pynpoint.core.dataio.OutputPort.append` for more information.
+
+        Parameters
+        ----------
+        tag : str
+            Database tag of the data that will be modified.
+        data : numpy.ndarray
+            The data that will be stored and replace any old data.
+        data_dim : int
+            Number of dimension of the data.
+        force : bool
+            The existing data will be overwritten if shape or type does not match.
+
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # check if database entry is new...
@@ -845,8 +868,12 @@ class OutputPort(Port):
             # we always append in axis one independent of the dimension
             # 1D case
 
-            if isinstance(data[0], str):
-                data = np.array(data, dtype="|S")
+            try:
+                if isinstance(data[0], str):
+                    data = np.array(data, dtype="|S")
+
+            except IndexError:
+                warnings.warn("The dataset that is stored under the tag name '"+tag+"' is empty.")
 
             self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
@@ -869,7 +896,7 @@ class OutputPort(Port):
                     value):
         """
         Internal function needed to change data using slicing. See class documentation for an
-        example (:class:`pynpoint.core.dataio.OutputPort`).
+        example (:class:`~pynpoint.core.dataio.OutputPort`).
 
         Parameters
         ----------
@@ -918,7 +945,7 @@ class OutputPort(Port):
 
         For 2D and 3D data the first dimension always represents the list / stack (variable size)
         while the second (or third) dimension has a fixed size. After creation it is possible to
-        extend a data set using :func:`pynpoint.core.dataio.OutputPort.append` along the first
+        extend a data set using :func:`~pynpoint.core.dataio.OutputPort.append` along the first
         dimension.
 
         **Example 1:**
@@ -966,7 +993,7 @@ class OutputPort(Port):
         Appends data to an existing dataset with the tag of the Port along the first
         dimension. If no data exists with the tag of the Port a new data set is created.
         For more information about how the dimensions are organized see documentation of
-        the function :func:`pynpoint.core.dataio.OutputPort.set_all`. Note it is not possible to
+        the function :func:`~pynpoint.core.dataio.OutputPort.set_all`. Note it is not possible to
         append data with a different shape or data type to the existing dataset.
 
         **Example:** An internal data set is 3D (storing a stack of 2D images) with shape
@@ -1040,7 +1067,7 @@ class OutputPort(Port):
             2. **non-static attributes**:
                Contain a dataset which is connected to the actual data set (e.g. Instrument
                temperature). It is possible to append additional information to non-static
-               attributes later (:func:`pynpoint.core.dataio.OutputPort.append_attribute_data`).
+               attributes later (:func:`~pynpoint.core.dataio.OutputPort.append_attribute_data`).
                This is not supported by static attributes.
 
         Static and non-static attributes are stored in a different way using the HDF5 file format.
@@ -1098,36 +1125,6 @@ class OutputPort(Port):
 
             self._append_key(tag=("header_" + self._m_tag + "/" + name),
                              data=np.asarray([value, ]))
-
-    def add_value_to_static_attribute(self,
-                                      name,
-                                      value):
-        """
-        Function which adds an integer of float to an existing static attribute.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute.
-        value : str, float, or int
-            Attribute value.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        if self._check_status_and_activate():
-
-            if not isinstance(value, int) or isinstance(value, float):
-                raise ValueError("Only integer and float values can be added to an existing "
-                                 "attribute.")
-
-            if name not in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-                raise AttributeError("Value can not be added to a not existing attribute.")
-
-            self._m_data_storage.m_data_bank[self._m_tag].attrs[name] += value
 
     def copy_attributes(self,
                         input_port):
