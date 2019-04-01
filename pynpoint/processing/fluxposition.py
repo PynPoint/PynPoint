@@ -135,9 +135,9 @@ class FakePlanetModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Shifts the reference PSF to the location of the fake planet
-        with an additional correction for the parallactic angle and writes the stack with images
-        with the injected planet signal.
+        Run method of the module. Shifts the PSF template to the location of the fake planet
+        with an additional correction for the parallactic angle and an optional flux scaling.
+        The stack of images with the injected planet signal is stored.
 
         Returns
         -------
@@ -816,9 +816,10 @@ class MCMCsamplingModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Shifts the reference PSF to the location of the fake planet
-        with an additional correction for the parallactic angle and writes the stack with images
-        with the injected planet signal.
+        Run method of the module. The posterior distributions of the separation, position angle,
+        and flux contrast are sampled with the affine invariant Markov chain Monte Carlo (MCMC)
+        ensemble sampler emcee. At each step, a negative copy of the PSF template is injected
+        and the likelihood function is evaluated at the approximate position of the planet.
 
         Returns
         -------

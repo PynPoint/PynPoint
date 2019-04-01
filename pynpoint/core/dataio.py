@@ -705,11 +705,11 @@ class OutputPort(Port):
             if data_dim > 3 or data_dim < 1:
                 raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
 
-            elif data_dim < first_dim:
+            if data_dim < first_dim:
                 raise ValueError('The dimensions of the data should be equal to or larger than the '
                                  'dimensions of the input data.')
 
-            elif data_dim == 3 and first_dim == 1:
+            if data_dim == 3 and first_dim == 1:
                 raise ValueError('Cannot initialize 1D data in 3D data container.')
 
         first_data = np.asarray(first_data)

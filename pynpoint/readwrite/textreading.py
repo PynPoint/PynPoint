@@ -152,8 +152,8 @@ class AttributeReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Reads the parallactic angles from a text file and writes the
-        values as non-static attribute (PARANG) to the database tag.
+        Run method of the module. Reads a list of values from a text file and writes them as
+        non-static attribute to a dataset.
 
         Returns
         -------
