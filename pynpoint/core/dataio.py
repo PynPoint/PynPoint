@@ -28,10 +28,15 @@ class DataStorage(object):
         database) as input. If the file already exists it is opened and extended, if not a new File
         will be created.
 
-        :param location_in: Location (directory + filename) of the HDF5 data bank
-        :type location_in: str
+        Parameters
+        ----------
+        location_in : str
+            Location (directory + filename) of the HDF5 database.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         assert (os.path.isdir(os.path.split(location_in)[0])), 'Input directory for DataStorage ' \
@@ -46,7 +51,10 @@ class DataStorage(object):
         """
         Opens the connection to the HDF5 file by opening an old file or creating a new one.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if not self.m_open:
@@ -58,7 +66,10 @@ class DataStorage(object):
         Closes the connection to the HDF5 file. All entries of the data bank will be stored on the
         hard drive and the memory is cleaned.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_open:
@@ -70,9 +81,9 @@ class Port(six.with_metaclass(ABCMeta)):
     """
     Abstract interface and implementation of common functionality of the InputPort, OutputPort, and
     ConfigPort. Each Port has a internal tag which is its key to a dataset in the DataStorage. If
-    for example data is stored under the entry *im_arr* in the central data storage only a port
-    with the tag (self._m_tag = *im_arr*) can access and change that data. A port knows exactly
-    one DataStorage instance, whether it is active or not (self._m_data_base_active).
+    for example data is stored under the entry ``im_arr`` in the central data storage only a port
+    with the tag (``self._m_tag = im_arr``) can access and change that data. A port knows exactly
+    one DataStorage instance, whether it is active or not (``self._m_data_base_active``).
     """
 
     @abstractmethod
@@ -83,17 +94,23 @@ class Port(six.with_metaclass(ABCMeta)):
         Abstract constructor of a Port. As input the tag / key is expected which is needed to build
         the connection to the database entry with the same tag / key. It is possible to give the
         Port a DataStorage. If this storage is not given the Pypeline module has to set it or the
-        connection needs to be added manually using set_database_connection(data_base_in).
+        connection needs to be added manually using
+        :func:`~pynpoint.core.dataio.Port.set_database_connection()`.
 
-        :param tag: Input Tag
-        :type tag: str
-        :param data_storage_in: The data storage the port is connected with
-        :type data_storage_in: DataStorage
+        Parameters
+        ----------
+        tag : str
+            Input Tag.
+        data_storage_in : pynpoint.core.dataio.DataStorage
+            The data storage to which the port is connected.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
-        assert (isinstance(tag, str)), "Port tag need to be strings."
+        assert isinstance(tag, str), "Port tag needs to be a string."
 
         self._m_tag = tag
         self._m_data_storage = data_storage_in
@@ -102,9 +119,12 @@ class Port(six.with_metaclass(ABCMeta)):
     @property
     def tag(self):
         """
-        Getter for the internal tag (no setter!!!)
+        Getter for the internal tag (no setter).
 
-        :return:
+        Returns
+        -------
+        str
+            Database tag name.
         """
 
         return self._m_tag
@@ -114,7 +134,10 @@ class Port(six.with_metaclass(ABCMeta)):
         Closes the connection to the Data Storage and force it to save the data to the hard drive.
         All data that was accessed using the port is cleaned from the memory.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._m_data_base_active:
@@ -125,7 +148,10 @@ class Port(six.with_metaclass(ABCMeta)):
         """
         Opens the connection to the Data Storage and activates its data bank.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if not self._m_data_base_active:
@@ -137,10 +163,15 @@ class Port(six.with_metaclass(ABCMeta)):
         """
         Sets the internal DataStorage instance.
 
-        :param data_base_in: The input DataStorage
-        :type data_base_in: DataStorage
+        Parameters
+        ----------
+        data_base_in: pynpoint.core.dataio.DataStorage
+            The input DataStorage.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._m_data_storage = data_base_in
@@ -166,16 +197,20 @@ class ConfigPort(Port):
 
             memory = self._m_config_port.get_attribute("MEMORY")
 
-        :param tag: The tag of the port. The port can be used in order to get data from the dataset
-                    with the key `config`.
-        :type tag: str
-        :param data_storage_in: It is possible to give the constructor of an ConfigPort a
-                                DataStorage instance which will link the port to that DataStorage.
-                                Usually the DataStorage is set later by calling
-                                set_database_connection().
-        :type data_storage_in: DataStorage
+        Parameters
+        ----------
+        tag : str
+            The tag name of the port. The port can be used to get data from the dataset with the
+            key `config`.
+        data_storage_in : pynpoint.core.dataio.DataStorage
+            The input DataStorage. It is possible to give the constructor of an ConfigPort a
+            DataStorage instance which will link the port to that DataStorage. Usually the
+            DataStorage is set later by calling set_database_connection().
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(ConfigPort, self).__init__(tag, data_storage_in)
@@ -187,25 +222,32 @@ class ConfigPort(Port):
         """
         Internal function which checks if the ConfigPort is ready to use and open it.
 
-        :return: Returns True if the ConfigPort can be used, False if not.
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Returns True if the ConfigPort can be used, False if not.
         """
 
         if self._m_data_storage is None:
             warnings.warn("ConfigPort can not load data unless a database is connected.")
-            return False
+            status = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        else:
+            if not self._m_data_base_active:
+                self.open_port()
 
-        return True
+            status = True
+
+        return status
 
     def _check_if_data_exists(self):
         """
         Internal function which checks if data exists for the "config" tag.
 
-        :return: True if data exists, False if not
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Returns True if data exists, False if not.
         """
 
         return "config" in self._m_data_storage.m_data_bank
@@ -216,35 +258,44 @@ class ConfigPort(Port):
         """
 
         if not self._check_status_and_activate():
-            return False
+            status = False
 
-        if self._check_if_data_exists() is False:
+        elif self._check_if_data_exists() is False:
             warnings.warn("No data under the tag which is linked by the ConfigPort.")
-            return False
+            status = False
 
-        return True
+        else:
+            status = True
+
+        return status
 
     def get_attribute(self,
                       name):
         """
         Returns a (static) attribute which is connected to the dataset of the ConfigPort.
 
-        :param name: The name of the attribute to be returned.
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            The name of the attribute to be returned.
 
-        :return: The attribute value. Returns None if the attribute does not exist.
-        :rtype: str, float, int
+        Returns
+        -------
+        str, float, or int
+            The attribute value. Returns None if the attribute does not exist.
         """
 
         if not self._check_error_cases():
-            return None
+            attr_val = None
 
-        if name in self._m_data_storage.m_data_bank["config"].attrs:
-            return self._m_data_storage.m_data_bank["config"].attrs[name]
+        elif name in self._m_data_storage.m_data_bank["config"].attrs:
+            attr_val = self._m_data_storage.m_data_bank["config"].attrs[name]
 
-        warnings.warn('No attribute found - requested: %s.' % name)
+        else:
+            warnings.warn("The attribute '%s' was not found." % name)
+            attr_val = None
 
-        return None
+        return attr_val
 
 
 class InputPort(Port):
@@ -284,15 +335,20 @@ class InputPort(Port):
         key `tag`. Instances of InputPort should not be created manually inside a PypelineModule
         but should be created with the add_input_port() function.
 
-        :param tag: The tag of the port. The port can be used in order to get data from the dataset
-                    with the key `tag`.
-        :type tag: str
-        :param data_storage_in: It is possible to give the constructor of an InputPort a DataStorage
-                                instance which will link the port to that DataStorage. Usually the
-                                DataStorage is set later by calling set_database_connection().
-        :type data_storage_in: DataStorage
+        Parameters
+        ----------
+        tag : str
+            The tag of the port. The port can be used in order to get data from the dataset with
+            the key `tag`.
+        data_storage_in : pynpoint.core.dataio.DataStorage
+            It is possible to give the constructor of an InputPort a DataStorage instance which
+            will link the port to that DataStorage. Usually the DataStorage is set later by calling
+            set_database_connection().
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(InputPort, self).__init__(tag, data_storage_in)
@@ -309,25 +365,32 @@ class InputPort(Port):
         """
         Internal function which checks if the InputPort is ready to use and open it.
 
-        :return: Returns True if the InputPort can be used, False if not.
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Returns True if the InputPort can be used, False if not.
         """
 
         if self._m_data_storage is None:
             warnings.warn("InputPort can not load data unless a database is connected.")
-            return False
+            status = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        else:
+            status = True
 
-        return True
+            if not self._m_data_base_active:
+                self.open_port()
+
+        return status
 
     def _check_if_data_exists(self):
         """
         Internal function which checks if data exists for the Port specific tag.
 
-        :return: True if data exists, False if not
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Returns True if data exists, False if not.
         """
 
         return self._m_tag in self._m_data_storage.m_data_bank
@@ -335,152 +398,184 @@ class InputPort(Port):
     def _check_error_cases(self):
 
         if not self._check_status_and_activate():
-            return False
+            status = False
 
-        if self._check_if_data_exists() is False:
+        elif self._check_if_data_exists() is False:
             warnings.warn("No data under the tag which is linked by the InputPort.")
-            return False
+            status = False
 
-        return True
+        else:
+            status = True
 
-    def __getitem__(self, item):
+        return status
+
+    def __getitem__(self,
+                    item):
         """
         Internal function which handles the data access using slicing. See class documentation for a
         example (:class:`pynpoint.core.dataio.InputPort`). None if the data does not exist.
 
-        :param item: Slicing parameter
-        :type item: slice
+        Parameters
+        ----------
+        item : tuple
+            Slicing parameter.
 
-        :return: The selected data as numpy array. Returns None if no data exists under the tag of
-                 the Port.
-        :rtype: numpy array
+        Returns
+        -------
+        numpy.ndarray
+            The selected data. Returns None if no data exists under the tag of thePort.
         """
 
         if not self._check_error_cases():
-            return None
+            data = None
 
-        return self._m_data_storage.m_data_bank[self._m_tag][item]
+        else:
+            data = self._m_data_storage.m_data_bank[self._m_tag][item]
+
+        return data
 
     def get_shape(self):
         """
         Returns the shape of the dataset the port is linked to. This can be useful if you need the
         shape without loading the whole data.
 
-        :return: Shape of the dataset, None if dataset does not exist.
-        :rtype: tuple
+        Returns
+        -------
+        tuple(int, )
+            Shape of the dataset. Returns None if the dataset does not exist.
         """
 
         if not self._check_error_cases():
-            return None
+            data_shape = None
 
-        self.open_port()
+        else:
+            self.open_port()
+            data_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
 
-        return self._m_data_storage.m_data_bank[self._m_tag].shape
+        return data_shape
 
     def get_ndim(self):
         """
         Returns the number of dimensions of the dataset the port is linked to.
 
-        :return: Number of dimensions of the dataset, None if dataset does not exist.
-        :rtype: int
+        Returns
+        -------
+        int
+            Number of dimensions of the dataset. Returns None if the dataset does not exist.
         """
 
         if not self._check_error_cases():
-            return None
+            ndim = None
 
-        self.open_port()
+        else:
+            self.open_port()
+            ndim = self._m_data_storage.m_data_bank[self._m_tag].ndim
 
-        return self._m_data_storage.m_data_bank[self._m_tag].ndim
+        return ndim
 
     def get_all(self):
         """
         Returns the whole dataset stored in the data bank under the tag of the Port. Be careful
-        using this function for loading huge datasets! The data type is inferred from the data
-        by numpy.asarray. A 32 bit array will be returned in case the input data is a combination
-        of float32 and float64 arrays.
+        using this function for loading large datasets. The data type is inferred from the data
+        with numpy.asarray. A 32 bit array will be returned in case the input data is a
+        combination of float32 and float64 arrays.
 
-        :return: The data of the dataset as numpy array. None if the data does not exist.
-        :rtype: numpy array
+        Returns
+        -------
+        numpy.ndarray
+            The full dataset. Returns None if the data does not exist.
         """
 
         if not self._check_error_cases():
-            return None
+            data = None
 
-        return np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
+        else:
+            data = np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
+
+        return data
 
     def get_attribute(self,
                       name):
         """
         Returns an attribute which is connected to the dataset of the port. The function can return
-        static and non-static attributes (But it is first looking for static attributes). See class
-        documentation for more information about static and non-static attributes.
-        (:class:`pynpoint.core.dataio.InputPort`)
+        static and non-static attributes (static attributes have priority). More information about
+        static and non-static attributes can be found in the class documentation of
+        :class:`pynpoint.core.dataio.InputPort`.
 
-        :param name: The name of the attribute to be returned
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            The name of the attribute.
 
-        :return: The attribute value. Returns None if the attribute does not exist.
-        :rtype: numpy array for non-static attributes and simple types for static attributes.
+        Returns
+        -------
+        str, float, int, or numpy.ndarray
+            The attribute value. Returns None if the attribute does not exist.
         """
 
         if not self._check_error_cases():
-            return None
+            attr_val = None
 
-        if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            return self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+        else:
+            if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
+                # static attribute
+                attr_val = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
-            # try:
-            #     return attr.item()
-            #
-            # except:
-            #     return attr
+            elif "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
+                # non-static attribute
+                attribute = "header_" + self._m_tag + "/" + name
+                attr_val = np.asarray(self._m_data_storage.m_data_bank[attribute][...])
 
-        if "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank:
-            return np.asarray(self._m_data_storage.m_data_bank
-                              [("header_" + self._m_tag + "/" + name)][...])
+            else:
+                warnings.warn("The attribute '%s' was not found." % name)
+                attr_val = None
 
-        warnings.warn("No attribute found - requested: %s." % name)
-
-        return None
+        return attr_val
 
     def get_all_static_attributes(self):
         """
-        Returns all static attributes of the dataset which is linked to the Port tag. The result is
-        a dictionary which is organized like this:
+        Get all static attributes of the dataset which are linked to the Port tag.
 
-        {attr_name: attr_value}.
-
-        :return: Dictionary of all attributes {attr_name: attr_value}
-        :rtype: dict
+        Returns
+        -------
+        dict
+            Dictionary of all attributes, as `{attr_name:attr_value}`.
         """
 
         if not self._check_error_cases():
-            return None
+            attr_dict = None
 
-        return self._m_data_storage.m_data_bank[self._m_tag].attrs
+        else:
+            attr_dict = dict(self._m_data_storage.m_data_bank[self._m_tag].attrs)
+
+        return attr_dict
 
     def get_all_non_static_attributes(self):
         """
-        Returns a list of all non-static attribute keys (Not the actual attribute data). See class
-        documentation for more information about static and non-static attributes.
-        (:class:`pynpoint.core.dataio.InputPort`)
+        Returns a list of all non-static attribute keys.  More information about
+        static and non-static attributes can be found in the class documentation of
+        :class:`pynpoint.core.dataio.InputPort`.
 
-        :return: List of all existing non-static attribute keys
-        :rtype: list[str]
+        Returns
+        -------
+        list(str, )
+            List of all existing non-static attribute keys.
         """
 
         if not self._check_error_cases():
-            return None
+            attr_key = None
 
-        result = []
+        else:
+            attr_key = []
 
-        if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
-            for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
-                result.append(key)
+            if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
+                for key in self._m_data_storage.m_data_bank["header_" + self._m_tag + "/"]:
+                    attr_key.append(key)
 
-            return result
+            else:
+                attr_key = None
 
-        return None
+        return attr_key
 
 
 class OutputPort(Port):
@@ -526,16 +621,20 @@ class OutputPort(Port):
         data to the the central database under the tag `tag`. If you write a PypelineModule you
         should not create instances manually! Use the add_output_port() function instead.
 
-        :param tag: The tag of the port. The port can be used in order to write data to the dataset
-                    with the key = `tag`.
-        :type tag: str
-        :param data_storage_in: It is possible to give the constructor of an OutputPort a
-                                DataStorage instance which will link the port to that DataStorage.
-                                Usually the DataStorage is set later by calling
-                                set_database_connection().
-        :type data_storage_in: DataStorage
+        Parameters
+        ----------
+        tag : str
+            The tag of the port. The port can be used in order to write data to the dataset with
+            the key = `tag`.
+        data_storage_in : pynpoint.core.dataio.DataStorage
+            It is possible to give the constructor of an OutputPort a DataStorage instance which
+            will link the port to that DataStorage. Usually the DataStorage is set later by calling
+            set_database_connection().
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(OutputPort, self).__init__(tag, data_storage_in)
@@ -554,21 +653,26 @@ class OutputPort(Port):
         """
         Internal function which checks if the OutputPort is ready to use and open it.
 
+        Returns
+        -------
         :return: Returns True if the OutputPort can be used, False if not.
         :rtype: bool
         """
 
         if not self.m_activate:
-            return False
+            status = False
 
-        if self._m_data_storage is None:
+        elif self._m_data_storage is None:
             warnings.warn("OutputPort can not store data unless a database is connected.")
-            return False
+            status = False
 
-        if not self._m_data_base_active:
-            self.open_port()
+        else:
+            if not self._m_data_base_active:
+                self.open_port()
 
-        return True
+            status = True
+
+        return status
 
     def _initialize_database(self,
                              first_data,
@@ -577,13 +681,17 @@ class OutputPort(Port):
         """
         Internal function which is used to initialize the HDF5 database.
 
-        :param first_data: The initial data.
-        :type first_data: bytearray
-        :param data_dim: Number of desired dimensions. The dimensions of *first_data* is used if
-                         set to None.
-        :type data_dim: int
+        Parameters
+        ----------
+        first_data : numpy.ndarray
+            The initial data.
+        data_dim : int
+            Number of data dimensions. The dimensions of *first_data* is used if set to None.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _ndim_check(data_dim, first_dim):
@@ -627,7 +735,7 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
 
-        if np.size(first_data) > 0 and isinstance(first_data[0], str):
+        if isinstance(first_data[0], str):
             first_data = np.array(first_data, dtype="|S")
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
@@ -644,19 +752,22 @@ class OutputPort(Port):
         of the input "data". If old data exists it will be overwritten. This function is used in
         set_all() as well as for setting non-static attributes.
 
-        :param tag: Data base tag of the data to be modified
-        :type tag: String
-        :param data: The data which is used to replace the old data.
-        :type data: numpy array
-        :param data_dim: Dimension of the data that is saved. See set_all() and append of more
-                         documentation()
-        :type data_dim: int
-        :param keep_attributes: Parameter which can be set True to keep all static attributes of
-                                the dataset. Non-static attributes will be kept, (Not needed for
-                                setting non-static attributes)
-        :type keep_attributes: bool
+        Parameters
+        ----------
+        tag : str
+            Database tag of the data that will be modified.
+        data : numpy.ndarray
+            The data which is used to replace the old data.
+        data_dim : int
+            Dimension of the data that is saved.
+        keep_attributes : bool
+            Keep all static attributes of the dataset if set to True. Non-static attributes will be
+            kept so not needed for setting non-static attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         tmp_attributes = {}
@@ -753,19 +864,27 @@ class OutputPort(Port):
         raise ValueError("The port tag '%s' is already used with a different data type. The "
                          "'force' parameter can be used to replace the tag." % self._m_tag)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self,
+                    key,
+                    value):
         """
         Internal function needed to change data using slicing. See class documentation for an
         example (:class:`pynpoint.core.dataio.OutputPort`).
 
-        :param key: Slicing indices to be changed
-        :param value: New values
+        Parameters
+        ----------
+        key : slice
+            Index slice to be changed.
+        value : numpy.ndarray
+            New data.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
-
             self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
     def del_all_data(self):
@@ -815,16 +934,19 @@ class OutputPort(Port):
         or other stacks of lines with the size (:, 200). However it is not possible to append other
         2D images along a third dimension.
 
-        :param data: The data to be saved
-        :type data: numpy array
-        :param data_dim: number of desired dimensions. If None the dimension of the first_data is
-                         used.
-        :type data_dim: int
-        :param keep_attributes: If True all attributes of a old dataset which will be replaced
-                                remain the same.
-        :type keep_attributes: bool
+        Parameters
+        ----------
+        data : numpy.ndarray
+            The data to be saved.
+        data_dim : int
+            Number of data dimensions. The dimension of the *first_data* is used if set to None.
+        keep_attributes : bool
+            All attributes of the old dataset will remain the same if set to True.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         data = np.asarray(data)
@@ -857,15 +979,20 @@ class OutputPort(Port):
         shape or type of the input data does not match the existing data. **Warning**: This can
         delete the existing data.
 
-        :param data: The data which will be appended
-        :type data: numpy array
-        :param data_dim: Number of desired dimensions used if a new data set is created. If None
-                         the dimension of the *data* is used.
-        :type data_dim: int
-        :param force: If True existing data will be overwritten if shape or type does not match.
-        :type force: bool
+        Parameters
+        ----------
+        data : numpy.ndarray
+            The data which will be appended.
+        data_dim : int
+            Number of data dimensions used if a new data set is created. The dimension of the
+            *data* is used if set to None.
+        force : bool
+            The existing data will be overwritten if shape or type does not match if set to True.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -879,7 +1006,10 @@ class OutputPort(Port):
         """
         Activates the port. A non activated port will not save data.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_activate = True
@@ -888,7 +1018,10 @@ class OutputPort(Port):
         """
         Deactivates the port. A non activated port will not save data.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_activate = False
@@ -914,13 +1047,19 @@ class OutputPort(Port):
         Static attributes will be direct attributes while non-static attributes are stored in a
         group with the name *header_* + name of the dataset.
 
-        :param name: Name of the attribute.
-        :type name: str
-        :param value: Value of the attribute
-        :param static: Indicate if the attribute is static (True) or non-static (False).
-        :type static: bool
+        Parameters
+        ----------
+        name : str
+            Name of the attribute.
+        value : str, float, or int
+            Value of the attribute.
+        static : bool
+            Indicate if the attribute is static (True) or non-static (False).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -942,11 +1081,17 @@ class OutputPort(Port):
         """
         Function which appends a single data value to non-static attributes.
 
-        :param name: Name of the attribute
-        :type name: str
-        :param value: Value which will be appended to the attribute dataset.
+        Parameters
+        ----------
+        name : str
+            Name of the attribute.
+        value : str, float, or int
+            Value which will be appended to the attribute dataset.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -960,12 +1105,17 @@ class OutputPort(Port):
         """
         Function which adds an integer of float to an existing static attribute.
 
-        :param name: Name of the attribute
-        :type name: str
-        :param value: Value to be added
-        :type value: int or float
+        Parameters
+        ----------
+        name : str
+            Name of the attribute.
+        value : str, float, or int
+            Attribute value.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -987,10 +1137,15 @@ class OutputPort(Port):
         tag = OutputPort tag (self.tag) nothing will be changed. Use this function in all modules
         to keep the header information.
 
-        :param input_port: The InputPort containing header information
-        :type input_port: InputPort
+        Parameters
+        ----------
+        input_port : pynpoint.core.dataio.InputPort
+            The InputPort with the header information.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate() and input_port.tag != self._m_tag:
@@ -1022,10 +1177,15 @@ class OutputPort(Port):
         Deletes the attribute of the dataset with the given name. Finds and removes static and
         non-static attributes.
 
-        :param name: Name of the attribute.
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            Name of the attribute.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -1045,7 +1205,10 @@ class OutputPort(Port):
         """
         Deletes all static and non-static attributes of the dataset.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self._check_status_and_activate():
@@ -1064,15 +1227,18 @@ class OutputPort(Port):
         """
         Checks if a static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the static attribute.
-        :type name: str
-        :param comparison_value: Value for comparison.
+        Parameters
+        ----------
+        name : str
+            Name of the static attribute.
+        comparison_value : str, float, or int
+            Comparison value.
 
-        :return:
-                     * 1 if the static attribute does not exist
-                     * 0 if the static attribute exists and is equal
-                     * -1 if the static attribute exists but is not equal
-        :rtype: int
+        Returns
+        -------
+        int
+            Status: 1 if the static attribute does not exist, 0 if the static attribute exists
+            and is equal, and -1 if the static attribute exists but is not equal.
         """
 
         if not self._check_status_and_activate():
@@ -1092,15 +1258,18 @@ class OutputPort(Port):
         """
         Checks if a non-static attribute exists and if it is equal to a comparison value.
 
-        :param name: Name of the non-static attribute.
-        :type name: str
-        :param comparison_value: Value for comparison.
+        Parameters
+        ----------
+        name : str
+            Name of the non-static attribute.
+        comparison_value : numpy.ndarray
+            Comparison values
 
-        :return:
-                     * 1 if the non-static attribute does not exist
-                     * 0 if the non-static attribute exists and is equal
-                     * -1 if the non-static attribute exists but is not equal
-        :rtype: int
+        Returns
+        -------
+        int
+            Status: 1 if the non-static attribute does not exist, 0 if the non-static attribute
+            exists and is equal, and -1 if the non-static attribute exists but is not equal.
         """
 
         if not self._check_status_and_activate():
@@ -1126,12 +1295,17 @@ class OutputPort(Port):
         """
         Adds an attribute with history information about the pipeline module.
 
-        :param module: Name of the pipeline module which was executed.
-        :type module: str
-        :param history: History information.
-        :type history: str
+        Parameters
+        ----------
+        module : str
+            Name of the pipeline module which was executed.
+        history : str
+            History information.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.add_attribute("History: " + module, history)
@@ -1141,7 +1315,10 @@ class OutputPort(Port):
         Forces the DataStorage to save all data from the memory to the hard drive without closing
         it.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._m_data_storage.m_data_bank.flush()

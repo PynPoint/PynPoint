@@ -362,7 +362,7 @@ class TestOutputPort(object):
             control.get_attribute("attr3")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: attr3."
+        assert warning[0].message.args[0] == "The attribute 'attr3' was not found."
 
         out_port.activate()
         out_port.del_all_attributes()
@@ -544,7 +544,7 @@ class TestOutputPort(object):
             control.get_attribute("attr1")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: attr1."
+        assert warning[0].message.args[0] == "The attribute 'attr1' was not found."
 
         assert control.get_attribute("attr2") == 5
 
@@ -552,7 +552,7 @@ class TestOutputPort(object):
             control.get_attribute("attr_non_static_1")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: attr_non_static_1."
+        assert warning[0].message.args[0] == "The attribute 'attr_non_static_1' was not found."
 
         assert np.array_equal(control.get_attribute("attr_non_static_2"), [2, 4, 6, 8])
 
@@ -598,13 +598,13 @@ class TestOutputPort(object):
             control.get_attribute("attr_1")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: attr_1."
+        assert warning[0].message.args[0] == "The attribute 'attr_1' was not found."
 
         with pytest.warns(UserWarning) as warning:
             control.get_attribute("attr_2")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: attr_2."
+        assert warning[0].message.args[0] == "The attribute 'attr_2' was not found."
 
         out_port.del_all_data()
 

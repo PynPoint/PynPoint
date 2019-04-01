@@ -55,7 +55,8 @@ class FitsWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
@@ -78,7 +79,8 @@ class FitsWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
