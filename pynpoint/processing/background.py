@@ -29,17 +29,22 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         """
         Constructor of SimpleBackgroundSubtractionModule.
 
-        :param shift: Frame index offset for the background subtraction. Typically equal to the
-                      number of frames per dither location.
-        :type shift: int
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        shift : int
+            Frame index offset for the background subtraction. Typically equal to the number of
+            frames per dither location.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(SimpleBackgroundSubtractionModule, self).__init__(name_in)
@@ -53,7 +58,10 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         """
         Run method of the module. Simple background subtraction with a constant index offset.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         nframes = self.m_image_in_port.get_shape()[0]
@@ -98,22 +106,25 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         """
         Constructor of MeanBackgroundSubtractionModule.
 
-        :param shift: Image index offset for the background subtraction. Typically equal to the
-                      number of frames per dither location. If set to *None*, the NFRAMES attribute
-                      will be used to select the background frames automatically. The *cubes*
-                      argument should also be set with *shift=None*.
-        :type shift: int
-        :param cubes: Number of consecutive cubes per dithering position.
-        :type cubes: int
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        shift : int
+            Image index offset for the background subtraction. Typically equal to the number of
+            frames per dither location. If set to *None*, the NFRAMES attribute will be used to
+            select the background frames automatically. The *cubes* argument should also be set
+            with *shift=None*.
+        cubes : int
+            Number of consecutive cubes per dithering position.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(MeanBackgroundSubtractionModule, self).__init__(name_in)
@@ -130,7 +141,10 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         offset or the NFRAMES attributes. The mean background is calculated from the cubes before
         and after the science cube.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # Use NFRAMES values if shift=None
@@ -283,21 +297,25 @@ class LineSubtractionModule(ProcessingModule):
         """
         Constructor of LineSubtractionModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output.
-        :type image_out_tag: str
-        :param combine: The method by which the column and row pixel values are combined
-                        ("median" or "mean"). Using a mean-combination is computationally
-                        faster than a median-combination.
-        :type combine: str
-        :param mask: The radius of the mask within which pixel values are ignored. No mask
-                     is used if set to None.
-        :type mask: float
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output.
+        combine : str
+            The method by which the column and row pixel values are combined ("median" or "mean").
+            Using a mean-combination is computationally faster than a median-combination.
+        mask : float
+            The radius of the mask within which pixel values are ignored. No mask is used if set
+            to None.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(LineSubtractionModule, self).__init__(name_in)
@@ -314,7 +332,10 @@ class LineSubtractionModule(ProcessingModule):
         position, computes the mean or median value while excluding pixels within the radius of
         the mask, and subtracts the mean or median value from each pixel separately.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
@@ -383,23 +404,27 @@ class NoddingBackgroundModule(ProcessingModule):
         """
         Constructor of NoddingBackgroundModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param science_in_tag: Tag of the database entry with science images that are read as
-                               input.
-        :type science_in_tag: str
-        :param sky_in_tag: Tag of the database entry with sky images that are read as input. The
-                           MeanCubeModule should be used on the sky images beforehand.
-        :type sky_in_tag: str
-        :param image_out_tag: Tag of the database entry with sky subtracted images that are written
-                              as output.
-        :type image_out_tag: str
-        :param mode: Sky images that are subtracted, relative to the science images. Either the
-                     next, previous, or average of the next and previous cubes of sky frames can
-                     be used by choosing *next*, *previous*, or *both*, respectively.
-        :type mode: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        science_in_tag : str
+            Tag of the database entry with science images that are read as input.
+        sky_in_tag : str
+            Tag of the database entry with sky images that are read as input. The
+            :class:`~pynpoint.processing.stacksubset.MeanCubeModule` should be used on the sky
+            images beforehand.
+        image_out_tag : str
+            Tag of the database entry with sky subtracted images that are written as output.
+        mode : str
+            Sky images that are subtracted, relative to the science images. Either the next,
+            previous, or average of the next and previous cubes of sky frames can be used by
+            choosing "next", "previous", or "both", respectively.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(NoddingBackgroundModule, self).__init__(name_in=name_in)
@@ -507,7 +532,10 @@ class NoddingBackgroundModule(ProcessingModule):
         Run method of the module. Create list of time stamps, get sky and science images, and
         subtract the sky images from the science images.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()

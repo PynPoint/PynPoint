@@ -50,7 +50,8 @@ class Hdf5WritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(Hdf5WritingModule, self).__init__(name_in, output_dir)
@@ -70,7 +71,8 @@ class Hdf5WritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running Hdf5WritingModule...")

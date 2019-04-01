@@ -44,7 +44,8 @@ class TextWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(TextWritingModule, self).__init__(name_in, output_dir)
@@ -63,7 +64,8 @@ class TextWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         if self.m_header is None:
@@ -124,7 +126,8 @@ class ParangWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(ParangWritingModule, self).__init__(name_in, output_dir)
@@ -144,7 +147,8 @@ class ParangWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running ParangWritingModule...")
@@ -202,7 +206,8 @@ class AttributeWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(AttributeWritingModule, self).__init__(name_in, output_dir)
@@ -222,7 +227,8 @@ class AttributeWritingModule(WritingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         if self.m_header is None:

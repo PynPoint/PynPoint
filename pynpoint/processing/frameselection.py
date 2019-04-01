@@ -32,23 +32,27 @@ class RemoveFramesModule(ProcessingModule):
         """
         Constructor of RemoveFramesModule.
 
-        :param frames: A tuple or array with the frame indices that have to be removed or a
-                       database tag pointing to a list of frame indices.
-        :type frames: str or tuple or numpy.ndarray
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param selected_out_tag: Tag of the database entry with the remaining images after
-                                 removing the specified images. Should be different from
-                                 *image_in_tag*. No data is written when set to *None*.
-        :type selected_out_tag: str
-        :param removed_out_tag: Tag of the database entry with the images that are removed.
-                                Should be different from *image_in_tag*. No data is written
-                                when set to *None*.
-        :type removed_out_tag: str
+        Parameters
+        ----------
+        frames : str, tuple, or numpy.ndarray
+            A tuple or array with the frame indices that have to be removed or a database tag
+            pointing to a list of frame indices.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        selected_out_tag : str
+            Tag of the database entry with the remaining images after removing the specified
+            images. Should be different from *image_in_tag*. No data is written when set to
+            *None*.
+        removed_out_tag : str
+            Tag of the database entry with the images that are removed. Should be different
+            from *image_in_tag*. No data is written when set to *None*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(RemoveFramesModule, self).__init__(name_in)
@@ -103,7 +107,10 @@ class RemoveFramesModule(ProcessingModule):
         Run method of the module. Removes the frames and corresponding attributes, updates the
         NFRAMES attribute, and saves the data and attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._initialize()
@@ -171,49 +178,49 @@ class FrameSelectionModule(ProcessingModule):
         """
         Constructor of FrameSelectionModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param selected_out_tag: Tag of the database entry with the selected images that are
-                                 written as output. Should be different from *image_in_tag*.
-                                 No data is written when set to *None*.
-        :type selected_out_tag: str
-        :param removed_out_tag: Tag of the database entry with the removed images that are
-                                written as output. Should be different from *image_in_tag*.
-                                No data is written when set to *None*.
-        :type removed_out_tag: str
-        :param index_out_tag: Tag of the database entry with the list of frames indices that are
-                              removed with the frames selection. No data is written when set to
-                              *None*.
-        :type index_out_tag: str
-        :param method: Perform the sigma clipping with respect to the median or maximum aperture
-                       flux by setting the method to *median* or *max*, respectively.
-        :type method: str
-        :param threshold: Threshold in units of sigma for the frame selection. All images that
-                          are a *threshold* number of sigmas away from the median photometry will
-                          be removed.
-        :type threshold: float
-        :param fwhm: The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is
-                     used to smooth the images before the brightest pixel is located. Should be
-                     similar in size to the FWHM of the stellar PSF. A fixed position, specified
-                     by *position*, is used when *fwhm* is set to *None*.
-        :type fwhm: float
-        :param aperture: Tuple with the aperture properties for measuring the photometry around
-                         the location of the brightest pixel. The first element contains the
-                         aperture type ("circular", "annulus", or "ratio"). For a
-                         circular aperture, the second element contains the aperture radius
-                         (arcsec). For the other two types, the second and third element are the
-                         inner and outer radii (arcsec) of the aperture. The position of the
-                         aperture has to be specified with *position* when *fwhm=None*.
-        :type aperture: tuple(str, float, float)
-        :param position: Subframe that is selected to search for the star. The tuple contains the
-                         center (pix) and size (arcsec) (pos_x, pos_y, size). Setting *position*
-                         to None will use the full image to search for the star. If
-                         *position=(None, None, size)* then the center of the image will be used.
-        :type position: (int, int, float)
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        selected_out_tag : str
+            Tag of the database entry with the selected images that are written as output. Should
+            be different from *image_in_tag*. No data is written when set to None.
+        removed_out_tag : str
+            Tag of the database entry with the removed images that are written as output. Should
+            be different from *image_in_tag*. No data is written when set to None.
+        index_out_tag : str
+            Tag of the database entry with the list of frames indices that are removed with the
+            frames selection. No data is written when set to *None*.
+        method : str
+            Perform the sigma clipping with respect to the median or maximum aperture flux by
+            setting the *method* to "median" or "max".
+        threshold : float
+            Threshold in units of sigma for the frame selection. All images that are a *threshold*
+            number of sigmas away from the median photometry will be removed.
+        fwhm : float
+            The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is used to
+            smooth the images before the brightest pixel is located. Should be similar in size to
+            the FWHM of the stellar PSF. A fixed position, specified by *position*, is used when
+            *fwhm* is set to None
+        aperture : tuple(str, float, float)
+            Tuple with the aperture properties for measuring the photometry around the location of
+            the brightest pixel. The first element contains the aperture type ("circular",
+            "annulus", or "ratio"). For a circular aperture, the second element contains the
+            aperture radius (arcsec). For the other two types, the second and third element are the
+            inner and outer radii (arcsec) of the aperture. The position of the aperture has to be
+            specified with *position* when *fwhm* is set to None.
+        position : tuple(int, int, float)
+            Subframe that is selected to search for the star. The tuple contains the center (pix)
+            and size (arcsec) (pos_x, pos_y, size). Setting *position* to None will use the full
+            image to search for the star. If *position=(None, None, size)* then the center of the
+            image will be used.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(FrameSelectionModule, self).__init__(name_in)
@@ -265,7 +272,10 @@ class FrameSelectionModule(ProcessingModule):
         the median and standard deviation of the photometry, and applies sigma clipping to remove
         low quality images.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _get_aperture(aperture):
@@ -443,15 +453,20 @@ class RemoveLastFrameModule(ProcessingModule):
         """
         Constructor of RemoveLastFrameModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(RemoveLastFrameModule, self).__init__(name_in)
@@ -463,7 +478,10 @@ class RemoveLastFrameModule(ProcessingModule):
         """
         Run method of the module. Removes every NDIT+1 frame and saves the data and attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
@@ -526,17 +544,22 @@ class RemoveStartFramesModule(ProcessingModule):
         """
         Constructor of RemoveStartFramesModule.
 
-        :param frames: Number of frames that are removed at the beginning of each cube.
-        :type frames: int
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        frames : int
+            Number of frames that are removed at the beginning of each cube.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(RemoveStartFramesModule, self).__init__(name_in)
@@ -551,7 +574,10 @@ class RemoveStartFramesModule(ProcessingModule):
         Run method of the module. Removes a constant number of images at the beginning of each cube
         and saves the data and attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()

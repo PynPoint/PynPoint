@@ -45,7 +45,8 @@ class ParangReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
         super(ParangReadingModule, self).__init__(name_in, input_dir)
 
@@ -64,7 +65,8 @@ class ParangReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running ParangReadingModule...")
@@ -133,7 +135,8 @@ class AttributeReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(AttributeReadingModule, self).__init__(name_in, input_dir)
@@ -154,7 +157,8 @@ class AttributeReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running AttributeReadingModule...")

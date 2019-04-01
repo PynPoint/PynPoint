@@ -17,11 +17,7 @@ First we need to import the Pypeline, as well as the I/O and processing modules.
 
     from pynpoint import Pypeline, FitsReadingModule
 
-Or all at once::
-
-    from pynpoint import *
-
-Next, we create an instance of :class:`pynpoint.core.pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` a folder for the output::
+Next, we create an instance of :class:`~pynpoint.core.pypeline.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the path with the raw FITS files, and ``output_place_in`` to a folder for the output::
 
     pipeline = Pypeline(working_place_in="/path/to/working_place",
                         input_place_in="/path/to/input_place",
@@ -86,7 +82,7 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
 
 5. Remove the top two lines to make the images square::
 
-    module = RemoveLinesModule(lines=(0,0,0,2),
+    module = RemoveLinesModule(lines=(0, 0, 0, 2),
                                name_in="cut",
                                image_in_tag="last",
                                image_out_tag="cut")
@@ -125,7 +121,7 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
     module = DitheringBackgroundModule(name_in="background",
                                        image_in_tag="first",
                                        image_out_tag="background",
-                                       center=((263.,263.), (116.,263.), (116.,116.), (263,116.)),
+                                       center=((263, 263), (116, 263), (116, 116), (263, 116)),
                                        cubes=None,
                                        size=3.5,
                                        gaussian=fwhm,
@@ -206,7 +202,7 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
                                      interpolation="spline",
                                      radius=5.*fwhm,
                                      sign="positive",
-                                     guess=(0., 0., 1., 1., 100., 0.))
+                                     guess=(0., 0., 1., 1., 100., 0., 0.))
 
 	pipeline.add_module(module)
 
@@ -251,21 +247,21 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
 18. Measure the signal-to-noise ratio and false positive fraction::
 
 	module = FalsePositiveModule(position=(50.5, 26.5),
-                                    aperture=fwhm/2.,
-                                    ignore=True,
-                                    name_in="fpf",
-                                    image_in_tag="pca_median",
-                                    snr_out_tag="fpf")
+                                     aperture=fwhm/2.,
+                                     ignore=True,
+                                     name_in="fpf",
+                                     image_in_tag="pca_median",
+                                     snr_out_tag="fpf")
 
 	pipeline.add_module(module)
 
 19. Write the median residuals to a FITS file::
 
 	module = FitsWritingModule(name_in="write",
-                                    file_name="residuals.fits",
-                                    output_dir=None,
-                                    data_tag="pca_median",
-                                    data_range=None)
+                                   file_name="residuals.fits",
+                                   output_dir=None,
+                                   data_tag="pca_median",
+                                   data_range=None)
 
 	pipeline.add_module(module)
 

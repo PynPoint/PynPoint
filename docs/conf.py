@@ -87,17 +87,20 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {'collapse_navigation': False,
-                      'display_version': False,
-                      'sticky_navigation': True,
-                      'prev_next_buttons_location': 'bottom',
-                      'navigation_depth': 5,
-                      'logo_only': True}
+html_theme_options = { 'logo_only': True,
+                       'display_version': False,
+                       'prev_next_buttons_location': 'bottom',
+                       'style_external_links': False,
+                       'collapse_navigation': True,
+                       'sticky_navigation': True,
+                       'navigation_depth': 2,
+                       'includehidden': True,
+                       'titles_only': False }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_images']
+html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -109,8 +112,8 @@ html_static_path = ['_images']
 #
 # html_sidebars = {}
 
-html_logo = '_images/logo.png'
-# html_favicon = '_images/logo.jpg'
+html_logo = '_static/logo.png'
+# html_favicon = '_static/logo.jpg'
 html_search_language = 'en'
 
 html_context = {'display_github': True,
@@ -197,3 +200,5 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
+
+html_css_files = ['custom.css']

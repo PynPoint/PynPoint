@@ -60,7 +60,8 @@ class FitsReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(FitsReadingModule, self).__init__(name_in, input_dir)
@@ -110,7 +111,7 @@ class FitsReadingModule(ReadingModule):
         -------
         astropy.io.fits.header.Header
             FITS header.
-        tuple
+        tuple(int, )
             Image shape.
         """
 
@@ -154,7 +155,8 @@ class FitsReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         for item in self.m_static:
@@ -200,7 +202,8 @@ class FitsReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         for item in self.m_non_static:
@@ -242,7 +245,8 @@ class FitsReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         pixscale = self._m_config_port.get_attribute('PIXSCALE')
@@ -272,7 +276,8 @@ class FitsReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         location = os.path.join(self.m_input_location, '')

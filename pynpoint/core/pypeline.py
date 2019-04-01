@@ -19,7 +19,7 @@ import pynpoint
 
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
-from pynpoint.core.processing import PypelineModule, WritingModule, ReadingModule, ProcessingModule
+from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
 
 
 class Pypeline(object):
@@ -38,23 +38,26 @@ class Pypeline(object):
         """
         Constructor of Pypeline.
 
-        :param working_place_in: Working location of the Pypeline which needs to be a folder on the
-                                 hard drive. The given folder will be used to save the central
-                                 PynPoint database (an HDF5 file) in which all the intermediate
-                                 processing steps are saved. Note that the HDF5 file can become
-                                 very large depending on the size and number of input images.
-        :type working_place_in: str
-        :param input_place_in: Default input directory of the Pypeline. All ReadingModules added
-                               to the Pypeline use this directory to look for input data. It is
-                               possible to specify a different location for the ReadingModules
-                               using their constructors.
-        :type input_place_in: str
-        :param output_place_in: Default result directory used to save the output of all
-                                WritingModules added to the Pypeline. It is possible to specify
-                                a different locations for the WritingModules by using their
-                                constructors.
+        Parameters
+        ----------
+        working_place_in : str
+            Working location of the Pypeline which needs to be a folder on the hard drive. The
+            given folder will be used to save the central PynPoint database (an HDF5 file) in
+            which all the intermediate processing steps are saved. Note that the HDF5 file can
+            become very large depending on the size and number of input images.
+        input_place_in : str
+            Default input directory of the Pypeline. All ReadingModules added to the Pypeline
+            use this directory to look for input data. It is possible to specify a different
+            location for the ReadingModules using their constructors.
+        output_place_in : str
+            Default result directory used to save the output of all WritingModules added to the
+            Pypeline. It is possible to specify a different locations for the WritingModules by
+            using their constructors.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Initiating PynPoint v"+pynpoint.__version__+"...")
@@ -79,10 +82,17 @@ class Pypeline(object):
         This method is called every time a member / attribute of the Pypeline is changed. It checks
         whether a chosen working / input / output directory exists.
 
-        :param key: Member or attribute name.
-        :param value: New value for the given member or attribute.
+        Parameters
+        ----------
+        key : str
+            Member or attribute name.
+        value : str
+            New value for the given member or attribute.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if key in ["_m_working_place", "_m_input_place", "_m_output_place"]:
@@ -98,13 +108,19 @@ class Pypeline(object):
         Internal function which is used for the validation of the pipeline. Validates a
         single module.
 
-        :param module: The module.
-        :type module: ReadingModule, WritingModule, ProcessingModule
-        :param tags: Tags in the database.
-        :type tags: list, str
+        Parameters
+        ----------
+        module : ReadingModule, WritingModule, or ProcessingModule
+            The pipeline module.
+        tags : list(str, )
+            Tags in the database.
 
-        :return: Module validation.
-        :rtype: bool, str
+        Returns
+        -------
+        bool
+            Module validation.
+        str
+            Module name.
         """
 
         if isinstance(module, ReadingModule):
@@ -132,7 +148,10 @@ class Pypeline(object):
         in the working folder and creates this file with the default (ESO/NACO) settings in case
         the file is not present.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _create_config(filename, attributes):
@@ -224,10 +243,15 @@ class Pypeline(object):
         a specified input or output location then the Pypeline default location is used. Moreover,
         the given module is connected to the Pypeline internal data storage.
 
-        :param module: Input module.
-        :type module: ReadingModule, WritingModule, ProcessingModule
+        Parameters
+        ----------
+        module : ReadingModule, WritingModule, or ProcessingModule
+            Input pipeline module.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         assert isinstance(module, PypelineModule), "The added module is not a valid " \
@@ -254,27 +278,35 @@ class Pypeline(object):
         """
         Removes a Pypeline module from the internal dictionary.
 
-        :param name: Name of the module which has to be removed.
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            Name of the module that has to be removed.
 
-        :return: True if module was deleted and False if module does not exist.
-        :rtype: bool
+        Returns
+        -------
+        bool
+            Confirmation of removal.
         """
 
         if name in self._m_modules:
             del self._m_modules[name]
-            return True
+            removed = True
 
-        warnings.warn("Module name '"+name+"' not found in the Pypeline dictionary.")
+        else:
+            warnings.warn("Module name '"+name+"' not found in the Pypeline dictionary.")
+            removed = False
 
-        return False
+        return removed
 
     def get_module_names(self):
         """
         Function which returns a list of all module names.
 
-        :return: Ordered list of all Pypeline modules.
-        :rtype: list[str]
+        Returns
+        -------
+        list(str, )
+            Ordered list of all Pypeline modules.
         """
 
         return list(self._m_modules.keys())
@@ -284,9 +316,12 @@ class Pypeline(object):
         Function which checks if all input ports of the Pypeline are pointing to previous output
         ports.
 
-        :return: True if Pypeline is valid and False if not. The second parameter contains the name
-                 of the module which is not valid.
-        :rtype: bool, str
+        Returns
+        -------
+        bool
+            Confirmation of pipeline validation.
+        str
+            Module name that is not valid.
         """
 
         self.m_data_storage.open_connection()
@@ -305,12 +340,17 @@ class Pypeline(object):
         """
         Checks if the data exists for the module with label *name*.
 
-        :param name: Name of the module that is checked.
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            Name of the module that is checked.
 
-        :return: True if the Pypeline module is valid and False if not. The second parameter gives
-                 the name of the module which is not valid.
-        :rtype: bool, str
+        Returns
+        -------
+        bool
+            Confirmation of pipeline module validation.
+        str
+            Module name that is not valid.
         """
 
         self.m_data_storage.open_connection()
@@ -331,7 +371,10 @@ class Pypeline(object):
         Walks through all saved processing steps and calls their run methods. The order in which
         the steps are called depends on the order they have been added to the Pypeline.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Validating Pypeline...")
@@ -354,10 +397,15 @@ class Pypeline(object):
         """
         Runs a single processing module.
 
-        :param name: Name of the module.
-        :type name: str
+        Parameters
+        ----------
+        name : str
+            Name of the pipeline module.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if name in self._m_modules:
@@ -383,11 +431,15 @@ class Pypeline(object):
         """
         Function for accessing data in the central database.
 
-        :param tag: Database tag.
-        :type tag: str
+        Parameters
+        ----------
+        tag : str
+            Database tag.
 
-        :return: The selected dataset from the database.
-        :rtype: numpy.ndarray
+        Returns
+        -------
+        numpy.ndarray
+            The selected dataset from the database.
         """
 
         self.m_data_storage.open_connection()
@@ -401,14 +453,19 @@ class Pypeline(object):
         """
         Function for accessing attributes in the central database.
 
-        :param data_tag: Database tag.
-        :type data_tag: str
-        :param attr_name: Name of the attribute.
-        :type attr_name: str
-        :param static: Static or non-static attribute.
-        :type static: bool
+        Parameters
+        ----------
+        data_tag : str
+            Database tag.
+        attr_name : str
+            Name of the attribute.
+        static : bool
+            Static or non-static attribute.
 
-        :return: The attribute value(s).
+        Returns
+        -------
+        numpy.ndarray
+            The attribute values.
         """
 
         self.m_data_storage.open_connection()
@@ -425,37 +482,42 @@ class Pypeline(object):
     def set_attribute(self,
                       data_tag,
                       attr_name,
-                      value,
+                      attr_value,
                       static=True):
         """
         Function for writing attributes to the central database. Existing values will be
         overwritten.
 
-        :param data_tag: Database tag.
-        :type data_tag: str
-        :param attr_name: Name of the attribute.
-        :type attr_name: str
-        :param value: Attribute value.
-        :type value: float, int, str, tuple, numpy.ndarray
-        :param static: Static or non-static attribute.
-        :type static: bool
+        Parameters
+        ----------
+        data_tag : str
+            Database tag.
+        attr_name : str
+            Name of the attribute.
+        attr_value : float, int, str, tuple, or numpy.ndarray
+            Attribute value.
+        static : bool
+            Static or non-static attribute.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_data_storage.open_connection()
 
         if static:
-            self.m_data_storage.m_data_bank[data_tag].attrs[attr_name] = value
+            self.m_data_storage.m_data_bank[data_tag].attrs[attr_name] = attr_value
 
         else:
-            if isinstance(value[0], str):
-                value = np.array(value, dtype="|S")
+            if isinstance(attr_value[0], str):
+                attr_value = np.array(attr_value, dtype="|S")
 
             if attr_name in list(self.m_data_storage.m_data_bank["header_"+data_tag].keys()):
                 del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
 
-            self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(value)
+            self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(attr_value)
 
         self.m_data_storage.close_connection()
 
@@ -463,8 +525,10 @@ class Pypeline(object):
         """
         Function for listing the database tags, ignoring header and config tags.
 
-        :return: Database tags.
-        :rtype: numpy.asarray
+        Returns
+        -------
+        numpy.asarray
+            Database tags.
         """
 
         self.m_data_storage.open_connection()
@@ -482,13 +546,17 @@ class Pypeline(object):
 
     def get_shape(self, tag):
         """
-        Function getting the shape of a database entry.
+        Function for getting the shape of a database entry.
 
-        :param tag: Database tag.
-        :type tag: str
+        Parameters
+        ----------
+        tag : str
+            Database tag.
 
-        :return: Database tags.
-        :rtype: tuple
+        Returns
+        -------
+        tuple(int, )
+            Dataset shape.
         """
 
         self.m_data_storage.open_connection()

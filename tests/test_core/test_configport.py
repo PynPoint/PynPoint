@@ -82,6 +82,6 @@ class TestConfigPort(object):
             attribute = port.get_attribute("test")
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No attribute found - requested: test."
+        assert warning[0].message.args[0] == "The attribute 'test' was not found."
 
         assert attribute is None
