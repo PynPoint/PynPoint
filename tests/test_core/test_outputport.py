@@ -415,45 +415,6 @@ class TestOutputPort(object):
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_add_value_to_static_attribute(self):
-        out_port = self.create_output_port("new_data")
-        out_port.set_all([1])
-        out_port.add_attribute("attr1", value=4)
-
-        control = self.create_input_port("new_data")
-        assert control.get_attribute("attr1") == 4
-        out_port.add_value_to_static_attribute("attr1", value=2)
-        assert control.get_attribute("attr1") == 6
-
-        out_port.deactivate()
-        out_port.add_value_to_static_attribute("attr1", value=2)
-        assert control.get_attribute("attr1") == 6
-
-        out_port.del_all_attributes()
-        out_port.del_all_data()
-
-    def test_add_value_to_static_attribute_error(self):
-        # add non int or float data
-        out_port = self.create_output_port("new_data")
-        out_port.set_all([1])
-        out_port.add_attribute("attr1", value="test")
-
-        control = self.create_input_port("new_data")
-        assert control.get_attribute("attr1") == "test"
-        with pytest.raises(ValueError) as error:
-            out_port.add_value_to_static_attribute("attr1", value="test")
-
-        assert str(error.value) == "Only integer and float values can be added to an existing " \
-                                   "attribute."
-
-        # add data to not existing attribute
-        with pytest.raises(AttributeError) as error2:
-            out_port.add_value_to_static_attribute("attr42", value=3)
-        assert error2.value, "Value can not be added to a not existing attribute."
-
-        out_port.del_all_attributes()
-        out_port.del_all_data()
-
     def test_copy_attributes(self):
         out_port = self.create_output_port("new_data")
         out_port.del_all_attributes()
