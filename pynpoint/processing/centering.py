@@ -52,7 +52,9 @@ class StarExtractionModule(ProcessingModule):
             *image_in_tag*.
         index_out_tag : str
             List with image indices for which the image size is too large to be cropped around the
-            brightest pixel. No data is written if set to None.
+            brightest pixel. No data is written if set to None. This tag name can be provided to
+            the *frames* parameter in
+            :class:`~pynpoint.processing.frameselection.RemoveFramesModule`.
         image_size : float
             Cropped image size (arcsec).
         fwhm_star : float
