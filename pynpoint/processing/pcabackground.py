@@ -46,9 +46,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
             position, and *first* the index value of the first cube which contains the star
             (Python indexing starts at zero). Sorting is based on the DITHER_X and DITHER_Y
             attributes when *cubes* is set to None.
-        mean : bool
-            Subtract the mean pixel value from each image separately, both star and background
-            frames.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
