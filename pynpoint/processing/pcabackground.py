@@ -37,33 +37,36 @@ class PCABackgroundPreparationModule(ProcessingModule):
         """
         Constructor of PCABackgroundPreparationModule.
 
-        :param dither: Tuple with the parameters for separating the star and background frames.
-                       The tuple should contain three values (positions, cubes, first) with
-                       *positions* the number of unique dithering position, *cubes* the number of
-                       consecutive cubes per dithering position, and *first* the index value of the
-                       first cube which contains the star (Python indexing starts at zero). Sorting
-                       is based on the DITHER_X and DITHER_Y attributes when *cubes* is set to
-                       None.
-        :type dither: (int, int, int)
-        :param mean: Subtract the mean pixel value from each image separately, both star and
-                     background frames.
-        :type mean: bool
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param star_out_tag: Tag of the database entry with frames that include the star. Should be
-                             different from *image_in_tag*.
-        :type star_out_tag: str
-        :param mean_out_tag: Tag of the database entry with frames that include the star and for
-                             which a mean background subtraction has been applied. Should be
-                             different from *image_in_tag*.
-        :type mean_out_tag: str
-        :param background_out_tag: Tag of the the database entry with frames that contain only
-                                   background and no star. Should be different from *image_in_tag*.
-        :type background_out_tag: str
+        Parameters
+        ----------
+        dither : tuple(int, int, int)
+            Tuple with the parameters for separating the star and background frames. The tuple
+            should contain three values (positions, cubes, first) with *positions* the number
+            of unique dithering position, *cubes* the number of consecutive cubes per dithering
+            position, and *first* the index value of the first cube which contains the star
+            (Python indexing starts at zero). Sorting is based on the DITHER_X and DITHER_Y
+            attributes when *cubes* is set to None.
+        mean : bool
+            Subtract the mean pixel value from each image separately, both star and background
+            frames.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        star_out_tag : str
+            Tag of the database entry with frames that include the star. Should be different
+            from *image_in_tag*.
+        mean_out_tag : str
+            Tag of the database entry with frames that include the star and for which a mean
+            background subtraction has been applied. Should be different from *image_in_tag*.
+        background_out_tag : str
+            Tag of the the database entry with frames that contain only background and no star.
+            Should be different from *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PCABackgroundPreparationModule, self).__init__(name_in)
@@ -211,7 +214,10 @@ class PCABackgroundPreparationModule(ProcessingModule):
         background from both the star and background frames, and writes the star and background
         frames separately.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_star_out_port.del_all_data()
@@ -287,42 +293,44 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         """
         Constructor of PCABackgroundSubtractionModule.
 
-        :param pca_number: Number of principal components.
-        :type pca_number: int
-        :param mask_star: Radius of the central mask (arcsec).
-        :type mask_star: float
-        :param mask_planet: Separation (arcsec), position angle (deg) measured in counterclockwise
-                            direction with respect to upward direction, additional rotation angle
-                            (deg), and radius (arcsec) of the mask, (sep, angle, extra_rot,
-                            radius). No mask is used when set to None.
-        :type mask_planet: (float, float, float, float)
-        :param subtract_mean: The mean of the background images is subtracted from both the star
-                              and background images before the PCA basis is constructed.
-        :type subtract_mean: bool
-        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
-                         to smooth the image before the star is located.
-        :type gaussian: float
-        :param subframe: Size (arcsec) of the subframe that is used to search for the star.
-                         Cropping of the subframe is done around the center of the image.
-                         The full images is used if set to None.
-        :type subframe: float
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param star_in_tag: Tag of the database entry with the star images.
-        :type star_in_tag: str
-        :param background_in_tag: Tag of the database entry with the background images.
-        :type background_in_tag: str
-        :param residuals_out_tag: Tag of the database entry with the residuals of the star images
-                                  after the background subtraction.
-        :type residuals_out_tag: str
-        :param fit_out_tag: Tag of the database entry with the fitted background. No data is
-                            written when set to None.
-        :type fit_out_tag: str
-        :param mask_out_tag: Tag of the database entry with the mask. No data is written when set
-                             to None.
-        :type mask_out_tag: str
+        Parameters
+        ----------
+        pca_number : int
+            Number of principal components.
+        mask_star : float
+            Radius of the central mask (arcsec).
+        mask_planet : tuple(float, float, float, float)
+            Separation (arcsec), position angle (deg) measured in counterclockwise direction with
+            respect to upward direction, additional rotation angle (deg), and radius (arcsec) of
+            the mask, (sep, angle, extra_rot, radius). No mask is used when set to None.
+        subtract_mean : bool
+            The mean of the background images is subtracted from both the star and background
+            images before the PCA basis is constructed.
+        gaussian : float
+            Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
+            image before the star is located.
+        subframe : float
+            Size (arcsec) of the subframe that is used to find the star. Cropping of the subframe
+            is done around the center of the image. The full images is used if set to None.
+        name_in : str
+            Tag of the database entry with the star images.
+        star_in_tag : str
+            Tag of the database entry with the star images.
+        background_in_tag : str
+            Tag of the database entry with the background images.
+        residuals_out_tag : str
+            Tag of the database entry with the residuals of the star images after the background
+            subtraction.
+        fit_out_tag : str
+            Tag of the database entry with the fitted background. No data is written when set to
+            None.
+        mask_out_tag : str
+            Tag of the database entry with the mask. No data is written when set to None.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PCABackgroundSubtractionModule, self).__init__(name_in)
@@ -355,7 +363,10 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         linear combination of the principal components, and writes the residuals of the background
         subtracted images.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _create_mask(radius, position, nimages):
@@ -567,64 +578,61 @@ class DitheringBackgroundModule(ProcessingModule):
         """
         Constructor of DitheringBackgroundModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Not written if
-                              set to None.
-        :type image_out_tag: str
-        :param center: Tuple with the centers of the dithering positions, e.g. ((x0,y0), (x1,y1)).
-                       The order of the coordinates should correspond to the order in which the
-                       star is present. If *center* and *cubes* are both set to None then sorting
-                       and subtracting of the background frames is based on DITHER_X and DITHER_Y.
-                       If *center* is specified and *cubes* is set to None then the DITHER_X and
-                       DITHER_Y attributes will be used for sorting and subtracting of the
-                       background but not for selecting the dithering positions.
-        :type center: ((int, int), (int, int), )
-        :param cubes: Number of consecutive cubes per dither position. If *cubes* is set to None
-                      then sorting and subtracting of the background frames is based on DITHER_X
-                      and DITHER_Y.
-        :type cubes: int
-        :param size: Image size (arsec) that is cropped at the specified dither positions.
-        :type size: float
-        :param gaussian: Full width at half maximum (arcsec) of the Gaussian kernel that is used
-                         to smooth the image before the star is located.
-        :type gaussian: float
-        :param subframe: Size (arcsec) of the subframe that is used to search for the star.
-                         Cropping of the subframe is done around the center of the dithering
-                         position. If set to None then the full frame size (*size*) will be
-                         used.
-        :type subframe: float
-        :param pca_number: Number of principal components.
-        :type pca_number: int
-        :param mask_star: Radius of the central mask (arcsec).
-        :type mask_star: float
-        :param subtract_mean: The mean of the background images is subtracted from both the star
-                              and background images before the PCA basis is constructed.
-        :type subtract_mean: bool
-        :param kwargs:
-            See below.
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Not written if set to None.
+        center : tuple(tuple(int, int), )
+            Tuple with the centers of the dithering positions, e.g. ((x0,y0), (x1,y1)). The order
+            of the coordinates should correspond to the order in which the star is present. If
+            *center* and *cubes* are both set to None then sorting and subtracting of the
+            background frames is based on DITHER_X and DITHER_Y. If *center* is specified and
+            *cubes* is set to None then the DITHER_X and DITHER_Y attributes will be used for
+            sorting and subtracting of the background but not for selecting the dither positions.
+        cubes : int
+            Number of consecutive cubes per dither position. If *cubes* is set to None then sorting
+            and subtracting of the background frames is based on DITHER_X and DITHER_Y.
+        size : float
+            Image size (arsec) that is cropped at the specified dither positions.
+        gaussian : float
+            Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
+            image before the star is located.
+        subframe : float
+            Size (arcsec) of the subframe that is used to search for the star. Cropping of the
+            subframe is done around the center of the dithering position. If set to None then the
+            full frame size (*size*) will be used.
+        pca_number : int
+            Number of principal components.
+        mask_star : float
+            Radius of the central mask (arcsec).
+        subtract_mean : bool
+            The mean of the background images is subtracted from both the star and background
+            images before the PCA basis is constructed.
 
-        :Keyword arguments:
-            **crop** (*bool*) -- Skip the step of selecting and cropping of the dithering
-            positions if set to False.
+        Keyword Arguments
+        -----------------
+        crop : bool
+            Skip the step of selecting and cropping of the dithering positions if set to False.
+        prepare : bool
+            Skip the step of preparing the PCA background subtraction if set to False.
+        pca_background : bool
+            Skip the step of the PCA background subtraction if set to False.
+        combine : str
+            Combine the mean background subtracted ("mean") or PCA background subtracted ("pca")
+            frames. This step is ignored if set to None.
+        mask_planet : tuple(float, float, float)
+            Separation (arcsec), position angle (deg) measured in counterclockwise direction with
+            respect to upward direction, additional rotation angle (deg), and radius (arcsec) of
+            the mask, (sep, angle, radius). No mask is used when set to None.
 
-            **prepare** (*bool*) -- Skip the step of preparing the PCA background subtraction if
-            set to False.
-
-            **pca_background** (*bool*) -- Skip the step of the PCA background subtraction if set
-            to False.
-
-            **combine** (*str*) -- Combine the mean background subtracted ("mean") or PCA
-            background subtracted ("pca") frames. This step is ignored if set to None.
-
-            **mask_planet** (*(float, float, float)*) -- Separation (arcsec), position angle
-            (deg) measured in counterclockwise direction with respect to upward direction,
-            additional rotation angle (deg), and radius (arcsec) of the mask, (sep, angle,
-            radius). No mask is used when set to None.
-
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if "crop" in kwargs:
@@ -707,7 +715,10 @@ class DitheringBackgroundModule(ProcessingModule):
         background subtraction, combines the output from the different dither positions is written
         to a single database tag.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _admin_start(count, n_dither, position, star_pos):

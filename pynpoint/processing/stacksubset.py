@@ -51,7 +51,8 @@ class StackAndSubsetModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(StackAndSubsetModule, self).__init__(name_in)
@@ -73,7 +74,8 @@ class StackAndSubsetModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         def _mean_angle(angles):
@@ -210,7 +212,8 @@ class MeanCubeModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(MeanCubeModule, self).__init__(name_in=name_in)
@@ -225,7 +228,8 @@ class MeanCubeModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
@@ -303,7 +307,8 @@ class DerotateAndStackModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(DerotateAndStackModule, self).__init__(name_in=name_in)
@@ -322,7 +327,8 @@ class DerotateAndStackModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         def _initialize(ndim, npix):
@@ -423,7 +429,8 @@ class CombineTagsModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(CombineTagsModule, self).__init__(name_in=name_in)
@@ -448,7 +455,8 @@ class CombineTagsModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()

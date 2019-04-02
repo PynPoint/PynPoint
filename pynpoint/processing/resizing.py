@@ -44,7 +44,8 @@ class CropImagesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(CropImagesModule, self).__init__(name_in=name_in)
@@ -65,7 +66,8 @@ class CropImagesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_attributes()
@@ -125,7 +127,8 @@ class ScaleImagesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(ScaleImagesModule, self).__init__(name_in=name_in)
@@ -167,7 +170,8 @@ class ScaleImagesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
@@ -230,7 +234,8 @@ class AddLinesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(AddLinesModule, self).__init__(name_in)
@@ -246,7 +251,8 @@ class AddLinesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         shape_in = self.m_image_in_port.get_shape()
@@ -307,7 +313,8 @@ class RemoveLinesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(RemoveLinesModule, self).__init__(name_in)
@@ -323,7 +330,8 @@ class RemoveLinesModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         def _remove_lines(image_in):

@@ -40,7 +40,8 @@ class CwtWaveletConfiguration(object):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         if wavelet not in ["dog", "morlet"]:
@@ -69,7 +70,8 @@ class DwtWaveletConfiguration(object):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         # create list of supported wavelets
@@ -123,7 +125,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(WaveletTimeDenoisingModule, self).__init__(name_in)
@@ -146,7 +149,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         if isinstance(self.m_wavelet_configuration, DwtWaveletConfiguration):
@@ -269,7 +273,8 @@ class TimeNormalizationModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(TimeNormalizationModule, self).__init__(name_in=name_in)
@@ -283,7 +288,8 @@ class TimeNormalizationModule(ProcessingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         def _normalization(image_in):

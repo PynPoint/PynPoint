@@ -51,7 +51,8 @@ class Hdf5ReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(Hdf5ReadingModule, self).__init__(name_in, input_dir)
@@ -77,7 +78,8 @@ class Hdf5ReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         hdf5_file = h5py.File(file_in, mode='r')
@@ -112,7 +114,8 @@ class Hdf5ReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         # create list of files to be read
