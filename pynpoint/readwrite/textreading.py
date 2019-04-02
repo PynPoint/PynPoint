@@ -45,7 +45,8 @@ class ParangReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
         super(ParangReadingModule, self).__init__(name_in, input_dir)
 
@@ -64,7 +65,8 @@ class ParangReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running ParangReadingModule...")
@@ -133,7 +135,8 @@ class AttributeReadingModule(ReadingModule):
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         super(AttributeReadingModule, self).__init__(name_in, input_dir)
@@ -149,12 +152,13 @@ class AttributeReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Reads the parallactic angles from a text file and writes the
-        values as non-static attribute (PARANG) to the database tag.
+        Run method of the module. Reads a list of values from a text file and writes them as
+        non-static attribute to a dataset.
 
         Returns
         -------
-        None
+        NoneType
+            None
         """
 
         sys.stdout.write("Running AttributeReadingModule...")

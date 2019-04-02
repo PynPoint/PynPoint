@@ -6,8 +6,10 @@ def get_attributes():
     """
     Function to get a dictionary with all attributes.
 
-    :return: Attribute information.
-    :rtype: dict
+    Returns
+    -------
+    dict
+        Attribute information.
     """
 
     attr = {'PIXSCALE':{'attribute':'static',
