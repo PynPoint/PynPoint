@@ -420,7 +420,8 @@ class CombineTagsModule(ProcessingModule):
             Compare non-static attributes between the tags or combine all non-static attributes
             into the new database tag.
         index_init : bool
-            Reinitialize the INDEX attribute. Index frames in the order of the input tags.
+            Reinitialize the ``INDEX`` attribute. The frames are indexed in the order of tags names
+            that are provided in *image_in_tags*.
         name_in : str
             Unique name of the module instance.
         image_out_tag : str
@@ -449,7 +450,7 @@ class CombineTagsModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Combines the frames of multiple tags into a single output tag
+        Run method of the module. Combines the frames of multiple tags into a single dataset
         and adds the static and non-static attributes. The values of the attributes are compared
         between the input tags to make sure that the input tags descent from the same data set.
 
@@ -464,17 +465,25 @@ class CombineTagsModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
 
+        image_in_port = []
+        im_shape = []
+
+        for i, item in enumerate(self.m_image_in_tags):
+            image_in_port.append(self.add_input_port(item))
+            im_shape.append(image_in_port[i].get_shape())
+
+        if len(set(im_shape)) > 1:
+            raise ValueError("The size of the images should be the same for all datasets.")
+
         count = 0
         for i, item in enumerate(self.m_image_in_tags):
             progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
 
-            image_in_port = self.add_input_port(item)
-            nimages = image_in_port.get_shape()[0]
-
+            nimages = number_images_port(image_in_port[i])
             frames = memory_frames(memory, nimages)
 
             for j, _ in enumerate(frames[:-1]):
-                im_tmp = image_in_port[frames[j]:frames[j+1], ]
+                im_tmp = image_in_port[i][frames[j]:frames[j+1], ]
                 self.m_image_out_port.append(im_tmp)
 
                 if self.m_index_init:
@@ -486,8 +495,8 @@ class CombineTagsModule(ProcessingModule):
                         for ind in index:
                             self.m_image_out_port.append_attribute_data("INDEX", ind)
 
-            static_attr = image_in_port.get_all_static_attributes()
-            non_static_attr = image_in_port.get_all_non_static_attributes()
+            static_attr = image_in_port[i].get_all_static_attributes()
+            non_static_attr = image_in_port[i].get_all_non_static_attributes()
 
             for key in static_attr:
                 status = self.m_image_out_port.check_static_attribute(key, static_attr[key])
@@ -501,7 +510,7 @@ class CombineTagsModule(ProcessingModule):
                                   'the same data set.' % key)
 
             for key in non_static_attr:
-                values = image_in_port.get_attribute(key)
+                values = image_in_port[i].get_attribute(key)
                 status = self.m_image_out_port.check_non_static_attribute(key, values)
 
                 if key != "INDEX" or (key == "INDEX" and not self.m_index_init):
