@@ -37,10 +37,10 @@ def contrast_limit(tmp_images,
     Function for calculating the contrast limit at a specified position by iterating towards
     a threshold for the false positive fraction, with a correction for small sample statistics.
 
-    :param images: Stack of images.
-    :type images: numpy.ndarray
-    :param psf: PSF template for the fake planet (2D or 3D).
-    :type psf: numpy.ndarray
+    :param images: System location of the stack of images.
+    :type images: string
+    :param psf: System location of the PSF template for the fake planet (1 or multiple frames).
+    :type psf: string
     :param parang: Derotation angles (deg).
     :type parang: numpy.ndarray
     :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
@@ -90,6 +90,9 @@ def contrast_limit(tmp_images,
 
     images = np.load(tmp_images)
     psf = np.load(tmp_psf)
+
+    if psf.shape[0] == 1:
+        psf = np.array(psf[0, :, :])
 
     if threshold[0] == "sigma":
         fpf_threshold = student_fpf(sigma=threshold[1],
