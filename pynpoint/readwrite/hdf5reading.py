@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+import warnings
 
 import six
 import h5py
@@ -74,7 +75,7 @@ class Hdf5ReadingModule(ReadingModule):
         Parameters
         ----------
         file_in : str
-            Name of the HDF5 file.
+            Path and name of the HDF5 file.
 
         Returns
         -------
@@ -84,33 +85,33 @@ class Hdf5ReadingModule(ReadingModule):
 
         hdf5_file = h5py.File(file_in, mode='r')
 
-        for _, entry in enumerate(hdf5_file.keys()):
-            entry = str(entry) # unicode keys cause errors
+        for tag_in in self._m_tag_dictionary:
+            tag_in = str(tag_in) # unicode keys cause errors
+            tag_out = self._m_tag_dictionary[tag_in]
 
-            if entry in self._m_tag_dictionary and not entry.startswith("header_"):
-                tmp_tag = self._m_tag_dictionary[entry]
+            if tag_in not in hdf5_file:
+                warnings.warn("The dataset with tag name '{0}' is not found in the HDF5 file."
+                              .format(tag_in))
+                continue
 
-                # add data
-                tmp_port = self._m_output_ports[tmp_tag]
-                tmp_port.set_all(np.asarray(hdf5_file[entry][...]))
+            # add data
+            port_out = self._m_output_ports[tag_out]
+            port_out.set_all(np.asarray(hdf5_file[tag_in][...]))
 
-                # add static attributes
-                for attribute_name, attribute_value in six.iteritems(hdf5_file[entry].attrs):
-                    tmp_port.add_attribute(name=attribute_name,
-                                           value=attribute_value)
+            # add static attributes
+            for attr_name, attr_value in six.iteritems(hdf5_file[tag_in].attrs):
+                port_out.add_attribute(name=attr_name, value=attr_value)
 
-                # add non-static attributes
-                if "header_" + entry in hdf5_file:
-                    for non_static_attr in hdf5_file[("header_" + entry)]:
-                        tmp_port.add_attribute(name=non_static_attr,
-                                               value=hdf5_file[("header_" + entry+
-                                                                "/"+non_static_attr)][...],
-                                               static=False)
+            # add non-static attributes
+            if "header_" + tag_in in hdf5_file:
+                for attr_name in hdf5_file["header_" + tag_in]:
+                    attr_val = hdf5_file["header_" + tag_in + "/" + attr_name][...]
+                    port_out.add_attribute(name=attr_name, value=attr_val, static=False)
 
     def run(self):
         """
-        Run method of the module. Looks for all HDF5 files in the input directory and reads them
-        using the internal function _read_single_hdf5().
+        Run method of the module. Looks for all HDF5 files in the input directory and reads the
+        datasets that are provided in the tag dictionary.
 
         Returns
         -------
