@@ -470,7 +470,7 @@ class CombineTagsModule(ProcessingModule):
 
         for i, item in enumerate(self.m_image_in_tags):
             image_in_port.append(self.add_input_port(item))
-            im_shape.append(image_in_port[i].get_shape())
+            im_shape.append(image_in_port[i].get_shape()[-2:])
 
         if len(set(im_shape)) > 1:
             raise ValueError("The size of the images should be the same for all datasets.")
