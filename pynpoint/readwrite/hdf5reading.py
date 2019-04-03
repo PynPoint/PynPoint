@@ -90,8 +90,8 @@ class Hdf5ReadingModule(ReadingModule):
             tag_out = self._m_tag_dictionary[tag_in]
 
             if tag_in not in hdf5_file:
-                warnings.warn("The dataset with tag name '{0}' is not found in the HDF5 file {1}"
-                              .format(tag_in, file_in))
+                warnings.warn("The dataset with tag name '{0}' is not found in the HDF5 file."
+                              .format(tag_in))
                 continue
 
             # add data
@@ -110,7 +110,7 @@ class Hdf5ReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Looks for all HDF5 files in the input directory and reads the 
+        Run method of the module. Looks for all HDF5 files in the input directory and reads the
         datasets that are provided in the tag dictionary.
 
         Returns
