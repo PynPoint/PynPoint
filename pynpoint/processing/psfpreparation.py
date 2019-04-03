@@ -563,6 +563,14 @@ class AngleCalculationModule(ProcessingModule):
             # See SPHERE manual page 64 (v102)
             new_angles_corr = new_angles - self.m_pupil_offset
 
+        indices = np.where(new_angles_corr < -180.)[0]
+        if indices.size > 0:
+            new_angles_corr[indices] += 360.
+
+        indices = np.where(new_angles_corr > 180.)[0]
+        if indices.size > 0:
+            new_angles_corr[indices] -= 360.
+
         self.m_data_out_port.add_attribute("PARANG", new_angles_corr, static=False)
 
         sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
