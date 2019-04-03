@@ -111,14 +111,15 @@ class TestPSFpreparation(object):
         assert len(warning) == 2
         assert warning[0].message.args[0] == "AngleCalculationModule has not been tested for " \
                                              "SPHERE/IFS data."
-        assert warning[1].message.args[0] == "For SPHERE data it is recommended to use the header keywords " \
-                          "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. " \
-                          "The input will be parsed accordingly. Using the regular " \
-                          "RA/DEC parameters will lead to wrong parallactic angles." \
+        assert warning[1].message.args[0] == "For SPHERE data it is recommended to use the " \
+                                             "header keywords \"ESO INS4 DROT2 RA/DEC\" to " \
+                                             "specify the object's position. The input will be " \
+                                             "parsed accordingly. Using the regular RA/DEC "\
+                                             "parameters will lead to wrong parallactic angles." \
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], 270.87102733657815, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 270.9724409967988, rtol=limit, atol=0.)
+        assert np.allclose(data[0], -89.12897266342185, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -89.02755900320116, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
     def test_angle_interpolation_mismatch(self):
