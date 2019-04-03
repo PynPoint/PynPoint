@@ -186,11 +186,11 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_aperture /= pixscale
 
-        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-            raise ValueError('The number of frames in psf_in_tag does not match with the number of '
-                             'frames in image_in_tag. The DerotateAndStackModule can be used to '
-                             'average the PSF frames (without derotating) before applying the '
-                             'ContrastCurveModule.')
+        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+            raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
+                             'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
+                             'be used to average the PSF frames (without derotating) before '
+                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
 
         pos_r = np.arange(self.m_separation[0]/pixscale,
                           self.m_separation[1]/pixscale,
@@ -214,7 +214,7 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule\r")
+        sys.stdout.write("Running ContrastCurveModule...\r")
         sys.stdout.flush()
 
         positions = []
@@ -269,7 +269,7 @@ class ContrastCurveModule(ProcessingModule):
 
             progress(i, len(jobs), "Running ConstrastCurveModule...")
 
-        # Send termination sentinel to queue and block till all tasks are done
+        # Send termination sentinel to queue
         queue.put(None)
 
         while True:
