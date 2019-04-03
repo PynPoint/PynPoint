@@ -38,9 +38,10 @@ def contrast_limit(tmp_images,
     a threshold for the false positive fraction, with a correction for small sample statistics.
 
     :param images: System location of the stack of images.
-    :type images: string
-    :param psf: System location of the PSF template for the fake planet (1 or multiple frames).
-    :type psf: string
+    :type images: str
+    :param psf: System location of the PSF template for the fake planet. Either a single image
+                or a stack of images equal in size to *images*.
+    :type psf: str
     :param parang: Derotation angles (deg).
     :type parang: numpy.ndarray
     :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
