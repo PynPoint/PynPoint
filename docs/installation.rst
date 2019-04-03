@@ -47,10 +47,10 @@ By adding the path of the repository to the ``PYTHONPATH`` environment variable 
 
     $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/pynpoint'" >> folder_name/bin/activate
 
-Do you want to makes changes to the code? Then please fork the PynPoint repository on the Github page and clone your own fork instead of the main repository. We very much welcome active contributions and pull requests (see :ref:`contributing` section).
-
 .. important::
    Make sure to adjust local path in which PynPoint will be cloned from the Github repository.
+
+Do you want to makes changes to the code? Then please fork the PynPoint repository on the Github page and clone your own fork instead of the main repository. We very much welcome active contributions and pull requests (see :ref:`contributing` section).
 
 Testing Pynpoint
 ----------------
@@ -59,6 +59,14 @@ The installation can be tested by starting Python in interactive mode and printi
 
     >>> import pynpoint
     >>> pynpoint.__version__
+
+.. tip::
+   If the PynPoint package is not find by Python then possibly the path was not set correctly. The list of folders that are searched by Python for modules can be printed in interactive mode as::
+
+      >>> import sys
+      >>> sys.path
+
+   The result should contain the folder in which the Github repository was cloned or the folder in which Python modules are installed with pip.
 
 .. |pypi| raw:: html
 
