@@ -34,7 +34,7 @@ If you do not use a virtual environment, you might need to add the '`- - user`' 
 The installation can be tested by starting Python in interactive mode and printing the PynPoint version::
 
     >>> import pynpoint
-    >>> print(pynpoint.__version__)
+    >>> pynpoint.__version__
 
 A virtual environment is deactivate with::
 
@@ -57,7 +57,7 @@ A virtual environment is deactivate with::
 Running PynPoint
 ----------------
 
-We provide here a short script how to run PynPoint with the data provided here. No bad pixel or background subtraction modules are used. An overview of all the modules available in PynPoint is available |all|.
+We provide here a short script how to run PynPoint with the data provided here. No bad pixel or other background subtraction modules than the chop and nod subtraction are used. An overview of all the modules available in PynPoint is available |all|.
 
 In the project folder, create 5 different folders:
 
