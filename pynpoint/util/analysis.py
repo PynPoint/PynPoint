@@ -26,7 +26,7 @@ def false_alarm(image,
     Function for the formal t-test for high-contrast imaging at small working angles and the
     related false positive fraction (Mawet et al. 2014).
 
-    :param image: Input image.
+    :param image: Input image (2D).
     :type image: numpy.ndarray
     :param x_pos: Position (pix) along the horizontal axis. The pixel coordinates of the
                   bottom-left corner of the image are (-0.5, -0.5).
@@ -129,22 +129,18 @@ def fake_planet(images,
 
     im_shift = np.zeros(images.shape)
 
-    if images.ndim == 2:
-        im_shift = shift_image(psf, (y_shift, x_shift), interpolation, mode='reflect')
+    for i in range(images.shape[0]):
+        if psf.shape[0] == 1:
+            im_shift[i, ] = shift_image(psf[0, ],
+                                        (y_shift[i], x_shift[i]),
+                                        interpolation,
+                                        mode='reflect')
 
-    elif images.ndim == 3:
-        for i in range(images.shape[0]):
-            if psf.ndim == 2:
-                im_shift[i, ] = shift_image(psf,
-                                            (y_shift[i], x_shift[i]),
-                                            interpolation,
-                                            mode='reflect')
-
-            elif psf.ndim == 3:
-                im_shift[i, ] = shift_image(psf[i, ],
-                                            (y_shift[i], x_shift[i]),
-                                            interpolation,
-                                            mode='reflect')
+        else:
+            im_shift[i, ] = shift_image(psf[i, ],
+                                        (y_shift[i], x_shift[i]),
+                                        interpolation,
+                                        mode='reflect')
 
     return images + im_shift
 
@@ -157,15 +153,15 @@ def merit_function(residuals,
     """
     Function to calculate the merit function at a given position in the image residuals.
 
-    :param residuals: Residuals of the PSF subtraction.
-    :type residuals: ndarray
+    :param residuals: Residuals of the PSF subtraction (2D).
+    :type residuals: numpy.ndarray
     :param function: Figure of merit ("hessian" or "sum").
     :type function: str
     :param variance: Variance type and value for the likelihood function. The value is set to None
                      in case a Poisson distribution is assumed.
     :type variance: tuple(str, float)
-    :param aperture: Dictionary with the aperture properties. See
-                     Util.AnalysisTools.create_aperture for details.
+    :param aperture: Dictionary with the aperture properties. See for more information
+                     :func:`~pynpoint.util.analysis.create_aperture`.
     :type aperture: dict
     :param sigma: Standard deviation (pix) of the Gaussian kernel which is used to smooth
                   the residuals before the function of merit is calculated.

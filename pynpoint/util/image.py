@@ -8,10 +8,8 @@ import math
 
 import numpy as np
 
-from scipy.ndimage import fourier_shift
-from scipy.ndimage import shift
-from scipy.ndimage import rotate
 from skimage.transform import rescale
+from scipy.ndimage import fourier_shift, shift, rotate
 
 
 def center_pixel(image):
@@ -20,11 +18,15 @@ def center_pixel(image):
     can not be unambiguously defined for an even-sized image. Python indexing starts
     at 0 so the coordinates of the pixel in the bottom-left corner are (0, 0).
 
-    :param image: Input image (2D or 3D).
-    :type image: numpy.ndarray
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D or 3D).
 
-    :return: Pixel position (y, x) of the image center.
-    :rtype: tuple(int, int)
+    Returns
+    -------
+    tuple(int, int)
+        Pixel position (y, x) of the image center.
     """
 
     if image.shape[-2]%2 == 0 and image.shape[-1]%2 == 0:
@@ -47,11 +49,15 @@ def center_subpixel(image):
     bottom left corner of the image is defined as (0, 0), so the bottom left corner of the
     image is located at (-0.5, -0.5).
 
-    :param image: Input image (2D or 3D).
-    :type image: numpy.ndarray
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D or 3D).
 
-    :return: Subpixel position (y, x) of the image center.
-    :rtype: tuple(float, float)
+    Returns
+    -------
+    tuple(float, float)
+        Subpixel position (y, x) of the image center.
     """
 
     center_x = float(image.shape[-1])/2. - 0.5
@@ -65,25 +71,23 @@ def crop_image(image,
     """
     Function to crop square images around a specified position.
 
-    :param image: Input image (2D or 3D).
-    :type image: numpy.ndarray
-    :param center: Tuple (y, x) with the new image center. The center of the image is used if
-                   set to None.
-    :type center: (int, int)
-    :param size: Image size (pix) for both dimensions. Increased by 1 pixel if size is an even
-                 number.
-    :type size: int
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D or 3D).
+    center : tuple(int, int)
+        The new image center (y, x). The center of the image is used if set to None.
+    size : int
+        Image size (pix) for both dimensions. Increased by 1 pixel if size is an even number.
 
-    :return: Cropped odd-sized image.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Cropped odd-sized image (2D or 3D).
     """
 
     if center is None or (center[0] is None and center[1] is None):
-        if image.ndim == 2:
-            center = center_pixel(image)
-
-        elif image.ndim == 3:
-            center = center_pixel(image[0, ])
+        center = center_pixel(image)
 
     if size%2 == 0:
         size += 1
@@ -94,39 +98,38 @@ def crop_image(image,
     y_start = center[0] - (size-1)//2
     y_end = center[0] + (size-1)//2 + 1
 
-    if x_start < 0 or y_start < 0 or x_end > image.shape[1] or y_end > image.shape[0]:
+    if x_start < 0 or y_start < 0 or x_end > image.shape[-1] or y_end > image.shape[-2]:
         raise ValueError("Target image resolution does not fit inside the input image resolution.")
 
     if image.ndim == 2:
-        im_crop = np.copy(image[y_start:y_end, x_start:x_end])
+        im_return = np.copy(image[y_start:y_end, x_start:x_end])
+    if image.ndim == 3:
+        im_return = np.copy(image[:, y_start:y_end, x_start:x_end])
 
-    elif image.ndim == 3:
-        im_crop = np.copy(image[:, y_start:y_end, x_start:x_end])
-
-    return im_crop
+    return im_return
 
 def rotate_images(images,
                   angles):
     """
     Function to rotate all images in clockwise direction.
 
-    :param images: Stack of images.
-    :type images: numpy.ndarray
-    :param angle: Rotation angles (deg).
-    :type angle: numpy.ndarray
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Stack of images (3D).
+    angle : numpy.ndarray
+        Rotation angles (deg).
 
-    :return: Rotated images.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Rotated images.
     """
 
     im_rot = np.zeros(images.shape)
 
-    if images.ndim == 2:
-        im_rot = rotate(input=images, angle=angles, reshape=False)
-
-    elif images.ndim == 3:
-        for i, item in enumerate(angles):
-            im_rot[i, ] = rotate(input=images[i, ], angle=item, reshape=False)
+    for i, item in enumerate(angles):
+        im_rot[i, ] = rotate(input=images[i, ], angle=item, reshape=False)
 
     return im_rot
 
@@ -135,13 +138,17 @@ def create_mask(im_shape,
     """
     Function to create a mask for the central and outer image regions.
 
-    :param im_shape: Image size in both dimensions.
-    :type im_shape: (int, int)
-    :param size: Size (pix) of the inner and outer mask.
-    :type size: (float, float)
+    Parameters
+    ----------
+    im_shape : tuple(int, int)
+        Image size in both dimensions.
+    size : tuple(float, float)
+        Size (pix) of the inner and outer mask.
 
-    :return: Image mask.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray     
+        Image mask.
     """
 
     mask = np.ones(im_shape)
@@ -175,15 +182,19 @@ def shift_image(image,
     """
     Function to shift an image.
 
-    :param images: Input image.
-    :type images: numpy.ndarray
-    :param shift_yx: Shift (y, x) to be applied (pixel).
-    :type shift_yx: (float, float)
-    :param interpolation: Interpolation type (spline, bilinear, fft)
-    :type interpolation: str
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D).
+    shift_yx : tuple(float, float)
+        Shift (y, x) to be applied (pix).
+    interpolation : str
+        Interpolation type ("spline", "bilinear", or "fft").
 
-    :return: Shifted image.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Shifted image.
     """
 
     if interpolation == "spline":
@@ -204,15 +215,19 @@ def scale_image(image,
     """
     Function to spatially scale an image.
 
-    :param images: Input image.
-    :type images: numpy.ndarray
-    :param scaling_x: Scaling factor x.
-    :type scaling_x: float
-    :param scaling_y: Scaling factor y.
-    :type scaling_y: float
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Input image (2D).
+    scaling_x : float
+        Scaling factor x.
+    scaling_y : float
+        Scaling factor y.
 
-    :return: Shifted image.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Shifted image (2D).
     """
 
     sum_before = np.sum(image)
@@ -228,44 +243,55 @@ def scale_image(image,
 
     return im_scale * (sum_before / sum_after)
 
-def cartesian_to_polar(center, x_pos, y_pos):
+def cartesian_to_polar(center,
+                       x_pos,
+                       y_pos):
     """
     Function to convert pixel coordinates to polar coordinates.
 
-    :param center: Image center (y, x) from :meth:`pynpoint.util.image.center_subpixel`.
-    :type center: tuple(float, float)
-    :param x_pos: Pixel coordinate along the horizontal axis. The bottom left corner of the image
-                  is (-0.5, -0.5).
-    :type x_pos: float
-    :param y_pos: Pixel coordinate along the vertical axis. The bottom left corner of the image
-                  is (-0.5, -0.5).
-    :type y_pos: float
+    Parameters
+    ----------
+    center : tuple(float, float)
+        Image center (y, x) from :func:`~pynpoint.util.image.center_subpixel`.
+    x_pos : float
+        Pixel coordinate along the horizontal axis. The bottom left corner of the image is
+        (-0.5, -0.5).
+    y_pos : float
+        Pixel coordinate along the vertical axis. The bottom left corner of the image is
+        (-0.5, -0.5).
 
-    :return: Polar coordinates as separation (pix) and position angle (deg). The angle is measured
-             counterclockwise with respect to the positive y-axis.
-    :rtype: float, float
+    Returns
+    -------
+    tuple(float, float)
+        Separation (pix) and position angle (deg). The angle is measured counterclockwise with
+        respect to the positive y-axis.
     """
 
     sep = math.sqrt((center[1]-x_pos)**2.+(center[0]-y_pos)**2.)
     ang = math.atan2(y_pos-center[1], x_pos-center[0])
     ang = (math.degrees(ang)-90.)%360.
 
-    return sep, ang
+    return tuple([sep, ang])
 
-def polar_to_cartesian(image, sep, ang):
+def polar_to_cartesian(image,
+                       sep,
+                       ang):
     """
     Function to convert polar coordinates to pixel coordinates.
 
-    :param image: Input image (2D or 3D).
-    :type image: numpy.ndarray
-    :param sep: Separation (pix).
-    :type sep: float
-    :param ang: Position angle (deg), measured counterclockwise with respect to the
-                positive y-axis.
-    :type ang: float
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D or 3D).
+    sep : float
+        Separation (pix).
+    ang : float
+        Position angle (deg), measured counterclockwise with respect to the positive y-axis.
 
-    :return: Cartesian coordinates (x, y). The bottom left corner of the image is (-0.5, -0.5).
-    :rtype: float, float
+    Returns
+    -------
+    tuple(float, float)
+        Cartesian coordinates (x, y). The bottom left corner of the image is (-0.5, -0.5).
     """
 
     center = center_subpixel(image) # (y, x)
@@ -273,30 +299,4 @@ def polar_to_cartesian(image, sep, ang):
     x_pos = center[1] + sep*math.cos(math.radians(ang+90.))
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
-    return x_pos, y_pos
-
-def get_image(input_port, index, nimages):
-    """
-    Function to get an image from an input port based on its index.
-
-    :param input_port: Input port with the stack of images.
-    :type input_port: pynpoint.core.dataio.InputPort
-    :param index: Index in the stack of images.
-    :type index: int
-    :param nimages: Total number of images in the stack.
-    :type nimages: int
-
-    :return: Selected image.
-    :rtype: numpy.ndarray
-    """
-
-    if nimages == 1:
-        image = input_port.get_all()
-
-        if image.ndim == 3:
-            image = np.squeeze(image, axis=0)
-
-    else:
-        image = input_port[index, ]
-
-    return image
+    return tuple([x_pos, y_pos])

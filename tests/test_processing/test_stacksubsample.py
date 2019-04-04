@@ -122,9 +122,9 @@ class TestStackingAndSubsampling(object):
         self.pipeline.run_module("derotate1")
 
         data = self.pipeline.get_data("derotate1")
-        assert np.allclose(data[50, 50], 0.09689679769268554, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09689679769268554, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010021671152246617, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
         derotate = DerotateAndStackModule(name_in="derotate2",
                                           image_in_tag="images",
@@ -137,9 +137,9 @@ class TestStackingAndSubsampling(object):
         self.pipeline.run_module("derotate2")
 
         data = self.pipeline.get_data("derotate2")
-        assert np.allclose(data[50, 50], 0.09809001768003645, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09809001768003645, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010033064394962, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
     def test_combine_tags(self):
 
