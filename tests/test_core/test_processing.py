@@ -26,7 +26,7 @@ class TestPypeline(object):
         np.random.seed(1)
 
         image_3d = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
-        image_2d = np.random.normal(loc=0, scale=2e-4, size=(10, 10))
+        image_2d = np.random.normal(loc=0, scale=2e-4, size=(1, 10, 10))
         science = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
         dark = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
 
@@ -101,11 +101,11 @@ class TestPypeline(object):
 
         data = self.pipeline.get_data("image_2d")
         assert np.allclose(np.mean(data), 1.2869483197883442e-05, rtol=limit, atol=0.)
-        assert data.shape == (10, 10)
+        assert data.shape == (1, 10, 10)
 
         data = self.pipeline.get_data("remove_2d")
         assert np.allclose(np.mean(data), 1.3957075246029751e-05, rtol=limit, atol=0.)
-        assert data.shape == (10, 9)
+        assert data.shape == (1, 10, 9)
 
     def test_apply_function_to_images_same_port(self):
         dark = DarkCalibrationModule(name_in="dark1",
@@ -195,7 +195,7 @@ class TestPypeline(object):
 
         data = self.pipeline.get_data("scale_2d")
         assert np.allclose(np.mean(data), 8.937141109641279e-05, rtol=limit, atol=0.)
-        assert data.shape == (12, 12)
+        assert data.shape == (1, 12, 12)
 
         attribute = self.pipeline.get_attribute("scale_2d", "PIXSCALE", static=True)
         assert np.allclose(attribute, 0.08333333333333334, rtol=limit, atol=0.)

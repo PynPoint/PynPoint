@@ -14,7 +14,7 @@ import numpy as np
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import progress, memory_frames, number_images_port
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.image import rotate_images
 
 
@@ -148,7 +148,7 @@ class StackAndSubsetModule(ProcessingModule):
         non_static = self.m_image_in_port.get_all_non_static_attributes()
 
         im_shape = self.m_image_in_port.get_shape()
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = im_shape[0]
 
         if self.m_random is not None:
             if self.m_stacking is None and im_shape[0] < self.m_random:
@@ -376,7 +376,7 @@ class DerotateAndStackModule(ProcessingModule):
 
             if self.m_stack is None:
                 if ndim == 2:
-                    self.m_image_out_port.set_all(images)
+                    self.m_image_out_port.set_all(images[np.newaxis, ...])
                 elif ndim == 3:
                     self.m_image_out_port.append(images, data_dim=3)
 
@@ -387,10 +387,12 @@ class DerotateAndStackModule(ProcessingModule):
         sys.stdout.flush()
 
         if self.m_stack == "mean":
-            self.m_image_out_port.set_all(im_tot/float(nimages))
+            im_stack = im_tot/float(nimages)
+            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         elif self.m_stack == "median":
-            self.m_image_out_port.set_all(np.median(images, axis=0))
+            im_stack = np.median(images, axis=0)
+            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         if self.m_derotate or self.m_stack is not None:
             self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -479,7 +481,7 @@ class CombineTagsModule(ProcessingModule):
         for i, item in enumerate(self.m_image_in_tags):
             progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
 
-            nimages = number_images_port(image_in_port[i])
+            nimages = image_in_port[i].get_shape()[0]
             frames = memory_frames(memory, nimages)
 
             for j, _ in enumerate(frames[:-1]):

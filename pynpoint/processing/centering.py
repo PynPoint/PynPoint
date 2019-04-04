@@ -19,8 +19,7 @@ from astropy.modeling import models, fitting
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import memory_frames, progress, locate_star, number_images_port, \
-                                 image_size_port
+from pynpoint.util.module import memory_frames, progress, locate_star
 from pynpoint.util.image import crop_image, shift_image, center_pixel
 
 
@@ -107,7 +106,7 @@ class StarExtractionModule(ProcessingModule):
 
         if self.m_position is not None:
             self.m_position = np.asarray(self.m_position)
-            nimages = number_images_port(self.m_image_in_port)
+            nimages = self.m_image_in_port.get_shape()[0]
 
             if self.m_position.ndim == 2 and self.m_position.shape[0] != nimages:
                 raise ValueError("Either a single 'position' should be specified or an array "
@@ -284,12 +283,14 @@ class StarAlignmentModule(ProcessingModule):
 
             if self.m_resize is not None:
                 sum_before = np.sum(image_in)
+
                 tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
                                     scale=(self.m_resize, self.m_resize),
                                     order=5,
                                     mode="reflect",
                                     anti_aliasing=True,
                                     multichannel=False)
+
                 sum_after = np.sum(tmp_image)
 
                 # Conserve flux because the rescale function normalizes all values to [0:1].
@@ -712,25 +713,18 @@ class StarCenteringModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[-1]
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         if self.m_method == "full":
             popt = None
 
         elif self.m_method == "mean":
-            if ndim == 2:
-                im_mean = self.m_image_in_port[:, :]
+            im_mean = np.zeros((npix, npix))
+            for i, _ in enumerate(frames[:-1]):
+                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
-            elif ndim == 3:
-                im_mean = np.zeros((npix, npix))
-
-                for i, _ in enumerate(frames[:-1]):
-                    im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
-
-                im_mean /= float(nimages)
-
-            popt = _least_squares(im_mean)
+            popt = _least_squares(im_mean/float(nimages))
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
@@ -906,15 +900,10 @@ class WaffleCenteringModule(ProcessingModule):
         """
 
         def _get_center(ndim, center):
-            if ndim == 2:
-                center_frame = self.m_center_in_port.get_all()
+            center_frame = self.m_center_in_port[0, ]
 
-            elif ndim == 3:
-                center_frame = self.m_center_in_port.get_all()[0, ]
-
-                if center_shape[0] > 1:
-                    warnings.warn("Multiple center images found. Using the first image of "
-                                  "the stack.")
+            if center_shape[0] > 1:
+                warnings.warn("Multiple center images found. Using the first image of the stack.")
 
             if center is None:
                 center = center_pixel(center_frame)
@@ -929,6 +918,7 @@ class WaffleCenteringModule(ProcessingModule):
         center_ndim = self.m_center_in_port.get_ndim()
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
+
         center_frame, self.m_center = _get_center(center_ndim, self.m_center)
 
         if im_shape[-2:] != center_shape[-2:]:
@@ -1046,8 +1036,8 @@ class WaffleCenteringModule(ProcessingModule):
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
 
-        nimages = number_images_port(self.m_image_in_port)
-        npix = image_size_port(self.m_image_in_port)[0]
+        nimages = self.m_image_in_port.get_shape()[0]
+        npix = self.m_image_in_port.get_shape()[1]
 
         for i in range(nimages):
             progress(i, nimages, "Running WaffleCenteringModule...")
