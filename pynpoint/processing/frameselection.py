@@ -34,7 +34,7 @@ class RemoveFramesModule(ProcessingModule):
 
         Parameters
         ----------
-        frames : str, tuple, or numpy.ndarray
+        frames : str, list, tuple, range, or numpy.ndarray
             A tuple or array with the frame indices that have to be removed or a database tag
             pointing to a list of frame indices.
         name_in : str
@@ -74,8 +74,11 @@ class RemoveFramesModule(ProcessingModule):
         else:
             self.m_index_in_port = None
 
-            if isinstance(frames, (tuple, list)):
+            if isinstance(frames, (tuple, list, range)):
                 self.m_frames = np.asarray(frames, dtype=np.int)
+
+            elif isinstance(frames, np.ndarray):
+                self.m_frames = frames
 
     def _initialize(self):
 
