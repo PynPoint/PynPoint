@@ -8,19 +8,23 @@ Data Reduction
 Example
 -------
 
-We provide here a short script how to run PynPoint with the data provided here. No bad pixel or other background subtraction modules than the chop and nod subtraction are used. An overview of all the modules available in PynPoint is available |all|.
+We provide here a short script how to run PynPoint with simulation data. No bad pixel or background subtraction modules other than the chop and nod subtraction are used. An overview of all the modules available in PynPoint is available |all|. For an end-to-end processing example of a pupil-stabilized data set of beta Pic in PynPoint, see |stolker|.
+
+For the pipeline we require a folder ``working_place``, ``input_place``, ``output_place``. However, in total we have 3 different import fits files (reference PSF, Nod A, Nod B) that we would like to have under a different tag in the database. Therefore we also create a folder ``input_place1`` and ``input_place2``
 
 In the project folder, create 5 different folders::
 
     $ mkdir working_place input_place input_place1 input_place2 output_place
 
-For the pipeline we require a folder ``working_place``, ``input_place``, ``output_place``. However, in total we have 3 different import fits files (reference PSF, Nod A, Nod B) that we would like to have under a different tag in the database. Therefore we also create a folder ``input_place1`` and ``input_place2``
+The simulation data used as input can be downloaded |data|. Put `set1.fits` in ``input_place1``, `set2.fits` in ``input_place2`` and `Ref_PSF_aCenA.fits` into ``input_place``. This data is already chop-subtracted, but not nod-subtracted. `set1.fits` corresponds to Nod A and `set2.fits` to Nod B.
 
-The simulation data used as input can be downloaded |data|. Put `set1.fits` in ``input_place1``, `set2.fits` in ``input_place2`` and `Ref_PSF_aCenA.fits` into ``input_place``.
+The total script is written in a .py file. You can download it |script|. Not all arguments of each function below are explained. Please visit the the full documentation of |pynpoint|, providing more in-depth information. Lastly, if you encounter any errors/mistakes, please visit this |contributions|. We very much welcome active contributions.
 
-The total script is then written in a .py file. You can download it |down_script|. Not all arguments of each function below are explained. Please visit the the full documentation of |pynpoint|, providing more in-depth information. Lastly, if you encounter any errors/mistakes, please visit this |contributions|. We very much welcome active contributions.
+To run the script, first activate your virtual environment. Secondly, change the paths of the project/working place on top of the script. Then, run the script `NEAR.py` by typing in bash::
 
-Lastly, for an end-to-end processing example of a pupil-stabilized data set of beta Pic in PynPoint, see |stolker|::
+    $ python3 NEAR.py
+
+The script::
 
     import pynpoint as p
 
@@ -60,6 +64,7 @@ Lastly, for an end-to-end processing example of a pupil-stabilized data set of b
     pipeline.add_module(inputb)
 
     # Subtract the two input tags, Nod B from Nod A.
+    # This subtracts each frame individually
     subtract = p.SubtractImagesModule(name_in="subtract",
                                       image_in_tags=("input1", "input2"),
                                       image_out_tag="subtract",
@@ -205,7 +210,7 @@ The contrast decrease after 1.8 arcseconds is a result of the sidelobes visible 
 
    <a href="https://pynpoint.readthedocs.io/en/latest/overview.html" target="_blank">here</a>
 
-.. |down_script| raw:: html
+.. |script| raw:: html
 
    <a href="https://drive.google.com/open?id=13cJ1a3gGwfI4YR7_wq2AIOP1PoYUSIbn" target="_blank">here</a>
 
