@@ -97,8 +97,8 @@ The script::
                                        data_tag="cropped")
     pipeline.add_module(angle)
 
-    # PCA with 10 principal components. I urge you to visit the pynpoint documentation for an
-    # explanation for each keyword
+    # PCA with 10 principal components. Visit the pynpoint documentation for an explanation
+    # for each keyword
     pca = p.PcaPsfSubtractionModule(name_in="pca",
                                     pca_numbers=10,
                                     images_in_tag="cropped",
@@ -140,10 +140,11 @@ The script::
                                  size=5.)
     pipeline.add_module(croppsf)
 
+    # WARNING: This might take a look time to compute!
     # Run the contrastcurve module, between 0.8 to 3 arcseconds, in steps of 0.1 at every 60 degrees.
     # Below is a fpf of 2.87e-6 used, equivalent to a 5-sigma gaussian confidence interval.
     # The PCA is done within this module.
-    contrast = p.ContrastCurveModule(name_in="contrast1",
+    contrast = p.ContrastCurveModule(name_in="contrast",
                                      image_in_tag="cropped",
                                      psf_in_tag="psf",
                                      contrast_out_tag="contrast_out",
@@ -162,9 +163,9 @@ The script::
                                      extra_rot=0.)
     pipeline.add_module(contrast)
 
-    # Write the result of the contrastcurve to a text file
-    # columns: (separation, azimuthally averaged contrast, azimuthal variance of the contrast, false positive fraction)
-    write_text = p.TextWritingModule(file_name="contrast",
+    # Write the result of the contrastcurve to a text file. Colums:
+    # (separation, azimuthally averaged contrast, azimuthal variance of the contrast, false positive fraction)
+    write_text = p.TextWritingModule(file_name="contrast_text",
                                      name_in="contrast_text",
                                      output_dir=None,
                                      data_tag="contrast_out",
@@ -175,7 +176,7 @@ The script::
     pipeline.run()
 
     # or run each module individually
-    pipeline.run_module("contrast1")
+    # pipeline.run_module("contrast1")
 
 When the script starts running, PynPoint creates a ``PynPoint_config.ini`` file in ``working_place``. In this file, edit ``PIXSCALE`` to 0.045 for VISIR. Also, set ``CPU`` and ``MEMORY`` to a value desired.
 
