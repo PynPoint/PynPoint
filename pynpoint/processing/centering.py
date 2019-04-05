@@ -365,6 +365,7 @@ class StarCenteringModule(ProcessingModule):
                  radius=0.1,
                  sign="positive",
                  model="gaussian",
+                 filter_size=None,
                  **kwargs):
         """
         Constructor of StarCenteringModule.
@@ -380,7 +381,9 @@ class StarCenteringModule(ProcessingModule):
             be different from *image_in_tag*. Data is not written when set to None.
         mask_out_tag : str
             Tag of the database entry with the masked images that are written as output. The
-            unmasked part of the images is used for the fit. Data is not written when set to None.
+            unmasked part of the images is used for the fit. The effect of the smoothing that is
+            applied by setting the *fwhm* parameter is also visible in the data of the
+            *mask_out_tag*. Data is not written when set to None.
         fit_out_tag : str
             Tag of the database entry with the best-fit results of the model fit and the 1-sigma
             errors. Data is written in the following format: x offset (arcsec), x offset error
@@ -406,6 +409,9 @@ class StarCenteringModule(ProcessingModule):
         model : str
             Type of 2D model used to fit the PSF ("gaussian" or "moffat"). Both models are
             elliptical in shape.
+        filter_size : float
+            Standard deviation (arcsec) of the Gaussian filter that is used to smooth the
+            images before fitting the model. No filter is applied if set to None.
 
         Keyword arguments
         -----------------
@@ -458,6 +464,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_radius = radius
         self.m_sign = sign
         self.m_model = model
+        self.m_filter_size = filter_size
         self.m_model_func = None
 
         self.m_count = 0
@@ -492,6 +499,9 @@ class StarCenteringModule(ProcessingModule):
 
         if self.m_radius:
             self.m_radius /= pixscale
+
+        if self.m_filter_size:
+            self.m_filter_size /= pixscale
 
         if npix%2 == 0:
             x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
@@ -630,6 +640,8 @@ class StarCenteringModule(ProcessingModule):
             return moffat
 
         def _least_squares(image):
+            if self.m_filter_size:
+                image = gaussian_filter(image, self.m_filter_size)
 
             if self.m_mask_out_port:
                 mask = np.copy(image)
