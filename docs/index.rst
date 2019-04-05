@@ -40,9 +40,10 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
 
 .. toctree::
    :maxdepth: 2
-   :caption: NEAR
+   :caption: NEAR Documentation
 
-   near
+   near_intro
+   near_example
 
 .. toctree::
    :maxdepth: 2
