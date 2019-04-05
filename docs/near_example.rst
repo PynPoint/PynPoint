@@ -1,65 +1,16 @@
-NEAR Data with PynPoint
-=======================
+.. _near_data:
 
-.. _introduction:
+Data Reduction
+==============
 
-Introduction
-------------
+.. _near_example:
 
-This guide shows the basic steps to process NEAR data with PynPoint. First we describe the steps required to install PynPoint.  After that, the basic steps how to get PCA working with PynPoint are shown. Python version 3 is used.
-
-Install PynPoint
-----------------
-
-PynPoint is available in the |pypi| and on |github|. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv` with the |pip|::
-
-    $ python3 -m pip install virtualenv
-
-Then create a virtual environment, for example::
-
-    $ virtualenv folder_name
-
-And activate the environment with::
-
-    $ source folder_name/bin/activate
-
-PynPoint can now be installed with pip::
-
-    $ python3 -m pip install pynpoint
-
-If you do not use a virtual environment, you might need to add the '`- - user`' argument::
-
-    $ python3 -m pip install --user pynpoint
-
-The installation can be tested by starting Python in interactive mode and printing the PynPoint version::
-
-    >>> import pynpoint
-    >>> pynpoint.__version__
-
-A virtual environment is deactivate with::
-
-    $ deactivate
-
-.. |pypi| raw:: html
-
-   <a href="https://pypi.org/project/pynpoint/" target="_blank">PyPI repository</a>
-
-.. |github| raw:: html
-
-   <a href="https://github.com/PynPoint/PynPoint" target="_blank">Github</a>
-
-.. |pip| raw:: html
-
-   <a href="https://packaging.python.org/tutorials/installing-packages/" target="_blank">pip package manager</a>
-
-.. _running:
-
-Running PynPoint
-----------------
+Example
+-------
 
 We provide here a short script how to run PynPoint with the data provided here. No bad pixel or other background subtraction modules than the chop and nod subtraction are used. An overview of all the modules available in PynPoint is available |all|.
 
-In the project folder, create 5 different folders:
+In the project folder, create 5 different folders::
 
     $ mkdir working_place input_place input_place1 input_place2 output_place
 
@@ -223,7 +174,7 @@ Lastly, for an end-to-end processing example of a pupil-stabilized data set of b
 
 When the script starts running, PynPoint creates a ``PynPoint_config.ini`` file in ``working_place``. In this file, edit ``PIXSCALE`` to 0.045 for VISIR. Also, set ``CPU`` and ``MEMORY`` to a value desired.
 
-.. _results:
+.. _near_results:
 
 Results
 -------
@@ -232,19 +183,22 @@ The output of the PCA should look like this (Open it with DS9 to read the fits f
 
 .. image::
    https://lh3.googleusercontent.com/ZTpbnudQq1884kaEc0q5U6D9SZFWoyFXEOunAwNK2i7w5IDEm1uhqymKvnDkRhn3TG2HxnF5b5HL_qfATUAmBnkoK7qJrdpafq2P7xfIvpW5wiN4L2XlFVjqpGk7M2dpnkJ_p3INgtOxPIaPkWE0m6u3l4mmorRymER475h-7x8YFtWj-XRr0F04v6MOi0zQ0klIfzLL0M21EvtGmcjbqkQv5Rpt28x2elq2dMmpAJ-8Wrk_qu_hS3Va2bRDgv8hqOH5s6Ycd1yCKEXukwHiJ3UAa77ZU_NT3XdZX0u-sqOFvKusGVtGvghx-us_PySpNksf6cIjxF1AHxdgPrYCLw3bOCMMCjHWzK2lNHTZAfGZDSx0VTwqgVLBu0hS7-yB_H1jfEGpd_mNJ7pxPkxxWD25jJA0Lr2CeHViEKsmCftpOF41g1Ma2JXggAoL0FGlya-zN-DkJJBJj18G3FWyMxtU8dRsO02pQDdzJ6fKkQ1ekdzi09dj9sZEV2mDsdagACXK1AT34fhNQFvknv5gBRl-beUAhy4G6YMYljfIVuxESmLXRsKLD2b_Fs-Sk9wIR_hnOKmt6Yp4NEPkXUPgYWA-4gJzhZbKecLJCdKUeqdbcCV_y5ywXQAjC6NQLp6lbvlim9YMO0TqpnKO9QPI2yvE1scl6g=w1276-h1139-no?.png
-  :width: 600
+  :width: 70%
+  :align: center
   :alt: PCA Image
 
 And plotting the output of the contrastcurve (errorbar is the variance of the different angles, the third column of the text file) using matplotlib will show:
 
 .. image:: https://lh3.googleusercontent.com/wKRxB9hnf5CNG6L5pcPP-cfc7nc0G56nTauctrySP2GpSvg3IAYCrmfNPEItY91qQOGp2ehvWHsO4RRvuE8l7ooMtmiYKY3BCehzSNfiAWcWtNjVJP0QpGdx1OiKdWHZJBb4neGxfoCC7J5gFdH2cugG25GUsS13UitLQkCA6GTzUNZsmlE6LUzDJv4-C5AmuB83UvAYgK8Za4IKct1z2M7x7MsUcRRAy9p6I9NWyiazSz8AZodCkhnP2sVmXDeDEiY0lt6AemXjjiDWRQFqYxsa4eWPlycepefMGKZ5LF2GUnzDv2Ao7SweLnuzmMDNDBtIfugRfvNXu0QphHWgSB_s33n4I-ByqZN0v2zR_zH3NJLKMHqzl5nuyHSe4dunnzfBQjDA8VOSTXljPhlZu6U0zukMC1NjJtzeH_x6DoiaNifvwcQpeVSTqBCYEPUHkdb03nQEFJfZvPApOEo1GYJinS2MrZU0wVQxN8hrJDBQhH-0WLEI6IJAGRWTaO7kkYi2Ybds4r-G9JJmvacPQDftdzHwxAq7XY4lnbyw-g6hJZzX_wSFrVMPvXHt722EwEWkd8nuUc-_KET-t54NZdt9UehPunkNW5VJc7HcrEZXrqvOFGQtI1G7v4xhQzopayn6MwJOM65kqi_ie0T45n-5Dz6k2AuQHqi6LEJt-P3owZFiKv5xnUvSSprLYqEbsSVlcmPRYtE4Y6Jc_xDxpg8=w640-h480-no
-  :width: 600
+  :width: 70%
+  :align: center
   :alt: ContrastCurve
 
 The contrast decrease after 1.8 arcseconds is a result of the sidelobes visible in the image (negative psf residue from the subtraction). This becomes more clear in the image below (cropped.fits file), where the green circle has a radius of 1.8 arcseconds.
 
 .. image:: https://lh3.googleusercontent.com/6i9HxIqNP9cQRDmBBzxEHarLNODNr0UaGViTzooNqNYCbzXw03QZ006WrCQRl2VRp9jj49AH2aa_k1Ggkqj3VvQQM7qJDh4hKQDAm9G0DnOtB8sRgX_WB7RVUSoVqla_ZmR5gnsfZSnvT9DEPNYiw-Cf9gcV7wsDtOFP9UzDKTFkBSRPomTlboHkW_mLvQ50Pfi6Yc0uHK3XpEFTkwi4kWqUcYMPiowvd7q6m8-y1AbeUXOvR3f9lDQfo1o6sn4W6ZzSyVb9rr2izx-KXPjdxL3yh_WkDojXXEuugDISeMIxuf9J2ZvtHGvoCFn8AB7bevMsnKAIFI1FKiqxjoNXMJPvRBCuuEl1mHI21brO_lXwLuBIkqHhTXRWUUS9zMFhjIl_iqGdKDJ7As38ZGnvOsJ1z4dytteUG8hoepCPifyX5EZ7prg-mAQ18IgMabgGWqRIqZIj95VARnfhoneoxOBgeQAXBYUX5kqbbGeMBeweVyTweW37R1dO0KHG4z_y808O6hjwZ1ZfDktlrq35U19hi18gtMyvZOi_HzsHQ1KIbomTL3c6OKstXInTff4ONlqvJpV-MGuj5f9vrcrEFv71xEZQth1S9TgltasayljLIxHsR5z_QYbt5MTfBBvpANMhI5aBLHTdn2ouXF6vv9FKN9KwUu_wuNQBqfZMOL0vxB94m2ReTJMiTPHUD4jIpZPK02kQsOjAKNGylxU6QOs=w1273-h1134-no
-  :width: 600
+  :width: 70%
+  :align: center
   :alt: PSF
 
 .. |all| raw:: html
@@ -270,12 +224,3 @@ The contrast decrease after 1.8 arcseconds is a result of the sidelobes visible 
 .. |stolker| raw:: html
 
    <a href="http://adsabs.harvard.edu/abs/2019A%26A...622A.156C" target="_blank">Stolker et al. (2019)</a>
-
-
-.. _attribution:
-
-Attribution
------------
-
-If you use PynPoint in your publication then please cite `Stolker et al. (2019) <http://adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_. Please also cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method. In case you use specifically the PCA-based background subtraction module or the wavelet based speckle suppression module, please give credit to `Hunziker et al. (2018) <http://adsabs.harvard.edu/abs/2018A%26A...611A..23H>`_ or `Bonse, Quanz & Amara (2018) <http://adsabs.harvard.edu/abs/2018arXiv180405063B>`_, respectively.
-
