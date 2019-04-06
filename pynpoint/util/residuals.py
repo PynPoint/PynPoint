@@ -17,7 +17,7 @@ def combine_residuals(method,
     """
     Function for combining the derotated residuals of the PSF subtraction.
 
-    Paraneters
+    Parameters
     ----------
     method : str
         Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
