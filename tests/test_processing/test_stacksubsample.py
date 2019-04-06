@@ -7,7 +7,8 @@ import numpy as np
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.stacksubset import StackAndSubsetModule, MeanCubeModule, \
-                                            DerotateAndStackModule, CombineTagsModule
+                                            DerotateAndStackModule, CombineTagsModule, \
+                                            StackCubeModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
@@ -95,6 +96,29 @@ class TestStackingAndSubsampling(object):
 
         self.pipeline.add_module(mean)
         self.pipeline.run_module("mean")
+
+        data = self.pipeline.get_data("mean")
+        assert np.allclose(data[0, 50, 50], 0.09805840100024205, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738069, rtol=limit, atol=0.)
+        assert data.shape == (4, 100, 100)
+
+        attribute = self.pipeline.get_attribute("mean", "INDEX", static=False)
+        assert np.allclose(np.mean(attribute), 1.5, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
+        attribute = self.pipeline.get_attribute("mean", "NFRAMES", static=False)
+        assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
+    def test_stack_cube(self):
+
+        module = StackCubeModule(name_in="stackcube",
+                                 image_in_tag="images",
+                                 image_out_tag="mean",
+                                 combine="mean")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("stackcube")
 
         data = self.pipeline.get_data("mean")
         assert np.allclose(data[0, 50, 50], 0.09805840100024205, rtol=limit, atol=0.)
