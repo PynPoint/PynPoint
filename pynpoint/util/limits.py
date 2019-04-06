@@ -107,7 +107,7 @@ def contrast_limit(tmp_images,
     else:
         raise ValueError("Threshold type not recognized.")
 
-    x_fake, y_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+    xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     list_fpf = []
     list_mag = [magnitude[0]]
@@ -137,9 +137,9 @@ def contrast_limit(tmp_images,
 
         stack = combine_residuals(method=residuals, res_rot=im_res)
 
-        _, _, fpf = false_alarm(image=stack,
-                                x_pos=x_fake,
-                                y_pos=y_fake,
+        _, _, fpf = false_alarm(image=stack[0, ],
+                                x_pos=xy_fake[0],
+                                y_pos=xy_fake[1],
                                 size=aperture,
                                 ignore=ignore)
 

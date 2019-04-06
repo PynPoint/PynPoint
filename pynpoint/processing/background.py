@@ -13,7 +13,7 @@ from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
-from pynpoint.util.module import progress, image_size_port
+from pynpoint.util.module import progress
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -339,7 +339,7 @@ class LineSubtractionModule(ProcessingModule):
         """
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        im_shape = image_size_port(self.m_image_in_port)
+        im_shape = self.m_image_in_port.get_shape()[-2:]
 
         def _subtract_line(image_in, mask):
             image_tmp = np.copy(image_in)

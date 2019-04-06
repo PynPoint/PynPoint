@@ -135,6 +135,6 @@ Stacking
 ~~~~~~~~
 
 * :class:`~pynpoint.processing.stacksubset.StackAndSubsetModule`: Stack and/or select a random subset of the images.
-* :class:`~pynpoint.processing.stacksubset.MeanCubeModule`: Compute the mean of each original data cube.
+* :class:`~pynpoint.processing.stacksubset.StackCubeModule`: Collapse each original data cube separately.
 * :class:`~pynpoint.processing.stacksubset.DerotateAndStackModule`: Derotate and/or stack the images.
 * :class:`~pynpoint.processing.stacksubset.CombineTagsModule`: Combine multiple database tags into a single dataset.

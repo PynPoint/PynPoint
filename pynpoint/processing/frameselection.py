@@ -14,7 +14,7 @@ from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image
-from pynpoint.util.module import progress, memory_frames, number_images_port, locate_star
+from pynpoint.util.module import progress, memory_frames, locate_star
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
 
@@ -120,7 +120,7 @@ class RemoveFramesModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         if memory == 0 or memory >= nimages:
@@ -349,7 +349,7 @@ class FrameSelectionModule(ProcessingModule):
         self._initialize()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
 
         aperture = _get_aperture(self.m_aperture)
         starpos = _get_starpos(self.m_fwhm, self.m_position)
