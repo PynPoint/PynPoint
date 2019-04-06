@@ -261,7 +261,7 @@ class TestFluxAndPosition(object):
         self.pipeline.run_module("take_psf_avg")
 
         data = self.pipeline.get_data("psf_avg")
-        assert data.shape == (15, 15)
+        assert data.shape == (1, 15, 15)
 
         mcmc = MCMCsamplingModule(param=(0.1485, 0., 0.),
                                   bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),

@@ -33,59 +33,60 @@ def lnprob(param,
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
 
-    :param param: Tuple with the separation (arcsec), angle (deg), and contrast
-                  (mag). The angle is measured in counterclockwise direction with
-                  respect to the positive y-axis.
-    :type param: (float, float, float)
-    :param bounds: Tuple with the boundaries of the separation (arcsec), angle (deg),
-                   and contrast (mag). Each set of boundaries is specified as a tuple.
-    :type bounds: ((float, float), (float, float), (float, float))
-    :param images: Stack with images.
-    :type images: numpy.ndarray
-    :param psf: PSF template, either a single image (2D) or a cube (3D) with the dimensions
-                equal to *images*.
-    :type psf: numpy.ndarray
-    :param mask: Array with the circular mask (zeros) of the central and outer regions.
-    :type mask: numpy.ndarray
-    :param parang: Array with the angles for derotation.
-    :type parang: numpy.ndarray
-    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
-                        neutral density filter). Should be negative in order to inject negative
-                        fake planets.
-    :type psf_scaling: float
-    :param pixscale: Additional scaling factor of the planet flux (e.g., to correct for a neutral
-                     density filter). Should be negative in order to inject negative fake planets.
-    :type pixscale: float
-    :param pca_number: Number of principal components used for the PSF subtraction.
-    :type pca_number: int
-    :param extra_rot: Additional rotation angle of the images (deg).
-    :type extra_rot: float
-    :param aperture: Dictionary with the aperture properties. See
-                     Util.AnalysisTools.create_aperture for details.
-    :type aperture: dict
-    :param indices: Non-masked image indices.
-    :type indices: numpy.ndarray
-    :param prior: Prior can be set to "flat" or "aperture". With "flat", the values of *bounds*
-                  are used as uniform priors. With "aperture", the prior probability is set to
-                  zero beyond the aperture and unity within the aperture.
-    :type prior: str
-    :param variance: Variance type and value for the likelihood function. The value is set to None
-                     in case a Poisson distribution is assumed.
-    :type variance: tuple(str, float)
-    :param residuals: Method used for combining the residuals ("mean", "median", "weighted", or
-                      "clipped").
-    :type residuals: str
+    param : tuple(float, float, float)
+        Tuple with the separation (arcsec), angle (deg), and contrast (mag). The angle is measured
+        in counterclockwise direction with respect to the positive y-axis.
+    bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
+        Tuple with the boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each
+        set of boundaries is specified as a tuple.
+    images : numpy.ndarray
+        Stack with images.
+    psf : numpy.ndarray
+        PSF template, either a single image (2D) or a cube (3D) with the dimensions equal to
+        *images*.
+    mask : numpy.ndarray
+        Array with the circular mask (zeros) of the central and outer regions.
+    parang : numpy.ndarray
+        Array with the angles for derotation.
+    psf_scaling : float
+        Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+        filter). Should be negative in order to inject negative fake planets.
+    pixscale : float
+        Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+        filter). Should be negative in order to inject negative fake planets.
+    pca_number : int
+        Number of principal components used for the PSF subtraction.
+    extra_rot : float
+        Additional rotation angle of the images (deg).
+    aperture : dict
+        Dictionary with the aperture properties. See for more information
+        :func:`~pynpoint.util.analysis.create_aperture`.
+    indices : numpy.ndarray
+        Non-masked image indices.
+    prior : str
+        Prior can be set to "flat" or "aperture". With "flat", the values of *bounds* are used
+        as uniform priors. With "aperture", the prior probability is set to zero beyond the
+        aperture and unity within the aperture.
+    variance : tuple(str, float)
+        Variance type and value for the likelihood function. The value is set to None in case
+        a Poisson distribution is assumed.
+    residuals : str
+        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
 
-    :return: Log posterior probability.
-    :rtype: float
+    Returns
+    -------
+    float
+        Log posterior probability.
     """
 
     def _lnprior():
         """
         Internal function for the log prior function.
 
-        :return: Log prior.
-        :rtype: float
+        Returns
+        -------
+        float
+            Log prior.
         """
 
         if prior == "flat":
@@ -102,10 +103,10 @@ def lnprob(param,
 
         elif prior == "aperture":
 
-            x_pos, y_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
+            xy_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
 
-            delta_x = x_pos - aperture['pos_x']
-            delta_y = y_pos - aperture['pos_y']
+            delta_x = xy_pos[0] - aperture['pos_x']
+            delta_y = xy_pos[1] - aperture['pos_y']
 
             if aperture['type'] == "circular":
 
@@ -146,8 +147,10 @@ def lnprob(param,
         either a Poisson distribution (see Wertz et al. 2017) or a Gaussian distribution with a
         correction for small sample statistics (see Mawet et al. 2014).
 
-        :return: Log likelihood.
-        :rtype: float
+        Returns
+        -------
+        float
+            Log likelihood.
         """
 
         sep, ang, mag = param
@@ -166,7 +169,7 @@ def lnprob(param,
 
         stack = combine_residuals(method=residuals, res_rot=im_res)
 
-        merit = merit_function(residuals=stack,
+        merit = merit_function(residuals=stack[0, ],
                                function="sum",
                                variance=variance,
                                aperture=aperture,

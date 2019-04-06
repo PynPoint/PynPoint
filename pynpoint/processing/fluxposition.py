@@ -16,11 +16,10 @@ from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
-from pynpoint.util.image import create_mask, polar_to_cartesian, get_image, cartesian_to_polar, \
+from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel
 from pynpoint.util.mcmc import lnprob
-from pynpoint.util.module import progress, memory_frames, image_size_port, number_images_port, \
-                                 rotate_coordinates
+from pynpoint.util.module import progress, memory_frames, rotate_coordinates
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
@@ -97,12 +96,12 @@ class FakePlanetModule(ProcessingModule):
         if ndim_image != 3:
             raise ValueError("The image_in_tag should contain a cube of images.")
 
-        nimages = number_images_port(self.m_image_in_port)
-        im_size = image_size_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
+        im_size = self.m_image_in_port.get_shape()[-2:]
         frames = memory_frames(memory, nimages)
 
-        npsf = number_images_port(self.m_psf_in_port)
-        psf_size = image_size_port(self.m_psf_in_port)
+        npsf = self.m_psf_in_port.get_shape()[0]
+        psf_size = self.m_psf_in_port.get_shape()[-2:]
 
         if psf_size != im_size:
             raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
@@ -353,7 +352,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
         center = center_subpixel(psf)
 
-        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
+        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number '
                              'of frames in image_in_tag. The DerotateAndStackModule can be '
                              'used to average the PSF frames (without derotating) before applying '
@@ -367,12 +366,12 @@ class SimplexMinimizationModule(ProcessingModule):
             pos_x = arg[1]
             mag = arg[2]
 
-            sep, ang = cartesian_to_polar(center, pos_x, pos_y)
+            sep_ang = cartesian_to_polar(center, pos_x, pos_y)
 
             fake = fake_planet(images=images,
                                psf=psf,
                                parang=parang,
-                               position=(sep, ang),
+                               position=(sep_ang[0], sep_ang[1]),
                                magnitude=mag,
                                psf_scaling=self.m_psf_scaling)
 
@@ -388,7 +387,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_res_out_port.append(stack, data_dim=3)
 
-            merit = merit_function(residuals=stack,
+            merit = merit_function(residuals=stack[0, ],
                                    function=self.m_merit,
                                    variance="poisson",
                                    aperture=self.m_aperture,
@@ -398,8 +397,8 @@ class SimplexMinimizationModule(ProcessingModule):
 
             res = np.asarray((position[1],
                               position[0],
-                              sep*pixscale,
-                              (ang-self.m_extra_rot)%360.,
+                              sep_ang[0]*pixscale,
+                              (sep_ang[1]-self.m_extra_rot)%360.,
                               mag,
                               merit))
 
@@ -538,12 +537,12 @@ class FalsePositiveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_aperture /= pixscale
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
 
         for j in range(nimages):
             progress(j, nimages, "Running FalsePositiveModule...")
 
-            image = get_image(self.m_image_in_port, j, nimages)
+            image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
 
             if self.m_optimize:
@@ -559,7 +558,7 @@ class FalsePositiveModule(ProcessingModule):
                                           size=self.m_aperture,
                                           ignore=self.m_ignore)
 
-                sep, ang = cartesian_to_polar(center, result.x[0], result.x[1])
+                sep_ang = cartesian_to_polar(center, result.x[0], result.x[1])
 
             else:
                 _, snr, fpf = false_alarm(image=image,
@@ -568,12 +567,12 @@ class FalsePositiveModule(ProcessingModule):
                                           size=self.m_aperture,
                                           ignore=self.m_ignore)
 
-                sep, ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
+                sep_ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
 
             result = np.column_stack((self.m_position[0],
                                       self.m_position[1],
-                                      sep*pixscale,
-                                      ang,
+                                      sep_ang[0]*pixscale,
+                                      sep_ang[1],
                                       snr,
                                       fpf))
 
@@ -744,11 +743,11 @@ class MCMCsamplingModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if isinstance(self.m_aperture, float):
-            x_pos, y_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
+            xy_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
 
             self.m_aperture = {'type':'circular',
-                               'pos_x':x_pos,
-                               'pos_y':y_pos,
+                               'pos_x':xy_pos[0],
+                               'pos_y':xy_pos[1],
                                'radius':self.m_aperture/pixscale}
 
         elif isinstance(self.m_aperture, dict):
@@ -806,7 +805,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
 
-        noise, _, _ = false_alarm(image=stack,
+        noise, _, _ = false_alarm(image=stack[0, ],
                                   x_pos=aperture['pos_x'],
                                   y_pos=aperture['pos_y'],
                                   size=aperture['radius'],
@@ -851,13 +850,13 @@ class MCMCsamplingModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
-        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
+        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number of '
                              'frames in image_in_tag. The DerotateAndStackModule can be used to '
                              'average the PSF frames (without derotating) before applying the '
                              'MCMCsamplingModule.')
 
-        im_shape = image_size_port(self.m_image_in_port)
+        im_shape = self.m_image_in_port.get_shape()[-2:]
 
         if self.m_mask[0] is not None:
             self.m_mask[0] /= pixscale
@@ -998,8 +997,8 @@ class AperturePhotometryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
-        nimages = number_images_port(self.m_image_in_port)
-        image = get_image(self.m_image_in_port, 0, nimages)
+        nimages = self.m_image_in_port.get_shape()[0]
+        image = self.m_image_in_port[0, ]
 
         if self.m_position is None:
             self.m_position = center_subpixel(image)

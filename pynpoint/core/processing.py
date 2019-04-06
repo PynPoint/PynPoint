@@ -391,7 +391,7 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
         Function which applies a function to all images of an input port. The MEMORY attribute
         from the central configuration is used to load subsets of images into the memory. Note
         that the function *func* is not allowed to change the shape of the images if the input
-        and output port have the same tag and MEMORY is not None.
+        and output port have the same tag and ``MEMORY`` is not None.
 
         Parameters
         ----------
@@ -403,9 +403,9 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
                              parameter2,
                              parameter3)
 
-        image_in_port : InputPort
+        image_in_port : pynpoint.core.dataio.InputPort
             InputPort which is linked to the input data.
-        image_out_port : OutputPort
+        image_out_port : pynpoint.core.dataio.OutputPort
             OutputPort which is linked to the result place. No data is written if set to None.
         message : str
             Progress message that is printed.
@@ -418,44 +418,20 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
             None
         """
 
+        if image_out_port is not None and image_out_port.tag != image_in_port.tag:
+            image_out_port.del_all_attributes()
+            image_out_port.del_all_data()
+
+        nimages = image_in_port.get_shape()[0]
         memory = self._m_config_port.get_attribute("MEMORY")
+        frames = memory_frames(memory, nimages)
 
-        def _initialize():
-            """
-            Internal function to get the number of dimensions and subdivide the images by the
-            MEMORY attribute.
-
-            Returns
-            -------
-            int
-                Number of dimensions.
-            numpy.ndarray
-                Subdivision of the images.
-            """
-
-            ndim = image_in_port.get_ndim()
-
-            if ndim == 2:
-                nimages = 1
-            elif ndim == 3:
-                nimages = image_in_port.get_shape()[0]
-
-            if image_out_port is not None and image_out_port.tag != image_in_port.tag:
-                image_out_port.del_all_attributes()
-                image_out_port.del_all_data()
-
-            frames = memory_frames(memory, nimages)
-
-            return ndim, frames
-
-        def _append_result(ndim, images):
+        def _append_result(images):
             """
             Internal function to apply the function on the images and append the results to a list.
 
             Parameters
             ----------
-            ndim : int
-                Number of dimensions.
             images : numpy.ndarray
                 Stack of images.
 
@@ -468,34 +444,20 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
             result = []
 
             if func_args is None:
-                if ndim == 2:
-                    result.append(func(images))
-
-                elif ndim == 3:
-                    for k in six.moves.range(images.shape[0]):
-                        result.append(func(images[k]))
+                for k in six.moves.range(images.shape[0]):
+                    result.append(func(images[k]))
 
             else:
-                if ndim == 2:
-                    result.append(func(images, * func_args))
-
-                elif ndim == 3:
-                    for k in six.moves.range(images.shape[0]):
-                        result.append(func(images[k], * func_args))
+                for k in six.moves.range(images.shape[0]):
+                    result.append(func(images[k], * func_args))
 
             return np.asarray(result)
-
-        ndim, frames = _initialize()
 
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), message)
 
-            if ndim == 2:
-                images = image_in_port[:, :]
-            elif ndim == 3:
-                images = image_in_port[frames[i]:frames[i+1], ]
-
-            result = _append_result(ndim, images)
+            images = image_in_port[frames[i]:frames[i+1], ]
+            result = _append_result(images)
 
             if image_out_port is not None:
                 if image_out_port.tag == image_in_port.tag:
@@ -514,9 +476,6 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
                                          "possible with MEMORY=None.")
 
                 else:
-                    if ndim == 2:
-                        result = np.squeeze(result, axis=0)
-
                     image_out_port.append(result)
 
         sys.stdout.write(message+" [DONE]\n")
