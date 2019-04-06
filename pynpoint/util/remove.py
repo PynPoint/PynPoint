@@ -6,8 +6,6 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from pynpoint.util.module import number_images_port
-
 
 def write_selected_data(images,
                         indices,
@@ -16,16 +14,21 @@ def write_selected_data(images,
     """
     Function to write a selected number of images from a data set.
 
-    :param images: Stack of images.
-    :type images: ndarray
-    :param indices: Indices that are removed.
-    :type indices: ndarray
-    :param port_selected: Port to store the selected images.
-    :type port_selected: OutputPort
-    :param port_removed: Port to store the removed images.
-    :type port_removed: OutputPort
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Stack of images.
+    indices : numpy.ndarray
+        Indices that are removed.
+    port_selected : pynpoint.core.dataio.OutputPort
+        Port to store the selected images.
+    port_removed : pynpoint.core.dataio.OutputPort
+        Port to store the removed images.
 
-    :return: None
+    Returns
+    -------
+    NoneType
+        None
     """
 
     if np.size(indices) > 0:
@@ -48,27 +51,29 @@ def write_selected_attributes(indices,
     """
     Function to write the attributes of a selected number of images.
 
-    :param indices: Indices that are removed.
-    :type indices: ndarray
-    :param port_input: Port to the input data.
-    :type port_input: InputPort
-    :param port_selected: Port to store the attributes of the selected images.
-    :type port_selected: OutputPort
-    :param port_removed: Port to store the attributes of the removed images. Not written if
-                         set to None.
-    :type port_removed: OutputPort
+    Parameters
+    ----------
+    indices : numpy.ndarray
+        Indices that are removed.
+    port_input : pynpoint.core.dataio.InputPort
+        Port to the input data.
+    port_selected : pynpoint.core.dataio.OutputPort
+        Port to store the attributes of the selected images.
+    port_removed : pynpoint.core.dataio.OutputPort
+        Port to store the attributes of the removed images. Not written if set to None.
 
-    :return: None
+    Returns
+    -------
+    NoneType
+        None
     """
-
-    nimages = number_images_port(port_input)
 
     non_static = port_input.get_all_non_static_attributes()
 
     for i, item in enumerate(non_static):
         values = port_input.get_attribute(item)
 
-        if values.shape[0] == nimages:
+        if values.shape[0] == port_input.get_shape()[0]:
 
             if port_selected is not None:
                 if np.size(indices) > 0:
