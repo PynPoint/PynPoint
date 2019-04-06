@@ -15,7 +15,7 @@ from scipy import ndimage
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import progress, memory_frames, number_images_port
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.image import create_mask, scale_image, shift_image
 
 
@@ -99,8 +99,8 @@ class PSFpreparationModule(ProcessingModule):
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
-        nimages = number_images_port(self.m_image_in_port)
         im_shape = self.m_image_in_port.get_shape()
+        nimages = im_shape[0]
 
         if self.m_norm:
             im_norm = np.linalg.norm(self.m_image_in_port.get_all(),
@@ -644,7 +644,7 @@ class SDIpreparationModule(ProcessingModule):
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
         width_factor = self.m_line_width/self.m_cnt_width
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
 
         for i in range(nimages):
             progress(i, nimages, "Running SDIpreparationModule...")
