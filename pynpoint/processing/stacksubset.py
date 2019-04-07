@@ -219,7 +219,7 @@ class MeanCubeModule(ProcessingModule):
         super(MeanCubeModule, self).__init__(name_in=name_in)
 
         warnings.warn("The MeanCubeModule will be be deprecated in a future release. Please use "
-                      "the StackCubeModule instead.", DeprecationWarning)
+                      "the StackCubesModule instead.", DeprecationWarning)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -284,7 +284,7 @@ class MeanCubeModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
 
-class StackCubeModule(ProcessingModule):
+class StackCubesModule(ProcessingModule):
     """
     Module for calculating the mean or median of each original data cube associated with a
     database tag.
@@ -296,7 +296,7 @@ class StackCubeModule(ProcessingModule):
                  image_out_tag="im_stack",
                  combine="mean"):
         """
-        Constructor of StackCubeModule.
+        Constructor of StackCubesModule.
 
         Parameters
         ----------
@@ -316,7 +316,7 @@ class StackCubeModule(ProcessingModule):
             None
         """
 
-        super(StackCubeModule, self).__init__(name_in=name_in)
+        super(StackCubesModule, self).__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -352,7 +352,7 @@ class StackCubeModule(ProcessingModule):
         parang_new = []
 
         for i, frames in enumerate(nframes):
-            progress(i, len(nframes), "Running StackCubeModule...")
+            progress(i, len(nframes), "Running StackCubesModule...")
 
             if self.m_combine == "mean":
                 im_stack = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
@@ -366,7 +366,7 @@ class StackCubeModule(ProcessingModule):
 
             current += frames
 
-        sys.stdout.write("Running StackCubeModule... [DONE]\n")
+        sys.stdout.write("Running StackCubesModule... [DONE]\n")
         sys.stdout.flush()
 
         nimages = np.size(nframes)
