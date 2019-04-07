@@ -8,7 +8,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.stacksubset import StackAndSubsetModule, MeanCubeModule, \
                                             DerotateAndStackModule, CombineTagsModule, \
-                                            StackCubeModule
+                                            StackCubesModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
@@ -112,10 +112,10 @@ class TestStackingAndSubsampling(object):
 
     def test_stack_cube(self):
 
-        module = StackCubeModule(name_in="stackcube",
-                                 image_in_tag="images",
-                                 image_out_tag="mean",
-                                 combine="mean")
+        module = StackCubesModule(name_in="stackcube",
+                                  image_in_tag="images",
+                                  image_out_tag="mean",
+                                  combine="mean")
 
         self.pipeline.add_module(module)
         self.pipeline.run_module("stackcube")
