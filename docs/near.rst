@@ -45,8 +45,8 @@ First we create a configuration file which contains the global pipeline settings
    [settings]
 
    PIXSCALE:  0.045
-   MEMORY: 1000
-   CPU: 1
+   MEMORY: 100
+   CPU: 4
 
 The ``MEMORY`` and ``CPU`` setting can be adjusted. They define the number of images that is simultaneously loaded into the computer memory and the number of parallel processes that are used by some of the pipeline modules.
 
