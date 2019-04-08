@@ -87,51 +87,6 @@ class FakePlanetModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_interpolation = interpolation
 
-    def _init(self):
-        memory = self._m_config_port.get_attribute("MEMORY")
-
-        ndim_image = self.m_image_in_port.get_ndim()
-        ndim_psf = self.m_psf_in_port.get_ndim()
-
-        if ndim_image != 3:
-            raise ValueError("The image_in_tag should contain a cube of images.")
-
-        nimages = self.m_image_in_port.get_shape()[0]
-        im_size = self.m_image_in_port.get_shape()[-2:]
-        frames = memory_frames(memory, nimages)
-
-        npsf = self.m_psf_in_port.get_shape()[0]
-        psf_size = self.m_psf_in_port.get_shape()[-2:]
-
-        if psf_size != im_size:
-            raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
-                             "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
-
-        if ndim_psf == 3 and npsf == 1:
-            psf = np.squeeze(self.m_psf_in_port.get_all(), axis=0)
-            ndim_psf = psf.ndim
-
-        elif ndim_psf == 2:
-            psf = self.m_psf_in_port.get_all()
-
-        elif ndim_psf == 3 and nimages != npsf:
-            psf = np.zeros((self.m_psf_in_port.get_shape()[1],
-                            self.m_psf_in_port.get_shape()[2]))
-
-            frames_psf = memory_frames(memory, npsf)
-
-            for i, _ in enumerate(frames_psf[:-1]):
-                psf += np.sum(self.m_psf_in_port[frames_psf[i]:frames_psf[i+1]], axis=0)
-
-            psf /= float(npsf)
-
-            ndim_psf = psf.ndim
-
-        elif ndim_psf == 3 and nimages == npsf:
-            psf = None
-
-        return psf, ndim_psf, ndim_image, frames
-
     def run(self):
         """
         Run method of the module. Shifts the PSF template to the location of the fake planet
@@ -147,33 +102,49 @@ class FakePlanetModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
+        memory = self._m_config_port.get_attribute("MEMORY")
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_position = (self.m_position[0]/pixscale, self.m_position[1])
 
-        psf, ndim_psf, ndim, frames = self._init()
+        im_shape = self.m_image_in_port.get_shape()
+        psf_shape = self.m_psf_in_port.get_shape()
+
+        if psf_shape[0] != 1 and psf_shape[0] != im_shape[0]:
+            raise ValueError('The number of frames in psf_in_tag does not match with the number '
+                             'of frames in image_in_tag. The DerotateAndStackModule can be '
+                             'used to average the PSF frames (without derotating) before applying '
+                             'the FakePlanetModule.')
+
+        if psf_shape[-2:] != im_shape[-2:]:
+            raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
+                             "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
+
+        frames = memory_frames(memory, im_shape[0])
 
         for j, _ in enumerate(frames[:-1]):
             progress(j, len(frames[:-1]), "Running FakePlanetModule...")
 
-            images = np.copy(self.m_image_in_port[frames[j]:frames[j+1]])
+            images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
 
-            if ndim_psf == 3:
-                psf = np.copy(images)
+            if psf_shape[0] == 1:
+                psf = self.m_psf_in_port.get_all()
+            else:
+                psf = self.m_psf_in_port[frames[j]:frames[j+1]]
 
-            im_fake = fake_planet(images,
-                                  psf,
-                                  angles,
-                                  self.m_position,
-                                  self.m_magnitude,
-                                  self.m_psf_scaling,
+            im_fake = fake_planet(images=images,
+                                  psf=psf,
+                                  parang=angles,
+                                  position=self.m_position,
+                                  magnitude=self.m_magnitude,
+                                  psf_scaling=self.m_psf_scaling,
                                   interpolation="spline")
 
-            if ndim == 2:
+            if j == 0:
                 self.m_image_out_port.set_all(im_fake)
-            elif ndim == 3:
+            else:
                 self.m_image_out_port.append(im_fake, data_dim=3)
 
         sys.stdout.write("Running FakePlanetModule... [DONE]\n")

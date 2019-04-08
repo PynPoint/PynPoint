@@ -126,9 +126,9 @@ def fake_planet(images,
     Parameters
     ----------
     images : numpy.ndarray
-        Input images.
+        Input images (3D).
     psf : numpy.ndarray
-        PSF template.
+        PSF template (3D).
     parang : float
         Parallactic angles (deg).
     position : tuple(float, float)
