@@ -125,26 +125,26 @@ def fake_planet(images,
 
     Parameters
     ----------
-    :param images: Input images.
-    :type images: numpy.ndarray
-    :param psf: PSF template.
-    :type psf: numpy.ndarray
-    :param parang: Parallactic angles (deg).
-    :type parang: float
-    :param position: Separation (pix) and position angle (deg) measured in counterclockwise
-                     with respect to the upward direction.
-    :type position: (float, float)
-    :param magnitude: Magnitude difference used to scale input PSF.
-    :type magnitude: float
-    :param psf_scaling: Extra factor used to scale input PSF.
-    :type psf_scaling: float
-    :param interpolation: Interpolation type (spline, bilinear, fft)
-    :type interpolation: str
+    images : numpy.ndarray
+        Input images.
+    psf : numpy.ndarray
+        PSF template.
+    parang : float
+        Parallactic angles (deg).
+    position : tuple(float, float)
+        Separation (pix) and position angle (deg) measured in counterclockwise with respect to the
+        upward direction.
+    magnitude : float
+        Magnitude difference used to scale input PSF.
+    psf_scaling : float
+        Extra factor used to scale input PSF.
+    interpolation : str
+        Interpolation type ("spline", "bilinear", or "fft").
 
     Returns
     -------
-    :return: Images with artificial planet injected.
-    :rtype: numpy.ndarray
+    numpy.ndarray
+        Images with artificial planet injected.
     """
 
     sep = position[0]
@@ -184,24 +184,24 @@ def merit_function(residuals,
 
     Parameters
     ----------
-    :param residuals: Residuals of the PSF subtraction (2D).
-    :type residuals: numpy.ndarray
-    :param function: Figure of merit ("hessian" or "sum").
-    :type function: str
-    :param variance: Variance type and value for the likelihood function. The value is set to None
-                     in case a Poisson distribution is assumed.
-    :type variance: tuple(str, float)
-    :param aperture: Dictionary with the aperture properties. See for more information
-                     :func:`~pynpoint.util.analysis.create_aperture`.
-    :type aperture: dict
-    :param sigma: Standard deviation (pix) of the Gaussian kernel which is used to smooth
-                  the residuals before the function of merit is calculated.
-    :type sigma: float
+    residuals : numpy.ndarray
+        Residuals of the PSF subtraction (2D).
+    function : str
+        Figure of merit ("hessian" or "sum").
+    variance : tuple(str, float)
+        Variance type and value for the likelihood function. The value is set to None in case a
+        Poisson distribution is assumed.
+    aperture : dict
+        Dictionary with the aperture properties. See for more information
+        :func:`~pynpoint.util.analysis.create_aperture`.
+    sigma : float
+        Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
+        before the function of merit is calculated.
 
     Returns
     -------
-    :return: Merit value.
-    :rtype: float
+    float
+        Merit value.
     """
 
     if function == "hessian":
@@ -262,20 +262,18 @@ def create_aperture(aperture):
 
     Parameters
     ----------
-    :param aperture: Dictionary with the aperture properties. The aperture 'type' can be
-                     'circular' or 'elliptical' (str). Both types of apertures require a position,
-                     'pos_x' and 'pos_y' (float), where the aperture is placed. The circular
-                     aperture requires a 'radius' (in pixels, float) and the elliptical
-                     aperture requires a 'semimajor' and 'semiminor' axis (in pixels, float),
-                     and an 'angle' (deg). The rotation angle in degrees of the semimajor axis
-                     from the positive x axis. The rotation angle increases counterclockwise.
-    :type aperture: dict
+    aperture : dict
+        Dictionary with the aperture properties. The aperture 'type' can be 'circular' or
+        'elliptical' (str). Both types of apertures require a position, 'pos_x' and 'pos_y'
+        (float), where the aperture is placed. The circular aperture requires a 'radius'
+        (in pixels, float) and the elliptical aperture requires a 'semimajor' and 'semiminor'
+        axis (in pixels, float), and an 'angle' (deg). The rotation angle in degrees of the
+        semimajor axis from the positive x axis. The rotation angle increases counterclockwise.
 
     Returns
     -------
-    :return: Aperture object.
-    :rtype: photutils.aperture.circle.CircularAperture or
-            photutils.aperture.circle.EllipticalAperture
+    photutils.aperture.circle.CircularAperture or photutils.aperture.circle.EllipticalAperture
+        Aperture object.
     """
 
     if aperture['type'] == "circular":

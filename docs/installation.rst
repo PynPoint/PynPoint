@@ -3,6 +3,8 @@
 Installation
 ============
 
+PynPoint is compatible with Python 2.7, Python 3.6, and Python 3.7. We highly recommend using Python 3 since several key Python projects have already |python| Python 2.
+
 Virtual Environment
 -------------------
 
@@ -31,6 +33,10 @@ Installation from PyPI
 PynPoint can now be installed with pip::
 
     $ pip install pynpoint
+
+If you do not use a virtual environment then you may have to add the ``-- user`` argument::
+
+    $ pip install --user pynpoint
 
 Installation from Github
 ------------------------
@@ -67,6 +73,10 @@ The installation can be tested by starting Python in interactive mode and printi
       >>> sys.path
 
    The result should contain the folder in which the Github repository was cloned or the folder in which Python modules are installed with pip.
+
+.. |python| raw:: html
+
+   <a href="https://python3statement.org/" target="_blank">stopped supporting</a>
 
 .. |pypi| raw:: html
 
