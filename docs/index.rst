@@ -10,7 +10,7 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
    :target: http://www.eso.org/public/news/eso1310
 
 .. |ipa| raw:: html
-	
+
 	<a href="http://www.ipa.phys.ethz.ch" target="_blank">Institute of Particle Physics and Astrophysics</a>
 
 .. |spf| raw:: html
@@ -37,6 +37,12 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
    tutorial
    examples
    modules
+
+.. toctree::
+   :maxdepth: 2
+   :caption: NEAR Documentation
+
+   near
 
 .. toctree::
    :maxdepth: 2
