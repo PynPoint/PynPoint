@@ -131,7 +131,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Crop the Nod A and reference PSF around the approximate center
+   # Crop the Nod A and reference PSF to a 5 x 5 arcsecond image around the approximate center
 
    module = CropImagesModule(size=5.,
                              center=(256, 256),
@@ -184,7 +184,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.add_module(module)
 
    # To mask the central and outer part of the Nod A data
-   
+
    module = PSFpreparationModule(name_in='prep',
                                  image_in_tag='nodA_center',
                                  image_out_tag='nodA_prep',
@@ -196,7 +196,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Tun the PSF subtraction with PCA for the first 30 components
+   # Do the PSF subtraction with PCA for the first 30 components
 
    module = PcaPsfSubtractionModule(pca_numbers=range(1, 31),
                                     name_in='pca',
@@ -234,7 +234,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    # Datasets can be exported to FITS files by their tag name in the database
    # Here we will export the centered Nod A data to the default output place
-   
+
    module = FitsWritingModule(name_in='write1',
                               file_name='nodA_center.fits',
                               output_dir=None,
@@ -249,7 +249,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    module = FitsWritingModule(name_in='write2',
                               file_name='res_median.fits',
                               output_dir=None,
-                              data_tag='res_median',
+                              data_tag='residuals',
                               data_range=None,
                               overwrite=True)
 
