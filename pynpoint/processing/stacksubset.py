@@ -155,7 +155,7 @@ class StackAndSubsetModule(ProcessingModule):
                 raise ValueError("The number of images of the destination subset is larger than " \
                                  "the number of images in the source.")
 
-            elif self.m_stacking is not None and \
+            if self.m_stacking is not None and \
                         int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
                 raise ValueError("The number of images of the destination subset is larger than " \
                                  "the number of images in the stacked source.")
