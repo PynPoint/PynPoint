@@ -218,10 +218,10 @@ def cwt(x, dt, scales, wf='dog', p=2):
     x_arr = np.asarray(x) - np.mean(x)
     scales_arr = np.asarray(scales)
 
-    if x_arr.ndim is not 1:
+    if x_arr.ndim != 1:
         raise ValueError('x must be an 1d numpy array of list')
 
-    if scales_arr.ndim is not 1:
+    if scales_arr.ndim != 1:
         raise ValueError('scales must be an 1d numpy array of list')
 
     w = angularfreq(N=x_arr.shape[0], dt=dt)

@@ -247,7 +247,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # And the median-combined residuals of the PSF subtraction
 
    module = FitsWritingModule(name_in='write2',
-                              file_name='res_median.fits',
+                              file_name='residuals.fits',
                               output_dir=None,
                               data_tag='residuals',
                               data_range=None,
