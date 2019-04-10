@@ -1,6 +1,7 @@
 """
 Utilities for poison pill multiprocessing. Provides abstract interfaces as well as an
-implementation needed to process lines in time as used in the wavelet time denoising.
+implementation needed to process lines in time as used in the
+:class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`
 """
 
 import multiprocessing
@@ -24,12 +25,17 @@ class TaskResult(object):
         """
         Constructor of TaskResult.
 
-        :param data_array: Some kind of 1/2/3D data which is the result for a given position.
-        :type data_array:
-        :param position: The position where the result data will be stored
-        :type position: slice
+        Parameters
+        ----------
+        data_array : numpy.ndarray
+            Some kind of 1/2/3D data which is the result for a given position.
+        position : tuple
+             The position where the result data will be stored
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_data_array = data_array
@@ -47,12 +53,17 @@ class TaskInput(object):
         """
         Constructor of TaskInput.
 
-        :param input_data: Data needed by the TaskProcessors
-        :type input_data:
-        :param job_parameter: Additional data or parameters
-        :type job_parameter: tuple
+        Parameters
+        ----------
+        input_data : int, float, or numpy.ndarray
+            Data needed by the TaskProcessors.
+        job_parameter : tuple
+            Additional data or parameters.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_input_data = input_data
@@ -76,15 +87,22 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         """
         Constructor of TaskCreator. Can only be called by using super from children classes.
 
-        :param data_port_in: A Port which links to data to be processed.
-        :type data_port_in:
-        :param tasks_queue_in: The central Task queue.
-        :type tasks_queue_in: multiprocessing.Queue
-        :param data_mutex_in: A mutex shared with the writer to ensure that no read and write
-                              operations happen at the same time.
-        :type data_mutex_in:
-        :param number_of_processors: Maximum number of TaskProcessors running at the same time.
-        :type number_of_processors:
+        Parameters
+        ----------
+        data_port_in : pynpoint.core.dataio.InputPort
+            An input port which links to the data that has to be processed.
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            The central task queue.
+        data_mutex_in : multiprocessing.synchronize.Lock
+            A mutex shared with the writer to ensure that no read and write operations happen at
+            the same time.
+        number_of_processors : int
+            Maximum number of TaskProcessors running at the same time.
+
+        Returns
+        -------
+        NoneType
+            None
         """
 
         multiprocessing.Process.__init__(self)
@@ -100,10 +118,11 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         """
         Creates objects of TaskInput until all tasks are in the task queue
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
-
-        # pass
 
     def create_poison_pills(self):
         """
@@ -111,7 +130,10 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         gets a poison pill as the new task it will shut down. Run the method at the end of the
         run method.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         for _ in six.moves.range(self.m_number_of_processors-1):
@@ -137,12 +159,17 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         """
         Abstract constructor of TaskProcessor.
 
-        :param tasks_queue_in: The input task queue (contains TaskInput instances).
-        :type tasks_queue_in:
-        :param result_queue_in: The result task queue (contains TaskResult instances).
-        :type result_queue_in:
+        Parameters
+        ----------
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            The input task queue (contains TaskInput instances).
+        result_queue_in : multiprocessing.queues.JoinableQueue
+            The result task queue (contains TaskResult instances).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         multiprocessing.Process.__init__(self)
@@ -156,11 +183,15 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         Run this function to check if the next task is a poison pill. The shut down of the process
         needs to be done in its run method.
 
-        :param next_task: The next task.
-        :type next_task:
+        Parameters
+        ----------
+        next_task : pynpoint.util.multiproc.TaskInput
+            The next task.
 
-        :return: True if the next task is a poison pill, else False.
-        :rtype: bool
+        Returns
+        -------
+        bool
+            True if the next task is a poison pill, else False.
         """
 
         if next_task == 1:
@@ -183,7 +214,10 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         The run method is called to start a TaskProcessor. The process will continue to process
         tasks from the input task queue until it gets a poison pill.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # Process till we get a poison pill
@@ -205,15 +239,16 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         Abstract interface for the run_job method which is called from run() for each task
         individually.
 
-        :param tmp_task: Input Task
-        :type tmp_task:
+        Parameters
+        ----------
+        tmp_task : pynpoint.util.multiproc.TaskInput
+            Input task.
 
-        :return: A TaskResult
-        :rtype:
+        Returns
+        -------
+        NoneType
+            None
         """
-
-        # pass
-
 
 class TaskWriter(multiprocessing.Process):
     """
@@ -226,6 +261,22 @@ class TaskWriter(multiprocessing.Process):
                  result_queue_in,
                  data_out_port_in,
                  data_mutex_in):
+        """
+        Parameters
+        ----------
+        result_queue_in : multiprocessing.queues.JoinableQueue
+            The result queue.
+        data_out_port_in : pynpoint.core.dataio.OutputPort
+            The output port where the results are stored.
+        data_mutex_in : multiprocessing.synchronize.Lock
+            A mutex shared with the writer to ensure that no read and write operations happen at
+            the same time.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         multiprocessing.Process.__init__(self)
 
@@ -238,12 +289,16 @@ class TaskWriter(multiprocessing.Process):
         """
         Checks if the next result is a poison pill.
 
-        :param next_result: The next result.
-        :type next_result:
+        Parameters
+        ----------
+        next_result : pynpoint.util.multiproc.TaskResult
+            The next result.
 
-        :return: 0 -> no poison pill, 1 -> poison pill, 2 -> poison pill but still results in the
-                 queue (rare error case).
-        :rtype: int
+        Returns
+        -------
+        int
+            0 -> no poison pill, 1 -> poison pill, 2 -> poison pill but still results in the
+            queue (rare error case).
         """
 
         if next_result is None:
@@ -266,7 +321,10 @@ class TaskWriter(multiprocessing.Process):
         The run method of the writer process is called once and will start him to store results
         until it gets a poison pill.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         while True:
@@ -299,14 +357,19 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
         """
         Constructor can only be called from children classes by using super.
 
-        :param image_in_port: Port to the input data
-        :type image_in_port:
-        :param image_out_port: Port to the place where the output will be stored
-        :type image_in_port:
-        :param num_processors: Maximum number of Task Processors
-        :type num_processors:
+        Parameters
+        ----------
+        image_in_port : pynpoint.core.dataio.InputPort
+            Port to the input data.
+        image_in_port : pynpoint.core.dataio.OutputPort
+            Port to the place where the output will be stored.
+        num_processors : int
+            Maximum number of task processors
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # buffer twice the data as processes are available
@@ -326,32 +389,39 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
         # create writer
         self.m_writer = self.create_writer(image_out_port)
 
-    def create_writer(self, image_out_port):
+    def create_writer(self,
+                      image_out_port):
         """
         Called from the constructor to create the writer object.
 
-        :param image_out_port: Output port for the creator.
-        :type image_out_port:
+        Parameters
+        ----------
+        image_out_port : pynpoint.core.dataio.OutputPort
+            Output port for the creator.
 
-        :return: Writer object
-        :rtype:
+        Returns
+        -------
+        pynpoint.util.multiproc.TaskWriter
+            Task writer.
         """
 
-        tmp_writer = TaskWriter(self.m_result_queue,
-                                image_out_port,
-                                self.m_data_mutex)
 
-        return tmp_writer
+        return TaskWriter(self.m_result_queue,
+                          image_out_port,
+                          self.m_data_mutex)
 
     @abstractmethod
     def create_processors(self):
         """
         Called from the constructor to create a list of a TaskProcessor.
+
+        Returns
+        -------
+        list
+            Empty list.
         """
 
-        # loop to create Task Processors
-        tmp_processors = []
-        return tmp_processors
+        return []
 
     @abstractmethod
     def init_creator(self,
@@ -359,21 +429,26 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
         """
         Called from the constructor to create a creator object.
 
-        :param image_in_port: Input port for the creator.
-        :type image_in_port:
+        Parameters
+        ----------
+        image_in_port : pynpoint.core.dataio.InputPort
+            Input port for the creator.
 
-        :return: Creator object.
-        :rtype:
+        Returns
+        -------
+        NoneType
+            None
         """
-
-        return None
 
     def run(self):
         """
         The run method starts the Creator, all Task Processors and the Writer Process. Finally it
         will shut down them again after all tasks are done.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # start all processes
@@ -403,8 +478,19 @@ def apply_function(tmp_data,
     """
     Applies the function func with its arguments func_args to the tmp_data
 
-    :return: the results of the function
-    :rtype:
+    Parameters
+    ----------
+    tmp_data : numpy.ndarray
+        Input data.
+    func : function
+        Function.
+    func_args :
+        Function arguments.
+
+    Returns
+    -------
+    numpy.ndarray
+        The results of the function.
     """
 
     # process line
@@ -417,13 +503,17 @@ def apply_function(tmp_data,
 
 def to_slice(tuple_slice):
     """
-    this function is needed to pickle slices as reburied for multiprocessing queues
+    This function is needed to pickle slices as reburied for multiprocessing queues.
 
-    :param tuple_slice: Tuple to be converted to a slice
-    :type tuple_slice:
+    Parameters
+    ----------
+    tuple_slice : tuple
+        Tuple to be converted to a slice.
 
-    :return: the slice
-    :rtype:
+    Returns
+    -------
+    tuple(slice, slice, slice)
+        Tuple with three slices.
     """
 
     return (slice(tuple_slice[0][0], tuple_slice[0][1], tuple_slice[0][2]),
@@ -443,13 +533,31 @@ class LineTaskProcessor(TaskProcessor):
                  result_queue_in,
                  function,
                  function_args):
+        """
+        Parameters
+        ----------
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            Tasks queue.
+        result_queue_in : multiprocessing.queues.JoinableQueue
+            Results queue.
+        function : function
+            Input function.
+        function_args :
+            Function arguments.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         super(LineTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
 
         self.m_function = function
         self.m_function_args = function_args
 
-    def run_job(self, tmp_task):
+    def run_job(self,
+                tmp_task):
         result_arr = np.zeros((tmp_task.m_job_parameter[0],
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))
@@ -478,16 +586,42 @@ class LineReader(TaskCreator):
                  tasks_queue_in,
                  data_mutex_in,
                  number_of_processors,
-                 length_of_processed_data):
+                 data_length):
+        """
+        Parameters
+        ----------
+        data_port_in : pynpoint.core.dataio.InputPort
+            Input port.
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            Tasks queue.
+        data_mutex_in : multiprocessing.synchronize.Lock
+            A mutex shared with the writer to ensure that no read and write operations happen at
+            the same time.
+        number_of_processors : int
+            Number of processors.
+        data_length : int
+            Length of the processed data.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         super(LineReader, self).__init__(data_port_in,
                                          tasks_queue_in,
                                          data_mutex_in,
                                          number_of_processors)
 
-        self.m_length_of_processed_data = length_of_processed_data
+        self.m_data_length = data_length
 
     def run(self):
+        """
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         total_number_of_rows = self.m_data_in_port.get_shape()[1]
         row_length = int(np.ceil(self.m_data_in_port.get_shape()[1] /
@@ -504,7 +638,7 @@ class LineReader(TaskCreator):
                 tmp_data = self.m_data_in_port[:, i:j, :]
 
             self.m_task_queue.put(TaskInput(tmp_data,
-                                            (self.m_length_of_processed_data,
+                                            (self.m_data_length,
                                              ((None, None, None),
                                               (i, j, None),
                                               (None, None, None)))))
@@ -525,15 +659,42 @@ class LineProcessingCapsule(MultiprocessingCapsule):
                  num_processors,
                  function,
                  function_args,
-                 length_of_processed_data):
+                 data_length):
+        """
+        Parameters
+        ----------
+        image_in_port : pynpoint.core.dataio.InputPort
+            Input port.
+        image_out_port : pynpoint.core.dataio.OutputPort
+            Output port.
+        num_processors : int
+            Number of processors.
+        function : function
+            Input function.
+        function_args :
+            Function arguments.
+        data_length : int
+            Length of the processed data.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         self.m_function = function
         self.m_function_args = function_args
-        self.m_length_of_processed_data = length_of_processed_data
+        self.m_data_length = data_length
 
         super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_processors)
 
     def create_processors(self):
+        """
+        Returns
+        -------
+        list(pynpoint.util.multiproc.LineTaskProcessor, )
+            List with line task processors.
+        """
 
         tmp_processors = []
 
@@ -548,11 +709,20 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
     def init_creator(self,
                      image_in_port):
+        """
+        Parameters
+        ----------
+        image_in_port : pynpoint.core.dataio.InputPort
+            Input port
 
-        reader = LineReader(image_in_port,
-                            self.m_tasks_queue,
-                            self.m_data_mutex,
-                            self.m_num_processors,
-                            self.m_length_of_processed_data)
+        Returns
+        -------
+        NoneType
+            None
+        """
 
-        return reader
+        return LineReader(image_in_port,
+                          self.m_tasks_queue,
+                          self.m_data_mutex,
+                          self.m_num_processors,
+                          self.m_data_length)
