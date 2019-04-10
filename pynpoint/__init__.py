@@ -87,7 +87,7 @@ warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __license__ = 'GPLv3'
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'
