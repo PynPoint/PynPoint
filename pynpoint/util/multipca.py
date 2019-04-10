@@ -138,12 +138,12 @@ class PcaTaskProcessor(TaskProcessor):
 
         Parameters
         ----------
-        tmp_task : PynPoint.Util.Multiprocessing.TaskInput
+        tmp_task : pynpoint.util.multiproc.TaskInput
             Input task.
 
         Returns
         -------
-        PynPoint.Util.Multiprocessing.TaskResult
+        pynpoint.util.multiproc.TaskResult
             Output residuals.
         """
 
@@ -198,13 +198,13 @@ class PcaTaskWriter(TaskWriter):
         ----------
         result_queue_in : multiprocessing.queues.JoinableQueue
             Input result queue.
-        mean_out_port : PynPoint.Core.DataIO.OutputPort
+        mean_out_port : pynpoint.core.dataio.OutputPort
             Output port with the mean residuals. Not used if set to None.
-        median_out_port : PynPoint.Core.DataIO.OutputPort
+        median_out_port : pynpoint.core.dataio.OutputPort
             Output port with the median residuals. Not used if set to None.
-        weighted_out_port : PynPoint.Core.DataIO.OutputPort
+        weighted_out_port : pynpoint.core.dataio.OutputPort
             Output port with the noise-weighted residuals. Not used if set to None.
-        clip_out_port : PynPoint.Core.DataIO.OutputPort
+        clip_out_port : pynpoint.core.dataio.OutputPort
             Output port with the clipped mean residuals. Not used if set to None.
         data_mutex_in : multiprocessing.synchronize.Lock
             A mutual exclusion variable which ensure that no read and write simultaneously occur.
@@ -299,13 +299,13 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         Parameters
         ----------
-        mean_out_port : PynPoint.Core.DataIO.OutputPort
+        mean_out_port : pynpoint.core.dataio.OutputPort
             Output port for the mean residuals.
-        median_out_port : PynPoint.Core.DataIO.OutputPort
+        median_out_port : pynpoint.core.dataio.OutputPort
             Output port for the median residuals.
-        weighted_out_port : PynPoint.Core.DataIO.OutputPort
+        weighted_out_port : pynpoint.core.dataio.OutputPort
             Output port for the noise-weighted residuals.
-        clip_out_port : PynPoint.Core.DataIO.OutputPort
+        clip_out_port : pynpoint.core.dataio.OutputPort
             Output port for the mean clipped residuals.
         num_processors : int
             Number of processors.
@@ -363,12 +363,12 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         Parameters
         ----------
-        image_out_port : PynPoint.Util.Multiprocessing.TaskInput
+        image_out_port : pynpoint.util.multiproc.TaskInput
             Input task.
 
         Returns
         -------
-        PynPoint.Util.MultiprocessingPCA.PcaTaskWriter
+        pynpoint.util.multipca.PcaTaskWriter
             PCA task writer.
         """
 
@@ -388,12 +388,12 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         Parameters
         ----------
-        image_in_port : PynPoint.Util.Multiprocessing.TaskInput
+        image_in_port : pynpoint.util.multiproc.TaskInput
             Input task.
 
         Returns
         -------
-        PynPoint.Util.MultiprocessingPCA.PcaTaskCreator
+        pynpoint.util.multipca.PcaTaskCreator
             PCA task creator.
         """
 
@@ -409,7 +409,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         Returns
         -------
-        list(PynPoint.Util.MultiprocessingPCA.PcaTaskProcessor, )
+        list(pynpoint.util.multipca.PcaTaskProcessor, )
             PCA task processors.
         """
 
