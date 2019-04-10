@@ -24,16 +24,19 @@ def _fast_zeros(soft,
     Fast numba method to modify values in the wavelet space by using a hard or soft threshold
     function.
 
-    :param soft: If True soft the threshold function will be used, otherwise a hard threshold
-                 is applied.
-    :type soft: bool
-    :param spectrum: The input 2D wavelet space.
-    :type spectrum: numpy.ndarray
-    :param uthresh: Threshold used by the threshold function.
-    :type uthresh: float
+    Parameters
+    ----------
+    soft : bool
+        If True soft the threshold function will be used, otherwise a hard threshold is applied.
+    spectrum : numpy.ndarray
+        The input 2D wavelet space.
+    uthresh : float
+        Threshold used by the threshold function.
 
-    :return: Modified spectrum.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Modified spectrum.
     """
 
     if soft:
@@ -68,18 +71,23 @@ class WaveletAnalysisCapsule(object):
         """
         Constructor of the WaveletAnalysisCapsule.
 
-        :param signal_in: 1D input signal.
-        :type signal_in: numpy.ndarray
-        :param wavelet_in: Wavelet function ("dog" or "morlet").
-        :type wavelet_in: str
-        :param order: Order of the wavelet function.
-        :type order: int
-        :param padding: Padding method ("zero", "mirror", or "none").
-        :type padding: str
-        :param frequency_resolution: Wavelet space resolution in scale/frequency.
-        :type frequency_resolution: float
+        Parameters
+        ----------
+        signal_in : numpy.ndarray
+            1D input signal.
+        wavelet_in : str
+            Wavelet function ("dog" or "morlet").
+        order : int
+            Order of the wavelet function.
+        padding : str
+            Padding method ("zero", "mirror", or "none").
+        frequency_resolution : float
+            Wavelet space resolution in scale/frequency.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # save input data
@@ -146,8 +154,10 @@ class WaveletAnalysisCapsule(object):
     def _morlet_function(omega0,
                          x_in):
         """
-        :return: Morlet function
-        :rtype: numpy.complex128
+        Returns
+        -------
+        numpy.complex128
+            Morlet function.
         """
 
         return np.pi**(-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-x_in**2/2.0)
@@ -156,8 +166,10 @@ class WaveletAnalysisCapsule(object):
     def _dog_function(order,
                       x_in):
         """
-        :return: DOG function
-        :rtype: float
+        Returns
+        -------
+        float
+            DOG function.
         """
 
         p_hpoly = hermite(order)[int(x_in / np.power(2, 0.5))]
@@ -167,7 +179,10 @@ class WaveletAnalysisCapsule(object):
 
     def __pad_signal(self):
         """
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         padding_length = int(len(self._m_data) * 0.5)
@@ -186,8 +201,10 @@ class WaveletAnalysisCapsule(object):
         """
         Computes the reconstruction factor.
 
-        :return: Reconstruction factor.
-        :rtype: float
+        Returns
+        -------
+        float
+            Reconstruction factor.
         """
 
         dj = self._m_frequency_resolution
@@ -209,7 +226,10 @@ class WaveletAnalysisCapsule(object):
         """
         Compute the wavelet space of the given input signal.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_spectrum = cwt(self._m_data,
@@ -222,7 +242,10 @@ class WaveletAnalysisCapsule(object):
         """
         Updates the internal signal by the reconstruction of the current wavelet space.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._m_data = icwt(self.m_spectrum, scales=self._m_scales)
@@ -235,10 +258,15 @@ class WaveletAnalysisCapsule(object):
         Applies wavelet shrinkage on the current wavelet space (m_spectrum) by either a hard of
         soft threshold function.
 
-        :param soft: If True a soft threshold is used, hard otherwise.
-        :type soft: bool
+        Parameters
+        ----------
+        soft : bool
+            If True a soft threshold is used, hard otherwise.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_padding != "none":
@@ -261,7 +289,10 @@ class WaveletAnalysisCapsule(object):
         Applies a median filter on the internal 1d signal. Can be useful for cosmic ray correction
         after temporal de-noising
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._m_data = medfilt(self._m_data, 19)
@@ -271,8 +302,10 @@ class WaveletAnalysisCapsule(object):
         Returns the current version of the 1d signal. Use update_signal() in advance in order to get
         the current reconstruction of the wavelet space. Removes padded values as well.
 
-        :return: Current version of the 1D signal.
-        :rtype: numpy.ndarray
+        Returns
+        -------
+        numpy.ndarray
+            Current version of the 1D signal.
         """
 
         tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
