@@ -12,9 +12,9 @@ PynPoint is available in the |pypi| and on |github|. We recommend using a Python
 
     $ pip install virtualenv
 
-Then create a virtual environment::
+Then create a virtual environment for Python 3::
 
-    $ virtualenv folder_name
+    $ virtualenv -p python3 folder_name
 
 And activate the environment with::
 

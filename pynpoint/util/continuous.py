@@ -194,25 +194,31 @@ def autoscales(N, dt, dj, wf, p):
 #         raise ValueError('wavelet function not available')
 
 
-def cwt(x, dt, scales, wf='dog', p=2):
-    """Continuous Wavelet Tranform.
+def cwt(x,
+        dt,
+        scales,
+        wf="dog",
+        p=2):
+    """
+    Continuous Wavelet Transform.
 
-    :Parameters:
-       x : 1d array_like object
-          data
-       dt : float
-          time step
-       scales : 1d array_like object
-          scales
-       wf : string ('morlet', 'paul', 'dog')
-          wavelet function
-       p : float
-          wavelet function parameter ('omega0' for morlet, 'm' for paul
-          and dog)
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Data (1D).
+    dt : int
+        Time step.
+    scales : numpy.ndarray
+        Scales (1D).
+    wf : str
+        Wavelet function ("morlet", "paul", or "dog").
+    p : int
+        Wavelet order.
 
-    :Returns:
-       X : 2d numpy array
-          transformed data
+    Returns
+    -------
+    numpy.ndarray
+        Transformed data (2D).
     """
 
     x_arr = np.asarray(x) - np.mean(x)
@@ -228,8 +234,10 @@ def cwt(x, dt, scales, wf='dog', p=2):
 
     if wf == 'dog':
         wft = dogft(s=scales_arr, w=w, order=p, dt=dt)
+
     elif wf == 'morlet':
         wft = morletft(s=scales_arr, w=w, w0=p, dt=dt)
+
     else:
         raise ValueError('wavelet function is not available')
 
@@ -243,19 +251,22 @@ def cwt(x, dt, scales, wf='dog', p=2):
     return X_ARR
 
 
-def icwt(X, scales):
-    """Inverse Continuous Wavelet Tranform.
-    The reconstruction factor is not applied.
+def icwt(X,
+         scales):
+    """
+    Inverse Continuous Wavelet Transform. The reconstruction factor is not applied.
 
-    :Parameters:
-       X : 2d array_like object
-          transformed data
-       scales : 1d array_like object
-          scales
+    Parameters
+    ----------
+    X : numpy.ndarray
+        Transformed data (2D).
+    scales : numpy.ndarray
+        Scales (1D).
 
-    :Returns:
-       x : 1d numpy array
-          data
+    Returns
+    -------
+    numpy.ndarray
+         1D data.
     """
 
     X_arr = np.asarray(X)
@@ -269,6 +280,4 @@ def icwt(X, scales):
     for i in range(scales_arr.shape[0]):
         X_ARR[i] = X_arr[i] / np.sqrt(scales_arr[i])
 
-    x = np.sum(np.real(X_ARR), axis=0)
-
-    return x
+    return np.sum(np.real(X_ARR), axis=0)
