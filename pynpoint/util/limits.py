@@ -286,11 +286,18 @@ def contrast_limit(path_images,
     if threshold[0] == "sigma":
         sigma = threshold[1]
 
+        fpf = student_t(t_input=threshold,
+                        radius=position[0],
+                        size=aperture,
+                        ignore=ignore)
+
     elif threshold[0] == "fpf":
         sigma = student_t(t_input=threshold,
                           radius=position[0],
                           size=aperture,
                           ignore=ignore)
+
+        fpf = threshold[1]
 
     else:
         raise ValueError("Threshold type not recognized.")
@@ -326,11 +333,11 @@ def contrast_limit(path_images,
 
     im_res = combine_residuals(method=residuals, res_rot=im_res)
 
-    flux_out, _, _, fpf = false_alarm(image=im_res[0, ],
-                                      x_pos=xy_fake[0],
-                                      y_pos=xy_fake[1],
-                                      size=aperture,
-                                      ignore=ignore)
+    flux_out, _, _, _ = false_alarm(image=im_res[0, ],
+                                    x_pos=xy_fake[0],
+                                    y_pos=xy_fake[1],
+                                    size=aperture,
+                                    ignore=ignore)
 
     attenuation = flux_out/flux_in
 
@@ -338,5 +345,3 @@ def contrast_limit(path_images,
     contrast = -2.5*math.log10(contrast)
 
     queue.put((position[0], position[1], contrast, fpf))
-
-    # return position[0], position[1], contrast, fpf
