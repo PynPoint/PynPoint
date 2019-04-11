@@ -83,7 +83,6 @@ def false_alarm(image,
     noise = np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1))
     t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
-    # TODO -2 or -1?
     return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
 def student_t(t_input,
@@ -96,7 +95,7 @@ def student_t(t_input,
     Parameters
     ----------
     t_input : tuple(str, float)
-        Tuple with the input type ("sigma" or "fpf") and the input value. 
+        Tuple with the input type ("sigma" or "fpf") and the input value.
     radius : float
         Aperture radius (pix).
     size : float
@@ -116,11 +115,9 @@ def student_t(t_input,
         num_ap -= 2
 
     if t_input[0] == "sigma":
-        # TODO -2 or -1?
         t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
 
     elif t_input[0] == "fpf":
-        # TODO -2 or -1?
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
 
     return t_result
