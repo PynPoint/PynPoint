@@ -307,7 +307,9 @@ class ContrastCurveModule(ProcessingModule):
             contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
             contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
             contrast_result[i, 3] = value[-1] [-1]
-
+        
+        contrast_result.sort(axis = 0)
+        
         self.m_contrast_out_port.set_all(contrast_result, data_dim=2)
 
         sys.stdout.write("\rRunning ConstrastCurveModule... [DONE]\n")
