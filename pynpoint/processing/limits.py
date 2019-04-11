@@ -289,7 +289,7 @@ class ContrastCurveModule(ProcessingModule):
         for key in distances.keys():
             for line in result:
                 if line[0] == key:
-                    distances[i] += [line[1:]]
+                    distances[key] += [line[1:]]
 
         # initialize the storage for later output
         contrast_result = np.ones((len(distances), 4)) * np.nan
