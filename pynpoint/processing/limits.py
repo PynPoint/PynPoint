@@ -283,23 +283,32 @@ class ContrastCurveModule(ProcessingModule):
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        res_mag = np.zeros((len(pos_r), len(pos_t)))
-        res_fpf = np.zeros((len(pos_r)))
+        # create a dictionary with the distances/separation as keys and empty lists as values
+        distances = {line[0]:[] for line in result}
+        # add the results of the contrast_limit process queue to the dictionary using the distances as keys
+        for key in distances.keys():
+            for line in result:
+                if line[0] == key:
+                    distances[i] += [line[1:]]
 
-        count = 0
-        for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t)][3]
+        # initialize the storage for later output
+        contrast_result = np.ones((len(distances), 4)) * np.nan
 
-            for j in range(len(pos_t)):
-                res_mag[i, j] = result[count][2]
-                count += 1
+        # write the results to the contrast result array
+        # the first column contains the separations in arcsec
+        # the second column contains the average magnitude for the given separation
+        # the thrid column contains the variance of the magnitude for the given separation
+        # the forth colum contains the false positive fraction
+        for i, (key, value) in enumerate(distances.items()):
+            contrast_result[i] = key * pixscale
+            temporary_magnitude_storage = []
+            for result in value: 
+                temporary_magnitude_storage += [result[1]]
+            contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
+            contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
+            contrast_result[i, 3] = value[-1] [-1]
 
-        limits = np.column_stack((pos_r*pixscale,
-                                  np.nanmean(res_mag, axis=1),
-                                  np.nanvar(res_mag, axis=1),
-                                  res_fpf))
-
-        self.m_contrast_out_port.set_all(limits, data_dim=2)
+        self.m_contrast_out_port.set_all(contrast_result, data_dim=2)
 
         sys.stdout.write("\rRunning ConstrastCurveModule... [DONE]\n")
         sys.stdout.flush()
