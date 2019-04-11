@@ -577,21 +577,19 @@ class ContrastCurveModule(ProcessingModule):
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        res_mag = np.zeros((len(pos_r), len(pos_t)))
-        res_fpf = np.zeros((len(pos_r)))
+        result = np.asarray(result)
 
-        count = 0
-        for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t)][3]
+        # Sort the results first by separation and then by angle
+        indices = np.lexsort((result[:, 1], result[:, 0]))
+        result = result[indices]
 
-            for j in range(len(pos_t)):
-                res_mag[i, j] = result[count][2]
-                count += 1
+        result = result.reshape((pos_r.size, pos_t.size, 4))
 
-        limits = np.column_stack((pos_r*pixscale,
-                                  np.nanmean(res_mag, axis=1),
-                                  np.nanvar(res_mag, axis=1),
-                                  res_fpf))
+        mag_mean = np.nanmean(result, axis=1)[:, 2]
+        mag_var = np.nanvar(result, axis=1)[:, 2]
+        res_fpf = result[:, 0, 3]
+
+        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
