@@ -80,6 +80,9 @@ def false_alarm(image,
     noise = np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1))
     t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
+    # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
+    # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
+    # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
     return noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
 def student_fpf(sigma,
@@ -111,6 +114,9 @@ def student_fpf(sigma,
     if ignore:
         num_ap -= 2
 
+    # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
+    # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
+    # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
     return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
 
 def fake_planet(images,
