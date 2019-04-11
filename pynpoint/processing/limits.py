@@ -289,7 +289,7 @@ class ContrastCurveModule(ProcessingModule):
         indices = np.lexsort((result[:, 1], result[:, 0]))
         result = result[indices]
 
-        result = result.reshape((pos_r.size, pos_t.size, -1))
+        result = result.reshape((pos_r.size, pos_t.size, 4))
 
         mag_mean = np.nanmean(result, axis=1)[:, 2]
         mag_var = np.nanvar(result, axis=1)[:, 2]
