@@ -28,20 +28,25 @@ class ParangReadingModule(ReadingModule):
         """
         Constructor of ParangReadingModule.
 
-        :param file_name: Name of the input file with a list of parallactic angles (deg). Should
-                          be equal in size to the number of images in *data_tag*.
-        :type file_name: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param input_dir: Input directory where the text file is located. If not specified the
-                          Pypeline default directory is used.
-        :type input_dir: str
-        :param data_tag: Tag of the database entry to which the PARANG attribute is written.
-        :type data_tag: str
-        :param overwrite: Overwrite if the PARANG attribute already exists.
-        :type overwrite: bool
+        Parameters
+        ----------
+        file_name : str
+            Name of the input file with a list of parallactic angles (deg). Should be equal in size
+            to the number of images in *data_tag*.
+        name_in : str
+            Unique name of the module instance.
+        input_dir : str
+            Input directory where the text file is located. If not specified the Pypeline default
+            directory is used.
+        data_tag : str
+            Tag of the database entry to which the PARANG attribute is written.
+        overwrite : bool
+            Overwrite if the PARANG attribute already exists.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
         super(ParangReadingModule, self).__init__(name_in, input_dir)
 
@@ -58,7 +63,10 @@ class ParangReadingModule(ReadingModule):
         Run method of the module. Reads the parallactic angles from a text file and writes the
         values as non-static attribute (PARANG) to the database tag.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Running ParangReadingModule...")
@@ -109,21 +117,26 @@ class AttributeReadingModule(ReadingModule):
         """
         Constructor of AttributeReadingModule.
 
-        :param file_name: Name of the input file with a list of values.
-        :type file_name: str
-        :param attribute: Name of the attribute as to be written in the database.
-        :type attribute: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param input_dir: Input directory where the text file is located. If not specified the
-                          Pypeline default directory is used.
-        :type input_dir: str
-        :param data_tag: Tag of the database entry to which the attribute is written.
-        :type data_tag: str
-        :param overwrite: Overwrite if the attribute is already exists.
-        :type overwrite: bool
+        Parameters
+        ----------
+        file_name : str
+            Name of the input file with a list of values.
+        attribute : str
+            Name of the attribute as to be written in the database.
+        name_in : str
+            Unique name of the module instance.
+        input_dir : str
+            Input directory where the text file is located. If not specified the Pypeline default
+            directory is used.
+        data_tag : str
+            Tag of the database entry to which the attribute is written.
+        overwrite : bool
+            Overwrite if the attribute is already exists.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(AttributeReadingModule, self).__init__(name_in, input_dir)
@@ -139,10 +152,13 @@ class AttributeReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Reads the parallactic angles from a text file and writes the
-        values as non-static attribute (PARANG) to the database tag.
+        Run method of the module. Reads a list of values from a text file and writes them as
+        non-static attribute to a dataset.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Running AttributeReadingModule...")

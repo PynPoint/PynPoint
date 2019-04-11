@@ -1,7 +1,6 @@
 """
 Capsule for multiprocessing of the PSF subtraction with PCA. Residuals are created in parallel for
-a range of principal components for which the PCA basis is required as input. Note that the
-multiprocessing does not run on macOS due to a missing functionality in numpy.
+a range of principal components for which the PCA basis is required as input.
 """
 
 from __future__ import absolute_import
@@ -31,14 +30,19 @@ class PcaTaskCreator(TaskCreator):
         """
         Constructor of PcaTaskCreator.
 
-        :param tasks_queue_in: Input task queue.
-        :type tasks_queue_in: multiprocessing.queues.JoinableQueue
-        :param number_of_processors: Number of processors.
-        :type number_of_processors: int
-        :param pca_numbers: Principal components for which the residuals are computed.
-        :type pca_numbers: numpy.ndarray
+        Parameters
+        ----------
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            Input task queue.
+        number_of_processors : int
+            Number of processors.
+        pca_numbers : numpy.ndarray
+            Principal components for which the residuals are computed.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PcaTaskCreator, self).__init__(None, tasks_queue_in, None, number_of_processors)
@@ -49,7 +53,10 @@ class PcaTaskCreator(TaskCreator):
         """
         Run method of PcaTaskCreator.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         res_position = 0
@@ -91,24 +98,29 @@ class PcaTaskProcessor(TaskProcessor):
         """
         Constructor of PcaTaskProcessor.
 
-        :param tasks_queue_in: Input task queue.
-        :type tasks_queue_in: multiprocessing.queues.JoinableQueue
-        :param result_queue_in: Input result queue.
-        :type result_queue_in: multiprocessing.queues.JoinableQueue
-        :param star_reshape: Reshaped (2D) stack of images.
-        :type star_reshape: numpy.ndarray
-        :param angles: Derotation angles (deg).
-        :type angles: numpy.ndarray
-        :param pca_model: PCA object with the basis.
-        :type pca_model: sklearn.decomposition.pca.PCA
-        :param im_shape: Original shape of the stack of images.
-        :type im_shape: tuple(int, int, int)
-        :param indices: Non-masked image indices.
-        :type indices: numpy.ndarray
-        :param requirements: Required output residuals.
-        :type requirements: tuple(bool, bool, bool, bool)
+        Parameters
+        ----------
+        tasks_queue_in : multiprocessing.queues.JoinableQueue
+            Input task queue.
+        result_queue_in : multiprocessing.queues.JoinableQueue
+            Input result queue.
+        star_reshape : numpy.ndarray
+            Reshaped (2D) stack of images.
+        angles : numpy.ndarray
+            Derotation angles (deg).
+        pca_model : sklearn.decomposition.pca.PCA
+            PCA object with the basis.
+        im_shape : tuple(int, int, int)
+            Original shape of the stack of images.
+        indices : numpy.ndarray
+            Non-masked image indices.
+        requirements : tuple(bool, bool, bool, bool)
+            Required output residuals.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PcaTaskProcessor, self).__init__(tasks_queue_in, result_queue_in)
@@ -124,11 +136,15 @@ class PcaTaskProcessor(TaskProcessor):
         """
         Run method of PcaTaskProcessor.
 
-        :param tmp_task: Input task.
-        :type tmp_task: PynPoint.Util.Multiprocessing.TaskInput
+        Parameters
+        ----------
+        tmp_task : pynpoint.util.multiproc.TaskInput
+            Input task.
 
-        :return: Output residuals.
-        :rtype: PynPoint.Util.Multiprocessing.TaskResult
+        Returns
+        -------
+        pynpoint.util.multiproc.TaskResult
+            Output residuals.
         """
 
         residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
@@ -178,24 +194,27 @@ class PcaTaskWriter(TaskWriter):
         """
         Constructor of PcaTaskWriter.
 
-        :param result_queue_in: Input result queue.
-        :type result_queue_in: multiprocessing.queues.JoinableQueue
-        :param mean_out_port: Output port with the mean residuals. Not used if set to None.
-        :type mean_out_port: PynPoint.Core.DataIO.OutputPort
-        :param median_out_port: Output port with the median residuals. Not used if set to None.
-        :type median_out_port: PynPoint.Core.DataIO.OutputPort
-        :param weighted_out_port: Output port with the noise-weighted residuals. Not used if set
-                                  to None.
-        :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
-        :param clip_out_port: Output port with the clipped mean residuals. Not used if set to None.
-        :type clip_out_port: PynPoint.Core.DataIO.OutputPort
-        :param data_mutex_in: A mutual exclusion variable which ensure that no read and write
-                           simultaneously occur.
-        :type data_mutex_in: multiprocessing.synchronize.Lock
-        :param requirements: Required output residuals.
-        :type requirements: tuple(bool, bool, bool, bool)
+        Parameters
+        ----------
+        result_queue_in : multiprocessing.queues.JoinableQueue
+            Input result queue.
+        mean_out_port : pynpoint.core.dataio.OutputPort
+            Output port with the mean residuals. Not used if set to None.
+        median_out_port : pynpoint.core.dataio.OutputPort
+            Output port with the median residuals. Not used if set to None.
+        weighted_out_port : pynpoint.core.dataio.OutputPort
+            Output port with the noise-weighted residuals. Not used if set to None.
+        clip_out_port : pynpoint.core.dataio.OutputPort
+            Output port with the clipped mean residuals. Not used if set to None.
+        data_mutex_in : multiprocessing.synchronize.Lock
+            A mutual exclusion variable which ensure that no read and write simultaneously occur.
+        requirements : tuple(bool, bool, bool, bool)
+            Required output residuals.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if mean_out_port is not None:
@@ -222,7 +241,10 @@ class PcaTaskWriter(TaskWriter):
         """
         Run method of PcaTaskWriter. Writes the residuals to the output ports.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         while True:
@@ -275,30 +297,35 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         """
         Constructor of PcaMultiprocessingCapsule.
 
-        :param mean_out_port: Output port for the mean residuals.
-        :type mean_out_port: PynPoint.Core.DataIO.OutputPort
-        :param median_out_port: Output port for the median residuals.
-        :type median_out_port: PynPoint.Core.DataIO.OutputPort
-        :param weighted_out_port: Output port for the noise-weighted residuals.
-        :type weighted_out_port: PynPoint.Core.DataIO.OutputPort
-        :param clip_out_port: Output port for the mean clipped residuals.
-        :type clip_out_port: PynPoint.Core.DataIO.OutputPort
-        :param num_processors: Number of processors.
-        :type num_processors: int
-        :param pca_numbers: Number of principal components.
-        :type pca_numbers: numpy.ndarray
-        :param pca_model: PCA object with the basis.
-        :type pca_model: sklearn.decomposition.pca.PCA
-        :param star_reshape: Reshaped (2D) input images.
-        :type star_reshape: numpy.ndarray
-        :param angles: Derotation angles (deg).
-        :type angles: numpy.ndarray
-        :param im_shape: Original shape of the input images.
-        :type im_shape: tuple(int, int, int)
-        :param indices: Non-masked pixel indices.
-        :type indices: numpy.ndarray
+        Parameters
+        ----------
+        mean_out_port : pynpoint.core.dataio.OutputPort
+            Output port for the mean residuals.
+        median_out_port : pynpoint.core.dataio.OutputPort
+            Output port for the median residuals.
+        weighted_out_port : pynpoint.core.dataio.OutputPort
+            Output port for the noise-weighted residuals.
+        clip_out_port : pynpoint.core.dataio.OutputPort
+            Output port for the mean clipped residuals.
+        num_processors : int
+            Number of processors.
+        pca_numbers : numpy.ndarray
+            Number of principal components.
+        pca_model : sklearn.decomposition.pca.PCA
+            PCA object with the basis.
+        star_reshape : numpy.ndarray
+            Reshaped (2D) input images.
+        angles : numpy.ndarray
+            Derotation angles (deg).
+        im_shape : tuple(int, int, int)
+            Original shape of the input images.
+        indices : numpy.ndarray
+            Non-masked pixel indices.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_mean_out_port = mean_out_port
@@ -334,11 +361,15 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         """
         Method to create an instance of PcaTaskWriter.
 
-        :param image_out_port: Input task.
-        :type image_out_port: PynPoint.Util.Multiprocessing.TaskInput
+        Parameters
+        ----------
+        image_out_port : pynpoint.util.multiproc.TaskInput
+            Input task.
 
-        :return: PCA task writer.
-        :rtype: PynPoint.Util.MultiprocessingPCA.PcaTaskWriter
+        Returns
+        -------
+        pynpoint.util.multipca.PcaTaskWriter
+            PCA task writer.
         """
 
         writer = PcaTaskWriter(self.m_result_queue,
@@ -355,11 +386,15 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         """
         Method to create an instance of PcaTaskCreator.
 
-        :param image_in_port: Input task.
-        :type image_in_port: PynPoint.Util.Multiprocessing.TaskInput
+        Parameters
+        ----------
+        image_in_port : pynpoint.util.multiproc.TaskInput
+            Input task.
 
-        :return: PCA task creator.
-        :rtype: PynPoint.Util.MultiprocessingPCA.PcaTaskCreator
+        Returns
+        -------
+        pynpoint.util.multipca.PcaTaskCreator
+            PCA task creator.
         """
 
         creator = PcaTaskCreator(self.m_tasks_queue,
@@ -372,8 +407,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         """
         Method to create a list of instances of PcaTaskProcessor.
 
-        :return: PCA task processors.
-        :rtype: list of PynPoint.Util.MultiprocessingPCA.PcaTaskProcessor
+        Returns
+        -------
+        list(pynpoint.util.multipca.PcaTaskProcessor, )
+            PCA task processors.
         """
 
         processors = []

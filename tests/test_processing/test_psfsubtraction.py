@@ -152,7 +152,7 @@ class TestPSFSubtractionPCA(object):
 
         data = self.pipeline.get_data("cadi_stack")
         assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
     def test_classical_adi_threshold(self):
 
@@ -174,7 +174,7 @@ class TestPSFSubtractionPCA(object):
 
         data = self.pipeline.get_data("cadi_stack")
         assert np.allclose(np.mean(data), 1.413437242880268e-07, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
     def test_psf_subtraction_pca_single(self):
 

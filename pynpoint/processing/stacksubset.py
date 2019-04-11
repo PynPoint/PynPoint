@@ -1,10 +1,12 @@
 """
-Modules for stacking and subsampling of images.
+Pipeline modules for stacking and subsampling of images.
 """
 
 from __future__ import absolute_import
 
 import sys
+import math
+import cmath
 import warnings
 
 import numpy as np
@@ -26,24 +28,31 @@ class StackAndSubsetModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
                  random=None,
-                 stacking=None):
+                 stacking=None,
+                 combine="mean"):
         """
         Constructor of StackAndSubsetModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
-        :param random: Number of random images. All images are used if set to None.
-        :type random: int
-        :param stacking: Number of stacked images per subset. No stacking is applied if set
-                         to None.
-        :type stacking: int
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
+        random : int
+            Number of random images. All images are used if set to None.
+        stacking : int
+            Number of stacked images per subset. No stacking is applied if set to None.
+        combine : str
+            Method for combining images ("mean" or "median"). The angles are always mean-combined.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(StackAndSubsetModule, self).__init__(name_in)
@@ -53,16 +62,28 @@ class StackAndSubsetModule(ProcessingModule):
 
         self.m_random = random
         self.m_stacking = stacking
+        self.m_combine = combine
 
         if self.m_stacking is None and self.m_random is None:
-            warnings.warn("Both 'stacking' and 'random' are set to None.")
+            warnings.warn("Both 'stacking' and 'random' are set to None. No data will be written.")
 
     def run(self):
         """
-        Run method of the module. Stacks subsets of images and/or selects a random subset.
+        Run method of the module. Stacks subsets of images and/or selects a random subset. Also
+        the parallactic angles are mean-combined if images are stacked.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
+
+        def _mean_angle(angles):
+            cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
+            cmath_phase = cmath.phase(cmath_rect/len(angles))
+
+            return math.degrees(cmath_phase)
+
 
         def _stack(nimages, im_shape, parang):
             im_new = None
@@ -84,9 +105,13 @@ class StackAndSubsetModule(ProcessingModule):
                     progress(i, nimages_new, "Running StackAndSubsetModule...")
 
                     if parang is not None:
-                        parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                        # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
+                        parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
 
-                    im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                    if self.m_combine == "mean":
+                        im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                    elif self.m_combine == "median":
+                        im_new[i, ] = np.median(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
                 im_shape = im_new.shape
 
@@ -99,7 +124,7 @@ class StackAndSubsetModule(ProcessingModule):
         def _subset(im_shape, im_new, parang_new):
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)
-                choice = np.sort(choice)
+                choice = list(np.sort(choice))
 
                 if parang_new is None:
                     parang_new = None
@@ -107,11 +132,13 @@ class StackAndSubsetModule(ProcessingModule):
                     parang_new = parang_new[choice]
 
                 if self.m_stacking is None:
-                    im_new = self.m_image_in_port[choice, ]
+                    im_new = self.m_image_in_port[list(choice), ]
                 else:
                     im_new = im_new[choice, ]
 
-            if im_new.ndim == 2:
+            if self.m_random is None and self.m_stacking is None:
+                nimages = 0
+            elif im_new.ndim == 2:
                 nimages = 1
             elif im_new.ndim == 3:
                 nimages = im_new.shape[0]
@@ -128,7 +155,7 @@ class StackAndSubsetModule(ProcessingModule):
                 raise ValueError("The number of images of the destination subset is larger than " \
                                  "the number of images in the source.")
 
-            elif self.m_stacking is not None and \
+            if self.m_stacking is not None and \
                         int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
                 raise ValueError("The number of images of the destination subset is larger than " \
                                  "the number of images in the stacked source.")
@@ -144,18 +171,20 @@ class StackAndSubsetModule(ProcessingModule):
         sys.stdout.write("Running StackAndSubsetModule... [DONE]\n")
         sys.stdout.flush()
 
-        self.m_image_out_port.set_all(im_new, keep_attributes=True)
-        self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
+        if self.m_random or self.m_stacking:
+            self.m_image_out_port.set_all(im_new, keep_attributes=True)
+            self.m_image_out_port.copy_attributes(self.m_image_in_port)
+            self.m_image_out_port.add_attribute("INDEX", np.arange(0, nimages, 1), static=False)
 
-        if parang is not None:
-            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+            if parang_new is not None:
+                self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
 
-        if "NFRAMES" in non_static:
-            self.m_image_out_port.del_attribute("NFRAMES")
+            if "NFRAMES" in non_static:
+                self.m_image_out_port.del_attribute("NFRAMES")
 
-        history = "stacking ="+str(self.m_stacking)+", random ="+str(self.m_random)
-        self.m_image_out_port.add_history("StackAndSubsetModule", history)
+            history = "stacking ="+str(self.m_stacking)+", random ="+str(self.m_random)
+            self.m_image_out_port.add_history("StackAndSubsetModule", history)
+
         self.m_image_out_port.close_port()
 
 
@@ -171,18 +200,26 @@ class MeanCubeModule(ProcessingModule):
         """
         Constructor of MeanCubeModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the mean collapsed images that are
-                              written as output. Should be different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry with the mean collapsed images that are written as output.
+            Should be different from *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(MeanCubeModule, self).__init__(name_in=name_in)
+
+        warnings.warn("The MeanCubeModule will be be deprecated in a future release. Please use "
+                      "the StackCubesModule instead.", DeprecationWarning)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -192,29 +229,37 @@ class MeanCubeModule(ProcessingModule):
         Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
         calculates the mean of each cube, and saves the data and attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError("Input and output port should have a different tag.")
 
-        non_static = self.m_image_in_port.get_all_non_static_attributes()
-
-        nframes = self.m_image_in_port.get_attribute("NFRAMES")
-
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        if "PARANG" in non_static:
+            parang = self.m_image_in_port.get_attribute("PARANG")
+        else:
+            parang = None
+
         current = 0
+        parang_new = []
 
         for i, frames in enumerate(nframes):
             progress(i, len(nframes), "Running MeanCubeModule...")
 
-            mean_frame = np.mean(self.m_image_in_port[current:current+frames, ],
-                                 axis=0)
+            mean_frame = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
+            self.m_image_out_port.append(mean_frame, data_dim=3)
 
-            self.m_image_out_port.append(mean_frame,
-                                         data_dim=3)
+            if parang is not None:
+                parang_new.append(np.mean(parang[current:current+frames]))
 
             current += frames
 
@@ -232,6 +277,112 @@ class MeanCubeModule(ProcessingModule):
         if "NFRAMES" in non_static:
             nframes = np.ones(nimages, dtype=np.int)
             self.m_image_out_port.add_attribute("NFRAMES", nframes, static=False)
+
+        if "PARANG" in non_static:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
+
+        self.m_image_out_port.close_port()
+
+
+class StackCubesModule(ProcessingModule):
+    """
+    Module for calculating the mean or median of each original data cube associated with a
+    database tag.
+    """
+
+    def __init__(self,
+                 name_in="stack_cube",
+                 image_in_tag="im_arr",
+                 image_out_tag="im_stack",
+                 combine="mean"):
+        """
+        Constructor of StackCubesModule.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry with the mean or median collapsed images that are written
+            as output. Should be different from *image_in_tag*.
+        combine : str
+            Method to combine the images ("mean" or "median").
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(StackCubesModule, self).__init__(name_in=name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_image_out_port = self.add_output_port(image_out_tag)
+
+        self.m_combine = combine
+
+    def run(self):
+        """
+        Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
+        calculates the mean or median of each cube, and saves the data and attributes.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if self.m_image_in_port.tag == self.m_image_out_port.tag:
+            raise ValueError("Input and output port should have a different tag.")
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        non_static = self.m_image_in_port.get_all_non_static_attributes()
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+
+        if "PARANG" in non_static:
+            parang = self.m_image_in_port.get_attribute("PARANG")
+        else:
+            parang = None
+
+        current = 0
+        parang_new = []
+
+        for i, frames in enumerate(nframes):
+            progress(i, len(nframes), "Running StackCubesModule...")
+
+            if self.m_combine == "mean":
+                im_stack = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
+            elif self.m_combine == "median":
+                im_stack = np.median(self.m_image_in_port[current:current+frames, ], axis=0)
+
+            self.m_image_out_port.append(im_stack, data_dim=3)
+
+            if parang is not None:
+                parang_new.append(np.mean(parang[current:current+frames]))
+
+            current += frames
+
+        sys.stdout.write("Running StackCubesModule... [DONE]\n")
+        sys.stdout.flush()
+
+        nimages = np.size(nframes)
+
+        self.m_image_out_port.copy_attributes(self.m_image_in_port)
+
+        if "INDEX" in non_static:
+            index = np.arange(0, nimages, 1, dtype=np.int)
+            self.m_image_out_port.add_attribute("INDEX", index, static=False)
+
+        if "NFRAMES" in non_static:
+            nframes = np.ones(nimages, dtype=np.int)
+            self.m_image_out_port.add_attribute("NFRAMES", nframes, static=False)
+
+        if "PARANG" in non_static:
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
 
         self.m_image_out_port.close_port()
 
@@ -251,22 +402,27 @@ class DerotateAndStackModule(ProcessingModule):
         """
         Constructor of DerotateAndStackModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. The output is
-                              either 2D (*stack=False*) or 3D (*stack=True*).
-        :type image_out_tag: str
-        :param derotate: Derotate the images with the PARANG attribute.
-        :type derotate: bool
-        :param stack: Type of stacking applied after optional derotation ("mean", "median",
-                      or None for no stacking).
-        :type stack: str
-        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
-        :type extra_rot: float
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. The output is either 2D
+            (*stack=False*) or 3D (*stack=True*).
+        derotate : bool
+            Derotate the images with the PARANG attribute.
+        stack : str
+            Type of stacking applied after optional derotation ("mean", "median", or None for no
+            stacking).
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(DerotateAndStackModule, self).__init__(name_in=name_in)
@@ -283,7 +439,10 @@ class DerotateAndStackModule(ProcessingModule):
         Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
         is set to True) and applies an optional mean or median stacking afterwards.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _initialize(ndim, npix):
@@ -331,7 +490,7 @@ class DerotateAndStackModule(ProcessingModule):
 
             if self.m_stack is None:
                 if ndim == 2:
-                    self.m_image_out_port.set_all(images)
+                    self.m_image_out_port.set_all(images[np.newaxis, ...])
                 elif ndim == 3:
                     self.m_image_out_port.append(images, data_dim=3)
 
@@ -342,10 +501,12 @@ class DerotateAndStackModule(ProcessingModule):
         sys.stdout.flush()
 
         if self.m_stack == "mean":
-            self.m_image_out_port.set_all(im_tot/float(nimages))
+            im_stack = im_tot/float(nimages)
+            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         elif self.m_stack == "median":
-            self.m_image_out_port.set_all(np.median(images, axis=0))
+            im_stack = np.median(images, axis=0)
+            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         if self.m_derotate or self.m_stack is not None:
             self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -367,21 +528,26 @@ class CombineTagsModule(ProcessingModule):
         """
         Constructor of CombineTagsModule.
 
-        :param image_in_tags: Tags of the database entries that are read as input and combined.
-        :type image_in_tags: (str, str, )
-        :param check_attr: Compare non-static attributes between the tags or combine all non-static
-                           attributes into the new database tag.
-        :type check_attr: bool
-        :param index_init: Reinitialize the INDEX attribute. Index frames in the order of the input
-                           tags.
-        :type: index_init: bool
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should not be
-                              present in *image_in_tags*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        image_in_tags : tuple(str, )
+            Tags of the database entries that are read as input and combined.
+        check_attr : bool
+            Compare non-static attributes between the tags or combine all non-static attributes
+            into the new database tag.
+        index_init : bool
+            Reinitialize the ``INDEX`` attribute. The frames are indexed in the order of tags names
+            that are provided in *image_in_tags*.
+        name_in : str
+            Unique name of the module instance.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should not be present in
+            *image_in_tags*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(CombineTagsModule, self).__init__(name_in=name_in)
@@ -400,11 +566,14 @@ class CombineTagsModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Combines the frames of multiple tags into a single output tag
+        Run method of the module. Combines the frames of multiple tags into a single dataset
         and adds the static and non-static attributes. The values of the attributes are compared
         between the input tags to make sure that the input tags descent from the same data set.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()
@@ -412,17 +581,25 @@ class CombineTagsModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute("MEMORY")
 
+        image_in_port = []
+        im_shape = []
+
+        for i, item in enumerate(self.m_image_in_tags):
+            image_in_port.append(self.add_input_port(item))
+            im_shape.append(image_in_port[i].get_shape()[-2:])
+
+        if len(set(im_shape)) > 1:
+            raise ValueError("The size of the images should be the same for all datasets.")
+
         count = 0
         for i, item in enumerate(self.m_image_in_tags):
             progress(i, len(self.m_image_in_tags), "Running CombineTagsModule...")
 
-            image_in_port = self.add_input_port(item)
-            nimages = image_in_port.get_shape()[0]
-
+            nimages = image_in_port[i].get_shape()[0]
             frames = memory_frames(memory, nimages)
 
             for j, _ in enumerate(frames[:-1]):
-                im_tmp = image_in_port[frames[j]:frames[j+1], ]
+                im_tmp = image_in_port[i][frames[j]:frames[j+1], ]
                 self.m_image_out_port.append(im_tmp)
 
                 if self.m_index_init:
@@ -434,8 +611,8 @@ class CombineTagsModule(ProcessingModule):
                         for ind in index:
                             self.m_image_out_port.append_attribute_data("INDEX", ind)
 
-            static_attr = image_in_port.get_all_static_attributes()
-            non_static_attr = image_in_port.get_all_non_static_attributes()
+            static_attr = image_in_port[i].get_all_static_attributes()
+            non_static_attr = image_in_port[i].get_all_non_static_attributes()
 
             for key in static_attr:
                 status = self.m_image_out_port.check_static_attribute(key, static_attr[key])
@@ -449,7 +626,7 @@ class CombineTagsModule(ProcessingModule):
                                   'the same data set.' % key)
 
             for key in non_static_attr:
-                values = image_in_port.get_attribute(key)
+                values = image_in_port[i].get_attribute(key)
                 status = self.m_image_out_port.check_non_static_attribute(key, values)
 
                 if key != "INDEX" or (key == "INDEX" and not self.m_index_init):
