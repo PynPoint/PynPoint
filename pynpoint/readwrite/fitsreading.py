@@ -17,8 +17,6 @@ from pynpoint.core.attributes import get_attributes
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.module import progress
 
-import xml.etree.ElementTree as ET
-
 
 class FitsReadingModule(ReadingModule):
     """
@@ -39,10 +37,7 @@ class FitsReadingModule(ReadingModule):
                  input_dir=None,
                  image_tag="im_arr",
                  overwrite=True,
-                 check=True,
-                 xml_path="",
-                 fits_type="",
-                 fits_certification=""):
+                 check=True):
         """
         Constructor of FitsReadingModule.
 
@@ -61,14 +56,6 @@ class FitsReadingModule(ReadingModule):
                       are not always required (e.g. PARANG_START, DITHER_X).
         :type check: bool
 
-        :param xml_path: path to the xml file containing the classification of the fits files
-        :type xml_path: string
-
-        :param fits_type: type which one wants to read in. Must be one of: 'OBJECT', 'SKY', 'ACQUISITION', 'CAL_FLAT_TW', 'CAL_DARK', 'CAL_FLAT_LAMP'
-        :type fits_type: string
-
-        :param fits_certification: classifier, applicable only for FLAT and DARK fits types
-        :param fits_certification: bool or string
         :return: None
         """
 
@@ -93,17 +80,6 @@ class FitsReadingModule(ReadingModule):
                 self.m_non_static.append(key)
 
         self.m_count = 0
-
-        if xml_path:
-            self.m_xml_path = xml_path
-            assert fits_type, "A type of FITS file must be included when a xml_path is given"
-            self.m_fits_type = fits_type
-            self.m_fits_certification = "true" if fits_certification else "false"
-        else:
-            self.m_xml_path = False
-
-
-        self.m_input_dir = input_dir
 
     def _read_single_file(self,
                           fits_file,
@@ -258,41 +234,6 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count += nimages
 
-
-    def  _xml_file_list(self):
-        """
-        Internal function to get the filename list of fits files from an xml file
-        """
-        
-        files = []
-        
-        root = ET.parse(self.m_input_dir + self.m_xml_path).getroot()
-
-        if self.m_fits_type == 'OBJECT' or self.m_fits_type == 'SKY':
-            for association in root.findall('./mainFiles'):
-                for file in association.iter('file'): 
-                    filename = file.attrib['name'] + '.fits'
-                    hdul = fits.open(self.m_input_dir + filename)
-                    if hdul[0].header['HIERARCH ESO DPR TYPE'] == self.m_fits_type: 
-                        files += [filename]
-                    hdul.close()
-        
-        elif self.m_fits_type in ['ACQUISITION', 'CAL_FLAT_TW', 'CAL_DARK', 'CAL_FLAT_LAMP']: 
-            for ass in associatedFiles:
-                if ass.attrib['category'] == self.m_fits_type:
-                    for file in ass.iter('file'):
-                        filename = file.attrib['name'] + '.fits'
-                        files += [filename]
-                elif ass.attrib['certified'] == self.m_fits_certification:
-                    for file in ass.iter('file'):
-                        if file.attrib['category'] == self.m_fits_type:
-                            filename = file.attrib['name'] + '.fits'
-                            files += [filename]
-
-        else: "fits_type not in list of allowed types"
-        return files
-
-        
     def run(self):
         """
         Run method of the module. Looks for all FITS files in the input directory and reads them
@@ -307,18 +248,13 @@ class FitsReadingModule(ReadingModule):
         location = os.path.join(self.m_input_location, '')
 
         files = []
-        if not self.m_xml_path:
-            for filename in os.listdir(location):
-                if filename.endswith('.fits'):
-                    files.append(filename)
+        for filename in os.listdir(location):
+            if filename.endswith('.fits') and not filename.startswith('._'):
+                files.append(filename)
 
-            files.sort()
+        files.sort()
 
-            assert(files), 'No FITS files found in %s.' % self.m_input_location
-        else:
-            files = self._xml_file_list()
-
-        print(files)
+        assert(files), 'No FITS files found in %s.' % self.m_input_location
 
         overwrite_tags = []
 
