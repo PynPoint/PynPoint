@@ -5,6 +5,11 @@ Module to obtain information about the implemented attributes.
 def get_attributes():
     """
     Function to get a dictionary with all attributes.
+
+    Returns
+    -------
+    dict
+        Attribute information.
     """
 
     attr = {'PIXSCALE':{'attribute':'static',

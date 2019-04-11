@@ -1,5 +1,5 @@
 """
-Functions for analysis of a planet signal.
+Functions for analysis of a point source.
 """
 
 from __future__ import absolute_import
@@ -14,7 +14,7 @@ from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 from six.moves import range
 
-from pynpoint.util.image import shift_image
+from pynpoint.util.image import shift_image, center_subpixel
 
 
 def false_alarm(image,
@@ -23,25 +23,35 @@ def false_alarm(image,
                 size,
                 ignore):
     """
-    Function for the formal t-test for high-contrast imaging at small working angles, as well as
-    the related false positive fraction (Mawet et al. 2014).
+    Function for the formal t-test for high-contrast imaging at small working angles and the
+    related false positive fraction (Mawet et al. 2014).
 
-    :param image: Input image.
-    :type image: numpy.ndarray
-    :param x_pos: Position (pix) along the x-axis.
-    :type x_pos: float
-    :param y_pos: Position (pix) along the y-axis.
-    :type y_pos: float
-    :param size: Aperture radius (pix).
-    :type size: float
-    :param ignore: Ignore neighboring aperture for the noise.
-    :type ignore: bool
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D).
+    x_pos : float
+        Position (pix) along the horizontal axis. The pixel coordinates of the bottom-left
+        corner of the image are (-0.5, -0.5).
+    y_pos : float
+        Position (pix) along the vertical axis. The pixel coordinates of the bottom-left corner
+        of the image are (-0.5, -0.5).
+    size : float
+        Aperture radius (pix).
+    ignore : bool
+        Ignore the neighboring apertures for the noise estimate.
 
-    :return: Noise level, SNR, FPF
-    :rtype: float, float, float
+    Returns
+    -------
+    float
+        Noise level.
+    float
+        Signal-to-noise ratio.
+    float
+        False positive fraction (FPF).
     """
 
-    center = (np.size(image, 0)/2., np.size(image, 1)/2.)
+    center = center_subpixel(image)
     radius = math.sqrt((center[0]-y_pos)**2.+(center[1]-x_pos)**2.)
 
     num_ap = int(math.pi*radius/size)
@@ -53,13 +63,13 @@ def false_alarm(image,
 
     if num_ap < 3:
         raise ValueError("Number of apertures (num_ap=%s) is too small to calculate the "
-                         "false positive fraction. Increase the lower limit of the "
-                         "separation argument." % num_ap)
+                         "false positive fraction." % num_ap)
 
     ap_phot = np.zeros(num_ap)
     for i, theta in enumerate(ap_theta):
         x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
                             (y_pos-center[0])*math.sin(theta)
+
         y_tmp = center[0] + (x_pos-center[1])*math.sin(theta) + \
                             (y_pos-center[0])*math.cos(theta)
 
@@ -78,9 +88,26 @@ def student_fpf(sigma,
                 ignore):
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
+
+    Parameters
+    ----------
+    sigma : float
+        Sigma level.
+    radius : float
+        Aperture radius (pix).
+    size : float
+        Separation of the point source (pix).
+    ignore : bool
+        Ignore neighboring apertures of the point source to exclude the self-subtraction lobes.
+
+    Returns
+    -------
+    float
+        False positive fraction (FPF).
     """
 
     num_ap = int(math.pi*radius/size)
+
     if ignore:
         num_ap -= 2
 
@@ -96,24 +123,28 @@ def fake_planet(images,
     """
     Function to inject artificial planets in a dataset.
 
-    :param images: Input images.
-    :type images: numpy.ndarray
-    :param psf: PSF template.
-    :type psf: numpy.ndarray
-    :param parang: Parallactic angles (deg).
-    :type parang: float
-    :param position: Separation (pix) and position angle (deg) measured in counterclockwise
-                     with respect to the upward direction.
-    :type position: (float, float)
-    :param magnitude: Magnitude difference used to scale input PSF.
-    :type magnitude: float
-    :param psf_scaling: Extra factor used to scale input PSF.
-    :type psf_scaling: float
-    :param interpolation: Interpolation type (spline, bilinear, fft)
-    :type interpolation: str
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Input images (3D).
+    psf : numpy.ndarray
+        PSF template (3D).
+    parang : float
+        Parallactic angles (deg).
+    position : tuple(float, float)
+        Separation (pix) and position angle (deg) measured in counterclockwise with respect to the
+        upward direction.
+    magnitude : float
+        Magnitude difference used to scale input PSF.
+    psf_scaling : float
+        Extra factor used to scale input PSF.
+    interpolation : str
+        Interpolation type ("spline", "bilinear", or "fft").
 
-    :return: Images with artificial planet injected.
-    :rtype: numpy.ndarray
+    Returns
+    -------
+    numpy.ndarray
+        Images with artificial planet injected.
     """
 
     sep = position[0]
@@ -127,22 +158,18 @@ def fake_planet(images,
 
     im_shift = np.zeros(images.shape)
 
-    if images.ndim == 2:
-        im_shift = shift_image(psf, (y_shift, x_shift), interpolation, mode='reflect')
+    for i in range(images.shape[0]):
+        if psf.shape[0] == 1:
+            im_shift[i, ] = shift_image(psf[0, ],
+                                        (y_shift[i], x_shift[i]),
+                                        interpolation,
+                                        mode='reflect')
 
-    elif images.ndim == 3:
-        for i in range(images.shape[0]):
-            if psf.ndim == 2:
-                im_shift[i, ] = shift_image(psf,
-                                            (y_shift[i], x_shift[i]),
-                                            interpolation,
-                                            mode='reflect')
-
-            elif psf.ndim == 3:
-                im_shift[i, ] = shift_image(psf[i, ],
-                                            (y_shift[i], x_shift[i]),
-                                            interpolation,
-                                            mode='reflect')
+        else:
+            im_shift[i, ] = shift_image(psf[i, ],
+                                        (y_shift[i], x_shift[i]),
+                                        interpolation,
+                                        mode='reflect')
 
     return images + im_shift
 
@@ -155,22 +182,26 @@ def merit_function(residuals,
     """
     Function to calculate the merit function at a given position in the image residuals.
 
-    :param residuals: Residuals of the PSF subtraction.
-    :type residuals: ndarray
-    :param function: Figure of merit ("hessian" or "sum").
-    :type function: str
-    :param variance: Variance type and value for the likelihood function. The value is set to None
-                     in case a Poisson distribution is assumed.
-    :type variance: tuple(str, float)
-    :param aperture: Dictionary with the aperture properties. See
-                     Util.AnalysisTools.create_aperture for details.
-    :type aperture: dict
-    :param sigma: Standard deviation (pix) of the Gaussian kernel which is used to smooth
-                  the residuals before the function of merit is calculated.
-    :type sigma: float
+    Parameters
+    ----------
+    residuals : numpy.ndarray
+        Residuals of the PSF subtraction (2D).
+    function : str
+        Figure of merit ("hessian" or "sum").
+    variance : tuple(str, float)
+        Variance type and value for the likelihood function. The value is set to None in case a
+        Poisson distribution is assumed.
+    aperture : dict
+        Dictionary with the aperture properties. See for more information
+        :func:`~pynpoint.util.analysis.create_aperture`.
+    sigma : float
+        Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
+        before the function of merit is calculated.
 
-    :return: Merit value.
-    :rtype: float
+    Returns
+    -------
+    float
+        Merit value.
     """
 
     if function == "hessian":
@@ -229,18 +260,20 @@ def create_aperture(aperture):
     """
     Function to create a circular or elliptical aperture.
 
-    :param aperture: Dictionary with the aperture properties. The aperture 'type' can be
-                     'circular' or 'elliptical' (str). Both types of apertures require a position,
-                     'pos_x' and 'pos_y' (float), where the aperture is placed. The circular
-                     aperture requires a 'radius' (in pixels, float) and the elliptical
-                     aperture requires a 'semimajor' and 'semiminor' axis (in pixels, float),
-                     and an 'angle' (deg). The rotation angle in degrees of the semimajor axis
-                     from the positive x axis. The rotation angle increases counterclockwise.
-    :type aperture: dict
+    Parameters
+    ----------
+    aperture : dict
+        Dictionary with the aperture properties. The aperture 'type' can be 'circular' or
+        'elliptical' (str). Both types of apertures require a position, 'pos_x' and 'pos_y'
+        (float), where the aperture is placed. The circular aperture requires a 'radius'
+        (in pixels, float) and the elliptical aperture requires a 'semimajor' and 'semiminor'
+        axis (in pixels, float), and an 'angle' (deg). The rotation angle in degrees of the
+        semimajor axis from the positive x axis. The rotation angle increases counterclockwise.
 
-    :return: Aperture object.
-    :rtype: photutils.aperture.circle.CircularAperture or
-            photutils.aperture.circle.EllipticalAperture
+    Returns
+    -------
+    photutils.aperture.circle.CircularAperture or photutils.aperture.circle.EllipticalAperture
+        Aperture object.
     """
 
     if aperture['type'] == "circular":

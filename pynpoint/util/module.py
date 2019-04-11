@@ -10,7 +10,7 @@ import math
 import cv2
 import numpy as np
 
-from pynpoint.util.image import crop_image, image_center_pixel
+from pynpoint.util.image import crop_image, center_pixel
 
 
 def progress(current,
@@ -18,6 +18,20 @@ def progress(current,
              message):
     """
     Function to show and update the progress as standard output.
+
+    Parameters
+    ----------
+    current : int
+        Current index.
+    total : int
+        Total index number.
+    message : str
+        Message that is printed.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     fraction = float(current)/float(total)
@@ -30,10 +44,21 @@ def memory_frames(memory,
                   nimages):
     """
     Function to subdivide the input images is in quantities of MEMORY.
+
+    Parameters
+    ----------
+    memory : int
+        Number of images that is simultaneously loaded into the memory.
+    nimages : int
+        Number of images in the stack.
+
+    Returns
+    -------
+    numpy.ndarray
     """
 
     if memory == 0 or memory >= nimages:
-        frames = [0, nimages]
+        frames = np.asarray([0, nimages])
 
     else:
         frames = np.linspace(0,
@@ -47,32 +72,6 @@ def memory_frames(memory,
 
     return frames
 
-def number_images_port(port):
-    """
-    Function to get the number of images of an input port.
-    """
-
-    if port.get_ndim() == 2:
-        nimages = 1
-
-    elif port.get_ndim() == 3:
-        nimages = port.get_shape()[0]
-
-    return nimages
-
-def image_size_port(port):
-    """
-    Function to get the image size of an input port.
-    """
-
-    if port.get_ndim() == 2:
-        size = port.get_shape()
-
-    elif port.get_ndim() == 3:
-        size = (port.get_shape()[1], port.get_shape()[2])
-
-    return size
-
 def locate_star(image,
                 center,
                 width,
@@ -80,22 +79,26 @@ def locate_star(image,
     """
     Function to locate the star by finding the brightest pixel.
 
-    :param image: Input image.
-    :type image: ndarray
-    :param center: Pixel center (y, x) of the subframe. The full image is used if set to None.
-    :type center: (int, int)
-    :param width: The width (pixel) of the subframe. The full image is used if set to None.
-    :type width: int
-    :param fwhm: Full width at half maximum of the Gaussian kernel.
-    :type fwhm: int
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D).
+    center : tuple(int, int)
+        Pixel center (y, x) of the subframe. The full image is used if set to None.
+    width : int
+        The width (pix) of the subframe. The full image is used if set to None.
+    fwhm : int
+        Full width at half maximum of the Gaussian kernel.
 
-    :return: Position (y, x) of the brightest pixel.
-    :rtype: (int, int)
+    Returns
+    -------
+    tuple(int, int)
+        Position (y, x) of the brightest pixel.
     """
 
     if width is not None:
         if center is None:
-            center = image_center_pixel(image)
+            center = center_pixel(image)
 
         image = crop_image(image, center, width)
 
@@ -118,15 +121,19 @@ def rotate_coordinates(center,
     """
     Function to rotate coordinates around the image center.
 
-    :param center: Image center (y, x).
-    :type center: (float, float)
-    :param position: Position (y, x) in the image.
-    :type position: (float, float)
-    :param angle: Angle (deg) to rotate in counterclockwise direction.
-    :type angle: float
+    Parameters
+    ----------
+    center : tuple(float, float)
+        Image center (y, x).
+    position : tuple(float, float)
+        Position (y, x) in the image.
+    angle : float
+        Angle (deg) to rotate in counterclockwise direction.
 
-    :return: Position (y, x) of the brightest pixel.
-    :rtype: (int, int)
+    Returns
+    -------
+    tuple(float, float)
+        New position (y, x).
     """
 
     pos_x = (position[1]-center[1])*math.cos(np.radians(angle)) - \

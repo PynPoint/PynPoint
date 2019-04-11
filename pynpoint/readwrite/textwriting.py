@@ -28,19 +28,24 @@ class TextWritingModule(WritingModule):
         """
         Constructor of TextWritingModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param file_name: Name of the output file.
-        :type file_name: str
-        :param output_dir: Output directory where the text file will be stored. If no path is
-                           specified then the Pypeline default output location is used.
-        :type output_dir: str
-        :param data_tag: Tag of the database entry from which data is exported.
-        :type data_tag: str
-        :param header: Header that is written at the top of the text file.
-        :type header: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        file_name : str
+            Name of the output file.
+        output_dir : str
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        data_tag : str
+            Tag of the database entry from which data is exported.
+        header : str
+            Header that is written at the top of the text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(TextWritingModule, self).__init__(name_in, output_dir)
@@ -57,7 +62,10 @@ class TextWritingModule(WritingModule):
         """
         Run method of the module. Saves the specified data from the database to a text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_header is None:
@@ -102,19 +110,24 @@ class ParangWritingModule(WritingModule):
         """
         Constructor of ParangWritingModule.
 
-        :param file_name: Name of the output file.
-        :type file_name: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param output_dir: Output directory where the text file will be stored. If no path is
-                           specified then the Pypeline default output location is used.
-        :type output_dir: str
-        :param data_tag: Tag of the database entry from which the PARANG attribute is read.
-        :type data_tag: str
-        :param header: Header that is written at the top of the text file.
-        :type header: str
+        Parameters
+        ----------
+        file_name : str
+            Name of the output file.
+        name_in : str
+            Unique name of the module instance.
+        output_dir : str
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        data_tag : str
+            Tag of the database entry from which the PARANG attribute is read.
+        header : str
+            Header that is written at the top of the text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(ParangWritingModule, self).__init__(name_in, output_dir)
@@ -132,7 +145,10 @@ class ParangWritingModule(WritingModule):
         Run method of the module. Writes the parallactic angles from the PARANG attribute of
         the specified database tag to a a text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Running ParangWritingModule...")
@@ -158,7 +174,7 @@ class ParangWritingModule(WritingModule):
 
 class AttributeWritingModule(WritingModule):
     """
-    Module for a 1D or 2D array of non-static attributes to a text file.
+    Module for writing a 1D or 2D array of non-static attributes to a text file.
     """
 
     def __init__(self,
@@ -171,22 +187,27 @@ class AttributeWritingModule(WritingModule):
         """
         Constructor of AttributeWritingModule.
 
-        :param file_name: Name of the output file.
-        :type file_name: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param output_dir: Output directory where the text file will be stored. If no path is
-                           specified then the Pypeline default output location is used.
-        :type output_dir: str
-        :param data_tag: Tag of the database entry from which the PARANG attribute is read.
-        :type data_tag: str
-        :param attribute: Name of the non-static attribute as given in the central database
-                          (e.g., "INDEX" or "STAR_POSITION").
-        :type attribute: str
-        :param header: Header that is written at the top of the text file.
-        :type header: str
+        Parameters
+        ----------
+        file_name : str
+            Name of the output file.
+        name_in : str
+            Unique name of the module instance.
+        output_dir : str
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        data_tag : str
+            Tag of the database entry from which the PARANG attribute is read.
+        attribute : str
+            Name of the non-static attribute as given in the central database (e.g., "INDEX" or
+            "STAR_POSITION").
+        header : str
+            Header that is written at the top of the text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(AttributeWritingModule, self).__init__(name_in, output_dir)
@@ -204,7 +225,10 @@ class AttributeWritingModule(WritingModule):
         """
         Run method of the module. Writes the non-static attributes (1D or 2D) to a a text file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_header is None:
