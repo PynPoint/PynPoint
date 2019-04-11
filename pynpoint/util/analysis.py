@@ -44,6 +44,8 @@ def false_alarm(image,
     Returns
     -------
     float
+        Signal.
+    float
         Noise level.
     float
         Signal-to-noise ratio.
@@ -66,6 +68,7 @@ def false_alarm(image,
                          "false positive fraction." % num_ap)
 
     ap_phot = np.zeros(num_ap)
+
     for i, theta in enumerate(ap_theta):
         x_tmp = center[1] + (x_pos-center[1])*math.cos(theta) - \
                             (y_pos-center[0])*math.sin(theta)
@@ -80,23 +83,24 @@ def false_alarm(image,
     noise = np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1))
     t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
-    return noise, t_test, 1.-t.cdf(t_test, num_ap-2)
+    # TODO -2 or -1?
+    return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
-def student_fpf(sigma,
-                radius,
-                size,
-                ignore):
+def student_t(t_input,
+              radius,
+              size,
+              ignore):
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
 
     Parameters
     ----------
-    sigma : float
-        Sigma level.
+    t_input : tuple(str, float)
+        Tuple with the input type ("sigma" or "fpf") and the input value. 
     radius : float
         Aperture radius (pix).
     size : float
-        Separation of the point source (pix).
+        Separation of the aperture center (pix).
     ignore : bool
         Ignore neighboring apertures of the point source to exclude the self-subtraction lobes.
 
@@ -111,7 +115,15 @@ def student_fpf(sigma,
     if ignore:
         num_ap -= 2
 
-    return 1. - t.cdf(sigma, num_ap-2, loc=0., scale=1.)
+    if t_input[0] == "sigma":
+        # TODO -2 or -1?
+        t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
+
+    elif t_input[0] == "fpf":
+        # TODO -2 or -1?
+        t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
+
+    return t_result
 
 def fake_planet(images,
                 psf,
