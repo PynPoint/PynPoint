@@ -208,7 +208,7 @@ def contrast_limit(tmp_images,
 
             break
 
-    result = (position[0], position[1], fake_mag, fpf_threshold)
-    queue.put(result)
+    # result = np.asarray([position[0], position[1], fake_mag, fpf_threshold])
+    queue.put((position[0], position[1], fake_mag, fpf_threshold))
 
-    return position[0], position[1], fake_mag, fpf_threshold
+    # return position[0], position[1], fake_mag, fpf_threshold
