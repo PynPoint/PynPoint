@@ -283,21 +283,46 @@ class ContrastCurveModule(ProcessingModule):
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        res_mag = np.zeros((len(pos_r), len(pos_t)))
-        res_fpf = np.zeros((len(pos_r)))
+        result = np.asarray(result)
 
-        count = 0
-        for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t)][3]
+        # Sort the results first by separation and then by angle
+        indices = np.lexsort((result[:, 1], result[:, 0]))
+        result = result[indices]
 
-            for j in range(len(pos_t)):
-                res_mag[i, j] = result[count][2]
-                count += 1
+        result = result.reshape((pos_r.size, pos_t.size, 4))
 
-        limits = np.column_stack((pos_r*pixscale,
-                                  np.nanmean(res_mag, axis=1),
-                                  np.nanvar(res_mag, axis=1),
-                                  res_fpf))
+        mag_mean = np.nanmean(result, axis=1)[:, 2]
+        mag_var = np.nanvar(result, axis=1)[:, 2]
+        res_fpf = result[:, 0, 3]
+
+        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+
+        # # # create a dictionary with the distances/separation as keys and empty lists as values
+        # # distances = {line[0]:[] for line in result}
+        # # # add the results of the contrast_limit process queue to the dictionary using the distances as keys
+        # # for key in distances.keys():
+        # #     for line in result:
+        # #         if line[0] == key:
+        # #             distances[key] += [line[1:]]
+        # #
+        # # # initialize the storage for later output
+        # # contrast_result = np.ones((len(distances), 4)) * np.nan
+        # #
+        # # # write the results to the contrast result array
+        # # # the first column contains the separations in arcsec
+        # # # the second column contains the average magnitude for the given separation
+        # # # the thrid column contains the variance of the magnitude for the given separation
+        # # # the forth colum contains the false positive fraction
+        # # for i, (key, value) in enumerate(distances.items()):
+        # #     contrast_result[i] = key * pixscale
+        # #     temporary_magnitude_storage = []
+        # #     for result in value:
+        # #         temporary_magnitude_storage += [result[1]]
+        # #     contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
+        # #     contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
+        # #     contrast_result[i, 3] = value[-1] [-1]
+        # #
+        # # contrast_result.sort(axis = 0)
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
