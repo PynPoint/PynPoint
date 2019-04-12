@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+
 import os
+import pytest
 import warnings
 
 import h5py
@@ -73,7 +75,13 @@ class TestHdf5ReadingModule(object):
                                  tag_dictionary={"test":"test"})
 
         self.pipeline.add_module(read)
-        self.pipeline.run_module("read3")
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("read3")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "The dataset with tag name 'test' is not found in " \
+                                             "the HDF5 file."
 
         h5f = h5py.File(self.test_dir+"data/PynPoint_database.hdf5", "r")
         assert set(h5f.keys()) == set(["extra", "header_extra", "header_images", "images"])

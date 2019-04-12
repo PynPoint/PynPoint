@@ -37,55 +37,61 @@ def contrast_limit(tmp_images,
     Function for calculating the contrast limit at a specified position by iterating towards
     a threshold for the false positive fraction, with a correction for small sample statistics.
 
-    :param images: Stack of images.
-    :type images: numpy.ndarray
-    :param psf: PSF template for the fake planet (2D or 3D).
-    :type psf: numpy.ndarray
-    :param parang: Derotation angles (deg).
-    :type parang: numpy.ndarray
-    :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
-                        neutral density filter). Should have a positive value.
-    :type psf_scaling: float
-    :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
-    :type extra_rot: float
-    :param magnitude: Initial magnitude value and step size for the fake planet, specified
-                      as (planet magnitude, magnitude step size).
-    :type magnitude: (float, float)
-    :param pca_number: Number of principal components used for the PSF subtraction.
-    :type pca_number: int
-    :param threshold: Detection threshold for the contrast curve, either in terms of "sigma"
-                      or the false positive fraction (FPF). The value is a tuple, for example
-                      provided as ("sigma", 5.) or ("fpf", 1e-6). Note that when sigma is fixed,
-                      the false positive fraction will change with separation. Also, sigma only
-                      corresponds to the standard deviation of a normal distribution at large
-                      separations (i.e., large number of samples).
-    :type threshold: tuple(str, float)
-    :param accuracy: Fractional accuracy of the false positive fraction. When the
-                     accuracy condition is met, the final magnitude is calculated with a
-                     linear interpolation.
-    :type accuracy: float
-    :param aperture: Aperture radius (arcsec) for the calculation of the false positive
-                     fraction.
-    :type aperture: float
-    :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
-                   the planet.
-    :type ignore: bool
-    :param cent_size: Central mask radius (arcsec). No mask is used when set to None.
-    :type cent_size: float
-    :param edge_size: Outer edge radius (arcsec) beyond which pixels are masked. No outer mask
-                      is used when set to None. If the value is larger than half the image size
-                      then it will be set to half the image size.
-    :type edge_size: float
-    :param pixscale: Pixel scale (arcsec pix-1).
-    :type pixscale: float
-    :param position: Tuple with the separation (pix) and position angle (deg) of the fake planet.
-    :type position: tuple(float, float)
-    :param residuals: Method used for combining the residuals ("mean", "median", "weighted", or
-                      "clipped").
-    :type residuals: str
+    Parameters
+    ----------
+    images : str
+        System location of the stack of images.
+    psf : str
+        System location of the PSF template for the fake planet. Either a single image or a stack
+        of images equal in size to *images*.
+    parang : numpy.ndarray
+        Derotation angles (deg).
+    psf_scaling : float
+        Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+        filter). Should have a positive value.
+    extra_rot : float
+        Additional rotation angle of the images in clockwise direction (deg).
+    magnitude : tuple(float, float)
+        Initial magnitude value and step size for the fake planet, specified as (planet magnitude,
+        magnitude step size).
+    pca_number : int
+        Number of principal components used for the PSF subtraction.
+    threshold : tuple(str, float)
+        Detection threshold for the contrast curve, either in terms of "sigma" or the false
+        positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.) or
+        ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will change with
+        separation. Also, sigma only corresponds to the standard deviation of a normal distribution
+        at large separations (i.e., large number of samples).
+    accuracy : float
+        Fractional accuracy of the false positive fraction. When the accuracy condition is met, the
+        final magnitude is calculated with a linear interpolation.
+    aperture : float
+        Aperture radius (arcsec) for the calculation of the false positive fraction.
+    ignore : bool
+        Ignore the two neighboring apertures that may contain self-subtraction from the planet.
+    cent_size : float
+        Central mask radius (arcsec). No mask is used when set to None.
+    edge_size : float
+        Outer edge radius (arcsec) beyond which pixels are masked. No outer mask is used when set
+        to None. If the value is larger than half the image size then it will be set to half the
+        image size.
+    pixscale : float
+        Pixel scale (arcsec pix-1).
+    position : tuple(float, float)
+        The separation (pix) and position angle (deg) of the fake planet.
+    residuals : str
+        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
 
-    :return:
-    :rtype: float, float, float, float
+    Returns
+    -------
+    float
+        Separation (pix).
+    float
+        Position angle (deg).
+    float
+        Magnitude (mag).
+    float
+        False positive fraction.
     """
 
     images = np.load(tmp_images)
@@ -103,7 +109,7 @@ def contrast_limit(tmp_images,
     else:
         raise ValueError("Threshold type not recognized.")
 
-    x_fake, y_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+    xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     list_fpf = []
     list_mag = [magnitude[0]]
@@ -133,9 +139,9 @@ def contrast_limit(tmp_images,
 
         stack = combine_residuals(method=residuals, res_rot=im_res)
 
-        _, _, fpf = false_alarm(image=stack,
-                                x_pos=x_fake,
-                                y_pos=y_fake,
+        _, _, fpf = false_alarm(image=stack[0, ],
+                                x_pos=xy_fake[0],
+                                y_pos=xy_fake[1],
                                 size=aperture,
                                 ignore=ignore)
 
@@ -202,7 +208,7 @@ def contrast_limit(tmp_images,
 
             break
 
-    result = (position[0], position[1], fake_mag, fpf_threshold)
-    queue.put(result)
+    # result = np.asarray([position[0], position[1], fake_mag, fpf_threshold])
+    queue.put((position[0], position[1], fake_mag, fpf_threshold))
 
-    return position[0], position[1], fake_mag, fpf_threshold
+    # return position[0], position[1], fake_mag, fpf_threshold

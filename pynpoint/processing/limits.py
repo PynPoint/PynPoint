@@ -1,5 +1,5 @@
 """
-Modules for determining detection limits.
+Pipeline modules for estimating detection limits.
 """
 
 from __future__ import absolute_import
@@ -46,74 +46,73 @@ class ContrastCurveModule(ProcessingModule):
         """
         Constructor of ContrastCurveModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that contains the stack with images.
-        :type image_in_tag: str
-        :param psf_in_tag: Tag of the database entry that contains the reference PSF that is used
-                           as fake planet. Can be either a single image (2D) or a cube (3D) with
-                           the dimensions equal to *image_in_tag*.
-        :type psf_in_tag: str
-        :param contrast_out_tag: Tag of the database entry that contains the separation,
-                                 azimuthally averaged contrast limits, the azimuthal variance of
-                                 the contrast limits, and the threshold of the false positive
-                                 fraction associated with sigma.
-        :type contrast_out_tag: str
-        :param separation: Range of separations (arcsec) where the contrast is calculated. Should
-                           be specified as (lower limit, upper limit, step size). Apertures that
-                           fall within the mask radius or beyond the image size are removed.
-        :type separation: (float, float, float)
-        :param angle: Range of position angles (deg) where the contrast is calculated. Should be
-                      specified as (lower limit, upper limit, step size), measured counterclockwise
-                      with respect to the vertical image axis, i.e. East of North.
-        :type angle: (float, float, float)
-        :param magnitude: Initial magnitude value and step size for the fake planet, specified
-                          as (planet magnitude, magnitude step size).
-        :type magnitude: (float, float)
-        :param threshold: Detection threshold for the contrast curve, either in terms of "sigma"
-                          or the false positive fraction (FPF). The value is a tuple, for example
-                          provided as ("sigma", 5.) or ("fpf", 1e-6). Note that when sigma is fixed,
-                          the false positive fraction will change with separation. Also, sigma only
-                          corresponds to the standard deviation of a normal distribution at large
-                          separations (i.e., large number of samples).
-        :type threshold: tuple(str, float)
-        :param accuracy: Fractional accuracy of the false positive fraction. When the
-                         accuracy condition is met, the final magnitude is calculated with a
-                         linear interpolation.
-        :type accuracy: float
-        :param psf_scaling: Additional scaling factor of the planet flux (e.g., to correct for a
-                            neutral density filter). Should have a positive value.
-        :type psf_scaling: float
-        :param aperture: Aperture radius (arcsec) for the calculation of the false positive
-                         fraction.
-        :type aperture: float
-        :param ignore: Ignore the two neighboring apertures that may contain self-subtraction from
-                       the planet.
-        :type ignore: bool
-        :param pca_number: Number of principal components used for the PSF subtraction.
-        :type pca_number: int
-        :param norm: Normalization of each image by its Frobenius norm.
-        :type norm: bool
-        :param cent_size: Central mask radius (arcsec). No mask is used when set to None.
-        :type cent_size: float
-        :param edge_size: Outer edge radius (arcsec) beyond which pixels are masked. No outer mask
-                          is used when set to None. If the value is larger than half the image size
-                          then it will be set to half the image size.
-        :type edge_size: float
-        :param extra_rot: Additional rotation angle of the images in clockwise direction (deg).
-        :type extra_rot: float
-        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
-                          or "clipped").
-        :type residuals: str
-        :param kwargs:
-            See below.
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that contains the stack with images.
+        psf_in_tag : str
+            Tag of the database entry that contains the reference PSF that is used as fake planet.
+            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
+            *image_in_tag*.
+        contrast_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged contrast
+            limits, the azimuthal variance of the contrast limits, and the threshold of the false
+            positive fraction associated with sigma.
+        separation : tuple(float, float, float)
+            Range of separations (arcsec) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size). Apertures that fall within the mask radius or
+            beyond the image size are removed.
+        angle : tuple(float, float, float)
+            Range of position angles (deg) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size), measured counterclockwise with respect to the
+            vertical image axis, i.e. East of North.
+        magnitude : tuple(float, float)
+            Initial magnitude value and step size for the fake planet, specified as (planet
+            magnitude, magnitude step size).
+        threshold : tuple(str, float)
+            Detection threshold for the contrast curve, either in terms of "sigma" or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.)
+            or ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will
+            change with separation. Also, sigma only corresponds to the standard deviation of a
+            normal distribution at large separations (i.e., large number of samples).
+        accuracy : float
+            Fractional accuracy of the false positive fraction. When the accuracy condition is met,
+            the final magnitude is calculated with a linear interpolation.
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should have a positive value.
+        aperture : float
+            Aperture radius (arcsec) for the calculation of the false positive fraction.
+        ignore : bool
+            Ignore the two neighboring apertures that may contain self-subtraction from the planet.
+        pca_number : int
+            Number of principal components used for the PSF subtraction.
+        norm : bool
+            Normalization of each image by its Frobenius norm.
+        cent_size : float
+            Central mask radius (arcsec). No mask is used when set to None.
+        edge_size : float
+            Outer edge radius (arcsec) beyond which pixels are masked. No outer mask is used when
+            set to None. If the value is larger than half the image size then it will be set to
+            half the image size.
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        residuals : str
+            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
 
-        :Keyword arguments:
-            **sigma** (*float*) -- Detection threshold in units of sigma. Note that as sigma is
-            fixed, the confidence level (and false positive fraction) change with separation. This
-            parameter will be deprecated. Please use the *threshold* parameter instead.
+        Keyword Arguments
+        -----------------
+        sigma : float
+            Detection threshold in units of sigma. Note that as sigma is fixed, the confidence level
+            (and false positive fraction) change with separation. This parameter will be deprecated.
+            Please use the *threshold* parameter instead.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(ContrastCurveModule, self).__init__(name_in)
@@ -161,7 +160,10 @@ class ContrastCurveModule(ProcessingModule):
         is fixed therefore the false positive fraction changes with separation, following the
         Student's t-distribution (Mawet et al. 2014).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
@@ -184,11 +186,11 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_aperture /= pixscale
 
-        if psf.ndim == 3 and psf.shape[0] != images.shape[0]:
-            raise ValueError('The number of frames in psf_in_tag does not match with the number of '
-                             'frames in image_in_tag. The DerotateAndStackModule can be used to '
-                             'average the PSF frames (without derotating) before applying the '
-                             'ContrastCurveModule.')
+        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+            raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
+                             'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
+                             'be used to average the PSF frames (without derotating) before '
+                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
 
         pos_r = np.arange(self.m_separation[0]/pixscale,
                           self.m_separation[1]/pixscale,
@@ -212,7 +214,7 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule\r")
+        sys.stdout.write("Running ContrastCurveModule...\r")
         sys.stdout.flush()
 
         positions = []
@@ -267,7 +269,7 @@ class ContrastCurveModule(ProcessingModule):
 
             progress(i, len(jobs), "Running ConstrastCurveModule...")
 
-        # Send termination sentinel to queue and block till all tasks are done
+        # Send termination sentinel to queue
         queue.put(None)
 
         while True:
@@ -281,21 +283,46 @@ class ContrastCurveModule(ProcessingModule):
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        res_mag = np.zeros((len(pos_r), len(pos_t)))
-        res_fpf = np.zeros((len(pos_r)))
+        result = np.asarray(result)
 
-        count = 0
-        for i in range(len(pos_r)):
-            res_fpf[i] = result[i*len(pos_t)][3]
+        # Sort the results first by separation and then by angle
+        indices = np.lexsort((result[:, 1], result[:, 0]))
+        result = result[indices]
 
-            for j in range(len(pos_t)):
-                res_mag[i, j] = result[count][2]
-                count += 1
+        result = result.reshape((pos_r.size, pos_t.size, 4))
 
-        limits = np.column_stack((pos_r*pixscale,
-                                  np.nanmean(res_mag, axis=1),
-                                  np.nanvar(res_mag, axis=1),
-                                  res_fpf))
+        mag_mean = np.nanmean(result, axis=1)[:, 2]
+        mag_var = np.nanvar(result, axis=1)[:, 2]
+        res_fpf = result[:, 0, 3]
+
+        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+
+        # # # create a dictionary with the distances/separation as keys and empty lists as values
+        # # distances = {line[0]:[] for line in result}
+        # # # add the results of the contrast_limit process queue to the dictionary using the distances as keys
+        # # for key in distances.keys():
+        # #     for line in result:
+        # #         if line[0] == key:
+        # #             distances[key] += [line[1:]]
+        # #
+        # # # initialize the storage for later output
+        # # contrast_result = np.ones((len(distances), 4)) * np.nan
+        # #
+        # # # write the results to the contrast result array
+        # # # the first column contains the separations in arcsec
+        # # # the second column contains the average magnitude for the given separation
+        # # # the thrid column contains the variance of the magnitude for the given separation
+        # # # the forth colum contains the false positive fraction
+        # # for i, (key, value) in enumerate(distances.items()):
+        # #     contrast_result[i] = key * pixscale
+        # #     temporary_magnitude_storage = []
+        # #     for result in value:
+        # #         temporary_magnitude_storage += [result[1]]
+        # #     contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
+        # #     contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
+        # #     contrast_result[i, 3] = value[-1] [-1]
+        # #
+        # # contrast_result.sort(axis = 0)
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
@@ -303,6 +330,7 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
+
         self.m_contrast_out_port.add_history("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()

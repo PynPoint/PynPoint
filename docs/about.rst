@@ -13,21 +13,6 @@ Development Team
 * Sascha Quanz <sascha.quanz@phys.ethz.ch>
 * Adam Amara <adam.amara@phys.ethz.ch>
 
-.. _contributing:
-
-Contributing
-------------
-
-If you encounter errors or problems when using PynPoint then please contact Tomas Stolker (ETH Zurich). Bug reports and functionality requests can be provided by creating an |issue| on the Github page. We also welcome active help with bug fixing and the development of new functionalities and pipeline modules. Please consider forking the Github repository and creating a |pull| for implementations that could be of interest for other users.
-
-.. |issue| raw:: html
-
-   <a href="https://github.com/PynPoint/PynPoint/issues" target="_blank">issue</a>
-
-.. |pull| raw:: html
-
-   <a href="https://github.com/PynPoint/PynPoint/pulls" target="_blank">pull request</a>
-
 .. _attribution:
 
 Attribution

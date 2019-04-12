@@ -36,23 +36,27 @@ class FitsWritingModule(WritingModule):
         the dataset tag which has to exported into that file. See class documentation for more
         information.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param file_name: Name of the FITS output file. Requires the FITS extension.
-        :type file_name: str
-        :param output_dir: Output directory where the FITS file will be stored. If no folder is
-                           specified the Pypeline default is chosen.
-        :type output_dir: str
-        :param data_tag: Tag of the database entry the module has to export as FITS file.
-        :type data_tag: str
-        :param data_range: A two element tuple which specifies a begin and end frame of the export.
-                           This can be used to save a subsets of huge dataset. If None the whole
-                           dataset will be exported.
-        :type data_range: tuple
-        :param overwrite: Overwrite existing FITS file with identical filename.
-        :type overwrite: bool
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        file_name : str
+            Name of the FITS output file. Requires the FITS extension.
+        output_dir : str
+            Output directory where the FITS file will be stored. If no folder is specified the
+            Pypeline default is chosen.
+        data_tag : str
+            Tag of the database entry the module has to export as FITS file.
+        data_range : tuple
+            A two element tuple which specifies a begin and end frame of the export. This can be
+            used to save a subsets of huge dataset. If None the whole dataset will be exported.
+        overwrite : bool
+            Overwrite existing FITS file with identical filename.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
@@ -73,7 +77,10 @@ class FitsWritingModule(WritingModule):
         Run method of the module. Creates a FITS file and saves the data as well as the
         corresponding attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
@@ -91,7 +98,7 @@ class FitsWritingModule(WritingModule):
 
             for attr in attributes:
                 if len(attr) > 8:
-                    prihdr["hierarch "+attr] = attributes[attr]
+                    prihdr["hierarch "+attr] = str(attributes[attr])
                 else:
                     prihdr[attr] = attributes[attr]
 

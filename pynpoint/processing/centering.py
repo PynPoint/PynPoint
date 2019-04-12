@@ -1,5 +1,5 @@
 """
-Modules for locating, aligning, and centering of the star.
+Pipeline modules for locating, aligning, and centering of the star.
 """
 
 from __future__ import absolute_import
@@ -19,9 +19,8 @@ from astropy.modeling import models, fitting
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import memory_frames, progress, locate_star, number_images_port, \
-                                 image_size_port
-from pynpoint.util.image import crop_image, shift_image, image_center_pixel
+from pynpoint.util.module import memory_frames, progress, locate_star
+from pynpoint.util.image import crop_image, shift_image, center_pixel
 
 
 class StarExtractionModule(ProcessingModule):
@@ -41,31 +40,36 @@ class StarExtractionModule(ProcessingModule):
         """
         Constructor of StarExtractionModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
-        :param index_out_tag: List with image indices for which the image size is too large to
-                              be cropped around the brightest pixel. No data is written if set
-                              to None.
-        :type index_out_tag: str
-        :param image_size: Cropped image size (arcsec).
-        :type image_size: float
-        :param fwhm_star: Full width at half maximum (arcsec) of the Gaussian kernel that is used
-                          to smooth the images to lower contributions of bad pixels.
-        :type fwhm_star: float
-        :param position: Subframe that is selected to search for the star. The tuple can contain a
-                         single position (pix) and size (arcsec) as (pos_x, pos_y, size), or the
-                         position and size can be defined for each image separately in which case
-                         the tuple should be 2D (nframes x 3). Setting *position* to None will use
-                         the full image to search for the star. If *position=(None, None, size)*
-                         then the center of the image will be used.
-        :type position: (int, int, float)
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
+        index_out_tag : str
+            List with image indices for which the image size is too large to be cropped around the
+            brightest pixel. No data is written if set to None. This tag name can be provided to
+            the *frames* parameter in
+            :class:`~pynpoint.processing.frameselection.RemoveFramesModule`.
+        image_size : float
+            Cropped image size (arcsec).
+        fwhm_star : float
+            Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
+            images to lower contributions of bad pixels.
+        position : tuple(int, int, float)
+            Subframe that is selected to search for the star. The tuple can contain a single
+            position (pix) and size (arcsec) as (pos_x, pos_y, size), or the position and size can
+            be defined for each image separately in which case the tuple should be 2D
+            (nframes x 3). Setting *position* to None will use the full image to search for the
+            star. If *position=(None, None, size)* then the center of the image will be used.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(StarExtractionModule, self).__init__(name_in)
@@ -92,14 +96,17 @@ class StarExtractionModule(ProcessingModule):
         peak of the PSF. Images are cropped and written to an output port. The position of the
         star is attached to the input images as the non-static attribute STAR_POSITION (y, x).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         if self.m_position is not None:
             self.m_position = np.asarray(self.m_position)
-            nimages = number_images_port(self.m_image_in_port)
+            nimages = self.m_image_in_port.get_shape()[0]
 
             if self.m_position.ndim == 2 and self.m_position.shape[0] != nimages:
                 raise ValueError("Either a single 'position' should be specified or an array "
@@ -143,7 +150,7 @@ class StarExtractionModule(ProcessingModule):
 
                 index.append(self.m_count)
 
-                starpos = image_center_pixel(image)
+                starpos = center_pixel(image)
                 im_crop = crop_image(image, starpos, im_size)
 
             star.append((starpos[1], starpos[0]))
@@ -192,34 +199,35 @@ class StarAlignmentModule(ProcessingModule):
         """
         Constructor of StarAlignmentModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry with the stack of images that is read as
-                             input.
-        :type image_in_tag: str
-        :param ref_image_in_tag: Tag of the database entry with the reference image(s)
-                                 that are read as input. If it is set to None, a random
-                                 subsample of *num_references* elements of *image_in_tag*
-                                 is taken as reference image(s)
-        :type ref_image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the images that are written as
-                              output.
-        :type image_out_tag: str
-        :param interpolation: Type of interpolation that is used for shifting the images (spline,
-                              bilinear, or fft).
-        :type interpolation: str
-        :param accuracy: Upsampling factor for the cross-correlation. Images will be registered
-                         to within 1/accuracy of a pixel.
-        :type accuracy: float
-        :param resize: Scaling factor for the up/down-sampling before the images are shifted.
-        :type resize: float
-        :param num_references: Number of reference images for the cross-correlation.
-        :type num_references: int
-        :param subframe: Size (arcsec) of the subframe around the image center that is used for
-                         the cross-correlation. The full image is used if set to None.
-        :type subframe: float
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with the stack of images that is read as input.
+        ref_image_in_tag : str
+            Tag of the database entry with the reference image(s) that are read as input. If it is
+            set to None, a random subsample of *num_references* elements of *image_in_tag* is taken
+            as reference images.
+        image_out_tag : str
+            Tag of the database entry with the images that are written as output.
+        interpolation : str
+            Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
+        accuracy : float
+            Upsampling factor for the cross-correlation. Images will be registered to within
+            1/accuracy of a pixel.
+        resize : float
+            Scaling factor for the up/down-sampling before the images are shifted.
+        num_references : int
+            Number of reference images for the cross-correlation.
+        subframe : float
+            Size (arcsec) of the subframe around the image center that is used for the
+            cross-correlation. The full image is used if set to None.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(StarAlignmentModule, self).__init__(name_in)
@@ -244,7 +252,10 @@ class StarAlignmentModule(ProcessingModule):
         a stack of reference images, rescales the image dimensions, and shifts the images to a
         common center.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _align_image(image_in):
@@ -272,12 +283,14 @@ class StarAlignmentModule(ProcessingModule):
 
             if self.m_resize is not None:
                 sum_before = np.sum(image_in)
+
                 tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
                                     scale=(self.m_resize, self.m_resize),
                                     order=5,
                                     mode="reflect",
                                     anti_aliasing=True,
                                     multichannel=False)
+
                 sum_after = np.sum(tmp_image)
 
                 # Conserve flux because the rescale function normalizes all values to [0:1].
@@ -352,60 +365,65 @@ class StarCenteringModule(ProcessingModule):
                  radius=0.1,
                  sign="positive",
                  model="gaussian",
+                 filter_size=None,
                  **kwargs):
         """
         Constructor of StarCenteringModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry with images that are read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with the centered images that are written
-                              as output. Should be different from *image_in_tag*. Data is not
-                              written when set to *None*.
-        :type image_out_tag: str
-        :param mask_out_tag: Tag of the database entry with the masked images that are written as
-                             output. The unmasked part of the images is used for the fit. Data is
-                             not written when set to *None*.
-        :type mask_out_tag: str
-        :param fit_out_tag: Tag of the database entry with the best-fit results of the model
-                            fit and the 1-sigma errors. Data is written in the following format:
-                            x offset (arcsec), x offset error (arcsec), y offset (arcsec), y offset
-                            error (arcsec), FWHM major axis (arcsec), FWHM major axis error
-                            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error
-                            (arcsec), amplitude (counts), amplitude error (counts), angle (deg),
-                            angle error (deg) measured in counterclockwise direction with respect
-                            to the upward direction (i.e., East of North), offset (counts), offset
-                            error (counts), power index (only for Moffat function), and power index
-                            error (only for Moffat function).
-        :type fit_out_tag: str
-        :param method: Fit and shift all the images individually ("full") or only fit the mean of
-                       the cube and shift all images to that location ("mean"). The "mean" method
-                       could be used after running the StarAlignmentModule.
-        :type method: str
-        :param interpolation: Type of interpolation that is used for shifting the images (spline,
-                              bilinear, or fft).
-        :type interpolation: str
-        :param radius: Radius (arcsec) around the center of the image beyond which pixels are
-                       neglected with the fit. The radius is centered on the position specified
-                       in *guess*, which is the center of the image by default.
-        :type radius: float
-        :param sign: Fit a *"positive"* or *"negative"* Gaussian/Moffat. A negative model can be
-                     used to center coronagraphic data in which a dark hole is present.
-        :type sign: str
-        :param model: Type of 2D model used to fit the PSF ("gaussian" or "moffat"). Both models
-                      are elliptical in shape.
-        :type model: str
-        :param kwargs:
-            See below.
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with images that are read as input.
+        image_out_tag : str
+            Tag of the database entry with the centered images that are written as output. Should
+            be different from *image_in_tag*. Data is not written when set to None.
+        mask_out_tag : str
+            Tag of the database entry with the masked images that are written as output. The
+            unmasked part of the images is used for the fit. The effect of the smoothing that is
+            applied by setting the *fwhm* parameter is also visible in the data of the
+            *mask_out_tag*. Data is not written when set to None.
+        fit_out_tag : str
+            Tag of the database entry with the best-fit results of the model fit and the 1-sigma
+            errors. Data is written in the following format: x offset (arcsec), x offset error
+            (arcsec), y offset (arcsec), y offset error (arcsec), FWHM major axis (arcsec), FWHM
+            major axis error (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec),
+            amplitude (counts), amplitude error (counts), angle (deg), angle error (deg) measured
+            in counterclockwise direction with respect to the upward direction (i.e., East of
+            North), offset (counts), offset error (counts), power index (only for Moffat function),
+            and power index error (only for Moffat function).
+        method : str
+            Fit and shift all the images individually ("full") or only fit the mean of the cube and
+            shift all images to that location ("mean"). The "mean" method could be used after
+            running the :class:`~pynpoint.processing.centering.StarAlignmentModule`.
+        interpolation : str
+            Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
+        radius : float
+            Radius (arcsec) around the center of the image beyond which pixels are neglected with
+            the fit. The radius is centered on the position specified in *guess*, which is the
+            center of the image by default.
+        sign : str
+            Fit a "positive" or "negative" Gaussian/Moffat. A negative model can be used to center
+            coronagraphic data in which a dark hole is present.
+        model : str
+            Type of 2D model used to fit the PSF ("gaussian" or "moffat"). Both models are
+            elliptical in shape.
+        filter_size : float
+            Standard deviation (arcsec) of the Gaussian filter that is used to smooth the
+            images before fitting the model. No filter is applied if set to None.
 
-        :Keyword arguments:
-            **guess** (*(float, float, float, float, float, float, float)*) -- Tuple with the
-            initial parameter values for the least squares fit: x offset with respect to center
+        Keyword arguments
+        -----------------
+        guess : tuple(float, float, float, float, float, float, float, float)
+            The initial parameter values for the least squares fit: x offset with respect to center
             (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
-            (counts), angle (deg), offset (counts).
+            (counts), angle (deg), offset (counts), and power index (only for Moffat function).
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         if "guess" in kwargs:
@@ -446,6 +464,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_radius = radius
         self.m_sign = sign
         self.m_model = model
+        self.m_filter_size = filter_size
         self.m_model_func = None
 
         self.m_count = 0
@@ -457,7 +476,10 @@ class StarCenteringModule(ProcessingModule):
         shifts the images with subpixel precision, and writes the centered images and the fitting
         results. The fitting results contain zeros in case the algorithm could not converge.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_fit_out_port.del_all_data()
@@ -477,6 +499,9 @@ class StarCenteringModule(ProcessingModule):
 
         if self.m_radius:
             self.m_radius /= pixscale
+
+        if self.m_filter_size:
+            self.m_filter_size /= pixscale
 
         if npix%2 == 0:
             x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
@@ -503,25 +528,29 @@ class StarCenteringModule(ProcessingModule):
             """
             Function to create a 2D elliptical Gaussian model.
 
-            :param grid: Two 2D arrays with the mesh grid points in x and y direction.
-            :type grid: numpy.ndarray
-            :param x_center: Offset of the model center along the x axis (pix).
-            :type x_center: float
-            :param y_center: Offset of the model center along the y axis (pix).
-            :type y_center: float
-            :param fwhm_x: Full width at half maximum along the x axis (pix).
-            :type fwhm_x: float
-            :param fwhm_y: Full width at half maximum along the y axis (pix).
-            :type fwhm_y: float
-            :param amp: Peak flux.
-            :type amp: float
-            :param theta: Rotation angle in counterclockwise direction (rad).
-            :type theta: float
-            :param offset: Flux offset.
-            :type offset: float
+            Parameters
+            ----------
+            grid : numpy.ndarray
+                Two 2D arrays with the mesh grid points in x and y direction.
+            x_center : float
+                Offset of the model center along the x axis (pix).
+            y_center : float
+                Offset of the model center along the y axis (pix).
+            fwhm_x : float
+                Full width at half maximum along the x axis (pix).
+            fwhm_y : float
+                Full width at half maximum along the y axis (pix).
+            amp : float
+                Peak flux.
+            theta : float
+                Rotation angle in counterclockwise direction (rad).
+            offset : float
+                Flux offset.
 
-            :return: Raveled 2D elliptical Gaussian model.
-            :rtype: numpy.ndimage
+            Returns
+            -------
+            numpy.ndimage
+                Raveled 2D elliptical Gaussian model.
             """
 
             (xx_grid, yy_grid) = grid
@@ -558,27 +587,31 @@ class StarCenteringModule(ProcessingModule):
             """
             Function to create a 2D elliptical Moffat model.
 
-            :param grid: Two 2D arrays with the mesh grid points in x and y direction.
-            :type grid: numpy.ndarray
-            :param x_center: Offset of the model center along the x axis (pix).
-            :type x_center: float
-            :param y_center: Offset of the model center along the y axis (pix).
-            :type y_center: float
-            :param fwhm_x: Full width at half maximum along the x axis (pix).
-            :type fwhm_x: float
-            :param fwhm_y: Full width at half maximum along the y axis (pix).
-            :type fwhm_y: float
-            :param amp: Peak flux.
-            :type amp: float
-            :param theta: Rotation angle in counterclockwise direction (rad).
-            :type theta: float
-            :param offset: Flux offset.
-            :type offset: float
-            :param beta: Power index.
-            :type beta: float
+            Parameters
+            ----------
+            grid : numpy.ndarray
+                Two 2D arrays with the mesh grid points in x and y direction.
+            x_center : float
+                Offset of the model center along the x axis (pix).
+            y_center : float
+                Offset of the model center along the y axis (pix).
+            fwhm_x : float
+                Full width at half maximum along the x axis (pix).
+            fwhm_y : float
+                Full width at half maximum along the y axis (pix).
+            amp : float
+                Peak flux.
+            theta : float
+                Rotation angle in counterclockwise direction (rad).
+            offset : float
+                Flux offset.
+            beta : float
+                Power index.
 
-            :return: Raveled 2D elliptical Moffat model.
-            :rtype: numpy.ndimage
+            Returns
+            -------
+            numpy.ndimage
+                Raveled 2D elliptical Moffat model.
             """
 
             (xx_grid, yy_grid) = grid
@@ -607,6 +640,8 @@ class StarCenteringModule(ProcessingModule):
             return moffat
 
         def _least_squares(image):
+            if self.m_filter_size:
+                image = gaussian_filter(image, self.m_filter_size)
 
             if self.m_mask_out_port:
                 mask = np.copy(image)
@@ -690,25 +725,18 @@ class StarCenteringModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[-1]
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         if self.m_method == "full":
             popt = None
 
         elif self.m_method == "mean":
-            if ndim == 2:
-                im_mean = self.m_image_in_port[:, :]
+            im_mean = np.zeros((npix, npix))
+            for i, _ in enumerate(frames[:-1]):
+                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
-            elif ndim == 3:
-                im_mean = np.zeros((npix, npix))
-
-                for i, _ in enumerate(frames[:-1]):
-                    im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
-
-                im_mean /= float(nimages)
-
-            popt = _least_squares(im_mean)
+            popt = _least_squares(im_mean/float(nimages))
 
         self.apply_function_to_images(_centering,
                                       self.m_image_in_port,
@@ -749,20 +777,24 @@ class ShiftImagesModule(ProcessingModule):
         """
         Constructor of ShiftImagesModule.
 
-        :param shift_xy: Tuple (delta_x, delta_y) with the shift (pix) in both directions.
-        :type shift_xy: (float, float)
-        :param interpolation: Type of interpolation that is used for shifting the images (spline,
-                              bilinear, or fft).
-        :type interpolation: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        shift_xy : tuple(float, float)
+            The shift (pix) in x and y direction as (delta_x, delta_y).
+        interpolation : str
+            Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(ShiftImagesModule, self).__init__(name_in=name_in)
@@ -778,7 +810,10 @@ class ShiftImagesModule(ProcessingModule):
         Run method of the module. Shifts an image with a fifth order spline, bilinear, or a
         Fourier shift interpolation.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _image_shift(image, shift, interpolation):
@@ -800,8 +835,10 @@ class ShiftImagesModule(ProcessingModule):
 class WaffleCenteringModule(ProcessingModule):
     """
     Module for centering of SPHERE data obtained with a Lyot coronagraph for which center frames
-    with waffle pattern are available. Written by Alexander Bohn (Leiden University).
+    with waffle pattern are available.
     """
+
+    __author__ = "Alexander Bohn"
 
     def __init__(self,
                  name_in="center_images",
@@ -817,33 +854,36 @@ class WaffleCenteringModule(ProcessingModule):
         """
         Constructor of WaffleCenteringModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry with science images that are read as input.
-        :type image_in_tag: str
-        :param center_in_tag: Tag of the database entry with the center frame that is read as
-                              input.
-        :type center_in_tag: str
-        :param image_out_tag: Tag of the database entry with the centered images that are written
-                              as output. Should be different from *image_in_tag*.
-        :type image_out_tag: str
-        :param size: Image size (arcsec) for both dimensions. Original image size is used if set to
-                     None.
-        :type size: float
-        :param center: Approximate position (x0, y0) of the coronagraph. The center of the image is
-                       used if set to None.
-        :type center: (float, float)
-        :param radius: Approximate separation (pix) of the waffle spots from the star.
-        :type radius: float
-        :param pattern: Waffle pattern that is used (*x* or *+*).
-        :type pattern: str
-        :param sigma: Standard deviation (arcsec) of the Gaussian kernel that is used for the
-                      unsharp masking.
-        :type sigma: float
-        :param dither: Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
-        :type dither: bool
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with science images that are read as input.
+        center_in_tag : str
+            Tag of the database entry with the center frame that is read as input.
+        image_out_tag : str
+            Tag of the database entry with the centered images that are written as output. Should
+            be different from *image_in_tag*.
+        size : float
+            Image size (arcsec) for both dimensions. Original image size is used if set to None.
+        center : tuple(float, float)
+            Approximate position (x0, y0) of the coronagraph. The center of the image is used if
+            set to None.
+        radius : float
+            Approximate separation (pix) of the waffle spots from the star.
+        pattern : str
+            Waffle pattern that is used ("x" or "+").
+        sigma : float
+            Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
+            masking.
+        dither : bool
+            Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(WaffleCenteringModule, self).__init__(name_in)
@@ -865,22 +905,20 @@ class WaffleCenteringModule(ProcessingModule):
         frame. From the four spots, the position of the star behind the coronagraph is fitted,
         and the images are shifted and cropped.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _get_center(ndim, center):
-            if ndim == 2:
-                center_frame = self.m_center_in_port.get_all()
+            center_frame = self.m_center_in_port[0, ]
 
-            elif ndim == 3:
-                center_frame = self.m_center_in_port.get_all()[0, ]
-
-                if center_shape[0] > 1:
-                    warnings.warn("Multiple center images found. Using the first image of "
-                                  "the stack.")
+            if center_shape[0] > 1:
+                warnings.warn("Multiple center images found. Using the first image of the stack.")
 
             if center is None:
-                center = image_center_pixel(center_frame)
+                center = center_pixel(center_frame)
             else:
                 center = (np.floor(center[0]), np.floor(center[1]))
 
@@ -892,6 +930,7 @@ class WaffleCenteringModule(ProcessingModule):
         center_ndim = self.m_center_in_port.get_ndim()
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
+
         center_frame, self.m_center = _get_center(center_ndim, self.m_center)
 
         if im_shape[-2:] != center_shape[-2:]:
@@ -1009,8 +1048,8 @@ class WaffleCenteringModule(ProcessingModule):
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
 
-        nimages = number_images_port(self.m_image_in_port)
-        npix = image_size_port(self.m_image_in_port)[0]
+        nimages = self.m_image_in_port.get_shape()[0]
+        npix = self.m_image_in_port.get_shape()[1]
 
         for i in range(nimages):
             progress(i, nimages, "Running WaffleCenteringModule...")

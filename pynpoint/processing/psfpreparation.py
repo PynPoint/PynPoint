@@ -1,5 +1,5 @@
 """
-Modules to prepare the data for the PSF subtraction.
+Pipeline modules to prepare the data for the PSF subtraction.
 """
 
 from __future__ import division
@@ -15,7 +15,7 @@ from scipy import ndimage
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import progress, memory_frames, number_images_port
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.image import create_mask, scale_image, shift_image
 
 
@@ -37,28 +37,32 @@ class PSFpreparationModule(ProcessingModule):
         """
         Constructor of PSFpreparationModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with images that is written as output.
-        :type image_out_tag: str
-        :param mask_out_tag: Tag of the database entry with the mask that is written as output.
-        :type mask_out_tag: str
-        :param norm: Normalization of each image by its Frobenius norm.
-        :type norm: bool
-        :param resize: Factor by which the data is resized. For example, if *resize* is 2 then
-                       the data will be upsampled by a factor of two. No resizing is applied
-                       when set to None.
-        :type resize: float
-        :param cent_size: Radius of the central mask (arcsec). No mask is used when set to None.
-        :type cent_size: float
-        :param edge_size: Outer radius (arcsec) beyond which pixels are masked. No outer mask is
-                          used when set to None. If the value is larger than half the image size
-                          then it will be set to half the image size.
-        :type edge_size: float
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry with images that is written as output.
+        mask_out_tag : str
+            Tag of the database entry with the mask that is written as output.
+        norm : bool
+            Normalization of each image by its Frobenius norm.
+        resize : float
+            Factor by which the data is resized. For example, if *resize* is 2 then the data will
+            be upsampled by a factor of two. No resizing is applied when set to None.
+        cent_size : float
+            Radius of the central mask (arcsec). No mask is used when set to None.
+        edge_size : float
+            Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
+            None. If the value is larger than half the image size then it will be set to half the
+            image size.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PSFpreparationModule, self).__init__(name_in)
@@ -81,7 +85,10 @@ class PSFpreparationModule(ProcessingModule):
         """
         Run method of the module. Normalizes, resizes, and masks the images.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
@@ -92,8 +99,8 @@ class PSFpreparationModule(ProcessingModule):
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
-        nimages = number_images_port(self.m_image_in_port)
         im_shape = self.m_image_in_port.get_shape()
+        nimages = im_shape[0]
 
         if self.m_norm:
             im_norm = np.linalg.norm(self.m_image_in_port.get_all(),
@@ -174,13 +181,17 @@ class AngleInterpolationModule(ProcessingModule):
         """
         Constructor of AngleInterpolationModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param data_tag: Tag of the database entry for which the parallactic angles are written as
-                         attributes.
-        :type data_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        data_tag : str
+            Tag of the database entry for which the parallactic angles are written as attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(AngleInterpolationModule, self).__init__(name_in)
@@ -195,7 +206,10 @@ class AngleInterpolationModule(ProcessingModule):
         as attributes to *data_tag*. A correction of 360 deg is applied when the start and end
         values of the angles change sign at +/-180 deg.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         parang_start = self.m_data_in_port.get_attribute("PARANG_START")
@@ -246,15 +260,20 @@ class SortParangModule(ProcessingModule):
         """
         Constructor of SortParangModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry with images that is written as output.
-                              Should be different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry with images that is written as output. Should be different
+            from *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(SortParangModule, self).__init__(name_in)
@@ -266,7 +285,10 @@ class SortParangModule(ProcessingModule):
         """
         Run method of the module. Sorts the images and relevant non-static attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()
@@ -335,9 +357,10 @@ class AngleCalculationModule(ProcessingModule):
     """
     Module for calculating the parallactic angles. The start time of the observation is taken and
     multiples of the exposure time are added to derive the parallactic angle of each frame inside
-    the cube. Instrument specific overheads are included. Written by Alexander Bohn (Leiden
-    University).
+    the cube. Instrument specific overheads are included.
     """
+
+    __author__ = "Alexander Bohn"
 
     def __init__(self,
                  instrument="NACO",
@@ -346,15 +369,19 @@ class AngleCalculationModule(ProcessingModule):
         """
         Constructor of AngleCalculationModule.
 
-        :param instrument: Instrument name (*NACO*, *SPHERE/IRDIS*, or *SPHERE/IFS*)
-        :type instrument: str
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param data_tag: Tag of the database entry for which the parallactic angles are written as
-                         attributes.
-        :type data_tag: str
+        Parameters
+        ----------
+        instrument : str
+            Instrument name (*NACO*, *SPHERE/IRDIS*, or *SPHERE/IFS*)
+        name_in : str
+            Unique name of the module instance.
+        data_tag : str
+            Tag of the database entry for which the parallactic angles are written as attributes.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(AngleCalculationModule, self).__init__(name_in)
@@ -417,7 +444,10 @@ class AngleCalculationModule(ProcessingModule):
         extrapolate for the observation time of each individual image of a data cube. The values
         are written as PARANG attributes to *data_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # Load cube sizes
@@ -533,6 +563,14 @@ class AngleCalculationModule(ProcessingModule):
             # See SPHERE manual page 64 (v102)
             new_angles_corr = new_angles - self.m_pupil_offset
 
+        indices = np.where(new_angles_corr < -180.)[0]
+        if indices.size > 0:
+            new_angles_corr[indices] += 360.
+
+        indices = np.where(new_angles_corr > 180.)[0]
+        if indices.size > 0:
+            new_angles_corr[indices] -= 360.
+
         self.m_data_out_port.add_attribute("PARANG", new_angles_corr, static=False)
 
         sys.stdout.write("Running AngleCalculationModule... [DONE]\n")
@@ -544,6 +582,8 @@ class SDIpreparationModule(ProcessingModule):
     Module for preparing continuum frames for SDI subtraction.
     """
 
+    __author__ = "Gabriele Cugno"
+
     def __init__(self,
                  wavelength,
                  width,
@@ -553,21 +593,26 @@ class SDIpreparationModule(ProcessingModule):
         """
         Constructor of SDIpreparationModule.
 
-        :param wavelength: Tuple with the central wavelengths of the line and continuum filter,
-                           (line, continuum), in arbitrary but identical units.
-        :type wavelength: (float, float)
-        :param width: Tuple with the equivalent widths of the line and continuum filter,
-                      (line, continuum), in arbitrary but identical units.
-        :type width: (float, float)
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry that is read as input.
-        :type image_in_tag: str
-        :param image_out_tag: Tag of the database entry that is written as output. Should be
-                              different from *image_in_tag*.
-        :type image_out_tag: str
+        Parameters
+        ----------
+        wavelength : tuple(float, float)
+            The central wavelengths of the line and continuum filter, (line, continuum), in
+            arbitrary but identical units.
+        width : tuple(float, float)
+            The equivalent widths of the line and continuum filter, (line, continuum), in
+            arbitrary but identical units.
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should be different from
+            *image_in_tag*.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(SDIpreparationModule, self).__init__(name_in)
@@ -587,7 +632,10 @@ class SDIpreparationModule(ProcessingModule):
         upscales the images, and crops the images to the initial image shape in order to
         align the PSF patterns.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self.m_image_out_port.del_all_data()
@@ -596,7 +644,7 @@ class SDIpreparationModule(ProcessingModule):
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
         width_factor = self.m_line_width/self.m_cnt_width
 
-        nimages = number_images_port(self.m_image_in_port)
+        nimages = self.m_image_in_port.get_shape()[0]
 
         for i in range(nimages):
             progress(i, nimages, "Running SDIpreparationModule...")

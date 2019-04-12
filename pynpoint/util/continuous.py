@@ -23,28 +23,49 @@ import numpy as np
 from scipy.special import gamma
 from six.moves import range
 
-PI2 = 2 * np.pi
-
 
 def normalization(s, dt):
-    return np.sqrt((PI2 * s) / dt)
+    """"
+    Parameters
+    ----------
+    s : numpy.ndarray
+        Scales.
+    dt : int
+        Time step.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized data.
+    """
+
+    return np.sqrt((2 * np.pi * s) / dt)
 
 
 def morletft(s, w, w0, dt):
-    """Fourier tranformed morlet function.
+    """"
+    Fourier transformed morlet function.
 
-    Input
-      * *s*    - scales
-      * *w*    - angular frequencies
-      * *w0*   - omega0 (frequency)
-      * *dt*   - time step
-    Output
-      * (normalized) fourier transformed morlet function
+    Parameters
+    ----------
+    s : numpy.ndarray
+        Scales.
+    w : numpy.ndarray
+        Angular frequencies.
+    w0 : int
+        Omega0 frequency.
+    dt : int
+        Time step.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized Fourier transformed morlet function
     """
 
     p = 0.75112554446494251  # pi**(-1.0/4.0)
-    wavelet = np.zeros((s.shape[0], w.shape[0]))
     pos = w > 0
+    wavelet = np.zeros((s.shape[0], w.shape[0]))
 
     for i in range(s.shape[0]):
         n = normalization(s[i], dt)
@@ -54,15 +75,24 @@ def morletft(s, w, w0, dt):
 
 
 def dogft(s, w, order, dt):
-    """Fourier tranformed DOG function.
+    """
+    Fourier transformed DOG function.
 
-    Input
-      * *s*     - scales
-      * *w*     - angular frequencies
-      * *order* - wavelet order
-      * *dt*    - time step
-    Output
-      * (normalized) fourier transformed DOG function
+    Parameters
+    ----------
+    s : numpy.ndarray
+        Scales.
+    w : numpy.ndarray
+        Angular frequencies.
+    order : int
+        Wavelet order.
+    dt : int
+        Time step.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized Fourier transformed DOG function.
     """
 
     p = - (0.0 + 1.0j) ** order / np.sqrt(gamma(order + 0.5))
@@ -77,16 +107,20 @@ def dogft(s, w, order, dt):
 
 
 def angularfreq(N, dt):
-    """Compute angular frequencies.
+    """
+    Compute angular frequencies.
 
-    :Parameters:
-       N : integer
-          number of data samples
-       dt : float
-          time step
+    Parameters
+    ----------
+    N : int
+        Number of data samples.
+    dt : int
+        Time step.
 
-    :Returns:
-        angular frequencies : 1d numpy array
+    Returns
+    -------
+    numpy.ndarray
+        Angular frequencies (1D).
     """
 
     # See (5) at page 64.
@@ -104,29 +138,34 @@ def angularfreq(N, dt):
 
 
 def autoscales(N, dt, dj, wf, p):
-    """Compute scales as fractional power of two.
+    """
+    Compute scales as fractional power of two.
 
-    :Parameters:
-       N : integer
-          number of data samples
-       dt : float
-          time step
-       dj : float
-          scale resolution (smaller values of dj give finer resolution)
-       wf : string
-          wavelet function ('morlet', 'paul', 'dog')
-       p : float
-          omega0 ('morlet') or order ('paul', 'dog')
+    Parameters
+    ----------
+    N : int
+        Number of data samples.
+    dt : int
+        Time step.
+    dj : float
+        Scale resolution (smaller values of give finer resolution).
+    wf : str
+        Wavelet function ("morlet", "paul", or "dog").
+    p : int
+        omega0 ("morlet") or order ("paul", "dog").
 
-    :Returns:
-       scales : 1d numpy array
-          scales
+    Returns
+    -------
+    numpy.ndarray
+        Scales (1D).
     """
 
     if wf == 'dog':
         s0 = (dt * np.sqrt(p + 0.5)) / np.pi
+
     elif wf == 'morlet':
         s0 = (dt * (p + np.sqrt(2 + p ** 2))) / (2 * np.pi)
+
     else:
         raise ValueError('Wavelet function not available.')
 
@@ -194,42 +233,46 @@ def autoscales(N, dt, dj, wf, p):
 #         raise ValueError('wavelet function not available')
 
 
-def cwt(x, dt, scales, wf='dog', p=2):
-    """Continuous Wavelet Tranform.
+def cwt(x, dt, scales, wf="dog", p=2):
+    """
+    Continuous Wavelet Transform.
 
-    :Parameters:
-       x : 1d array_like object
-          data
-       dt : float
-          time step
-       scales : 1d array_like object
-          scales
-       wf : string ('morlet', 'paul', 'dog')
-          wavelet function
-       p : float
-          wavelet function parameter ('omega0' for morlet, 'm' for paul
-          and dog)
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Data (1D).
+    dt : int
+        Time step.
+    scales : numpy.ndarray
+        Scales (1D).
+    wf : str
+        Wavelet function ("morlet", "paul", or "dog").
+    p : int
+        omega0 ("morlet") or order ("paul", "dog").
 
-    :Returns:
-       X : 2d numpy array
-          transformed data
+    Returns
+    -------
+    numpy.ndarray
+        Transformed data (2D).
     """
 
     x_arr = np.asarray(x) - np.mean(x)
     scales_arr = np.asarray(scales)
 
-    if x_arr.ndim is not 1:
+    if x_arr.ndim != 1:
         raise ValueError('x must be an 1d numpy array of list')
 
-    if scales_arr.ndim is not 1:
+    if scales_arr.ndim != 1:
         raise ValueError('scales must be an 1d numpy array of list')
 
     w = angularfreq(N=x_arr.shape[0], dt=dt)
 
     if wf == 'dog':
         wft = dogft(s=scales_arr, w=w, order=p, dt=dt)
+
     elif wf == 'morlet':
         wft = morletft(s=scales_arr, w=w, w0=p, dt=dt)
+
     else:
         raise ValueError('wavelet function is not available')
 
@@ -244,18 +287,20 @@ def cwt(x, dt, scales, wf='dog', p=2):
 
 
 def icwt(X, scales):
-    """Inverse Continuous Wavelet Tranform.
-    The reconstruction factor is not applied.
+    """
+    Inverse Continuous Wavelet Transform. The reconstruction factor is not applied.
 
-    :Parameters:
-       X : 2d array_like object
-          transformed data
-       scales : 1d array_like object
-          scales
+    Parameters
+    ----------
+    X : numpy.ndarray
+        Transformed data (2D).
+    scales : numpy.ndarray
+        Scales (1D).
 
-    :Returns:
-       x : 1d numpy array
-          data
+    Returns
+    -------
+    numpy.ndarray
+         1D data.
     """
 
     X_arr = np.asarray(X)
@@ -269,6 +314,4 @@ def icwt(X, scales):
     for i in range(scales_arr.shape[0]):
         X_ARR[i] = X_arr[i] / np.sqrt(scales_arr[i])
 
-    x = np.sum(np.real(X_ARR), axis=0)
-
-    return x
+    return np.sum(np.real(X_ARR), axis=0)

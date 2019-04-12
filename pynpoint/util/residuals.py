@@ -10,23 +10,29 @@ from scipy.ndimage import rotate
 from six.moves import range
 
 
-def combine_residuals(method, res_rot, residuals=None, angles=None):
+def combine_residuals(method,
+                      res_rot,
+                      residuals=None,
+                      angles=None):
     """
     Function for combining the derotated residuals of the PSF subtraction.
 
-    :param method: Method used for combining the residuals ("mean", "median", "weighted", or
-                   "clipped").
-    :type method: str
-    :param res_rot: Derotated residuals of the PSF subtraction (3D).
-    :type res_rot: numpy.ndimage
-    :param residuals: Non-derotated residuals of the PSF subtraction (3D). Only required for the
-                      noise-weighted residuals.
-    :type residuals: numpy.ndimage
-    :param angles: Derotation angles (deg). Only required for the noise-weighted residuals.
-    :type angles: numpy.ndimage
+    Parameters
+    ----------
+    method : str
+        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+    res_rot : numpy.ndimage
+        Derotated residuals of the PSF subtraction (3D).
+    residuals : numpy.ndimage
+        Non-derotated residuals of the PSF subtraction (3D). Only required for the noise-weighted
+        residuals.
+    angles : numpy.ndimage
+        Derotation angles (deg). Only required for the noise-weighted residuals.
 
-    :return: Combined residuals (2D).
-    :rtype: numpy.ndimage
+    Returns
+    -------
+    numpy.ndimage
+        Combined residuals.
     """
 
     if method == "mean":
@@ -82,5 +88,6 @@ def combine_residuals(method, res_rot, residuals=None, angles=None):
 
                     stack[i, j] = temp.mean() + part2.mean()
 
+    stack = stack[np.newaxis, ...]
 
     return stack
