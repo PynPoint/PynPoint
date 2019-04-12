@@ -7,7 +7,8 @@ import numpy as np
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.stacksubset import StackAndSubsetModule, MeanCubeModule, \
-                                            DerotateAndStackModule, CombineTagsModule
+                                            DerotateAndStackModule, CombineTagsModule, \
+                                            StackCubesModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter("always")
@@ -109,6 +110,29 @@ class TestStackingAndSubsampling(object):
         assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
         assert attribute.shape == (4, )
 
+    def test_stack_cube(self):
+
+        module = StackCubesModule(name_in="stackcube",
+                                  image_in_tag="images",
+                                  image_out_tag="mean",
+                                  combine="mean")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("stackcube")
+
+        data = self.pipeline.get_data("mean")
+        assert np.allclose(data[0, 50, 50], 0.09805840100024205, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010029494781738069, rtol=limit, atol=0.)
+        assert data.shape == (4, 100, 100)
+
+        attribute = self.pipeline.get_attribute("mean", "INDEX", static=False)
+        assert np.allclose(np.mean(attribute), 1.5, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
+        attribute = self.pipeline.get_attribute("mean", "NFRAMES", static=False)
+        assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
+        assert attribute.shape == (4, )
+
     def test_derotate_and_stack(self):
 
         derotate = DerotateAndStackModule(name_in="derotate1",
@@ -122,9 +146,9 @@ class TestStackingAndSubsampling(object):
         self.pipeline.run_module("derotate1")
 
         data = self.pipeline.get_data("derotate1")
-        assert np.allclose(data[50, 50], 0.09689679769268554, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09689679769268554, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010021671152246617, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
         derotate = DerotateAndStackModule(name_in="derotate2",
                                           image_in_tag="images",
@@ -137,9 +161,9 @@ class TestStackingAndSubsampling(object):
         self.pipeline.run_module("derotate2")
 
         data = self.pipeline.get_data("derotate2")
-        assert np.allclose(data[50, 50], 0.09809001768003645, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09809001768003645, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00010033064394962, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
     def test_combine_tags(self):
 

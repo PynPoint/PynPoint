@@ -1,5 +1,5 @@
 """
-Modules for PSF subtraction.
+Pipeline modules for PSF subtraction.
 """
 
 from __future__ import absolute_import
@@ -46,45 +46,45 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         Constructor of PcaPsfSubtractionModule.
 
-        :param pca_numbers: Number of principal components used for the PSF model. Can be a single
-                            value or a list of integers.
-        :type pca_numbers: int
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param images_in_tag: Tag of the database entry with the science images that are read
-                              as input.
-        :type images_in_tag: str
-        :param reference_in_tag: Tag of the database entry with the reference images that are
-                                 read as input.
-        :type reference_in_tag: str
-        :param res_mean_tag: Tag of the database entry with the mean collapsed residuals. Not
-                             calculated if set to *None*.
-        :type res_mean_tag: str
-        :param res_median_tag: Tag of the database entry with the median collapsed residuals. Not
-                               calculated if set to *None*.
-        :type res_median_tag: str
-        :param res_weighted_tag: Tag of the database entry with the noise-weighted residuals
-                                 (see Bottom et al. 2017). Not calculated if set to *None*.
-        :type res_weighted_tag: str
-        :param res_rot_mean_clip_tag: Tag of the database entry of the clipped mean residuals. Not
-                                      calculated if set to *None*.
-        :type res_rot_mean_clip_tag: str
-        :param res_arr_out_tag: Tag of the database entry with the image residuals from the PSF
-                                subtraction. If a list of PCs is provided in *pca_numbers* then
-                                multiple tags will be created in the central database. Not
-                                calculated if set to *None*. Not supported with multiprocessing.
-        :type res_arr_out_tag: str
-        :param basis_out_tag: Tag of the database entry with the basis set. Not stored if set to
-                              None.
-        :type basis_out_tag: str
-        :param extra_rot: Additional rotation angle of the images (deg).
-        :type extra_rot: float
-        :param subtract_mean: The mean of the science and reference images is subtracted from
-                              the corresponding stack, before the PCA basis is constructed and
-                              fitted.
-        :type subtract_mean: bool
+        Parameters
+        ----------
+        pca_numbers : int or tuple(int, )
+            Number of principal components used for the PSF model. Can be a single value or a tuple
+            with integers.
+        name_in : str
+            Unique name of the module instance.
+        images_in_tag : str
+            Tag of the database entry with the science images that are read as input
+        reference_in_tag : str
+            Tag of the database entry with the reference images that are read as input.
+        res_mean_tag : str
+            Tag of the database entry with the mean collapsed residuals. Not calculated if set to
+            None.
+        res_median_tag : str
+            Tag of the database entry with the median collapsed residuals. Not calculated if set
+            to None.
+        res_weighted_tag : str
+            Tag of the database entry with the noise-weighted residuals (see Bottom et al. 2017).
+            Not calculated if set to None.
+        res_rot_mean_clip_tag : str
+            Tag of the database entry of the clipped mean residuals. Not calculated if set to
+            None.
+        res_arr_out_tag : str
+            Tag of the database entry with the image residuals from the PSF subtraction. If a list
+            of PCs is provided in *pca_numbers* then multiple tags will be created in the central
+            database. Not calculated if set to None. Not supported with multiprocessing.
+        basis_out_tag : str
+            Tag of the database entry with the basis set. Not stored if set to None.
+        extra_rot : float
+            Additional rotation angle of the images (deg).
+        subtract_mean : bool
+            The mean of the science and reference images is subtracted from the corresponding
+            stack, before the PCA basis is constructed and fitted.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(PcaPsfSubtractionModule, self).__init__(name_in)
@@ -136,7 +136,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
@@ -174,7 +177,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         for i, pca_number in enumerate(self.m_components):
@@ -253,7 +259,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         orthogonal basis set, calculates the PCA coefficients for each image, subtracts the PSF
         model, and writes the residuals as output.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         cpu = self._m_config_port.get_attribute("CPU")
@@ -378,31 +387,33 @@ class ClassicalADIModule(ProcessingModule):
         """
         Constructor of ClassicalADIModule.
 
-        :param threshold: Tuple with the separation for which the angle threshold is optimized
-                          (arcsec), FWHM of the PSF (arcsec), and the threshold (FWHM) for the
-                          the reference images. No threshold is used if set to None.
-        :type threshold: tuple(float, float, float)
-        :param nreference: Number of reference image, closest in line to the science image. All
-                           images are used if *threshold* is None or *nreference* is None.
-        :type nreference: int
-        :param residuals: Method used for combining the residuals ("mean", "median", "weighted",
-                          or "clipped").
-        :type residuals: str
-        :param extra_rot: Additional rotation angle of the images (deg).
-        :type extra_rot: float
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param image_in_tag: Tag of the database entry with the science images that are read
-                             as input.
-        :type image_in_tag: str
-        :param res_out_tag: Tag of the database entry with the residuals of the PSF subtraction
-                            that are written as output.
-        :type res_out_tag: str
-        :param stack_out_tag: Tag of the database entry with the stacked residuals that are written
-                              as output.
-        :type stack_out_tag: str
+        Parameters
+        ----------
+        threshold : tuple(float, float, float)
+            Tuple with the separation for which the angle threshold is optimized (arcsec), FWHM of
+            the PSF (arcsec), and the threshold (FWHM) for thenthe reference images. No threshold
+            is used if set to None.
+        nreference : int
+            Number of reference image, closest in line to the science image. All images are used if
+            *threshold* is None or *nreference* is None.
+        residuals : str
+            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+        extra_rot : float
+            Additional rotation angle of the images (deg).
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with the science images that are read as input.
+        res_out_tag : str
+            Tag of the database entry with the residuals of the PSF subtraction that are written
+            as output.
+        stack_out_tag : str
+            Tag of the database entry with the stacked residuals that are written as output.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(ClassicalADIModule, self).__init__(name_in)
@@ -429,7 +440,10 @@ class ClassicalADIModule(ProcessingModule):
         all images. All images are used if the rotation condition can not be met. Both the
         individual residuals (before derotation) and the stacked residuals are stored.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         def _subtract_psf(image,

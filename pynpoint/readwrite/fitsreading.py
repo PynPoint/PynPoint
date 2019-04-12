@@ -17,8 +17,6 @@ from pynpoint.core.attributes import get_attributes
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.module import progress
 
-import xml.etree.ElementTree as ET
-
 
 class FitsReadingModule(ReadingModule):
     """
@@ -31,7 +29,8 @@ class FitsReadingModule(ReadingModule):
     directory have changing static attributes or the shape of the input images is changing a
     warning appears. FitsReadingModule overwrites by default all existing data with the same tags
     in the central database. Note that PynPoint only supports the processing of square images so
-    rectangular images should be made square with e.g. CropImagesModule or RemoveLinesModule.
+    rectangular images should be made square with e.g. :class:`CropImagesModule` or
+    :class:`RemoveLinesModule`.
     """
 
     def __init__(self,
@@ -39,37 +38,30 @@ class FitsReadingModule(ReadingModule):
                  input_dir=None,
                  image_tag="im_arr",
                  overwrite=True,
-                 check=True,
-                 xml_path="",
-                 fits_type="",
-                 fits_certification=""):
+                 check=True):
         """
         Constructor of FitsReadingModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param input_dir: Input directory where the FITS files are located. If not specified the
-                          Pypeline default directory is used.
-        :type input_dir: str
-        :param image_tag: Tag of the read data in the HDF5 database. Non static header
-                          information is stored with the tag: *header_* + image_tag /
-                          header_entry_name.
-        :type image_tag: str
-        :param overwrite: Overwrite existing data and header in the central database.
-        :type overwrite: bool
-        :param check: Check all the listed non-static attributes or ignore the attributes that
-                      are not always required (e.g. PARANG_START, DITHER_X).
-        :type check: bool
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        input_dir : str
+            Input directory where the FITS files are located. If not specified the Pypeline default
+            directory is used.
+        image_tag : str
+            Tag of the read data in the HDF5 database. Non static header information is stored with
+            the tag: *header_* + image_tag / header_entry_name.
+        overwrite : bool
+            Overwrite existing data and header in the central database.
+        check : bool
+            Check all the listed non-static attributes or ignore the attributes that are not always
+            required (e.g. PARANG_START, DITHER_X).
 
-        :param xml_path: path to the xml file containing the classification of the fits files
-        :type xml_path: string
-
-        :param fits_type: type which one wants to read in. Must be one of: 'OBJECT', 'SKY', 'ACQUISITION', 'CAL_FLAT_TW', 'CAL_DARK', 'CAL_FLAT_LAMP'
-        :type fits_type: string
-
-        :param fits_certification: classifier, applicable only for FLAT and DARK fits types
-        :param fits_certification: bool or string
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(FitsReadingModule, self).__init__(name_in, input_dir)
@@ -94,17 +86,6 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
-        if xml_path:
-            self.m_xml_path = xml_path
-            assert fits_type, "A type of FITS file must be included when a xml_path is given"
-            self.m_fits_type = fits_type
-            self.m_fits_certification = "true" if fits_certification else "false"
-        else:
-            self.m_xml_path = False
-
-
-        self.m_input_dir = input_dir
-
     def _read_single_file(self,
                           fits_file,
                           location,
@@ -117,15 +98,21 @@ class FitsReadingModule(ReadingModule):
         procedure guaranties that all previous database information, that does not belong to the
         new data set that is read by FitsReadingModule is replaced and the rest is kept.
 
-        :param fits_file: Name of the FITS file.
-        :type fits_file: str
-        :param location: Directory where the FITS file is located.
-        :type location: str
-        :param overwrite_tags: The list of database tags that will not be overwritten.
-        :type overwrite_tags: bool
+        Parameters
+        ----------
+        fits_file : str
+            Name of the FITS file.
+        location : str
+            Directory where the FITS file is located.
+        overwrite_tags : bool
+            The list of database tags that will not be overwritten.
 
-        :return: FITS header and image shape.
-        :rtype: astropy.io.fits.header.Header, tuple
+        Returns
+        -------
+        astropy.io.fits.header.Header
+            FITS header.
+        tuple(int, )
+            Image shape.
         """
 
         hdulist = fits.open(location + fits_file)
@@ -153,16 +140,23 @@ class FitsReadingModule(ReadingModule):
 
         return header, images.shape
 
-    def _static_attributes(self, fits_file, header):
+    def _static_attributes(self,
+                           fits_file,
+                           header):
         """
         Internal function which adds the static attributes to the central database.
 
-        :param fits_file: Name of the FITS file.
-        :type fits_file: str
-        :param header: Header information from the FITS file that is read.
-        :type header: astropy FITS header
+        Parameters
+        ----------
+        fits_file : str
+            Name of the FITS file.
+        header : astropy FITS header
+            Header information from the FITS file that is read.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         for item in self.m_static:
@@ -196,14 +190,20 @@ class FitsReadingModule(ReadingModule):
                         warnings.warn("Static attribute %s (=%s) not found in the FITS header." \
                                       % (item, fitskey))
 
-    def _non_static_attributes(self, header):
+    def _non_static_attributes(self,
+                               header):
         """
         Internal function which adds the non-static attributes to the central database.
 
-        :param header: Header information from the FITS file that is read.
-        :type header: astropy FITS header
+        Parameters
+        ----------
+        header : astropy FITS header
+            Header information from the FITS file that is read.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         for item in self.m_non_static:
@@ -227,18 +227,26 @@ class FitsReadingModule(ReadingModule):
 
                             self.m_image_out_port.append_attribute_data(item, -1)
 
-    def _extra_attributes(self, fits_file, location, shape):
+    def _extra_attributes(self,
+                          fits_file,
+                          location,
+                          shape):
         """
         Internal function which adds extra attributes to the central database.
 
-        :param fits_file: Name of the FITS file.
-        :type fits_file: str
-        :param location: Directory where the FITS file is located.
-        :type location: str
-        :param shape: Shape of the images.
-        :type shape: tuple(int)
+        Parameters
+        ----------
+        fits_file : str
+            Name of the FITS file.
+        location : str
+            Directory where the FITS file is located.
+        shape : tuple(int)
+            Shape of the images.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         pixscale = self._m_config_port.get_attribute('PIXSCALE')
@@ -258,67 +266,30 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count += nimages
 
-
-    def  _xml_file_list(self):
-        """
-        Internal function to get the filename list of fits files from an xml file
-        """
-        
-        files = []
-        
-        root = ET.parse(self.m_input_dir + self.m_xml_path).getroot()
-
-        if self.m_fits_type == 'OBJECT' or self.m_fits_type == 'SKY':
-            for association in root.findall('./mainFiles'):
-                for file in association.iter('file'): 
-                    filename = file.attrib['name'] + '.fits'
-                    hdul = fits.open(self.m_input_dir + filename)
-                    if hdul[0].header['HIERARCH ESO DPR TYPE'] == self.m_fits_type: 
-                        files += [filename]
-                    hdul.close()
-        
-        elif self.m_fits_type in ['ACQUISITION', 'CAL_FLAT_TW', 'CAL_DARK', 'CAL_FLAT_LAMP']: 
-            for ass in associatedFiles:
-                if ass.attrib['category'] == self.m_fits_type:
-                    for file in ass.iter('file'):
-                        filename = file.attrib['name'] + '.fits'
-                        files += [filename]
-                elif ass.attrib['certified'] == self.m_fits_certification:
-                    for file in ass.iter('file'):
-                        if file.attrib['category'] == self.m_fits_type:
-                            filename = file.attrib['name'] + '.fits'
-                            files += [filename]
-
-        else: "fits_type not in list of allowed types"
-        return files
-
-        
     def run(self):
         """
         Run method of the module. Looks for all FITS files in the input directory and reads them
         using the internal function _read_single_file(). Note that previous database information
         is overwritten if overwrite=True. The filenames are stored as attributes. Note that
         PynPoint only supports processing of square images so, in case required, images should
-        be made square with e.g. CropImagesModule or RemoveLinesModule.
+        be made square with e.g. :class:`CropImagesModule` or :class:`RemoveLinesModule`.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         location = os.path.join(self.m_input_location, '')
 
         files = []
-        if not self.m_xml_path:
-            for filename in os.listdir(location):
-                if filename.endswith('.fits'):
-                    files.append(filename)
+        for filename in os.listdir(location):
+            if filename.endswith('.fits') and not filename.startswith('._'):
+                files.append(filename)
 
-            files.sort()
+        files.sort()
 
-            assert(files), 'No FITS files found in %s.' % self.m_input_location
-        else:
-            files = self._xml_file_list()
-
-        print(files)
+        assert(files), 'No FITS files found in %s.' % self.m_input_location
 
         overwrite_tags = []
 

@@ -4,10 +4,7 @@ Wrapper utils for the wavelet functions for the mlpy cwt implementation (see con
 
 from __future__ import absolute_import
 
-# import copy
-
 import numpy as np
-# import matplotlib.pyplot as plt
 
 from numba import jit
 from scipy.special import gamma, hermite
@@ -26,11 +23,20 @@ def _fast_zeros(soft,
     """
     Fast numba method to modify values in the wavelet space by using a hard or soft threshold
     function.
-    :param soft: If True soft the threshold function will be used. Else hard threshold.
-    :type soft: bool
-    :param spectrum: The input wavelet space i.e. a 2d numpy array.
-    :param uthresh: Threshold used by the threshold function
-    :return: The modified spectrum
+
+    Parameters
+    ----------
+    soft : bool
+        If True soft the threshold function will be used, otherwise a hard threshold is applied.
+    spectrum : numpy.ndarray
+        The input 2D wavelet space.
+    uthresh : float
+        Threshold used by the threshold function.
+
+    Returns
+    -------
+    numpy.ndarray
+        Modified spectrum.
     """
 
     if soft:
@@ -63,13 +69,25 @@ class WaveletAnalysisCapsule(object):
                  padding="none",
                  frequency_resolution=0.5):
         """
-        Constructor of the WaveletAnalysisCapsule
-        :param signal_in: A 1d input signal
-        :param wavelet_in: mother wavelet function can be either "dog" or "morlet"
-        :type wavelet_in: str
-        :param order: order of the mother wavelet function
-        :param padding: padding strategy. Zero and mirror padding ara supported.
-        :param frequency_resolution: wavelet space resolution in scale / frequency
+        Constructor of the WaveletAnalysisCapsule.
+
+        Parameters
+        ----------
+        signal_in : numpy.ndarray
+            1D input signal.
+        wavelet_in : str
+            Wavelet function ("dog" or "morlet").
+        order : int
+            Order of the wavelet function.
+        padding : str
+            Padding method ("zero", "mirror", or "none").
+        frequency_resolution : float
+            Wavelet space resolution in scale/frequency.
+
+        Returns
+        -------
+        NoneType
+            None
         """
 
         # save input data
@@ -130,38 +148,65 @@ class WaveletAnalysisCapsule(object):
         self._m_frequency_resolution = frequency_resolution
 
         self.m_spectrum = None
-        return
 
     # --- functions for reconstruction value
     @staticmethod
     def _morlet_function(omega0,
                          x_in):
+        """
+        Returns
+        -------
+        numpy.complex128
+            Morlet function.
+        """
+
         return np.pi**(-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-x_in**2/2.0)
 
     @staticmethod
     def _dog_function(order,
                       x_in):
+        """
+        Returns
+        -------
+        float
+            DOG function.
+        """
+
         p_hpoly = hermite(order)[int(x_in / np.power(2, 0.5))]
         herm = p_hpoly / (np.power(2, float(order) / 2))
+
         return ((-1)**(order+1)) / np.sqrt(gamma(order + 0.5)) * herm
 
     def __pad_signal(self):
-        padding_length = int(len(self._m_data) * 0.5)
-        if self.m_padding == "none":
-            return
+        """
+        Returns
+        -------
+        NoneType
+            None
+        """
 
-        elif self.m_padding == "zero":
+        padding_length = int(len(self._m_data) * 0.5)
+
+        if self.m_padding == "zero":
             new_data = np.append(self._m_data, np.zeros(padding_length, dtype=np.float64))
             self._m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
 
-        else:
-            # Mirror Padding
+        elif self.m_padding == "mirror":
             left_half_signal = self._m_data[:padding_length]
             right_half_signal = self._m_data[padding_length:]
             new_data = np.append(self._m_data, right_half_signal[::-1])
             self._m_data = np.append(left_half_signal[::-1], new_data)
 
     def __compute_reconstruction_factor(self):
+        """
+        Computes the reconstruction factor.
+
+        Returns
+        -------
+        float
+            Reconstruction factor.
+        """
+
         dj = self._m_frequency_resolution
         wavelet = self.m_wavelet
         order = self.m_order
@@ -174,13 +219,19 @@ class WaveletAnalysisCapsule(object):
         c_delta = self._m_c_final_reconstruction
 
         reconstruction_factor = dj/(c_delta * zero_function)
+
         return reconstruction_factor.real
 
     def compute_cwt(self):
         """
         Compute the wavelet space of the given input signal.
-        :return: None
+
+        Returns
+        -------
+        NoneType
+            None
         """
+
         self.m_spectrum = cwt(self._m_data,
                               dt=1,
                               scales=self._m_scales,
@@ -190,12 +241,83 @@ class WaveletAnalysisCapsule(object):
     def update_signal(self):
         """
         Updates the internal signal by the reconstruction of the current wavelet space.
-        :return: None
+
+        Returns
+        -------
+        NoneType
+            None
         """
-        self._m_data = icwt(self.m_spectrum,
-                            scales=self._m_scales)
+
+        self._m_data = icwt(self.m_spectrum, scales=self._m_scales)
         reconstruction_factor = self.__compute_reconstruction_factor()
         self._m_data *= reconstruction_factor
+
+    def denoise_spectrum(self,
+                         soft=False):
+        """
+        Applies wavelet shrinkage on the current wavelet space (m_spectrum) by either a hard of
+        soft threshold function.
+
+        Parameters
+        ----------
+        soft : bool
+            If True a soft threshold is used, hard otherwise.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if self.m_padding != "none":
+            # Python 2
+            # noise_length_4 = len(self._m_data) / 4
+            # Python 2+3?
+            noise_length_4 = len(self._m_data) // 4
+            noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
+
+        else:
+            noise_spectrum = self.m_spectrum[0, :].real
+
+        sigma = mad(noise_spectrum)
+        uthresh = sigma*np.sqrt(2.0*np.log(len(noise_spectrum)))
+
+        self.m_spectrum = _fast_zeros(soft, self.m_spectrum, uthresh)
+
+    def median_filter(self):
+        """
+        Applies a median filter on the internal 1d signal. Can be useful for cosmic ray correction
+        after temporal de-noising
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        self._m_data = medfilt(self._m_data, 19)
+
+    def get_signal(self):
+        """
+        Returns the current version of the 1d signal. Use update_signal() in advance in order to get
+        the current reconstruction of the wavelet space. Removes padded values as well.
+
+        Returns
+        -------
+        numpy.ndarray
+            Current version of the 1D signal.
+        """
+
+        tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
+
+        if self.m_padding == "none":
+            return tmp_data
+
+        # Python 2
+        # return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
+
+        # Python 2+3?
+        return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
 
     # def __transform_period(self,
     #                        period):
@@ -216,57 +338,6 @@ class WaveletAnalysisCapsule(object):
     #     cutoff_scaled *= factor
     #
     #     return cutoff_scaled
-
-    def denoise_spectrum(self,
-                         soft=False):
-        """
-        Applies wavelet shrinkage on the current wavelet space (m_spectrum) by either a hard of
-        soft threshold function.
-        :param soft: If True a soft threshold is used hard otherwise
-        :type soft: bool
-        :return:
-        """
-
-        if self.m_padding != "none":
-            # Python 2
-            # noise_length_4 = len(self._m_data) / 4
-            # Python 2+3?
-            noise_length_4 = len(self._m_data) // 4
-            noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
-        else:
-            noise_spectrum = self.m_spectrum[0, :].real
-
-        sigma = mad(noise_spectrum)
-        uthresh = sigma*np.sqrt(2.0*np.log(len(noise_spectrum)))
-
-        self.m_spectrum = _fast_zeros(soft,
-                                      self.m_spectrum,
-                                      uthresh)
-
-    def median_filter(self):
-        """
-        Applies a median filter on the internal 1d signal. Can be useful for cosmic ray correction
-        after temporal de-noising
-        :return: None
-        """
-
-        self._m_data = medfilt(self._m_data, 19)
-
-    def get_signal(self):
-        """
-        Returns the current version of the 1d signal. Use update_signal() in advance in order to get
-        the current reconstruction of the wavelet space. Removes padded values as well.
-        :return:
-        """
-
-        tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
-        if self.m_padding == "none":
-            return tmp_data
-
-        # Python 2
-        # return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
-        # Python 2+3?
-        return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
 
     # ----- plotting functions --------
 

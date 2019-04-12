@@ -30,25 +30,28 @@ class Hdf5WritingModule(WritingModule):
         """
         Constructor of Hdf5WritingModule.
 
-        :param name_in: Unique name of the module instance.
-        :type name_in: str
-        :param file_name: Name of the file which will be created by the module.
-        :type file_name: str
-        :param output_dir: Location where the HDF5 file will be stored. The Pypeline default
-                           output location is used when no location is given.
-        :type output_dir: str
-        :param tag_dictionary: Directory containing all tags / keys of the datasets which will be
-                               exported from the PynPoint internal database. The datasets will be
-                               exported like this:
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        file_name : str
+            Name of the file which will be created by the module.
+        output_dir : str
+            Location where the HDF5 file will be stored. The Pypeline default output location is
+            used when no location is given.
+        tag_dictionary : dict
+            Directory containing all tags / keys of the datasets which will be exported from the
+            PynPoint internal database. The datasets will be exported as
+            {*input_tag*:*output_tag*, }.
+        keep_attributes : bool
+            If True all static and non-static attributes will be exported.
+        overwrite : bool
+            Overwrite an existing HDF5 file.
 
-                                { *PynPoint_database_tag* : *output_tag* }
-        :type tag_dictionary: dict
-        :param keep_attributes: If True all static and non-static attributes will be exported.
-        :type keep_attributes: bool
-        :param overwrite: Overwrite an existing HDF5 file.
-        :type overwrite: bool
-
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         super(Hdf5WritingModule, self).__init__(name_in, output_dir)
@@ -66,7 +69,10 @@ class Hdf5WritingModule(WritingModule):
         Run method of the module. Exports all datasets defined in the *tag_dictionary* to an
         external HDF5 file.
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         sys.stdout.write("Running Hdf5WritingModule...")

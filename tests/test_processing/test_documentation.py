@@ -276,8 +276,8 @@ class TestDocumentation(object):
         self.pipeline.run_module("psf_subtraction")
 
         data = self.pipeline.get_data("res_mean")
-        assert np.allclose(data[0, 38, 22], 2.073746596517549e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -1.5133345435496935e-08, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 38, 22], 2.073747383344391e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -1.5133372249623263e-08, rtol=limit, atol=0.)
         assert data.shape == (1, 46, 46)
 
     def test_write_fits(self):
