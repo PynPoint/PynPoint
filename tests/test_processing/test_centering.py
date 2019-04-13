@@ -53,13 +53,13 @@ class TestStarAlignment(object):
 
         create_waffle_data(path=self.test_dir+"waffle_odd",
                            npix=101,
-                           x_waffle=[20., 20., 80., 80.],
-                           y_waffle=[20., 80., 80., 20.])
+                           x_spot=[20., 20., 80., 80.],
+                           y_spot=[20., 80., 80., 20.])
 
         create_waffle_data(path=self.test_dir+"waffle_even",
                            npix=100,
-                           x_waffle=[20., 20., 79., 79.],
-                           y_waffle=[20., 79., 79., 20.])
+                           x_spot=[20., 20., 79., 79.],
+                           y_spot=[20., 79., 79., 20.])
 
         create_config(self.test_dir+"PynPoint_config.ini")
 
