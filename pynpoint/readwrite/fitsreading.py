@@ -38,7 +38,8 @@ class FitsReadingModule(ReadingModule):
                  input_dir=None,
                  image_tag="im_arr",
                  overwrite=True,
-                 check=True):
+                 check=True,
+                 txt_path=""):
         """
         Constructor of FitsReadingModule.
 
@@ -85,6 +86,9 @@ class FitsReadingModule(ReadingModule):
                 self.m_non_static.append(key)
 
         self.m_count = 0
+
+        if txt_path:
+            self.m_txt_path = txt_path
 
     def _read_single_file(self,
                           fits_file,
@@ -139,6 +143,17 @@ class FitsReadingModule(ReadingModule):
         header_out_port.set_all(fits_header)
 
         return header, images.shape
+
+    def _txt_file_list(self):
+        """
+        Internal function to import the list of files from a text file
+        """
+        with open(self.m_txt_path) as f:
+            files = f.readlines()
+
+        files = [x.strip() for x in files] # get rid of newlines
+        files = list(filter(None, files)) # get rid of empty lines
+        return files
 
     def _static_attributes(self,
                            fits_file,
@@ -283,9 +298,13 @@ class FitsReadingModule(ReadingModule):
         location = os.path.join(self.m_input_location, '')
 
         files = []
-        for filename in os.listdir(location):
-            if filename.endswith('.fits') and not filename.startswith('._'):
-                files.append(filename)
+
+        if hasattr(self, 'm_txt_path'):
+            files = self._txt_file_list()
+        else: 
+            for filename in os.listdir(location):
+                if filename.endswith('.fits') and not filename.startswith('._'):
+                    files.append(filename)
 
         files.sort()
 
