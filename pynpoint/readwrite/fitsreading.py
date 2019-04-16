@@ -58,7 +58,10 @@ class FitsReadingModule(ReadingModule):
         check : bool
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
-
+        txt_path : string
+            Path of the file containing a list of .fits files to be added in the image_tag. The txt
+            file should contain the relative path to the input_dir of the desired fits file in each
+            line.
         Returns
         -------
         NoneType
