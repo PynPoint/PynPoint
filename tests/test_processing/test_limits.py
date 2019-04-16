@@ -75,7 +75,6 @@ class TestDetectionLimits(object):
                                            threshold=("sigma", 5.),
                                            psf_scaling=1.,
                                            aperture=0.1,
-                                           ignore=True,
                                            pca_number=15,
                                            cent_size=None,
                                            edge_size=None,
@@ -86,7 +85,7 @@ class TestDetectionLimits(object):
 
             data = self.pipeline.get_data("limits_"+item)
             assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 1], 3.093773823471402, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 2], 0.3763432867254638, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 3], 0.0002012649090622487, rtol=limit, atol=0.)
+            assert np.allclose(data[0, 1], 2.3624384190310397, rtol=limit, atol=0.)
+            assert np.allclose(data[0, 2], 0.05234065236317515, rtol=limit, atol=0.)
+            assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
             assert data.shape == (1, 4)

@@ -118,6 +118,10 @@ class ContrastCurveModule(ProcessingModule):
             warnings.warn("The 'magnitude' parameter has been deprecated. The parameter is no "
                           "longer required.", DeprecationWarning)
 
+        if "ignore" in kwargs:
+            warnings.warn("The 'ignore' parameter has been deprecated. The parameter is no "
+                          "longer required.", DeprecationWarning)
+
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
         if psf_in_tag == image_in_tag:
