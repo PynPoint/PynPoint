@@ -39,7 +39,8 @@ class FitsReadingModule(ReadingModule):
                  image_tag="im_arr",
                  overwrite=True,
                  check=True,
-                 txt_path=""):
+                 txt_path="" # takes a filename containing a list of filenames
+                 file_list=[]: # takes a list of filenames directly
         """
         Constructor of FitsReadingModule.
 
@@ -61,7 +62,10 @@ class FitsReadingModule(ReadingModule):
         txt_path : string
             Path of the file containing a list of .fits files to be added in the image_tag. The txt
             file should contain the relative path to the input_dir of the desired fits file in each
-            line.
+            line. Mutually exclusive with file_list parameter
+        file_list : list[string, string, ]
+            List of strings in which the desired file path is written relative to the working 
+            directory. Mutually exclusive with the txt_path parameter
         Returns
         -------
         NoneType
@@ -90,8 +94,13 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
+        if txt_path and file_list:
+            raise AssertionError("the parameters 'txt_path' and 'file_list' are mutually exclusive")
         if txt_path:
             self.m_txt_path = txt_path
+        if file_list:
+            self.m_file_list = file_list
+
 
     def _read_single_file(self,
                           fits_file,
@@ -304,6 +313,8 @@ class FitsReadingModule(ReadingModule):
 
         if hasattr(self, 'm_txt_path'):
             files = self._txt_file_list()
+        if hasattr(self, 'm_file_list'):
+            files = list(self.m_file_list)
         else: 
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
