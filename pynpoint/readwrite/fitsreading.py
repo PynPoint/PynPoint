@@ -39,8 +39,8 @@ class FitsReadingModule(ReadingModule):
                  image_tag="im_arr",
                  overwrite=True,
                  check=True,
-                 txt_path="" # takes a filename containing a list of filenames
-                 file_list=[]: # takes a list of filenames directly
+                 txt_path="", # takes a filename containing a list of filenames
+                 file_list=[]): # takes a list of filenames directly
         """
         Constructor of FitsReadingModule.
 
