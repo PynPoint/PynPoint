@@ -23,3 +23,5 @@ docs/_build
 
 # Mac
 .DS_Store
+.vscode
+.vscode/settings.json
