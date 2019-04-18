@@ -39,8 +39,7 @@ class FitsReadingModule(ReadingModule):
                  image_tag="im_arr",
                  overwrite=True,
                  check=True,
-                 txt_path="", # takes a filename containing a list of filenames
-                 file_list=[]): # takes a list of filenames directly
+                 filenames=None): # takes a list of filenames directly or a file containing a list of filenames
         """
         Constructor of FitsReadingModule.
 
@@ -94,12 +93,7 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
-        if txt_path and file_list:
-            raise AssertionError("the parameters 'txt_path' and 'file_list' are mutually exclusive")
-        if txt_path:
-            self.m_txt_path = txt_path
-        if file_list:
-            self.m_file_list = file_list
+        self.m_filenames = filenames
 
 
     def _read_single_file(self,
@@ -160,7 +154,7 @@ class FitsReadingModule(ReadingModule):
         """
         Internal function to import the list of files from a text file
         """
-        with open(self.m_txt_path) as f:
+        with open(self.m_filenames) as f:
             files = f.readlines()
 
         files = [x.strip() for x in files] # get rid of newlines
@@ -311,11 +305,11 @@ class FitsReadingModule(ReadingModule):
 
         files = []
 
-        if hasattr(self, 'm_txt_path'):
+        if type(self.m_filenames) == type(" "):
             files = self._txt_file_list()
-        if hasattr(self, 'm_file_list'):
-            files = list(self.m_file_list)
-        else: 
+        elif type(self.m_filenames) == type(list()):
+            files = list(self.m_filenames)
+        elif type(self.m_filenames) == type(None):
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(filename)
