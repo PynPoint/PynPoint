@@ -12,8 +12,11 @@ import multiprocessing as mp
 import numpy as np
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.image import create_mask
 from pynpoint.util.limits import contrast_limit
 from pynpoint.util.module import progress
+from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.residuals import combine_residuals
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -30,18 +33,15 @@ class ContrastCurveModule(ProcessingModule):
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
                  angle=(0., 360., 60.),
-                 magnitude=(7.5, 1.),
                  threshold=("sigma", 5.),
-                 accuracy=1e-1,
                  psf_scaling=1.,
                  aperture=0.05,
-                 ignore=False,
                  pca_number=20,
-                 norm=False,
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
-                 residuals="mean",
+                 residuals="median",
+                 snr_inject=100.,
                  **kwargs):
         """
         Constructor of ContrastCurveModule.
@@ -54,8 +54,7 @@ class ContrastCurveModule(ProcessingModule):
             Tag of the database entry that contains the stack with images.
         psf_in_tag : str
             Tag of the database entry that contains the reference PSF that is used as fake planet.
-            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
-            *image_in_tag*.
+            Can be either a single image or a stack of images equal in size to *image_in_tag*.
         contrast_out_tag : str
             Tag of the database entry that contains the separation, azimuthally averaged contrast
             limits, the azimuthal variance of the contrast limits, and the threshold of the false
@@ -68,29 +67,19 @@ class ContrastCurveModule(ProcessingModule):
             Range of position angles (deg) where the contrast is calculated. Should be specified as
             (lower limit, upper limit, step size), measured counterclockwise with respect to the
             vertical image axis, i.e. East of North.
-        magnitude : tuple(float, float)
-            Initial magnitude value and step size for the fake planet, specified as (planet
-            magnitude, magnitude step size).
         threshold : tuple(str, float)
             Detection threshold for the contrast curve, either in terms of "sigma" or the false
             positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.)
             or ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will
             change with separation. Also, sigma only corresponds to the standard deviation of a
             normal distribution at large separations (i.e., large number of samples).
-        accuracy : float
-            Fractional accuracy of the false positive fraction. When the accuracy condition is met,
-            the final magnitude is calculated with a linear interpolation.
         psf_scaling : float
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should have a positive value.
         aperture : float
-            Aperture radius (arcsec) for the calculation of the false positive fraction.
-        ignore : bool
-            Ignore the two neighboring apertures that may contain self-subtraction from the planet.
+            Aperture radius (arcsec).
         pca_number : int
             Number of principal components used for the PSF subtraction.
-        norm : bool
-            Normalization of each image by its Frobenius norm.
         cent_size : float
             Central mask radius (arcsec). No mask is used when set to None.
         edge_size : float
@@ -101,13 +90,9 @@ class ContrastCurveModule(ProcessingModule):
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
             Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
-
-        Keyword Arguments
-        -----------------
-        sigma : float
-            Detection threshold in units of sigma. Note that as sigma is fixed, the confidence level
-            (and false positive fraction) change with separation. This parameter will be deprecated.
-            Please use the *threshold* parameter instead.
+        snr_inject : float
+            Signal-to-noise ratio of the injected planet signal that is used to measure the amount
+            of self-subtraction.
 
         Returns
         -------
@@ -118,14 +103,24 @@ class ContrastCurveModule(ProcessingModule):
         super(ContrastCurveModule, self).__init__(name_in)
 
         if "sigma" in kwargs:
-            self.m_theshold = ("sigma", kwargs["sigma"])
+            warnings.warn("The 'sigma' parameter has been deprecated. Please use the 'threshold' "
+                          "parameter instead.", DeprecationWarning)
 
-            warnings.warn("The 'sigma' parameter will be deprecated in a future release. It is "
-                          "recommended to use the 'threshold' parameter instead.",
-                          DeprecationWarning)
+        if "norm" in kwargs:
+            warnings.warn("The 'norm' parameter has been deprecated. It is not recommended to "
+                          "normalize the images before PSF subtraction.", DeprecationWarning)
 
-        if "pca_out_tag" in kwargs:
-            warnings.warn("The 'pca_out_tag' parameter has been deprecated.", DeprecationWarning)
+        if "accuracy" in kwargs:
+            warnings.warn("The 'accuracy' parameter has been deprecated. The parameter is no "
+                          "longer required.", DeprecationWarning)
+
+        if "magnitude" in kwargs:
+            warnings.warn("The 'magnitude' parameter has been deprecated. The parameter is no "
+                          "longer required.", DeprecationWarning)
+
+        if "ignore" in kwargs:
+            warnings.warn("The 'ignore' parameter has been deprecated. The parameter is no "
+                          "longer required.", DeprecationWarning)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -138,18 +133,21 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_separation = separation
         self.m_angle = angle
-        self.m_accuracy = accuracy
-        self.m_magnitude = magnitude
         self.m_psf_scaling = psf_scaling
         self.m_threshold = threshold
         self.m_aperture = aperture
-        self.m_ignore = ignore
         self.m_pca_number = pca_number
-        self.m_norm = norm
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
+        self.m_snr_inject = snr_inject
+
+        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
+           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
+
+            raise ValueError("The angular positions of the fake planets should lie between "
+                             "0 deg and 360 deg.")
 
     def run(self):
         """
@@ -166,13 +164,14 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
-        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
-           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
-            raise ValueError("The angular positions of the fake planets should lie between "
-                             "0 deg and 360 deg.")
-
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
+
+        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+            raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
+                             'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
+                             'be used to average the PSF frames (without derotating) before '
+                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
 
         cpu = self._m_config_port.get_attribute("CPU")
         parang = self.m_image_in_port.get_attribute("PARANG")
@@ -185,12 +184,6 @@ class ContrastCurveModule(ProcessingModule):
             self.m_edge_size /= pixscale
 
         self.m_aperture /= pixscale
-
-        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
-            raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
-                             'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
-                             'be used to average the PSF frames (without derotating) before '
-                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
 
         pos_r = np.arange(self.m_separation[0]/pixscale,
                           self.m_separation[1]/pixscale,
@@ -237,13 +230,30 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
+        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+
+        _, im_res = pca_psf_subtraction(images=images*mask,
+                                        angles=-1.*parang+self.m_extra_rot,
+                                        pca_number=self.m_pca_number)
+
+        noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
+
         for i, pos in enumerate(positions):
             process = mp.Process(target=contrast_limit,
-                                 args=(tmp_im_str, tmp_psf_str, parang, self.m_psf_scaling,
-                                       self.m_extra_rot, self.m_magnitude, self.m_pca_number,
-                                       self.m_threshold, self.m_accuracy, self.m_aperture,
-                                       self.m_ignore, self.m_cent_size, self.m_edge_size,
-                                       pixscale, pos, self.m_residuals, queue, ),
+                                 args=(tmp_im_str,
+                                       tmp_psf_str,
+                                       noise,
+                                       mask,
+                                       parang,
+                                       self.m_psf_scaling,
+                                       self.m_extra_rot,
+                                       self.m_pca_number,
+                                       self.m_threshold,
+                                       self.m_aperture,
+                                       self.m_residuals,
+                                       self.m_snr_inject,
+                                       pos,
+                                       queue),
                                  name=(str(os.path.basename(__file__)) + '_radius=' +
                                        str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
                                        str(np.round(pos[1], 1))))
@@ -267,7 +277,7 @@ class ContrastCurveModule(ProcessingModule):
                 for k in jobs[(i + 1 - (i+1)%cpu):]:
                     k.join()
 
-            progress(i, len(jobs), "Running ConstrastCurveModule...")
+            progress(i, len(jobs), "Running ContrastCurveModule...")
 
         # Send termination sentinel to queue
         queue.put(None)
@@ -297,36 +307,9 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
-        # # # create a dictionary with the distances/separation as keys and empty lists as values
-        # # distances = {line[0]:[] for line in result}
-        # # # add the results of the contrast_limit process queue to the dictionary using the distances as keys
-        # # for key in distances.keys():
-        # #     for line in result:
-        # #         if line[0] == key:
-        # #             distances[key] += [line[1:]]
-        # #
-        # # # initialize the storage for later output
-        # # contrast_result = np.ones((len(distances), 4)) * np.nan
-        # #
-        # # # write the results to the contrast result array
-        # # # the first column contains the separations in arcsec
-        # # # the second column contains the average magnitude for the given separation
-        # # # the thrid column contains the variance of the magnitude for the given separation
-        # # # the forth colum contains the false positive fraction
-        # # for i, (key, value) in enumerate(distances.items()):
-        # #     contrast_result[i] = key * pixscale
-        # #     temporary_magnitude_storage = []
-        # #     for result in value:
-        # #         temporary_magnitude_storage += [result[1]]
-        # #     contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
-        # #     contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
-        # #     contrast_result[i, 3] = value[-1] [-1]
-        # #
-        # # contrast_result.sort(axis = 0)
-
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        sys.stdout.write("\rRunning ConstrastCurveModule... [DONE]\n")
+        sys.stdout.write("\rRunning ContrastCurveModule... [DONE]\n")
         sys.stdout.flush()
 
         history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
