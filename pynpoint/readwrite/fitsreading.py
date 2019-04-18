@@ -57,10 +57,11 @@ class FitsReadingModule(ReadingModule):
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
         filenames : str or list(str, )
-            If a string, then a path of a text file (relative to the PynPoint working folder)
-            should be provided. This text file should contain a list of FITS files. If a list, the
-            the paths of the FITS files (relative to the PynPoint working folder) should be
-            provided directly. If set to None, the FITS files in the `input_dir` are read.
+            If a string, then a path of a text file should be provided (relative to the location
+            of the user's pypeline script). This text file should contain a list of FITS files
+            (also relative to the pypeline script). If a list, then the paths of the FITS files
+            (relative to the pypeline script) should be provided directly. If set to None, the
+            FITS files in the `input_dir` are read.
 
         Returns
         -------
@@ -74,6 +75,7 @@ class FitsReadingModule(ReadingModule):
 
         self.m_overwrite = overwrite
         self.m_check = check
+        self.m_filenames = filenames
 
         self.m_static = []
         self.m_non_static = []
@@ -90,9 +92,9 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
-        if not isinstance(filenames, (type(None), list, str)):
-            raise TypeError("parameter filenames is of the wrong type")
-        self.m_filenames = filenames
+        if not isinstance(filenames, (type(None), list, tuple, str)):
+            raise TypeError("The 'filenames' parameter should contain a string or list with "
+                            "strings.")
 
     def _read_single_file(self,
                           fits_file,
@@ -302,11 +304,12 @@ class FitsReadingModule(ReadingModule):
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-            location = self._m_config_port.get_attribute("WORKING_PLACE")
+            location = os.path.dirname(os.path.abspath(__file__))
+            print(location)
 
         elif isinstance(self.m_filenames, (list, tuple)):
             files = self.m_filenames
-            location = self._m_config_port.get_attribute("WORKING_PLACE")
+            location = os.path.dirname(os.path.abspath(__file__))
 
         elif isinstance(self.m_filenames, type(None)):
             location = os.path.join(self.m_input_location, '')
