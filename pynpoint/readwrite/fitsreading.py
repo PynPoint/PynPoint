@@ -62,9 +62,9 @@ class FitsReadingModule(ReadingModule):
             Optional parameter:
               - can be *None*, then all fits files in *input_dir* are read.
               - can be *str*, then it must be a path to a file containing a list of fits files to 
-              be read. Each line must contain exactly one filepath relative to *input_dir*.
+              be read. Each line must contain exactly one filepath relative to the executed file.
               - can be *list*, then each element must be a string containing the relative path to 
-              *input_dir* of the desired fits file.
+              executed file of the desired fits file.
         Returns
         -------
         NoneType
@@ -251,8 +251,8 @@ class FitsReadingModule(ReadingModule):
 
     def _extra_attributes(self,
                           fits_file,
-                          shape,
-                          location=''):
+                          location,
+                          shape):
         """
         Internal function which adds extra attributes to the central database.
 
@@ -307,8 +307,10 @@ class FitsReadingModule(ReadingModule):
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
+            location = ''
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
+            location = ''
         elif isinstance(self.m_filenames, type(None)):
             location = os.path.join(self.m_input_location, '')
             for filename in os.listdir(location):
