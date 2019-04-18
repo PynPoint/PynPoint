@@ -184,3 +184,27 @@ class TestFitsReadingModule(object):
         for item in warning:
             assert item.message.args[0] == "Non-static attribute EXP_NO (=ESO DET EXP NO) not " \
                                            "found in the FITS header."
+
+    def test_fits_read_files(self):
+
+        read = FitsReadingModule(name_in="read7",
+                                 input_dir=None,
+                                 image_tag="files",
+                                 overwrite=False,
+                                 check=True,
+                                 filenames=["fits/image01.fits", "fits/image03.fits"])
+
+        self.pipeline.add_module(read)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("read7")
+
+        assert len(warning) == 2
+        for item in warning:
+            assert item.message.args[0] == "Non-static attribute EXP_NO (=ESO DET EXP NO) not " \
+                                           "found in the FITS header."
+
+        data = self.pipeline.get_data("files")
+        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
+        assert data.shape == (20, 100, 100)

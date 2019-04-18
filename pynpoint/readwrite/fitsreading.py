@@ -28,9 +28,7 @@ class FitsReadingModule(ReadingModule):
     sets in a subfolder of the database named *header_* + image_tag. If the FITS files in the input
     directory have changing static attributes or the shape of the input images is changing a
     warning appears. FitsReadingModule overwrites by default all existing data with the same tags
-    in the central database. Note that PynPoint only supports the processing of square images so
-    rectangular images should be made square with e.g. :class:`CropImagesModule` or
-    :class:`RemoveLinesModule`.
+    in the central database.
     """
 
     def __init__(self,
@@ -39,7 +37,7 @@ class FitsReadingModule(ReadingModule):
                  image_tag="im_arr",
                  overwrite=True,
                  check=True,
-                 filenames=None): # takes a list of filenames directly or a file containing a list of filenames
+                 filenames=None):
         """
         Constructor of FitsReadingModule.
 
@@ -58,13 +56,12 @@ class FitsReadingModule(ReadingModule):
         check : bool
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
-        filenames : None *or* str *or* list
-            Optional parameter:
-              - can be *None*, then all fits files in *input_dir* are read.
-              - can be *str*, then it must be a path to a file containing a list of fits files to 
-              be read. Each line must contain exactly one filepath relative to the executed file.
-              - can be *list*, then each element must be a string containing the relative path to 
-              executed file of the desired fits file.
+        filenames : str or list(str, )
+            If a string, then a path of a text file (relative to the PynPoint working folder)
+            should be provided. This text file should contain a list of FITS files. If a list, the
+            the paths of the FITS files (relative to the PynPoint working folder) should be
+            provided directly. If set to None, the FITS files in the `input_dir` are read.
+
         Returns
         -------
         NoneType
@@ -153,14 +150,15 @@ class FitsReadingModule(ReadingModule):
 
     def _txt_file_list(self):
         """
-        Internal function to import the list of files from a text file
+        Internal function to import a list of FITS files from a text file.
         """
-        with open(self.m_filenames) as f:
-            files = f.readlines()
+
+        with open(self.m_filenames) as file_obj:
+            files = file_obj.readlines()
 
         files = [x.strip() for x in files] # get rid of newlines
-        files = list(filter(None, files)) # get rid of empty lines
-        return files
+
+        return list(filter(None, files)) # get rid of empty lines
 
     def _static_attributes(self,
                            fits_file,
@@ -172,7 +170,7 @@ class FitsReadingModule(ReadingModule):
         ----------
         fits_file : str
             Name of the FITS file.
-        header : astropy FITS header
+        header : astropy.io.fits.header.Header
             Header information from the FITS file that is read.
 
         Returns
@@ -219,7 +217,7 @@ class FitsReadingModule(ReadingModule):
 
         Parameters
         ----------
-        header : astropy FITS header
+        header : astropy.io.fits.header.Header
             Header information from the FITS file that is read.
 
         Returns
@@ -262,7 +260,7 @@ class FitsReadingModule(ReadingModule):
             Name of the FITS file.
         location : str
             Directory where the FITS file is located.
-        shape : tuple(int)
+        shape : tuple(int, )
             Shape of the images.
 
         Returns
@@ -290,11 +288,9 @@ class FitsReadingModule(ReadingModule):
 
     def run(self):
         """
-        Run method of the module. Looks for all FITS files in the input directory and reads them
-        using the internal function _read_single_file(). Note that previous database information
-        is overwritten if overwrite=True. The filenames are stored as attributes. Note that
-        PynPoint only supports processing of square images so, in case required, images should
-        be made square with e.g. :class:`CropImagesModule` or :class:`RemoveLinesModule`.
+        Run method of the module. Looks for all FITS files in the input directory and imports the
+        images into the database. Note that previous database information is overwritten if
+        ``overwrite=True``. The filenames are stored as attributes.
 
         Returns
         -------
@@ -302,24 +298,26 @@ class FitsReadingModule(ReadingModule):
             None
         """
 
-        
         files = []
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-            location = ''
-        elif isinstance(self.m_filenames, list):
+            location = self._m_config_port.get_attribute("WORKING_PLACE")
+
+        elif isinstance(self.m_filenames, (list, tuple)):
             files = self.m_filenames
-            location = ''
+            location = self._m_config_port.get_attribute("WORKING_PLACE")
+
         elif isinstance(self.m_filenames, type(None)):
             location = os.path.join(self.m_input_location, '')
+
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(filename)
 
-        files.sort()
+            assert(files), 'No FITS files found in %s.' % self.m_input_location
 
-        assert(files), 'No FITS files found in %s.' % self.m_input_location
+        files.sort()
 
         overwrite_tags = []
 
