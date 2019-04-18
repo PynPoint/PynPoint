@@ -110,3 +110,31 @@ class TestFitsWritingModule(object):
         assert len(warning) == 1
         assert warning[0].message.args[0] == "Filename already present. Use overwrite=True " \
                                              "to overwrite an existing FITS file."
+
+    def test_attribute_length(self):
+
+        text = "long_text_long_text_long_text_long_text_long_text_long_text_long_text_long_text"
+
+        self.pipeline.set_attribute("images", "short", "value", static=True)
+        self.pipeline.set_attribute("images", "longer_than_eight1", "value", static=True)
+        self.pipeline.set_attribute("images", "longer_than_eight2", text, static=True)
+
+        write = FitsWritingModule(file_name="test.fits",
+                                  name_in="write6",
+                                  output_dir=None,
+                                  data_tag="images",
+                                  data_range=None,
+                                  overwrite=True)
+
+        self.pipeline.add_module(write)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("write6")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "Key 'hierarch longer_than_eight2' with value " \
+                                             "'long_text_long_text_long_text_long_text_long_" \
+                                             "text_long_text_long_text_long_text' is too " \
+                                             "long for the FITS format. To avoid an error, " \
+                                             "the value was truncated to 'long_text_long_text" \
+                                             "_long_text_long_text_long_tex'."
