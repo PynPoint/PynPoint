@@ -251,8 +251,8 @@ class FitsReadingModule(ReadingModule):
 
     def _extra_attributes(self,
                           fits_file,
-                          location,
-                          shape):
+                          shape,
+                          location=''):
         """
         Internal function which adds extra attributes to the central database.
 
@@ -302,8 +302,7 @@ class FitsReadingModule(ReadingModule):
             None
         """
 
-        location = os.path.join(self.m_input_location, '')
-
+        
         files = []
 
         if isinstance(self.m_filenames, str):
@@ -311,6 +310,7 @@ class FitsReadingModule(ReadingModule):
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
         elif isinstance(self.m_filenames, type(None)):
+            location = os.path.join(self.m_input_location, '')
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(filename)
