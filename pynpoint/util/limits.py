@@ -82,40 +82,45 @@ def contrast_limit(path_images,
     if threshold[0] == "sigma":
         sigma = threshold[1]
 
+        # Calculate the FPF for a given sigma level
         fpf = student_t(t_input=threshold,
                         radius=position[0],
                         size=aperture,
                         ignore=False)
 
     elif threshold[0] == "fpf":
+        fpf = threshold[1]
+
+        # Calculate the sigma level for a given FPF
         sigma = student_t(t_input=threshold,
                           radius=position[0],
                           size=aperture,
                           ignore=False)
 
-        fpf = threshold[1]
-
     else:
         raise ValueError("Threshold type not recognized.")
 
+    # Cartesian coordinates of the fake planet
     xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
+    # Determine the noise level
     _, t_noise, _, _ = false_alarm(image=noise[0, ],
                                    x_pos=xy_fake[0],
                                    y_pos=xy_fake[1],
                                    size=aperture,
                                    ignore=False)
 
+    # Measure the flux of the star
     im_center = center_subpixel(images)
     ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
-
     phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
     star = phot_table['aperture_sum'][0]
 
+    # Magnitude of the injected planet
     flux_in = snr_inject*t_noise
-
     mag = -2.5*math.log10(flux_in/star)
 
+    # Inject the fake planet
     fake = fake_planet(images=images,
                        psf=psf,
                        parang=parang,
@@ -123,20 +128,25 @@ def contrast_limit(path_images,
                        magnitude=mag,
                        psf_scaling=psf_scaling)
 
+    # Run the PSF subtraction
     _, im_res = pca_psf_subtraction(images=fake*mask,
                                     angles=-1.*parang+extra_rot,
                                     pca_number=pca_number)
 
+    # Stack the residuals
     im_res = combine_residuals(method=residuals, res_rot=im_res)
 
+    # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],
                                     x_pos=xy_fake[0],
                                     y_pos=xy_fake[1],
                                     size=aperture,
                                     ignore=False)
 
+    # Calculate the self-subtraction
     attenuation = flux_out/flux_in
 
+    # Calculate the detection limit
     contrast = sigma*t_noise/(attenuation*star)
     contrast = -2.5*math.log10(contrast)
 
