@@ -1,5 +1,5 @@
 """
-Functions for the test cases.
+Functions for testing the pipeline and modules.
 """
 
 from __future__ import absolute_import
@@ -19,6 +19,16 @@ from six.moves import range
 def create_config(filename):
     """
     Create a configuration file.
+
+    Parameters
+    ----------
+    filename : str
+        Configuration filename.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     file_obj = open(filename, 'w')
@@ -51,6 +61,20 @@ def create_random(path,
                   parang=np.arange(1., 11., 1.)):
     """
     Create a stack of images with Gaussian distributed pixel values.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    ndit : int
+        Number of images.
+    parang : numpy.ndarray
+        Parallactic angles.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     if not os.path.exists(path):
@@ -73,11 +97,35 @@ def create_fits(path,
                 image,
                 ndit,
                 exp_no=0,
-                parang=[0., 0.],
+                parang=np.array([0., 0.]),
                 x0=0.,
                 y0=0.):
     """
     Create a FITS file with images and header information.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    filename : str
+        FITS filename.
+    image : numpy.ndarray
+        Images.
+    ndit : int
+        Number of integrations.
+    exp_no : int
+        Exposure number.
+    parang : list(float, float)
+        Start and end parallactic angle.
+    x0 : float
+        Horizontal dither position.
+    y0 : float
+        Vertical dither position.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     if not os.path.exists(path):
@@ -108,7 +156,37 @@ def create_fake(path,
                 sep,
                 contrast):
     """
-    Create ADI test data with fake planets.
+    Create ADI test data with a fake planet.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    ndit : list(int, )
+        Number of exposures.
+    nframes : list(int, )
+        Number of images.
+    exp_no : list(int, )
+        Exposure numbers.
+    npix : tupe(int, int)
+        Number of pixels in x and y direction.
+    fwhm : float
+        Full width at half maximum (pix) of the PSF.
+    x0 : list(float, )
+        Horizontal positions of the star.
+    y0 : list(float, )
+        Vertical positions of the star.
+    angles : list(list(float, float), )
+        Derotation angles (deg).
+    sep : float
+        Separation of the planet.
+    contrast : float
+        Brightness contrast of the planet.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     if not os.path.exists(path):
@@ -166,6 +244,36 @@ def create_star_data(path,
                      noise=True):
     """
     Create data with a stellar PSF and Gaussian noise.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    npix_x : int
+        Number of pixels in horizontal direction.
+    npix_y : int
+        Number of pixels in vertical direction.
+    x0 : list(float, )
+        Positions of the PSF in horizontal direction.
+    y0 : list(float, )
+        Positions of the PSF in vertical direction.
+    parang_start : list(float, )
+        Start values of the parallactic angle (deg).
+    parang_end : list(float, )
+        End values of the parallactic angle (deg).
+    exp_no : list(int, )
+        Exposure numbers.
+    ndit : int
+        Number of exposures.
+    nframes : int
+        Number of frames.
+    noise : bool
+        Adding noise to the images.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     fwhm = 3.
@@ -203,10 +311,26 @@ def create_star_data(path,
 
 def create_waffle_data(path,
                        npix,
-                       x_waffle,
-                       y_waffle):
+                       x_spot,
+                       y_spot):
     """
-    Create data with waffle spots and Gaussian noise.
+    Create data with satellite spots and Gaussian noise.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    npix : int
+        Number of pixels in both dimensions.
+    x_spot : list(float, )
+        Pixel positions in horizontal direction of the satellite spots.
+    y_spot : list(float, )
+        Pixel positions in vertical direction of the satellite spots.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     if not os.path.exists(path):
@@ -221,8 +345,8 @@ def create_waffle_data(path,
 
     image = np.zeros((npix, npix))
 
-    for j, _ in enumerate(x_waffle):
-        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_waffle[j])**2+(yy-y_waffle[j])**2)/ \
+    for j, _ in enumerate(x_spot):
+        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2)/ \
                (2.*sigma**2))
         image += star
 
@@ -243,6 +367,20 @@ def remove_test_data(path,
                      files=None):
     """
     Function to remove data created by the test cases.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    folders : list(str, )
+        Folders to remove.
+    files : list(str, )
+        Files to removes.
+
+    Returns
+    -------
+    NoneType
+        None
     """
 
     os.remove(path+'PynPoint_database.hdf5')
@@ -255,4 +393,3 @@ def remove_test_data(path,
     if files is not None:
         for item in files:
             os.remove(path+item)
-            
