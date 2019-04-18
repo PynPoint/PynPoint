@@ -186,13 +186,15 @@ class TestFitsReadingModule(object):
                                            "found in the FITS header."
 
     def test_fits_read_files(self):
+        folder = os.path.dirname(os.path.abspath(__file__))
 
         read = FitsReadingModule(name_in="read7",
                                  input_dir=None,
                                  image_tag="files",
                                  overwrite=False,
                                  check=True,
-                                 filenames=["fits/image01.fits", "fits/image03.fits"])
+                                 filenames=[folder+"/fits/image01.fits",
+                                            folder+"/fits/image03.fits"])
 
         self.pipeline.add_module(read)
 

@@ -57,11 +57,11 @@ class FitsReadingModule(ReadingModule):
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
         filenames : str or list(str, )
-            If a string, then a path of a text file should be provided (relative to the location
-            of the user's pypeline script). This text file should contain a list of FITS files
-            (also relative to the pypeline script). If a list, then the paths of the FITS files
-            (relative to the pypeline script) should be provided directly. If set to None, the
-            FITS files in the `input_dir` are read.
+            If a string, then a path of a text file should be provided. This text file should
+            contain a list of FITS files. If a list, then the paths of the FITS files should be
+            provided directly. If set to None, the FITS files in the `input_dir` are read. All
+            paths should be provided either relative to the Python working folder (i.e., the folder
+            where Python is executed) or as absolute paths.
 
         Returns
         -------
@@ -125,7 +125,7 @@ class FitsReadingModule(ReadingModule):
             Image shape.
         """
 
-        hdulist = fits.open(location + fits_file)
+        hdulist = fits.open(os.path.join(location, fits_file))
         images = hdulist[0].data.byteswap().newbyteorder()
 
         if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
@@ -283,7 +283,7 @@ class FitsReadingModule(ReadingModule):
         for _, item in enumerate(index):
             self.m_image_out_port.append_attribute_data("INDEX", item)
 
-        self.m_image_out_port.append_attribute_data("FILES", location+fits_file)
+        self.m_image_out_port.append_attribute_data("FILES", os.path.join(location, fits_file))
         self.m_image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
 
         self.m_count += nimages
@@ -304,12 +304,11 @@ class FitsReadingModule(ReadingModule):
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-            location = os.path.dirname(os.path.abspath(__file__))
-            print(location)
+            location = os.getcwd()
 
         elif isinstance(self.m_filenames, (list, tuple)):
             files = self.m_filenames
-            location = os.path.dirname(os.path.abspath(__file__))
+            location = os.getcwd()
 
         elif isinstance(self.m_filenames, type(None)):
             location = os.path.join(self.m_input_location, '')
