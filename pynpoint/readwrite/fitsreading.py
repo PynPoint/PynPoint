@@ -58,13 +58,13 @@ class FitsReadingModule(ReadingModule):
         check : bool
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
-        txt_path : string
-            Path of the file containing a list of .fits files to be added in the image_tag. The txt
-            file should contain the relative path to the input_dir of the desired fits file in each
-            line. Mutually exclusive with file_list parameter
-        file_list : list[string, string, ]
-            List of strings in which the desired file path is written relative to the working 
-            directory. Mutually exclusive with the txt_path parameter
+        filenames : None *or* str *or* list
+            Optional parameter:
+              - can be *None*, then all fits files in *input_dir* are read.
+              - can be *str*, then it must be a path to a file containing a list of fits files to 
+              be read. Each line must contain exactly one filepath relative to *input_dir*.
+              - can be *list*, then each element must be a string containing the relative path to 
+              *input_dir* of the desired fits file.
         Returns
         -------
         NoneType
