@@ -110,7 +110,7 @@ class FitsWritingModule(WritingModule):
                     if len(key + value) >= 75:
                         warnings.warn("Key '{}' with value '{}' is too long "
                                       "for the FITS format. To avoid an "
-                                      "error, the value was truncated to '{}'!"
+                                      "error, the value was truncated to '{}'."
                                       .format(key, value, value[:max_val_len]))
 
                     prihdr[key] = value[:max_val_len]
