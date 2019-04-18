@@ -147,7 +147,7 @@ def create_mask(im_shape,
 
     Returns
     -------
-    numpy.ndarray     
+    numpy.ndarray
         Image mask.
     """
 
