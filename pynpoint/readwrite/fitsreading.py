@@ -309,7 +309,7 @@ class FitsReadingModule(ReadingModule):
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
         elif isinstance(self.m_filenames, list):
-            files = list(self.m_filenames)
+            files = self.m_filenames
         elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
