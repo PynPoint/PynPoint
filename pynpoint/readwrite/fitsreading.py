@@ -93,8 +93,8 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
+        assert(type(filenames) in [type(None), type(list()), type("string"), "The given filenames parameter is of the wrong type.")
         self.m_filenames = filenames
-
 
     def _read_single_file(self,
                           fits_file,
