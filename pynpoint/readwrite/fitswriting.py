@@ -97,8 +97,24 @@ class FitsWritingModule(WritingModule):
             attributes = self.m_data_port.get_all_static_attributes()
 
             for attr in attributes:
+
                 if len(attr) > 8:
-                    prihdr["hierarch "+attr] = str(attributes[attr])
+
+                    # Check if the header keyword together with its value is
+                    # too long for the FITS format. If that is the case, raise
+                    # a warning and truncate the value to avoid a ValueError.
+                    key = "hierarch " + attr
+                    value = str(attributes[attr])
+                    max_val_len = 75 - len(key)
+
+                    if len(key + value) >= 75:
+                        warnings.warn("Key '{}' with value '{}' is too long "
+                                      "for the FITS format. To avoid an "
+                                      "error, the value was truncated to '{}'."
+                                      .format(key, value, value[:max_val_len]))
+
+                    prihdr[key] = value[:max_val_len]
+
                 else:
                     prihdr[attr] = attributes[attr]
 
