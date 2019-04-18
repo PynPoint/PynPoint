@@ -152,3 +152,4 @@ def contrast_limit(path_images,
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
     queue.put((position[0], position[1], contrast, fpf))
+
