@@ -93,7 +93,7 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
-        if not type(filenames) in [type(None), type(list()), type("string")]:
+        if not isinstance(filenames, (type(None), list, str)):
             raise TypeError("parameter filenames is of the wrong type")
         self.m_filenames = filenames
 
@@ -306,11 +306,11 @@ class FitsReadingModule(ReadingModule):
 
         files = []
 
-        if type(self.m_filenames) == type(" "):
+        if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-        elif type(self.m_filenames) == type(list()):
+        elif isinstance(self.m_filenames, list):
             files = list(self.m_filenames)
-        elif type(self.m_filenames) == type(None):
+        elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(filename)
