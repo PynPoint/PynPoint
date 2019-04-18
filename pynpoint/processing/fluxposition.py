@@ -491,11 +491,11 @@ class FalsePositiveModule(ProcessingModule):
             pos_x, pos_y = arg
 
             try:
-                _, _, fpf = false_alarm(image=image,
-                                        x_pos=pos_x,
-                                        y_pos=pos_y,
-                                        size=self.m_aperture,
-                                        ignore=self.m_ignore)
+                _, _, _, fpf = false_alarm(image=image,
+                                           x_pos=pos_x,
+                                           y_pos=pos_y,
+                                           size=self.m_aperture,
+                                           ignore=self.m_ignore)
 
             except ValueError:
                 fpf = float('inf')
@@ -523,20 +523,20 @@ class FalsePositiveModule(ProcessingModule):
                                   tol=None,
                                   options={'xatol':self.m_tolerance, 'fatol':float("inf")})
 
-                _, snr, fpf = false_alarm(image=image,
-                                          x_pos=result.x[0],
-                                          y_pos=result.x[1],
-                                          size=self.m_aperture,
-                                          ignore=self.m_ignore)
+                _, _, snr, fpf = false_alarm(image=image,
+                                             x_pos=result.x[0],
+                                             y_pos=result.x[1],
+                                             size=self.m_aperture,
+                                             ignore=self.m_ignore)
 
                 sep_ang = cartesian_to_polar(center, result.x[0], result.x[1])
 
             else:
-                _, snr, fpf = false_alarm(image=image,
-                                          x_pos=self.m_position[0],
-                                          y_pos=self.m_position[1],
-                                          size=self.m_aperture,
-                                          ignore=self.m_ignore)
+                _, _, snr, fpf = false_alarm(image=image,
+                                             x_pos=self.m_position[0],
+                                             y_pos=self.m_position[1],
+                                             size=self.m_aperture,
+                                             ignore=self.m_ignore)
 
                 sep_ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
 
@@ -776,11 +776,11 @@ class MCMCsamplingModule(ProcessingModule):
 
         stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
 
-        noise, _, _ = false_alarm(image=stack[0, ],
-                                  x_pos=aperture['pos_x'],
-                                  y_pos=aperture['pos_y'],
-                                  size=aperture['radius'],
-                                  ignore=False)
+        _, noise, _, _ = false_alarm(image=stack[0, ],
+                                     x_pos=aperture['pos_x'],
+                                     y_pos=aperture['pos_y'],
+                                     size=aperture['radius'],
+                                     ignore=False)
 
         return noise**2
 
