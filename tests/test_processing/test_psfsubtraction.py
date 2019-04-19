@@ -178,7 +178,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_pca_single(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_single",
                                       images_in_tag="science",
                                       reference_in_tag="science",
@@ -220,7 +220,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_no_mean(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_no_mean",
                                       images_in_tag="science",
                                       reference_in_tag="science",
@@ -246,7 +246,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_ref(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_ref",
                                       images_in_tag="science",
                                       reference_in_tag="reference",
@@ -272,7 +272,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_ref_no_mean(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_ref_no_mean",
                                       images_in_tag="science",
                                       reference_in_tag="reference",
@@ -298,7 +298,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_pca_single_mask(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_single_mask",
                                       images_in_tag="science_prep",
                                       reference_in_tag="science_prep",
@@ -340,7 +340,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_no_mean_mask(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_no_mean_mask",
                                       images_in_tag="science_prep",
                                       reference_in_tag="science_prep",
@@ -366,7 +366,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_ref_mask(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_ref_mask",
                                       images_in_tag="science_prep",
                                       reference_in_tag="reference_prep",
@@ -392,7 +392,7 @@ class TestPSFSubtractionPCA(object):
 
     def test_psf_subtraction_ref_no_mean_mask(self):
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_ref_no_mean_mask",
                                       images_in_tag="science_prep",
                                       reference_in_tag="reference_prep",
@@ -421,7 +421,7 @@ class TestPSFSubtractionPCA(object):
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_multi",
                                       images_in_tag="science",
                                       reference_in_tag="science",
@@ -462,7 +462,7 @@ class TestPSFSubtractionPCA(object):
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
 
-        pca = PcaPsfSubtractionModule(pca_numbers=np.arange(1, 21, 1),
+        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in="pca_multi_mask",
                                       images_in_tag="science_prep",
                                       reference_in_tag="science_prep",

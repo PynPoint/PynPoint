@@ -35,7 +35,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  name_in="psf_subtraction",
                  images_in_tag="im_arr",
                  reference_in_tag="ref_arr",
-                 res_mean_tag="res_mean",
+                 res_mean_tag=None,
                  res_median_tag=None,
                  res_weighted_tag=None,
                  res_rot_mean_clip_tag=None,

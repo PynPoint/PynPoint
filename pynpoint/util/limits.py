@@ -110,9 +110,11 @@ def contrast_limit(path_images,
                                    size=aperture,
                                    ignore=False)
 
-    # Measure the flux of the star
+    # Aperture properties
     im_center = center_subpixel(images)
     ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
+
+    # Measure the flux of the star
     phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
     star = phot_table['aperture_sum'][0]
 
@@ -143,7 +145,7 @@ def contrast_limit(path_images,
                                     size=aperture,
                                     ignore=False)
 
-    # Calculate the self-subtraction
+    # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
 
     # Calculate the detection limit

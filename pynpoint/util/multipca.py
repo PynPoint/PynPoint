@@ -229,6 +229,9 @@ class PcaTaskWriter(TaskWriter):
         elif clip_out_port is not None:
             data_out_port_in = clip_out_port
 
+        else:
+            data_out_port_in = None
+
         super(PcaTaskWriter, self).__init__(result_queue_in, data_out_port_in, data_mutex_in)
 
         self.m_mean_out_port = mean_out_port
