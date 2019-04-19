@@ -142,7 +142,7 @@ def create_mask(im_shape,
     ----------
     im_shape : tuple(int, int)
         Image size in both dimensions.
-    size : tuple(float, float)
+    size : list(float, float)
         Size (pix) of the inner and outer mask.
 
     Returns

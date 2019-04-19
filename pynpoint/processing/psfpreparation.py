@@ -115,13 +115,13 @@ class PSFpreparationModule(ProcessingModule):
                                      axis=(1, 2))
 
         if self.m_resize is None:
-            mask = create_mask(im_shape[-2:], (self.m_cent_size, self.m_edge_size))
+            mask = create_mask(im_shape[-2:], [self.m_cent_size, self.m_edge_size])
 
         else:
             y_pix, x_pix = int(im_shape[-2]*self.m_resize), int(im_shape[-1]*self.m_resize)
             im_res = np.zeros((nimages, y_pix, x_pix))
 
-            mask = create_mask(im_res.shape[-2:], (self.m_cent_size, self.m_edge_size))
+            mask = create_mask(im_res.shape[-2:], [self.m_cent_size, self.m_edge_size])
 
         for i in range(nimages):
             progress(i, nimages, "Running PSFpreparationModule...")
