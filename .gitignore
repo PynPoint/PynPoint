@@ -23,9 +23,5 @@ docs/_build
 
 # Mac
 .DS_Store
-<<<<<<< HEAD
-.vscode/
-=======
 .vscode
-.vscode/settings.json
->>>>>>> 2d274f7ea5b8e95793714c53a2304db2542e426a
+pynpoint.egg-info
