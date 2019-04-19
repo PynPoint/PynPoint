@@ -30,7 +30,7 @@ class PSFpreparationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr",
                  mask_out_tag="mask_arr",
-                 norm=True,
+                 norm=False,
                  resize=None,
                  cent_size=None,
                  edge_size=None):
@@ -69,17 +69,17 @@ class PSFpreparationModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
-        if mask_out_tag is not None:
-            self.m_mask_out_port = self.add_output_port(mask_out_tag)
-        else:
+        if mask_out_tag is None:
             self.m_mask_out_port = None
+        else:
+            self.m_mask_out_port = self.add_output_port(mask_out_tag)
 
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
+        self.m_norm = norm
         self.m_resize = resize
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
-        self.m_norm = norm
 
     def run(self):
         """
@@ -90,6 +90,13 @@ class PSFpreparationModule(ProcessingModule):
         NoneType
             None
         """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
@@ -108,16 +115,13 @@ class PSFpreparationModule(ProcessingModule):
                                      axis=(1, 2))
 
         if self.m_resize is None:
-            mask = create_mask((im_shape[-2], im_shape[-1]),
-                               [self.m_cent_size, self.m_edge_size])
+            mask = create_mask(im_shape[-2:], (self.m_cent_size, self.m_edge_size))
 
         else:
-            im_res = np.zeros((nimages,
-                               int(im_shape[-2]*self.m_resize),
-                               int(im_shape[-1]*self.m_resize)))
+            y_pix, x_pix = int(im_shape[-2]*self.m_resize), int(im_shape[-1]*self.m_resize)
+            im_res = np.zeros((nimages, y_pix, x_pix))
 
-            mask = create_mask((im_res.shape[-2], im_res.shape[-1]),
-                               [self.m_cent_size, self.m_edge_size])
+            mask = create_mask(im_res.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
         for i in range(nimages):
             progress(i, nimages, "Running PSFpreparationModule...")
@@ -134,13 +138,7 @@ class PSFpreparationModule(ProcessingModule):
                                                    zoom=[self.m_resize, self.m_resize],
                                                    order=5)
 
-            if i == 0:
-                if nimages == 1:
-                    self.m_image_out_port.set_all(image*mask, data_dim=2)
-                else:
-                    self.m_image_out_port.set_all(image*mask, data_dim=3)
-            else:
-                self.m_image_out_port.append(image*mask, data_dim=3)
+            self.m_image_out_port.append(image*mask, data_dim=3)
 
         if self.m_mask_out_port is not None:
             self.m_mask_out_port.set_all(mask)
@@ -236,9 +234,7 @@ class AngleInterpolationModule(ProcessingModule):
                 parang_end[i] += 360.
 
             new_angles = np.append(new_angles,
-                                   np.linspace(parang_start[i],
-                                               parang_end[i],
-                                               num=steps[i]))
+                                   np.linspace(parang_start[i], parang_end[i], num=steps[i]))
 
         sys.stdout.write("Running AngleInterpolationModule... [DONE]\n")
         sys.stdout.flush()
@@ -649,11 +645,7 @@ class SDIpreparationModule(ProcessingModule):
         for i in range(nimages):
             progress(i, nimages, "Running SDIpreparationModule...")
 
-            if nimages == 1:
-                image = self.m_image_in_port.get_all()
-
-            else:
-                image = self.m_image_in_port[i, ]
+            image = self.m_image_in_port[i, ]
 
             im_scale = width_factor * scale_image(image, wvl_factor, wvl_factor)
 
@@ -673,11 +665,7 @@ class SDIpreparationModule(ProcessingModule):
             if npix_del%2 == 1:
                 im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation="spline")
 
-            if nimages == 1:
-                self.m_image_out_port.set_all(im_crop)
-
-            else:
-                self.m_image_out_port.append(im_crop, data_dim=3)
+            self.m_image_out_port.append(im_crop, data_dim=3)
 
         sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
         sys.stdout.flush()
