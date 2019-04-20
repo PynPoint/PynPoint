@@ -30,8 +30,8 @@ def contrast_limit(path_images,
                    queue):
 
     """
-    Function for calculating the contrast limit at a specified position with a correction for
-    small sample statistics.
+    Function for calculating the contrast limit at a specified position for a given sigma level or
+    false positive fraction, both corrected for small sample statistics.
 
     Parameters
     ----------

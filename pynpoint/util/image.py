@@ -300,3 +300,43 @@ def polar_to_cartesian(image,
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
     return tuple([x_pos, y_pos])
+
+def pixel_distance(im_shape,
+                   position=None):
+    """
+    Function to calculate the distance of each pixel with respect to a given pixel position.
+
+    Parameters
+    ----------
+    im_shape : tuple(int, int)
+        Image shape (y, x).
+    position : tuple(int, int)
+        Pixel center (y, x) from which the distance is calculated. The image center is used if
+        set to None. Python indexing starts at zero so the bottom left pixel is (0, 0).
+
+    Returns
+    -------
+    numpy.ndarray
+        2D array with the distances of each pixel from the provided pixel position.
+    """
+
+    if im_shape[0]%2 == 0:
+        y_grid = np.linspace(-im_shape[0]/2+0.5, im_shape[0]/2-0.5, im_shape[0])
+    elif im_shape[0]%2 == 1:
+        y_grid = np.linspace(-(im_shape[0]-1)/2, (im_shape[0]-1)/2, im_shape[0])
+
+    if im_shape[1]%2 == 0:
+        x_grid = np.linspace(-im_shape[1]/2+0.5, im_shape[1]/2-0.5, im_shape[1])
+    elif im_shape[0]%2 == 1:
+        x_grid = np.linspace(-(im_shape[1]-1)/2, (im_shape[1]-1)/2, im_shape[1])
+
+    if position is not None:
+        y_shift = y_grid[position[0]]
+        x_shift = x_grid[position[1]]
+
+        y_grid -= y_shift
+        x_grid -= x_shift
+
+    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+    return np.sqrt(xx_grid**2 + yy_grid**2)
