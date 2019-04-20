@@ -541,13 +541,7 @@ class FalsePositiveModule(ProcessingModule):
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
             sep_ang = cartesian_to_polar(center, x_pos, y_pos)
-
-            result = np.column_stack((self.m_position[0],
-                                      self.m_position[1],
-                                      sep_ang[0]*pixscale,
-                                      sep_ang[1],
-                                      snr,
-                                      fpf))
+            result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
 
