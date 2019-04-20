@@ -241,7 +241,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "star = "+str(sum(star_nframes))+", background = "+str(len(background_nframes))
+        history = "frames = "+str(sum(star_nframes))+", "+str(len(background_nframes))
         self.m_star_out_port.copy_attributes(self.m_image_in_port)
         self.m_star_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
