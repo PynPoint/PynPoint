@@ -529,7 +529,7 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                pos_x, pos_y = result.x[0], result.x[1]
+                x_pos, y_pos = result.x[0], result.x[1]
 
             else:
                 _, _, snr, fpf = false_alarm(image=image,
@@ -538,7 +538,7 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                pos_x, pos_y = self.m_position[0], self.m_position[1]
+                x_pos, y_pos = self.m_position[0], self.m_position[1]
 
             sep_ang = cartesian_to_polar(center, x_pos, y_pos)
 
