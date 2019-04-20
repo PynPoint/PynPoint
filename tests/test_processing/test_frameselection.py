@@ -6,7 +6,8 @@ import numpy as np
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectionModule, \
-                                               RemoveLastFrameModule, RemoveStartFramesModule
+                                               RemoveLastFrameModule, RemoveStartFramesModule, \
+                                               ImageStatisticsModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
 warnings.simplefilter("always")
@@ -225,3 +226,33 @@ class TestFrameSelection(object):
         attribute = self.pipeline.get_attribute("removed2", "STAR_POSITION", static=False)
         assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
         assert attribute.shape == (12, 2)
+
+    def test_image_statistics_full(self):
+
+        module = ImageStatisticsModule(name_in="stat1",
+                                       image_in_tag="read",
+                                       stat_out_tag="stat1",
+                                       position=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("stat1")
+
+        data = self.pipeline.get_data("stat1")
+        assert np.allclose(data[0, 0], -0.0007312880198509591, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(data), 48.479917666979716, rtol=limit, atol=0.)
+        assert data.shape == (44, 6)
+
+    def test_image_statistics_posiiton(self):
+
+        module = ImageStatisticsModule(name_in="stat2",
+                                       image_in_tag="read",
+                                       stat_out_tag="stat2",
+                                       position=(70, 20, 0.5))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("stat2")
+
+        data = self.pipeline.get_data("stat2")
+        assert np.allclose(data[0, 0], -0.00046030773937605655, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(data), 0.19799486555625812, rtol=limit, atol=0.)
+        assert data.shape == (44, 6)

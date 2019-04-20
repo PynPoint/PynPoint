@@ -13,14 +13,14 @@ import numpy as np
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image
+from pynpoint.util.image import crop_image, pixel_distance
 from pynpoint.util.module import progress, memory_frames, locate_star
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
 
 class RemoveFramesModule(ProcessingModule):
     """
-    Module for removing frames.
+    Pipeline module for removing images by their index number.
     """
 
     def __init__(self,
@@ -164,7 +164,7 @@ class RemoveFramesModule(ProcessingModule):
 
 class FrameSelectionModule(ProcessingModule):
     """
-    Module for frame selection.
+    Pipeline module for frame selection.
     """
 
     def __init__(self,
@@ -445,8 +445,8 @@ class FrameSelectionModule(ProcessingModule):
 
 class RemoveLastFrameModule(ProcessingModule):
     """
-    Module for removing every NDIT+1 frame from NACO data obtained in cube mode. This frame contains
-    the average pixel values of the cube.
+    Pipeline module for removing every NDIT+1 frame from NACO data obtained in cube mode. This
+    frame contains the average pixel values of the cube.
     """
 
     def __init__(self,
@@ -534,8 +534,8 @@ class RemoveLastFrameModule(ProcessingModule):
 
 class RemoveStartFramesModule(ProcessingModule):
     """
-    Module for removing a fixed number of images at the beginning of each cube. This can be
-    useful for NACO data in which the background is significantly higher in the first several
+    Pipeline module for removing a fixed number of images at the beginning of each cube. This can
+    be useful for NACO data in which the background is significantly higher in the first several
     frames of a data cube.
     """
 
@@ -647,3 +647,101 @@ class RemoveStartFramesModule(ProcessingModule):
         self.m_image_out_port.add_history("RemoveStartFramesModule", history)
 
         self.m_image_out_port.close_port()
+
+
+class ImageStatisticsModule(ProcessingModule):
+    """
+    Pipeline module for calculating image statistics for the full images or a subsection of the
+    images.
+    """
+
+    def __init__(self,
+                 name_in="remove_last_frame",
+                 image_in_tag="im_arr",
+                 stat_out_tag="stat",
+                 position=None):
+        """
+        Constructor of ImageStatisticsModule.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with the images that are read as input.
+        stat_out_tag : str
+            Tag of the database entry with the statistical results that are written as output.
+        position : tuple(int, int, float)
+            Position (x, y) (pix) and radius (arcsec) of the circular area in which the statistics
+            are calculated. The full image is used if set to None.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(ImageStatisticsModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_stat_out_port = self.add_output_port(stat_out_tag)
+
+        self.m_position = position
+
+    def run(self):
+        """
+        Run method of the module. Calculates the minimum, maximum, sum, mean, median, and standard
+        deviation of the pixel values of each image separately. NaNs are ignored for each
+        calculation. The values are calculated for either the full images or a circular
+        subsection of the images.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        self.m_stat_out_port.del_all_data()
+        self.m_stat_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        if self.m_position is not None:
+            self.m_position = (int(self.m_position[1]), # y position
+                               int(self.m_position[0]), # x position
+                               self.m_position[2]/pixscale) # radius (pix)
+
+        nimages = self.m_image_in_port.get_shape()[0]
+        im_shape = self.m_image_in_port.get_shape()[1:]
+
+        frames = memory_frames(memory, nimages)
+
+        for i, _ in enumerate(frames[:-1]):
+            progress(i, len(frames[:-1]), "Running ImageStatisticsModule...")
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = np.reshape(images, (images.shape[0], im_shape[0]*im_shape[1]))
+
+            if self.m_position is not None:
+                rr_grid = pixel_distance(im_shape, self.m_position)
+                indices = np.where(rr_grid <= self.m_position[2])[0]
+                images = images[:, indices]
+
+            nmin = np.nanmin(images, axis=1)
+            nmax = np.nanmax(images, axis=1)
+            nsum = np.nansum(images, axis=1)
+            mean = np.nanmean(images, axis=1)
+            median = np.nanmedian(images, axis=1)
+            std = np.nanstd(images, axis=1)
+
+            result = np.column_stack((nmin, nmax, nsum, mean, median, std))
+            self.m_stat_out_port.append(result)
+
+        sys.stdout.write("Running ImageStatisticsModule... [DONE]\n")
+        sys.stdout.flush()
+
+        history = "number of images = "+str(nimages)
+        self.m_stat_out_port.copy_attributes(self.m_image_in_port)
+        self.m_stat_out_port.add_history("ImageStatisticsModule", history)
+        self.m_stat_out_port.close_port()

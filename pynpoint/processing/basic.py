@@ -15,7 +15,7 @@ from pynpoint.util.module import progress, memory_frames
 
 class SubtractImagesModule(ProcessingModule):
     """
-    Module for subtracting two sets of images.
+    Pipeline module for subtracting two sets of images.
     """
 
     def __init__(self,
@@ -93,7 +93,7 @@ class SubtractImagesModule(ProcessingModule):
 
 class AddImagesModule(ProcessingModule):
     """
-    Module for adding two sets of images.
+    Pipeline module for adding two sets of images.
     """
 
     def __init__(self,
@@ -171,7 +171,7 @@ class AddImagesModule(ProcessingModule):
 
 class RotateImagesModule(ProcessingModule):
     """
-    Module for rotating images.
+    Pipeline module for rotating images.
     """
 
     def __init__(self,

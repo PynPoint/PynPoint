@@ -21,7 +21,7 @@ from pynpoint.util.image import create_mask, scale_image, shift_image
 
 class PSFpreparationModule(ProcessingModule):
     """
-    Module to prepare the data for PSF subtraction with PCA. The preparation steps include
+    Pipeline module to prepare the data for PSF subtraction with PCA. The preparation steps include
     resizing, masking, and image normalization.
     """
 
@@ -169,8 +169,8 @@ class PSFpreparationModule(ProcessingModule):
 
 class AngleInterpolationModule(ProcessingModule):
     """
-    Module for calculating the parallactic angle values by interpolating between the begin and end
-    value of a data cube.
+    Pipeline module for calculating the parallactic angle values by interpolating between the
+    begin and end value of a data cube.
     """
 
     def __init__(self,
@@ -246,7 +246,7 @@ class AngleInterpolationModule(ProcessingModule):
 
 class SortParangModule(ProcessingModule):
     """
-    Module to sort the images and non-static attributes with increasing INDEX.
+    Pipeline module to sort the images and non-static attributes with increasing INDEX.
     """
 
     def __init__(self,
@@ -351,9 +351,9 @@ class SortParangModule(ProcessingModule):
 
 class AngleCalculationModule(ProcessingModule):
     """
-    Module for calculating the parallactic angles. The start time of the observation is taken and
-    multiples of the exposure time are added to derive the parallactic angle of each frame inside
-    the cube. Instrument specific overheads are included.
+    Pipeline module for calculating the parallactic angles. The start time of the observation is
+    taken and multiples of the exposure time are added to derive the parallactic angle of each
+    frame inside the cube. Instrument specific overheads are included.
     """
 
     __author__ = "Alexander Bohn"
@@ -575,7 +575,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SDIpreparationModule(ProcessingModule):
     """
-    Module for preparing continuum frames for SDI subtraction.
+    Pipeline module for preparing continuum frames for SDI subtraction.
     """
 
     __author__ = "Gabriele Cugno"

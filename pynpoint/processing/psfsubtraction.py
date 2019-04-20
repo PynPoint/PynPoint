@@ -24,10 +24,10 @@ from pynpoint.util.residuals import combine_residuals
 
 class PcaPsfSubtractionModule(ProcessingModule):
     """
-    Module for PSF subtraction with principal component analysis (PCA). The residuals are
-    calculated in parallel for the selected numbers of principal components. This may
-    require a large amount of memory in case the stack of input images is very large.
-    The number of processes can be set with the CPU keyword in the configuration file.
+    Pipeline module for PSF subtraction with principal component analysis (PCA). The residuals are
+    calculated in parallel for the selected numbers of principal components. This may require
+    a large amount of memory in case the stack of input images is very large. The number of
+    processes can be set with the CPU keyword in the configuration file.
     """
 
     def __init__(self,
@@ -48,7 +48,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         Parameters
         ----------
-        pca_numbers : int or tuple(int, )
+        pca_numbers : list(int, ), tuple(int, ), or numpy.ndarray
             Number of principal components used for the PSF model. Can be a single value or a tuple
             with integers.
         name_in : str
@@ -371,8 +371,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
 class ClassicalADIModule(ProcessingModule):
     """
-    Module for PSF subtraction with classical ADI by subtracting a median-combined reference
-    image. A rotation threshold can be set for a fixed separation to prevent self-subtraction.
+    Pipeline module for PSF subtraction with classical ADI by subtracting a median-combined
+    reference image. A rotation threshold can be set for a fixed separation to prevent
+    self-subtraction.
     """
 
     def __init__(self,
@@ -391,8 +392,8 @@ class ClassicalADIModule(ProcessingModule):
         ----------
         threshold : tuple(float, float, float)
             Tuple with the separation for which the angle threshold is optimized (arcsec), FWHM of
-            the PSF (arcsec), and the threshold (FWHM) for thenthe reference images. No threshold
-            is used if set to None.
+            the PSF (arcsec), and the threshold (FWHM) for the selection of the reference images.
+            No threshold is used if set to None.
         nreference : int
             Number of reference image, closest in line to the science image. All images are used if
             *threshold* is None or *nreference* is None.

@@ -21,9 +21,9 @@ from pynpoint.util.residuals import combine_residuals
 
 class ContrastCurveModule(ProcessingModule):
     """
-    Module to calculate contrast limits by iterating towards a threshold for the false positive
-    fraction, with a correction for small sample statistics. Positions are processed in parallel
-    if CPU > 1 in the configuration file.
+    Pipeline module to calculate contrast limits by iterating towards a threshold for the false
+    positive fraction, with a correction for small sample statistics. Positions are processed in
+    parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
     def __init__(self,

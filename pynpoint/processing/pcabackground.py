@@ -24,7 +24,7 @@ from pynpoint.util.module import progress, memory_frames, locate_star
 
 class PCABackgroundPreparationModule(ProcessingModule):
     """
-    Module for preparing the PCA background subtraction.
+    Pipeline module for preparing the PCA background subtraction.
     """
 
     def __init__(self,
@@ -241,7 +241,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "star = "+str(sum(star_nframes))+", background"+str(len(background_nframes))
+        history = "star = "+str(sum(star_nframes))+", background = "+str(len(background_nframes))
         self.m_star_out_port.copy_attributes(self.m_image_in_port)
         self.m_star_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
@@ -271,7 +271,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
 class PCABackgroundSubtractionModule(ProcessingModule):
     """
-    Module for PCA based background subtraction. See Hunziker et al. 2018 for details.
+    Pipeline module for PCA based background subtraction. See Hunziker et al. 2018 for details.
     """
 
     def __init__(self,
@@ -524,8 +524,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
 class DitheringBackgroundModule(ProcessingModule):
     """
-    Module for PCA-based background subtraction of data with dithering. This is a wrapper that
-    applies the processing modules required for the PCA background subtraction.
+    Pipeline module for PCA-based background subtraction of data with dithering. This is a wrapper
+    that applies the processing modules required for the PCA background subtraction.
     """
 
     def __init__(self,
