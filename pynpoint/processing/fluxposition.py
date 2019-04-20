@@ -529,7 +529,7 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                sep_ang = cartesian_to_polar(center, result.x[0], result.x[1])
+                pos_x, pos_y = result.x[0], result.x[1]
 
             else:
                 _, _, snr, fpf = false_alarm(image=image,
@@ -538,7 +538,9 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                sep_ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
+                pos_x, pos_y = self.m_position[0], self.m_position[1]
+
+            sep_ang = cartesian_to_polar(center, x_pos, y_pos)
 
             result = np.column_stack((self.m_position[0],
                                       self.m_position[1],
@@ -547,10 +549,7 @@ class FalsePositiveModule(ProcessingModule):
                                       snr,
                                       fpf))
 
-            if nimages == 1:
-                self.m_snr_out_port.set_all(result)
-            else:
-                self.m_snr_out_port.append(result, data_dim=2)
+            self.m_snr_out_port.append(result, data_dim=2)
 
         sys.stdout.write("Running FalsePositiveModule... [DONE]\n")
         sys.stdout.flush()
@@ -968,7 +967,6 @@ class AperturePhotometryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
-        nimages = self.m_image_in_port.get_shape()[0]
         image = self.m_image_in_port[0, ]
 
         if self.m_position is None:

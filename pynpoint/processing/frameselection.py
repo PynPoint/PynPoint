@@ -656,7 +656,7 @@ class ImageStatisticsModule(ProcessingModule):
     """
 
     def __init__(self,
-                 name_in="remove_last_frame",
+                 name_in="im_stat",
                  image_in_tag="im_arr",
                  stat_out_tag="stat",
                  position=None):
@@ -670,7 +670,9 @@ class ImageStatisticsModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry with the images that are read as input.
         stat_out_tag : str
-            Tag of the database entry with the statistical results that are written as output.
+            Tag of the database entry with the statistical results that are written as output. The
+            result is stored in the following order: minimum, maximum, sum, mean, median, and
+            standard deviation.
         position : tuple(int, int, float)
             Position (x, y) (pix) and radius (arcsec) of the circular area in which the statistics
             are calculated. The full image is used if set to None.
