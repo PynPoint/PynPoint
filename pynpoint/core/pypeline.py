@@ -172,7 +172,8 @@ class Pypeline(object):
 
         def _read_config(config_file, attributes):
             config = configparser.ConfigParser()
-            config.read_file(open(config_file))
+            with open(config_file) as cf:
+                config.read_file(cf)
 
             for key, val in six.iteritems(attributes):
                 if config.has_option(val["config"], key):
