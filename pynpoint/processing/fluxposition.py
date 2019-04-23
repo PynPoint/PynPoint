@@ -917,8 +917,9 @@ class AperturePhotometryModule(ProcessingModule):
         radius : int
             Radius (arcsec) of the circular aperture.
         position : tuple(float, float)
-            Center position (pix) of the aperture, (x, y). The center of the image will be used if
-            set to None.
+            Center position (pix) of the aperture, (x, y), with subpixel precision. The center of
+            the image will be used if set to None. Python indexing starts at zero so the bottom
+            left corner of the image has coordinates (-0.5, -0.5).
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -952,8 +953,7 @@ class AperturePhotometryModule(ProcessingModule):
         """
 
         def _photometry(image, aperture):
-            photo = aperture_photometry(image, aperture, method='exact')
-            return photo['aperture_sum']
+            return aperture_photometry(image, aperture, method='exact')['aperture_sum']
 
         self.m_phot_out_port.del_all_data()
         self.m_phot_out_port.del_all_attributes()
@@ -961,10 +961,8 @@ class AperturePhotometryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
-        image = self.m_image_in_port[0, ]
-
         if self.m_position is None:
-            self.m_position = center_subpixel(image)
+            self.m_position = center_subpixel(self.m_image_in_port[0, ])
 
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture(self.m_position, self.m_radius)
@@ -973,9 +971,9 @@ class AperturePhotometryModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       "Running AperturePhotometryModule...",
-                                      func_args=(aperture,))
+                                      func_args=(aperture, ))
 
-        history = "radius [arcsec] = "+str(self.m_radius*pixscale)
+        history = "radius [arcsec] = {:.3f}".format(self.m_radius*pixscale)
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history("AperturePhotometryModule", history)
         self.m_phot_out_port.close_port()
