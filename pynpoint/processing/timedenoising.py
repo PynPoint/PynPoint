@@ -88,8 +88,8 @@ class DwtWaveletConfiguration(object):
 
 class WaveletTimeDenoisingModule(ProcessingModule):
     """
-    Module for speckle subtraction in the time domain by using CWT or DWT wavelet shrinkage
-    (see Bonse et al. 2018).
+    Pipeline module for speckle subtraction in the time domain by using CWT or DWT wavelet
+    shrinkage (see Bonse et al. 2018).
     """
 
     def __init__(self,
@@ -253,7 +253,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
 class TimeNormalizationModule(ProcessingModule):
     """
-    Module for normalization of global brightness variations of the detector
+    Pipeline module for normalization of global brightness variations of the detector
     (see Bonse et al. 2018).
     """
 

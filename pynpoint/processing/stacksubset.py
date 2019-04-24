@@ -20,7 +20,7 @@ from pynpoint.util.image import rotate_images
 
 class StackAndSubsetModule(ProcessingModule):
     """
-    Module for stacking subsets of images and/or selecting a random sample of images.
+    Pipeline module for stacking subsets of images and/or selecting a random sample of images.
     """
 
     def __init__(self,
@@ -190,7 +190,8 @@ class StackAndSubsetModule(ProcessingModule):
 
 class MeanCubeModule(ProcessingModule):
     """
-    Module for calculating the mean of each individual cube associated with a database tag.
+    Pipeline module for calculating the mean of each individual cube associated with a database
+    tag.
     """
 
     def __init__(self,
@@ -286,7 +287,7 @@ class MeanCubeModule(ProcessingModule):
 
 class StackCubesModule(ProcessingModule):
     """
-    Module for calculating the mean or median of each original data cube associated with a
+    Pipeline module for calculating the mean or median of each original data cube associated with a
     database tag.
     """
 
@@ -389,7 +390,8 @@ class StackCubesModule(ProcessingModule):
 
 class DerotateAndStackModule(ProcessingModule):
     """
-    Module for derotating and/or stacking (i.e., taking the median or average) of the images.
+    Pipeline module for derotating and/or stacking (i.e., taking the median or average) of the
+    images.
     """
 
     def __init__(self,
@@ -516,7 +518,7 @@ class DerotateAndStackModule(ProcessingModule):
 
 class CombineTagsModule(ProcessingModule):
     """
-    Module for combining tags from multiple database entries into a single tag.
+    Pipeline module for combining tags from multiple database entries into a single tag.
     """
 
     def __init__(self,

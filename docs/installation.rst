@@ -38,6 +38,10 @@ If you do not use a virtual environment then you may have to add the ``-- user``
 
     $ pip install --user pynpoint
 
+PynPoint is actively being developed. To update the installation to the latest version::
+
+   $ pip install --upgrade PynPoint
+
 Installation from Github
 ------------------------
 

@@ -100,6 +100,7 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.FrameSelectionModule`: Frame selection to remove low-quality image.
 * :class:`~pynpoint.processing.frameselection.RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
 * :class:`~pynpoint.processing.frameselection.RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
+* :class:`~pynpoint.processing.frameselection.ImageStatisticsModule`: Compute statistics of the pixel values for each image.
 
 Image Resizing
 ~~~~~~~~~~~~~~
