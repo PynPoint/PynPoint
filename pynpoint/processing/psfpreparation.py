@@ -11,7 +11,6 @@ import warnings
 import numpy as np
 from astropy.coordinates import EarthLocation
 from astropy.time import Time
-from scipy import ndimage
 from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
@@ -21,8 +20,8 @@ from pynpoint.util.image import create_mask, scale_image, shift_image
 
 class PSFpreparationModule(ProcessingModule):
     """
-    Pipeline module to prepare the data for PSF subtraction with PCA. The preparation steps include
-    resizing, masking, and image normalization.
+    Module to prepare the data for PSF subtraction with PCA. The preparation steps include masking
+    and image normalization.
     """
 
     def __init__(self,
@@ -41,23 +40,30 @@ class PSFpreparationModule(ProcessingModule):
         ----------
         name_in : str
             Unique name of the module instance.
+            Default: "psf_preparation".
         image_in_tag : str
             Tag of the database entry that is read as input.
+            Default: "im_arr".
         image_out_tag : str
             Tag of the database entry with images that is written as output.
-        mask_out_tag : str
-            Tag of the database entry with the mask that is written as output.
+            Default: "im_arr".
+        mask_out_tag : str, optional
+            Tag of the database entry with the mask that is written as output. If set to None, no
+            mask array is saved.
+            Default: "mask_arr".
         norm : bool
-            Normalization of each image by its Frobenius norm.
+            Normalize each image by its Frobenius norm. Default: False.
         resize : float
-            Factor by which the data is resized. For example, if *resize* is 2 then the data will
-            be upsampled by a factor of two. No resizing is applied when set to None.
-        cent_size : float
-            Radius of the central mask (arcsec). No mask is used when set to None.
-        edge_size : float
-            Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
-            None. If the value is larger than half the image size then it will be set to half the
-            image size.
+            DEPRECATED. This parameter is currently ignored by the module and will be removed in a
+            future version of PynPoint.
+        cent_size : float, optional
+            Radius of the central mask (in arcsec). No mask is used when set to None.
+            Default: None.
+        edge_size : float, optional
+            Outer radius (in arcsec) beyond which pixels are masked. No outer mask is used when set
+            to None. If the value is larger than half the image size then it will be set to half
+            the image size.
+            Default: None.
 
         Returns
         -------
@@ -76,14 +82,19 @@ class PSFpreparationModule(ProcessingModule):
 
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_norm = norm
-        self.m_resize = resize
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
+        self.m_norm = norm
+
+        # Raise a DeprecationWarning if the resize argument is used
+        if resize is not None:
+            warnings.warn("The 'resize' parameter has been deprecated. Its value is currently "
+                          "being ignored, and the argument will be removed in a future version "
+                          "of PynPoint.", DeprecationWarning)
 
     def run(self):
         """
-        Run method of the module. Normalizes, resizes, and masks the images.
+        Run method of the module. Masks and normalizes the images.
 
         Returns
         -------
@@ -98,69 +109,80 @@ class PSFpreparationModule(ProcessingModule):
             self.m_mask_out_port.del_all_data()
             self.m_mask_out_port.del_all_attributes()
 
+        # Get PIXSCALE and MEMORY attributes
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        memory = self._m_config_port.get_attribute("MEMORY")
 
+        # Get the number of images and split into batches to comply with memory constraints
+        im_shape = self.m_image_in_port.get_shape()
+        nimages = im_shape[0]
+        frames = memory_frames(memory, nimages)
+
+        # Convert m_cent_size and m_edge_size from arcseconds to pixels
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
-
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
-        im_shape = self.m_image_in_port.get_shape()
-        nimages = im_shape[0]
+        # Create 2D disk mask which will be applied to every frame
+        mask = create_mask((int(im_shape[-2]), int(im_shape[-1])),
+                           [self.m_cent_size, self.m_edge_size]).astype(bool)
 
-        if self.m_norm:
-            im_norm = np.linalg.norm(self.m_image_in_port.get_all(),
-                                     ord="fro",
-                                     axis=(1, 2))
+        # Keep track of the normalization vectors in case we are normalizing the images (if
+        # we are not normalizing, this list will remain empty)
+        norms = list()
 
-        if self.m_resize is None:
-            mask = create_mask(im_shape[-2:], [self.m_cent_size, self.m_edge_size])
+        # Run the PSFpreparationModule for each subset of frames
+        for i, _ in enumerate(frames[:-1]):
 
-        else:
-            y_pix, x_pix = int(im_shape[-2]*self.m_resize), int(im_shape[-1]*self.m_resize)
-            im_res = np.zeros((nimages, y_pix, x_pix))
+            # Print progress to command line
+            progress(i, len(frames[:-1]), "Running PSFpreparationModule...")
 
-            mask = create_mask(im_res.shape[-2:], [self.m_cent_size, self.m_edge_size])
+            # Get the images and ensure they have the correct 3D shape with the following
+            # three dimensions: (batch_size, height, width)
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-        for i in range(nimages):
-            progress(i, nimages, "Running PSFpreparationModule...")
+            if images.ndim == 2:
+                warnings.warn("The input data has 2 dimensions whereas 3 dimensions are required. "
+                              "An extra dimension has been added.")
 
-            image = self.m_image_in_port[i, ]
+                images = images[np.newaxis, ...]
 
+            # Apply the mask, i.e., set all pixels to 0 where the mask is False
+            images[:, ~mask] = 0.
+
+            # If desired, normalize the images using the Frobenius norm
             if self.m_norm:
-                # Normalize with the Frobenius norma
-                image /= im_norm[i]
+                im_norm = np.linalg.norm(images, ord="fro", axis=(1, 2))
+                images /= im_norm[:, np.newaxis, np.newaxis]
+                norms.append(im_norm)
 
-            if self.m_resize is not None:
-                # Resample the data with a spline interpolation of the 5th order
-                image = ndimage.interpolation.zoom(image,
-                                                   zoom=[self.m_resize, self.m_resize],
-                                                   order=5)
+            # Write processed images to output port
+            self.m_image_out_port.append(images, data_dim=3)
 
-            self.m_image_out_port.append(image*mask, data_dim=3)
-
+        # Store information about mask
         if self.m_mask_out_port is not None:
             self.m_mask_out_port.set_all(mask)
             self.m_mask_out_port.copy_attributes(self.m_image_in_port)
 
+        # Copy attributes from input port
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
-        if self.m_norm:
-            self.m_image_out_port.add_attribute("norm", im_norm, static=False)
+        # If the norms list is not empty (i.e., if we have computed the norm for every image),
+        # we can also save the corresponding norm vector as an additional attribute
+        if norms:
+            self.m_image_out_port.add_attribute(name="norm",
+                                                value=np.hstack(norms),
+                                                static=False)
 
-        if self.m_resize is not None:
-            self.m_image_out_port.add_attribute("resize", self.m_resize, static=True)
-            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
-
+        # Save cent_size and edge_size as attributes to the output port
         if self.m_cent_size is not None:
-            self.m_image_out_port.add_attribute("cent_size",
-                                                self.m_cent_size*pixscale,
+            self.m_image_out_port.add_attribute(name="cent_size",
+                                                value=self.m_cent_size * pixscale,
                                                 static=True)
-
         if self.m_edge_size is not None:
-            self.m_image_out_port.add_attribute("edge_size",
-                                                self.m_edge_size*pixscale,
+            self.m_image_out_port.add_attribute(name="edge_size",
+                                                value=self.m_edge_size * pixscale,
                                                 static=True)
 
         sys.stdout.write("Running PSFpreparationModule... [DONE]\n")
@@ -169,8 +191,8 @@ class PSFpreparationModule(ProcessingModule):
 
 class AngleInterpolationModule(ProcessingModule):
     """
-    Pipeline module for calculating the parallactic angle values by interpolating between the
-    begin and end value of a data cube.
+    Module for calculating the parallactic angle values by interpolating between the begin and end
+    value of a data cube.
     """
 
     def __init__(self,
@@ -234,7 +256,9 @@ class AngleInterpolationModule(ProcessingModule):
                 parang_end[i] += 360.
 
             new_angles = np.append(new_angles,
-                                   np.linspace(parang_start[i], parang_end[i], num=steps[i]))
+                                   np.linspace(parang_start[i],
+                                               parang_end[i],
+                                               num=steps[i]))
 
         sys.stdout.write("Running AngleInterpolationModule... [DONE]\n")
         sys.stdout.flush()
@@ -246,7 +270,7 @@ class AngleInterpolationModule(ProcessingModule):
 
 class SortParangModule(ProcessingModule):
     """
-    Pipeline module to sort the images and non-static attributes with increasing INDEX.
+    Module to sort the images and non-static attributes with increasing INDEX.
     """
 
     def __init__(self,
@@ -351,9 +375,9 @@ class SortParangModule(ProcessingModule):
 
 class AngleCalculationModule(ProcessingModule):
     """
-    Pipeline module for calculating the parallactic angles. The start time of the observation is
-    taken and multiples of the exposure time are added to derive the parallactic angle of each
-    frame inside the cube. Instrument specific overheads are included.
+    Module for calculating the parallactic angles. The start time of the observation is taken and
+    multiples of the exposure time are added to derive the parallactic angle of each frame inside
+    the cube. Instrument specific overheads are included.
     """
 
     __author__ = "Alexander Bohn"
@@ -575,7 +599,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SDIpreparationModule(ProcessingModule):
     """
-    Pipeline module for preparing continuum frames for SDI subtraction.
+    Module for preparing continuum frames for SDI subtraction.
     """
 
     __author__ = "Gabriele Cugno"
@@ -645,7 +669,11 @@ class SDIpreparationModule(ProcessingModule):
         for i in range(nimages):
             progress(i, nimages, "Running SDIpreparationModule...")
 
-            image = self.m_image_in_port[i, ]
+            if nimages == 1:
+                image = self.m_image_in_port.get_all()
+
+            else:
+                image = self.m_image_in_port[i, ]
 
             im_scale = width_factor * scale_image(image, wvl_factor, wvl_factor)
 
@@ -665,7 +693,11 @@ class SDIpreparationModule(ProcessingModule):
             if npix_del%2 == 1:
                 im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation="spline")
 
-            self.m_image_out_port.append(im_crop, data_dim=3)
+            if nimages == 1:
+                self.m_image_out_port.set_all(im_crop)
+
+            else:
+                self.m_image_out_port.append(im_crop, data_dim=3)
 
         sys.stdout.write("Running SDIpreparationModule... [DONE]\n")
         sys.stdout.flush()
