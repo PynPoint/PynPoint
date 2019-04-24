@@ -35,7 +35,8 @@ from pynpoint.processing.fluxposition import FakePlanetModule, \
 from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \
                                                RemoveLastFrameModule, \
-                                               RemoveStartFramesModule
+                                               RemoveStartFramesModule, \
+                                               ImageStatisticsModule
 
 from pynpoint.processing.limits import ContrastCurveModule
 

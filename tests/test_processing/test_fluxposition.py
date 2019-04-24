@@ -219,7 +219,7 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[42, 4], 5.683191873535635, rtol=limit, atol=0.)
         assert data.shape == (43, 6)
 
-    def test_mcmc_sampling_poisson(self):
+    def test_mcmc_sampling_gaussian(self):
 
         self.pipeline.set_attribute("adi", "PARANG", np.arange(0., 200., 10.), static=False)
 
@@ -273,13 +273,16 @@ class TestFluxAndPosition(object):
                                   nsteps=150,
                                   psf_scaling=-1.,
                                   pca_number=1,
-                                  aperture=0.1,
+                                  aperture={'type':'circular',
+                                            'pos_x':7.0,
+                                            'pos_y':12.5,
+                                            'radius':0.1},
                                   mask=None,
                                   extra_rot=0.,
                                   scale=2.,
                                   sigma=(1e-3, 1e-1, 1e-2),
                                   prior="flat",
-                                  variance="poisson")
+                                  variance="gaussian")
 
         self.pipeline.add_module(mcmc)
         self.pipeline.run_module("mcmc")
@@ -290,7 +293,7 @@ class TestFluxAndPosition(object):
         assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
         assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
 
-    def test_mcmc_sampling_gaussian(self):
+    def test_mcmc_sampling_poisson(self):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
@@ -305,13 +308,18 @@ class TestFluxAndPosition(object):
                                   nsteps=150,
                                   psf_scaling=-1.,
                                   pca_number=1,
-                                  aperture=0.1,
+                                  aperture={'type':'elliptical',
+                                            'pos_x':7.0,
+                                            'pos_y':12.5,
+                                            'semimajor':0.1,
+                                            'semiminor':0.1,
+                                            'angle':0.0},
                                   mask=None,
                                   extra_rot=0.,
                                   scale=2.,
                                   sigma=(1e-3, 1e-1, 1e-2),
                                   prior="flat",
-                                  variance="gaussian")
+                                  variance="poisson")
 
         self.pipeline.add_module(mcmc)
         self.pipeline.run_module("mcmc_gaussian")

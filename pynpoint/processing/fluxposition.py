@@ -26,7 +26,7 @@ from pynpoint.util.residuals import combine_residuals
 
 class FakePlanetModule(ProcessingModule):
     """
-    Module to inject a positive or negative fake companion into a stack of images.
+    Pipeline module to inject a positive or negative artificial planet into a stack of images.
     """
 
     def __init__(self,
@@ -160,8 +160,8 @@ class FakePlanetModule(ProcessingModule):
 
 class SimplexMinimizationModule(ProcessingModule):
     """
-    Module to measure the flux and position of a planet by injecting negative fake planets and
-    minimizing a function of merit.
+    Pipeline module to measure the flux and position of a planet by injecting negative fake planets
+    and minimizing a function of merit.
     """
 
     def __init__(self,
@@ -407,9 +407,9 @@ class SimplexMinimizationModule(ProcessingModule):
 
 class FalsePositiveModule(ProcessingModule):
     """
-    Module to calculate the signal-to-noise ratio (SNR) and false positive fraction (FPF) at a
-    specified location in an image by using the Student's t-test (Mawet et al. 2014). Optionally,
-    the SNR can be optimized with the aperture position as free parameter.
+    Pipeline module to calculate the signal-to-noise ratio (SNR) and false positive fraction (FPF)
+    at a specified location in an image by using the Student's t-test (Mawet et al. 2014).
+    Optionally, the SNR can be optimized with the aperture position as free parameter.
     """
 
     def __init__(self,
@@ -529,7 +529,7 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                sep_ang = cartesian_to_polar(center, result.x[0], result.x[1])
+                x_pos, y_pos = result.x[0], result.x[1]
 
             else:
                 _, _, snr, fpf = false_alarm(image=image,
@@ -538,19 +538,12 @@ class FalsePositiveModule(ProcessingModule):
                                              size=self.m_aperture,
                                              ignore=self.m_ignore)
 
-                sep_ang = cartesian_to_polar(center, self.m_position[0], self.m_position[1])
+                x_pos, y_pos = self.m_position[0], self.m_position[1]
 
-            result = np.column_stack((self.m_position[0],
-                                      self.m_position[1],
-                                      sep_ang[0]*pixscale,
-                                      sep_ang[1],
-                                      snr,
-                                      fpf))
+            sep_ang = cartesian_to_polar(center, x_pos, y_pos)
+            result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
-            if nimages == 1:
-                self.m_snr_out_port.set_all(result)
-            else:
-                self.m_snr_out_port.append(result, data_dim=2)
+            self.m_snr_out_port.append(result, data_dim=2)
 
         sys.stdout.write("Running FalsePositiveModule... [DONE]\n")
         sys.stdout.flush()
@@ -563,9 +556,9 @@ class FalsePositiveModule(ProcessingModule):
 
 class MCMCsamplingModule(ProcessingModule):
     """
-    Module to measure the separation, position angle, and contrast of a planet with injection of
-    negative artificial planets and sampling of the posterior distributions with emcee, an
-    affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
+    Pipeline module to measure the separation, position angle, and contrast of a planet with
+    injection of negative artificial planets and sampling of the posterior distributions with
+    emcee, an affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
     """
 
     def __init__(self,
@@ -907,7 +900,7 @@ class MCMCsamplingModule(ProcessingModule):
 
 class AperturePhotometryModule(ProcessingModule):
     """
-    Module for calculating the counts within a circular region.
+    Pipeline module for calculating the counts within a circular region.
     """
 
     def __init__(self,
@@ -924,8 +917,9 @@ class AperturePhotometryModule(ProcessingModule):
         radius : int
             Radius (arcsec) of the circular aperture.
         position : tuple(float, float)
-            Center position (pix) of the aperture, (x, y). The center of the image will be used if
-            set to None.
+            Center position (pix) of the aperture, (x, y), with subpixel precision. The center of
+            the image will be used if set to None. Python indexing starts at zero so the bottom
+            left corner of the image has coordinates (-0.5, -0.5).
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -959,8 +953,7 @@ class AperturePhotometryModule(ProcessingModule):
         """
 
         def _photometry(image, aperture):
-            photo = aperture_photometry(image, aperture, method='exact')
-            return photo['aperture_sum']
+            return aperture_photometry(image, aperture, method='exact')['aperture_sum']
 
         self.m_phot_out_port.del_all_data()
         self.m_phot_out_port.del_all_attributes()
@@ -968,11 +961,8 @@ class AperturePhotometryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
-        nimages = self.m_image_in_port.get_shape()[0]
-        image = self.m_image_in_port[0, ]
-
         if self.m_position is None:
-            self.m_position = center_subpixel(image)
+            self.m_position = center_subpixel(self.m_image_in_port[0, ])
 
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture(self.m_position, self.m_radius)
@@ -981,9 +971,9 @@ class AperturePhotometryModule(ProcessingModule):
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       "Running AperturePhotometryModule...",
-                                      func_args=(aperture,))
+                                      func_args=(aperture, ))
 
-        history = "radius [arcsec] = "+str(self.m_radius*pixscale)
+        history = "radius [arcsec] = {:.3f}".format(self.m_radius*pixscale)
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history("AperturePhotometryModule", history)
         self.m_phot_out_port.close_port()

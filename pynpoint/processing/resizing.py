@@ -15,7 +15,7 @@ from pynpoint.util.image import crop_image, scale_image
 
 class CropImagesModule(ProcessingModule):
     """
-    Module for cropping of images around a given position.
+    Pipeline module for cropping of images around a given position.
     """
 
     def __init__(self,
@@ -97,7 +97,7 @@ class CropImagesModule(ProcessingModule):
 
 class ScaleImagesModule(ProcessingModule):
     """
-    Module for rescaling of an image.
+    Pipeline module for rescaling of an image.
     """
 
     def __init__(self,

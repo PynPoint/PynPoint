@@ -18,7 +18,8 @@ from pynpoint.util.module import progress
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
     """
-    Module for simple background subtraction. Only applicable on data obtained with dithering.
+    Pipeline module for simple background subtraction. Only applicable on data obtained with
+    dithering.
     """
 
     def __init__(self,
@@ -94,7 +95,8 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
 
 class MeanBackgroundSubtractionModule(ProcessingModule):
     """
-    Module for mean background subtraction. Only applicable on data obtained with dithering.
+    Pipeline module for mean background subtraction. Only applicable on data obtained with
+    dithering.
     """
 
     def __init__(self,
@@ -283,8 +285,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
 class LineSubtractionModule(ProcessingModule):
     """
-    Module for subtracting the background emission from each pixel by computing the mean or
-    median of all values in the row and column of the pixel. The module can for example be
+    Pipeline module for subtracting the background emission from each pixel by computing the mean
+    or median of all values in the row and column of the pixel. The module can for example be
     used if no background data is available or to remove a detector bias.
     """
 
@@ -390,9 +392,10 @@ class LineSubtractionModule(ProcessingModule):
 
 class NoddingBackgroundModule(ProcessingModule):
     """
-    Module for background subtraction of data obtained with nodding (e.g., NACO AGPM data). Before
-    using this module, the sky images should be stacked with the MeanCubeModule such that each image
-    in the stack of sky images corresponds to the mean combination of a single FITS data cube.
+    Pipeline module for background subtraction of data obtained with nodding (e.g., NACO AGPM
+    data). Before using this module, the sky images should be stacked with the MeanCubeModule
+    such that each image in the stack of sky images corresponds to the mean combination of a
+    single FITS data cube.
     """
 
     def __init__(self,
@@ -412,7 +415,7 @@ class NoddingBackgroundModule(ProcessingModule):
             Tag of the database entry with science images that are read as input.
         sky_in_tag : str
             Tag of the database entry with sky images that are read as input. The
-            :class:`~pynpoint.processing.stacksubset.MeanCubeModule` should be used on the sky
+            :class:`~pynpoint.processing.stacksubset.StackCubesModule` should be used on the sky
             images beforehand.
         image_out_tag : str
             Tag of the database entry with sky subtracted images that are written as output.

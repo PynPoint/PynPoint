@@ -25,8 +25,8 @@ from pynpoint.util.image import crop_image, shift_image, center_pixel
 
 class StarExtractionModule(ProcessingModule):
     """
-    Module to locate the position of the star in each image and to crop all the images around
-    this position.
+    Pipeline module to locate the position of the star in each image and to crop all the images
+    around this position.
     """
 
     def __init__(self,
@@ -183,7 +183,7 @@ class StarExtractionModule(ProcessingModule):
 
 class StarAlignmentModule(ProcessingModule):
     """
-    Module to align the images with a cross-correlation in Fourier space.
+    Pipeline module to align the images with a cross-correlation in Fourier space.
     """
 
     def __init__(self,
@@ -351,7 +351,8 @@ class StarAlignmentModule(ProcessingModule):
 
 class StarCenteringModule(ProcessingModule):
     """
-    Module for centering the star by fitting the PSF with a 2D Gaussian or Moffat function.
+    Pipeline module for centering the star by fitting the PSF with a 2D Gaussian or Moffat
+    function.
     """
 
     def __init__(self,
@@ -765,7 +766,7 @@ class StarCenteringModule(ProcessingModule):
 
 class ShiftImagesModule(ProcessingModule):
     """
-    Module for shifting of an image.
+    Pipeline module for shifting a stack of images.
     """
 
     def __init__(self,
@@ -834,8 +835,8 @@ class ShiftImagesModule(ProcessingModule):
 
 class WaffleCenteringModule(ProcessingModule):
     """
-    Module for centering of SPHERE data obtained with a Lyot coronagraph for which center frames
-    with waffle pattern are available.
+    Pipeline module for centering of SPHERE data obtained with a Lyot coronagraph for which center
+    frames with satellite spots are available.
     """
 
     __author__ = "Alexander Bohn"
