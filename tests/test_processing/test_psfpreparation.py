@@ -14,6 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
+
 class TestPSFpreparation(object):
 
     def setup_class(self):
@@ -67,7 +68,7 @@ class TestPSFpreparation(object):
         self.pipeline.set_attribute("read", "DEC", (-51., -51., -51., -51.), static=False)
         self.pipeline.set_attribute("read", "PUPIL", (90., 90., 90., 90.), static=False)
 
-        date = ("2012-12-01T07:09:00.0000", "2012-12-01T07:09:01.0000", \
+        date = ("2012-12-01T07:09:00.0000", "2012-12-01T07:09:01.0000",
                 "2012-12-01T07:09:02.0000", "2012-12-01T07:09:03.0000")
 
         self.pipeline.set_attribute("read", "DATE", date, static=False)
@@ -147,14 +148,13 @@ class TestPSFpreparation(object):
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_psf_preparation_norm_resize_mask(self):
+    def test_psf_preparation_norm_mask(self):
 
         prep = PSFpreparationModule(name_in="prep1",
                                     image_in_tag="read",
                                     image_out_tag="prep1",
                                     mask_out_tag="mask1",
                                     norm=True,
-                                    resize=2.,
                                     cent_size=0.1,
                                     edge_size=1.0)
 
@@ -163,17 +163,15 @@ class TestPSFpreparation(object):
 
         data = self.pipeline.get_data("prep1")
         assert np.allclose(data[0, 0, 0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[0, 25, 25], 0., rtol=limit, atol=0.)
         assert np.allclose(data[0, 99, 99], 0., rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0001818623671899089, rtol=limit, atol=0.)
-        assert data.shape == (40, 200, 200)
+        assert np.allclose(np.mean(data), 0.0001690382058762809, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
 
         data = self.pipeline.get_data("mask1")
         assert np.allclose(data[0, 0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[120, 120], 1., rtol=limit, atol=0.)
-        assert np.allclose(data[100, 100], 0., rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.1067, rtol=limit, atol=0.)
-        assert data.shape == (200, 200)
+        assert np.allclose(data[99, 99], 0., rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.4268, rtol=limit, atol=0.)
+        assert data.shape == (100, 100)
 
     def test_psf_preparation_none(self):
 
@@ -182,7 +180,6 @@ class TestPSFpreparation(object):
                                     image_out_tag="prep2",
                                     mask_out_tag="mask2",
                                     norm=False,
-                                    resize=None,
                                     cent_size=None,
                                     edge_size=None)
 
@@ -203,7 +200,6 @@ class TestPSFpreparation(object):
                                     image_out_tag="prep3",
                                     mask_out_tag=None,
                                     norm=False,
-                                    resize=None,
                                     cent_size=None,
                                     edge_size=None)
 
