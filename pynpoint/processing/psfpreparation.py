@@ -20,8 +20,8 @@ from pynpoint.util.image import create_mask, scale_image, shift_image
 
 class PSFpreparationModule(ProcessingModule):
     """
-    Module to prepare the data for PSF subtraction with PCA.
-    The preparation steps include masking and image normalization.
+    Module to prepare the data for PSF subtraction with PCA. The preparation steps include masking
+    and image normalization.
     """
 
     def __init__(self,
@@ -45,25 +45,25 @@ class PSFpreparationModule(ProcessingModule):
             Tag of the database entry that is read as input.
             Default: "im_arr".
         image_out_tag : str
-            Tag of the database entry with images that is written as
-            output. Default: "im_arr".
+            Tag of the database entry with images that is written as output.
+            Default: "im_arr".
         mask_out_tag : str, optional
-            Tag of the database entry with the mask that is written as
-            output. If set to None, no mask array is saved.
+            Tag of the database entry with the mask that is written as output. If set to None, no
+            mask array is saved.
             Default: "mask_arr".
         norm : bool
             Normalize each image by its Frobenius norm. Default: False.
         resize : float
-            DEPRECATED. This parameter is currently ignored by the
-            module and will be removed in a future version of PynPoint.
+            DEPRECATED. This parameter is currently ignored by the module and will be removed in a
+            future version of PynPoint.
         cent_size : float, optional
-            Radius of the central mask (in arcsec). No mask is used
-            when set to None. Default: None.
+            Radius of the central mask (in arcsec). No mask is used when set to None.
+            Default: None.
         edge_size : float, optional
-            Outer radius (in arcsec) beyond which pixels are masked. No
-            outer mask is used when set to None. If the value is larger
-            than half the image size then it will be set to half the
-            image size. Default: None.
+            Outer radius (in arcsec) beyond which pixels are masked. No outer mask is used when set
+            to None. If the value is larger than half the image size then it will be set to half
+            the image size.
+            Default: None.
 
         Returns
         -------
@@ -75,10 +75,10 @@ class PSFpreparationModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
-        if mask_out_tag is not None:
-            self.m_mask_out_port = self.add_output_port(mask_out_tag)
-        else:
+        if mask_out_tag is None:
             self.m_mask_out_port = None
+        else:
+            self.m_mask_out_port = self.add_output_port(mask_out_tag)
 
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
@@ -86,12 +86,11 @@ class PSFpreparationModule(ProcessingModule):
         self.m_edge_size = edge_size
         self.m_norm = norm
 
-        # Raise a DeprecationWarning if someone tries to use the resize argument
+        # Raise a DeprecationWarning if the resize argument is used
         if resize is not None:
-            warnings.warn("The 'resize' parameter has been deprecated. Its "
-                          "value is currently being ignored, and the argument "
-                          "will be removed in a future version of PynPoint.",
-                          DeprecationWarning)
+            warnings.warn("The 'resize' parameter has been deprecated. Its value is currently "
+                          "being ignored, and the argument will be removed in a future version "
+                          "of PynPoint.", DeprecationWarning)
 
     def run(self):
         """
@@ -102,6 +101,13 @@ class PSFpreparationModule(ProcessingModule):
         NoneType
             None
         """
+
+        self.m_image_out_port.del_all_data()
+        self.m_image_out_port.del_all_attributes()
+
+        if self.m_mask_out_port is not None:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
 
         # Get PIXSCALE and MEMORY attributes
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
@@ -134,10 +140,16 @@ class PSFpreparationModule(ProcessingModule):
 
             # Get the images and ensure they have the correct 3D shape with the following
             # three dimensions: (batch_size, height, width)
-            images = np.atleast_3d(self.m_image_in_port[frames[i]:frames[i+1]])
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            if images.ndim == 2:
+                warnings.warn("The input data has 2 dimensions whereas 3 dimensions are required. "
+                              "An extra dimension has been added.")
+
+                images = images[np.newaxis, ...]
 
             # Apply the mask, i.e., set all pixels to 0 where the mask is False
-            images[:, ~mask] = 0
+            images[:, ~mask] = 0.
 
             # If desired, normalize the images using the Frobenius norm
             if self.m_norm:
@@ -146,10 +158,7 @@ class PSFpreparationModule(ProcessingModule):
                 norms.append(im_norm)
 
             # Write processed images to output port
-            if nimages == 1:
-                self.m_image_out_port.set_all(images.squeeze(), data_dim=2)
-            else:
-                self.m_image_out_port.set_all(images, data_dim=3)
+            self.m_image_out_port.append(images, data_dim=3)
 
         # Store information about mask
         if self.m_mask_out_port is not None:
