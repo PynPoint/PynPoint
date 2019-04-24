@@ -51,7 +51,7 @@ def create_config(filename):
     file_obj.write('DEC: None\n\n')
     file_obj.write('[settings]\n\n')
     file_obj.write('PIXSCALE: 0.027\n')
-    file_obj.write('MEMORY: 100\n')
+    file_obj.write('MEMORY: 39\n')
     file_obj.write('CPU: 1\n')
 
     file_obj.close()
