@@ -5,6 +5,7 @@ Functions for image processing.
 from __future__ import absolute_import
 
 import math
+import warnings
 
 import numpy as np
 
@@ -87,6 +88,11 @@ def crop_image(image,
     """
 
     if center is None or (center[0] is None and center[1] is None):
+        if image.shape[-1]%2 == 0:
+            warnings.warn("The image is even-size so there is not a uniquely defined pixel in "
+                          "the center of the image. The image center is determined (with pixel "
+                          "precision) with the pynpoint.util.image.center_pixel function.")
+
         center = center_pixel(image)
 
     if size%2 == 0:
