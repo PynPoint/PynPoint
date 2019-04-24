@@ -85,25 +85,25 @@ class TestFitsReadingModule(object):
 
     def test_static_changing(self):
 
-        hdu = fits.open(self.test_dir+"fits/image01.fits")
-        header = hdu[0].header
-        header['HIERARCH ESO DET DIT'] = 0.1
-        hdu.writeto(self.test_dir+"fits/image01.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image01.fits") as hdu:
+            header = hdu[0].header
+            header['HIERARCH ESO DET DIT'] = 0.1
+            hdu.writeto(self.test_dir+"fits/image01.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image02.fits")
-        header = hdu[0].header
-        header['HIERARCH ESO DET DIT'] = 0.1
-        hdu.writeto(self.test_dir+"fits/image02.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image02.fits") as hdu:
+            header = hdu[0].header
+            header['HIERARCH ESO DET DIT'] = 0.1
+            hdu.writeto(self.test_dir+"fits/image02.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image03.fits")
-        header = hdu[0].header
-        header['HIERARCH ESO DET DIT'] = 0.2
-        hdu.writeto(self.test_dir+"fits/image03.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image03.fits") as hdu:
+            header = hdu[0].header
+            header['HIERARCH ESO DET DIT'] = 0.2
+            hdu.writeto(self.test_dir+"fits/image03.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image04.fits")
-        header = hdu[0].header
-        header['HIERARCH ESO DET DIT'] = 0.2
-        hdu.writeto(self.test_dir+"fits/image04.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image04.fits") as hdu:
+            header = hdu[0].header
+            header['HIERARCH ESO DET DIT'] = 0.2
+            hdu.writeto(self.test_dir+"fits/image04.fits", overwrite=True)
 
         read = FitsReadingModule(name_in="read4",
                                  input_dir=self.test_dir+"fits",
@@ -128,27 +128,28 @@ class TestFitsReadingModule(object):
                                              "value is updated."
 
     def test_header_attribute(self):
-        hdu = fits.open(self.test_dir+"fits/image01.fits")
-        header = hdu[0].header
-        header['PARANG'] = 1.0
-        hdu.writeto(self.test_dir+"fits/image01.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image02.fits")
-        header = hdu[0].header
-        header['PARANG'] = 2.0
-        hdu.writeto(self.test_dir+"fits/image02.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image01.fits") as hdu:
+            header = hdu[0].header
+            header['PARANG'] = 1.0
+            hdu.writeto(self.test_dir+"fits/image01.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image03.fits")
-        header = hdu[0].header
-        header['PARANG'] = 3.0
-        header['HIERARCH ESO DET DIT'] = 0.1
-        hdu.writeto(self.test_dir+"fits/image03.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image02.fits") as hdu:
+            header = hdu[0].header
+            header['PARANG'] = 2.0
+            hdu.writeto(self.test_dir+"fits/image02.fits", overwrite=True)
 
-        hdu = fits.open(self.test_dir+"fits/image04.fits")
-        header = hdu[0].header
-        header['PARANG'] = 4.0
-        header['HIERARCH ESO DET DIT'] = 0.1
-        hdu.writeto(self.test_dir+"fits/image04.fits", overwrite=True)
+        with fits.open(self.test_dir+"fits/image03.fits") as hdu:
+            header = hdu[0].header
+            header['PARANG'] = 3.0
+            header['HIERARCH ESO DET DIT'] = 0.1
+            hdu.writeto(self.test_dir+"fits/image03.fits", overwrite=True)
+
+        with fits.open(self.test_dir+"fits/image04.fits") as hdu:
+            header = hdu[0].header
+            header['PARANG'] = 4.0
+            header['HIERARCH ESO DET DIT'] = 0.1
+            hdu.writeto(self.test_dir+"fits/image04.fits", overwrite=True)
 
         read = FitsReadingModule(name_in="read5",
                                  input_dir=self.test_dir+"fits",
@@ -163,11 +164,11 @@ class TestFitsReadingModule(object):
         self.pipeline.set_attribute("config", "DIT", "None", static=True)
 
         for i in range(1, 5):
-            hdu = fits.open(self.test_dir+"fits/image0"+str(i)+".fits")
-            header = hdu[0].header
-            del header['HIERARCH ESO DET DIT']
-            del header['HIERARCH ESO DET EXP NO']
-            hdu.writeto(self.test_dir+"fits/image0"+str(i)+".fits", overwrite=True)
+            with fits.open(self.test_dir+"fits/image0"+str(i)+".fits") as hdu:
+                header = hdu[0].header
+                del header['HIERARCH ESO DET DIT']
+                del header['HIERARCH ESO DET EXP NO']
+                hdu.writeto(self.test_dir+"fits/image0"+str(i)+".fits", overwrite=True)
 
         read = FitsReadingModule(name_in="read6",
                                  input_dir=self.test_dir+"fits",
