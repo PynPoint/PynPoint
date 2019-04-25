@@ -101,12 +101,13 @@ class MassCurveModule(ProcessingModule):
         from scipy.interpolate import interp1d
 
         # find the model corresponding to the m_age
-        age_index = np.argwhere(self.m_age == self.m_ages)[0]
+        age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
         print(age_index)
         # find the filter corresponding to the m_filter
         filter_index = np.argwhere(self.m_filter == self.m_header)
 
         # grab the data to be interpolated
+        print(self.m_model_data[23])
         mass = self.m_model_data[age_index] [:, 0]
         absoulteMagnitude = self.m_model_data[age_index] [:, filter_index]
 
