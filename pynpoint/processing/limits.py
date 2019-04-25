@@ -25,6 +25,7 @@ class MassCurveModule(ProcessingModule):
     def __init__(self,
                 host_star_magnitude=(0, 10),
                 age=.5,
+                filter="L\'",
                 name_in="mass",
                 data_in_tag="contrast_limits",
                 data_out_tag="mass_limits",
@@ -38,15 +39,69 @@ class MassCurveModule(ProcessingModule):
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
         self.m_host_magnitude = host_star_magnitude[0] - 5 * np.log10(host_star_magnitude[1] / 10)
         self.m_age = age
-        self.m_model = model_file
+        self.m_model_file = model_file
 
         # add in and out ports
         self.m_data_in_port = self.add_input_port(data_in_tag)
         self.m_data_out_port = self.add_output_port(data_out_tag)
 
+        ages, model_data, header = self._read_model()
 
-    def _interpolate_model(self):
-        pass
+        assert filter in header, "The selected filter was not found in the list of available filters from the model"
+        assert age in ages, "The selected age was not found in the list of available ages from the model"
+
+
+    def _read_model(self):
+        """
+        Internal function. 
+        Reads the data from the AMES-Cond-2000 file and structures it.
+        Returns an array of available model ages and a list of model data for each age
+        """
+
+        # read in all the data, selecting out empty lines or '---' lines
+        data = []
+        with open(self.m_model_file) as file:
+            for line in file:
+                if ('---' in line) or line == '\n':
+                    continue
+                else:
+                    data += [list(filter(None, line.rstrip().split(' ')))]
+        
+        # initialize list of ages
+        ages = []
+        # initialize the header
+        header = []
+        # initialize a new data list, where the data is separated by age
+        model_data = []
+        k=-1
+        for _line in data:
+            if '(Gyr)' in _line: # get time line
+                ages += [float(_line[-1])]
+                k += 1
+                model_data += [[]]
+            elif 'lg(g)' in _line: # get header line
+                temp = ['M/Ms', 'Teff(K)'] + _line[1:]
+                header +=[temp]
+            else: # save the data
+                model_data[k] += [_line]
+
+        ages = np.array(ages, dtype = float)
+        return t, model_data, header
+
+    def _interpolate_model(self, ages, models):
+        """
+        Internal function.
+        Takes Model data and interpolates it
+        """
+
+        from scipy.interpolate import interp1d
+
+        interpols_mass_contrast = []
+        for k in range(len(ages)):
+            m = models[k] [:, 0]
+            absoulteMagnitude = models[k] [:, 10]
+            interpols_mass_contrast += [interp1d(absoulteMagnitude, m, kind='linear', bounds_error = False)]
+        return interpols_mass_contrast
 
 class ContrastCurveModule(ProcessingModule):
     """
