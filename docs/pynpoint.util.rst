@@ -52,6 +52,14 @@ pynpoint.util.module module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.util.multiline module
+------------------------------
+
+.. automodule:: pynpoint.util.multiline
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.util.multipca module
 -----------------------------
 

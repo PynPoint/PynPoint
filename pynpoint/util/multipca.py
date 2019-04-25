@@ -375,15 +375,13 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             PCA task writer.
         """
 
-        writer = PcaTaskWriter(self.m_result_queue,
-                               self.m_mean_out_port,
-                               self.m_median_out_port,
-                               self.m_weighted_out_port,
-                               self.m_clip_out_port,
-                               self.m_data_mutex,
-                               self.m_requirements)
-
-        return writer
+        return PcaTaskWriter(self.m_result_queue,
+                             self.m_mean_out_port,
+                             self.m_median_out_port,
+                             self.m_weighted_out_port,
+                             self.m_clip_out_port,
+                             self.m_data_mutex,
+                             self.m_requirements)
 
     def init_creator(self, image_in_port):
         """
@@ -400,11 +398,9 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             PCA task creator.
         """
 
-        creator = PcaTaskCreator(self.m_tasks_queue,
-                                 self.m_num_processors,
-                                 self.m_pca_numbers)
-
-        return creator
+        return PcaTaskCreator(self.m_tasks_queue,
+                              self.m_num_processors,
+                              self.m_pca_numbers)
 
     def create_processors(self):
         """
