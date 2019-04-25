@@ -57,7 +57,7 @@ def _master_frame(data,
 
 class DarkCalibrationModule(ProcessingModule):
     """
-    Module to subtract a master dark from the science data.
+    Pipeline module to subtract a master dark from the science data.
     """
 
     def __init__(self,
@@ -122,7 +122,7 @@ class DarkCalibrationModule(ProcessingModule):
 
 class FlatCalibrationModule(ProcessingModule):
     """
-    Module to apply a flat field correction to the science data.
+    Pipeline module to apply a flat field correction to the science data.
     """
 
     def __init__(self,

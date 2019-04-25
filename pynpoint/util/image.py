@@ -5,6 +5,7 @@ Functions for image processing.
 from __future__ import absolute_import
 
 import math
+import warnings
 
 import numpy as np
 
@@ -87,6 +88,11 @@ def crop_image(image,
     """
 
     if center is None or (center[0] is None and center[1] is None):
+        if image.shape[-1]%2 == 0:
+            warnings.warn("The image is even-size so there is not a uniquely defined pixel in "
+                          "the center of the image. The image center is determined (with pixel "
+                          "precision) with the pynpoint.util.image.center_pixel function.")
+
         center = center_pixel(image)
 
     if size%2 == 0:
@@ -142,7 +148,7 @@ def create_mask(im_shape,
     ----------
     im_shape : tuple(int, int)
         Image size in both dimensions.
-    size : tuple(float, float)
+    size : list(float, float)
         Size (pix) of the inner and outer mask.
 
     Returns
@@ -300,3 +306,43 @@ def polar_to_cartesian(image,
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
     return tuple([x_pos, y_pos])
+
+def pixel_distance(im_shape,
+                   position=None):
+    """
+    Function to calculate the distance of each pixel with respect to a given pixel position.
+
+    Parameters
+    ----------
+    im_shape : tuple(int, int)
+        Image shape (y, x).
+    position : tuple(int, int)
+        Pixel center (y, x) from which the distance is calculated. The image center is used if
+        set to None. Python indexing starts at zero so the bottom left pixel is (0, 0).
+
+    Returns
+    -------
+    numpy.ndarray
+        2D array with the distances of each pixel from the provided pixel position.
+    """
+
+    if im_shape[0]%2 == 0:
+        y_grid = np.linspace(-im_shape[0]/2+0.5, im_shape[0]/2-0.5, im_shape[0])
+    elif im_shape[0]%2 == 1:
+        y_grid = np.linspace(-(im_shape[0]-1)/2, (im_shape[0]-1)/2, im_shape[0])
+
+    if im_shape[1]%2 == 0:
+        x_grid = np.linspace(-im_shape[1]/2+0.5, im_shape[1]/2-0.5, im_shape[1])
+    elif im_shape[0]%2 == 1:
+        x_grid = np.linspace(-(im_shape[1]-1)/2, (im_shape[1]-1)/2, im_shape[1])
+
+    if position is not None:
+        y_shift = y_grid[position[0]]
+        x_shift = x_grid[position[1]]
+
+        y_grid -= y_shift
+        x_grid -= x_shift
+
+    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+    return np.sqrt(xx_grid**2 + yy_grid**2)

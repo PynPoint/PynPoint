@@ -35,7 +35,8 @@ from pynpoint.processing.fluxposition import FakePlanetModule, \
 from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \
                                                RemoveLastFrameModule, \
-                                               RemoveStartFramesModule
+                                               RemoveStartFramesModule, \
+                                               ImageStatisticsModule
 
 from pynpoint.processing.limits import ContrastCurveModule
 
@@ -87,7 +88,7 @@ warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __license__ = 'GPLv3'
-__version__ = '0.6.3'
+__version__ = '0.7.0'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'

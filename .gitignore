@@ -24,4 +24,3 @@ docs/_build
 # Mac
 .DS_Store
 .vscode
-pynpoint.egg-info

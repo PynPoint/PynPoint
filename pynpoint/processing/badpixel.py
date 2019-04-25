@@ -170,8 +170,8 @@ def _bad_pixel_interpolation(image_in,
 
 class BadPixelSigmaFilterModule(ProcessingModule):
     """
-    Module for finding bad pixels with a sigma filter and replacing them with the mean value of
-    the surrounding pixels.
+    Pipeline module for finding bad pixels with a sigma filter and replacing them with the mean
+    value of the surrounding pixels.
     """
 
     @staticmethod
@@ -320,7 +320,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
 class BadPixelMapModule(ProcessingModule):
     """
-    Module to create a bad pixel map from the dark frames and flat fields.
+    Pipeline module to create a bad pixel map from the dark frames and flat fields.
     """
 
     def __init__(self,
@@ -438,7 +438,7 @@ class BadPixelMapModule(ProcessingModule):
 
 class BadPixelInterpolationModule(ProcessingModule):
     """
-    Module to interpolate bad pixels with spectral deconvolution.
+    Pipeline module to interpolate bad pixels with spectral deconvolution.
     """
 
     def __init__(self,
@@ -516,10 +516,10 @@ class BadPixelInterpolationModule(ProcessingModule):
 
 class BadPixelTimeFilterModule(ProcessingModule):
     """
-    Module for finding bad pixels with a sigma filter along a pixel line in time. This module is
-    suitable for removing bad pixels that are only present at a position in a small number of
-    images, for example because a dither pattern has been applied. Pixel lines can be processed
-    in parallel by setting the CPU keyword in the configuration file.
+    Pipeline module for finding bad pixels with a sigma filter along a pixel line in time. This
+    module is suitable for removing bad pixels that are only present at a position in a small
+    number of images, for example because a dither pattern has been applied. Pixel lines can be
+    processed in parallel by setting the CPU keyword in the configuration file.
     """
 
     def __init__(self,
@@ -607,8 +607,8 @@ class BadPixelTimeFilterModule(ProcessingModule):
 
 class ReplaceBadPixelsModule(ProcessingModule):
     """
-    Module for replacing bad pixels with the mean are median value of the surrounding pixels. The
-    bad pixels are selected from the input bad pixel map.
+    Pipeline module for replacing bad pixels with the mean are median value of the surrounding
+    pixels. The bad pixels are selected from the input bad pixel map.
     """
 
     def __init__(self,
