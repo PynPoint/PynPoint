@@ -86,7 +86,7 @@ class MassCurveModule(ProcessingModule):
                 model_data[k] += [_line]
 
         ages = np.array(ages, dtype = float)
-        return t, model_data, header
+        return ages, model_data, header
 
     def _interpolate_model(self, ages, models):
         """
