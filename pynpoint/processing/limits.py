@@ -89,7 +89,7 @@ class MassCurveModule(ProcessingModule):
             else: # save the data
                 model_data[k] += [_line]
         for index in range(len(model_data)):
-            model_data[index] = np.array(model_data[index])
+            model_data[index] = np.array(model_data[index], dtype=float)
 
         ages = np.array(ages, dtype = float)
         return ages, model_data, header
@@ -106,10 +106,9 @@ class MassCurveModule(ProcessingModule):
         age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
         # find the filter corresponding to the m_filter
         filter_index = np.argwhere([self.m_filter == j for j in self.m_header])[0] # simple argwhere gives empty list?!
-        print('filter', filter_index)
+        
         # grab the data to be interpolated
         mass = self.m_model_data[age_index] [:, 0]
-        print(mass)
         absoulteMagnitude = self.m_model_data[age_index] [:, filter_index]
         print(absoulteMagnitude, absoulteMagnitude.shape)
         print(np.squeeze(absoulteMagnitude))
