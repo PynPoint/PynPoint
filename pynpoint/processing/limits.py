@@ -142,8 +142,8 @@ class MassCurveModule(ProcessingModule):
         contrast_std = np.sqrt(contrast_data[:,2])
 
         mass = self._interpolate_model()(contrast)
-        mass_upper = self._interpolate_model()(contrast + contrast_std)
-        mass_lower = self._interpolate_model()(contrast - contrast_std)
+        mass_upper = self._interpolate_model()(contrast + contrast_std) - mass
+        mass_lower = self._interpolate_model()(contrast - contrast_std) - mass
 
 
         mass_summary = np.column_stack((r, mass, mass_upper, mass_lower))
