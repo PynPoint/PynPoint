@@ -18,6 +18,35 @@ from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
+class MassCurveModule(ProcessingModule):
+    """
+    Module to calculate mass limits from a COND model and calculated ContrastLimits
+    """
+    def __init__(self,
+                host_star_magnitude=(0, 10),
+                age=.5,
+                name_in="mass",
+                data_in_tag="contrast_limits",
+                data_out_tag="mass_limits",
+                model_file=""):
+        
+        """
+        Constructor of MassCurveModule
+        """
+        super(MassCurveModule, self).__init__(name_in)
+
+        # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
+        self.m_host_magnitude = host_star_magnitude[0] - 5 * np.log10(host_star_magnitude[1] / 10)
+        self.m_age = age
+        self.m_model = model_file
+
+        # add in and out ports
+        self.m_data_in_port = self.add_input_port(data_in_tag)
+        self.m_data_out_port = self.add_output_port(data_out_tag)
+
+
+    def _interpolate_model(self):
+        pass
 
 class ContrastCurveModule(ProcessingModule):
     """
