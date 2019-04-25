@@ -38,17 +38,21 @@ class MassCurveModule(ProcessingModule):
 
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
         self.m_host_magnitude = host_star_magnitude[0] - 5 * np.log10(host_star_magnitude[1] / 10)
-        self.m_age = age
+
         self.m_model_file = model_file
 
         # add in and out ports
         self.m_data_in_port = self.add_input_port(data_in_tag)
         self.m_data_out_port = self.add_output_port(data_out_tag)
 
-        ages, model_data, header = self._read_model()
+        self.m_ages, self.m_model_data, self.m_header = self._read_model()
 
-        assert filter in header, "The selected filter was not found in the list of available filters from the model"
-        assert age in ages, "The selected age was not found in the list of available ages from the model"
+        assert filter in self.m_header, "The selected filter was not found in the list of available filters from the model"
+        assert age in self.m_ages, "The selected age was not found in the list of available ages from the model"
+
+        self.m_filter = filter
+        self.m_age = age
+
 
 
     def _read_model(self):
@@ -88,7 +92,7 @@ class MassCurveModule(ProcessingModule):
         ages = np.array(ages, dtype = float)
         return ages, model_data, header
 
-    def _interpolate_model(self, ages, models):
+    def _interpolate_model(self):
         """
         Internal function.
         Takes Model data and interpolates it
@@ -96,12 +100,44 @@ class MassCurveModule(ProcessingModule):
 
         from scipy.interpolate import interp1d
 
-        interpols_mass_contrast = []
-        for k in range(len(ages)):
-            m = models[k] [:, 0]
-            absoulteMagnitude = models[k] [:, 10]
-            interpols_mass_contrast += [interp1d(absoulteMagnitude, m, kind='linear', bounds_error = False)]
+        # find the model corresponding to the m_age
+        age_index = np.argwhere(self.m_age == self.m_ages)
+        # find the filter corresponding to the m_filter
+        filter_index = np.argwhere(self.m_filter == self.m_header)
+
+        # grab the data to be interpolated
+        mass = self.m_model_data[age_index] [:, 0]
+        absoulteMagnitude = self.m_model_data[age_index] [:, filter_index]
+
+        # interpolate the data
+        interpols_mass_contrast = interp1d(absoulteMagnitude, mass, kind='linear', bounds_error = False)
         return interpols_mass_contrast
+    
+    def run(self):
+        contrast_data = self.m_data_in_port.get_all()
+
+        r = contrast_data[:,0]
+        contrast = contrast_data[:,1]
+        contrast_std = np.sqrt(contrast_data[:,2])
+
+        mass = self._interpolate_model()(contrast)
+        mass_upper = self._interpolate_model()(contrast + contrast_std)
+        mass_lower = self._interpolate_model()(contrast - contrast_std)
+
+
+        mass_summary = np.column_stack((r, mass, mass_upper, mass_lower))
+        self.m_data_out_port.set_all(mass_summary, data_dim=2)
+
+        sys.stdout.write("\rRunning MassCurveModule... [DONE]\n")
+        sys.stdout.flush()
+
+        history = ""
+        self.m_data_out_port.add_history("MassCurveModule", history)
+        self.m_data_out_port.copy_attributes(self.m_data_in_port)
+        self.m_data_out_port.close_port()
+
+
+    
 
 class ContrastCurveModule(ProcessingModule):
     """
