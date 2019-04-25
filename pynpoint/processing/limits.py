@@ -108,10 +108,10 @@ class MassCurveModule(ProcessingModule):
         filter_index = np.argwhere(self.m_filter == self.m_header)
 
         # grab the data to be interpolated
-        print(self.m_model_data[23])
         mass = self.m_model_data[age_index] [:, 0]
         absoulteMagnitude = self.m_model_data[age_index] [:, filter_index]
 
+        print(absoulteMagnitude, absoulteMagnitude.shape)
         # interpolate the data
         interpols_mass_contrast = interp1d(absoulteMagnitude, mass, kind='linear', bounds_error = False)
         return interpols_mass_contrast
