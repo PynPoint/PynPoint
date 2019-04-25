@@ -21,14 +21,31 @@ from pynpoint.util.residuals import combine_residuals
 class MassCurveModule(ProcessingModule):
     """
     Module to calculate mass limits from a COND model and calculated ContrastLimits
+
+    Parameters
+    ----------
+        name_in : str
+            Unique name of the module instance.
+        data_in_tag : str
+            Tag of the database entry that contains the contrast curve data
+        data_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged mass
+            limits, the one sigma boundaries of the mass limits.
+        host_star_magnitude: tuple of str
+            A tuple containing the apparent magnitude and the distance to the host star in parsec
+        age: float
+            Age of the system in Gyr
+        model_file: str
+            Relative path to the file containing the COND model data.
+        
     """
     def __init__(self,
-                host_star_magnitude=(0, 10),
-                age=.5,
-                filter="L\'",
                 name_in="mass",
                 data_in_tag="contrast_limits",
                 data_out_tag="mass_limits",
+                host_star_magnitude=(0, 10),
+                age=.5,
+                filter="L\'",
                 model_file=""):
         
         """
