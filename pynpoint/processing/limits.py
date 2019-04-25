@@ -109,7 +109,7 @@ class MassCurveModule(ProcessingModule):
         # grab the data to be interpolated
         mass = self.m_model_data[age_index] [:, 0]
         print(mass)
-        absoulteMagnitude = self.m_model_data[age_index] # [:, filter_index]
+        absoulteMagnitude = self.m_model_data[age_index] [:, filter_index]
         print(absoulteMagnitude, absoulteMagnitude.shape)
         print(np.squeeze(absoulteMagnitude))
 
