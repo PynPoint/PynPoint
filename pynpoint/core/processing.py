@@ -14,8 +14,9 @@ import six
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
-from pynpoint.util.multiproc import LineProcessingCapsule, apply_function
 from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.multiline import LineProcessingCapsule
+from pynpoint.util.multiproc import apply_function
 
 
 class PypelineModule(six.with_metaclass(ABCMeta)):
