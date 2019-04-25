@@ -38,6 +38,9 @@ class MassCurveModule(ProcessingModule):
 
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
         self.m_host_magnitude = host_star_magnitude[0] - 5 * np.log10(host_star_magnitude[1] / 10)
+        
+        self.m_host_apparent_magnitude = host_star_magnitude[0]
+        self.m_distance = host_star_magnitude[1]
 
         self.m_model_file = model_file
 
@@ -110,8 +113,6 @@ class MassCurveModule(ProcessingModule):
         # grab the data to be interpolated
         mass = self.m_model_data[age_index] [:, 0]
         absoulteMagnitude = np.squeeze(self.m_model_data[age_index] [:, filter_index])
-        print(absoulteMagnitude, absoulteMagnitude.shape)
-        print(np.squeeze(absoulteMagnitude))
 
         interpols_mass_contrast = interp1d(absoulteMagnitude, mass, kind='linear', bounds_error = False)
         return interpols_mass_contrast
@@ -134,7 +135,8 @@ class MassCurveModule(ProcessingModule):
         sys.stdout.write("\rRunning MassCurveModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = ""
+        history = " apparent Magnitude: " + str(self.m_host_apparent_magnitude) + " at distance: "\
+            + str(self.m_distance) + "at age: " + str(self.m_age)
         self.m_data_out_port.add_history("MassCurveModule", history)
         self.m_data_out_port.copy_attributes(self.m_data_in_port)
         self.m_data_out_port.close_port()
