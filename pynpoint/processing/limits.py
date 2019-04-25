@@ -105,7 +105,7 @@ class MassCurveModule(ProcessingModule):
         # find the model corresponding to the m_age
         age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
         # find the filter corresponding to the m_filter
-        filter_index = np.argwhere(self.m_filter == self.m_header)
+        filter_index = np.argwhere([self.m_filter == j for j in self.m_header])[0] # simple argwhere gives empty list?!
         print('filter', filter_index)
         # grab the data to be interpolated
         mass = self.m_model_data[age_index] [:, 0]
