@@ -103,7 +103,7 @@ class MassCurveModule(ProcessingModule):
         # find the model corresponding to the m_age
         age_index = np.argwhere(self.m_age == self.m_ages)[0]
         # find the filter corresponding to the m_filter
-        filter_index = np.argwhere(self.m_filter == self.m_header)[0]
+        filter_index = np.argwhere(self.m_filter == self.m_header)
 
         # grab the data to be interpolated
         mass = self.m_model_data[age_index] [:, 0]
@@ -115,8 +115,6 @@ class MassCurveModule(ProcessingModule):
     
     def run(self):
         contrast_data = self.m_data_in_port.get_all()
-
-        print(contrast_data)
 
         r = contrast_data[:,0]
         contrast = contrast_data[:,1]
