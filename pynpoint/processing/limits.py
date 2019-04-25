@@ -88,6 +88,8 @@ class MassCurveModule(ProcessingModule):
                 header = temp
             else: # save the data
                 model_data[k] += [_line]
+        for index in range(len(model_data)):
+            model_data[index] = np.array(model_data[index])
 
         ages = np.array(ages, dtype = float)
         return ages, model_data, header
@@ -102,7 +104,6 @@ class MassCurveModule(ProcessingModule):
 
         # find the model corresponding to the m_age
         age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
-        print(age_index)
         # find the filter corresponding to the m_filter
         filter_index = np.argwhere(self.m_filter == self.m_header)
 
