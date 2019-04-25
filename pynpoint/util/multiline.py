@@ -1,6 +1,5 @@
 """
-Utilities for multiprocessing for lines in time with the poison pill pattern.
-
+Utilities for multiprocessing of lines in time with the poison pill pattern.
 """
 
 import six
@@ -30,8 +29,8 @@ class LineTaskProcessor(TaskProcessor):
             Results queue.
         function : function
             Input function.
-        function_args :
-            Function arguments.
+        function_args : tuple, None
+            Optional function arguments.
 
         Returns
         -------
@@ -46,6 +45,18 @@ class LineTaskProcessor(TaskProcessor):
 
     def run_job(self,
                 tmp_task):
+        """
+        Parameters
+        ----------
+        tmp_task : pynpoint.util.multiproc.TaskInput
+            Input task.
+
+        Returns
+        -------
+        pynpoint.util.multiproc.TaskResult
+            Task result.
+        """
+
         result_arr = np.zeros((tmp_task.m_job_parameter[0],
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))
@@ -58,9 +69,7 @@ class LineTaskProcessor(TaskProcessor):
                                                      self.m_function,
                                                      self.m_function_args)
 
-        result = TaskResult(result_arr, tmp_task.m_job_parameter[1])
-
-        return result
+        return TaskResult(result_arr, tmp_task.m_job_parameter[1])
 
 
 class LineReader(TaskCreator):
@@ -120,16 +129,14 @@ class LineReader(TaskCreator):
             # read rows from i to j
             j = min((i + row_length), total_number_of_rows)
 
-            # lock Mutex and read data
+            # lock mutex and read data
             with self.m_data_mutex:
-                # print "Reading lines from " + str(i) + " to " + str(j)
+                # reading lines from i to j
                 tmp_data = self.m_data_in_port[:, i:j, :]
 
-            self.m_task_queue.put(TaskInput(tmp_data,
-                                            (self.m_data_length,
-                                             ((None, None, None),
-                                              (i, j, None),
-                                              (None, None, None)))))
+            param = (self.m_data_length, ((None, None, None), (i, j, None), (None, None, None)))
+            self.m_task_queue.put(TaskInput(tmp_data, param))
+
             i = j
 
         self.create_poison_pills()
@@ -206,8 +213,8 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         Returns
         -------
-        NoneType
-            None
+        pynpoint.util.multiline.LineReader
+            Line reader object.
         """
 
         return LineReader(image_in_port,
