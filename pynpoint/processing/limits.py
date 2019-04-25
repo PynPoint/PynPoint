@@ -35,6 +35,9 @@ class MassCurveModule(ProcessingModule):
             A tuple containing the apparent magnitude and the distance to the host star in parsec
         age: float
             Age of the system in Gyr
+        observation_filter: str
+            Name of the filter in which the observations were made. Must be the same as in the COND
+            model data file
         model_file: str
             Relative path to the file containing the COND model data.
         
@@ -45,7 +48,7 @@ class MassCurveModule(ProcessingModule):
                 data_out_tag="mass_limits",
                 host_star_magnitude=(0, 10),
                 age=.5,
-                filter="L\'",
+                observation_filter="L\'",
                 model_file=""):
         
         """
@@ -67,10 +70,10 @@ class MassCurveModule(ProcessingModule):
 
         self.m_ages, self.m_model_data, self.m_header = self._read_model()
 
-        assert filter in self.m_header, "The selected filter was not found in the list of available filters from the model"
+        assert observation_filter in self.m_header, "The selected filter was not found in the list of available filters from the model"
         assert age in self.m_ages, "The selected age was not found in the list of available ages from the model"
 
-        self.m_filter = filter
+        self.m_filter = observation_filter
         self.m_age = age
 
 
@@ -108,8 +111,8 @@ class MassCurveModule(ProcessingModule):
                 header = temp
             else: # save the data
                 model_data[k] += [_line]
-        for index in range(len(model_data)):
-            model_data[index] = np.array(model_data[index], dtype=float)
+        for index, _ in enumerate(model_data):
+            model_data[index] = np.array(model_data[index], dtype=float) 
 
         ages = np.array(ages, dtype = float)
         return ages, model_data, header
