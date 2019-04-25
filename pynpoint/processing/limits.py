@@ -85,7 +85,7 @@ class MassCurveModule(ProcessingModule):
                 model_data += [[]]
             elif 'lg(g)' in _line: # get header line
                 temp = ['M/Ms', 'Teff(K)'] + _line[1:]
-                header +=[temp]
+                header = temp
             else: # save the data
                 model_data[k] += [_line]
 
