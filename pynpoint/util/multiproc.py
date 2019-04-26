@@ -78,7 +78,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
                  data_port_in,
                  tasks_queue_in,
                  data_mutex_in,
-                 number_of_processors):
+                 num_proc):
         """
         Parameters
         ----------
@@ -89,7 +89,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         data_mutex_in : multiprocessing.synchronize.Lock
             A mutex shared with the writer to ensure that no read and write operations happen at
             the same time.
-        number_of_processors : int
+        num_proc : int
             Maximum number of instances of :class:`~pynpoint.util.multiproc.TaskProcessor` that run
             simultaneously.
 
@@ -104,7 +104,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         self.m_data_mutex = data_mutex_in
         self.m_task_queue = tasks_queue_in
 
-        self.m_number_of_processors = number_of_processors
+        self.m_num_proc = num_proc
         self.m_data_in_port = data_port_in
 
     def create_poison_pills(self):
@@ -120,7 +120,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
             None
         """
 
-        for _ in six.moves.range(self.m_number_of_processors-1):
+        for _ in six.moves.range(self.m_num_proc-1):
             # poison pills
             self.m_task_queue.put(1)
 
@@ -358,7 +358,7 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
     def __init__(self,
                  image_in_port,
                  image_out_port,
-                 num_processors):
+                 num_proc):
         """
         Parameters
         ----------
@@ -366,7 +366,7 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
             Port to the input data.
         image_in_port : pynpoint.core.dataio.OutputPort
             Port to the place where the output data will be stored.
-        num_processors : int
+        num_proc : int
             Number of task processors.
 
         Returns
@@ -376,9 +376,9 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
         """
 
         # buffer twice the data as processes are available
-        self.m_tasks_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
-        self.m_result_queue = multiprocessing.JoinableQueue(maxsize=num_processors)
-        self.m_num_processors = num_processors
+        self.m_tasks_queue = multiprocessing.JoinableQueue(maxsize=num_proc)
+        self.m_result_queue = multiprocessing.JoinableQueue(maxsize=num_proc)
+        self.m_num_proc = num_proc
 
         # database mutex
         self.m_data_mutex = multiprocessing.Lock()
@@ -448,7 +448,7 @@ class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
     def run(self):
         """
         Run method that starts the :class:`~pynpoint.util.multiproc.TaskCreator`, the instances
-        of :class:`~pynpoint.util.multiproc.TaskProcessor`, and the TaskWriter and the
+        of :class:`~pynpoint.util.multiproc.TaskProcessor`, and the
         :class:`~pynpoint.util.multiproc.TaskWriter`. They will be shut down when all tasks have
         finished.
 
@@ -514,7 +514,7 @@ def to_slice(tuple_slice):
     Parameters
     ----------
     tuple_slice : tuple
-        Tuple to be converted to a slice.
+        Tuple to be converted into a slice.
 
     Returns
     -------
