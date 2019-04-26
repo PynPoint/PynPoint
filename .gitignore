@@ -27,3 +27,4 @@ docs/_build
 
 # pip install -e
 pynpoint.egg-info
+pynpoint.egg-info/*

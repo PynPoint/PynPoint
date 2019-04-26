@@ -31,10 +31,14 @@ class MassCurveModule(ProcessingModule):
         data_out_tag : str
             Tag of the database entry that contains the separation, azimuthally averaged mass
             limits, the one sigma boundaries of the mass limits.
-        host_star_magnitude: tuple of str
-            A tuple containing the apparent magnitude and the distance to the host star in parsec
-        age: float
-            Age of the system in Gyr
+        host_star_propertiers: dict
+            Dictionary containing host star properties. Must have the following keys:
+             - 'mag': Magnitude
+             - 'mag_app': Magnitude flag : True when the apparent magnitude is given, False when the absolute 
+             magnitude is given
+             - 'dist': Distance in parsec
+             - 'age': age of the system in the units specified in 'age_unit'
+             - 'age_unit': Can be either Gyr or Myr
         observation_filter: str
             Name of the filter in which the observations were made. Must be the same as in the COND
             model data file
@@ -46,8 +50,7 @@ class MassCurveModule(ProcessingModule):
                 name_in="mass",
                 data_in_tag="contrast_limits",
                 data_out_tag="mass_limits",
-                host_star_magnitude=(0, 10),
-                age=.5,
+                host_star_propertiers=(0, True, 10, .5, 'Gyr'),
                 observation_filter="L\'",
                 model_file=""):
         
@@ -57,10 +60,11 @@ class MassCurveModule(ProcessingModule):
         super(MassCurveModule, self).__init__(name_in)
 
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
-        self.m_host_magnitude = host_star_magnitude[0] - 5 * np.log10(host_star_magnitude[1] / 10)
+        if host_star_propertiers[1]:
+            self.m_host_magnitude = host_star_propertiers['mag'] - 5 * np.log10(host_star_propertiers['dist'] / 10)
+
         
-        self.m_host_apparent_magnitude = host_star_magnitude[0]
-        self.m_distance = host_star_magnitude[1]
+        self.m_distance = host_star_propertiers['dist']
 
         self.m_model_file = model_file
 
@@ -71,11 +75,16 @@ class MassCurveModule(ProcessingModule):
         self.m_ages, self.m_model_data, self.m_header = self._read_model()
 
         assert observation_filter in self.m_header, "The selected filter was not found in the list of available filters from the model"
-        assert age in self.m_ages, "The selected age was not found in the list of available ages from the model"
-
         self.m_filter = observation_filter
-        self.m_age = age
 
+        if host_star_propertiers['age_unit'] == 'Myr':
+            self.m_age = host_star_propertiers['age'] * 1000
+        else: 
+            self.m_age = host_star_propertiers['age']
+            
+        assert self.m_age in self.m_ages, "The selected age was not found in the list of available ages from the model"
+        
+        
 
 
     def _read_model(self):
@@ -155,7 +164,7 @@ class MassCurveModule(ProcessingModule):
         sys.stdout.write("\rRunning MassCurveModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = " apparent Magnitude: " + str(self.m_host_apparent_magnitude) + " at distance: "\
+        history = " absolute Magnitude: " + str(self.m_host_magnitude) + " at distance: "\
             + str(self.m_distance) + "at age: " + str(self.m_age)
         self.m_data_out_port.add_history("MassCurveModule", history)
         self.m_data_out_port.copy_attributes(self.m_data_in_port)
