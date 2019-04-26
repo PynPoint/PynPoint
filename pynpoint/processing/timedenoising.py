@@ -218,7 +218,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 """
 
                 cwt_capsule = WaveletAnalysisCapsule(
-                    signal_in,
+                    signal_in=signal_in,
                     padding=self.m_padding,
                     wavelet_in=self.m_wavelet_configuration.m_wavelet,
                     order=self.m_wavelet_configuration.m_wavelet_order,
