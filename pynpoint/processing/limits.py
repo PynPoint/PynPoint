@@ -50,7 +50,7 @@ class MassCurveModule(ProcessingModule):
                 name_in="mass",
                 data_in_tag="contrast_limits",
                 data_out_tag="mass_limits",
-                host_star_propertiers=(0, True, 10, .5, 'Gyr'),
+                host_star_propertiers={'mag': 0, 'mag_app':True, 'dist': 10, 'age': 500, 'age_unit':'Myr'},
                 observation_filter="L\'",
                 model_file=""):
         
@@ -78,10 +78,12 @@ class MassCurveModule(ProcessingModule):
         self.m_filter = observation_filter
 
         if host_star_propertiers['age_unit'] == 'Myr':
-            self.m_age = host_star_propertiers['age'] * 1000
-        else: 
+            self.m_age = host_star_propertiers['age'] / 1000
+        elif host_star_propertiers['age_unit'] == 'Gyr':
             self.m_age = host_star_propertiers['age']
-            
+        else:
+            AssertionError('Age must be given in Myr or Gyr, please check the "age_unit" key')
+
         assert self.m_age in self.m_ages, "The selected age was not found in the list of available ages from the model"
         
         
