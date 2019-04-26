@@ -25,7 +25,7 @@ class PcaTaskCreator(TaskCreator):
 
     def __init__(self,
                  tasks_queue_in,
-                 number_of_processors,
+                 num_proc,
                  pca_numbers):
         """
         Constructor of PcaTaskCreator.
@@ -34,7 +34,7 @@ class PcaTaskCreator(TaskCreator):
         ----------
         tasks_queue_in : multiprocessing.queues.JoinableQueue
             Input task queue.
-        number_of_processors : int
+        num_proc : int
             Number of processors.
         pca_numbers : numpy.ndarray
             Principal components for which the residuals are computed.
@@ -45,7 +45,7 @@ class PcaTaskCreator(TaskCreator):
             None
         """
 
-        super(PcaTaskCreator, self).__init__(None, tasks_queue_in, None, number_of_processors)
+        super(PcaTaskCreator, self).__init__(None, tasks_queue_in, None, num_proc)
 
         self.m_pca_numbers = pca_numbers
 
@@ -290,7 +290,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  median_out_port,
                  weighted_out_port,
                  clip_out_port,
-                 num_processors,
+                 num_proc,
                  pca_numbers,
                  pca_model,
                  star_reshape,
@@ -310,7 +310,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             Output port for the noise-weighted residuals.
         clip_out_port : pynpoint.core.dataio.OutputPort
             Output port for the mean clipped residuals.
-        num_processors : int
+        num_proc : int
             Number of processors.
         pca_numbers : numpy.ndarray
             Number of principal components.
@@ -358,7 +358,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         self.m_requirements = tuple(self.m_requirements)
 
-        super(PcaMultiprocessingCapsule, self).__init__(None, None, num_processors)
+        super(PcaMultiprocessingCapsule, self).__init__(None, None, num_proc)
 
     def create_writer(self, image_out_port):
         """
@@ -375,15 +375,13 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             PCA task writer.
         """
 
-        writer = PcaTaskWriter(self.m_result_queue,
-                               self.m_mean_out_port,
-                               self.m_median_out_port,
-                               self.m_weighted_out_port,
-                               self.m_clip_out_port,
-                               self.m_data_mutex,
-                               self.m_requirements)
-
-        return writer
+        return PcaTaskWriter(self.m_result_queue,
+                             self.m_mean_out_port,
+                             self.m_median_out_port,
+                             self.m_weighted_out_port,
+                             self.m_clip_out_port,
+                             self.m_data_mutex,
+                             self.m_requirements)
 
     def init_creator(self, image_in_port):
         """
@@ -400,11 +398,9 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             PCA task creator.
         """
 
-        creator = PcaTaskCreator(self.m_tasks_queue,
-                                 self.m_num_processors,
-                                 self.m_pca_numbers)
-
-        return creator
+        return PcaTaskCreator(self.m_tasks_queue,
+                              self.m_num_proc,
+                              self.m_pca_numbers)
 
     def create_processors(self):
         """
@@ -418,7 +414,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         processors = []
 
-        for _ in range(self.m_num_processors):
+        for _ in range(self.m_num_proc):
             processors.append(PcaTaskProcessor(self.m_tasks_queue,
                                                self.m_result_queue,
                                                self.m_star_reshape,

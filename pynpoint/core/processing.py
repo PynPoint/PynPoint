@@ -14,8 +14,9 @@ import six
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
-from pynpoint.util.multiproc import LineProcessingCapsule, apply_function
 from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.multiline import LineProcessingCapsule
+from pynpoint.util.multiproc import apply_function
 
 
 class PypelineModule(six.with_metaclass(ABCMeta)):
@@ -86,6 +87,129 @@ class PypelineModule(six.with_metaclass(ABCMeta)):
         algorithm behind the module.
         """
 
+
+class ReadingModule(six.with_metaclass(ABCMeta, PypelineModule)):
+    """
+    The abstract class ReadingModule is an interface for processing steps in the Pypeline which
+    have only read access to the central data storage. One can specify a directory on the hard
+    drive where the input data for the module is located. If no input directory is given then
+    default Pypeline input directory is used. Reading modules have a dictionary of output ports
+    (self._m_out_ports) but no input ports.
+    """
+
+    def __init__(self,
+                 name_in,
+                 input_dir=None):
+        """
+        Abstract constructor of ReadingModule which needs the unique name identifier as input
+        (more information: :class:`pynpoint.core.processing.PypelineModule`). An input directory
+        can be specified for the location of the data or else the Pypeline default directory is
+        used. This function is called in all *__init__()* functions inheriting from this class.
+
+        Parameters
+        ----------
+        name_in : str
+            The name of the ReadingModule.
+        input_dir : str
+            Directory where the input files are located.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(ReadingModule, self).__init__(name_in)
+
+        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Input directory for ' \
+            'reading module does not exist - input requested: %s.' % input_dir
+
+        self.m_input_location = input_dir
+        self._m_output_ports = {}
+
+    def add_output_port(self,
+                        tag,
+                        activation=True):
+        """
+        Function which creates an OutputPort for a ReadingModule and appends it to the internal
+        OutputPort dictionary. This function should be used by classes inheriting from
+        ReadingModule to make sure that only output ports with unique tags are added. The new
+        port can be used as: ::
+
+             port = self._m_output_ports[tag]
+
+        or by using the returned Port.
+
+        Parameters
+        ----------
+        tag : str
+            Tag of the new output port.
+        activation : bool
+            Activation status of the Port after creation. Deactivated ports will not save their
+            results until they are activated.
+
+        Returns
+        -------
+        pynpoint.core.dataio.OutputPort
+            The new OutputPort for the ReadingModule.
+        """
+
+        port = OutputPort(tag, activate_init=activation)
+
+        if tag in self._m_output_ports:
+            warnings.warn("Tag '%s' of ReadingModule '%s' is already used."
+                          % (tag, self._m_name))
+
+        if self._m_data_base is not None:
+            port.set_database_connection(self._m_data_base)
+
+        self._m_output_ports[tag] = port
+
+        return port
+
+    def connect_database(self,
+                         data_base_in):
+        """
+        Function used by a ReadingModule to connect all ports in the internal input and output
+        port dictionaries to the database. The function is called by Pypeline and connects the
+        DataStorage object to all module ports.
+
+        Parameters
+        ----------
+        data_base_in : pynpoint.core.dataio.DataStorage
+            The central database.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        for port in six.itervalues(self._m_output_ports):
+            port.set_database_connection(data_base_in)
+
+        self._m_config_port.set_database_connection(data_base_in)
+
+        self._m_data_base = data_base_in
+
+    def get_all_output_tags(self):
+        """
+        Returns a list of all output tags to the ReadingModule.
+
+        Returns
+        -------
+        list(str, )
+            List of output tags.
+        """
+
+        return list(self._m_output_ports.keys())
+
+    @abstractmethod
+    def run(self):
+        """
+        Abstract interface for the run method of a ReadingModule which inheres the actual
+        algorithm behind the module.
+        """
 
 class WritingModule(six.with_metaclass(ABCMeta, PypelineModule)):
     """
@@ -343,12 +467,12 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
         ----------
         func : function
             The input function.
-        image_in_port : InputPort
-            InputPort which is linked to the input data.
-        image_out_port : OutputPort
-            OutputPort which is linked to the result place.
-        func_args : tuple
-            Additional arguments which are needed by the function *func*.
+        image_in_port : pynpoint.core.dataio.InputPort
+            Input port which is linked to the input data.
+        image_out_port : pynpoint.core.dataio.OutputPort
+            Output port which is linked to the results.
+        func_args : tuple, None
+            Additional arguments which are required by the input function. Not used if set to None.
 
         Returns
         -------
@@ -358,26 +482,22 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
 
         init_line = image_in_port[:, 0, 0]
 
+        im_shape = image_in_port.get_shape()
+
         size = apply_function(init_line, func, func_args).shape[0]
 
-        # if image_out_port.tag == image_in_port.tag and size != image_in_port.get_shape()[0]:
-        #     raise ValueError("Input and output port have the same tag while %s is changing " \
-        #         "the length of the signal. Use different input and output ports instead." % func)
-
-        image_out_port.set_all(np.zeros((size,
-                                         image_in_port.get_shape()[1],
-                                         image_in_port.get_shape()[2])),
+        image_out_port.set_all(np.zeros((size, im_shape[1], im_shape[2])),
                                data_dim=3,
                                keep_attributes=False)
 
         cpu = self._m_config_port.get_attribute("CPU")
 
-        line_processor = LineProcessingCapsule(image_in_port,
-                                               image_out_port,
-                                               cpu,
-                                               func,
-                                               func_args,
-                                               size)
+        line_processor = LineProcessingCapsule(image_in_port=image_in_port,
+                                               image_out_port=image_out_port,
+                                               num_proc=cpu,
+                                               function=func,
+                                               function_args=func_args,
+                                               data_length=size)
 
         line_processor.run()
 
@@ -404,13 +524,13 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
                              parameter3)
 
         image_in_port : pynpoint.core.dataio.InputPort
-            InputPort which is linked to the input data.
+            Input port which is linked to the input data.
         image_out_port : pynpoint.core.dataio.OutputPort
-            OutputPort which is linked to the result place. No data is written if set to None.
+            Output port which is linked to the results. No data is written if set to None.
         message : str
             Progress message that is printed.
         func_args : tuple
-            Additional arguments which are needed by the function *func*.
+            Additional arguments that are required by the input function.
 
         Returns
         -------
@@ -509,129 +629,5 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
     def run(self):
         """
         Abstract interface for the run method of a ProcessingModule which inheres the actual
-        algorithm behind the module.
-        """
-
-
-class ReadingModule(six.with_metaclass(ABCMeta, PypelineModule)):
-    """
-    The abstract class ReadingModule is an interface for processing steps in the Pypeline which
-    have only read access to the central data storage. One can specify a directory on the hard
-    drive where the input data for the module is located. If no input directory is given then
-    default Pypeline input directory is used. Reading modules have a dictionary of output ports
-    (self._m_out_ports) but no input ports.
-    """
-
-    def __init__(self,
-                 name_in,
-                 input_dir=None):
-        """
-        Abstract constructor of ReadingModule which needs the unique name identifier as input
-        (more information: :class:`pynpoint.core.processing.PypelineModule`). An input directory
-        can be specified for the location of the data or else the Pypeline default directory is
-        used. This function is called in all *__init__()* functions inheriting from this class.
-
-        Parameters
-        ----------
-        name_in : str
-            The name of the ReadingModule.
-        input_dir : str
-            Directory where the input files are located.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        super(ReadingModule, self).__init__(name_in)
-
-        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Input directory for ' \
-            'reading module does not exist - input requested: %s.' % input_dir
-
-        self.m_input_location = input_dir
-        self._m_output_ports = {}
-
-    def add_output_port(self,
-                        tag,
-                        activation=True):
-        """
-        Function which creates an OutputPort for a ReadingModule and appends it to the internal
-        OutputPort dictionary. This function should be used by classes inheriting from
-        ReadingModule to make sure that only output ports with unique tags are added. The new
-        port can be used as: ::
-
-             port = self._m_output_ports[tag]
-
-        or by using the returned Port.
-
-        Parameters
-        ----------
-        tag : str
-            Tag of the new output port.
-        activation : bool
-            Activation status of the Port after creation. Deactivated ports will not save their
-            results until they are activated.
-
-        Returns
-        -------
-        pynpoint.core.dataio.OutputPort
-            The new OutputPort for the ReadingModule.
-        """
-
-        port = OutputPort(tag, activate_init=activation)
-
-        if tag in self._m_output_ports:
-            warnings.warn("Tag '%s' of ReadingModule '%s' is already used."
-                          % (tag, self._m_name))
-
-        if self._m_data_base is not None:
-            port.set_database_connection(self._m_data_base)
-
-        self._m_output_ports[tag] = port
-
-        return port
-
-    def connect_database(self,
-                         data_base_in):
-        """
-        Function used by a ReadingModule to connect all ports in the internal input and output
-        port dictionaries to the database. The function is called by Pypeline and connects the
-        DataStorage object to all module ports.
-
-        Parameters
-        ----------
-        data_base_in : pynpoint.core.dataio.DataStorage
-            The central database.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        for port in six.itervalues(self._m_output_ports):
-            port.set_database_connection(data_base_in)
-
-        self._m_config_port.set_database_connection(data_base_in)
-
-        self._m_data_base = data_base_in
-
-    def get_all_output_tags(self):
-        """
-        Returns a list of all output tags to the ReadingModule.
-
-        Returns
-        -------
-        list(str, )
-            List of output tags.
-        """
-
-        return list(self._m_output_ports.keys())
-
-    @abstractmethod
-    def run(self):
-        """
-        Abstract interface for the run method of a ReadingModule which inheres the actual
         algorithm behind the module.
         """
