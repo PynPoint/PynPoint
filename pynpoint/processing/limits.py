@@ -84,11 +84,7 @@ class MassCurveModule(ProcessingModule):
         else:
             AssertionError('Age must be given in Myr or Gyr, please check the "age_unit" key')
 
-        assert self.m_age in self.m_ages, "The selected age was not found in the list of available ages from the model"
         
-        
-
-
     def _read_model(self):
         """
         Internal function. 
@@ -128,7 +124,28 @@ class MassCurveModule(ProcessingModule):
         ages = np.array(ages, dtype = float)
         return ages, model_data, header
 
-    def _interpolate_model(self):
+    def _interpolate_data_by_age(self, age):
+        """
+        Internal function to interpolate the ages when the input age is not in the list of model ages
+        """
+        # find the closest to models to the inout age
+        closest_age_index = (np.abs(self.m_ages-age)).argmin()
+        # find out whether the age is above or below the closest value and write to indices
+        if age < self.m_ages[closest_age_index]:
+            closest_age_indices = [closest_age_index -1, closest_age_index]
+        elif age > self.m_ages[closest_age_index]:
+            closest_age_indices = [closest_age_index, closest_age_index-1]
+        
+        lower_data = self.m_model_data[closest_age_indices[0]]
+        upper_data = self.m_model_data[closest_age_indices[1]]
+
+        # linear interpolation of the data
+        interpolated_data = lower_data + (age - self.m_ages[closest_age_indices[0]]) * \
+            (upper_data - lower_data) / (self.m_ages[closest_age_indices[1]] - self.m_ages[closest_age_indices[0]])
+
+        return interpolated_data
+
+    def _interpolate_model(self, interpolate_age=False):
         """
         Internal function.
         Takes Model data and interpolates it
@@ -136,17 +153,27 @@ class MassCurveModule(ProcessingModule):
 
         from scipy.interpolate import interp1d
 
-        # find the model corresponding to the m_age
-        age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
         # find the filter corresponding to the m_filter
         filter_index = np.argwhere([self.m_filter == j for j in self.m_header])[0] # simple argwhere gives empty list?!
-        
-        # grab the data to be interpolated
-        mass = self.m_model_data[age_index] [:, 0]
-        absoulteMagnitude = np.squeeze(self.m_model_data[age_index] [:, filter_index])
+            
+        # find the model corresponding to the m_age
+        if not interpolate_age:
+            age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
 
+            # grab the data to be interpolated
+            mass = self.m_model_data[age_index] [:, 0]
+            absoulteMagnitude = np.squeeze(self.m_model_data[age_index] [:, filter_index])
+        
+        else:
+            # interpolate the data by age
+            interpolated_age_data = self._interpolate_data_by_age(self.m_age)
+            mass = interpolated_age_data[:,0]
+            absoulteMagnitude = np.squeeze(interpolated_age_data[:, filter_index])
+        
+        # interpolate the data for one age
         interpols_mass_contrast = interp1d(absoulteMagnitude, mass, kind='linear', bounds_error = False)
         return interpols_mass_contrast
+
     
     def run(self):
         contrast_data = self.m_data_in_port.get_all()
@@ -155,9 +182,10 @@ class MassCurveModule(ProcessingModule):
         contrast = contrast_data[:,1]
         contrast_std = np.sqrt(contrast_data[:,2])
 
-        mass = self._interpolate_model()(contrast)
-        mass_upper = self._interpolate_model()(contrast + contrast_std) - mass
-        mass_lower = self._interpolate_model()(contrast - contrast_std) - mass
+        interpolate_age_flag = not (self.m_age in self.m_ages)
+        mass = self._interpolate_model(interpolate_age_flag)(contrast)
+        mass_upper = self._interpolate_model(interpolate_age_flag)(contrast + contrast_std) - mass
+        mass_lower = self._interpolate_model(interpolate_age_flag)(contrast - contrast_std) - mass
 
 
         mass_summary = np.column_stack((r, mass, mass_upper, mass_lower))
@@ -171,9 +199,6 @@ class MassCurveModule(ProcessingModule):
         self.m_data_out_port.add_history("MassCurveModule", history)
         self.m_data_out_port.copy_attributes(self.m_data_in_port)
         self.m_data_out_port.close_port()
-
-
-    
 
 class ContrastCurveModule(ProcessingModule):
     """
