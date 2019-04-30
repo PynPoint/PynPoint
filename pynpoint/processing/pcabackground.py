@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import sys
 import math
+import warnings
 
 import numpy as np
 
@@ -24,7 +25,7 @@ from pynpoint.util.module import progress, memory_frames, locate_star
 
 class PCABackgroundPreparationModule(ProcessingModule):
     """
-    Module for preparing the PCA background subtraction.
+    Pipeline module for preparing the PCA background subtraction.
     """
 
     def __init__(self,
@@ -241,7 +242,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "star = "+str(sum(star_nframes))+", background"+str(len(background_nframes))
+        history = "frames = "+str(sum(star_nframes))+", "+str(len(background_nframes))
         self.m_star_out_port.copy_attributes(self.m_image_in_port)
         self.m_star_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
@@ -271,13 +272,12 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
 class PCABackgroundSubtractionModule(ProcessingModule):
     """
-    Module for PCA based background subtraction. See Hunziker et al. 2018 for details.
+    Pipeline module for PCA based background subtraction. See Hunziker et al. 2018 for details.
     """
 
     def __init__(self,
                  pca_number=60,
                  mask_star=0.7,
-                 mask_planet=None,
                  subtract_mean=False,
                  subframe=None,
                  gaussian=0.15,
@@ -286,7 +286,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  background_in_tag="im_background",
                  residuals_out_tag="background_subtracted",
                  fit_out_tag=None,
-                 mask_out_tag=None):
+                 mask_out_tag=None,
+                 **kwargs):
         """
         Constructor of PCABackgroundSubtractionModule.
 
@@ -296,10 +297,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             Number of principal components.
         mask_star : float
             Radius of the central mask (arcsec).
-        mask_planet : tuple(float, float, float, float)
-            Separation (arcsec), position angle (deg) measured in counterclockwise direction with
-            respect to upward direction, additional rotation angle (deg), and radius (arcsec) of
-            the mask, (sep, angle, extra_rot, radius). No mask is used when set to None.
         subtract_mean : bool
             The mean of the background images is subtracted from both the star and background
             images before the PCA basis is constructed.
@@ -330,6 +327,9 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             None
         """
 
+        if "mask_planet" in kwargs:
+            warnings.warn("The 'mask_planet' parameter has been deprecated.", DeprecationWarning)
+
         super(PCABackgroundSubtractionModule, self).__init__(name_in)
 
         self.m_star_in_port = self.add_input_port(star_in_tag)
@@ -348,7 +348,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
-        self.m_mask_planet = mask_planet
         self.m_subtract_mean = subtract_mean
         self.m_gaussian = gaussian
         self.m_subframe = subframe
@@ -473,14 +472,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                                      width=self.m_subframe,
                                      fwhm=self.m_gaussian)
 
-        if self.m_mask_planet is not None:
-            parang = self.m_star_in_port.get_attribute("PARANG")
-
-            self.m_mask_planet = np.asarray(self.m_mask_planet)
-
-            self.m_mask_planet[0] /= pixscale
-            self.m_mask_planet[3] /= pixscale
-
         sys.stdout.write("Creating PCA basis set...")
         sys.stdout.flush()
 
@@ -499,32 +490,11 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             if self.m_subtract_mean:
                 im_star -= bg_mean
 
-            mask_star = _create_mask(self.m_mask_star,
-                                     star[frames[i]:frames[i+1], ],
-                                     frames[i+1]-frames[i])
+            mask = _create_mask(self.m_mask_star,
+                                star[frames[i]:frames[i+1], ],
+                                frames[i+1]-frames[i])
 
-            if self.m_mask_planet is None:
-                mask_planet = np.ones(im_star.shape)
-
-            else:
-                cent_x = star[frames[i]:frames[i+1], 1]
-                cent_y = star[frames[i]:frames[i+1], 0]
-
-                theta = np.radians(self.m_mask_planet[1] + 90. - \
-                            parang[frames[i]:frames[i+1]] + self.m_mask_planet[2])
-
-                x_planet = self.m_mask_planet[0]*np.cos(theta) + cent_x
-                y_planet = self.m_mask_planet[0]*np.sin(theta) + cent_y
-
-                planet = np.stack((y_planet, x_planet))
-
-                mask_planet = _create_mask(self.m_mask_planet[3],
-                                           np.transpose(planet),
-                                           frames[i+1]-frames[i])
-
-            fit_im = _model_background(basis_pca,
-                                       im_star*mask_star*mask_planet,
-                                       mask_star*mask_planet)
+            fit_im = _model_background(basis_pca, im_star*mask, mask)
 
             self.m_residuals_out_port.append(im_star-fit_im)
 
@@ -532,7 +502,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 self.m_fit_out_port.append(fit_im)
 
             if self.m_mask_out_port is not None:
-                self.m_mask_out_port.append(mask_star*mask_planet)
+                self.m_mask_out_port.append(mask)
 
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
@@ -555,8 +525,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
 class DitheringBackgroundModule(ProcessingModule):
     """
-    Module for PCA-based background subtraction of data with dithering. This is a wrapper that
-    applies the processing modules required for the PCA background subtraction.
+    Pipeline module for PCA-based background subtraction of data with dithering. This is a wrapper
+    that applies the processing modules required for the PCA background subtraction.
     """
 
     def __init__(self,
@@ -621,16 +591,15 @@ class DitheringBackgroundModule(ProcessingModule):
         combine : str
             Combine the mean background subtracted ("mean") or PCA background subtracted ("pca")
             frames. This step is ignored if set to None.
-        mask_planet : tuple(float, float, float)
-            Separation (arcsec), position angle (deg) measured in counterclockwise direction with
-            respect to upward direction, additional rotation angle (deg), and radius (arcsec) of
-            the mask, (sep, angle, radius). No mask is used when set to None.
 
         Returns
         -------
         NoneType
             None
         """
+
+        if "mask_planet" in kwargs:
+            warnings.warn("The 'mask_planet' parameter has been deprecated.", DeprecationWarning)
 
         if "crop" in kwargs:
             self.m_crop = kwargs["crop"]
@@ -651,11 +620,6 @@ class DitheringBackgroundModule(ProcessingModule):
             self.m_combine = kwargs["combine"]
         else:
             self.m_combine = "pca"
-
-        if "mask_planet" in kwargs:
-            self.m_mask_planet = kwargs["mask_planet"]
-        else:
-            self.m_mask_planet = None
 
         super(DitheringBackgroundModule, self).__init__(name_in)
 
@@ -776,7 +740,6 @@ class DitheringBackgroundModule(ProcessingModule):
             if self.m_pca_background:
                 module = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                         mask_star=self.m_mask_star,
-                                                        mask_planet=self.m_mask_planet,
                                                         subtract_mean=self.m_subtract_mean,
                                                         subframe=self.m_subframe,
                                                         name_in="pca_background"+str(i),

@@ -15,7 +15,7 @@ from pynpoint.util.module import progress, memory_frames
 
 class SubtractImagesModule(ProcessingModule):
     """
-    Module for subtracting two sets of images.
+    Pipeline module for subtracting two sets of images.
     """
 
     def __init__(self,
@@ -93,7 +93,7 @@ class SubtractImagesModule(ProcessingModule):
 
 class AddImagesModule(ProcessingModule):
     """
-    Module for adding two sets of images.
+    Pipeline module for adding two sets of images.
     """
 
     def __init__(self,
@@ -171,7 +171,7 @@ class AddImagesModule(ProcessingModule):
 
 class RotateImagesModule(ProcessingModule):
     """
-    Module for rotating images.
+    Pipeline module for rotating images.
     """
 
     def __init__(self,
@@ -233,17 +233,10 @@ class RotateImagesModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running RotateImagesModule...")
 
-            if nimages == 1:
-                images = self.m_image_in_port.get_all()
-            else:
-                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             for j in range(frames[i+1]-frames[i]):
-
-                if nimages == 1:
-                    im_tmp = images
-                else:
-                    im_tmp = images[j, ]
+                im_tmp = images[j, ]
 
                 # ndimage.rotate rotates in clockwise direction for positive angles
                 im_tmp = rotate(im_tmp, self.m_angle, reshape=False)

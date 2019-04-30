@@ -28,9 +28,7 @@ class FitsReadingModule(ReadingModule):
     sets in a subfolder of the database named *header_* + image_tag. If the FITS files in the input
     directory have changing static attributes or the shape of the input images is changing a
     warning appears. FitsReadingModule overwrites by default all existing data with the same tags
-    in the central database. Note that PynPoint only supports the processing of square images so
-    rectangular images should be made square with e.g. :class:`CropImagesModule` or
-    :class:`RemoveLinesModule`.
+    in the central database.
     """
 
     def __init__(self,
@@ -39,7 +37,7 @@ class FitsReadingModule(ReadingModule):
                  image_tag="im_arr",
                  overwrite=True,
                  check=True,
-                 txt_path=""):
+                 filenames=None):
         """
         Constructor of FitsReadingModule.
 
@@ -58,10 +56,13 @@ class FitsReadingModule(ReadingModule):
         check : bool
             Check all the listed non-static attributes or ignore the attributes that are not always
             required (e.g. PARANG_START, DITHER_X).
-        txt_path : string
-            Path of the file containing a list of .fits files to be added in the image_tag. The txt
-            file should contain the relative path to the input_dir of the desired fits file in each
-            line.
+        filenames : str or list(str, )
+            If a string, then a path of a text file should be provided. This text file should
+            contain a list of FITS files. If a list, then the paths of the FITS files should be
+            provided directly. If set to None, the FITS files in the `input_dir` are read. All
+            paths should be provided either relative to the Python working folder (i.e., the folder
+            where Python is executed) or as absolute paths.
+
         Returns
         -------
         NoneType
@@ -74,6 +75,7 @@ class FitsReadingModule(ReadingModule):
 
         self.m_overwrite = overwrite
         self.m_check = check
+        self.m_filenames = filenames
 
         self.m_static = []
         self.m_non_static = []
@@ -90,8 +92,9 @@ class FitsReadingModule(ReadingModule):
 
         self.m_count = 0
 
-        if txt_path:
-            self.m_txt_path = txt_path
+        if not isinstance(filenames, (type(None), list, tuple, str)):
+            raise TypeError("The 'filenames' parameter should contain a string or list with "
+                            "strings.")
 
     def _read_single_file(self,
                           fits_file,
@@ -122,7 +125,7 @@ class FitsReadingModule(ReadingModule):
             Image shape.
         """
 
-        hdulist = fits.open(location + fits_file)
+        hdulist = fits.open(os.path.join(location, fits_file))
         images = hdulist[0].data.byteswap().newbyteorder()
 
         if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
@@ -149,14 +152,15 @@ class FitsReadingModule(ReadingModule):
 
     def _txt_file_list(self):
         """
-        Internal function to import the list of files from a text file
+        Internal function to import a list of FITS files from a text file.
         """
-        with open(self.m_txt_path) as f:
-            files = f.readlines()
+
+        with open(self.m_filenames) as file_obj:
+            files = file_obj.readlines()
 
         files = [x.strip() for x in files] # get rid of newlines
-        files = list(filter(None, files)) # get rid of empty lines
-        return files
+
+        return list(filter(None, files)) # get rid of empty lines
 
     def _static_attributes(self,
                            fits_file,
@@ -168,7 +172,7 @@ class FitsReadingModule(ReadingModule):
         ----------
         fits_file : str
             Name of the FITS file.
-        header : astropy FITS header
+        header : astropy.io.fits.header.Header
             Header information from the FITS file that is read.
 
         Returns
@@ -215,7 +219,7 @@ class FitsReadingModule(ReadingModule):
 
         Parameters
         ----------
-        header : astropy FITS header
+        header : astropy.io.fits.header.Header
             Header information from the FITS file that is read.
 
         Returns
@@ -258,7 +262,7 @@ class FitsReadingModule(ReadingModule):
             Name of the FITS file.
         location : str
             Directory where the FITS file is located.
-        shape : tuple(int)
+        shape : tuple(int, )
             Shape of the images.
 
         Returns
@@ -279,18 +283,16 @@ class FitsReadingModule(ReadingModule):
         for _, item in enumerate(index):
             self.m_image_out_port.append_attribute_data("INDEX", item)
 
-        self.m_image_out_port.append_attribute_data("FILES", location+fits_file)
+        self.m_image_out_port.append_attribute_data("FILES", os.path.join(location, fits_file))
         self.m_image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
 
         self.m_count += nimages
 
     def run(self):
         """
-        Run method of the module. Looks for all FITS files in the input directory and reads them
-        using the internal function _read_single_file(). Note that previous database information
-        is overwritten if overwrite=True. The filenames are stored as attributes. Note that
-        PynPoint only supports processing of square images so, in case required, images should
-        be made square with e.g. :class:`CropImagesModule` or :class:`RemoveLinesModule`.
+        Run method of the module. Looks for all FITS files in the input directory and imports the
+        images into the database. Note that previous database information is overwritten if
+        ``overwrite=True``. The filenames are stored as attributes.
 
         Returns
         -------
@@ -298,20 +300,26 @@ class FitsReadingModule(ReadingModule):
             None
         """
 
-        location = os.path.join(self.m_input_location, '')
-
         files = []
 
-        if hasattr(self, 'm_txt_path'):
+        if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-        else: 
+            location = os.getcwd()
+
+        elif isinstance(self.m_filenames, (list, tuple)):
+            files = self.m_filenames
+            location = os.getcwd()
+
+        elif isinstance(self.m_filenames, type(None)):
+            location = os.path.join(self.m_input_location, '')
+
             for filename in os.listdir(location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(filename)
 
-        files.sort()
+            assert(files), 'No FITS files found in %s.' % self.m_input_location
 
-        assert(files), 'No FITS files found in %s.' % self.m_input_location
+        files.sort()
 
         overwrite_tags = []
 

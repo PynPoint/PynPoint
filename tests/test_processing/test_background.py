@@ -10,12 +10,13 @@ from pynpoint.processing.background import MeanBackgroundSubtractionModule, \
                                            LineSubtractionModule, \
                                            NoddingBackgroundModule
 from pynpoint.processing.pcabackground import DitheringBackgroundModule
-from pynpoint.processing.stacksubset import MeanCubeModule
+from pynpoint.processing.stacksubset import StackCubesModule
 from pynpoint.util.tests import create_config, create_fake, remove_test_data
 
 warnings.simplefilter("always")
 
 limit = 1e-10
+
 
 class TestBackgroundSubtraction(object):
 
@@ -189,7 +190,6 @@ class TestBackgroundSubtraction(object):
                                                subframe=0.5,
                                                pca_number=5,
                                                mask_star=0.1,
-                                               mask_planet=None,
                                                crop=True,
                                                prepare=True,
                                                pca_background=True,
@@ -258,7 +258,6 @@ class TestBackgroundSubtraction(object):
                                                subframe=None,
                                                pca_number=5,
                                                mask_star=0.1,
-                                               mask_planet=None,
                                                bad_pixel=None,
                                                crop=True,
                                                prepare=True,
@@ -275,9 +274,10 @@ class TestBackgroundSubtraction(object):
 
     def test_nodding_background(self):
 
-        mean = MeanCubeModule(name_in="mean",
-                              image_in_tag="sky",
-                              image_out_tag="mean")
+        mean = StackCubesModule(name_in="mean",
+                                image_in_tag="sky",
+                                image_out_tag="mean",
+                                combine="mean")
 
         self.pipeline.add_module(mean)
         self.pipeline.run_module("mean")
