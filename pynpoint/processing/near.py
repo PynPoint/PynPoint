@@ -146,6 +146,10 @@ class NearInitializationModule(ReadingModule):
             Name of the FITS file.
         header : astropy.io.fits.header
             Header information from the FITS file that is read.
+        iteration : int
+            Number of current fits file
+        end : int
+            Total number of fits files
 
         Returns
         -------
@@ -160,7 +164,7 @@ class NearInitializationModule(ReadingModule):
             if self.m_check:
                 fitskey = self._m_config_port.get_attribute(item)
 
-                if isinstance(fitskey, np.bytes_):
+                if type(fitskey) == np.bytes_:
                     fitskey = str(fitskey.decode("utf-8"))
 
                 if fitskey != "None":
