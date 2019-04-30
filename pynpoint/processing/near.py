@@ -136,8 +136,6 @@ class NearInitializationModule(ReadingModule):
             self.m_image_out_port_4.del_all_data()
             self.m_image_out_port_4.del_all_attributes()
 
-        return None
-
     def _static_attributes(self, fits_file, header, iteration, end):
         """
         Internal function which adds the static attributes to the central database.
@@ -249,8 +247,6 @@ class NearInitializationModule(ReadingModule):
                         warnings.warn("Static attribute %s (=%s) not found in the FITS header."
                                       % (item, fitskey))
 
-        return None
-
     def _non_static_attributes(self, header):
         """
         Internal function which adds the non-static attributes to the central database.
@@ -285,14 +281,6 @@ class NearInitializationModule(ReadingModule):
                                 self.m_image_out_port_2.append_attribute_data(item, header[fitskey])
                                 self.m_image_out_port_3.append_attribute_data(item, header[fitskey])
                                 self.m_image_out_port_4.append_attribute_data(item, header[fitskey])
-
-                            elif header['NAXIS'] == 2 and item == 'NFRAMES':
-                                self.m_image_out_port_1.append_attribute_data(item, 1)
-                                self.m_image_out_port_2.append_attribute_data(item, 1)
-                                self.m_image_out_port_3.append_attribute_data(item, 1)
-                                self.m_image_out_port_4.append_attribute_data(item, 1)
-
-        return None
 
     def _extra_attributes(self, fits_file, location, shape, nod):
         """
@@ -343,8 +331,6 @@ class NearInitializationModule(ReadingModule):
 
         self.m_count += nimages
 
-        return None
-
     def _uncompress_multi(self, filename):
         """
         Subfuction of -uncompress- used for threading.
@@ -365,8 +351,6 @@ class NearInitializationModule(ReadingModule):
 
             command = "gunzip -d " + filename
             subprocess.check_call(shlex.split(command))
-
-        return None
 
     def uncompress(self):
         """
@@ -431,8 +415,6 @@ class NearInitializationModule(ReadingModule):
                 for j in jobs:
                     j.join()
 
-        return None
-
     def check_header(self, head):
         """
         Check general header keywords and prompt warning if the value is other than default
@@ -455,8 +437,6 @@ class NearInitializationModule(ReadingModule):
         if half_cycle == 'T':
             warnings.warn("Frames have been averaged by default. This module will probably not "
                           "work properly")
-
-        return None
 
     def open_fit(self, location, image_file, number):
         """
@@ -617,4 +597,3 @@ class NearInitializationModule(ReadingModule):
         self.m_image_out_port_2.close_port()
         self.m_image_out_port_3.close_port()
         self.m_image_out_port_4.close_port()
-
