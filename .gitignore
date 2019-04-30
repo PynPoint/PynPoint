@@ -24,4 +24,6 @@ docs/_build
 # Mac
 .DS_Store
 .vscode
+
+# python installation (pip install -e)
 pynpoint.egg-info
