@@ -280,7 +280,7 @@ class NearInitializationModule(ReadingModule):
                     if self.m_attributes[item]["config"] == "header":
                         fitskey = self._m_config_port.get_attribute(item)
 
-                        if type(fitskey) == np.bytes_:
+                        if isinstance(fitskey, np.bytes_):
                             fitskey = str(fitskey.decode("utf-8"))
 
                         if fitskey != "None":
