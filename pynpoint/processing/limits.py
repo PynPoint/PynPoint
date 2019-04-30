@@ -60,7 +60,7 @@ class MassCurveModule(ProcessingModule):
         super(MassCurveModule, self).__init__(name_in)
 
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
-        if host_star_propertiers[1]:
+        if host_star_propertiers['mag_app']:
             self.m_host_magnitude = host_star_propertiers['mag'] - 5 * np.log10(host_star_propertiers['dist'] / 10)
 
         
@@ -177,7 +177,7 @@ class MassCurveModule(ProcessingModule):
     
     def run(self):
         contrast_data = self.m_data_in_port.get_all()
-
+        print(contrast_data)
         r = contrast_data[:,0]
         contrast = contrast_data[:,1]
         contrast_std = np.sqrt(contrast_data[:,2])
