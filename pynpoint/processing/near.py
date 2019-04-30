@@ -140,10 +140,12 @@ class NearInitializationModule(ReadingModule):
         """
         Internal function which adds the static attributes to the central database.
 
-        :param fits_file: Name of the FITS file.
-        :type fits_file: str
-        :param header: Header information from the FITS file that is read.
-        :type header: astropy FITS header
+        Parameters
+        ----------
+        fits_file : str
+            Name of the FITS file.
+        header : astropy.io.fits.header
+            Header information from the FITS file that is read.
 
         Returns
         -------
@@ -346,7 +348,7 @@ class NearInitializationModule(ReadingModule):
             command = "uncompress " + filename
             subprocess.check_call(shlex.split(command))
 
-        except FileNotFoundError or OSError:
+        except (FileNotFoundError, OSError):
             # If command *uncompress* is not existing
 
             command = "gunzip -d " + filename
@@ -379,7 +381,7 @@ class NearInitializationModule(ReadingModule):
             # Not implemented yet
             pass
 
-        if len(files_compressed) == 0:
+        if not files_compressed:
             pass
 
         else:
