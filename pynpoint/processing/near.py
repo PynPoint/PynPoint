@@ -164,7 +164,7 @@ class NearInitializationModule(ReadingModule):
             if self.m_check:
                 fitskey = self._m_config_port.get_attribute(item)
 
-                if type(fitskey) == np.bytes_:
+                if isinstance(fitskey, np.bytes_):
                     fitskey = str(fitskey.decode("utf-8"))
 
                 if fitskey != "None":
@@ -257,8 +257,10 @@ class NearInitializationModule(ReadingModule):
         """
         Internal function which adds the non-static attributes to the central database.
 
-        :param header: Header information from the FITS file that is read.
-        :type header: astropy FITS header
+        Parameters
+        ----------
+        header : astropy.io.fits.header
+            Header information from the FITS file that is read
 
         Returns
         -------
