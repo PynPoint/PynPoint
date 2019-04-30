@@ -14,11 +14,11 @@ import threading
 
 
 class NearInitializationModule(ReadingModule):
-    '''
+    """
     This module reads the input fits files from the input directory and returns 4 outputs.
     These correspond to the specific chop/nod configuration. This module is desinged for NEAR data
     from the VISIR instrument
-    '''
+    """
 
     def __init__(self,
                  name_in="burst",
@@ -30,28 +30,34 @@ class NearInitializationModule(ReadingModule):
                  # scheme='ABBA',
                  check=True,
                  overwrite=True):
-        '''
+        """
         Constructor of the VisirBurtModule
-        :param name_in: Unique name of the instance
-        :type name_in: str
-        :param image_in_dir: Entry directory of the database used as input of the module
-        :type image_in_dir: str
-        :param image_out_tag_1: Entry written as output, Nod A -> Chop A
-        :type image_out_tag_1: str
-        :param image_out_tag_1: Entry written as output, Nod A -> Chop B
-        :type image_out_tag_2: str
-        :param image_out_tag_1: Entry written as output, Nod B -> Chop A
-        :type image_out_tag_3: str
-        :param image_out_tag_1: Entry written as output, Nod B -> Chop B
-        :type image_out_tag_4: str
-        :param check: Check all the listed non-static attributes or ignore the attributes that
-                      are not always required (e.g. PARANG_START, DITHER_X).
-        :type check: bool
-        :param overwrite: Overwrite existing data and header in the central database.
-        :type overwrite: bool
 
-        return None
-        '''
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the instance
+        image_in_dir : str
+            Entry directory of the database used as input of the module
+        image_out_tag_1 : str
+            Entry written as output, Nod A -> Chop A
+        image_out_tag_1 : str
+            Entry written as output, Nod A -> Chop B
+        image_out_tag_1 : str
+            Entry written as output, Nod B -> Chop A
+        image_out_tag_1 : str
+            Entry written as output, Nod B -> Chop B
+        check : bool
+            Check all the listed non-static attributes or ignore the attributes that
+            are not always required (e.g. PARANG_START, DITHER_X).
+        overwrite : bool
+            Overwrite existing data and header in the central database.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         super(NearInitializationModule, self).__init__(name_in)
 
@@ -87,7 +93,10 @@ class NearInitializationModule(ReadingModule):
         """
         Function that clears the __init__ tags if they are not empty given incorrect input
 
-        return None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         tag = [self.m_image_out_port_1.tag,
@@ -138,7 +147,10 @@ class NearInitializationModule(ReadingModule):
         :param header: Header information from the FITS file that is read.
         :type header: astropy FITS header
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         a, b, c, d = 0, 0, 0, 0
@@ -246,7 +258,10 @@ class NearInitializationModule(ReadingModule):
         :param header: Header information from the FITS file that is read.
         :type header: astropy FITS header
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         for item in self.m_non_static:
@@ -290,7 +305,10 @@ class NearInitializationModule(ReadingModule):
         :param shape: Shape of the images.
         :type shape: tuple(int)
 
-        :return: None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         pixscale = self._m_config_port.get_attribute('PIXSCALE')
@@ -332,7 +350,10 @@ class NearInitializationModule(ReadingModule):
         Subfuction of -uncompress- used for threading.
         It uncompresses the file -filename-
 
-        return None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         try:
@@ -353,7 +374,10 @@ class NearInitializationModule(ReadingModule):
         '.fits.Z'. If this is the case, it will uncompress these using multithreading. This is much
         faster than uncompressing when having multiple files
 
-        return None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         cpu = self._m_config_port.get_attribute("CPU")
@@ -410,11 +434,14 @@ class NearInitializationModule(ReadingModule):
         return None
 
     def check_header(self, head):
-        '''
+        """
         Check general header keywords and prompt warning if the value is other than default
 
-        return None
-        '''
+        Returns
+        -------
+        NoneType
+            None
+        """
 
         chop_enabled = str(head['ESO DET CHOP ST'])
         if chop_enabled == 'F':
@@ -437,8 +464,22 @@ class NearInitializationModule(ReadingModule):
         file into chop A and chop B, including the header data.
         The first hdulist only contains the general header, the last an average of all images.
 
-        return chopa, chopb, nod, head, head_small, images.shape
+        Returns
+        -------
+        chopa : numpy array
+            Array containing all chop A images
+        chopb : numpy array
+            Array containing all chop B images
+        nod : str
+            String with 'A' or 'B', denoting the nod type
+        head : astropy.io.fits.header
+            General header valid for all images
+        head_small : astropy.io.fits.header
+            Header of the first frame, containing frame specific information
+        images.shape : array
+            Shape of the input array
         """
+
         hdulist = fits.open(location + image_file)
         image = hdulist[1].data.byteswap().newbyteorder()
 
@@ -513,7 +554,10 @@ class NearInitializationModule(ReadingModule):
         correspond to nod A -> chop A & B, nod B -> chop A & B - respectively.
         Lastly, from the header, the cards are inported to the general config port of PynPoint.
 
-        return None
+        Returns
+        -------
+        NoneType
+            None
         """
 
         self._initialize()
