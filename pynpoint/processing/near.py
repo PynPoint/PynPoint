@@ -15,9 +15,9 @@ import threading
 
 class NearInitializationModule(ReadingModule):
     """
-    This module reads the input fits files from the input directory and returns 4 outputs.
-    These correspond to the specific chop/nod configuration. This module is desinged for NEAR data
-    from the VISIR instrument
+    This module reads the input fits files from the input directory and returns 4 outputs. These
+    correspond to the specific chop/nod configuration. This module is desinged for NEAR data from
+    the VISIR instrument.
     """
 
     def __init__(self,
@@ -31,22 +31,22 @@ class NearInitializationModule(ReadingModule):
                  check=True,
                  overwrite=True):
         """
-        Constructor of the VisirBurtModule
+        Constructor of the VisirBurtModule.
 
         Parameters
         ----------
         name_in : str
-            Unique name of the instance
+            Unique name of the instance.
         image_in_dir : str
-            Entry directory of the database used as input of the module
+            Entry directory of the database used as input of the module.
         image_out_tag_1 : str
-            Entry written as output, Nod A -> Chop A
+            Entry written as output, Nod A -> Chop A.
         image_out_tag_1 : str
-            Entry written as output, Nod A -> Chop B
+            Entry written as output, Nod A -> Chop B.
         image_out_tag_1 : str
-            Entry written as output, Nod B -> Chop A
+            Entry written as output, Nod B -> Chop A.
         image_out_tag_1 : str
-            Entry written as output, Nod B -> Chop B
+            Entry written as output, Nod B -> Chop B.
         check : bool
             Check all the listed non-static attributes or ignore the attributes that
             are not always required (e.g. PARANG_START, DITHER_X).
@@ -91,7 +91,7 @@ class NearInitializationModule(ReadingModule):
 
     def _initialize(self):
         """
-        Function that clears the __init__ tags if they are not empty given incorrect input
+        Function that clears the __init__ tags if they are not empty given incorrect input.
 
         Returns
         -------
@@ -147,9 +147,9 @@ class NearInitializationModule(ReadingModule):
         header : astropy.io.fits.header
             Header information from the FITS file that is read.
         iteration : int
-            Number of current fits file
+            Iteration/Number of current fits file.
         end : int
-            Total number of fits files
+            Total number of fits files.
 
         Returns
         -------
@@ -260,7 +260,7 @@ class NearInitializationModule(ReadingModule):
         Parameters
         ----------
         header : astropy.io.fits.header
-            Header information from the FITS file that is read
+            Header information from the FITS file that is read.
 
         Returns
         -------
@@ -294,12 +294,14 @@ class NearInitializationModule(ReadingModule):
         """
         Internal function which adds extra attributes to the central database.
 
-        :param fits_file: Name of the FITS file.
-        :type fits_file: str
-        :param location: Directory where the FITS file is located.
-        :type location: str
-        :param shape: Shape of the images.
-        :type shape: tuple(int)
+        Parameters
+        ----------
+        fits_file : str
+            Name of the FITS file.
+        location : str
+            Directory where the FITS file is located.
+        shape : tuple(int)
+            Shape of the images.
 
         Returns
         -------
@@ -341,8 +343,7 @@ class NearInitializationModule(ReadingModule):
 
     def _uncompress_multi(self, filename):
         """
-        Subfuction of -uncompress- used for threading.
-        It uncompresses the file -filename-
+        Subfuction of -uncompress- used for threading. It uncompresses the file *filename*.
 
         Returns
         -------
@@ -364,7 +365,7 @@ class NearInitializationModule(ReadingModule):
         """
         This function checks the input directory if it contains any compressed files ending with
         '.fits.Z'. If this is the case, it will uncompress these using multithreading. This is much
-        faster than uncompressing when having multiple files
+        faster than uncompressing when having multiple files.
 
         Returns
         -------
@@ -425,7 +426,7 @@ class NearInitializationModule(ReadingModule):
 
     def check_header(self, head):
         """
-        Check general header keywords and prompt warning if the value is other than default
+        Check general header keywords and prompt warning if the value is other than default.
 
         Returns
         -------
@@ -455,17 +456,17 @@ class NearInitializationModule(ReadingModule):
         Returns
         -------
         chopa : numpy array
-            Array containing all chop A images
+            Array containing all chop A images.
         chopb : numpy array
-            Array containing all chop B images
+            Array containing all chop B images.
         nod : str
-            String with 'A' or 'B', denoting the nod type
+            String with 'A' or 'B', denoting the nod type.
         head : astropy.io.fits.header
-            General header valid for all images
+            General header valid for all images.
         head_small : astropy.io.fits.header
-            Header of the first frame, containing frame specific information
+            Header of the first frame, containing frame specific information.
         images.shape : array
-            Shape of the input array
+            Shape of the input array.
         """
 
         hdulist = fits.open(location + image_file)
