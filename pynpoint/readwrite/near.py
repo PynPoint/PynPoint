@@ -1,16 +1,22 @@
-import numpy as np
-from astropy.io import fits
+"""
+Module for reading fits files coming from the VISIR instrument.
+"""
 import os
-import subprocess
-import shlex
-import math
 import sys
-import six
+import subprocess
+import threading
 import warnings
+import math
+
+import numpy as np
+import shlex
+import six
+
+from astropy.io import fits
+
+from pynpoint.core.attributes import get_attributes
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.module import progress
-from pynpoint.core.attributes import get_attributes
-import threading
 
 
 class NearInitializationModule(ReadingModule):
@@ -18,6 +24,10 @@ class NearInitializationModule(ReadingModule):
     This module reads the input fits files from the input directory and returns 4 outputs. These
     correspond to the specific chop/nod configuration. This module is desinged for NEAR data from
     the VISIR instrument.
+    The fits files are multidimensional where the first hdulist contains only the general header.
+    The second hdulist contains both data and a small header, where the data is a single frame and
+    the small header contains specific information about this frame. This format continues until the
+    last frame, which is an average of all frames.
     """
 
     def __init__(self,
@@ -27,7 +37,7 @@ class NearInitializationModule(ReadingModule):
                  image_out_tag_2="noda_chopb",
                  image_out_tag_3="nodb_chopa",
                  image_out_tag_4="nodb_chopb",
-                 # scheme='ABBA',
+                 scheme='ABBA',
                  check=True,
                  overwrite=True):
         """
@@ -47,6 +57,8 @@ class NearInitializationModule(ReadingModule):
             Entry written as output, Nod B -> Chop A.
         image_out_tag_1 : str
             Entry written as output, Nod B -> Chop B.
+        scheme : str
+            Scheme used when keyword ESO SEQ NODPOS is not found. Can be 'ABBA' or 'ABAB'
         check : bool
             Check all the listed non-static attributes or ignore the attributes that
             are not always required (e.g. PARANG_START, DITHER_X).
@@ -59,7 +71,7 @@ class NearInitializationModule(ReadingModule):
             None
         """
 
-        super(NearInitializationModule, self).__init__(name_in)
+        super(NearInitializationModule, self).__init__(name_in=name_in)
 
         # Port
         self.m_image_out_port_1 = self.add_output_port(image_out_tag_1)
@@ -71,7 +83,7 @@ class NearInitializationModule(ReadingModule):
         self.m_im_dir = image_in_dir
         self.m_check = check
         self.m_overwrite = overwrite
-        # self.m_scheme = scheme
+        self.m_scheme = scheme
 
         # Arguments
         self.m_static = []
@@ -111,8 +123,8 @@ class NearInitializationModule(ReadingModule):
             if i not in seen:
                 seen.add(i)
 
-        # if self.m_scheme != 'ABBA' and self.m_scheme != 'ABAB':
-        #     raise ValueError("Scheme keyword should be set to 'ABBA' or 'ABAB'")
+        if self.m_scheme != "ABBA" and self.m_scheme != "ABAB":
+            raise ValueError("Scheme keyword should be set to 'ABBA' or 'ABAB'")
 
         if not isinstance(self.m_check, bool):
             raise ValueError("Check port should be set to 'True' or 'False'")
@@ -316,7 +328,7 @@ class NearInitializationModule(ReadingModule):
         elif len(shape) == 3:
             nimages = shape[0]
 
-        index = np.arange(self.m_count, self.m_count+nimages, 1)
+        index = np.arange(self.m_count, self.m_count + nimages, 1)
 
         for _, item in enumerate(index):
             if nod == 'A':
@@ -327,13 +339,13 @@ class NearInitializationModule(ReadingModule):
                 self.m_image_out_port_4.append_attribute_data("INDEX", item)
 
         if nod == 'A':
-            self.m_image_out_port_1.append_attribute_data("FILES", location+fits_file)
-            self.m_image_out_port_2.append_attribute_data("FILES", location+fits_file)
+            self.m_image_out_port_1.append_attribute_data("FILES", location + fits_file)
+            self.m_image_out_port_2.append_attribute_data("FILES", location + fits_file)
             self.m_image_out_port_1.add_attribute("PIXSCALE", pixscale, static=True)
             self.m_image_out_port_2.add_attribute("PIXSCALE", pixscale, static=True)
         elif nod == 'B':
-            self.m_image_out_port_3.append_attribute_data("FILES", location+fits_file)
-            self.m_image_out_port_4.append_attribute_data("FILES", location+fits_file)
+            self.m_image_out_port_3.append_attribute_data("FILES", location + fits_file)
+            self.m_image_out_port_4.append_attribute_data("FILES", location + fits_file)
             self.m_image_out_port_3.add_attribute("PIXSCALE", pixscale, static=True)
             self.m_image_out_port_4.add_attribute("PIXSCALE", pixscale, static=True)
         else:
@@ -398,8 +410,8 @@ class NearInitializationModule(ReadingModule):
             # First check if the number of files is not larger than cpu
             amount = len(files_compressed)
             if amount > cpu:
-                for i in range(math.ceil(amount/cpu)):
-                    files_compressed_chunk = files_compressed[cpu*i:min(cpu*(i+1), amount)]
+                for i in range(math.ceil(amount / cpu)):
+                    files_compressed_chunk = files_compressed[cpu * i:min(cpu * (i + 1), amount)]
 
                     jobs = []
                     for i, filename in enumerate(files_compressed_chunk):
@@ -481,13 +493,22 @@ class NearInitializationModule(ReadingModule):
 
         except KeyError:
             if number == 0:
-                warnings.warn("Keyword 'ESO SEQ NODPOS' cannot be found. Assuming ABBA NOD scheme")
+                warnings.warn("Keyword 'ESO SEQ NODPOS' cannot be found. Assuming {} NOD "
+                              "scheme".format(self.m_scheme))
 
-            if (number % 4) == 0 or (number % 4) == 3:
-                nod = 'A'
+            if self.m_scheme == "ABBA":
+                if (number % 4) == 0 or (number % 4) == 3:
+                    nod = 'A'
 
-            if (number % 4) == 1 or (number % 4) == 2:
-                nod = 'B'
+                if (number % 4) == 1 or (number % 4) == 2:
+                    nod = 'B'
+
+            elif self.m_scheme == "ABAB":
+                if (number % 2) == 0:
+                    nod = 'A'
+
+                if (number % 2) == 1:
+                    nod = 'B'
 
         self.check_header(head)
 
@@ -587,7 +608,7 @@ class NearInitializationModule(ReadingModule):
             self._non_static_attributes(header)
             self._extra_attributes(files[i], location, shape, nod)
 
-            # Only flush when output ports contain data
+            # Only flush when output ports contain new data
             if nod == "A":
                 self.m_image_out_port_1.flush()
                 self.m_image_out_port_2.flush()
