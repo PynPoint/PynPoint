@@ -14,7 +14,6 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
 from six.moves import map
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.processing.resizing import CropImagesModule

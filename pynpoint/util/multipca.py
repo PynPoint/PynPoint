@@ -9,8 +9,6 @@ import sys
 
 import numpy as np
 
-from six.moves import range
-
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                     TaskInput, MultiprocessingCapsule, to_slice
 from pynpoint.util.psf import pca_psf_subtraction

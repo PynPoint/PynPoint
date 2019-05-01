@@ -11,7 +11,6 @@ import cv2
 import numpy as np
 
 from numba import jit
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 
@@ -233,6 +232,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
+
         if map_out_tag is None:
             self.m_map_out_port = None
         else:
@@ -566,9 +566,6 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         def _time_filter(timeline, sigma):
             median = np.median(timeline)
             std = np.std(timeline)
@@ -663,9 +660,6 @@ class ReplaceBadPixelsModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         bpmap = self.m_map_in_port.get_all()
         index = np.argwhere(bpmap == 0)
