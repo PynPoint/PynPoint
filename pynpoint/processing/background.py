@@ -9,8 +9,6 @@ import warnings
 
 import numpy as np
 
-from six.moves import range
-
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
 from pynpoint.util.module import progress

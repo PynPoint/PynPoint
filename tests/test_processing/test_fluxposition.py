@@ -96,14 +96,29 @@ class TestFluxAndPosition(object):
 
     def test_aperture_photometry(self):
 
-        photometry = AperturePhotometryModule(radius=0.1,
-                                              position=None,
-                                              name_in="photometry",
-                                              image_in_tag="read",
-                                              phot_out_tag="photometry")
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
-        self.pipeline.add_module(photometry)
+        module = AperturePhotometryModule(radius=0.1,
+                                          position=None,
+                                          name_in="photometry",
+                                          image_in_tag="read",
+                                          phot_out_tag="photometry")
+
+        self.pipeline.add_module(module)
         self.pipeline.run_module("photometry")
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        module = AperturePhotometryModule(radius=0.1,
+                                          position=None,
+                                          name_in="photometry_multi",
+                                          image_in_tag="read",
+                                          phot_out_tag="photometry_multi")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("photometry_multi")
 
         data = self.pipeline.get_data("photometry")
         assert np.allclose(data[0][0], 0.9853286992326858, rtol=limit, atol=0.)
@@ -111,7 +126,14 @@ class TestFluxAndPosition(object):
         assert np.allclose(np.mean(data), 0.9836439188900222, rtol=limit, atol=0.)
         assert data.shape == (40, 1)
 
+        data_multi = self.pipeline.get_data("photometry_multi")
+        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data.shape == data_multi.shape
+
     def test_angle_interpolation(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
         angle = AngleInterpolationModule(name_in="angle",
                                          data_tag="read")

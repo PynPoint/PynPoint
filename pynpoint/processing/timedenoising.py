@@ -293,8 +293,7 @@ class TimeNormalizationModule(ProcessingModule):
         """
 
         def _normalization(image_in):
-            median = np.median(image_in)
-            return image_in - median
+            return image_in - np.median(image_in)
 
         self.apply_function_to_images(_normalization,
                                       self.m_image_in_port,
