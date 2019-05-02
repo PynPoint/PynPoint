@@ -7,7 +7,7 @@ import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
-from pynpoint.processing.limits import ContrastCurveModule, MassCurveModule
+from pynpoint.processing.limits import ContrastCurveModule, MassLimitsModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
@@ -121,14 +121,12 @@ class TestDetectionLimits(object):
 
         urlretrieve(url, filename)
 
-        module = MassCurveModule(name_in="mass",
+        module = MassLimitsModule(name_in="mass",
                                  data_in_tag="contrast_limits",
                                  data_out_tag="mass_limits",
                                  host_star_propertiers={'mag':10.,
-                                                        'mag_app':True,
                                                         'dist':100.,
-                                                        'age':20.,
-                                                        'age_unit':'Myr'},
+                                                        'age':20.},
                                  observation_filter="L\'",
                                  model_file=filename)
 
