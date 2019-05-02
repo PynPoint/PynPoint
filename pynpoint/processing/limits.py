@@ -22,9 +22,9 @@ from pynpoint.util.residuals import combine_residuals
 
 class ContrastCurveModule(ProcessingModule):
     """
-    Module to calculate contrast limits by iterating towards a threshold for the false positive
-    fraction, with a correction for small sample statistics. Positions are processed in parallel
-    if CPU > 1 in the configuration file.
+    Pipeline module to calculate contrast limits for a given sigma level or false positive
+    fraction, with a correction for small sample statistics. Positions are processed in
+    parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
     def __init__(self,
@@ -96,8 +96,8 @@ class ContrastCurveModule(ProcessingModule):
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
         max_time  : float
-            Maximum time the computation of the contrast limits is allowed to take. Useful for 
-            when computation time is limited by other factors. The actual computation takes a few 
+            Maximum time in seconds the computation of the contrast limits is allowed to take. Useful 
+            for when computation time is limited by other factors. The actual computation takes a few 
             seconds longer, due to sorting and writing at the end of the module. If the time limit
             is reached, all results availble at that time will be used.
             If it is None, then the computation of the contrast limits will wait for all results to
@@ -151,7 +151,7 @@ class ContrastCurveModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
         self.m_snr_inject = snr_inject
-        
+
         if max_time != None: self.m_max_time = max_time
         else: self.m_max_time = np.inf
 
@@ -164,13 +164,12 @@ class ContrastCurveModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. Fake positive companions are injected for a range of separations
-        and angles. The magnitude of the contrast is changed stepwise and lowered by a factor 2 if
-        needed. Once the fractional accuracy of the false positive fraction threshold is met, a
-        linear interpolation is used to determine the final contrast. Note that the sigma level
-        is fixed therefore the false positive fraction changes with separation, following the
-        Student's t-distribution (Mawet et al. 2014).
-
+        Run method of the module. An artificial planet is injected (based on the noise level) at a
+        given separation and position angle. The amount of self-subtraction is then determined and
+        the contrast limit is calculated for a given sigma level or false positive fraction. A
+        correction for small sample statistics is applied for both cases. Note that if the sigma
+        level is fixed, the false positive fraction changes with separation, following the
+        Student's t-distribution (see Mawet et al. 2014 for details).
         Returns
         -------
         NoneType
