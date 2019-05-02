@@ -493,7 +493,7 @@ class NearInitializationModule(ReadingModule):
 
         except KeyError:
             if number == 0:
-                warnings.warn("Keyword 'ESO SEQ NODPOS' cannot be found. Assuming {} NOD "
+                warnings.warn("Keyword 'ESO SEQ NODPOS' cannot be found. Assuming {} nod "
                               "scheme".format(self.m_scheme))
 
             if self.m_scheme == "ABBA":
