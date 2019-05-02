@@ -149,7 +149,12 @@ def contrast_limit(path_images,
 
     # Calculate the detection limit
     contrast = sigma*t_noise/(attenuation*star)
-    contrast = -2.5*math.log10(contrast)
+
+    # The flux_out can be negative, for example if the aperture includes self-subtraction regions
+    if contrast > 0.:
+        contrast = -2.5*math.log10(contrast)
+    else:
+        contrast = np.nan
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
     return position[0], position[1], contrast, fpf
