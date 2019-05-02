@@ -393,40 +393,26 @@ class NearInitializationModule(ReadingModule):
 
         for f in files:
             if f.endswith('.fits.Z'):
-                files_compressed.append(location + f)
-
-        if len(files_compressed) > cpu:
-            # Split the threads into smaller chunks
-            # Not implemented yet
-            pass
+                files_compressed.append(os.path.join(location, f))
 
         if not files_compressed:
+            # No files have to be uncompressed
             pass
 
         else:
-            sys.stdout.write("\rRunning VISIRInitializationModule... Uncompressing files ...")
+            sys.stdout.write("\rRunning NEARInitializationModule... ")
+            sys.stdout.write("\nUncompressing input files... ")
             sys.stdout.flush()
 
-            # First check if the number of files is not larger than cpu
-            amount = len(files_compressed)
-            if amount > cpu:
-                for i in range(math.ceil(amount / cpu)):
-                    files_compressed_chunk = files_compressed[cpu * i:min(cpu * (i + 1), amount)]
+            no_files = len(files_compressed)
 
-                    jobs = []
-                    for i, filename in enumerate(files_compressed_chunk):
-                        thread = threading.Thread(target=self._uncompress_multi, args=(filename,))
-                        jobs.append(thread)
+            for i in range(math.ceil(no_files / cpu)):
+                last_file = min(cpu * (i + 1), no_files + 1 - (cpu * i), no_files)
+                files_compressed_chunk = files_compressed[cpu * i:last_file]
+                progress(i, math.ceil(no_files / cpu), "\rUncompressing input files...")
 
-                    for j in jobs:
-                        j.start()
-
-                    for j in jobs:
-                        j.join()
-
-            else:
                 jobs = []
-                for i, filename in enumerate(files_compressed):
+                for i, filename in enumerate(files_compressed_chunk):
                     thread = threading.Thread(target=self._uncompress_multi, args=(filename,))
                     jobs.append(thread)
 
