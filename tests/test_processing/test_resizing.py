@@ -82,10 +82,10 @@ class TestImageResizing(object):
         self.pipeline.run_module("crop1_multi")
 
         module = CropImagesModule(size=0.3,
-                                center=(10, 10),
-                                name_in="crop2_multi",
-                                image_in_tag="read",
-                                image_out_tag="crop2_multi")
+                                  center=(10, 10),
+                                  name_in="crop2_multi",
+                                  image_in_tag="read",
+                                  image_out_tag="crop2_multi")
 
         self.pipeline.add_module(module)
         self.pipeline.run_module("crop2_multi")
@@ -244,4 +244,3 @@ class TestImageResizing(object):
         data_multi = self.pipeline.get_data("remove_multi")
         assert np.allclose(data, data_multi, rtol=limit, atol=0.)
         assert data.shape == data_multi.shape
-
