@@ -18,7 +18,7 @@ from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
-class MassCurveModule(ProcessingModule):
+class MassLimitsModule(ProcessingModule):
     """
     Module to calculate mass limits from an grid model from https://phoenix.ens-lyon.fr/Grids/ 
     and calculated ContrastLimits
@@ -34,12 +34,9 @@ class MassCurveModule(ProcessingModule):
             limits, the one sigma boundaries of the mass limits.
         host_star_propertiers: dict
             Dictionary containing host star properties. Must have the following keys:
-             - 'mag': Magnitude
-             - 'mag_app': Magnitude flag : True when the apparent magnitude is given, False when the absolute 
-             magnitude is given
+             - 'mag': apparent Magnitude, in the same band as the observation filter
              - 'dist': Distance in parsec
-             - 'age': age of the system in the units specified in 'age_unit'
-             - 'age_unit': Can be either Gyr or Myr
+             - 'age': age of the system in the Myr
         observation_filter: str
             Name of the filter in which the observations were made. Must be the same as in the COND
             model data file
@@ -56,13 +53,12 @@ class MassCurveModule(ProcessingModule):
                 model_file=""):
         
         """
-        Constructor of MassCurveModule
+        Constructor of MassLimitsModule
         """
-        super(MassCurveModule, self).__init__(name_in)
+        super(MassLimitsModule, self).__init__(name_in)
 
         # calculate the absolute magnitude of the star, given its apparent magnitude and its distance
-        if host_star_propertiers['mag_app']:
-            self.m_host_magnitude = host_star_propertiers['mag'] - 5 * np.log10(host_star_propertiers['dist'] / 10)
+        self.m_host_magnitude = host_star_propertiers['mag'] - 5 * np.log10(host_star_propertiers['dist'] / 10)
 
         
         self.m_distance = host_star_propertiers['dist']
@@ -78,13 +74,7 @@ class MassCurveModule(ProcessingModule):
         assert observation_filter in self.m_header, "The selected filter was not found in the list of available filters from the model"
         self.m_filter = observation_filter
 
-        if host_star_propertiers['age_unit'] == 'Myr':
-            self.m_age = host_star_propertiers['age'] / 1000
-        elif host_star_propertiers['age_unit'] == 'Gyr':
-            self.m_age = host_star_propertiers['age']
-        else:
-            AssertionError('Age must be given in Myr or Gyr, please check the "age_unit" key')
-
+        self.m_age = host_star_propertiers['age'] / 1000
         
     def _read_model(self):
         """
