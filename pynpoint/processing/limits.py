@@ -20,7 +20,8 @@ from pynpoint.util.residuals import combine_residuals
 
 class MassCurveModule(ProcessingModule):
     """
-    Module to calculate mass limits from a COND model and calculated ContrastLimits
+    Module to calculate mass limits from an grid model from https://phoenix.ens-lyon.fr/Grids/ 
+    and calculated ContrastLimits
 
     Parameters
     ----------
@@ -43,8 +44,8 @@ class MassCurveModule(ProcessingModule):
             Name of the filter in which the observations were made. Must be the same as in the COND
             model data file
         model_file: str
-            Relative path to the file containing the COND model data.
-        
+            Relative path to the file containing the model data. Must be in the same format as the grids found
+            on: https://phoenix.ens-lyon.fr/Grids/
     """
     def __init__(self,
                 name_in="mass",
@@ -66,7 +67,7 @@ class MassCurveModule(ProcessingModule):
         
         self.m_distance = host_star_propertiers['dist']
 
-        self.m_model_file = model_file
+        self.m_model_file = os.path.join(os.getcwd(), model_file)
 
         # add in and out ports
         self.m_data_in_port = self.add_input_port(data_in_tag)
@@ -88,7 +89,7 @@ class MassCurveModule(ProcessingModule):
     def _read_model(self):
         """
         Internal function. 
-        Reads the data from the AMES-Cond-2000 file and structures it.
+        Reads the data from the model file and structures it.
         Returns an array of available model ages and a list of model data for each age
         """
 
@@ -176,8 +177,12 @@ class MassCurveModule(ProcessingModule):
 
     
     def run(self):
+        """
+        Run method of the Module. Calculates the mass limits given precalculated contrast limits
+        and a grid based model. Interpolates between the ages and contrast limits.
+        """
         contrast_data = self.m_data_in_port.get_all()
-        print(contrast_data)
+
         r = contrast_data[:,0]
         contrast = contrast_data[:,1]
         contrast_std = np.sqrt(contrast_data[:,2])
