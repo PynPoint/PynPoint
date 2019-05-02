@@ -8,6 +8,7 @@ import sys
 import os
 import warnings
 import multiprocessing as mp
+import time
 
 import numpy as np
 
@@ -21,9 +22,9 @@ from pynpoint.util.residuals import combine_residuals
 
 class ContrastCurveModule(ProcessingModule):
     """
-    Pipeline module to calculate contrast limits for a given sigma level or false positive
-    fraction, with a correction for small sample statistics. Positions are processed in
-    parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
+    Module to calculate contrast limits by iterating towards a threshold for the false positive
+    fraction, with a correction for small sample statistics. Positions are processed in parallel
+    if CPU > 1 in the configuration file.
     """
 
     def __init__(self,
@@ -42,6 +43,7 @@ class ContrastCurveModule(ProcessingModule):
                  extra_rot=0.,
                  residuals="median",
                  snr_inject=100.,
+                 max_time=82800,
                  **kwargs):
         """
         Constructor of ContrastCurveModule.
@@ -93,6 +95,13 @@ class ContrastCurveModule(ProcessingModule):
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
+        max_time  : float
+            Maximum time the computation of the contrast limits is allowed to take. Useful for 
+            when computation time is limited by other factors. The actual computation takes a few 
+            seconds longer, due to sorting and writing at the end of the module. If the time limit
+            is reached, all results availble at that time will be used.
+            If it is None, then the computation of the contrast limits will wait for all results to
+            be available.
 
         Returns
         -------
@@ -142,6 +151,10 @@ class ContrastCurveModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
         self.m_snr_inject = snr_inject
+        
+        if max_time != None: self.m_max_time = max_time
+        else: self.m_max_time = np.inf
+
 
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
            self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
@@ -151,18 +164,20 @@ class ContrastCurveModule(ProcessingModule):
 
     def run(self):
         """
-        Run method of the module. An artificial planet is injected (based on the noise level) at a
-        given separation and position angle. The amount of self-subtraction is then determined and
-        the contrast limit is calculated for a given sigma level or false positive fraction. A
-        correction for small sample statistics is applied for both cases. Note that if the sigma
-        level is fixed, the false positive fraction changes with separation, following the
-        Student's t-distribution (see Mawet et al. 2014 for details).
+        Run method of the module. Fake positive companions are injected for a range of separations
+        and angles. The magnitude of the contrast is changed stepwise and lowered by a factor 2 if
+        needed. Once the fractional accuracy of the false positive fraction threshold is met, a
+        linear interpolation is used to determine the final contrast. Note that the sigma level
+        is fixed therefore the false positive fraction changes with separation, following the
+        Student's t-distribution (Mawet et al. 2014).
 
         Returns
         -------
         NoneType
             None
         """
+
+        start_time = time.time()
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
@@ -215,11 +230,8 @@ class ContrastCurveModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
-        # Create a queue object which will contain the results
-        queue = mp.Queue()
-
         result = []
-        jobs = []
+        async_results = []
 
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
@@ -230,6 +242,7 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
+
         mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
 
         _, im_res = pca_psf_subtraction(images=images*mask,
@@ -237,10 +250,11 @@ class ContrastCurveModule(ProcessingModule):
                                         pca_number=self.m_pca_number)
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
-
-        for i, pos in enumerate(positions):
-            process = mp.Process(target=contrast_limit,
-                                 args=(tmp_im_str,
+        
+        pool = mp.Pool(cpu)
+        for pos in positions:
+            async_results.append(pool.apply_async(contrast_limit,
+                                args=(tmp_im_str,
                                        tmp_psf_str,
                                        noise,
                                        mask,
@@ -252,62 +266,59 @@ class ContrastCurveModule(ProcessingModule):
                                        self.m_aperture,
                                        self.m_residuals,
                                        self.m_snr_inject,
-                                       pos,
-                                       queue),
-                                 name=(str(os.path.basename(__file__)) + '_radius=' +
-                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
-                                       str(np.round(pos[1], 1))))
+                                       pos)))
+        pool.close()
 
-            jobs.append(process)
-
-        for i, job in enumerate(jobs):
-            job.start()
-
-            if (i+1)%cpu == 0:
-                # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
-                # number of processes.
-
-                for k in jobs[i+1-cpu:(i+1)]:
-                    k.join()
-
-            elif (i+1) == len(jobs) and (i+1)%cpu != 0:
-                # Wait for the last processes to finish if number of processes is not a multiple
-                # of *cpu*
-
-                for k in jobs[(i + 1 - (i+1)%cpu):]:
-                    k.join()
-
-            progress(i, len(jobs), "Running ContrastCurveModule...")
-
-        # Send termination sentinel to queue
-        queue.put(None)
-
-        while True:
-            item = queue.get()
-
-            if item is None:
-                break
-            else:
-                result.append(item)
+        # wait for either all processes to finish or self.m_max_time to pass
+        while mp.active_children() and time.time() - start_time < self.m_max_time:
+            finished_processes = sum([i.ready() for i in async_results])
+            max_progress = np.max([(time.time() - start_time) / self.m_max_time, finished_processes / len(positions)])
+            progress(max_progress, 1, "Running ContrastCurveModule...")
+            time.sleep(60) # check for an update every 60 secondes
+        
+        # get the results for every async_result object
+        for index, async_result in enumerate(async_results):
+            try: 
+                result.append(async_result.get(timeout=0))
+            except mp.TimeoutError: 
+                warnings.warn("The process number {} did not complete in time. There will not be a result at {} arcsec, {} degrees.".format(index, positions[index][0], positions[index][1]))
+                result.append([positions[index][0], positions[index][1], np.nan, np.nan])
+            except ValueError:
+                warnings.warn("A ValueError was excepted at {} arcsec, {} degrees. Likely the contrast could not be calculated".format(positions[index][0], positions[index][1]))
+                result.append([positions[index][0], positions[index][1], np.nan, np.nan]) # ignore math value error in math.log # result.append([np.nan, np.nan, np.nan, np.nan]) 
+        pool.terminate()
 
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        result = np.asarray(result)
+        # create a dictionary with the distances/separation as keys and empty lists as values
+        distances = {line[0]:[] for line in result}
+        # add the results of the contrast_limit process queue to the dictionary using the distances as keys
+        for key in distances.keys():
+            for line in result:
+                if line[0] == key:
+                    distances[key] += [line[1:]]
+        
+        # initialize the storage for later output
+        contrast_result = np.ones((len(distances), 4)) * np.nan
+        
+        # write the results to the contrast result array
+        # the first column contains the separations in arcsec
+        # the second column contains the average magnitude for the given separation
+        # the thrid column contains the variance of the magnitude for the given separation
+        # the forth colum contains the false positive fraction
+        for i, (key, value) in enumerate(distances.items()):
+            contrast_result[i] = key * pixscale
+            temporary_magnitude_storage = []
+            for result in value:
+                temporary_magnitude_storage += [result[1]]
+            contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
+            contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
+            contrast_result[i, 3] = value[-1] [-1]
+        
+        contrast_result.sort(axis = 0)
 
-        # Sort the results first by separation and then by angle
-        indices = np.lexsort((result[:, 1], result[:, 0]))
-        result = result[indices]
-
-        result = result.reshape((pos_r.size, pos_t.size, 4))
-
-        mag_mean = np.nanmean(result, axis=1)[:, 2]
-        mag_var = np.nanvar(result, axis=1)[:, 2]
-        res_fpf = result[:, 0, 3]
-
-        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
-
-        self.m_contrast_out_port.set_all(limits, data_dim=2)
+        self.m_contrast_out_port.set_all(contrast_result, data_dim=2)
 
         sys.stdout.write("\rRunning ContrastCurveModule... [DONE]\n")
         sys.stdout.flush()
