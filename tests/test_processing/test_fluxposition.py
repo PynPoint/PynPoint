@@ -180,8 +180,8 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[0, 1], 49.0, rtol=limit, atol=0.)
         assert np.allclose(data[0, 2], 0.513710034941892, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 93.01278750418334, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 4], 7.633199090133858, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 5], 3.029521252528866e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
 
     def test_simplex_minimization(self):
 
