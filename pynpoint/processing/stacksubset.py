@@ -2,8 +2,6 @@
 Pipeline modules for stacking and subsampling of images.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 import cmath

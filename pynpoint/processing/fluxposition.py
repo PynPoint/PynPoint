@@ -2,15 +2,12 @@
 Pipeline modules for photometric and astrometric measurements.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
+import warnings
 
 import numpy as np
 import emcee
 
-from six.moves import range
 from scipy.optimize import minimize
 from photutils import aperture_photometry, CircularAperture
 

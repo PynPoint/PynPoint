@@ -14,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestPSFSubtractionPCA(object):
+class TestPSFSubtractionPCA:
 
     def setup_class(self):
 

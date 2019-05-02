@@ -2,8 +2,6 @@
 Module which capsules the methods of the Pypeline.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 import warnings
@@ -22,7 +20,7 @@ from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
 
 
-class Pypeline(object):
+class Pypeline:
     """
     A Pypeline instance can be used to manage various processing steps. It inheres an internal
     dictionary of Pypeline steps (modules) and their names. A Pypeline has a central DataStorage on
@@ -172,8 +170,8 @@ class Pypeline(object):
 
         def _read_config(config_file, attributes):
             config = configparser.ConfigParser()
-            with open(config_file) as cf:
-                config.read_file(cf)
+            with open(config_file) as cf_open:
+                config.read_file(cf_open)
 
             for key, val in six.iteritems(attributes):
                 if config.has_option(val["config"], key):
@@ -518,7 +516,8 @@ class Pypeline(object):
             if attr_name in list(self.m_data_storage.m_data_bank["header_"+data_tag].keys()):
                 del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
 
-            self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(attr_value)
+            attr_key = "header_"+data_tag+"/"+attr_name
+            self.m_data_storage.m_data_bank[attr_key] = np.asarray(attr_value)
 
         self.m_data_storage.close_connection()
 

@@ -2,8 +2,6 @@
 Module for reading HDF5 files that were created with the Hdf5WritingModule.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 import warnings

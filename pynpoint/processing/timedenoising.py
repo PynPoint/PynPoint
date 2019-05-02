@@ -4,8 +4,6 @@ suppression in the time domain. The module can be used as additional preprocessi
 Bonse et al. 2018 more information.
 """
 
-from __future__ import absolute_import
-
 import pywt
 import numpy as np
 
