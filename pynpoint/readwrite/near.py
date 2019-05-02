@@ -472,10 +472,20 @@ class NearInitializationModule(ReadingModule):
 
         nimages = len(hdulist) - 2
         head = hdulist[0].header
-        # head_small = hdulist[1].header
+        head_small = hdulist[1].header
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+
+            header = head.copy()
+            header.update(head_small)
+            header.insert(3, ('NAXIS', 3))
+            header.insert(4, ('NAXIS1', int(head_small['NAXIS1'])))
+            header.insert(4, ('NAXIS2', int(head_small['NAXIS2'])))
+            header.insert(5, ('NAXIS3', int(nimages)))
 
         try:
-            nod = head['ESO SEQ NODPOS']
+            nod = header['ESO SEQ NODPOS']
 
         except KeyError:
             if number == 0:
@@ -496,7 +506,7 @@ class NearInitializationModule(ReadingModule):
                 if (number % 2) == 1:
                     nod = 'B'
 
-        self.check_header(head)
+        self.check_header(header)
 
         # Initialize the max possible size for chopa/b
         chopa = np.zeros((int(nimages), image.shape[0], image.shape[1]), dtype=np.float32)
@@ -531,15 +541,15 @@ class NearInitializationModule(ReadingModule):
             warnings.warn("The number of frames is not equal for chopa and chopb")
 
         fits_header = []
-        for key in head:
-            fits_header.append(str(key)+" = "+str(head[key]))
+        for key in header:
+            fits_header.append(str(key)+" = "+str(header[key]))
 
         hdulist.close()
 
         header_out_port = self.add_output_port('fits_header/' + image_file)
         header_out_port.set_all(fits_header)
 
-        return chopa, chopb, nod, head, images.shape
+        return chopa, chopb, nod, header, images.shape
 
     def run(self):
         """
