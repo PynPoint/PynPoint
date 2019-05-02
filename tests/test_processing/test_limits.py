@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 
 import h5py
@@ -6,9 +7,14 @@ import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
-from pynpoint.processing.limits import ContrastCurveModule
+from pynpoint.processing.limits import ContrastCurveModule, MassCurveModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
+
+if sys.version_info[0] == 2:
+    from urllib import urlretrieve
+elif sys.version_info[0] == 3:
+    from urllib.request import urlretrieve
 
 warnings.simplefilter("always")
 
@@ -27,7 +33,9 @@ class TestDetectionLimits(object):
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["limits"])
+        remove_test_data(path=self.test_dir,
+                         folders=["limits"],
+                         files=["model.AMES-Cond-2000.M-0.0.NaCo.Vega"])
 
     def test_read_data(self):
 
@@ -89,3 +97,47 @@ class TestDetectionLimits(object):
             assert np.allclose(data[0, 2], 0.2594381985736874, rtol=limit, atol=0.)
             assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
             assert data.shape == (1, 4)
+
+    def test_mass_limits(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+
+        separation = np.linspace(0.1, 1.0, 10)
+        contrast = -2.5*np.log10(1e-4/separation)
+        variance = 0.1*contrast
+
+        limits = np.zeros((10, 4))
+        limits[:, 0] = separation
+        limits[:, 1] = contrast
+        limits[:, 2] = variance
+
+        database['contrast_limits'] = limits
+
+        url = "https://phoenix.ens-lyon.fr/Grids/AMES-Cond/ISOCHRONES/" \
+              "model.AMES-Cond-2000.M-0.0.NaCo.Vega"
+
+        filename = self.test_dir + "model.AMES-Cond-2000.M-0.0.NaCo.Vega"
+
+        urlretrieve(url, filename)
+
+        module = MassCurveModule(name_in="mass",
+                                 data_in_tag="contrast_limits",
+                                 data_out_tag="mass_limits",
+                                 host_star_propertiers={'mag':10.,
+                                                        'mag_app':True,
+                                                        'dist':100.,
+                                                        'age':20.,
+                                                        'age_unit':'Myr'},
+                                 observation_filter="L\'",
+                                 model_file=filename)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("mass")
+
+        data = self.pipeline.get_data("mass_limits")
+        assert np.allclose(np.mean(data[:, 0]), 0.55, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 1]), 0.019270554232444774, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 2]), -0.008258944671343794, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 3]), 0.017635363486639806, rtol=limit, atol=0.)
+        assert data.shape == (10, 4)
