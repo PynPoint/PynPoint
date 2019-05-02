@@ -2,8 +2,6 @@
 Module for writing a list of tags from the database to a separate HDF5 file.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 

@@ -14,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFrameSelection(object):
+class TestFrameSelection:
 
     def setup_class(self):
 

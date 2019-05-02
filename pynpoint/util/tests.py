@@ -2,8 +2,6 @@
 Functions for testing the pipeline and modules.
 """
 
-from __future__ import absolute_import
-
 import os
 import math
 import shutil

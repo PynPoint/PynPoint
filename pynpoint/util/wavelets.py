@@ -2,8 +2,6 @@
 Wrapper utils for the wavelet functions for the mlpy cwt implementation (see continous.py)
 """
 
-from __future__ import absolute_import
-
 import numpy as np
 
 from numba import jit

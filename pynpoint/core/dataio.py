@@ -2,8 +2,6 @@
 Modules for accessing data and attributes in the central database.
 """
 
-from __future__ import absolute_import
-
 import warnings
 import os
 
@@ -14,7 +12,7 @@ import h5py
 import numpy as np
 
 
-class DataStorage(object):
+class DataStorage:
     """
     Instances of DataStorage manage to open and close the Pypeline HDF5 databases. They have an
     internal h5py data bank (self.m_data_bank) which gives direct access to the data if the storage
