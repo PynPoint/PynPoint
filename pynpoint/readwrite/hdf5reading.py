@@ -6,7 +6,6 @@ import os
 import sys
 import warnings
 
-import six
 import h5py
 import numpy as np
 
@@ -59,7 +58,7 @@ class Hdf5ReadingModule(ReadingModule):
         if tag_dictionary is None:
             tag_dictionary = {}
 
-        for out_tag in six.itervalues(tag_dictionary):
+        for out_tag in tag_dictionary.values():
             self.add_output_port(out_tag)
 
         self.m_filename = input_filename
@@ -97,7 +96,7 @@ class Hdf5ReadingModule(ReadingModule):
             port_out.set_all(np.asarray(hdf5_file[tag_in][...]))
 
             # add static attributes
-            for attr_name, attr_value in six.iteritems(hdf5_file[tag_in].attrs):
+            for attr_name, attr_value in hdf5_file[tag_in].attrs.items():
                 port_out.add_attribute(name=attr_name, value=attr_value)
 
             # add non-static attributes

@@ -29,11 +29,6 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
     data_url = "https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5"
     data_loc = os.path.join(input_place, "betapic_naco_mp.hdf5")
 
-    # Python 2
-    # url = urllib.URLopener()
-    # url.retrieve(data_url, data_loc)
-
-    # Python 3
     urllib.request.urlretrieve(data_url, data_loc)
 
     pipeline = Pypeline(working_place_in=working_place,
@@ -85,7 +80,7 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
    <a href="http://archive.eso.org/wdb/wdb/eso/sched_rep_arc/query?progid=090.C-0653(D)" target="_blank">090.C-0653(D)</a>
 
 .. important::
-   In the example, make sure to change the path of the ``working place``, ``input place``, and ``output place``. Also note the different use of ``urllib`` with Python 2 and Python 3.
+   In the example, make sure to change the path of the ``working place``, ``input place``, and ``output place``.
 
 Detection of beta Pic b
 -----------------------

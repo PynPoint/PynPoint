@@ -19,7 +19,6 @@
 import numpy as np
 
 from scipy.special import gamma
-from six.moves import range
 
 
 def normalization(s, dt):

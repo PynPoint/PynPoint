@@ -9,8 +9,6 @@ import warnings
 
 import numpy as np
 
-from six.moves import range
-
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.image import rotate_images
@@ -106,10 +104,12 @@ class StackAndSubsetModule(ProcessingModule):
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
                         parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
 
+                    im_subset = self.m_image_in_port[frames[i]:frames[i+1], ]
+
                     if self.m_combine == "mean":
-                        im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                        im_new[i, ] = np.mean(im_subset, axis=0)
                     elif self.m_combine == "median":
-                        im_new[i, ] = np.median(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                        im_new[i, ] = np.median(im_subset, axis=0)
 
                 im_shape = im_new.shape
 

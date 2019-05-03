@@ -6,11 +6,10 @@ import multiprocessing
 
 from abc import ABCMeta, abstractmethod
 
-import six
 import numpy as np
 
 
-class TaskInput(object):
+class TaskInput:
     """
     Class for tasks that are processed by the :class:`~pynpoint.util.multiproc.TaskProcessor`.
     """
@@ -36,7 +35,7 @@ class TaskInput(object):
         self.m_job_parameter = job_parameter
 
 
-class TaskResult(object):
+class TaskResult:
     """
     Class for results that can be stored by the :class:`~pynpoint.util.multiproc.TaskWriter`.
     """
@@ -62,7 +61,7 @@ class TaskResult(object):
         self.m_position = position
 
 
-class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
+class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
     """
     Abstract interface for :class:`~pynpoint.util.multiproc.TaskCreator` classes. A
     :class:`~pynpoint.util.multiproc.TaskCreator` creates instances of
@@ -120,7 +119,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
             None
         """
 
-        for _ in six.moves.range(self.m_num_proc-1):
+        for _ in range(self.m_num_proc-1):
             # poison pills
             self.m_task_queue.put(1)
 
@@ -140,7 +139,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         """
 
 
-class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
+class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
     """
     Abstract interface for :class:`~pynpoint.util.multiproc.TaskProcessor` classes. The number of
     instances of :class:`~pynpoint.util.multiproc.TaskProcessor` that run simultaneously in a
@@ -350,7 +349,7 @@ class TaskWriter(multiprocessing.Process):
             self.m_result_queue.task_done()
 
 
-class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
+class MultiprocessingCapsule(metaclass=ABCMeta):
     """
     Abstract interface for multiprocessing capsules based on the poison pill pattern.
     """
