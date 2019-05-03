@@ -5,7 +5,6 @@ Functions for combining the residuals of the PSF subtraction.
 import numpy as np
 
 from scipy.ndimage import rotate
-from six.moves import range
 
 
 def combine_residuals(method,

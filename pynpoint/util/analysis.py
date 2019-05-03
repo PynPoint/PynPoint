@@ -10,7 +10,6 @@ from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
-from six.moves import range
 
 from pynpoint.util.image import shift_image, center_subpixel
 

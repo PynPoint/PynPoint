@@ -3,7 +3,6 @@ Pipeline modules for photometric and astrometric measurements.
 """
 
 import sys
-import warnings
 
 import numpy as np
 import emcee

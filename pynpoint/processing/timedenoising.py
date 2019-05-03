@@ -13,7 +13,7 @@ from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.wavelets import WaveletAnalysisCapsule
 
 
-class CwtWaveletConfiguration(object):
+class CwtWaveletConfiguration:
     """
     Configuration capsule for a CWT based time denoising. Standard configuration as in the
     original paper.
@@ -51,7 +51,7 @@ class CwtWaveletConfiguration(object):
         self.m_resolution = resolution
 
 
-class DwtWaveletConfiguration(object):
+class DwtWaveletConfiguration:
     """
     Configuration capsule for a DWT based time denoising. A cheap alternative of the CWT based
     wavelet denoising. However, the supported wavelets should perform worse compared to the

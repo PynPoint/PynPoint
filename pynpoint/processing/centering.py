@@ -13,7 +13,6 @@ from skimage.transform import rescale
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import memory_frames, progress, locate_star

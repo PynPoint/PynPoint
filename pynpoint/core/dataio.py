@@ -2,12 +2,11 @@
 Modules for accessing data and attributes in the central database.
 """
 
-import warnings
 import os
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
-import six
 import h5py
 import numpy as np
 
@@ -75,7 +74,7 @@ class DataStorage:
             self.m_open = False
 
 
-class Port(six.with_metaclass(ABCMeta)):
+class Port(metaclass=ABCMeta):
     """
     Abstract interface and implementation of common functionality of the InputPort, OutputPort, and
     ConfigPort. Each Port has a internal tag which is its key to a dataset in the DataStorage. If
@@ -782,7 +781,7 @@ class OutputPort(Port):
             # NO -> database entry exists
             if keep_attributes:
                 # we have to copy all attributes since deepcopy is not supported
-                for key, value in six.iteritems(self._m_data_storage.m_data_bank[tag].attrs):
+                for key, value in self._m_data_storage.m_data_bank[tag].attrs.items():
                     tmp_attributes[key] = value
 
             # remove database entry
@@ -792,7 +791,7 @@ class OutputPort(Port):
         self._initialize_database(data, tag, data_dim=data_dim)
 
         if keep_attributes:
-            for key, value in six.iteritems(tmp_attributes):
+            for key, value in tmp_attributes.items():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
 
     def _append_key(self,
@@ -1148,8 +1147,8 @@ class OutputPort(Port):
             # link non-static attributes
             if "header_" + input_port.tag + "/" in self._m_data_storage.m_data_bank:
 
-                for attr_name, attr_data in six.iteritems(self._m_data_storage\
-                        .m_data_bank["header_" + input_port.tag + "/"]):
+                for attr_name, attr_data in self._m_data_storage\
+                        .m_data_bank["header_" + input_port.tag + "/"].items():
 
                     database_name = "header_"+self._m_tag+"/"+attr_name
 
@@ -1161,7 +1160,7 @@ class OutputPort(Port):
 
             # copy static attributes
             attributes = input_port.get_all_static_attributes()
-            for attr_name, attr_val in six.iteritems(attributes):
+            for attr_name, attr_val in attributes.items():
                 self.add_attribute(attr_name, attr_val)
 
             self._m_data_storage.m_data_bank.flush()

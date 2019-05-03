@@ -5,7 +5,6 @@ import pytest
 import numpy as np
 
 from astropy.io import fits
-from six.moves import range
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule

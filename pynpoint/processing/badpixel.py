@@ -9,7 +9,6 @@ import cv2
 import numpy as np
 
 from numba import jit
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 
