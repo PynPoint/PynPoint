@@ -145,69 +145,20 @@ class MassLimitsModule(ProcessingModule):
         # create array of available points
         for age_index, age in enumerate(self.m_ages):
             for contrast in self.m_model_data[age_index][:,filter_index]:
-                points = np.append(points, [age, contrast])
+                points = np.append(points, [age, contrast[0]])
         
         points = points.reshape(-1, 2)
+
         values = np.empty((points.shape[0]))
-        for i, line in enumerate(points):
-            values[i] = _model_mass(*line)
+        for i, point in enumerate(points):
+            values[i] = _model_mass(*point)
 
         from scipy.interpolate import griddata, LinearNDInterpolator
         age_array = np.ones_like(evaluate_contrast) * self.m_age
-        xi = np.column_stack((age_array, evaluate_contrast - self.m_host_magnitude ))
-    
+
+        xi = np.column_stack((age_array, evaluate_contrast + self.m_host_magnitude ))
+
         return griddata(points, values, xi) 
-
-    # def _interpolate_data_by_age(self, age):
-    #     """
-    #     Internal function to interpolate the ages when the input age is not in the list of model ages
-    #     """
-    #     # find the closest to models to the inout age
-    #     closest_age_index = (np.abs(self.m_ages-age)).argmin()
-    #     # find out whether the age is above or below the closest value and write to indices
-    #     if age < self.m_ages[closest_age_index]:
-    #         closest_age_indices = [closest_age_index -1, closest_age_index]
-    #     elif age > self.m_ages[closest_age_index]:
-    #         closest_age_indices = [closest_age_index, closest_age_index-1]
-        
-    #     lower_data = self.m_model_data[closest_age_indices[0]]
-    #     upper_data = self.m_model_data[closest_age_indices[1]]
-
-    #     # linear interpolation of the data
-    #     interpolated_data = lower_data + (age - self.m_ages[closest_age_indices[0]]) * \
-    #         (upper_data - lower_data) / (self.m_ages[closest_age_indices[1]] - self.m_ages[closest_age_indices[0]])
-
-    #     return interpolated_data
-
-    # def _interpolate_model(self, interpolate_age=False):
-    #     """
-    #     Internal function.
-    #     Takes Model data and interpolates it
-    #     """
-
-    #     from scipy.interpolate import interp1d
-
-    #     # find the filter corresponding to the m_filter
-    #     filter_index = np.argwhere([self.m_filter == j for j in self.m_header])[0] # simple argwhere gives empty list?!
-            
-    #     # find the model corresponding to the m_age
-    #     if not interpolate_age:
-    #         age_index = np.argwhere(self.m_age == self.m_ages)[0][0]
-
-    #         # grab the data to be interpolated
-    #         mass = self.m_model_data[age_index] [:, 0]
-    #         absoulteMagnitude = np.squeeze(self.m_model_data[age_index] [:, filter_index])
-        
-    #     else:
-    #         # interpolate the data by age
-    #         interpolated_age_data = self._interpolate_data_by_age(self.m_age)
-    #         mass = interpolated_age_data[:,0]
-    #         absoulteMagnitude = np.squeeze(interpolated_age_data[:, filter_index])
-        
-    #     # interpolate the data for one age
-    #     interpols_mass_contrast = interp1d(absoulteMagnitude, mass, kind='linear', bounds_error = False)
-    #     return interpols_mass_contrast
-
     
     def run(self):
         """
@@ -216,20 +167,14 @@ class MassLimitsModule(ProcessingModule):
         """
         contrast_data = self.m_data_in_port.get_all()
 
-        print(contrast_data)
-        print(contrast_data.shape)
         r = contrast_data[:,0]
         contrast = contrast_data[:,1]
         contrast_std = np.sqrt(contrast_data[:,2])
-
-        print(contrast)
 
         # interpolate_age_flag = not (self.m_age in self.m_ages)
         mass = self._interpolate_model(self.m_age, contrast) 
         mass_upper = self._interpolate_model(self.m_age, contrast + contrast_std) - mass
         mass_lower = self._interpolate_model(self.m_age, contrast - contrast_std) - mass
-
-        print(mass)
 
         mass_summary = np.column_stack((r, mass, mass_upper, mass_lower))
         self.m_data_out_port.set_all(mass_summary, data_dim=2)
