@@ -17,6 +17,9 @@ junit-docs-ci.xml
 junit-py27.xml
 junit-py36.xml
 junit-py37.xml
+.pytest_cache/
+*.nbi
+*.nbc
 
 # Sphinx
 docs/_build
