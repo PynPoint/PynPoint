@@ -1309,8 +1309,8 @@ class OutputPort(Port):
 
     def flush(self):
         """
-        Forces the DataStorage to save all data from the memory to the hard drive without closing
-        it.
+        Forces the :class:`~pynpoint.core.dataio.DataStorage` to save all data from the memory to
+        the hard drive without closing the :class:`~pynpoint.core.dataio.OutputPort`.
 
         Returns
         -------
