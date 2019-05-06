@@ -30,7 +30,7 @@ docs:
 	$(MAKE) -C docs html
 
 test:
-	pytest --cov=pynpoint
+	pytest --cov=pynpoint tests
 
 coverage:
 	coverage run --rcfile .coveragerc -m py.test

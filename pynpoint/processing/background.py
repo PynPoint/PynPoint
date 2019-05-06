@@ -2,14 +2,10 @@
 Pipeline modules for subtraction of the background emission.
 """
 
-from __future__ import absolute_import
-
 import sys
 import warnings
 
 import numpy as np
-
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
