@@ -2,8 +2,6 @@
 Pipeline modules for estimating detection limits.
 """
 
-from __future__ import absolute_import
-
 import sys
 import os
 import warnings

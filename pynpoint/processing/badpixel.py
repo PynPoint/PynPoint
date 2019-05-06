@@ -2,8 +2,6 @@
 Pipeline modules for the detection and interpolation of bad pixels.
 """
 
-from __future__ import absolute_import
-
 import sys
 import copy
 
@@ -11,7 +9,6 @@ import cv2
 import numpy as np
 
 from numba import jit
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 
