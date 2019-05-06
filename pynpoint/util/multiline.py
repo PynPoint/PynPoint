@@ -10,8 +10,8 @@ from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProc
 
 class LineReader(TaskCreator):
     """
-    Line Reader are part of the parallel line processing. They continuously read all rows of a data
-    set and puts them into a task queue.
+    Reader of task inputs for :class:`~pynpoint.util.multiline.LineProcessingCapsule`. Continuously
+    read all rows of a dataset and puts them into a task queue.
     """
 
     def __init__(self,
@@ -61,12 +61,11 @@ class LineReader(TaskCreator):
 
         i = 0
         while i < n_rows:
-            # read rows from i to j
             j = min((i + row_length), n_rows)
 
             # lock mutex and read data
             with self.m_data_mutex:
-                # reading lines from i to j
+                # read rows from i to j
                 tmp_data = self.m_data_in_port[:, i:j, :]
 
             param = (self.m_data_length, ((None, None, None), (i, j, None), (None, None, None)))
@@ -79,8 +78,8 @@ class LineReader(TaskCreator):
 
 class LineTaskProcessor(TaskProcessor):
     """
-    Line Task Processors are part of the parallel line processing. They take a row of lines in time
-    and apply a function to them.
+    Processor of task inputs for :class:`~pynpoint.util.multiline.LineProcessingCapsule`. A
+    processor applies a function on a row of lines in time.
     """
 
     def __init__(self,
@@ -117,7 +116,7 @@ class LineTaskProcessor(TaskProcessor):
         Parameters
         ----------
         tmp_task : pynpoint.util.multiproc.TaskInput
-            Input task.
+            Task input.
 
         Returns
         -------
@@ -125,25 +124,24 @@ class LineTaskProcessor(TaskProcessor):
             Task result.
         """
 
+
         result_arr = np.zeros((tmp_task.m_job_parameter[0],
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))
 
         for i in range(tmp_task.m_input_data.shape[1]):
             for j in range(tmp_task.m_input_data.shape[2]):
-                tmp_line = tmp_task.m_input_data[:, i, j]
-
-                result_arr[:, i, j] = apply_function(tmp_line,
-                                                     self.m_function,
-                                                     self.m_function_args)
+                result_arr[:, i, j] = apply_function(tmp_data=tmp_task.m_input_data[:, i, j],
+                                                     func=self.m_function,
+                                                     func_args=self.m_function_args)
 
         return TaskResult(result_arr, tmp_task.m_job_parameter[1])
 
 
 class LineProcessingCapsule(MultiprocessingCapsule):
     """
-    The central processing class for parallel line processing. Use this class to apply a function
-    in time in parallel, for example as in
+    Capsule for parallel processing of lines in time with the poison pill pattern. A function is
+    applied in parallel to each line in time, for example as in
     :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`.
     """
 
@@ -165,7 +163,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
             Number of processors.
         function : function
             Input function.
-        function_args :
+        function_args : tuple, None
             Function arguments.
         data_length : int
             Length of the processed data.
@@ -187,19 +185,19 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         Returns
         -------
         list(pynpoint.util.multiproc.LineTaskProcessor, )
-            List with line task processors.
+            List with instances of :class:`~pynpoint.util.multiproc.LineTaskProcessor`
         """
 
-        tmp_processors = []
+        processors = []
 
         for _ in range(self.m_num_proc):
 
-            tmp_processors.append(LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
-                                                    result_queue_in=self.m_result_queue,
-                                                    function=self.m_function,
-                                                    function_args=self.m_function_args))
+            processors.append(LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
+                                                result_queue_in=self.m_result_queue,
+                                                function=self.m_function,
+                                                function_args=self.m_function_args))
 
-        return tmp_processors
+        return processors
 
     def init_creator(self,
                      image_in_port):

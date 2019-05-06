@@ -3,7 +3,7 @@
 Overview
 ========
 
-Here you find a list of all available pipeline modules with a very short description of what each module does. Reading modules import data into the database, writing modules export data from the database, and processing modules run a specific task of the data reduction and analysis. More details on the design of the pipeline can be found in the :ref:`architecture` section.
+Here you find a list of all available pipeline modules with a very short description of what each module does. Reading modules import data into the database, writing modules export data from the database, and processing modules run a specific task of the data reduction and analysis. More details on the design of the pipeline can be found in the :ref:`architecture` section. 
 
 .. note::
    All PynPoint classes ending with ``Module`` in their name (e.g. :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule`) are pipeline modules that can be added to an instance of :class:`~pynpoint.core.pypeline.Pypeline` (see :ref:`pypeline` section).
@@ -39,17 +39,17 @@ Background Subtraction
 
 * :class:`~pynpoint.processing.background.SimpleBackgroundSubtractionModule`: Simple background subtraction for dithering datasets.
 * :class:`~pynpoint.processing.background.MeanBackgroundSubtractionModule`: Mean background subtraction for dithering datasets.
-* :class:`~pynpoint.processing.background.LineSubtractionModule`: Subtraction of striped detector artifacts.
+* :class:`~pynpoint.processing.background.LineSubtractionModule` (multiproc): Subtraction of striped detector artifacts.
 * :class:`~pynpoint.processing.background.NoddingBackgroundModule`: Background subtraction for nodding datasets.
 
 Bad Pixel Cleaning
 ~~~~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.badpixel.BadPixelSigmaFilterModule`: Find and replace bad pixels with a sigma filter.
-* :class:`~pynpoint.processing.badpixel.BadPixelInterpolationModule`: Interpolate bad pixels with a spectral deconvolution technique.
+* :class:`~pynpoint.processing.badpixel.BadPixelSigmaFilterModule` (CPU): Find and replace bad pixels with a sigma filter.
+* :class:`~pynpoint.processing.badpixel.BadPixelInterpolationModule` (CPU): Interpolate bad pixels with a spectral deconvolution technique.
 * :class:`~pynpoint.processing.badpixel.BadPixelMapModule`: Create a bad pixel map from dark and flat images.
-* :class:`~pynpoint.processing.badpixel.BadPixelTimeFilterModule`: Sigma clipping of bad pixels along the time dimension.
-* :class:`~pynpoint.processing.badpixel.ReplaceBadPixelsModule`: Replace bad pixels based on a bad pixel map.
+* :class:`~pynpoint.processing.badpixel.BadPixelTimeFilterModule` (CPU): Sigma clipping of bad pixels along the time dimension.
+* :class:`~pynpoint.processing.badpixel.ReplaceBadPixelsModule` (CPU): Replace bad pixels based on a bad pixel map.
 
 Basic Processing
 ~~~~~~~~~~~~~~~~
@@ -61,28 +61,28 @@ Basic Processing
 Centering
 ~~~~~~~~~
 
-* :class:`~pynpoint.processing.centering.StarExtractionModule`: Locate the position of the star.
-* :class:`~pynpoint.processing.centering.StarAlignmentModule`: Align the images with a cross-correlation.
-* :class:`~pynpoint.processing.centering.StarCenteringModule`: Center the images by fitting a 2D Gaussian or Moffat function.
-* :class:`~pynpoint.processing.centering.ShiftImagesModule`: Shift a stack of images.
+* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate the position of the star.
+* :class:`~pynpoint.processing.centering.StarAlignmentModule` (CPU): Align the images with a cross-correlation.
+* :class:`~pynpoint.processing.centering.StarCenteringModule` (CPU): Center the images by fitting a 2D Gaussian or Moffat function.
+* :class:`~pynpoint.processing.centering.ShiftImagesModule` (CPU): Shift a stack of images.
 * :class:`~pynpoint.processing.centering.WaffleCenteringModule`: Use the waffle spots to center the images.
 
 Dark and Flat Correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule`: Dark frame subtraction.
-* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule`: Flat field correction.
+* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule` (CPU): Dark frame subtraction.
+* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule` (CPU): Flat field correction.
 
 Denoising
 ~~~~~~~~~
 
-* :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`: Wavelet-based denoising in the time domain.
-* :class:`~pynpoint.processing.timedenoising.TimeNormalizationModule`: Normalize a stack of images.
+* :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule` (CPU): Wavelet-based denoising in the time domain.
+* :class:`~pynpoint.processing.timedenoising.TimeNormalizationModule` (CPU): Normalize a stack of images.
 
 Detection Limits
 ~~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.limits.ContrastCurveModule`: Compute a contrast curve.
+* :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
@@ -90,8 +90,8 @@ Flux and Position
 * :class:`~pynpoint.processing.fluxposition.FakePlanetModule`: Inject an artificial planet in a dataset.
 * :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`: Determine the flux and position with a simplex minimization.
 * :class:`~pynpoint.processing.fluxposition.FalsePositiveModule`: Compute the signal-to-noise ratio and false positive fraction.
-* :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule`: Estimate the flux and position of a planet with MCMC sampling.
-* :class:`~pynpoint.processing.fluxposition.AperturePhotometryModule`: Compute the integrated flux at a position.
+* :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule` (CPU): Estimate the flux and position of a planet with MCMC sampling.
+* :class:`~pynpoint.processing.fluxposition.AperturePhotometryModule` (CPU): Compute the integrated flux at a position.
 
 Frame Selection
 ~~~~~~~~~~~~~~~
@@ -105,10 +105,10 @@ Frame Selection
 Image Resizing
 ~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.resizing.CropImagesModule`: Crop the images.
-* :class:`~pynpoint.processing.resizing.ScaleImagesModule`: Resample the images (spatially and/or in flux).
-* :class:`~pynpoint.processing.resizing.AddLinesModule`: Add pixel lines on the sides of the images.
-* :class:`~pynpoint.processing.resizing.RemoveLinesModule`: Remove pixel lines from the sides of the images.
+* :class:`~pynpoint.processing.resizing.CropImagesModule` (CPU): Crop the images.
+* :class:`~pynpoint.processing.resizing.ScaleImagesModule` (CPU): Resample the images (spatially and/or in flux).
+* :class:`~pynpoint.processing.resizing.AddLinesModule` (CPU): Add pixel lines on the sides of the images.
+* :class:`~pynpoint.processing.resizing.RemoveLinesModule` (CPU): Remove pixel lines from the sides of the images.
 
 PCA Background Subtraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,8 +129,8 @@ PSF Preparation
 PSF Subtraction
 ~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule`: PSF subtraction with PCA.
-* :class:`~pynpoint.processing.psfsubtraction.ClassicalADIModule`: PSF subtraction with classical ADI.
+* :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` (CPU): PSF subtraction with PCA.
+* :class:`~pynpoint.processing.psfsubtraction.ClassicalADIModule` (CPU): PSF subtraction with classical ADI.
 
 Stacking
 ~~~~~~~~
@@ -139,3 +139,6 @@ Stacking
 * :class:`~pynpoint.processing.stacksubset.StackCubesModule`: Collapse each original data cube separately.
 * :class:`~pynpoint.processing.stacksubset.DerotateAndStackModule`: Derotate and/or stack the images.
 * :class:`~pynpoint.processing.stacksubset.CombineTagsModule`: Combine multiple database tags into a single dataset.
+
+.. note::
+   The pipeline modules with multiprocessing functionalities are indicated with "CPU" in parentheses. The number of parallel processes can be set with the ``CPU`` parameter in the central configuration file and the number of images that is simultaneously loaded into the memory with the ``MEMORY`` parameter. Pipeline modules that apply (in parallel) a function to subsets of images use a number of images per subset equal to ``MEMORY`` divided by ``CPU``.
