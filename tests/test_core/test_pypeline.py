@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import warnings
 
@@ -20,7 +17,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestPypeline(object):
+class TestPypeline:
 
     def setup_class(self):
         self.test_dir = os.path.dirname(__file__) + "/"
