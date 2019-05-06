@@ -76,6 +76,14 @@ pynpoint.util.multiproc module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.util.multistack module
+-------------------------------
+
+.. automodule:: pynpoint.util.multistack
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.util.psf module
 ------------------------
 

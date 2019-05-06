@@ -179,4 +179,4 @@ The full code for the ``ExampleModule`` from above is: ::
 Apply Function To Images
 ------------------------
 
-A processing module often applies a specific method to each image of an input port. Therefore, the :func:`~pynpoint.core.processing.ProcessingModule.apply_function_to_images` function has been implemented to apply a function to all images of an input port. An example of the implementation can be found in the code of the bad pixel cleaning with a sigma filter: :class:`~pynpoint.processing.badpixel.BadPixelSigmaFilterModule`.
+A processing module often applies a specific method to each image of an input port. Therefore, the :func:`~pynpoint.core.processing.ProcessingModule.apply_function_to_images` function has been implemented to apply a function to all images of an input port. This function uses the ``CPU`` and ``MEMORY`` parameter from the configuration file to automatically process subsets of images in parallel. An example of the implementation can be found in the code of the bad pixel cleaning with a sigma filter: :class:`~pynpoint.processing.badpixel.BadPixelSigmaFilterModule`.
