@@ -2,15 +2,12 @@
 Wrapper utils for the wavelet functions for the mlpy cwt implementation (see continous.py)
 """
 
-from __future__ import absolute_import
-
 import numpy as np
 
 from numba import jit
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
-from six.moves import range
 
 from pynpoint.util.continuous import autoscales, cwt, icwt
 # from pynpoint.util.continuous import fourier_from_scales
@@ -56,7 +53,7 @@ def _fast_zeros(soft,
     return spectrum
 
 
-class WaveletAnalysisCapsule(object):
+class WaveletAnalysisCapsule:
     """
     Capsule class to process one 1d time series using the CWT and wavelet de-nosing by wavelet
     shrinkage.

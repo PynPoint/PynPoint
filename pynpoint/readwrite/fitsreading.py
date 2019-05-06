@@ -2,13 +2,10 @@
 Module for reading FITS files.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 import warnings
 
-import six
 import numpy as np
 
 from astropy.io import fits
@@ -82,11 +79,11 @@ class FitsReadingModule(ReadingModule):
 
         self.m_attributes = get_attributes()
 
-        for key, value in six.iteritems(self.m_attributes):
+        for key, value in self.m_attributes.items():
             if value["config"] == "header" and value["attribute"] == "static":
                 self.m_static.append(key)
 
-        for key, value in six.iteritems(self.m_attributes):
+        for key, value in self.m_attributes.items():
             if value["attribute"] == "non-static":
                 self.m_non_static.append(key)
 

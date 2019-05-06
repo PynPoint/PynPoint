@@ -2,7 +2,6 @@
 Utilities for multiprocessing of lines in time with the poison pill pattern.
 """
 
-import six
 import numpy as np
 
 from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
@@ -130,8 +129,8 @@ class LineTaskProcessor(TaskProcessor):
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))
 
-        for i in six.moves.range(tmp_task.m_input_data.shape[1]):
-            for j in six.moves.range(tmp_task.m_input_data.shape[2]):
+        for i in range(tmp_task.m_input_data.shape[1]):
+            for j in range(tmp_task.m_input_data.shape[2]):
                 tmp_line = tmp_task.m_input_data[:, i, j]
 
                 result_arr[:, i, j] = apply_function(tmp_line,
@@ -193,7 +192,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         tmp_processors = []
 
-        for _ in six.moves.range(self.m_num_proc):
+        for _ in range(self.m_num_proc):
 
             tmp_processors.append(LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
                                                     result_queue_in=self.m_result_queue,

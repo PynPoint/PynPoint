@@ -2,8 +2,6 @@
 Functions for MCMC sampling.
 """
 
-from __future__ import absolute_import
-
 import math
 
 import numpy as np
