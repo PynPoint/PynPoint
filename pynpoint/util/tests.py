@@ -2,8 +2,6 @@
 Functions for testing the pipeline and modules.
 """
 
-from __future__ import absolute_import
-
 import os
 import math
 import shutil
@@ -13,7 +11,6 @@ import numpy as np
 
 from scipy.ndimage import shift
 from astropy.io import fits
-from six.moves import range
 
 
 def create_config(filename):

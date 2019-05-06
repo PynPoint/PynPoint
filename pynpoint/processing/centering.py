@@ -2,9 +2,6 @@
 Pipeline modules for locating, aligning, and centering of the star.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import math
 import warnings
@@ -16,7 +13,6 @@ from skimage.transform import rescale
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from astropy.modeling import models, fitting
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import memory_frames, progress, locate_star
@@ -976,8 +972,8 @@ class WaffleCenteringModule(ProcessingModule):
                                           size=ref_image_size)
 
             # find maximum in tmp image
-            y_max, x_max = np.unravel_index(np.argmax(tmp_center_frame),
-                                            dims=tmp_center_frame.shape)
+            y_max, x_max = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                            shape=tmp_center_frame.shape)
 
             pixmax = tmp_center_frame[y_max, x_max]
             max_pos = np.array([x_max, y_max]).reshape(1, 2)
@@ -989,8 +985,8 @@ class WaffleCenteringModule(ProcessingModule):
             dist = np.inf
 
             while dist > 2:
-                y_max_new, x_max_new = np.unravel_index(np.argmax(tmp_center_frame),
-                                                        dims=tmp_center_frame.shape)
+                y_max_new, x_max_new = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                                        shape=tmp_center_frame.shape)
 
                 pixmax_new = tmp_center_frame[y_max_new, x_max_new]
 

@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-
 import os
-import pytest
 import warnings
 
 import h5py
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -15,7 +13,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestHdf5ReadingModule(object):
+class TestHdf5ReadingModule:
 
     def setup_class(self):
 
