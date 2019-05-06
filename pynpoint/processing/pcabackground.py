@@ -2,9 +2,6 @@
 Pipeline modules for PCA-based background subtraction.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import math
 import warnings
@@ -13,8 +10,6 @@ import numpy as np
 
 from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
-from six.moves import map
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.processing.resizing import CropImagesModule

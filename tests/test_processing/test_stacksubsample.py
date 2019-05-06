@@ -15,7 +15,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestStackingAndSubsampling(object):
+class TestStackingAndSubsampling:
 
     def setup_class(self):
 
@@ -90,9 +90,15 @@ class TestStackingAndSubsampling(object):
 
     def test_mean_cube(self):
 
-        mean = MeanCubeModule(name_in="mean",
-                              image_in_tag="images",
-                              image_out_tag="mean")
+        with pytest.warns(DeprecationWarning) as warning:
+            mean = MeanCubeModule(name_in="mean",
+                                  image_in_tag="images",
+                                  image_out_tag="mean")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "The MeanCubeModule will be be deprecated in a " \
+                                             "future release. Please use the StackCubesModule " \
+                                             "instead."
 
         self.pipeline.add_module(mean)
         self.pipeline.run_module("mean")
