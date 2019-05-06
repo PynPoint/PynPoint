@@ -217,7 +217,7 @@ class NearReadingModule(ReadingModule):
         # open the FITS file
         hdulist = fits.open(os.path.join(self.m_input_location, filename))
 
-        # number of images = total number of HDUs - primary HDU - last HDU (average inage)
+        # number of images = total number of HDUs - primary HDU - last HDU (average image)
         nimages = len(hdulist) - 2
 
         # check if the file contains an even number of images, as expected with two chop positions
@@ -311,8 +311,8 @@ class NearReadingModule(ReadingModule):
                               'current image.'.format(cycle))
 
             else:
-                raise ValueError('Frame type ({}) not a valid. Expecting HCYCLE1 or HCYCLE2 as '
-                                 'value for ESO DET FRAM TYPE.'.format(cycle))
+                raise ValueError('Frame type ({}) not a valid value. Expecting HCYCLE1 or HCYCLE2 '
+                                 'as value for ESO DET FRAM TYPE.'.format(cycle))
 
         # check if the number of chop A and B images is equal, this error should never occur
         if count_chopa != count_chopb:
