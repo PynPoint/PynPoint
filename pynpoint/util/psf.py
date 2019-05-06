@@ -17,6 +17,8 @@ def pca_psf_subtraction(images,
     """
     Function for PSF subtraction with PCA.
 
+    Parameters
+    ----------
     images : numpy.ndarray
         Stack of images. Also used as reference images if `pca_sklearn` is set to None. Should be
         in the original 3D shape if `pca_sklearn` is set to None or in the 2D reshaped format if

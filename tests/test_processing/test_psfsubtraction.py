@@ -134,31 +134,12 @@ class TestPSFSubtractionPCA:
 
     def test_classical_adi(self):
 
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+
         module = ClassicalADIModule(threshold=None,
                                     nreference=None,
                                     residuals="mean",
-                                    extra_rot=0.,
-                                    name_in="cadi2",
-                                    image_in_tag="science",
-                                    res_out_tag="cadi_res",
-                                    stack_out_tag="cadi_stack")
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("cadi2")
-
-        data = self.pipeline.get_data("cadi_res")
-        assert np.allclose(np.mean(data), -6.359018260066029e-08, rtol=limit, atol=0.)
-        assert data.shape == (80, 100, 100)
-
-        data = self.pipeline.get_data("cadi_stack")
-        assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
-        assert data.shape == (1, 100, 100)
-
-    def test_classical_adi_threshold(self):
-
-        module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
-                                    nreference=5,
-                                    residuals="median",
                                     extra_rot=0.,
                                     name_in="cadi1",
                                     image_in_tag="science",
@@ -167,6 +148,54 @@ class TestPSFSubtractionPCA:
 
         self.pipeline.add_module(module)
         self.pipeline.run_module("cadi1")
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        module = ClassicalADIModule(threshold=None,
+                                    nreference=None,
+                                    residuals="mean",
+                                    extra_rot=0.,
+                                    name_in="cadi1_multi",
+                                    image_in_tag="science",
+                                    res_out_tag="cadi_res_multi",
+                                    stack_out_tag="cadi_stack_multi")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("cadi1_multi")
+
+        data = self.pipeline.get_data("cadi_res")
+        assert np.allclose(np.mean(data), -6.359018260066029e-08, rtol=limit, atol=0.)
+        assert data.shape == (80, 100, 100)
+
+        data_multi = self.pipeline.get_data("cadi_res_multi")
+        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data.shape == data_multi.shape
+
+        data = self.pipeline.get_data("cadi_stack")
+        assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
+        assert data.shape == (1, 100, 100)
+
+        data_multi = self.pipeline.get_data("cadi_stack_multi")
+        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data.shape == data_multi.shape
+
+    def test_classical_adi_threshold(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+
+        module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
+                                    nreference=5,
+                                    residuals="median",
+                                    extra_rot=0.,
+                                    name_in="cadi2",
+                                    image_in_tag="science",
+                                    res_out_tag="cadi_res",
+                                    stack_out_tag="cadi_stack")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("cadi2")
 
         data = self.pipeline.get_data("cadi_res")
         assert np.allclose(np.mean(data), 1.6523183877608216e-07, rtol=limit, atol=0.)
