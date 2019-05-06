@@ -2,16 +2,13 @@
 Pipeline modules to prepare the data for the PSF subtraction.
 """
 
-from __future__ import division
-from __future__ import absolute_import
-
 import sys
 import warnings
 
 import numpy as np
+
 from astropy.coordinates import EarthLocation
 from astropy.time import Time
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress, memory_frames

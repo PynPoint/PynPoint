@@ -12,7 +12,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestBasicOperations(object):
+class TestBasicOperations:
 
     def setup_class(self):
 

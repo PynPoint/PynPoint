@@ -2,8 +2,6 @@
 Functions for Pypeline modules.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 

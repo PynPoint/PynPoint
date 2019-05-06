@@ -2,8 +2,6 @@
 Pipeline modules for PSF subtraction.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 import warnings
