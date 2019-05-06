@@ -17,7 +17,7 @@ Reading Modules
 * :class:`~pynpoint.readwrite.hdf5reading.Hdf5ReadingModule`: Import datasets and attributes from an HDF5 file (as created by PynPoint).
 * :class:`~pynpoint.readwrite.textreading.ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
 * :class:`~pynpoint.readwrite.textreading.AttributeReadingModule`: Import a list of values as dataset attribute.
-* :class:`~pynpoint.readwrite.nearreading.NearReadingModule`: Import VLT/VISIR data for the NEAR experiment.
+* :class:`~pynpoint.readwrite.nearreading.NearReadingModule` (CPU): Import VLT/VISIR data for the NEAR experiment.
 
 .. _writemodule:
 
