@@ -2,8 +2,6 @@
 Pipeline modules for resizing of images.
 """
 
-from __future__ import absolute_import
-
 import math
 import warnings
 

@@ -3,8 +3,6 @@ Capsule for multiprocessing of the PSF subtraction with PCA. Residuals are creat
 a range of principal components for which the PCA basis is required as input.
 """
 
-from __future__ import absolute_import
-
 import sys
 
 import numpy as np

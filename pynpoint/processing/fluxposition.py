@@ -2,9 +2,6 @@
 Pipeline modules for photometric and astrometric measurements.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 
 import numpy as np

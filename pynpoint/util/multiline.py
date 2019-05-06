@@ -131,7 +131,6 @@ class LineTaskProcessor(TaskProcessor):
 
         for i in range(tmp_task.m_input_data.shape[1]):
             for j in range(tmp_task.m_input_data.shape[2]):
-
                 result_arr[:, i, j] = apply_function(tmp_data=tmp_task.m_input_data[:, i, j],
                                                      func=self.m_function,
                                                      func_args=self.m_function_args)

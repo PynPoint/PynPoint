@@ -2,12 +2,9 @@
 Module for writing a list of tags from the database to a separate HDF5 file.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 
-import six
 import h5py
 
 from pynpoint.core.processing import WritingModule
@@ -83,7 +80,7 @@ class Hdf5WritingModule(WritingModule):
         else:
             out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
 
-        for in_tag, out_tag in six.iteritems(self.m_tag_dictionary):
+        for in_tag, out_tag in self.m_tag_dictionary.items():
             tmp_port = self.add_input_port(in_tag)
             tmp_data = tmp_port.get_all()
 
@@ -97,7 +94,7 @@ class Hdf5WritingModule(WritingModule):
                 tmp_attr = tmp_port.get_all_static_attributes()
 
                 # it is not possible to copy attributes all together
-                for key, value in six.iteritems(tmp_attr):
+                for key, value in tmp_attr.items():
                     data_set.attrs[key] = value
 
                 # non-static attributes

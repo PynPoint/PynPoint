@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -14,7 +12,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestConfigPort(object):
+class TestConfigPort:
 
     def setup_class(self):
         self.test_dir = os.path.dirname(__file__) + "/"
@@ -49,7 +47,8 @@ class TestConfigPort(object):
             port._check_error_cases()
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == "No data under the tag which is linked by the ConfigPort."
+        assert warning[0].message.args[0] == "No data under the tag which is linked by the " \
+                                             "ConfigPort."
 
     def test_get_config_attribute(self):
         create_config(self.test_dir+"PynPoint_config.ini")

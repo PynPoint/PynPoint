@@ -2,8 +2,6 @@
 Pipeline modules for stacking and subsampling of images.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 import cmath
@@ -106,10 +104,12 @@ class StackAndSubsetModule(ProcessingModule):
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
                         parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
 
+                    im_subset = self.m_image_in_port[frames[i]:frames[i+1], ]
+
                     if self.m_combine == "mean":
-                        im_new[i, ] = np.mean(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                        im_new[i, ] = np.mean(im_subset, axis=0)
                     elif self.m_combine == "median":
-                        im_new[i, ] = np.median(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+                        im_new[i, ] = np.median(im_subset, axis=0)
 
                 im_shape = im_new.shape
 

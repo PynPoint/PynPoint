@@ -2,8 +2,6 @@
 Pipeline modules for frame selection.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 import warnings

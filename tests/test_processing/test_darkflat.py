@@ -12,7 +12,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestDarkAndFlatCalibration(object):
+class TestDarkAndFlatCalibration:
 
     def setup_class(self):
 
