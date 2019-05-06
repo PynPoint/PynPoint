@@ -17,7 +17,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestStarAlignment(object):
+class TestStarAlignment:
 
     def setup_class(self):
 

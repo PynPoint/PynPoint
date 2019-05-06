@@ -14,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestTimeDenoising(object):
+class TestTimeDenoising:
 
     def setup_class(self):
 

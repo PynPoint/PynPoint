@@ -2,15 +2,12 @@
 Interfaces for pipeline modules.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 import warnings
 
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 
-import six
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
@@ -19,7 +16,7 @@ from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
 
 
-class PypelineModule(six.with_metaclass(ABCMeta)):
+class PypelineModule(metaclass=ABCMeta):
     """
     Abstract interface for the PypelineModule:
 
@@ -88,7 +85,7 @@ class PypelineModule(six.with_metaclass(ABCMeta)):
         """
 
 
-class ReadingModule(six.with_metaclass(ABCMeta, PypelineModule)):
+class ReadingModule(PypelineModule, metaclass=ABCMeta):
     """
     The abstract class ReadingModule is an interface for processing steps in the Pypeline which
     have only read access to the central data storage. One can specify a directory on the hard
@@ -185,7 +182,7 @@ class ReadingModule(six.with_metaclass(ABCMeta, PypelineModule)):
             None
         """
 
-        for port in six.itervalues(self._m_output_ports):
+        for port in self._m_output_ports.values():
             port.set_database_connection(data_base_in)
 
         self._m_config_port.set_database_connection(data_base_in)
@@ -211,7 +208,7 @@ class ReadingModule(six.with_metaclass(ABCMeta, PypelineModule)):
         algorithm behind the module.
         """
 
-class WritingModule(six.with_metaclass(ABCMeta, PypelineModule)):
+class WritingModule(PypelineModule, metaclass=ABCMeta):
     """
     The abstract class WritingModule is an interface for processing steps in the pipeline which
     do not change the content of the internal DataStorage. They only have reading access to the
@@ -302,7 +299,7 @@ class WritingModule(six.with_metaclass(ABCMeta, PypelineModule)):
             None
         """
 
-        for port in six.itervalues(self._m_input_ports):
+        for port in self._m_input_ports.values():
             port.set_database_connection(data_base_in)
 
         self._m_config_port.set_database_connection(data_base_in)
@@ -329,7 +326,7 @@ class WritingModule(six.with_metaclass(ABCMeta, PypelineModule)):
         """
 
 
-class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
+class ProcessingModule(PypelineModule, metaclass=ABCMeta):
     """
     The abstract class ProcessingModule is an interface for all processing steps in the pipeline
     which read, process, and store data. Hence processing modules have read and write access to the
@@ -445,10 +442,10 @@ class ProcessingModule(six.with_metaclass(ABCMeta, PypelineModule)):
             None
         """
 
-        for port in six.itervalues(self._m_input_ports):
+        for port in self._m_input_ports.values():
             port.set_database_connection(data_base_in)
 
-        for port in six.itervalues(self._m_output_ports):
+        for port in self._m_output_ports.values():
             port.set_database_connection(data_base_in)
 
         self._m_config_port.set_database_connection(data_base_in)

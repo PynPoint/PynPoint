@@ -2,8 +2,6 @@
 Functions for image processing.
 """
 
-from __future__ import absolute_import
-
 import math
 import warnings
 

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import os
 import warnings
 
@@ -14,7 +13,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFitsWritingModule(object):
+class TestFitsWritingModule:
 
     def setup_class(self):
 

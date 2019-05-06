@@ -2,8 +2,6 @@
 Pipeline modules for basic image operations.
 """
 
-from __future__ import absolute_import
-
 import sys
 
 from scipy.ndimage import rotate

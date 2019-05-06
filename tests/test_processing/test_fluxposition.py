@@ -2,6 +2,7 @@ import os
 import warnings
 
 import h5py
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -19,7 +20,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFluxAndPosition(object):
+class TestFluxAndPosition:
 
     def setup_class(self):
 
@@ -307,7 +308,16 @@ class TestFluxAndPosition(object):
                                   variance="gaussian")
 
         self.pipeline.add_module(mcmc)
-        self.pipeline.run_module("mcmc")
+
+        with pytest.warns(FutureWarning) as warning:
+            self.pipeline.run_module("mcmc")
+
+        assert warning[0].message.args[0] == "Using a non-tuple sequence for multidimensional " \
+                                             "indexing is deprecated; use `arr[tuple(seq)]` " \
+                                             "instead of `arr[seq]`. In the future this will be " \
+                                             "interpreted as an array index, " \
+                                             "`arr[np.array(seq)]`, which will result either " \
+                                             "in an error or a different result."
 
         single = self.pipeline.get_data("mcmc")
         single = single[:, 20:, :].reshape((-1, 3))
@@ -344,7 +354,16 @@ class TestFluxAndPosition(object):
                                   variance="poisson")
 
         self.pipeline.add_module(mcmc)
-        self.pipeline.run_module("mcmc_gaussian")
+
+        with pytest.warns(FutureWarning) as warning:
+            self.pipeline.run_module("mcmc_gaussian")
+
+        assert warning[0].message.args[0] == "Using a non-tuple sequence for multidimensional " \
+                                             "indexing is deprecated; use `arr[tuple(seq)]` " \
+                                             "instead of `arr[seq]`. In the future this will be " \
+                                             "interpreted as an array index, " \
+                                             "`arr[np.array(seq)]`, which will result either " \
+                                             "in an error or a different result."
 
         single = self.pipeline.get_data("mcmc_gaussian")
         single = single[:, 20:, :].reshape((-1, 3))
