@@ -951,9 +951,6 @@ class AperturePhotometryModule(ProcessingModule):
         def _photometry(image, aperture):
             return aperture_photometry(image, aperture, method='exact')['aperture_sum']
 
-        self.m_phot_out_port.del_all_data()
-        self.m_phot_out_port.del_all_attributes()
-
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         self.m_radius /= pixscale
 
