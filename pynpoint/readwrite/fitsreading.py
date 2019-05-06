@@ -2,10 +2,10 @@
 Module for reading FITS files.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
+
+import numpy as np
 
 from astropy.io import fits
 
@@ -71,6 +71,7 @@ class FitsReadingModule(ReadingModule):
         self.m_overwrite = overwrite
         self.m_check = check
         self.m_filenames = filenames
+
 
         if not isinstance(filenames, (type(None), list, tuple, str)):
             raise TypeError("The 'filenames' parameter should contain a string or list with "

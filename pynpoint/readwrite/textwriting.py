@@ -2,8 +2,6 @@
 Modules for writing data as text file.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -7,7 +5,6 @@ import pytest
 import numpy as np
 
 from astropy.io import fits
-from six.moves import range
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
@@ -17,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFitsReadingModule(object):
+class TestFitsReadingModule:
 
     def setup_class(self):
 
