@@ -5,6 +5,7 @@ Functions for testing the pipeline and modules.
 import os
 import math
 import shutil
+import shlex
 import subprocess
 
 import h5py
@@ -390,44 +391,6 @@ def remove_test_data(path,
         for item in files:
             os.remove(path+item)
 
-def create_near_config(filename):
-    """
-    Create a configuration file for processing NEAR test data.
-
-    Parameters
-    ----------
-    filename : str
-        Configuration filename.
-
-    Returns
-    -------
-    NoneType
-        None
-    """
-
-    with open(filename, 'w') as file_obj:
-
-        file_obj.write('[header]\n\n')
-        file_obj.write('INSTRUMENT: INSTRUME\n')
-        file_obj.write('NFRAMES: None\n')
-        file_obj.write('EXP_NO: ESO TPL EXPNO\n')
-        file_obj.write('NDIT: None\n')
-        file_obj.write('PARANG_START: None\n')
-        file_obj.write('PARANG_END: None\n')
-        file_obj.write('DITHER_X: None\n')
-        file_obj.write('DITHER_Y: None\n')
-        file_obj.write('DIT: ESO DET SEQ1 DIT\n')
-        file_obj.write('LATITUDE: None\n')
-        file_obj.write('LONGITUDE: None\n')
-        file_obj.write('PUPIL: None\n')
-        file_obj.write('DATE: None\n')
-        file_obj.write('RA: None\n')
-        file_obj.write('DEC: None\n\n')
-        file_obj.write('[settings]\n\n')
-        file_obj.write('PIXSCALE: 0.045\n')
-        file_obj.write('MEMORY: 100\n')
-        file_obj.write('CPU: 1\n')
-
 def create_near_data(path):
     """
     Create a stack of images with Gaussian distributed pixel values.
@@ -478,4 +441,5 @@ def create_near_data(path):
 
         hdulist = fits.HDUList(hdu)
         hdulist.writeto(fits_file)
-        subprocess.call('compress '+fits_file, shell=True)
+
+        subprocess.check_call(shlex.split('compress '+fits_file))

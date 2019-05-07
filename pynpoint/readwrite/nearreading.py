@@ -28,6 +28,8 @@ class NearReadingModule(ReadingModule):
     contains the average of all images.
     """
 
+    __author__ = 'Jasper Jonker, Tomas Stolker'
+
     def __init__(self,
                  name_in='burst',
                  input_dir=None,
@@ -185,9 +187,8 @@ class NearReadingModule(ReadingModule):
             warnings.warn('Frames have been averaged by default. This module will probably not '
                           'work properly.')
 
-    def read_fits(self,
-                  filename,
-                  first_expno):
+    def read_header(self,
+                    filename):
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
         contains only a general header. The subsequent HDUs contain a single image with a small
@@ -197,21 +198,13 @@ class NearReadingModule(ReadingModule):
         ----------
         filename : str
             FITS filename.
-        first_expno : int
-            First exposure number. Should be the first position of the nodding scheme.
 
         Returns
         -------
-        numpy.array
-            Array containing the images of chop A.
-        numpy.array
-            Array containing the images of chop B.
         astropy.io.fits.header.Header
             Primary header, which is valid for all images.
-        str
-            Nod position ('A' or 'B').
-        int
-            Number of images per chop position.
+        tuple(int, int, int)
+            Shape of a stack of images for chop A or B.
         """
 
         # open the FITS file
@@ -229,9 +222,6 @@ class NearReadingModule(ReadingModule):
 
         # primary header
         header = hdulist[0].header
-
-        # get the exposure number
-        expno = header['ESO TPL EXPNO']
 
         # header of the first image
         header_image = hdulist[1].header
@@ -259,19 +249,35 @@ class NearReadingModule(ReadingModule):
         # check primary header
         self.check_header(header)
 
-        # determine the nod position (A or B) for the selected nodding scheme
-        # relative to the exposure number of the first FITS file that is read
-        if self.m_scheme == 'ABBA':
-            if (expno-first_expno)%4 == 0 or (expno-first_expno)%4 == 3:
-                nod = 'A'
-            elif (expno-first_expno)%4 == 1 or (expno-first_expno)%4 == 2:
-                nod = 'B'
+        hdulist.close()
 
-        elif self.m_scheme == 'ABAB':
-            if (expno-first_expno)%2 == 0:
-                nod = 'A'
-            elif (expno-first_expno)%2 == 1:
-                nod = 'B'
+        return header, im_shape
+
+    def read_images(self,
+                    filename,
+                    im_shape):
+        """
+        Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
+        contains only a general header. The subsequent HDUs contain a single image with a small
+        extra header. The last HDU is the average of all images, which will be ignored.
+
+        Parameters
+        ----------
+        filename : str
+            FITS filename.
+        im_shape : tuple(int, int, int)
+            Shape of a stack of images for chop A or B.
+
+        Returns
+        -------
+        numpy.array
+            Array containing the images of chop A.
+        numpy.array
+            Array containing the images of chop B.
+        """
+
+        # open the FITS file
+        hdulist = fits.open(os.path.join(self.m_input_location, filename))
 
         # initialize the image arrays for chop A and B
         chopa = np.zeros(im_shape, dtype=np.float32)
@@ -280,7 +286,7 @@ class NearReadingModule(ReadingModule):
         count_chopa, count_chopb = 0, 0
         prev_cycle = None
 
-        for i in range(nimages):
+        for i in range(2*im_shape[0]):
             # get the chop position (HCYCLE1 = chop A, HCYCLE2 = chop B)
             # primary HDU is skipped with +1
             if 'ESO DET FRAM TYPE' in hdulist[i+1].header:
@@ -320,7 +326,47 @@ class NearReadingModule(ReadingModule):
 
         hdulist.close()
 
-        return chopa, chopb, header, nod, nimages//2
+        return chopa, chopb
+
+    def get_nod(self,
+                header,
+                first_expno):
+        """
+        Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
+        contains only a general header. The subsequent HDUs contain a single image with a small
+        extra header. The last HDU is the average of all images, which will be ignored.
+
+        Parameters
+        ----------
+        astropy.io.fits.header.Header
+            Primary header, which is valid for all images.
+        first_expno : int
+            First exposure number. Should be the first position of the nodding scheme.
+
+        Returns
+        -------
+        str
+            Nod position ('A' or 'B').
+        """
+
+        # get the exposure number
+        expno = header['ESO TPL EXPNO']
+
+        # determine the nod position (A or B) for the selected nodding scheme
+        # relative to the exposure number of the first FITS file that is read
+        if self.m_scheme == 'ABBA':
+            if (expno-first_expno)%4 == 0 or (expno-first_expno)%4 == 3:
+                nod = 'A'
+            elif (expno-first_expno)%4 == 1 or (expno-first_expno)%4 == 2:
+                nod = 'B'
+
+        elif self.m_scheme == 'ABAB':
+            if (expno-first_expno)%2 == 0:
+                nod = 'A'
+            elif (expno-first_expno)%2 == 1:
+                nod = 'B'
+
+        return nod
 
     def run(self):
         """
@@ -368,7 +414,9 @@ class NearReadingModule(ReadingModule):
 
             # get the images of chop A and B, the primary header data, the nod position,
             # and the number of images per chop position
-            chopa, chopb, header, nod, nimages = self.read_fits(filename, first_expno)
+            header, im_shape = self.read_header(filename)
+            chopa, chopb = self.read_images(filename, im_shape)
+            nod = self.get_nod(header, first_expno)
 
             # select the output ports for nod A or B
             if nod == 'A':
@@ -399,13 +447,13 @@ class NearReadingModule(ReadingModule):
                 # set the remaining attributes
                 set_extra_attr(fits_file=filename,
                                location=self.m_input_location,
-                               nimages=nimages,
+                               nimages=im_shape[0]//2,
                                config_port=self._m_config_port,
                                image_out_port=port,
                                first_index=first_index)
 
                 # increase the first value of the INDEX attribute
-                first_index += nimages
+                first_index += im_shape[0]//2
 
                 # flush the output port
                 port.flush()

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -8,7 +6,7 @@ import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.nearreading import NearReadingModule
-from pynpoint.util.tests import create_near_config, create_near_data, remove_test_data
+from pynpoint.util.tests import create_config, create_near_data, remove_test_data
 
 warnings.simplefilter('always')
 
@@ -21,9 +19,19 @@ class TestNearInitModule(object):
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_near_data(path=self.test_dir + 'near')
-        create_near_config(self.test_dir + 'PynPoint_config.ini')
+        create_config(self.test_dir + 'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+
+        self.pipeline.set_attribute('config', 'NFRAMES', 'None', static=True)
+        self.pipeline.set_attribute('config', 'EXP_NO', 'ESO TPL EXPNO', static=True)
+        self.pipeline.set_attribute('config', 'NDIT', 'None', static=True)
+        self.pipeline.set_attribute('config', 'PARANG_START', 'None', static=True)
+        self.pipeline.set_attribute('config', 'PARANG_END', 'None', static=True)
+        self.pipeline.set_attribute('config', 'DITHER_X', 'None', static=True)
+        self.pipeline.set_attribute('config', 'DITHER_Y', 'None', static=True)
+        self.pipeline.set_attribute('config', 'PIXSCALE', 0.045, static=True)
+        self.pipeline.set_attribute('config', 'MEMORY', 100, static=True)
 
         self.positions = ('noda_chopa', 'noda_chopb', 'nodb_chopa', 'nodb_chopb')
 
