@@ -29,7 +29,7 @@ def set_static_attr(fits_file,
     config_port : pynpoint.core.dataio.ConfigPort
         Configuration port.
     image_out_port : pynpoint.core.dataio.OutputPort
-        Output port of the images to which the attributes are stored.
+        Output port of the images to which the static attributes are stored.
 
     Returns
     -------
@@ -85,7 +85,7 @@ def set_nonstatic_attr(header,
     config_port : pynpoint.core.dataio.ConfigPort
         Configuration port.
     image_out_port : pynpoint.core.dataio.OutputPort
-        Output port of the images to which the attributes are stored.
+        Output port of the images to which the non-static attributes are stored.
 
     Returns
     -------
