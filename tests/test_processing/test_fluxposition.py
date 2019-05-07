@@ -128,7 +128,7 @@ class TestFluxAndPosition:
         assert data.shape == (40, 1)
 
         data_multi = self.pipeline.get_data("photometry_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert np.allclose(data, data_multi, rtol=1e-6, atol=0.)
         assert data.shape == data_multi.shape
 
     def test_angle_interpolation(self):
