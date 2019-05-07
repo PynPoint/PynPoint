@@ -217,8 +217,8 @@ class NearReadingModule(ReadingModule):
         if nimages%2 != 0:
             warnings.warn('FITS file contains odd number of images: {}'.format(filename))
 
-            # increasing nimages to an even number such that nimages // 2 gives the correct size
-            nimages += 1
+            # decreasing nimages to an even number such that nimages // 2 gives the correct size
+            nimages -= 1
 
         # primary header
         header = hdulist[0].header
