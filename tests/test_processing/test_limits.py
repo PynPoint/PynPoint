@@ -135,7 +135,7 @@ class TestDetectionLimits:
 
         data = self.pipeline.get_data("mass_limits")
         assert np.allclose(np.mean(data[:, 0]), 0.55, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 1]), 0.019270554232444774, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 2]), -0.008258944671343794, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 3]), 0.017635363486639806, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 1]), 0.001891690765603738, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 2]), 0.000964309686441908, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 3]), -0.000696402843279597, rtol=limit, atol=0.)
         assert data.shape == (10, 4)
