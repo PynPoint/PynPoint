@@ -84,7 +84,7 @@ class CropImagesModule(ProcessingModule):
         self.apply_function_to_images(_image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CropImagesModule...",
+                                      "Running CropImagesModule",
                                       func_args=(self.m_size, self.m_center))
 
         history = "image size [pix] = "+str(self.m_size)
@@ -186,7 +186,7 @@ class ScaleImagesModule(ProcessingModule):
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ScaleImagesModule...",
+                                      "Running ScaleImagesModule",
                                       func_args=(self.m_scaling_x,
                                                  self.m_scaling_y,
                                                  self.m_scaling_flux,))
@@ -276,7 +276,7 @@ class AddLinesModule(ProcessingModule):
         self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running AddLinesModule...")
+                                      "Running AddLinesModule")
 
         history = "number of lines = "+str(self.m_lines)
         self.m_image_out_port.add_history("AddLinesModule", history)
@@ -341,7 +341,7 @@ class RemoveLinesModule(ProcessingModule):
         self.apply_function_to_images(_remove_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running RemoveLinesModule...")
+                                      "Running RemoveLinesModule")
 
         history = "number of lines = "+str(self.m_lines)
         self.m_image_out_port.add_history("RemoveLinesModule", history)

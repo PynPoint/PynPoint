@@ -141,3 +141,43 @@ def rotate_coordinates(center,
             (position[0]-center[0])*math.cos(np.radians(angle))
 
     return (center[0]+pos_y, center[1]+pos_x)
+
+def update_arguments(index,
+                     nimages,
+                     args_in):
+    """
+    Function to update the arguments of an input function. Specifically, arguments which contain an
+    array with the first dimension equal in size to the total number of images will be substituted
+    by the array element of the image index.
+
+    Parameters
+    ----------
+    index : int
+        Image index in the stack.
+    nimages : int
+        Total number of images in the stack.
+    args_in : tuple
+        Function arguments that have to be updated.
+
+    Returns
+    -------
+    tuple
+        Updated function arguments.
+    """
+
+    if args_in is None:
+        args_out = None
+
+    else:
+        args_out = []
+
+        for item in args_in:
+            if isinstance(item, np.ndarray) and item.shape[0] == nimages:
+                args_out.append(item[index])
+
+            else:
+                args_out.append(item)
+
+        args_out = tuple(args_out)
+
+    return args_out
