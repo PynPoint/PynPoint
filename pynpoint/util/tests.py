@@ -5,6 +5,8 @@ Functions for testing the pipeline and modules.
 import os
 import math
 import shutil
+import shlex
+import subprocess
 
 import h5py
 import numpy as np
@@ -388,3 +390,56 @@ def remove_test_data(path,
     if files is not None:
         for item in files:
             os.remove(path+item)
+
+def create_near_data(path):
+    """
+    Create a stack of images with Gaussian distributed pixel values.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    np.random.seed(1)
+    image = np.random.normal(loc=0, scale=1., size=(10, 10))
+
+    exp_no = [1, 2, 3, 4]
+
+    for item in exp_no:
+        fits_file = os.path.join(path, 'images_'+str(item)+'.fits')
+
+        primary_header = fits.Header()
+        primary_header['INSTRUME'] = 'VISIR'
+        primary_header['HIERARCH ESO DET SEQ1 DIT'] = 1.
+        primary_header['HIERARCH ESO TPL EXPNO'] = item
+        primary_header['HIERARCH ESO DET CHOP ST'] = "T"
+        primary_header['HIERARCH ESO DET CHOP CYCSKIP'] = 0
+        primary_header['HIERARCH ESO DET CHOP CYCSUM'] = "F"
+
+        chopa_header = fits.Header()
+        chopa_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE1"
+
+        chopb_header = fits.Header()
+        chopb_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE2"
+
+        hdu = [fits.PrimaryHDU(header=primary_header)]
+        for _ in range(5):
+            hdu.append(fits.ImageHDU(image, header=chopa_header))
+            hdu.append(fits.ImageHDU(image, header=chopb_header))
+
+        # last image is the average of all images
+        hdu.append(fits.ImageHDU(image))
+
+        hdulist = fits.HDUList(hdu)
+        hdulist.writeto(fits_file)
+
+        subprocess.call('compress '+fits_file, shell=True)

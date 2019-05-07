@@ -24,7 +24,7 @@ def get_attributes():
                    'config':'settings',
                    'value':1,
                    'type':'int'},
-            'INSTRUMENT':{'attribute':'non-static',
+            'INSTRUMENT':{'attribute':'static',
                           'config':'header',
                           'value':'INSTRUME',
                           'type':'str'},
