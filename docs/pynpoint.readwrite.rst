@@ -36,6 +36,14 @@ pynpoint.readwrite.hdf5writing module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.readwrite.nearreading module
+-------------------------------------
+
+.. automodule:: pynpoint.readwrite.nearreading
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.readwrite.textreading module
 -------------------------------------
 
