@@ -125,7 +125,7 @@ class MassLimitsModule(ProcessingModule):
         def _model_mass(age, contrast):
             """
             Internal function which returns the mass line for a given age and contrast
-            """ 
+            """  
             # find the correct grid
             age_grid_index = np.argwhere(self.m_ages == age)[0][0]
             grid = self.m_model_data[age_grid_index]
@@ -152,13 +152,17 @@ class MassLimitsModule(ProcessingModule):
         values = np.empty((points.shape[0]))
         for i, point in enumerate(points):
             values[i] = _model_mass(*point)
-
+            # print( point, values[i])
+            
         from scipy.interpolate import griddata, LinearNDInterpolator
         age_array = np.ones_like(evaluate_contrast) * self.m_age
-
+        
         xi = np.column_stack((age_array, evaluate_contrast + self.m_host_magnitude ))
 
-        return griddata(points, values, xi) 
+        # for point in xi:
+        #     print(point, griddata(points, values, point, method="cubic", rescale=True))
+
+        return griddata(points, values, xi, method='cubic', rescale=True) 
     
     def run(self):
         """
@@ -171,11 +175,14 @@ class MassLimitsModule(ProcessingModule):
         contrast = contrast_data[:,1]
         contrast_std = np.sqrt(contrast_data[:,2])
 
-        # interpolate_age_flag = not (self.m_age in self.m_ages)
         mass = self._interpolate_model(self.m_age, contrast) 
-        mass_upper = self._interpolate_model(self.m_age, contrast + contrast_std) - mass
-        mass_lower = self._interpolate_model(self.m_age, contrast - contrast_std) - mass
-
+        mass_upper = self._interpolate_model(self.m_age, contrast - contrast_std) - mass
+        mass_lower = self._interpolate_model(self.m_age, contrast + contrast_std) - mass
+        
+        print("mean mass:", np.mean(mass))
+        print("contrast :", contrast + self.m_host_magnitude)
+        print("mass :", mass)
+        
         mass_summary = np.column_stack((r, mass, mass_upper, mass_lower))
         self.m_data_out_port.set_all(mass_summary, data_dim=2)
 
