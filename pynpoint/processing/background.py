@@ -377,7 +377,7 @@ class LineSubtractionModule(ProcessingModule):
         self.apply_function_to_images(_subtract_line,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running LineSubtractionModule...",
+                                      "Running LineSubtractionModule",
                                       func_args=(mask, ))
 
         history = "combine = "+str(self.m_combine)
