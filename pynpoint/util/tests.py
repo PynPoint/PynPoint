@@ -442,4 +442,4 @@ def create_near_data(path):
         hdulist = fits.HDUList(hdu)
         hdulist.writeto(fits_file)
 
-        subprocess.check_call('compress '+fits_file)
+        subprocess.check_call('compress '+fits_file, shell=True)
