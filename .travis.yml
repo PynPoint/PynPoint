@@ -8,6 +8,7 @@ python:
 
 env:
   - NUMBA_DISABLE_JIT=1
+  - OMP_NUM_THREADS=1
   # - COVERALLS_PARALLEL=true
 
 install:
