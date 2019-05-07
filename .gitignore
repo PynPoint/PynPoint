@@ -27,7 +27,11 @@ docs/_build
 # Mac
 .DS_Store
 .vscode
+.vscode/settings.json
 
 # pip install -e
 pynpoint.egg-info
 pynpoint.egg-info/*
+
+# Vim
+.tags
