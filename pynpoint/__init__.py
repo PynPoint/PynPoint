@@ -84,6 +84,8 @@ from pynpoint.readwrite.textwriting import AttributeWritingModule, \
 from pynpoint.readwrite.textreading import ParangReadingModule, \
                                            AttributeReadingModule
 
+from pynpoint.readwrite.nearreading import NearReadingModule
+
 warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'

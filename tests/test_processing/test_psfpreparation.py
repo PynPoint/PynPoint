@@ -137,10 +137,10 @@ class TestPSFpreparation:
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == "There is a mismatch between the NDIT and NFRAMES " \
-                                             "values. The derotation angles are calculated with " \
-                                             "a linear interpolation by using NFRAMES steps. A " \
-                                             "frame selection should be applied after the " \
-                                             "derotation angles are calculated."
+                                             "values. The parallactic angles are calculated " \
+                                             "with a linear interpolation by using NFRAMES " \
+                                             "steps. A frame selection should be applied " \
+                                             "after the parallactic angles are calculated."
 
         data = self.pipeline.get_data("header_read/PARANG")
         assert np.allclose(data[0], 0., rtol=limit, atol=0.)
