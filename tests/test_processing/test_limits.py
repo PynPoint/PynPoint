@@ -1,6 +1,7 @@
 import os
-import sys
 import warnings
+
+from urllib.request import urlretrieve
 
 import h5py
 import numpy as np
@@ -10,11 +11,6 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.limits import ContrastCurveModule, MassLimitsModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
-
-if sys.version_info[0] == 2:
-    from urllib import urlretrieve
-elif sys.version_info[0] == 3:
-    from urllib.request import urlretrieve
 
 warnings.simplefilter("always")
 
@@ -121,14 +117,12 @@ class TestDetectionLimits:
 
         urlretrieve(url, filename)
 
-        module = MassLimitsModule(name_in="mass",
-                                 data_in_tag="contrast_limits",
-                                 data_out_tag="mass_limits",
-                                 host_star_propertiers={'mag':10.,
-                                                        'dist':100.,
-                                                        'age':20.},
-                                 observation_filter="L\'",
-                                 model_file=filename)
+        module = MassLimitsModule(model_file=filename,
+                                  star_prop={'magnitude':10., 'distance':100., 'age':20.},
+                                  name_in="mass",
+                                  contrast_in_tag="contrast_limits",
+                                  mass_out_tag="mass_limits",
+                                  instr_filter="L\'")
 
         self.pipeline.add_module(module)
         self.pipeline.run_module("mass")
