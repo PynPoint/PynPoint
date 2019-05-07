@@ -20,7 +20,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestDetectionLimits(object):
+class TestDetectionLimits:
 
     def setup_class(self):
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -19,7 +17,7 @@ def setup_module():
 def teardown_module():
     os.remove(os.path.dirname(__file__) + "/PynPoint_database.hdf5")
 
-class TestOutputPort(object):
+class TestOutputPort:
 
     def setup(self):
         self.storage = DataStorage(os.path.dirname(__file__) + "/PynPoint_database.hdf5")

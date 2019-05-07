@@ -15,7 +15,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestBadPixelCleaning(object):
+class TestBadPixelCleaning:
 
     def setup_class(self):
 
@@ -73,7 +73,24 @@ class TestBadPixelCleaning(object):
         assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
+    def test_bad_pixel_sigma_filter_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        self.pipeline.run_module("sigma")
+
+        data = self.pipeline.get_data("sigma")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 0.025022559679385093, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], 0.024962143884217046, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
     def test_bad_pixel_map(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
         bp_map = BadPixelMapModule(name_in="bp_map",
                                    dark_in_tag="dark",
@@ -115,7 +132,24 @@ class TestBadPixelCleaning(object):
         assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=1e-8, atol=0.)
         assert data.shape == (40, 100, 100)
 
+    def test_bad_pixel_interpolation_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        self.pipeline.run_module("interpolation")
+
+        data = self.pipeline.get_data("interpolation")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=1e-8, atol=0.)
+        assert np.allclose(data[0, 10, 10], 1.0139222106683477e-05, rtol=1e-8, atol=0.)
+        assert np.allclose(data[0, 20, 20], -4.686852973820094e-05, rtol=1e-8, atol=0.)
+        assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=1e-8, atol=0.)
+        assert data.shape == (40, 100, 100)
+
     def test_bad_pixel_time(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
         time = BadPixelTimeFilterModule(name_in="time",
                                         image_in_tag="images",
@@ -132,7 +166,24 @@ class TestBadPixelCleaning(object):
         assert np.allclose(np.mean(data), 2.9727173024489924e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
+    def test_bad_pixel_time_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        self.pipeline.run_module("time")
+
+        data = self.pipeline.get_data("time")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 8.32053029919322e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -2.3565404332481378e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.9727173024489924e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
     def test_replace_bad_pixels(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
         replace = ReplaceBadPixelsModule(name_in="replace1",
                                          image_in_tag="images",
@@ -176,6 +227,38 @@ class TestBadPixelCleaning(object):
                                          replace="nan")
 
         self.pipeline.add_module(replace)
+        self.pipeline.run_module("replace3")
+
+        data = self.pipeline.get_data("replace")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert math.isnan(data[0, 10, 10])
+        assert math.isnan(data[0, 20, 20])
+        assert np.allclose(np.nanmean(data), 3.0516702371516344e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+    def test_replace_bad_pixels_multi(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        self.pipeline.run_module("replace1")
+
+        data = self.pipeline.get_data("replace")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 5.493280938051695e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -5.51613113375153e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.019578931588861e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
+        self.pipeline.run_module("replace2")
+
+        data = self.pipeline.get_data("replace")
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 10, 10], 9.195634004203678e-05, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 20, 20], -6.101079878960902e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 2.983915326435115e-07, rtol=limit, atol=0.)
+        assert data.shape == (40, 100, 100)
+
         self.pipeline.run_module("replace3")
 
         data = self.pipeline.get_data("replace")

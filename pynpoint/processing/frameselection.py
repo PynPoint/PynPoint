@@ -2,15 +2,11 @@
 Pipeline modules for frame selection.
 """
 
-from __future__ import absolute_import
-
 import sys
 import math
 import warnings
 
 import numpy as np
-
-from six.moves import range
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, pixel_distance

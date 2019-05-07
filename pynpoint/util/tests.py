@@ -2,8 +2,6 @@
 Functions for testing the pipeline and modules.
 """
 
-from __future__ import absolute_import
-
 import os
 import math
 import shutil
@@ -13,7 +11,6 @@ import numpy as np
 
 from scipy.ndimage import shift
 from astropy.io import fits
-from six.moves import range
 
 
 def create_config(filename):
@@ -31,30 +28,28 @@ def create_config(filename):
         None
     """
 
-    file_obj = open(filename, 'w')
+    with open(filename, 'w') as file_obj:
 
-    file_obj.write('[header]\n\n')
-    file_obj.write('INSTRUMENT: INSTRUME\n')
-    file_obj.write('NFRAMES: NAXIS3\n')
-    file_obj.write('EXP_NO: ESO DET EXP NO\n')
-    file_obj.write('NDIT: ESO DET NDIT\n')
-    file_obj.write('PARANG_START: ESO ADA POSANG\n')
-    file_obj.write('PARANG_END: ESO ADA POSANG END\n')
-    file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
-    file_obj.write('DIT: None\n')
-    file_obj.write('LATITUDE: None\n')
-    file_obj.write('LONGITUDE: None\n')
-    file_obj.write('PUPIL: None\n')
-    file_obj.write('DATE: None\n')
-    file_obj.write('RA: None\n')
-    file_obj.write('DEC: None\n\n')
-    file_obj.write('[settings]\n\n')
-    file_obj.write('PIXSCALE: 0.027\n')
-    file_obj.write('MEMORY: 39\n')
-    file_obj.write('CPU: 1\n')
-
-    file_obj.close()
+        file_obj.write('[header]\n\n')
+        file_obj.write('INSTRUMENT: INSTRUME\n')
+        file_obj.write('NFRAMES: NAXIS3\n')
+        file_obj.write('EXP_NO: ESO DET EXP NO\n')
+        file_obj.write('NDIT: ESO DET NDIT\n')
+        file_obj.write('PARANG_START: ESO ADA POSANG\n')
+        file_obj.write('PARANG_END: ESO ADA POSANG END\n')
+        file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+        file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
+        file_obj.write('DIT: None\n')
+        file_obj.write('LATITUDE: None\n')
+        file_obj.write('LONGITUDE: None\n')
+        file_obj.write('PUPIL: None\n')
+        file_obj.write('DATE: None\n')
+        file_obj.write('RA: None\n')
+        file_obj.write('DEC: None\n\n')
+        file_obj.write('[settings]\n\n')
+        file_obj.write('PIXSCALE: 0.027\n')
+        file_obj.write('MEMORY: 39\n')
+        file_obj.write('CPU: 1\n')
 
 def create_random(path,
                   ndit=10,

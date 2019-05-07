@@ -2,8 +2,6 @@
 Module which capsules the methods of the Pypeline.
 """
 
-from __future__ import absolute_import
-
 import os
 import sys
 import warnings
@@ -11,7 +9,6 @@ import configparser
 import collections
 import multiprocessing
 
-import six
 import h5py
 import numpy as np
 
@@ -22,7 +19,7 @@ from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
 
 
-class Pypeline(object):
+class Pypeline:
     """
     A Pypeline instance can be used to manage various processing steps. It inheres an internal
     dictionary of Pypeline steps (modules) and their names. A Pypeline has a central DataStorage on
@@ -158,13 +155,13 @@ class Pypeline(object):
             file_obj = open(filename, 'w')
             file_obj.write("[header]\n\n")
 
-            for key, val in six.iteritems(attributes):
+            for key, val in attributes.items():
                 if val['config'] == "header":
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
             file_obj.write("\n[settings]\n\n")
 
-            for key, val in six.iteritems(attributes):
+            for key, val in attributes.items():
                 if val['config'] == "settings":
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
@@ -172,10 +169,10 @@ class Pypeline(object):
 
         def _read_config(config_file, attributes):
             config = configparser.ConfigParser()
-            with open(config_file) as cf:
-                config.read_file(cf)
+            with open(config_file) as cf_open:
+                config.read_file(cf_open)
 
-            for key, val in six.iteritems(attributes):
+            for key, val in attributes.items():
                 if config.has_option(val["config"], key):
                     if config.get(val["config"], key) == "None":
                         if val["config"] == "header":
@@ -213,7 +210,7 @@ class Pypeline(object):
 
             config = hdf.create_group("config")
 
-            for key, _ in six.iteritems(attributes):
+            for key in attributes.keys():
                 if attributes[key]["value"] is not None:
                     config.attrs[key] = attributes[key]["value"]
 
@@ -329,7 +326,7 @@ class Pypeline(object):
 
         existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
 
-        for module in six.itervalues(self._m_modules):
+        for module in self._m_modules.values():
             validation = self._validate(module, existing_data_tags)
 
             if not validation[0]:
@@ -518,7 +515,8 @@ class Pypeline(object):
             if attr_name in list(self.m_data_storage.m_data_bank["header_"+data_tag].keys()):
                 del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
 
-            self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name] = np.asarray(attr_value)
+            attr_key = "header_"+data_tag+"/"+attr_name
+            self.m_data_storage.m_data_bank[attr_key] = np.asarray(attr_value)
 
         self.m_data_storage.close_connection()
 
