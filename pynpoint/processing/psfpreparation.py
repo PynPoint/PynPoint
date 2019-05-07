@@ -233,13 +233,15 @@ class AngleInterpolationModule(ProcessingModule):
         parang_end = self.m_data_in_port.get_attribute("PARANG_END")
 
         steps = self.m_data_in_port.get_attribute("NFRAMES")
-        ndit = self.m_data_in_port.get_attribute("NDIT")
 
-        if not np.all(ndit == steps):
-            warnings.warn("There is a mismatch between the NDIT and NFRAMES values. The "
-                          "derotation angles are calculated with a linear interpolation by using "
-                          "NFRAMES steps. A frame selection should be applied after the "
-                          "derotation angles are calculated.")
+        if "NDIT" in self.m_data_in_port.get_all_non_static_attributes():
+            ndit = self.m_data_in_port.get_attribute("NDIT")
+
+            if not np.all(ndit == steps):
+                warnings.warn("There is a mismatch between the NDIT and NFRAMES values. The "
+                              "parallactic angles are calculated with a linear interpolation by "
+                              "using NFRAMES steps. A frame selection should be applied after "
+                              "the parallactic angles are calculated.")
 
         new_angles = []
 
@@ -473,7 +475,7 @@ class AngleCalculationModule(ProcessingModule):
 
         if not np.all(ndit == steps):
             warnings.warn("There is a mismatch between the NDIT and NFRAMES values. A frame "
-                          "selection should be applied after the derotation angles are "
+                          "selection should be applied after the parallactic angles are "
                           "calculated.")
 
         if self.m_instrument == "SPHERE/IFS":

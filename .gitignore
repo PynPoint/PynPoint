@@ -28,3 +28,6 @@ docs/_build
 
 # pip -e install
 pynpoint.egg-info
+
+# Vim
+.tags
