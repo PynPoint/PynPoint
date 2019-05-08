@@ -326,22 +326,7 @@ class TestBackgroundSubtraction:
         assert np.allclose(np.mean(data), 0.0024245904637616735, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
 
-    def test_line_background_mean_multi(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        self.pipeline.run_module("line1")
-
-        data = self.pipeline.get_data("line_mean")
-        assert np.allclose(data[0, 10, 10], 0.09792388324443534, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0024245904637616735, rtol=limit, atol=0.)
-        assert data.shape == (16, 20, 20)
-
     def test_line_background_median(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         module = LineSubtractionModule(name_in="line2",
                                        image_in_tag="line",
