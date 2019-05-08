@@ -145,9 +145,6 @@ class TestTimeDenoising:
 
     def test_time_normalization(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
-
         module = TimeNormalizationModule(name_in="timenorm",
                                          image_in_tag="images",
                                          image_out_tag="timenorm")
@@ -155,21 +152,7 @@ class TestTimeDenoising:
         self.pipeline.add_module(module)
         self.pipeline.run_module("timenorm")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = TimeNormalizationModule(name_in="timenorm_multi",
-                                         image_in_tag="images",
-                                         image_out_tag="timenorm_multi")
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("timenorm_multi")
-
         data = self.pipeline.get_data("timenorm")
         assert np.allclose(data[0, 10, 10], 0.09793500165714215, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0024483409033199985, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
-
-        data_multi = self.pipeline.get_data("timenorm_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
