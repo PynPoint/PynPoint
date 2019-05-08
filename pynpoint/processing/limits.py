@@ -442,56 +442,41 @@ class MassLimitsModule(ProcessingModule):
 
         Parameters
         ----------
+        age_eval : array(float)
+            Age at which the system is evaluated. Must be of the same shape as mag_eval
+        mag_eval : array(float)
+            Absolute magnitude for which the system is evaluated. Must be of the same shape as
+            age_eval
+        filter_index: int
+            Index at which the filter column is located (can be found in self.m_filter_index).
+        model_age: array(float)
+            List of ages which are given by the model.
+        model_data: list(array)
+            List of arrays containing the model data.
 
         Returns
         -------
+        griddata : array(float)
+            Interpolated values for the given evaluation points (age_eval, mag_eval). Has the
+            same shape as age_eval and mag_eval.
+        
         """
-
-        def _model_mass(age, contrast):
-            """
-            Internal function which returns the mass line for a given age and contrast.
-
-            Parameters
-            ----------
-
-            Returns
-            -------
-            """
-
-            # find the correct grid
-            age_grid_index = np.argwhere(model_age == age)[0][0]
-            grid = model_data[age_grid_index]
-
-            # find the correct column (filter)
-            filter_column = grid[:, filter_index]
-
-            # find the correct row (contrast)
-            contrast_row = np.argwhere(contrast == filter_column)[0][0]
-
-            # mass is found in the 0th column
-            mass_column = 0
-
-            # return the mass entry which corresponds to a given time, contrast and filter
-            return grid[contrast_row, mass_column]
-
         points = np.array([])
+        values = np.array([])
 
         # create array of available points
-        for i, item in enumerate(model_age):
-            for contrast in model_data[i][:, filter_index]:
-                points = np.append(points, [item, contrast[0]])
+        for age_index, age in enumerate(model_age):
+            contrast = model_data[age_index] [:, filter_index]
+            time = np.ones_like(contrast) * age
+            xy = np.column_stack((time, contrast))
+            points = np.append(points, xy)
 
+            mass = model_data[age_index] [:, 0]
+            values = np.append(values, mass)
+        
         points = points.reshape(-1, 2)
-
-        values = np.empty(points.shape[0])
-        for i, point in enumerate(points):
-            values[i] = _model_mass(*point)
-            # print(point, values[i], griddata(points, values, point))
-
+        
         interp = np.column_stack((age_eval, mag_eval))
-
-        # for point in xi:
-        #     print(point, griddata(points, values, point, method="cubic", rescale=True))
 
         return griddata(points, values, interp, method='cubic', rescale=True)
 
@@ -543,10 +528,6 @@ class MassLimitsModule(ProcessingModule):
                                             filter_index=filter_index,
                                             model_age=model_age,
                                             model_data=model_data) - mass
-
-        # print("mean mass:", np.mean(mass))
-        # print("contrast :", contrast + self.m_star_abs)
-        # print("mass :", mass)
 
         mass_limits = np.column_stack((separation, mass, mass_upper, mass_lower))
         self.m_mass_out_port.set_all(mass_limits, data_dim=2)
