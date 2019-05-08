@@ -17,6 +17,9 @@ junit-docs-ci.xml
 junit-py27.xml
 junit-py36.xml
 junit-py37.xml
+.pytest_cache/
+*.nbi
+*.nbc
 
 # Sphinx
 docs/_build
@@ -25,6 +28,10 @@ docs/_build
 .DS_Store
 .vscode
 .vscode/settings.json
+
+# pip install -e
+pynpoint.egg-info
+pynpoint.egg-info/*
 
 # Vim
 .tags
