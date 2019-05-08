@@ -491,7 +491,7 @@ class ClassicalADIModule(ProcessingModule):
         self.apply_function_to_images(_subtract_psf,
                                       self.m_image_in_port,
                                       self.m_res_out_port,
-                                      "Running ClassicalADIModule...",
+                                      "Running ClassicalADIModule",
                                       func_args=(parang_thres, self.m_nreference, reference))
 
         im_res = self.m_res_inout_port.get_all()

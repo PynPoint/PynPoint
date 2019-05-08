@@ -300,7 +300,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         self.apply_function_to_images(_bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelSigmaFilterModule...",
+                                      "Running BadPixelSigmaFilterModule",
                                       func_args=(self.m_box,
                                                  self.m_sigma,
                                                  self.m_iterate))
@@ -504,7 +504,7 @@ class BadPixelInterpolationModule(ProcessingModule):
         self.apply_function_to_images(_image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelInterpolationModule...")
+                                      "Running BadPixelInterpolationModule")
 
         history = "iterations = "+str(self.m_iterations)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -688,7 +688,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
         self.apply_function_to_images(_replace_pixels,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ReplaceBadPixelsModule...",
+                                      "Running ReplaceBadPixelsModule",
                                       func_args=(index, ))
 
         history = "replace = "+self.m_replace
