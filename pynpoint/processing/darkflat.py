@@ -109,7 +109,7 @@ class DarkCalibrationModule(ProcessingModule):
         self.apply_function_to_images(_dark_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running DarkCalibrationModule...",
+                                      "Running DarkCalibrationModule",
                                       func_args=(master, ))
 
         history = "dark_in_tag = "+self.m_dark_in_port.tag
