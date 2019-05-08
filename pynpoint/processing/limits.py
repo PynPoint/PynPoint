@@ -322,8 +322,8 @@ class ContrastCurveModule(ProcessingModule):
 
 class MassLimitsModule(ProcessingModule):
     """
-    Module to calculate mass limits from an grid model from https://phoenix.ens-lyon.fr/Grids/
-    and calculated ContrastLimits
+    Pipeline module to calculate mass limits from the contrast limits and any isochrones model grid
+    downloaded from https://phoenix.ens-lyon.fr/Grids/.
     """
 
     __author__ = "Benedikt Schmidhuber, Tomas Stolker"
@@ -343,22 +343,24 @@ class MassLimitsModule(ProcessingModule):
         ----------
         model_file: str
             Relative path to the file containing the model data. Must be in the same format as the
-            grids found on: https://phoenix.ens-lyon.fr/Grids/
+            grids found on https://phoenix.ens-lyon.fr/Grids/. Any of the isochrones files from
+            this website can be used.
         star_prop : dict
             Dictionary containing host star properties. Must have the following keys:
-             - 'magnitude': apparent Magnitude, in the same band as the observation filter
-             - 'distance': Distance in parsec
-             - 'age': age of the system in the Myr
+             - 'magnitude': Apparent magnitude, in the same band as the `instr_filter`.
+             - 'distance': Distance in parsec.
+             - 'age': Age of the system in the Myr.
         name_in : str
             Unique name of the module instance.
         contrast_in_tag : str
-            Tag of the database entry that contains the contrast curve data
+            Tag of the database entry that contains the contrast curve data, as computed with the
+            :class:`~pynpoint.processing.limits.ContrastCurveModule`.
         mass_out_tag : str
-            Tag of the database entry that contains the separation, azimuthally averaged mass
-            limits, the one sigma boundaries of the mass limits.
+            Tag of the database entry with the output data containing the separation, the mass
+            limits, and the upper and lower one sigma deviation as calculated for the azimuthal
+            variance on the contrast limits.
         instr_filter: str
-            Name of the filter in which the observations were made. Must be the same as listed in
-            the data file with the evolutionary tracks.
+            Instrument filter in the same format as listed in the `model_file`.
 
         Returns
         -------
@@ -382,13 +384,14 @@ class MassLimitsModule(ProcessingModule):
         Reads the data from the model file and structures it. Returns an array of available model
         ages and a list of model data for each age.
 
-        Parameters
-        ----------
-
         Returns
         -------
-        NoneType
-            None
+        list(float, )
+            List with all the ages from the model grid.
+        list(numpy.ndarray, )
+            List with all the isochrone data, so the length is the same as the number of ages.
+        list(str, )
+            List with all the column names from the model grid.
         """
 
         # read in all the data, selecting out empty lines or '---' lines
@@ -405,7 +408,7 @@ class MassLimitsModule(ProcessingModule):
         # initialize the header
         header = []
         # initialize a new data list, where the data is separated by age
-        model_data = []
+        isochrones = []
 
         k = -1
         for _line in data:
@@ -413,7 +416,7 @@ class MassLimitsModule(ProcessingModule):
                 # get time line
                 ages += [float(_line[-1])]
                 k += 1
-                model_data += [[]]
+                isochrones += [[]]
 
             elif 'lg(g)' in _line:
                 # get header line
@@ -422,14 +425,12 @@ class MassLimitsModule(ProcessingModule):
 
             else:
                 # save the data
-                model_data[k] += [_line]
+                isochrones[k] += [_line]
 
-        for index, _ in enumerate(model_data):
-            model_data[index] = np.array(model_data[index], dtype=float)
+        for index, _ in enumerate(isochrones):
+            isochrones[index] = np.array(isochrones[index], dtype=float)
 
-        ages = np.array(ages, dtype=float)
-
-        return ages, model_data, header
+        return ages, isochrones, header
 
     @staticmethod
     def interpolate_model(age_eval,
@@ -442,16 +443,16 @@ class MassLimitsModule(ProcessingModule):
 
         Parameters
         ----------
-        age_eval : array(float)
-            Age at which the system is evaluated. Must be of the same shape as mag_eval
-        mag_eval : array(float)
+        age_eval : numpy.array
+            Age at which the system is evaluated. Must be of the same shape as `mag_eval`.
+        mag_eval : numpy.array
             Absolute magnitude for which the system is evaluated. Must be of the same shape as
-            age_eval
+            `age_eval`.
         filter_index: int
-            Index at which the filter column is located (can be found in self.m_filter_index).
-        model_age: array(float)
+            Column index where the filter is located.
+        model_age: list(float, )
             List of ages which are given by the model.
-        model_data: list(array)
+        model_data: list(numpy.array, )
             List of arrays containing the model data.
 
         Returns
@@ -459,33 +460,33 @@ class MassLimitsModule(ProcessingModule):
         griddata : array(float)
             Interpolated values for the given evaluation points (age_eval, mag_eval). Has the
             same shape as age_eval and mag_eval.
-        
         """
-        points = np.array([])
-        values = np.array([])
+
+        grid_points = np.array([])
+        grid_values = np.array([])
 
         # create array of available points
         for age_index, age in enumerate(model_age):
-            contrast = model_data[age_index] [:, filter_index]
-            time = np.ones_like(contrast) * age
-            xy = np.column_stack((time, contrast))
-            points = np.append(points, xy)
+            mag = model_data[age_index][:, filter_index]
+            time = np.ones_like(mag) * age
+            mass = model_data[age_index][:, 0]
 
-            mass = model_data[age_index] [:, 0]
-            values = np.append(values, mass)
-        
-        points = points.reshape(-1, 2)
-        
+            grid_points = np.append(grid_points, np.column_stack((time, mag)))
+            grid_values = np.append(grid_values, mass)
+
+        grid_points = grid_points.reshape(-1, 2)
         interp = np.column_stack((age_eval, mag_eval))
 
-        return griddata(points, values, interp, method='cubic', rescale=True)
+        return griddata(grid_points, grid_values, interp, method='cubic', rescale=True)
 
     def run(self):
         """
         Run method of the module. Calculates the mass limits from the contrast limits (as
         calculated with the :class:`~pynpoint.processing.limits.ContrastCurveModule`) and the
-        isochrones of an evolutionary model. The age and the absolute magnitude (derived from
-        the contrast and apparent magnitude of the star) are interpolated.
+        isochrones of an evolutionary model. The age and the absolute magnitude of the isochrones
+        are linearly interpolated such that the mass limits can be calculated for a given contrast
+        limits  (which is converted in an absolute magnitude with the apparent magnitude and
+        distance of the central star).
 
         Returns
         -------
@@ -511,20 +512,23 @@ class MassLimitsModule(ProcessingModule):
         contrast = contrast_data[:, 1]
         contrast_std = np.sqrt(contrast_data[:, 2])
 
-        mass = self.interpolate_model(age_eval=self.m_star_age*np.ones_like(contrast),
-                                      mag_eval=self.m_star_abs+contrast,
+        age_eval = self.m_star_age*np.ones_like(contrast)
+        mag_eval = self.m_star_abs+contrast
+
+        mass = self.interpolate_model(age_eval=age_eval,
+                                      mag_eval=mag_eval,
                                       filter_index=filter_index,
                                       model_age=model_age,
                                       model_data=model_data)
 
-        mass_upper = self.interpolate_model(age_eval=self.m_star_age*np.ones_like(contrast),
-                                            mag_eval=self.m_star_abs+contrast-contrast_std,
+        mass_upper = self.interpolate_model(age_eval=age_eval,
+                                            mag_eval=mag_eval-contrast_std,
                                             filter_index=filter_index,
                                             model_age=model_age,
                                             model_data=model_data) - mass
 
-        mass_lower = self.interpolate_model(age_eval=self.m_star_age*np.ones_like(contrast),
-                                            mag_eval=self.m_star_abs+contrast+contrast_std,
+        mass_lower = self.interpolate_model(age_eval=age_eval,
+                                            mag_eval=mag_eval+contrast_std,
                                             filter_index=filter_index,
                                             model_age=model_age,
                                             model_data=model_data) - mass
@@ -535,7 +539,8 @@ class MassLimitsModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        history = "filter = {self.m_instr_filter}"
+        history = f"filter = {self.m_instr_filter}"
+        print(history)
         self.m_mass_out_port.add_history("MassLimitsModule", history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
