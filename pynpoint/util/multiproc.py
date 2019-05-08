@@ -6,11 +6,10 @@ import multiprocessing
 
 from abc import ABCMeta, abstractmethod
 
-import six
 import numpy as np
 
 
-class TaskInput(object):
+class TaskInput:
     """
     Class for tasks that are processed by the :class:`~pynpoint.util.multiproc.TaskProcessor`.
     """
@@ -36,7 +35,7 @@ class TaskInput(object):
         self.m_job_parameter = job_parameter
 
 
-class TaskResult(object):
+class TaskResult:
     """
     Class for results that can be stored by the :class:`~pynpoint.util.multiproc.TaskWriter`.
     """
@@ -62,7 +61,7 @@ class TaskResult(object):
         self.m_position = position
 
 
-class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
+class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
     """
     Abstract interface for :class:`~pynpoint.util.multiproc.TaskCreator` classes. A
     :class:`~pynpoint.util.multiproc.TaskCreator` creates instances of
@@ -120,7 +119,7 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
             None
         """
 
-        for _ in six.moves.range(self.m_num_proc-1):
+        for _ in range(self.m_num_proc-1):
             # poison pills
             self.m_task_queue.put(1)
 
@@ -140,11 +139,11 @@ class TaskCreator(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         """
 
 
-class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
+class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
     """
     Abstract interface for :class:`~pynpoint.util.multiproc.TaskProcessor` classes. The number of
     instances of :class:`~pynpoint.util.multiproc.TaskProcessor` that run simultaneously in a
-    poison pill multiprocessing application can be set with `CPU` parameter in the central
+    poison pill multiprocessing application can be set with ``CPU`` parameter in the central
     configuration file. A :class:`~pynpoint.util.multiproc.TaskProcessor` takes tasks from a task
     queue, processes the task, and stores the results back into a result queue. The process will
     shut down if the next task is a poison pill. The order in which process finish is not fixed.
@@ -222,7 +221,7 @@ class TaskProcessor(six.with_metaclass(ABCMeta, multiprocessing.Process)):
         while True:
             next_task = self.m_task_queue.get()
 
-            if self.check_poison_pill(next_task=next_task):
+            if self.check_poison_pill(next_task):
                 break
 
             result = self.run_job(next_task)
@@ -350,7 +349,7 @@ class TaskWriter(multiprocessing.Process):
             self.m_result_queue.task_done()
 
 
-class MultiprocessingCapsule(six.with_metaclass(ABCMeta, object)):
+class MultiprocessingCapsule(metaclass=ABCMeta):
     """
     Abstract interface for multiprocessing capsules based on the poison pill pattern.
     """
@@ -490,7 +489,7 @@ def apply_function(tmp_data,
         Input data.
     func : function
         Function.
-    func_args : tuple or None
+    func_args : tuple, None
         Function arguments.
 
     Returns
@@ -522,6 +521,8 @@ def to_slice(tuple_slice):
         Tuple with three slices.
     """
 
-    return (slice(tuple_slice[0][0], tuple_slice[0][1], tuple_slice[0][2]),
-            slice(tuple_slice[1][0], tuple_slice[1][1], tuple_slice[1][2]),
-            slice(tuple_slice[2][0], tuple_slice[2][1], tuple_slice[2][2]))
+    slices = []
+    for item in tuple_slice:
+        slices.append(slice(item[0], item[1], item[2]))
+
+    return tuple(slices)

@@ -2,18 +2,17 @@
 Functions for testing the pipeline and modules.
 """
 
-from __future__ import absolute_import
-
 import os
 import math
 import shutil
+import shlex
+import subprocess
 
 import h5py
 import numpy as np
 
 from scipy.ndimage import shift
 from astropy.io import fits
-from six.moves import range
 
 
 def create_config(filename):
@@ -31,30 +30,28 @@ def create_config(filename):
         None
     """
 
-    file_obj = open(filename, 'w')
+    with open(filename, 'w') as file_obj:
 
-    file_obj.write('[header]\n\n')
-    file_obj.write('INSTRUMENT: INSTRUME\n')
-    file_obj.write('NFRAMES: NAXIS3\n')
-    file_obj.write('EXP_NO: ESO DET EXP NO\n')
-    file_obj.write('NDIT: ESO DET NDIT\n')
-    file_obj.write('PARANG_START: ESO ADA POSANG\n')
-    file_obj.write('PARANG_END: ESO ADA POSANG END\n')
-    file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
-    file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
-    file_obj.write('DIT: None\n')
-    file_obj.write('LATITUDE: None\n')
-    file_obj.write('LONGITUDE: None\n')
-    file_obj.write('PUPIL: None\n')
-    file_obj.write('DATE: None\n')
-    file_obj.write('RA: None\n')
-    file_obj.write('DEC: None\n\n')
-    file_obj.write('[settings]\n\n')
-    file_obj.write('PIXSCALE: 0.027\n')
-    file_obj.write('MEMORY: 39\n')
-    file_obj.write('CPU: 1\n')
-
-    file_obj.close()
+        file_obj.write('[header]\n\n')
+        file_obj.write('INSTRUMENT: INSTRUME\n')
+        file_obj.write('NFRAMES: NAXIS3\n')
+        file_obj.write('EXP_NO: ESO DET EXP NO\n')
+        file_obj.write('NDIT: ESO DET NDIT\n')
+        file_obj.write('PARANG_START: ESO ADA POSANG\n')
+        file_obj.write('PARANG_END: ESO ADA POSANG END\n')
+        file_obj.write('DITHER_X: ESO SEQ CUMOFFSETX\n')
+        file_obj.write('DITHER_Y: ESO SEQ CUMOFFSETY\n')
+        file_obj.write('DIT: None\n')
+        file_obj.write('LATITUDE: None\n')
+        file_obj.write('LONGITUDE: None\n')
+        file_obj.write('PUPIL: None\n')
+        file_obj.write('DATE: None\n')
+        file_obj.write('RA: None\n')
+        file_obj.write('DEC: None\n\n')
+        file_obj.write('[settings]\n\n')
+        file_obj.write('PIXSCALE: 0.027\n')
+        file_obj.write('MEMORY: 39\n')
+        file_obj.write('CPU: 1\n')
 
 def create_random(path,
                   ndit=10,
@@ -393,3 +390,56 @@ def remove_test_data(path,
     if files is not None:
         for item in files:
             os.remove(path+item)
+
+def create_near_data(path):
+    """
+    Create a stack of images with Gaussian distributed pixel values.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    np.random.seed(1)
+    image = np.random.normal(loc=0, scale=1., size=(10, 10))
+
+    exp_no = [1, 2, 3, 4]
+
+    for item in exp_no:
+        fits_file = os.path.join(path, 'images_'+str(item)+'.fits')
+
+        primary_header = fits.Header()
+        primary_header['INSTRUME'] = 'VISIR'
+        primary_header['HIERARCH ESO DET SEQ1 DIT'] = 1.
+        primary_header['HIERARCH ESO TPL EXPNO'] = item
+        primary_header['HIERARCH ESO DET CHOP ST'] = "T"
+        primary_header['HIERARCH ESO DET CHOP CYCSKIP'] = 0
+        primary_header['HIERARCH ESO DET CHOP CYCSUM'] = "F"
+
+        chopa_header = fits.Header()
+        chopa_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE1"
+
+        chopb_header = fits.Header()
+        chopb_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE2"
+
+        hdu = [fits.PrimaryHDU(header=primary_header)]
+        for _ in range(5):
+            hdu.append(fits.ImageHDU(image, header=chopa_header))
+            hdu.append(fits.ImageHDU(image, header=chopb_header))
+
+        # last image is the average of all images
+        hdu.append(fits.ImageHDU(image))
+
+        hdulist = fits.HDUList(hdu)
+        hdulist.writeto(fits_file)
+
+        subprocess.call('compress '+fits_file, shell=True)

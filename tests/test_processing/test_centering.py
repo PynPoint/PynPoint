@@ -2,6 +2,7 @@ import os
 import warnings
 
 import pytest
+import h5py
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -16,7 +17,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestStarAlignment(object):
+class TestStarAlignment:
 
     def setup_class(self):
 
@@ -67,41 +68,42 @@ class TestStarAlignment(object):
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=["dither", "star_odd", "star_even", "waffle_odd", "waffle_even"])
+        remove_test_data(path=self.test_dir,
+                         folders=["dither", "star_odd", "star_even", "waffle_odd", "waffle_even"])
 
     def test_read_data(self):
 
-        read = FitsReadingModule(name_in="read1",
-                                 image_tag="dither",
-                                 input_dir=self.test_dir+"dither",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read1",
+                                   image_tag="dither",
+                                   input_dir=self.test_dir+"dither",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
 
-        read = FitsReadingModule(name_in="read2",
-                                 image_tag="waffle_odd",
-                                 input_dir=self.test_dir+"waffle_odd",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read2",
+                                   image_tag="waffle_odd",
+                                   input_dir=self.test_dir+"waffle_odd",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
 
-        read = FitsReadingModule(name_in="read3",
-                                 image_tag="waffle_even",
-                                 input_dir=self.test_dir+"waffle_even",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read3",
+                                   image_tag="waffle_even",
+                                   input_dir=self.test_dir+"waffle_even",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
 
-        read = FitsReadingModule(name_in="read4",
-                                 image_tag="star_odd",
-                                 input_dir=self.test_dir+"star_odd",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read4",
+                                   image_tag="star_odd",
+                                   input_dir=self.test_dir+"star_odd",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
 
         read = FitsReadingModule(name_in="read5",
                                  image_tag="star_even",
@@ -153,23 +155,24 @@ class TestStarAlignment(object):
 
     def test_star_extract_full(self):
 
-        extract = StarExtractionModule(name_in="extract1",
-                                       image_in_tag="dither",
-                                       image_out_tag="extract1",
-                                       image_size=1.0,
-                                       fwhm_star=0.1,
-                                       position=None)
+        module = StarExtractionModule(name_in="extract1",
+                                      image_in_tag="dither",
+                                      image_out_tag="extract1",
+                                      image_size=1.0,
+                                      fwhm_star=0.1,
+                                      position=None)
 
-        self.pipeline.add_module(extract)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("extract1")
 
         data = self.pipeline.get_data("extract1")
+
         assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-        data = self.pipeline.get_data("header_extract1/STAR_POSITION")
-        assert data[10, 0] == data[10, 1] == 75
+        attr = self.pipeline.get_attribute("extract1", "STAR_POSITION", static=False)
+        assert attr[10, 0] == attr[10, 1] == 75
 
     def test_star_extract_subframe(self):
 
@@ -187,14 +190,14 @@ class TestStarAlignment(object):
 
         position = np.concatenate((top_left, top_right, bottom_right, bottom_left))
 
-        extract = StarExtractionModule(name_in="extract2",
-                                       image_in_tag="dither",
-                                       image_out_tag="extract2",
-                                       image_size=1.0,
-                                       fwhm_star=0.1,
-                                       position=position)
+        module = StarExtractionModule(name_in="extract2",
+                                      image_in_tag="dither",
+                                      image_out_tag="extract2",
+                                      image_size=1.0,
+                                      fwhm_star=0.1,
+                                      position=position)
 
-        self.pipeline.add_module(extract)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("extract2")
 
         data = self.pipeline.get_data("extract2")
@@ -202,19 +205,19 @@ class TestStarAlignment(object):
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-        data = self.pipeline.get_data("header_extract2/STAR_POSITION")
-        assert data[10, 0] == data[10, 1] == 75
+        attr = self.pipeline.get_attribute("extract2", "STAR_POSITION", static=False)
+        assert attr[10, 0] == attr[10, 1] == 75
 
     def test_star_align(self):
 
-        align = StarAlignmentModule(name_in="align",
-                                    image_in_tag="extract1",
-                                    ref_image_in_tag="extract2",
-                                    image_out_tag="align",
-                                    accuracy=10,
-                                    resize=2.)
+        module = StarAlignmentModule(name_in="align",
+                                     image_in_tag="extract1",
+                                     ref_image_in_tag="extract2",
+                                     image_out_tag="align",
+                                     accuracy=10,
+                                     resize=2.)
 
-        self.pipeline.add_module(align)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("align")
 
         data = self.pipeline.get_data("align")
@@ -224,13 +227,13 @@ class TestStarAlignment(object):
 
     def test_shift_images_spline(self):
 
-        shift = ShiftImagesModule(shift_xy=(6., 4.),
-                                  interpolation="spline",
-                                  name_in="shift1",
-                                  image_in_tag="align",
-                                  image_out_tag="shift")
+        module = ShiftImagesModule(shift_xy=(6., 4.),
+                                   interpolation="spline",
+                                   name_in="shift1",
+                                   image_in_tag="align",
+                                   image_out_tag="shift")
 
-        self.pipeline.add_module(shift)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("shift1")
 
         data = self.pipeline.get_data("shift")
@@ -240,13 +243,13 @@ class TestStarAlignment(object):
 
     def test_shift_images_fft(self):
 
-        shift = ShiftImagesModule(shift_xy=(6., 4.),
-                                  interpolation="spline",
-                                  name_in="shift2",
-                                  image_in_tag="align",
-                                  image_out_tag="fft")
+        module = ShiftImagesModule(shift_xy=(6., 4.),
+                                   interpolation="spline",
+                                   name_in="shift2",
+                                   image_in_tag="align",
+                                   image_out_tag="fft")
 
-        self.pipeline.add_module(shift)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("shift2")
 
         data = self.pipeline.get_data("fft")
@@ -256,11 +259,11 @@ class TestStarAlignment(object):
 
     def test_star_center_full(self):
 
-        center = StarCenteringModule(name_in="center1",
+        module = StarCenteringModule(name_in="center1",
                                      image_in_tag="shift",
                                      image_out_tag="center",
                                      mask_out_tag="mask",
-                                     fit_out_tag="center_fit",
+                                     fit_out_tag=None,
                                      method="full",
                                      interpolation="spline",
                                      radius=0.05,
@@ -268,7 +271,7 @@ class TestStarAlignment(object):
                                      model="gaussian",
                                      guess=(6., 4., 3., 3., 1., 0., 0.))
 
-        self.pipeline.add_module(center)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("center1")
 
         data = self.pipeline.get_data("center")
@@ -284,11 +287,11 @@ class TestStarAlignment(object):
 
     def test_star_center_mean(self):
 
-        center = StarCenteringModule(name_in="center2",
+        module = StarCenteringModule(name_in="center2",
                                      image_in_tag="shift",
                                      image_out_tag="center",
                                      mask_out_tag=None,
-                                     fit_out_tag="center_fit",
+                                     fit_out_tag=None,
                                      method="mean",
                                      interpolation="bilinear",
                                      radius=0.05,
@@ -296,7 +299,7 @@ class TestStarAlignment(object):
                                      model="gaussian",
                                      guess=(6., 4., 3., 3., 1., 0., 0.))
 
-        self.pipeline.add_module(center)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("center2")
 
         data = self.pipeline.get_data("center")
@@ -306,7 +309,7 @@ class TestStarAlignment(object):
 
     def test_star_center_moffat(self):
 
-        center = StarCenteringModule(name_in="center3",
+        module = StarCenteringModule(name_in="center3",
                                      image_in_tag="shift",
                                      image_out_tag="center",
                                      mask_out_tag=None,
@@ -318,7 +321,7 @@ class TestStarAlignment(object):
                                      model="moffat",
                                      guess=(6., 4., 3., 3., 1., 0., 0., 1.))
 
-        self.pipeline.add_module(center)
+        self.pipeline.add_module(module)
 
         with pytest.warns(RuntimeWarning) as warning:
             self.pipeline.run_module("center3")
@@ -336,7 +339,7 @@ class TestStarAlignment(object):
 
     def test_waffle_center_odd(self):
 
-        waffle = WaffleCenteringModule(size=2.,
+        module = WaffleCenteringModule(size=2.,
                                        center=(50, 50),
                                        name_in="waffle_odd",
                                        image_in_tag="star_odd",
@@ -346,7 +349,7 @@ class TestStarAlignment(object):
                                        pattern="x",
                                        sigma=0.135)
 
-        self.pipeline.add_module(waffle)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("waffle_odd")
 
         data = self.pipeline.get_data("star_odd")
@@ -362,7 +365,7 @@ class TestStarAlignment(object):
 
     def test_waffle_center_even(self):
 
-        waffle = WaffleCenteringModule(size=2.,
+        module = WaffleCenteringModule(size=2.,
                                        center=(50, 50),
                                        name_in="waffle_even",
                                        image_in_tag="star_even",
@@ -372,7 +375,7 @@ class TestStarAlignment(object):
                                        pattern="x",
                                        sigma=0.135)
 
-        self.pipeline.add_module(waffle)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("waffle_even")
 
         data = self.pipeline.get_data("star_even")

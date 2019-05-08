@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import h5py
 import pytest
 import numpy as np
 
@@ -14,7 +15,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestImageResizing(object):
+class TestImageResizing:
 
     def setup_class(self):
 
@@ -31,14 +32,13 @@ class TestImageResizing(object):
 
     def test_read_data(self):
 
-        read = FitsReadingModule(name_in="read",
-                                 image_tag="read",
-                                 input_dir=self.test_dir+"resize",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read",
+                                   image_tag="read",
+                                   input_dir=self.test_dir+"resize",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
-
+        self.pipeline.add_module(module)
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -48,23 +48,22 @@ class TestImageResizing(object):
 
     def test_crop_images(self):
 
-        crop = CropImagesModule(size=0.3,
-                                center=None,
-                                name_in="crop1",
-                                image_in_tag="read",
-                                image_out_tag="crop1")
+        module = CropImagesModule(size=0.3,
+                                  center=None,
+                                  name_in="crop1",
+                                  image_in_tag="read",
+                                  image_out_tag="crop1")
 
-        self.pipeline.add_module(crop)
-
-        crop = CropImagesModule(size=0.3,
-                                center=(10, 10),
-                                name_in="crop2",
-                                image_in_tag="read",
-                                image_out_tag="crop2")
-
-        self.pipeline.add_module(crop)
-
+        self.pipeline.add_module(module)
         self.pipeline.run_module("crop1")
+
+        module = CropImagesModule(size=0.3,
+                                  center=(10, 10),
+                                  name_in="crop2",
+                                  image_in_tag="read",
+                                  image_out_tag="crop2")
+
+        self.pipeline.add_module(module)
         self.pipeline.run_module("crop2")
 
         data = self.pipeline.get_data("crop1")
@@ -79,21 +78,20 @@ class TestImageResizing(object):
 
     def test_scale_images(self):
 
-        scale = ScaleImagesModule(scaling=(2., 2., None),
-                                  name_in="scale1",
-                                  image_in_tag="read",
-                                  image_out_tag="scale1")
+        module = ScaleImagesModule(scaling=(2., 2., None),
+                                   name_in="scale1",
+                                   image_in_tag="read",
+                                   image_out_tag="scale1")
 
-        self.pipeline.add_module(scale)
-
-        scale = ScaleImagesModule(scaling=(None, None, 2.),
-                                  name_in="scale2",
-                                  image_in_tag="read",
-                                  image_out_tag="scale2")
-
-        self.pipeline.add_module(scale)
-
+        self.pipeline.add_module(module)
         self.pipeline.run_module("scale1")
+
+        module = ScaleImagesModule(scaling=(None, None, 2.),
+                                   name_in="scale2",
+                                   image_in_tag="read",
+                                   image_out_tag="scale2")
+
+        self.pipeline.add_module(module)
         self.pipeline.run_module("scale2")
 
         data = self.pipeline.get_data("scale1")
@@ -108,12 +106,12 @@ class TestImageResizing(object):
 
     def test_add_lines(self):
 
-        add = AddLinesModule(lines=(2, 5, 0, 9),
-                             name_in="add",
-                             image_in_tag="read",
-                             image_out_tag="add")
+        module = AddLinesModule(lines=(2, 5, 0, 9),
+                                name_in="add",
+                                image_in_tag="read",
+                                image_out_tag="add")
 
-        self.pipeline.add_module(add)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module("add")
@@ -129,12 +127,12 @@ class TestImageResizing(object):
 
     def test_remove_lines(self):
 
-        remove = RemoveLinesModule(lines=(2, 5, 0, 9),
+        module = RemoveLinesModule(lines=(2, 5, 0, 9),
                                    name_in="remove",
                                    image_in_tag="read",
                                    image_out_tag="remove")
 
-        self.pipeline.add_module(remove)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("remove")
 
         data = self.pipeline.get_data("remove")

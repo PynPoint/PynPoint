@@ -2,8 +2,6 @@
 Pipeline modules for resizing of images.
 """
 
-from __future__ import absolute_import
-
 import math
 import warnings
 
@@ -33,7 +31,10 @@ class CropImagesModule(ProcessingModule):
             New image size (arcsec). The same size will be used for both image dimensions.
         center : tuple(int, int)
             Tuple (x0, y0) with the new image center. Python indexing starts at 0. The center of
-            the input images will be used when *center* is set to *None*.
+            the input images will be used when *center* is set to *None*. Note that if the image
+            is even-sized, it is not possible to a uniquely define a pixel position in the center
+            of the image. The image center is determined (with pixel precision) with the
+            :func:`~pynpoint.util.image.center_pixel` function.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -69,9 +70,6 @@ class CropImagesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 

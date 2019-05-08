@@ -2,8 +2,6 @@
 Functions for analysis of a point source.
 """
 
-from __future__ import absolute_import
-
 import math
 
 import numpy as np
@@ -12,7 +10,6 @@ from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
-from six.moves import range
 
 from pynpoint.util.image import shift_image, center_subpixel
 
@@ -80,7 +77,9 @@ def false_alarm(image,
         phot_table = aperture_photometry(image, aperture, method='exact')
         ap_phot[i] = phot_table['aperture_sum']
 
-    noise = np.std(ap_phot[1:]) * math.sqrt(1.+1./float(num_ap-1))
+    # Note: ddof=1 is a necessary argument in order to compute the *unbiased* estimate of the
+    # standard deviation, as suggested by eq. 8 of Mawet et al. (2014).
+    noise = np.std(ap_phot[1:], ddof=1) * math.sqrt(1.+1./float(num_ap-1))
     t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
     # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.

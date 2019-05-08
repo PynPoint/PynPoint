@@ -15,7 +15,7 @@ warnings.simplefilter("always")
 limit = 1e-10
 
 
-class TestPSFpreparation(object):
+class TestPSFpreparation:
 
     def setup_class(self):
 
@@ -81,8 +81,8 @@ class TestPSFpreparation(object):
         self.pipeline.run_module("angle2")
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], -55.041097524594186, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -54.99858342139904, rtol=limit, atol=0.)
+        assert np.allclose(data[0], -55.04109770947442, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -54.99858360618869, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
         self.pipeline.set_attribute("read", "RA", (60000.0, 60000.0, 60000.0, 60000.0), static=False)
@@ -96,8 +96,8 @@ class TestPSFpreparation(object):
         self.pipeline.run_module("angle3")
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], 170.39102733657813, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 170.46341141667205, rtol=limit, atol=0.)
+        assert np.allclose(data[0], 170.39102715170227, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 170.46341123194824, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
         angle = AngleCalculationModule(instrument="SPHERE/IFS",
@@ -119,8 +119,8 @@ class TestPSFpreparation(object):
                                              "parameters will lead to wrong parallactic angles." \
 
         data = self.pipeline.get_data("header_read/PARANG")
-        assert np.allclose(data[0], -89.12897266342185, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -89.02755900320116, rtol=limit, atol=0.)
+        assert np.allclose(data[0], -89.12897284829768, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -89.02755918786514, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
     def test_angle_interpolation_mismatch(self):
@@ -137,10 +137,10 @@ class TestPSFpreparation(object):
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == "There is a mismatch between the NDIT and NFRAMES " \
-                                             "values. The derotation angles are calculated with " \
-                                             "a linear interpolation by using NFRAMES steps. A " \
-                                             "frame selection should be applied after the " \
-                                             "derotation angles are calculated."
+                                             "values. The parallactic angles are calculated " \
+                                             "with a linear interpolation by using NFRAMES " \
+                                             "steps. A frame selection should be applied " \
+                                             "after the parallactic angles are calculated."
 
         data = self.pipeline.get_data("header_read/PARANG")
         assert np.allclose(data[0], 0., rtol=limit, atol=0.)

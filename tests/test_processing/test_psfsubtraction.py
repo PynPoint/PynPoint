@@ -14,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestPSFSubtractionPCA(object):
+class TestPSFSubtractionPCA:
 
     def setup_class(self):
 
@@ -138,13 +138,13 @@ class TestPSFSubtractionPCA(object):
                                     nreference=None,
                                     residuals="mean",
                                     extra_rot=0.,
-                                    name_in="cadi2",
+                                    name_in="cadi1",
                                     image_in_tag="science",
                                     res_out_tag="cadi_res",
                                     stack_out_tag="cadi_stack")
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module("cadi2")
+        self.pipeline.run_module("cadi1")
 
         data = self.pipeline.get_data("cadi_res")
         assert np.allclose(np.mean(data), -6.359018260066029e-08, rtol=limit, atol=0.)
@@ -160,13 +160,13 @@ class TestPSFSubtractionPCA(object):
                                     nreference=5,
                                     residuals="median",
                                     extra_rot=0.,
-                                    name_in="cadi1",
+                                    name_in="cadi2",
                                     image_in_tag="science",
                                     res_out_tag="cadi_res",
                                     stack_out_tag="cadi_stack")
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module("cadi1")
+        self.pipeline.run_module("cadi2")
 
         data = self.pipeline.get_data("cadi_res")
         assert np.allclose(np.mean(data), 1.6523183877608216e-07, rtol=limit, atol=0.)

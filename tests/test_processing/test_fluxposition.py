@@ -2,6 +2,7 @@ import os
 import warnings
 
 import h5py
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -19,7 +20,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFluxAndPosition(object):
+class TestFluxAndPosition:
 
     def setup_class(self):
 
@@ -96,14 +97,29 @@ class TestFluxAndPosition(object):
 
     def test_aperture_photometry(self):
 
-        photometry = AperturePhotometryModule(radius=0.1,
-                                              position=None,
-                                              name_in="photometry",
-                                              image_in_tag="read",
-                                              phot_out_tag="photometry")
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
-        self.pipeline.add_module(photometry)
+        module = AperturePhotometryModule(radius=0.1,
+                                          position=None,
+                                          name_in="photometry",
+                                          image_in_tag="read",
+                                          phot_out_tag="photometry")
+
+        self.pipeline.add_module(module)
         self.pipeline.run_module("photometry")
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        module = AperturePhotometryModule(radius=0.1,
+                                          position=None,
+                                          name_in="photometry_multi",
+                                          image_in_tag="read",
+                                          phot_out_tag="photometry_multi")
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module("photometry_multi")
 
         data = self.pipeline.get_data("photometry")
         assert np.allclose(data[0][0], 0.9853286992326858, rtol=limit, atol=0.)
@@ -111,7 +127,15 @@ class TestFluxAndPosition(object):
         assert np.allclose(np.mean(data), 0.9836439188900222, rtol=limit, atol=0.)
         assert data.shape == (40, 1)
 
+        data_multi = self.pipeline.get_data("photometry_multi")
+        assert data.shape == data_multi.shape
+        for i, item in enumerate(data_multi):
+            assert np.allclose(data[i], item, rtol=1e-6, atol=0.)
+
     def test_angle_interpolation(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
 
         angle = AngleInterpolationModule(name_in="angle",
                                          data_tag="read")
@@ -180,8 +204,8 @@ class TestFluxAndPosition(object):
         assert np.allclose(data[0, 1], 49.0, rtol=limit, atol=0.)
         assert np.allclose(data[0, 2], 0.513710034941892, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 93.01278750418334, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 4], 7.633199090133858, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 5], 3.029521252528866e-06, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
 
     def test_simplex_minimization(self):
 
@@ -285,7 +309,16 @@ class TestFluxAndPosition(object):
                                   variance="gaussian")
 
         self.pipeline.add_module(mcmc)
-        self.pipeline.run_module("mcmc")
+
+        with pytest.warns(FutureWarning) as warning:
+            self.pipeline.run_module("mcmc")
+
+        assert warning[0].message.args[0] == "Using a non-tuple sequence for multidimensional " \
+                                             "indexing is deprecated; use `arr[tuple(seq)]` " \
+                                             "instead of `arr[seq]`. In the future this will be " \
+                                             "interpreted as an array index, " \
+                                             "`arr[np.array(seq)]`, which will result either " \
+                                             "in an error or a different result."
 
         single = self.pipeline.get_data("mcmc")
         single = single[:, 20:, :].reshape((-1, 3))
@@ -318,11 +351,20 @@ class TestFluxAndPosition(object):
                                   extra_rot=0.,
                                   scale=2.,
                                   sigma=(1e-3, 1e-1, 1e-2),
-                                  prior="flat",
+                                  prior="aperture",
                                   variance="poisson")
 
         self.pipeline.add_module(mcmc)
-        self.pipeline.run_module("mcmc_gaussian")
+
+        with pytest.warns(FutureWarning) as warning:
+            self.pipeline.run_module("mcmc_gaussian")
+
+        assert warning[0].message.args[0] == "Using a non-tuple sequence for multidimensional " \
+                                             "indexing is deprecated; use `arr[tuple(seq)]` " \
+                                             "instead of `arr[seq]`. In the future this will be " \
+                                             "interpreted as an array index, " \
+                                             "`arr[np.array(seq)]`, which will result either " \
+                                             "in an error or a different result."
 
         single = self.pipeline.get_data("mcmc_gaussian")
         single = single[:, 20:, :].reshape((-1, 3))

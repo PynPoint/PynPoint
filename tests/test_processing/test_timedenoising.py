@@ -14,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestTimeDenoising(object):
+class TestTimeDenoising:
 
     def setup_class(self):
 
@@ -46,7 +46,6 @@ class TestTimeDenoising(object):
                                  check=True)
 
         self.pipeline.add_module(read)
-
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("images")
@@ -146,11 +145,11 @@ class TestTimeDenoising(object):
 
     def test_time_normalization(self):
 
-        timenorm = TimeNormalizationModule(name_in="timenorm",
-                                           image_in_tag="images",
-                                           image_out_tag="timenorm")
+        module = TimeNormalizationModule(name_in="timenorm",
+                                         image_in_tag="images",
+                                         image_out_tag="timenorm")
 
-        self.pipeline.add_module(timenorm)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("timenorm")
 
         data = self.pipeline.get_data("timenorm")

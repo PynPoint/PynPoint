@@ -38,7 +38,8 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                RemoveStartFramesModule, \
                                                ImageStatisticsModule
 
-from pynpoint.processing.limits import ContrastCurveModule
+from pynpoint.processing.limits import ContrastCurveModule, \
+                                       MassLimitsModule
 
 from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \
                                               PCABackgroundSubtractionModule, \
@@ -83,6 +84,8 @@ from pynpoint.readwrite.textwriting import AttributeWritingModule, \
 
 from pynpoint.readwrite.textreading import ParangReadingModule, \
                                            AttributeReadingModule
+
+from pynpoint.readwrite.nearreading import NearReadingModule
 
 warnings.simplefilter('always', DeprecationWarning)
 

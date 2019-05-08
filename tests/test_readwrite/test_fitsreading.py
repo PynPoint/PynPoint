@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -7,7 +5,6 @@ import pytest
 import numpy as np
 
 from astropy.io import fits
-from six.moves import range
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
@@ -17,7 +14,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestFitsReadingModule(object):
+class TestFitsReadingModule:
 
     def setup_class(self):
 
@@ -65,7 +62,8 @@ class TestFitsReadingModule(object):
         assert data.shape == (40, 100, 100)
 
     def test_static_not_found(self):
-        self.pipeline.set_attribute("config", "DIT", "ESO DET DIT", static=True)
+
+        self.pipeline.set_attribute("config", "DIT", "Test", static=True)
 
         read = FitsReadingModule(name_in="read3",
                                  input_dir=self.test_dir+"fits",
@@ -80,8 +78,10 @@ class TestFitsReadingModule(object):
 
         assert len(warning) == 4
         for item in warning:
-            assert item.message.args[0] == "Static attribute DIT (=ESO DET DIT) not found in " \
-                                           "the FITS header."
+            assert item.message.args[0] == "Static attribute DIT (=Test) not found in the FITS " \
+                                           "header."
+
+        self.pipeline.set_attribute("config", "DIT", "ESO DET DIT", static=True)
 
     def test_static_changing(self):
 
@@ -161,6 +161,7 @@ class TestFitsReadingModule(object):
         self.pipeline.run_module("read5")
 
     def test_non_static_not_found(self):
+
         self.pipeline.set_attribute("config", "DIT", "None", static=True)
 
         for i in range(1, 5):
@@ -187,6 +188,7 @@ class TestFitsReadingModule(object):
                                            "found in the FITS header."
 
     def test_fits_read_files(self):
+
         folder = os.path.dirname(os.path.abspath(__file__))
 
         read = FitsReadingModule(name_in="read7",

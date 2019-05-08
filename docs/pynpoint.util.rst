@@ -12,6 +12,14 @@ pynpoint.util.analysis module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.util.attributes module
+-------------------------------
+
+.. automodule:: pynpoint.util.attributes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.util.continuous module
 -------------------------------
 
@@ -72,6 +80,14 @@ pynpoint.util.multiproc module
 ------------------------------
 
 .. automodule:: pynpoint.util.multiproc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pynpoint.util.multistack module
+-------------------------------
+
+.. automodule:: pynpoint.util.multistack
     :members:
     :undoc-members:
     :show-inheritance:

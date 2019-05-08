@@ -17,7 +17,7 @@ junit-docs-ci.xml
 junit-py27.xml
 junit-py36.xml
 junit-py37.xml
-.pytest_cache
+.pytest_cache/
 *.nbi
 *.nbc
 
@@ -27,6 +27,11 @@ docs/_build
 # Mac
 .DS_Store
 .vscode
+.vscode/settings.json
 
-# python installation (pip install -e)
+# pip install -e
 pynpoint.egg-info
+pynpoint.egg-info/*
+
+# Vim
+.tags
