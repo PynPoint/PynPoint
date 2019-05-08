@@ -155,9 +155,6 @@ class TestStarAlignment:
 
     def test_star_extract_full(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
-
         module = StarExtractionModule(name_in="extract1",
                                       image_in_tag="dither",
                                       image_out_tag="extract1",
@@ -168,37 +165,16 @@ class TestStarAlignment:
         self.pipeline.add_module(module)
         self.pipeline.run_module("extract1")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = StarExtractionModule(name_in="extract1_multi",
-                                      image_in_tag="dither",
-                                      image_out_tag="extract1_multi",
-                                      image_size=1.0,
-                                      fwhm_star=0.1,
-                                      position=None)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("extract1_multi")
-
         data = self.pipeline.get_data("extract1")
 
         assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-        data_multi = self.pipeline.get_data("extract1_multi")
-
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
-
         attr = self.pipeline.get_attribute("extract1", "STAR_POSITION", static=False)
         assert attr[10, 0] == attr[10, 1] == 75
 
     def test_star_extract_subframe(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         top_left = np.array([25, 75, 0.5])
         top_left = np.broadcast_to(top_left, (10, 3))
@@ -234,9 +210,6 @@ class TestStarAlignment:
 
     def test_star_align(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
-
         module = StarAlignmentModule(name_in="align",
                                      image_in_tag="extract1",
                                      ref_image_in_tag="extract2",
@@ -247,32 +220,12 @@ class TestStarAlignment:
         self.pipeline.add_module(module)
         self.pipeline.run_module("align")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = StarAlignmentModule(name_in="align_multi",
-                                     image_in_tag="extract1",
-                                     ref_image_in_tag="extract2",
-                                     image_out_tag="align_multi",
-                                     accuracy=10,
-                                     resize=2.)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("align_multi")
-
         data = self.pipeline.get_data("align")
         assert np.allclose(data[0, 39, 39], 0.023556628129942758, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00016446205542266837, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-        data_multi = self.pipeline.get_data("align_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
-
     def test_shift_images_spline(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         module = ShiftImagesModule(shift_xy=(6., 4.),
                                    interpolation="spline",
@@ -283,31 +236,12 @@ class TestStarAlignment:
         self.pipeline.add_module(module)
         self.pipeline.run_module("shift1")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = ShiftImagesModule(shift_xy=(6., 4.),
-                                   interpolation="spline",
-                                   name_in="shift1_multi",
-                                   image_in_tag="align",
-                                   image_out_tag="shift_multi")
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("shift1_multi")
-
         data = self.pipeline.get_data("shift")
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-        data_multi = self.pipeline.get_data("shift_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
-
     def test_shift_images_fft(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         module = ShiftImagesModule(shift_xy=(6., 4.),
                                    interpolation="spline",
@@ -325,9 +259,6 @@ class TestStarAlignment:
 
     def test_star_center_full(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
-
         module = StarCenteringModule(name_in="center1",
                                      image_in_tag="shift",
                                      image_out_tag="center",
@@ -343,32 +274,10 @@ class TestStarAlignment:
         self.pipeline.add_module(module)
         self.pipeline.run_module("center1")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = StarCenteringModule(name_in="center1_multi",
-                                     image_in_tag="shift",
-                                     image_out_tag="center_multi",
-                                     mask_out_tag=None,
-                                     fit_out_tag=None,
-                                     method="full",
-                                     interpolation="spline",
-                                     radius=0.05,
-                                     sign="positive",
-                                     model="gaussian",
-                                     guess=(6., 4., 3., 3., 1., 0., 0.))
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("center1_multi")
-
         data = self.pipeline.get_data("center")
         assert np.allclose(data[0, 39, 39], 0.02356308097293422, rtol=1e-4, atol=0.)
         assert np.allclose(np.mean(data), 0.000164306294368963, rtol=1e-4, atol=0.)
         assert data.shape == (40, 78, 78)
-
-        data_multi = self.pipeline.get_data("center_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
 
         data = self.pipeline.get_data("mask")
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
@@ -377,9 +286,6 @@ class TestStarAlignment:
         assert data.shape == (40, 78, 78)
 
     def test_star_center_mean(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         module = StarCenteringModule(name_in="center2",
                                      image_in_tag="shift",
@@ -396,37 +302,12 @@ class TestStarAlignment:
         self.pipeline.add_module(module)
         self.pipeline.run_module("center2")
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-
-        module = StarCenteringModule(name_in="center2_multi",
-                                     image_in_tag="shift",
-                                     image_out_tag="center_multi",
-                                     mask_out_tag=None,
-                                     fit_out_tag=None,
-                                     method="mean",
-                                     interpolation="bilinear",
-                                     radius=0.05,
-                                     sign="positive",
-                                     model="gaussian",
-                                     guess=(6., 4., 3., 3., 1., 0., 0.))
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module("center2_multi")
-
         data = self.pipeline.get_data("center")
         assert np.allclose(data[0, 39, 39], 0.023556482678860322, rtol=1e-4, atol=0.)
         assert np.allclose(np.mean(data), 0.00016430629447868552, rtol=1e-4, atol=0.)
         assert data.shape == (40, 78, 78)
 
-        data_multi = self.pipeline.get_data("center_multi")
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
-
     def test_star_center_moffat(self):
-
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
 
         module = StarCenteringModule(name_in="center3",
                                      image_in_tag="shift",
