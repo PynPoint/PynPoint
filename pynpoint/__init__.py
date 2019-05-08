@@ -38,7 +38,8 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                RemoveStartFramesModule, \
                                                ImageStatisticsModule
 
-from pynpoint.processing.limits import ContrastCurveModule
+from pynpoint.processing.limits import ContrastCurveModule, \
+                                       MassLimitsModule
 
 from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \
                                               PCABackgroundSubtractionModule, \
