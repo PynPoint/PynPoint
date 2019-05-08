@@ -80,9 +80,9 @@ Now we are ready to add all the pipeline modules that we need. Have a look at th
 
     pipeline.add_module(module)
 
-5. Remove the top two lines to make the images square::
+5. Remove the top and bottom line to make the images square::
 
-    module = RemoveLinesModule(lines=(0, 0, 0, 2),
+    module = RemoveLinesModule(lines=(0, 0, 1, 1),
                                name_in="cut",
                                image_in_tag="last",
                                image_out_tag="cut")

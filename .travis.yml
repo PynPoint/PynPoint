@@ -10,6 +10,9 @@ env:
   - NUMBA_DISABLE_JIT=1
   # - COVERALLS_PARALLEL=true
 
+before_install:
+  - sudo apt-get install ncompress
+
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov

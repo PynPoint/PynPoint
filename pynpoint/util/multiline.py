@@ -116,7 +116,7 @@ class LineTaskProcessor(TaskProcessor):
         Parameters
         ----------
         tmp_task : pynpoint.util.multiproc.TaskInput
-            Task input.
+            Task input with the subsets of lines and the job parameters.
 
         Returns
         -------
@@ -162,8 +162,8 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         num_proc : int
             Number of processors.
         function : function
-            Input function.
-        function_args : tuple, None
+            Input function that is applied to the lines.
+        function_args : tuple, None, optional
             Function arguments.
         data_length : int
             Length of the processed data.
@@ -205,7 +205,7 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         Parameters
         ----------
         image_in_port : pynpoint.core.dataio.InputPort
-            Input port.
+            Input port from where the subsets of lines are read.
 
         Returns
         -------
