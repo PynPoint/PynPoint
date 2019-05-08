@@ -963,7 +963,7 @@ class AperturePhotometryModule(ProcessingModule):
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
-                                      "Running AperturePhotometryModule...",
+                                      "Running AperturePhotometryModule",
                                       func_args=(aperture, ))
 
         history = "radius [arcsec] = {:.3f}".format(self.m_radius*pixscale)
