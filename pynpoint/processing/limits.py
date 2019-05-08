@@ -5,9 +5,9 @@ Pipeline modules for estimating detection limits.
 import sys
 import os
 import math
+import time
 import warnings
 import multiprocessing as mp
-import time
 
 import numpy as np
 
@@ -44,7 +44,6 @@ class ContrastCurveModule(ProcessingModule):
                  extra_rot=0.,
                  residuals="median",
                  snr_inject=100.,
-                 max_time=82800,
                  **kwargs):
         """
         Constructor of ContrastCurveModule.
@@ -96,13 +95,6 @@ class ContrastCurveModule(ProcessingModule):
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
-        max_time  : float
-            Maximum time in seconds the computation of the contrast limits is allowed to take. Useful 
-            for when computation time is limited by other factors. The actual computation takes a few 
-            seconds longer, due to sorting and writing at the end of the module. If the time limit
-            is reached, all results availble at that time will be used.
-            If it is None, then the computation of the contrast limits will wait for all results to
-            be available.
 
         Returns
         -------
@@ -153,10 +145,6 @@ class ContrastCurveModule(ProcessingModule):
         self.m_residuals = residuals
         self.m_snr_inject = snr_inject
 
-        if max_time != None: self.m_max_time = max_time
-        else: self.m_max_time = np.inf
-
-
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
            self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
 
@@ -176,8 +164,6 @@ class ContrastCurveModule(ProcessingModule):
         NoneType
             None
         """
-
-        start_time = time.time()
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
@@ -222,9 +208,6 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule...\r")
-        sys.stdout.flush()
-
         positions = []
         for sep in pos_r:
             for ang in pos_t:
@@ -242,7 +225,6 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
-
         mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
 
         _, im_res = pca_psf_subtraction(images=images*mask,
@@ -250,81 +232,82 @@ class ContrastCurveModule(ProcessingModule):
                                         pca_number=self.m_pca_number)
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
-        
+
         pool = mp.Pool(cpu)
+
         for pos in positions:
             async_results.append(pool.apply_async(contrast_limit,
-                                args=(tmp_im_str,
-                                       tmp_psf_str,
-                                       noise,
-                                       mask,
-                                       parang,
-                                       self.m_psf_scaling,
-                                       self.m_extra_rot,
-                                       self.m_pca_number,
-                                       self.m_threshold,
-                                       self.m_aperture,
-                                       self.m_residuals,
-                                       self.m_snr_inject,
-                                       pos)))
+                                                  args=(tmp_im_str,
+                                                        tmp_psf_str,
+                                                        noise,
+                                                        mask,
+                                                        parang,
+                                                        self.m_psf_scaling,
+                                                        self.m_extra_rot,
+                                                        self.m_pca_number,
+                                                        self.m_threshold,
+                                                        self.m_aperture,
+                                                        self.m_residuals,
+                                                        self.m_snr_inject,
+                                                        pos)))
+
         pool.close()
 
-        # wait for either all processes to finish or self.m_max_time to pass
-        while mp.active_children() and time.time() - start_time < self.m_max_time:
-            finished_processes = sum([i.ready() for i in async_results])
-            max_progress = np.max([(time.time() - start_time) / self.m_max_time, finished_processes / len(positions)])
-            progress(max_progress, 1, "Running ContrastCurveModule...")
-            time.sleep(60) # check for an update every 60 secondes
-        
+        # wait for all processes to finish
+        while mp.active_children():
+            # number of finished processes
+            nfinished = sum([i.ready() for i in async_results])
+
+            progress(nfinished/len(positions), 1, "Running ContrastCurveModule...")
+
+            # check if new processes have finished every 5 seconds
+            time.sleep(5)
+
         # get the results for every async_result object
         for index, async_result in enumerate(async_results):
-            try: 
+            try:
                 result.append(async_result.get(timeout=0))
-            except mp.TimeoutError: 
-                warnings.warn("The process number {} did not complete in time. There will not be a result at {} arcsec, {} degrees.".format(index, positions[index][0], positions[index][1]))
+
+            except mp.TimeoutError:
+                warnings.warn(f"The process number {index} did not complete in time. There will "
+                              "not be a result at {positions[index][0]} arcsec, "
+                              "{positions[index][1]} degrees.")
+
                 result.append([positions[index][0], positions[index][1], np.nan, np.nan])
+
             except ValueError:
-                warnings.warn("A ValueError was excepted at {} arcsec, {} degrees. Likely the contrast could not be calculated".format(positions[index][0], positions[index][1]))
-                result.append([positions[index][0], positions[index][1], np.nan, np.nan]) # ignore math value error in math.log # result.append([np.nan, np.nan, np.nan, np.nan]) 
+                warnings.warn(f"A ValueError was excepted at {positions[index][0]} arcsec, "
+                              "{positions[index][1]} degrees. Likely the contrast could not "
+                              "be calculated.")
+
+                # ignore math value error in math.log
+                result.append([positions[index][0], positions[index][1], np.nan, np.nan])
+
         pool.terminate()
 
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        # create a dictionary with the distances/separation as keys and empty lists as values
-        distances = {line[0]:[] for line in result}
-        # add the results of the contrast_limit process queue to the dictionary using the distances as keys
-        for key in distances.keys():
-            for line in result:
-                if line[0] == key:
-                    distances[key] += [line[1:]]
-        
-        # initialize the storage for later output
-        contrast_result = np.ones((len(distances), 4)) * np.nan
-        
-        # write the results to the contrast result array
-        # the first column contains the separations in arcsec
-        # the second column contains the average magnitude for the given separation
-        # the thrid column contains the variance of the magnitude for the given separation
-        # the forth colum contains the false positive fraction
-        for i, (key, value) in enumerate(distances.items()):
-            contrast_result[i] = key * pixscale
-            temporary_magnitude_storage = []
-            for result in value:
-                temporary_magnitude_storage += [result[1]]
-            contrast_result[i, 1] = np.nanmean(temporary_magnitude_storage)
-            contrast_result[i, 2] = np.nanvar(temporary_magnitude_storage)
-            contrast_result[i, 3] = value[-1] [-1]
-        
-        contrast_result.sort(axis = 0)
+        result = np.asarray(result)
 
-        self.m_contrast_out_port.set_all(contrast_result, data_dim=2)
+        # Sort the results first by separation and then by angle
+        indices = np.lexsort((result[:, 1], result[:, 0]))
+        result = result[indices]
+
+        result = result.reshape((pos_r.size, pos_t.size, 4))
+
+        mag_mean = np.nanmean(result, axis=1)[:, 2]
+        mag_var = np.nanvar(result, axis=1)[:, 2]
+        res_fpf = result[:, 0, 3]
+
+        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+
+        self.m_contrast_out_port.set_all(limits, data_dim=2)
 
         sys.stdout.write("\rRunning ContrastCurveModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
-
+        history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
         self.m_contrast_out_port.add_history("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
@@ -476,13 +459,13 @@ class MassLimitsModule(ProcessingModule):
         grid_values = np.array([])
 
         # create array of available points
-        for age_index, age in enumerate(model_age):
-            mag = model_data[age_index][:, filter_index]
-            time = np.ones_like(mag) * age
-            mass = model_data[age_index][:, 0]
+        for age_index, age_item in enumerate(model_age):
+            iso_mag = model_data[age_index][:, filter_index]
+            iso_age = np.ones_like(iso_mag) * age_item
+            iso_mass = model_data[age_index][:, 0]
 
-            grid_points = np.append(grid_points, np.column_stack((time, mag)))
-            grid_values = np.append(grid_values, mass)
+            grid_points = np.append(grid_points, np.column_stack((iso_age, iso_mag)))
+            grid_values = np.append(grid_values, iso_mass)
 
         grid_points = grid_points.reshape(-1, 2)
         interp = np.column_stack((age_eval, mag_eval))
@@ -550,7 +533,6 @@ class MassLimitsModule(ProcessingModule):
         sys.stdout.flush()
 
         history = f"filter = {self.m_instr_filter}"
-        print(history)
         self.m_mass_out_port.add_history("MassLimitsModule", history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
