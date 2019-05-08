@@ -106,9 +106,9 @@ class StackTaskProcessor(TaskProcessor):
         result_queue_in : multiprocessing.queues.JoinableQueue
             Results queue.
         function : function
-            Input function.
-        function_args : tuple, None
-            Optional function arguments.
+            Input function that is applied to the images.
+        function_args : tuple, None, optional
+            Function arguments.
         nimages : int
             Total number of images.
 
@@ -130,7 +130,7 @@ class StackTaskProcessor(TaskProcessor):
         Parameters
         ----------
         tmp_task : pynpoint.util.multiproc.TaskInput
-            Task input.
+            Task input with the subsets of images and the job parameters.
 
         Returns
         -------
@@ -237,7 +237,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         Parameters
         ----------
         image_in_port : pynpoint.core.dataio.InputPort
-            Input port.
+            Input port from where the subsets of images are read.
 
         Returns
         -------
