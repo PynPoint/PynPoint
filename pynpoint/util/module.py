@@ -41,20 +41,22 @@ def progress(current,
         """
         hours = int(time / 3600)
         minutes = int((time % 3600) / 60)
-        seconds = time % 60
-        return "{}:{:>02}:{:>05.2f}".format(hours, minutes, seconds)
+        seconds = int(time % 60)
+        return "{:>02}:{:>02}:{:>02}".format(hours, minutes, seconds)
 
     fraction = float(current)/float(total)
-    percentage = round(fraction*100., 1)
+    percentage = fraction * 100
     if not start_time:
-        sys.stdout.write("{}: {:.1f}% \r".format(message, percentage))
+        sys.stdout.write("\r{}: {:4.1f}% \r".format(message, percentage))
         sys.stdout.flush()
     else:
-        if percentage != 0:
+        if fraction != 0 and current +1 !=total:
             time_taken = time.time() - start_time
-            time_left = time_taken / percentage * (100 - percentage)
-            sys.stdout.write("{}: {:.1f}%  ETR: {} \r".format(message, percentage, time_string(time_left)))
+            time_left = time_taken / fraction * (1 - fraction)
+            sys.stdout.write("{}: {:4.1f}%  ETR: {}\r".format(message, percentage, time_string(time_left)))
             sys.stdout.flush()
+    if current +1 == total:
+        sys.stdout.write(" " * (24 + len(message)) + "\r")
 
 def memory_frames(memory,
                   nimages):
