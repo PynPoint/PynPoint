@@ -42,8 +42,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  extra_rot=0.,
                  subtract_mean=True):
         """
-        Constructor of PcaPsfSubtractionModule.
-
         Parameters
         ----------
         pca_numbers : list(int, ), tuple(int, ), or numpy.ndarray
@@ -384,8 +382,6 @@ class ClassicalADIModule(ProcessingModule):
                  res_out_tag="residuals",
                  stack_out_tag="stacked"):
         """
-        Constructor of ClassicalADIModule.
-
         Parameters
         ----------
         threshold : tuple(float, float, float)

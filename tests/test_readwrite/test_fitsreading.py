@@ -117,15 +117,15 @@ class TestFitsReadingModule:
             self.pipeline.run_module("read4")
 
         assert len(warning) == 2
-        assert warning[0].message.args[0] == "Static attribute ESO DET DIT has changed. " \
-                                             "Possibly the current file image03.fits does " \
-                                             "not belong to the data set 'input'. Attribute " \
-                                             "value is updated."
+        assert warning[0].message.args[0] == f"Static attribute ESO DET DIT has changed. " \
+                                             f"Possibly the current file {self.test_dir}fits/" \
+                                             f"image03.fits does not belong to the data set " \
+                                             f"'input'. Attribute value is updated." \
 
-        assert warning[1].message.args[0] == "Static attribute ESO DET DIT has changed. " \
-                                             "Possibly the current file image04.fits does " \
-                                             "not belong to the data set 'input'. Attribute " \
-                                             "value is updated."
+        assert warning[1].message.args[0] == f"Static attribute ESO DET DIT has changed. " \
+                                             f"Possibly the current file {self.test_dir}fits/" \
+                                             f"image04.fits does not belong to the data set " \
+                                             f"'input'. Attribute value is updated."
 
     def test_header_attribute(self):
 

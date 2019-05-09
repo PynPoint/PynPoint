@@ -25,8 +25,6 @@ class Hdf5WritingModule(WritingModule):
                  keep_attributes=True,
                  overwrite=False):
         """
-        Constructor of Hdf5WritingModule.
-
         Parameters
         ----------
         name_in : str
