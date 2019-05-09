@@ -16,7 +16,8 @@ from pynpoint.core.attributes import get_attributes
 def set_static_attr(fits_file,
                     header,
                     config_port,
-                    image_out_port):
+                    image_out_port,
+                    check=True):
     """
     Function which adds the static attributes to the central database.
 
@@ -30,6 +31,10 @@ def set_static_attr(fits_file,
         Configuration port.
     image_out_port : pynpoint.core.dataio.OutputPort
         Output port of the images to which the static attributes are stored.
+    check : bool
+        Print a warning if certain attributes from the configuration file are not present in
+        the FITS header. If set to `False`, attributes are still written to the dataset but
+        there will be no warning if a keyword is not found in the FITS header.
 
     Returns
     -------
@@ -62,19 +67,18 @@ def set_static_attr(fits_file,
                     pass
 
                 elif status == -1:
-                    warnings.warn('Static attribute %s has changed. Possibly the current '
-                                  'file %s does not belong to the data set \'%s\'. '
-                                  'Attribute value is updated.' \
-                                  % (fitskey, fits_file, image_out_port.tag))
+                    warnings.warn(f'Static attribute {fitskey} has changed. Possibly the '
+                                  f'current file {fits_file} does not belong to the data set '
+                                  f'\'{image_out_port.tag}\'. Attribute value is updated.')
 
-
-            else:
-                warnings.warn('Static attribute %s (=%s) not found in the FITS header.' \
-                              % (attr, fitskey))
+            elif check:
+                warnings.warn(f'Static attribute {attr} (={fitskey}) not found in the FITS '
+                              'header.')
 
 def set_nonstatic_attr(header,
                        config_port,
-                       image_out_port):
+                       image_out_port,
+                       check=True):
     """
     Function which adds the non-static attributes to the central database.
 
@@ -114,14 +118,13 @@ def set_nonstatic_attr(header,
                 elif header['NAXIS'] == 2 and attr == 'NFRAMES':
                     image_out_port.append_attribute_data(attr, 1)
 
-                else:
+                elif check:
                     warnings.warn('Non-static attribute %s (=%s) not found in the '
                                   'FITS header.' % (attr, fitskey))
 
                     image_out_port.append_attribute_data(attr, -1)
 
 def set_extra_attr(fits_file,
-                   location,
                    nimages,
                    config_port,
                    image_out_port,
@@ -132,9 +135,7 @@ def set_extra_attr(fits_file,
     Parameters
     ----------
     fits_file : str
-        Name of the FITS file.
-    location : str
-        Directory where the FITS file is located.
+        Absolute path and filename of the FITS file.
     nimages : int
         Number of images.
     config_port : pynpoint.core.dataio.ConfigPort
@@ -157,7 +158,7 @@ def set_extra_attr(fits_file,
     for item in image_index:
         image_out_port.append_attribute_data('INDEX', item)
 
-    image_out_port.append_attribute_data('FILES', os.path.join(location, fits_file))
+    image_out_port.append_attribute_data('FILES', fits_file)
     image_out_port.add_attribute('PIXSCALE', pixscale, static=True)
 
     return first_index + nimages
