@@ -3,6 +3,7 @@ Functions for Pypeline modules.
 """
 
 import sys
+import time
 import math
 
 import cv2
@@ -13,7 +14,8 @@ from pynpoint.util.image import crop_image, center_pixel
 
 def progress(current,
              total,
-             message):
+             message,
+             start_time = 0):
     """
     Function to show and update the progress as standard output.
 
@@ -25,18 +27,34 @@ def progress(current,
         Total index number.
     message : str
         Message that is printed.
+    start_time : float
+        Start time of the iteration in seconds since epoch
 
     Returns
     -------
     NoneType
         None
     """
+    def time_string(time):
+        """
+        Converts a time in seconds to a string which displays the time as hh:mm:ss
+        """
+        hours = int(time / 3600)
+        minutes = int((time % 3600) / 60)
+        seconds = time % 60
+        return "{}:{:>02}:{:>05.2f}".format(hours, minutes, seconds)
 
     fraction = float(current)/float(total)
     percentage = round(fraction*100., 1)
-
-    sys.stdout.write("%s %s%s \r" % (message, percentage, "%"))
-    sys.stdout.flush()
+    if not start_time:
+        sys.stdout.write("{}: {:.1f}% \r".format(message, percentage))
+        sys.stdout.flush()
+    else:
+        if percentage != 0:
+            time_taken = time.time() - start_time
+            time_left = time_taken / percentage * (100 - percentage)
+            sys.stdout.write("{}: {:.1f}%  ETR: {} \r".format(message, percentage, time_string(time_left)))
+            sys.stdout.flush()
 
 def memory_frames(memory,
                   nimages):
