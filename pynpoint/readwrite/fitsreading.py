@@ -101,8 +101,6 @@ class FitsReadingModule(ReadingModule):
             Image shape.
         """
 
-        print(fits_file)
-
         hdulist = fits.open(fits_file)
         images = hdulist[0].data.byteswap().newbyteorder()
 

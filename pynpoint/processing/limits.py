@@ -539,7 +539,6 @@ class MassLimitsModule(ProcessingModule):
         sys.stdout.flush()
 
         history = f"filter = {self.m_instr_filter}"
-        print(history)
         self.m_mass_out_port.add_history("MassLimitsModule", history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
