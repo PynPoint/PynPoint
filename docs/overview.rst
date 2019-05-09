@@ -40,7 +40,7 @@ Background Subtraction
 
 * :class:`~pynpoint.processing.background.SimpleBackgroundSubtractionModule`: Simple background subtraction for dithering datasets.
 * :class:`~pynpoint.processing.background.MeanBackgroundSubtractionModule`: Mean background subtraction for dithering datasets.
-* :class:`~pynpoint.processing.background.LineSubtractionModule` (multiproc): Subtraction of striped detector artifacts.
+* :class:`~pynpoint.processing.background.LineSubtractionModule` (CPU): Subtraction of striped detector artifacts.
 * :class:`~pynpoint.processing.background.NoddingBackgroundModule`: Background subtraction for nodding datasets.
 
 Bad Pixel Cleaning
@@ -84,6 +84,7 @@ Detection Limits
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
+* :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~

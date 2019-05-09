@@ -24,8 +24,6 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="bg_sub_arr"):
         """
-        Constructor of SimpleBackgroundSubtractionModule.
-
         Parameters
         ----------
         shift : int
@@ -102,8 +100,6 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="bg_sub_arr"):
         """
-        Constructor of MeanBackgroundSubtractionModule.
-
         shift : int
             Image index offset for the background subtraction. Typically equal to the number of
             frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
@@ -293,8 +289,6 @@ class LineSubtractionModule(ProcessingModule):
                  combine="median",
                  mask=None):
         """
-        Constructor of LineSubtractionModule.
-
         Parameters
         ----------
         name_in : str
@@ -377,7 +371,7 @@ class LineSubtractionModule(ProcessingModule):
         self.apply_function_to_images(_subtract_line,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running LineSubtractionModule...",
+                                      "Running LineSubtractionModule",
                                       func_args=(mask, ))
 
         history = "combine = "+str(self.m_combine)
@@ -401,8 +395,6 @@ class NoddingBackgroundModule(ProcessingModule):
                  image_out_tag="im_arr",
                  mode="both"):
         """
-        Constructor of NoddingBackgroundModule.
-
         Parameters
         ----------
         name_in : str
