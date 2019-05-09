@@ -3,6 +3,7 @@ Pipeline modules for stacking and subsampling of images.
 """
 
 import sys
+import time
 import math
 import cmath
 import warnings
@@ -95,8 +96,9 @@ class StackAndSubsetModule(ProcessingModule):
 
                 im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
+                start_time = time.time()
                 for i in range(nimages_new):
-                    progress(i, nimages_new, 'Running StackAndSubsetModule')
+                    progress(i, nimages_new, 'Running StackAndSubsetModule', start_time)
 
                     if parang is not None:
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
@@ -247,8 +249,9 @@ class MeanCubeModule(ProcessingModule):
         current = 0
         parang_new = []
 
+        start_time = time.time()
         for i, frames in enumerate(nframes):
-            progress(i, len(nframes), 'Running MeanCubeModule')
+            progress(i, len(nframes), 'Running MeanCubeModule', start_time)
 
             mean_frame = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
             self.m_image_out_port.append(mean_frame, data_dim=3)
@@ -344,8 +347,9 @@ class StackCubesModule(ProcessingModule):
         current = 0
         parang_new = []
 
+        start_time = time.time()
         for i, frames in enumerate(nframes):
-            progress(i, len(nframes), 'Running StackCubesModule')
+            progress(i, len(nframes), 'Running StackCubesModule', start_time)
 
             if self.m_combine == 'mean':
                 im_stack = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
@@ -470,9 +474,10 @@ class DerotateAndStackModule(ProcessingModule):
         npix = self.m_image_in_port.get_shape()[1]
 
         nimages, frames, im_tot = _initialize(ndim, npix)
-
+        
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Running DerotateAndStackModule')
+            progress(i, len(frames[:-1]), 'Running DerotateAndStackModule', start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -582,8 +587,9 @@ class CombineTagsModule(ProcessingModule):
             raise ValueError('The size of the images should be the same for all datasets.')
 
         count = 0
+        start_time = time.time()
         for i, item in enumerate(self.m_image_in_tags):
-            progress(i, len(self.m_image_in_tags), 'Running CombineTagsModule')
+            progress(i, len(self.m_image_in_tags), 'Running CombineTagsModule', start_time)
 
             nimages = image_in_port[i].get_shape()[0]
             frames = memory_frames(memory, nimages)

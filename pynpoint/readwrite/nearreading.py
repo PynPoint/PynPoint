@@ -4,6 +4,7 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 
 import os
 import sys
+import time
 import shlex
 import subprocess
 import threading
@@ -134,8 +135,9 @@ class NearReadingModule(ReadingModule):
             # subdivide the file indices by number of CPU
             indices = memory_frames(cpu, len(files))
 
+            start_time = time.time()
             for i, _ in enumerate(indices[:-1]):
-                progress(i, len(indices[:-1]), 'Uncompressing NEAR data...')
+                progress(i, len(indices[:-1]), 'Uncompressing NEAR data...', start_time)
 
                 # select subset of compressed files
                 subset = files[indices[i]:indices[i+1]]
@@ -406,9 +408,10 @@ class NearReadingModule(ReadingModule):
         # get the first exposure number, which should be the first position of the nodding scheme
         header = fits.getheader(files[0], ext=0)
         first_expno = header['ESO TPL EXPNO']
-
+        
+        start_time = time.time()
         for i, filename in enumerate(files):
-            progress(i, len(files), 'Running NearReadingModule...')
+            progress(i, len(files), 'Running NearReadingModule...', start_time)
 
             # get the images of chop A and B, the primary header data, the nod position,
             # and the number of images per chop position

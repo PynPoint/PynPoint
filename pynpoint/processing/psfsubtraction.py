@@ -3,6 +3,7 @@ Pipeline modules for PSF subtraction.
 """
 
 import sys
+import time
 import math
 import warnings
 
@@ -178,9 +179,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         NoneType
             None
         """
-
+        start_time = time.time()
         for i, pca_number in enumerate(self.m_components):
-            progress(i, len(self.m_components), "Creating residuals...")
+            progress(i, len(self.m_components), "Creating residuals...", start_time)
 
             parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 

@@ -4,6 +4,7 @@ Module for reading FITS files.
 
 import os
 import sys
+import time
 
 from typing import Union, Tuple, List
 
@@ -186,8 +187,9 @@ class FitsReadingModule(ReadingModule):
         overwrite_tags = []
         first_index = 0
 
+        start_time = time.time()
         for i, fits_file in enumerate(files):
-            progress(i, len(files), "Running FitsReadingModule...")
+            progress(i, len(files), "Running FitsReadingModule...", start_time)
 
             header, shape = self._read_single_file(fits_file, overwrite_tags)
 
