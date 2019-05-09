@@ -30,10 +30,6 @@ class FitsWritingModule(WritingModule):
                  data_range=None,
                  overwrite=True):
         """
-        Constructor of FitsWritingModule. It needs the name of the output file as well as
-        the dataset tag which has to exported into that file. See class documentation for more
-        information.
-
         Parameters
         ----------
         name_in : str

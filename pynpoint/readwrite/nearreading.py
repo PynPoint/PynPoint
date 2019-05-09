@@ -39,8 +39,6 @@ class NearReadingModule(ReadingModule):
                  nodb_chopb_tag='nodb_chopb',
                  scheme='ABBA'):
         """
-        Constructor of the NearReadingModule.
-
         Parameters
         ----------
         name_in : str
@@ -197,7 +195,7 @@ class NearReadingModule(ReadingModule):
         Parameters
         ----------
         filename : str
-            FITS filename.
+            Absolute path and filename of the FITS file.
 
         Returns
         -------
@@ -208,7 +206,7 @@ class NearReadingModule(ReadingModule):
         """
 
         # open the FITS file
-        hdulist = fits.open(os.path.join(self.m_input_location, filename))
+        hdulist = fits.open(filename)
 
         # number of images = total number of HDUs - primary HDU - last HDU (average image)
         nimages = len(hdulist) - 2
@@ -264,7 +262,7 @@ class NearReadingModule(ReadingModule):
         Parameters
         ----------
         filename : str
-            FITS filename.
+            Absolute path and filename of the FITS file.
         im_shape : tuple(int, int, int)
             Shape of a stack of images for chop A or B.
 
@@ -277,7 +275,7 @@ class NearReadingModule(ReadingModule):
         """
 
         # open the FITS file
-        hdulist = fits.open(os.path.join(self.m_input_location, filename))
+        hdulist = fits.open(filename)
 
         # initialize the image arrays for chop A and B
         chopa = np.zeros(im_shape, dtype=np.float32)
@@ -398,7 +396,7 @@ class NearReadingModule(ReadingModule):
 
         for filename in os.listdir(self.m_input_location):
             if filename.endswith('.fits'):
-                files.append(filename)
+                files.append(os.path.join(self.m_input_location, filename))
 
         files.sort()
 
@@ -406,7 +404,7 @@ class NearReadingModule(ReadingModule):
         assert(files), 'No FITS files found in {}.'.format(self.m_input_location)
 
         # get the first exposure number, which should be the first position of the nodding scheme
-        header = fits.getheader(os.path.join(self.m_input_location, files[0]), ext=0)
+        header = fits.getheader(files[0], ext=0)
         first_expno = header['ESO TPL EXPNO']
 
         for i, filename in enumerate(files):
@@ -437,16 +435,17 @@ class NearReadingModule(ReadingModule):
                 set_static_attr(fits_file=filename,
                                 header=header,
                                 config_port=self._m_config_port,
-                                image_out_port=port)
+                                image_out_port=port,
+                                check=True)
 
                 # set the non-static attributes
                 set_nonstatic_attr(header=header,
                                    config_port=self._m_config_port,
-                                   image_out_port=port)
+                                   image_out_port=port,
+                                   check=True)
 
                 # set the remaining attributes
                 set_extra_attr(fits_file=filename,
-                               location=self.m_input_location,
                                nimages=im_shape[0]//2,
                                config_port=self._m_config_port,
                                image_out_port=port,

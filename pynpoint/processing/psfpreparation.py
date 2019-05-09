@@ -31,8 +31,6 @@ class PSFpreparationModule(ProcessingModule):
                  cent_size=None,
                  edge_size=None):
         """
-        Constructor of PSFpreparationModule.
-
         Parameters
         ----------
         name_in : str
@@ -196,8 +194,6 @@ class AngleInterpolationModule(ProcessingModule):
                  name_in="angle_interpolation",
                  data_tag="im_arr"):
         """
-        Constructor of AngleInterpolationModule.
-
         Parameters
         ----------
         name_in : str
@@ -277,8 +273,6 @@ class SortParangModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_sort"):
         """
-        Constructor of SortParangModule.
-
         Parameters
         ----------
         name_in : str
@@ -386,8 +380,6 @@ class AngleCalculationModule(ProcessingModule):
                  name_in="angle_calculation",
                  data_tag="im_arr"):
         """
-        Constructor of AngleCalculationModule.
-
         Parameters
         ----------
         instrument : str
@@ -610,8 +602,6 @@ class SDIpreparationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_SDI"):
         """
-        Constructor of SDIpreparationModule.
-
         Parameters
         ----------
         wavelength : tuple(float, float)

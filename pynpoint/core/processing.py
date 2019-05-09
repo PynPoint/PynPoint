@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
+from pynpoint.util.module import update_arguments
 from pynpoint.util.multistack import StackProcessingCapsule
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
@@ -541,7 +542,10 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         nimages = image_in_port.get_shape()[0]
 
-        sys.stdout.write(message + "\r")
+        if cpu == 1:
+            message += "..."
+
+        sys.stdout.write(message)
         sys.stdout.flush()
 
         if memory == 0 or image_out_port.tag == image_in_port.tag:
@@ -552,11 +556,12 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             result = []
 
             for i in range(nimages):
-                if func_args is None:
-                    result.append(func(images[i, ]))
+                args = update_arguments(i, nimages, func_args)
 
+                if args is None:
+                    result.append(func(images[i, ]))
                 else:
-                    result.append(func(images[i, ], * func_args))
+                    result.append(func(images[i, ], *args))
 
             result = np.asarray(result)
 
@@ -576,10 +581,12 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             image_out_port.del_all_data()
 
             for i in range(nimages):
-                if func_args is None:
+                args = update_arguments(i, nimages, func_args)
+
+                if args is None:
                     result = func(image_in_port[i, ])
                 else:
-                    result = func(image_in_port[i, ], * func_args)
+                    result = func(image_in_port[i, ], *args)
 
                 if result.ndim == 1:
                     image_out_port.append(result, data_dim=2)
@@ -591,7 +598,11 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
 
-            result_shape = apply_function(image_in_port[0, :, :], func, func_args).shape
+            result = apply_function(tmp_data=image_in_port[0, :, :],
+                                    func=func,
+                                    func_args=update_arguments(0, nimages, func_args))
+
+            result_shape = result.shape
 
             out_shape = [nimages]
             for item in result_shape:
@@ -607,11 +618,12 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                              function=func,
                                              function_args=func_args,
                                              stack_size=int(memory/cpu),
-                                             result_shape=result_shape)
+                                             result_shape=result_shape,
+                                             nimages=nimages)
 
             capsule.run()
 
-        sys.stdout.write(message+" [DONE]\n")
+        sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
     def get_all_input_tags(self):

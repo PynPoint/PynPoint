@@ -24,8 +24,6 @@ class TextWritingModule(WritingModule):
                  data_tag="im_arr",
                  header=None):
         """
-        Constructor of TextWritingModule.
-
         Parameters
         ----------
         name_in : str
@@ -106,8 +104,6 @@ class ParangWritingModule(WritingModule):
                  data_tag="im_arr",
                  header="Parallactic angle [deg]"):
         """
-        Constructor of ParangWritingModule.
-
         Parameters
         ----------
         file_name : str
@@ -183,8 +179,6 @@ class AttributeWritingModule(WritingModule):
                  attribute="INDEX",
                  header=None):
         """
-        Constructor of AttributeWritingModule.
-
         Parameters
         ----------
         file_name : str

@@ -66,8 +66,6 @@ class WaveletAnalysisCapsule:
                  padding="none",
                  frequency_resolution=0.5):
         """
-        Constructor of the WaveletAnalysisCapsule.
-
         Parameters
         ----------
         signal_in : numpy.ndarray
