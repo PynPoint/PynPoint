@@ -3,6 +3,7 @@ Pipeline modules for locating, aligning, and centering of the star.
 """
 
 import sys
+import time
 import math
 import warnings
 
@@ -1093,8 +1094,9 @@ class WaffleCenteringModule(ProcessingModule):
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[1]
 
+        start_time = time.time()
         for i in range(nimages):
-            progress(i, nimages, "Running WaffleCenteringModule...")
+            progress(i, nimages, "Running WaffleCenteringModule...", start_time)
 
             image = self.m_image_in_port[i, ]
 
