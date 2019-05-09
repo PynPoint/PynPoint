@@ -84,6 +84,7 @@ Detection Limits
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
+* :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~

@@ -24,8 +24,6 @@ class ParangReadingModule(ReadingModule):
                  data_tag="im_arr",
                  overwrite=False):
         """
-        Constructor of ParangReadingModule.
-
         Parameters
         ----------
         file_name : str
@@ -113,8 +111,6 @@ class AttributeReadingModule(ReadingModule):
                  data_tag="im_arr",
                  overwrite=False):
         """
-        Constructor of AttributeReadingModule.
-
         Parameters
         ----------
         file_name : str
