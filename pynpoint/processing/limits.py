@@ -263,23 +263,7 @@ class ContrastCurveModule(ProcessingModule):
 
         # get the results for every async_result object
         for index, async_result in enumerate(async_results):
-            try:
-                result.append(async_result.get(timeout=0))
-
-            except mp.TimeoutError:
-                warnings.warn(f"The process number {index} did not complete in time. There will "
-                              "not be a result at {positions[index][0]} arcsec, "
-                              "{positions[index][1]} degrees.")
-
-                result.append([positions[index][0], positions[index][1], np.nan, np.nan])
-
-            except ValueError:
-                warnings.warn(f"A ValueError was excepted at {positions[index][0]} arcsec, "
-                              "{positions[index][1]} degrees. Likely the contrast could not "
-                              "be calculated.")
-
-                # ignore math value error in math.log
-                result.append([positions[index][0], positions[index][1], np.nan, np.nan])
+            result.append(async_result.get())
 
         pool.terminate()
 
