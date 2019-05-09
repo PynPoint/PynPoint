@@ -99,8 +99,6 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  median_filter=False,
                  threshold_function="soft"):
         """
-        Constructor of WaveletTimeDenoisingModule.
-
         Parameters
         ----------
         wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \

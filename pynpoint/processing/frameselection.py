@@ -26,8 +26,6 @@ class RemoveFramesModule(ProcessingModule):
                  selected_out_tag="im_arr_selected",
                  removed_out_tag="im_arr_removed"):
         """
-        Constructor of RemoveFramesModule.
-
         Parameters
         ----------
         frames : str, list, tuple, range, or numpy.ndarray
@@ -175,8 +173,6 @@ class FrameSelectionModule(ProcessingModule):
                  aperture=("circular", 0.2),
                  position=(None, None, 0.5)):
         """
-        Constructor of FrameSelectionModule.
-
         Parameters
         ----------
         name_in : str
@@ -450,8 +446,6 @@ class RemoveLastFrameModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_last"):
         """
-        Constructor of RemoveLastFrameModule.
-
         Parameters
         ----------
         name_in : str
@@ -541,8 +535,6 @@ class RemoveStartFramesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_first"):
         """
-        Constructor of RemoveStartFramesModule.
-
         Parameters
         ----------
         frames : int
@@ -657,8 +649,6 @@ class ImageStatisticsModule(ProcessingModule):
                  stat_out_tag="stat",
                  position=None):
         """
-        Constructor of ImageStatisticsModule.
-
         Parameters
         ----------
         name_in : str

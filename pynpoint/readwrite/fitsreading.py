@@ -5,9 +5,10 @@ Module for reading FITS files.
 import os
 import sys
 
-import numpy as np
+from typing import Union, Tuple, List
 
 from astropy.io import fits
+from typeguard import typechecked
 
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.attributes import set_static_attr, set_nonstatic_attr, set_extra_attr
@@ -27,21 +28,20 @@ class FitsReadingModule(ReadingModule):
     in the central database.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in=None,
-                 input_dir=None,
-                 image_tag="im_arr",
-                 overwrite=True,
-                 check=True,
-                 filenames=None):
+                 name_in: str,
+                 input_dir: str = None,
+                 image_tag: str = "im_arr",
+                 overwrite: bool = True,
+                 check: bool = True,
+                 filenames: Union[str, List] = None) -> None:
         """
-        Constructor of FitsReadingModule.
-
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-        input_dir : str
+        input_dir : str, None
             Input directory where the FITS files are located. If not specified the Pypeline default
             directory is used.
         image_tag : str
@@ -50,8 +50,10 @@ class FitsReadingModule(ReadingModule):
         overwrite : bool
             Overwrite existing data and header in the central database.
         check : bool
-            Check if the attributes from the configuration file are present in the FITS header.
-        filenames : str or list(str, )
+            Print a warning if certain attributes from the configuration file are not present in
+            the FITS header. If set to `False`, attributes are still written to the dataset but
+            there will be no warning if a keyword is not found in the FITS header.
+        filenames : str, list(str, ), None
             If a string, then a path of a text file should be provided. This text file should
             contain a list of FITS files. If a list, then the paths of the FITS files should be
             provided directly. If set to None, the FITS files in the `input_dir` are read. All
@@ -72,15 +74,10 @@ class FitsReadingModule(ReadingModule):
         self.m_check = check
         self.m_filenames = filenames
 
-
-        if not isinstance(filenames, (type(None), list, tuple, str)):
-            raise TypeError("The 'filenames' parameter should contain a string or list with "
-                            "strings.")
-
+    @typechecked
     def _read_single_file(self,
-                          fits_file,
-                          location,
-                          overwrite_tags):
+                          fits_file: str,
+                          overwrite_tags: List) -> Union[fits.header.Header, Tuple]:
         """
         Internal function which reads a single FITS file and appends it to the database. The
         function gets a list of *overwriting_tags*. If a new key (header entry or image data) is
@@ -92,10 +89,8 @@ class FitsReadingModule(ReadingModule):
         Parameters
         ----------
         fits_file : str
-            Name of the FITS file.
-        location : str
-            Directory where the FITS file is located.
-        overwrite_tags : bool
+            Absolute path and filename of the FITS file.
+        overwrite_tags : list(str, )
             The list of database tags that will not be overwritten.
 
         Returns
@@ -106,7 +101,9 @@ class FitsReadingModule(ReadingModule):
             Image shape.
         """
 
-        hdulist = fits.open(os.path.join(location, fits_file))
+        print(fits_file)
+
+        hdulist = fits.open(fits_file)
         images = hdulist[0].data.byteswap().newbyteorder()
 
         if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
@@ -131,7 +128,8 @@ class FitsReadingModule(ReadingModule):
 
         return header, images.shape
 
-    def _txt_file_list(self):
+    @typechecked
+    def _txt_file_list(self) -> List:
         """
         Internal function to import a list of FITS files from a text file.
         """
@@ -139,11 +137,16 @@ class FitsReadingModule(ReadingModule):
         with open(self.m_filenames) as file_obj:
             files = file_obj.readlines()
 
-        files = [x.strip() for x in files] # get rid of newlines
+        # remove newlines
+        files = [x.strip() for x in files]
 
-        return list(filter(None, files)) # get rid of empty lines
+        # remove of empty lines
+        files = filter(None, files)
 
-    def run(self):
+        return list(files)
+
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Looks for all FITS files in the input directory and imports the
         images into the database. Note that previous database information is overwritten if
@@ -159,18 +162,24 @@ class FitsReadingModule(ReadingModule):
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-            location = os.getcwd()
 
-        elif isinstance(self.m_filenames, (list, tuple)):
+            for item in files:
+                if not os.path.isabs(item):
+                    raise ValueError(f'The text file {self.m_filenames} should contain absolute '
+                                     'file paths.')
+
+        elif isinstance(self.m_filenames, list):
             files = self.m_filenames
-            location = os.getcwd()
+
+            for item in files:
+                if not os.path.isabs(item):
+                    raise ValueError('The list of \'filenames\' should contain absolute file '
+                                     'paths.')
 
         elif isinstance(self.m_filenames, type(None)):
-            location = self.m_input_location
-
-            for filename in os.listdir(location):
+            for filename in os.listdir(self.m_input_location):
                 if filename.endswith('.fits') and not filename.startswith('._'):
-                    files.append(filename)
+                    files.append(os.path.join(self.m_input_location, filename))
 
             assert(files), 'No FITS files found in %s.' % self.m_input_location
 
@@ -182,25 +191,25 @@ class FitsReadingModule(ReadingModule):
         for i, fits_file in enumerate(files):
             progress(i, len(files), "Running FitsReadingModule...")
 
-            header, shape = self._read_single_file(fits_file, location, overwrite_tags)
+            header, shape = self._read_single_file(fits_file, overwrite_tags)
 
             if len(shape) == 2:
                 nimages = 1
             elif len(shape) == 3:
                 nimages = shape[0]
 
-            if self.m_check:
-                set_static_attr(fits_file=fits_file,
-                                header=header,
-                                config_port=self._m_config_port,
-                                image_out_port=self.m_image_out_port)
+            set_static_attr(fits_file=fits_file,
+                            header=header,
+                            config_port=self._m_config_port,
+                            image_out_port=self.m_image_out_port,
+                            check=self.m_check)
 
-                set_nonstatic_attr(header=header,
-                                   config_port=self._m_config_port,
-                                   image_out_port=self.m_image_out_port)
+            set_nonstatic_attr(header=header,
+                               config_port=self._m_config_port,
+                               image_out_port=self.m_image_out_port,
+                               check=self.m_check)
 
             set_extra_attr(fits_file=fits_file,
-                           location=location,
                            nimages=nimages,
                            config_port=self._m_config_port,
                            image_out_port=self.m_image_out_port,

@@ -139,3 +139,12 @@ class TestImageResizing:
         assert np.allclose(data[0, 50, 50], 0.028455980719223083, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 0.00011848528804183087, rtol=limit, atol=0.)
         assert data.shape == (40, 91, 93)
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 4
+
+        self.pipeline.run_module("remove")
+
+        data_multi = self.pipeline.get_data("remove")
+        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data.shape == data_multi.shape

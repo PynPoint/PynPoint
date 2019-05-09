@@ -23,8 +23,6 @@ class CropImagesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cropped"):
         """
-        Constructor of CropImagesModule.
-
         Parameters
         ----------
         size : float
@@ -105,8 +103,6 @@ class ScaleImagesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_scaled"):
         """
-        Constructor of ScaleImagesModule.
-
         Parameters
         ----------
         scaling : tuple(float, float, float)
@@ -216,8 +212,6 @@ class AddLinesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_add"):
         """
-        Constructor of AddLinesModule.
-
         Parameters
         ----------
         lines : tuple(int, int, int, int)
@@ -295,8 +289,6 @@ class RemoveLinesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut"):
         """
-        Constructor of RemoveLinesModule.
-
         Parameters
         ----------
         lines : tuple(int, int, int, int)
