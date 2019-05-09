@@ -45,8 +45,6 @@ class ContrastCurveModule(ProcessingModule):
                  snr_inject=100.,
                  **kwargs):
         """
-        Constructor of ContrastCurveModule.
-
         Parameters
         ----------
         name_in : str
@@ -337,19 +335,17 @@ class MassLimitsModule(ProcessingModule):
                  instr_filter="L\'"):
 
         """
-        Constructor of MassLimitsModule.
-
         Parameters
         ----------
         model_file: str
-            Relative path to the file containing the model data. Must be in the same format as the
+            Absolute path to the file containing the model data. Must be in the same format as the
             grids found on https://phoenix.ens-lyon.fr/Grids/. Any of the isochrones files from
             this website can be used.
         star_prop : dict
             Dictionary containing host star properties. Must have the following keys:
-             - 'magnitude': Apparent magnitude, in the same band as the `instr_filter`.
-             - 'distance': Distance in parsec.
-             - 'age': Age of the system in the Myr.
+             - ``magnitude`` - Apparent magnitude, in the same band as the `instr_filter`.
+             - ``distance`` - Distance in parsec.
+             - ``age`` - Age of the system in the Myr.
         name_in : str
             Unique name of the module instance.
         contrast_in_tag : str
@@ -374,7 +370,10 @@ class MassLimitsModule(ProcessingModule):
         self.m_star_abs = star_prop['magnitude'] - 5.*math.log10(star_prop['distance']/10.)
 
         self.m_instr_filter = instr_filter
-        self.m_model_file = os.path.join(os.getcwd(), model_file)
+        self.m_model_file = model_file
+
+        if not os.path.isabs(self.m_model_file):
+            raise ValueError('The model_file should be a string with an absolute file path.')
 
         self.m_contrast_in_port = self.add_input_port(contrast_in_tag)
         self.m_mass_out_port = self.add_output_port(mass_out_tag)

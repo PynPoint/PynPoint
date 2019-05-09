@@ -29,8 +29,6 @@ class Hdf5ReadingModule(ReadingModule):
                  input_dir=None,
                  tag_dictionary=None):
         """
-        Constructor of Hdf5ReadingModule.
-
         Parameters
         ----------
         name_in : str

@@ -31,8 +31,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
                  mean_out_tag="im_arr_mean",
                  background_out_tag="im_arr_background"):
         """
-        Constructor of PCABackgroundPreparationModule.
-
         Parameters
         ----------
         dither : tuple(int, int, int)
@@ -284,8 +282,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  mask_out_tag=None,
                  **kwargs):
         """
-        Constructor of PCABackgroundSubtractionModule.
-
         Parameters
         ----------
         pca_number : int
@@ -538,8 +534,6 @@ class DitheringBackgroundModule(ProcessingModule):
                  subtract_mean=False,
                  **kwargs):
         """
-        Constructor of DitheringBackgroundModule.
-
         Parameters
         ----------
         name_in : str

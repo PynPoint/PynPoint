@@ -100,11 +100,10 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
 
         multiprocessing.Process.__init__(self)
 
-        self.m_data_mutex = data_mutex_in
-        self.m_task_queue = tasks_queue_in
-
-        self.m_num_proc = num_proc
         self.m_data_in_port = data_port_in
+        self.m_task_queue = tasks_queue_in
+        self.m_data_mutex = data_mutex_in
+        self.m_num_proc = num_proc
 
     def create_poison_pills(self):
         """
@@ -363,7 +362,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
         ----------
         image_in_port : pynpoint.core.dataio.InputPort
             Port to the input data.
-        image_in_port : pynpoint.core.dataio.OutputPort
+        image_out_port : pynpoint.core.dataio.OutputPort
             Port to the place where the output data will be stored.
         num_proc : int
             Number of task processors.
@@ -523,6 +522,7 @@ def to_slice(tuple_slice):
 
     slices = []
     for item in tuple_slice:
+        # slice(start, stop step)
         slices.append(slice(item[0], item[1], item[2]))
 
     return tuple(slices)
