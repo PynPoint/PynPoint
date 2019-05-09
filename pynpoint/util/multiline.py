@@ -41,10 +41,7 @@ class LineReader(TaskCreator):
             None
         """
 
-        super(LineReader, self).__init__(data_port_in,
-                                         tasks_queue_in,
-                                         data_mutex_in,
-                                         num_proc)
+        super(LineReader, self).__init__(data_port_in, tasks_queue_in, data_mutex_in, num_proc)
 
         self.m_data_length = data_length
 

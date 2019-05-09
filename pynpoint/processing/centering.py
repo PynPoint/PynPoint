@@ -37,8 +37,6 @@ class StarExtractionModule(ProcessingModule):
                  fwhm_star=0.2,
                  position=None):
         """
-        Constructor of StarExtractionModule.
-
         Parameters
         ----------
         name_in : str
@@ -118,9 +116,9 @@ class StarExtractionModule(ProcessingModule):
                                  "equal in size to the number of images in 'image_in_tag'.")
 
             if self.m_position.ndim == 2 and cpu > 1:
-                raise UserError("Multiprocessing is only implemented for a single position. "
-                                "Set CPU=1 in the configuration file or use a single "
-                                "value for the 'position' argument.")
+                raise ValueError("Multiprocessing is only implemented for a single position. "
+                                 "Set CPU=1 in the configuration file or use a single "
+                                 "value for the 'position' argument.")
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
         self.m_fwhm_star = int(math.ceil(self.m_fwhm_star/pixscale))
@@ -158,9 +156,9 @@ class StarExtractionModule(ProcessingModule):
                                   "pixel (image index = "+str(self.m_count)+", pixel [x, y] = "
                                   +str([starpos[0]]+[starpos[1]])+"). Using the center of the "
                                   "image instead.")
-                    
+
                     index.append(self.m_count)
-                    
+
                 else:
                     warnings.warn("PSF size is too large to crop the image around the brightest "
                                   "pixel. Using the center of the image instead.")
@@ -214,8 +212,6 @@ class StarAlignmentModule(ProcessingModule):
                  num_references=10,
                  subframe=None):
         """
-        Constructor of StarAlignmentModule.
-
         Parameters
         ----------
         name_in : str
@@ -387,8 +383,6 @@ class StarCenteringModule(ProcessingModule):
                  filter_size=None,
                  **kwargs):
         """
-        Constructor of StarCenteringModule.
-
         Parameters
         ----------
         name_in : str
@@ -683,7 +677,7 @@ class StarCenteringModule(ProcessingModule):
                     self.m_mask_out_port.append(mask, data_dim=3)
 
             if self.m_sign == "negative":
-                image = -image + np.abs(np.min(-image))
+                image = -1.*image + np.abs(np.min(-1.*image))
 
             if self.m_radius:
                 image = image[rr_ap < self.m_radius]
@@ -752,7 +746,6 @@ class StarCenteringModule(ProcessingModule):
 
             return shift_image(image, (-popt[1], -popt[0]), self.m_interpolation)
 
-        ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[-1]
 
         nimages = self.m_image_in_port.get_shape()[0]
@@ -806,8 +799,6 @@ class ShiftImagesModule(ProcessingModule):
                  image_out_tag: str = "im_arr_shifted",
                  interpolation: str = "spline") -> None:
         """
-        Constructor of ShiftImagesModule.
-
         Parameters
         ----------
         shift_xy : tuple(float, float), str
@@ -900,8 +891,6 @@ class WaffleCenteringModule(ProcessingModule):
                  sigma=0.06,
                  dither=False):
         """
-        Constructor of WaffleCenteringModule.
-
         Parameters
         ----------
         name_in : str
@@ -959,7 +948,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        def _get_center(ndim, center):
+        def _get_center(center):
             center_frame = self.m_center_in_port[0, ]
 
             if center_shape[0] > 1:
@@ -975,17 +964,18 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
-        center_ndim = self.m_center_in_port.get_ndim()
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
 
-        center_frame, self.m_center = _get_center(center_ndim, self.m_center)
+        center_frame, self.m_center = _get_center(self.m_center)
 
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError("Science and center images should have the same shape.")
 
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
         self.m_sigma /= pixscale
+
         if self.m_size is not None:
             self.m_size = int(math.ceil(self.m_size/pixscale))
 
@@ -1023,8 +1013,10 @@ class WaffleCenteringModule(ProcessingModule):
                                           size=ref_image_size)
 
             # find maximum in tmp image
-            y_max, x_max = np.unravel_index(indices=np.argmax(tmp_center_frame),
-                                            shape=tmp_center_frame.shape)
+            coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                      shape=tmp_center_frame.shape)
+
+            y_max, x_max = coords[0], coords[1]
 
             pixmax = tmp_center_frame[y_max, x_max]
             max_pos = np.array([x_max, y_max]).reshape(1, 2)
@@ -1036,8 +1028,10 @@ class WaffleCenteringModule(ProcessingModule):
             dist = np.inf
 
             while dist > 2:
-                y_max_new, x_max_new = np.unravel_index(indices=np.argmax(tmp_center_frame),
-                                                        shape=tmp_center_frame.shape)
+                coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                          shape=tmp_center_frame.shape)
+
+                y_max_new, x_max_new = coords[0], coords[1]
 
                 pixmax_new = tmp_center_frame[y_max_new, x_max_new]
 

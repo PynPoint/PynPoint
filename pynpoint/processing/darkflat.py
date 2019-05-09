@@ -64,8 +64,6 @@ class DarkCalibrationModule(ProcessingModule):
                  dark_in_tag="dark_arr",
                  image_out_tag="dark_cal_arr"):
         """
-        Constructor of DarkCalibrationModule.
-
         Parameters
         ----------
         name_in : str
@@ -129,8 +127,6 @@ class FlatCalibrationModule(ProcessingModule):
                  flat_in_tag="flat_arr",
                  image_out_tag="flat_cal_arr"):
         """
-        Constructor of FlatCalibrationModule.
-
         Parameters
         ----------
         name_in : str

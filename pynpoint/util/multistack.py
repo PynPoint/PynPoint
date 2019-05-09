@@ -1,5 +1,5 @@
 """
-Utilities for multiprocessing of stacks of images with the poison pill pattern.
+Utilities for multiprocessing of stacks of images.
 """
 
 import sys
@@ -39,7 +39,7 @@ class StackReader(TaskCreator):
         stack_size: int
             Number of images per stack.
         result_shape : tuple(int, int, int)
-            Shape of the array with output results (usually a stack of images).
+            Shape of the array with the output results (usually a stack of images).
 
         Returns
         -------
@@ -47,10 +47,7 @@ class StackReader(TaskCreator):
             None
         """
 
-        super(StackReader, self).__init__(data_port_in,
-                                          tasks_queue_in,
-                                          data_mutex_in,
-                                          num_proc)
+        super(StackReader, self).__init__(data_port_in, tasks_queue_in, data_mutex_in, num_proc)
 
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
@@ -74,7 +71,10 @@ class StackReader(TaskCreator):
                 # read images from i to j
                 tmp_data = self.m_data_in_port[i:j, ]
 
+            # first dimensiosn (start, stop, step)
             stack_slice = [(i, j, None)]
+
+            # additional dimensions
             for _ in self.m_result_shape:
                 stack_slice.append((None, None, None))
 
@@ -141,13 +141,17 @@ class StackTaskProcessor(TaskProcessor):
         result_nimages = tmp_task.m_input_data.shape[0]
         result_shape = tmp_task.m_job_parameter[0]
 
+        # first dimension
         full_shape = [result_nimages]
+
+        # additional dimensions
         for item in result_shape:
             full_shape.append(item)
 
         result_arr = np.zeros(full_shape)
 
         for i in range(result_nimages):
+            # job parameter contains (result_shape, tuple(stack_slice))
             index = tmp_task.m_job_parameter[1][0][0] + i
 
             args = update_arguments(index, self.m_nimages, self.m_function_args)

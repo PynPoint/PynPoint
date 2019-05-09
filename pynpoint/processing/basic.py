@@ -21,8 +21,6 @@ class SubtractImagesModule(ProcessingModule):
                  image_out_tag="im_arr_subtract",
                  scaling=1.):
         """
-        Constructor of SubtractImagesModule.
-
         Parameters
         ----------
         image_in_tags : tuple(str, str)
@@ -99,8 +97,6 @@ class AddImagesModule(ProcessingModule):
                  image_out_tag="im_arr_add",
                  scaling=1.):
         """
-        Constructor of AddImagesModule.
-
         Parameters
         ----------
         image_in_tags : tuple(str, str)
@@ -177,8 +173,6 @@ class RotateImagesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_rot"):
         """
-        Constructor of RotateImagesModule.
-
         Parameters
         ----------
         scaling : float
