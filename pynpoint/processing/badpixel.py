@@ -391,7 +391,7 @@ class BadPixelMapModule(ProcessingModule):
 
             max_dark = np.max(dark)
 
-            sys.stdout.write("Threshold dark frame [counts] ="+str(max_dark*self.m_dark_threshold)+'\n')
+            sys.stdout.write(f"Threshold dark frame [counts] = {max_dark*self.m_dark_threshold}\n")
             sys.stdout.flush()
 
             bpmap = np.ones(dark.shape)
@@ -405,7 +405,7 @@ class BadPixelMapModule(ProcessingModule):
 
             max_flat = np.max(flat)
 
-            sys.stdout.write("Threshold flat field [counts] ="+str(max_flat*self.m_flat_threshold)+'\n')
+            sys.stdout.write(f"Threshold flat field [counts] = {max_flat*self.m_flat_threshold}\n")
             sys.stdout.flush()
 
             if self.m_dark_port is None:
