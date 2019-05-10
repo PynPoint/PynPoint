@@ -3,6 +3,7 @@ Pipeline modules for photometric and astrometric measurements.
 """
 
 import sys
+import time
 
 from typing import Tuple
 
@@ -120,8 +121,9 @@ class FakePlanetModule(ProcessingModule):
 
         frames = memory_frames(memory, im_shape[0])
 
+        start_time = time.time()
         for j, _ in enumerate(frames[:-1]):
-            progress(j, len(frames[:-1]), "Running FakePlanetModule...")
+            progress(j, len(frames[:-1]), "Running FakePlanetModule...", start_time)
 
             images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
@@ -503,8 +505,9 @@ class FalsePositiveModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
 
+        start_time = time.time()
         for j in range(nimages):
-            progress(j, nimages, "Running FalsePositiveModule...")
+            progress(j, nimages, "Running FalsePositiveModule...", start_time)
 
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
@@ -857,9 +860,9 @@ class MCMCsamplingModule(ProcessingModule):
                                                variance,
                                                self.m_residuals]),
                                         threads=cpu)
-
+        start_time = time.time()
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, "Running MCMCsamplingModule...")
+            progress(i, self.m_nsteps, "Running MCMCsamplingModule...", start_time)
 
         sys.stdout.write("Running MCMCsamplingModule... [DONE]\n")
         sys.stdout.flush()

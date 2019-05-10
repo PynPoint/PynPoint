@@ -3,6 +3,7 @@ Pipeline modules for PCA-based background subtraction.
 """
 
 import sys
+import time
 import math
 import warnings
 
@@ -165,8 +166,10 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         # Separate star and background cubes. Subtract mean background.
         count = 0
+
+        start_time = time.time()
         for i, item in enumerate(nframes):
-            progress(i, len(nframes), "Running PCABackgroundPreparationModule...")
+            progress(i, len(nframes), "Running PCABackgroundPreparationModule...", start_time)
 
             im_tmp = self.m_image_in_port[count:count+item, ]
 
@@ -473,8 +476,9 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Calculating background model...")
+            progress(i, len(frames[:-1]), "Calculating background model...", start_time)
 
             im_star = self.m_star_in_port[frames[i]:frames[i+1], ]
 

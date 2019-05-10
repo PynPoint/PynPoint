@@ -4,6 +4,7 @@ Module for reading HDF5 files that were created with the Hdf5WritingModule.
 
 import os
 import sys
+import time
 import warnings
 
 import h5py
@@ -132,9 +133,10 @@ class Hdf5ReadingModule(ReadingModule):
             for tmp_file in os.listdir(self.m_input_location):
                 if tmp_file.endswith('.hdf5') or tmp_file.endswith('.h5'):
                     files.append(tmp_dir + str(tmp_file))
-
+        
+        start_time = time.time()
         for i, tmp_file in enumerate(files):
-            progress(i, len(files), "Running Hdf5ReadingModule...")
+            progress(i, len(files), "Running Hdf5ReadingModule...", start_time)
             self._read_single_hdf5(tmp_file)
 
         sys.stdout.write("Running Hdf5ReadingModule... [DONE]\n")

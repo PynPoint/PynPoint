@@ -3,6 +3,7 @@ Pipeline modules for basic image operations.
 """
 
 import sys
+import time
 
 from scipy.ndimage import rotate
 
@@ -69,8 +70,9 @@ class SubtractImagesModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running SubtractImagesModule...")
+            progress(i, len(frames[:-1]), "Running SubtractImagesModule...", start_time)
 
             images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
             images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
@@ -145,8 +147,9 @@ class AddImagesModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running AddImagesModule...")
+            progress(i, len(frames[:-1]), "Running AddImagesModule...", start_time)
 
             images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
             images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
@@ -221,8 +224,9 @@ class RotateImagesModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running RotateImagesModule...")
+            progress(i, len(frames[:-1]), "Running RotateImagesModule...", start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
