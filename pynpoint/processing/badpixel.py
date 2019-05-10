@@ -199,8 +199,6 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                  sigma=5,
                  iterate=1):
         """
-        Constructor of BadPixelSigmaFilterModule.
-
         Parameters
         ----------
         name_in : str
@@ -300,12 +298,12 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         self.apply_function_to_images(_bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelSigmaFilterModule...",
+                                      "Running BadPixelSigmaFilterModule",
                                       func_args=(self.m_box,
                                                  self.m_sigma,
                                                  self.m_iterate))
 
-        history = "sigma = "+str(self.m_sigma)
+        history = f"sigma = {self.m_sigma}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("BadPixelSigmaFilterModule", history)
 
@@ -329,8 +327,6 @@ class BadPixelMapModule(ProcessingModule):
                  dark_threshold=0.2,
                  flat_threshold=0.2):
         """
-        Constructor of BadPixelMapModule.
-
         Parameters
         ----------
         name_in : str
@@ -345,10 +341,10 @@ class BadPixelMapModule(ProcessingModule):
             Tag of the database entry with the bad pixel map that is written as output.
         dark_threshold : float
             Fractional threshold with respect to the maximum pixel value in the dark frame to flag
-            bad pixels.
+            bad pixels. Pixels `brighter` than the fractional threshold are flagged as bad.
         flat_threshold : float
             Fractional threshold with respect to the maximum pixel value in the flat field to flag
-            bad pixels.
+            bad pixels. Pixels `fainter` than the fractional threshold are flagged as bad.
 
         Returns
         -------
@@ -395,7 +391,7 @@ class BadPixelMapModule(ProcessingModule):
 
             max_dark = np.max(dark)
 
-            sys.stdout.write("Threshold dark frame [counts] ="+str(max_dark*self.m_dark_threshold)+'\n')
+            sys.stdout.write(f"Threshold dark frame [counts] = {max_dark*self.m_dark_threshold}\n")
             sys.stdout.flush()
 
             bpmap = np.ones(dark.shape)
@@ -409,7 +405,7 @@ class BadPixelMapModule(ProcessingModule):
 
             max_flat = np.max(flat)
 
-            sys.stdout.write("Threshold flat field [counts] ="+str(max_flat*self.m_flat_threshold)+'\n')
+            sys.stdout.write(f"Threshold flat field [counts] = {max_flat*self.m_flat_threshold}\n")
             sys.stdout.flush()
 
             if self.m_dark_port is None:
@@ -421,14 +417,14 @@ class BadPixelMapModule(ProcessingModule):
             if not dark.shape == flat.shape:
                 raise ValueError("Dark and flat images should have the same shape.")
 
-        self.m_bp_map_out_port.set_all(bpmap, data_dim=2)
+        self.m_bp_map_out_port.set_all(bpmap, data_dim=3)
 
         if self.m_dark_port is not None:
             self.m_bp_map_out_port.copy_attributes(self.m_dark_port)
         elif self.m_flat_port is not None:
             self.m_bp_map_out_port.copy_attributes(self.m_flat_port)
 
-        history = "dark = "+str(self.m_dark_threshold)+", flat = "+str(self.m_flat_threshold)
+        history = f"dark = {self.m_dark_threshold}, flat = {self.m_flat_threshold}"
         self.m_bp_map_out_port.add_history("BadPixelMapModule", history)
 
         self.m_bp_map_out_port.close_port()
@@ -446,8 +442,6 @@ class BadPixelInterpolationModule(ProcessingModule):
                  image_out_tag="im_arr_bp_clean",
                  iterations=1000):
         """
-        Constructor of BadPixelInterpolationModule.
-
         Parameters
         ----------
         name_in : str
@@ -485,7 +479,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             None
         """
 
-        bad_pixel_map = self.m_bp_map_in_port.get_all()
+        bad_pixel_map = self.m_bp_map_in_port.get_all()[0, ]
         im_shape = self.m_image_in_port.get_shape()
 
         if self.m_iterations > im_shape[1]*im_shape[2]:
@@ -504,9 +498,9 @@ class BadPixelInterpolationModule(ProcessingModule):
         self.apply_function_to_images(_image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running BadPixelInterpolationModule...")
+                                      "Running BadPixelInterpolationModule")
 
-        history = "iterations = "+str(self.m_iterations)
+        history = f"iterations = {self.m_iterations}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("BadPixelInterpolationModule", history)
         self.m_image_out_port.close_port()
@@ -526,8 +520,6 @@ class BadPixelTimeFilterModule(ProcessingModule):
                  image_out_tag="im_arr_bp_time",
                  sigma=(5., 5.)):
         """
-        Constructor of BadPixelTimeFilterModule.
-
         Parameters
         ----------
         name_in : str
@@ -594,7 +586,7 @@ class BadPixelTimeFilterModule(ProcessingModule):
         sys.stdout.write(" [DONE]\n")
         sys.stdout.flush()
 
-        history = "sigma = "+str(self.m_sigma)
+        history = f"sigma = {self.m_sigma}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("BadPixelTimeFilterModule", history)
         self.m_image_out_port.close_port()
@@ -614,8 +606,6 @@ class ReplaceBadPixelsModule(ProcessingModule):
                  size=2,
                  replace="mean"):
         """
-        Constructor of ReplaceBadPixelsModule.
-
         Parameters
         ----------
         name_in : str
@@ -659,7 +649,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
             None
         """
 
-        bpmap = self.m_map_in_port.get_all()
+        bpmap = self.m_map_in_port.get_all()[0, ]
         index = np.argwhere(bpmap == 0)
 
         def _replace_pixels(image, index):
@@ -688,10 +678,10 @@ class ReplaceBadPixelsModule(ProcessingModule):
         self.apply_function_to_images(_replace_pixels,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ReplaceBadPixelsModule...",
+                                      "Running ReplaceBadPixelsModule",
                                       func_args=(index, ))
 
-        history = "replace = "+self.m_replace
+        history = f"replace = {self.m_replace}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("ReplaceBadPixelsModule", history)
         self.m_image_out_port.close_port()

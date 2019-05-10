@@ -40,7 +40,7 @@ Background Subtraction
 
 * :class:`~pynpoint.processing.background.SimpleBackgroundSubtractionModule`: Simple background subtraction for dithering datasets.
 * :class:`~pynpoint.processing.background.MeanBackgroundSubtractionModule`: Mean background subtraction for dithering datasets.
-* :class:`~pynpoint.processing.background.LineSubtractionModule` (multiproc): Subtraction of striped detector artifacts.
+* :class:`~pynpoint.processing.background.LineSubtractionModule` (CPU): Subtraction of striped detector artifacts.
 * :class:`~pynpoint.processing.background.NoddingBackgroundModule`: Background subtraction for nodding datasets.
 
 Bad Pixel Cleaning
@@ -84,6 +84,7 @@ Detection Limits
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
+* :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
@@ -101,7 +102,7 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.FrameSelectionModule`: Frame selection to remove low-quality image.
 * :class:`~pynpoint.processing.frameselection.RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
 * :class:`~pynpoint.processing.frameselection.RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
-* :class:`~pynpoint.processing.frameselection.ImageStatisticsModule`: Compute statistics of the pixel values for each image.
+* :class:`~pynpoint.processing.frameselection.ImageStatisticsModule` (CPU): Compute statistics of the pixel values for each image.
 
 Image Resizing
 ~~~~~~~~~~~~~~

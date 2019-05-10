@@ -4,6 +4,7 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 
 import os
 import sys
+import time
 import shlex
 import subprocess
 import threading
@@ -33,14 +34,9 @@ class NearReadingModule(ReadingModule):
     def __init__(self,
                  name_in='burst',
                  input_dir=None,
-                 noda_chopa_tag='noda_chopa',
-                 noda_chopb_tag='noda_chopb',
-                 nodb_chopa_tag='nodb_chopa',
-                 nodb_chopb_tag='nodb_chopb',
-                 scheme='ABBA'):
+                 chopa_out_tag='chopa',
+                 chopb_out_tag='chopb'):
         """
-        Constructor of the NearReadingModule.
-
         Parameters
         ----------
         name_in : str
@@ -48,16 +44,12 @@ class NearReadingModule(ReadingModule):
         input_dir : str, None
             Input directory where the FITS files are located. The default input folder of the
             Pypeline is used if set to None.
-        noda_chopa_tag : str
-            Database entry where chop A from the nod A data will be stored.
-        noda_chopb_tag : str
-            Database entry where chop B from the nod A data will be stored.
-        nodb_chopa_tag : str
-            Database entry where chop A from the nod B data will be stored.
-        nodb_chopb_tag : str
-            Database entry where chop B from the nod B data will be stored.
-        scheme : str
-            Nodding scheme ('ABBA' or 'ABAB').
+        chopa_out_tag : str
+            Database entry where the chop A images will be stored. Should be different from
+            `chop_b_out_tag`.
+        chopb_out_tag : str
+            Database entry where the chop B images will be stored. Should be different from
+            `chop_a_out_tag`.
 
         Returns
         -------
@@ -67,24 +59,8 @@ class NearReadingModule(ReadingModule):
 
         super(NearReadingModule, self).__init__(name_in, input_dir)
 
-        out_tags = (noda_chopa_tag, noda_chopb_tag, nodb_chopa_tag, nodb_chopb_tag)
-
-        # select all unique output tag names
-        seen = set()
-        unique_tags = [tag for tag in out_tags if tag not in seen and not seen.add(tag)]
-
-        if len(unique_tags) != 4:
-            raise ValueError('Output ports should have different name tags.')
-
-        # create the 4 output ports for nod A/B and chop A/B
-        self.m_image_out_port = []
-        for tag in out_tags:
-            self.m_image_out_port.append(self.add_output_port(tag))
-
-        self.m_scheme = scheme
-
-        if self.m_scheme != 'ABBA' and self.m_scheme != 'ABAB':
-            raise ValueError('Nodding scheme argument should be set to \'ABBA\' or \'ABAB\'.')
+        self.m_chopa_out_port = self.add_output_port(chopa_out_tag)
+        self.m_chopb_out_port = self.add_output_port(chopb_out_tag)
 
     def _uncompress_file(self,
                          filename):
@@ -136,8 +112,9 @@ class NearReadingModule(ReadingModule):
             # subdivide the file indices by number of CPU
             indices = memory_frames(cpu, len(files))
 
+            start_time = time.time()
             for i, _ in enumerate(indices[:-1]):
-                progress(i, len(indices[:-1]), 'Uncompressing NEAR data...')
+                progress(i, len(indices[:-1]), 'Uncompressing NEAR data...', start_time)
 
                 # select subset of compressed files
                 subset = files[indices[i]:indices[i+1]]
@@ -197,7 +174,7 @@ class NearReadingModule(ReadingModule):
         Parameters
         ----------
         filename : str
-            FITS filename.
+            Absolute path and filename of the FITS file.
 
         Returns
         -------
@@ -208,7 +185,7 @@ class NearReadingModule(ReadingModule):
         """
 
         # open the FITS file
-        hdulist = fits.open(os.path.join(self.m_input_location, filename))
+        hdulist = fits.open(filename)
 
         # number of images = total number of HDUs - primary HDU - last HDU (average image)
         nimages = len(hdulist) - 2
@@ -264,7 +241,7 @@ class NearReadingModule(ReadingModule):
         Parameters
         ----------
         filename : str
-            FITS filename.
+            Absolute path and filename of the FITS file.
         im_shape : tuple(int, int, int)
             Shape of a stack of images for chop A or B.
 
@@ -277,7 +254,7 @@ class NearReadingModule(ReadingModule):
         """
 
         # open the FITS file
-        hdulist = fits.open(os.path.join(self.m_input_location, filename))
+        hdulist = fits.open(filename)
 
         # initialize the image arrays for chop A and B
         chopa = np.zeros(im_shape, dtype=np.float32)
@@ -328,46 +305,6 @@ class NearReadingModule(ReadingModule):
 
         return chopa, chopb
 
-    def get_nod(self,
-                header,
-                first_expno):
-        """
-        Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
-        contains only a general header. The subsequent HDUs contain a single image with a small
-        extra header. The last HDU is the average of all images, which will be ignored.
-
-        Parameters
-        ----------
-        astropy.io.fits.header.Header
-            Primary header, which is valid for all images.
-        first_expno : int
-            First exposure number. Should be the first position of the nodding scheme.
-
-        Returns
-        -------
-        str
-            Nod position ('A' or 'B').
-        """
-
-        # get the exposure number
-        expno = header['ESO TPL EXPNO']
-
-        # determine the nod position (A or B) for the selected nodding scheme
-        # relative to the exposure number of the first FITS file that is read
-        if self.m_scheme == 'ABBA':
-            if (expno-first_expno)%4 == 0 or (expno-first_expno)%4 == 3:
-                nod = 'A'
-            elif (expno-first_expno)%4 == 1 or (expno-first_expno)%4 == 2:
-                nod = 'B'
-
-        elif self.m_scheme == 'ABAB':
-            if (expno-first_expno)%2 == 0:
-                nod = 'A'
-            elif (expno-first_expno)%2 == 1:
-                nod = 'B'
-
-        return nod
-
     def run(self):
         """
         Run the module. The FITS files are collected from the input directory and uncompressed if
@@ -386,9 +323,10 @@ class NearReadingModule(ReadingModule):
         """
 
         # clear the output ports
-        for port in self.m_image_out_port:
-            port.del_all_data()
-            port.del_all_attributes()
+        self.m_chopa_out_port.del_all_data()
+        self.m_chopa_out_port.del_all_attributes()
+        self.m_chopb_out_port.del_all_data()
+        self.m_chopb_out_port.del_all_attributes()
 
         # uncompress the FITS files if needed
         self.uncompress()
@@ -398,55 +336,46 @@ class NearReadingModule(ReadingModule):
 
         for filename in os.listdir(self.m_input_location):
             if filename.endswith('.fits'):
-                files.append(filename)
+                files.append(os.path.join(self.m_input_location, filename))
 
         files.sort()
 
         # check if there are FITS files present in the input location
         assert(files), 'No FITS files found in {}.'.format(self.m_input_location)
 
-        # get the first exposure number, which should be the first position of the nodding scheme
-        header = fits.getheader(os.path.join(self.m_input_location, files[0]), ext=0)
-        first_expno = header['ESO TPL EXPNO']
-
+        start_time = time.time()
         for i, filename in enumerate(files):
-            progress(i, len(files), 'Running NearReadingModule...')
+            progress(i, len(files), 'Running NearReadingModule...', start_time)
 
             # get the images of chop A and B, the primary header data, the nod position,
             # and the number of images per chop position
             header, im_shape = self.read_header(filename)
             chopa, chopb = self.read_images(filename, im_shape)
-            nod = self.get_nod(header, first_expno)
-
-            # select the output ports for nod A or B
-            if nod == 'A':
-                out_ports = self.m_image_out_port[0:2]
-            elif nod == 'B':
-                out_ports = self.m_image_out_port[2:4]
 
             # append the images of chop A and B
-            out_ports[0].append(chopa, data_dim=3)
-            out_ports[1].append(chopb, data_dim=3)
+            self.m_chopa_out_port.append(chopa, data_dim=3)
+            self.m_chopb_out_port.append(chopb, data_dim=3)
 
             # starting value for the INDEX attribute
             first_index = 0
 
-            for port in out_ports:
+            for port in (self.m_chopa_out_port, self.m_chopb_out_port):
 
                 # set the static attributes
                 set_static_attr(fits_file=filename,
                                 header=header,
                                 config_port=self._m_config_port,
-                                image_out_port=port)
+                                image_out_port=port,
+                                check=True)
 
                 # set the non-static attributes
                 set_nonstatic_attr(header=header,
                                    config_port=self._m_config_port,
-                                   image_out_port=port)
+                                   image_out_port=port,
+                                   check=True)
 
                 # set the remaining attributes
                 set_extra_attr(fits_file=filename,
-                               location=self.m_input_location,
                                nimages=im_shape[0]//2,
                                config_port=self._m_config_port,
                                image_out_port=port,
@@ -462,10 +391,8 @@ class NearReadingModule(ReadingModule):
         sys.stdout.flush()
 
         # add history information
-        self.m_image_out_port[0].add_history('NearReadingModule', 'Nod A, Chop A')
-        self.m_image_out_port[1].add_history('NearReadingModule', 'Nod A, Chop B')
-        self.m_image_out_port[2].add_history('NearReadingModule', 'Nod B, Chop A')
-        self.m_image_out_port[3].add_history('NearReadingModule', 'Nod B, Chop B')
+        self.m_chopa_out_port.add_history('NearReadingModule', 'Chop A')
+        self.m_chopb_out_port.add_history('NearReadingModule', 'Chop B')
 
         # close all connections to the database
-        self.m_image_out_port[0].close_port()
+        self.m_chopa_out_port.close_port()

@@ -3,12 +3,16 @@ Pipeline modules for photometric and astrometric measurements.
 """
 
 import sys
+import time
+
+from typing import Tuple
 
 import numpy as np
 import emcee
 
 from scipy.optimize import minimize
 from photutils import aperture_photometry, CircularAperture
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
@@ -35,8 +39,6 @@ class FakePlanetModule(ProcessingModule):
                  psf_in_tag="im_psf",
                  image_out_tag="im_fake"):
         """
-        Constructor of FakePlanetModule.
-
         Parameters
         ----------
         position : tuple(float, float)
@@ -119,8 +121,9 @@ class FakePlanetModule(ProcessingModule):
 
         frames = memory_frames(memory, im_shape[0])
 
+        start_time = time.time()
         for j, _ in enumerate(frames[:-1]):
-            progress(j, len(frames[:-1]), "Running FakePlanetModule...")
+            progress(j, len(frames[:-1]), "Running FakePlanetModule...", start_time)
 
             images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
@@ -179,8 +182,6 @@ class SimplexMinimizationModule(ProcessingModule):
                  extra_rot=0.,
                  residuals="mean"):
         """
-        Constructor of SimplexMinimizationModule.
-
         Parameters
         ----------
         position : tuple(float, float)
@@ -418,8 +419,6 @@ class FalsePositiveModule(ProcessingModule):
                  optimize=False,
                  **kwargs):
         """
-        Constructor of FalsePositiveModule.
-
         Parameters
         ----------
         position : tuple(float, float)
@@ -506,8 +505,9 @@ class FalsePositiveModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
 
+        start_time = time.time()
         for j in range(nimages):
-            progress(j, nimages, "Running FalsePositiveModule...")
+            progress(j, nimages, "Running FalsePositiveModule...", start_time)
 
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
@@ -576,8 +576,6 @@ class MCMCsamplingModule(ProcessingModule):
                  residuals="mean",
                  **kwargs):
         """
-        Constructor of MCMCsamplingModule.
-
         Parameters
         ----------
         param : tuple(float, float, float)
@@ -862,9 +860,9 @@ class MCMCsamplingModule(ProcessingModule):
                                                variance,
                                                self.m_residuals]),
                                         threads=cpu)
-
+        start_time = time.time()
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, "Running MCMCsamplingModule...")
+            progress(i, self.m_nsteps, "Running MCMCsamplingModule...", start_time)
 
         sys.stdout.write("Running MCMCsamplingModule... [DONE]\n")
         sys.stdout.flush()
@@ -896,23 +894,22 @@ class MCMCsamplingModule(ProcessingModule):
 
 class AperturePhotometryModule(ProcessingModule):
     """
-    Pipeline module for calculating the counts within a circular region.
+    Pipeline module for calculating the counts within a circular area.
     """
 
+    @typechecked
     def __init__(self,
-                 radius=0.1,
-                 position=None,
-                 name_in="aperture_photometry",
-                 image_in_tag="im_arr",
-                 phot_out_tag="photometry"):
+                 radius: float = 0.1,
+                 position: Tuple[float, float] = None,
+                 name_in: str = "aperture_photometry",
+                 image_in_tag: str = "im_arr",
+                 phot_out_tag: str = "photometry") -> None:
         """
-        Constructor of AperturePhotometryModule.
-
         Parameters
         ----------
-        radius : int
+        radius : float
             Radius (arcsec) of the circular aperture.
-        position : tuple(float, float)
+        position : tuple(float, float), None
             Center position (pix) of the aperture, (x, y), with subpixel precision. The center of
             the image will be used if set to None. Python indexing starts at zero so the bottom
             left corner of the image has coordinates (-0.5, -0.5).
@@ -937,7 +934,8 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_radius = radius
         self.m_position = position
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Computes the flux within a circular aperture for each
         frame and saves the values in the database.
@@ -963,10 +961,10 @@ class AperturePhotometryModule(ProcessingModule):
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
-                                      "Running AperturePhotometryModule...",
+                                      "Running AperturePhotometryModule",
                                       func_args=(aperture, ))
 
-        history = "radius [arcsec] = {:.3f}".format(self.m_radius*pixscale)
+        history = f"radius [arcsec] = {self.m_radius*pixscale:.3f}"
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history("AperturePhotometryModule", history)
         self.m_phot_out_port.close_port()

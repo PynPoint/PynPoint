@@ -99,8 +99,6 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                  median_filter=False,
                  threshold_function="soft"):
         """
-        Constructor of WaveletTimeDenoisingModule.
-
         Parameters
         ----------
         wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
@@ -296,7 +294,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running TimeNormalizationModule...")
+                                      "Running TimeNormalizationModule")
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("TimeNormalizationModule", "normalization = median")

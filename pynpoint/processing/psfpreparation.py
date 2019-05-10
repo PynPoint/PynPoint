@@ -3,6 +3,7 @@ Pipeline modules to prepare the data for the PSF subtraction.
 """
 
 import sys
+import time
 import warnings
 
 import numpy as np
@@ -31,8 +32,6 @@ class PSFpreparationModule(ProcessingModule):
                  cent_size=None,
                  edge_size=None):
         """
-        Constructor of PSFpreparationModule.
-
         Parameters
         ----------
         name_in : str
@@ -130,10 +129,11 @@ class PSFpreparationModule(ProcessingModule):
         norms = list()
 
         # Run the PSFpreparationModule for each subset of frames
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
 
             # Print progress to command line
-            progress(i, len(frames[:-1]), "Running PSFpreparationModule...")
+            progress(i, len(frames[:-1]), "Running PSFpreparationModule...", start_time)
 
             # Get the images and ensure they have the correct 3D shape with the following
             # three dimensions: (batch_size, height, width)
@@ -196,8 +196,6 @@ class AngleInterpolationModule(ProcessingModule):
                  name_in="angle_interpolation",
                  data_tag="im_arr"):
         """
-        Constructor of AngleInterpolationModule.
-
         Parameters
         ----------
         name_in : str
@@ -245,8 +243,9 @@ class AngleInterpolationModule(ProcessingModule):
 
         new_angles = []
 
+        start_time = time.time()
         for i, _ in enumerate(parang_start):
-            progress(i, len(parang_start), "Running AngleInterpolationModule...")
+            progress(i, len(parang_start), "Running AngleInterpolationModule...", start_time)
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
                 parang_start[i] += 360.
@@ -277,8 +276,6 @@ class SortParangModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_sort"):
         """
-        Constructor of SortParangModule.
-
         Parameters
         ----------
         name_in : str
@@ -341,8 +338,9 @@ class SortParangModule(ProcessingModule):
 
         frames = memory_frames(memory, nimages)
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running SortParangModule...")
+            progress(i, len(frames[:-1]), "Running SortParangModule...", start_time)
 
             index_new[frames[i]:frames[i+1]] = index[index_sort[frames[i]:frames[i+1]]]
 
@@ -386,8 +384,6 @@ class AngleCalculationModule(ProcessingModule):
                  name_in="angle_calculation",
                  data_tag="im_arr"):
         """
-        Constructor of AngleCalculationModule.
-
         Parameters
         ----------
         instrument : str
@@ -481,6 +477,7 @@ class AngleCalculationModule(ProcessingModule):
         if self.m_instrument == "SPHERE/IFS":
             warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
 
+        if self.m_instrument in ("SPHERE/IRDIS", "SPHERE/IFS"):
             warnings.warn("For SPHERE data it is recommended to use the header keywords "
                           "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. "
                           "The input will be parsed accordingly. Using the regular "
@@ -610,8 +607,6 @@ class SDIpreparationModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_SDI"):
         """
-        Constructor of SDIpreparationModule.
-
         Parameters
         ----------
         wavelength : tuple(float, float)
@@ -665,8 +660,9 @@ class SDIpreparationModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
 
+        start_time = time.time()
         for i in range(nimages):
-            progress(i, nimages, "Running SDIpreparationModule...")
+            progress(i, nimages, "Running SDIpreparationModule...", start_time)
 
             if nimages == 1:
                 image = self.m_image_in_port.get_all()

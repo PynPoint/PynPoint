@@ -23,8 +23,6 @@ class CropImagesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cropped"):
         """
-        Constructor of CropImagesModule.
-
         Parameters
         ----------
         size : float
@@ -84,7 +82,7 @@ class CropImagesModule(ProcessingModule):
         self.apply_function_to_images(_image_cutting,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CropImagesModule...",
+                                      "Running CropImagesModule",
                                       func_args=(self.m_size, self.m_center))
 
         history = "image size [pix] = "+str(self.m_size)
@@ -105,8 +103,6 @@ class ScaleImagesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_scaled"):
         """
-        Constructor of ScaleImagesModule.
-
         Parameters
         ----------
         scaling : tuple(float, float, float)
@@ -186,7 +182,7 @@ class ScaleImagesModule(ProcessingModule):
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ScaleImagesModule...",
+                                      "Running ScaleImagesModule",
                                       func_args=(self.m_scaling_x,
                                                  self.m_scaling_y,
                                                  self.m_scaling_flux,))
@@ -216,8 +212,6 @@ class AddLinesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_add"):
         """
-        Constructor of AddLinesModule.
-
         Parameters
         ----------
         lines : tuple(int, int, int, int)
@@ -276,7 +270,7 @@ class AddLinesModule(ProcessingModule):
         self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running AddLinesModule...")
+                                      "Running AddLinesModule")
 
         history = "number of lines = "+str(self.m_lines)
         self.m_image_out_port.add_history("AddLinesModule", history)
@@ -295,8 +289,6 @@ class RemoveLinesModule(ProcessingModule):
                  image_in_tag="im_arr",
                  image_out_tag="im_arr_cut"):
         """
-        Constructor of RemoveLinesModule.
-
         Parameters
         ----------
         lines : tuple(int, int, int, int)
@@ -341,7 +333,7 @@ class RemoveLinesModule(ProcessingModule):
         self.apply_function_to_images(_remove_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running RemoveLinesModule...")
+                                      "Running RemoveLinesModule")
 
         history = "number of lines = "+str(self.m_lines)
         self.m_image_out_port.add_history("RemoveLinesModule", history)

@@ -1,11 +1,12 @@
 """
-Utilities for multiprocessing of stacks of images with the poison pill pattern.
+Utilities for multiprocessing of stacks of images.
 """
 
 import sys
 
 import numpy as np
 
+from pynpoint.util.module import update_arguments
 from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
                                     MultiprocessingCapsule, apply_function
 
@@ -38,7 +39,7 @@ class StackReader(TaskCreator):
         stack_size: int
             Number of images per stack.
         result_shape : tuple(int, int, int)
-            Shape of the array with output results (usually a stack of images).
+            Shape of the array with the output results (usually a stack of images).
 
         Returns
         -------
@@ -46,10 +47,7 @@ class StackReader(TaskCreator):
             None
         """
 
-        super(StackReader, self).__init__(data_port_in,
-                                          tasks_queue_in,
-                                          data_mutex_in,
-                                          num_proc)
+        super(StackReader, self).__init__(data_port_in, tasks_queue_in, data_mutex_in, num_proc)
 
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
@@ -73,7 +71,10 @@ class StackReader(TaskCreator):
                 # read images from i to j
                 tmp_data = self.m_data_in_port[i:j, ]
 
+            # first dimensiosn (start, stop, step)
             stack_slice = [(i, j, None)]
+
+            # additional dimensions
             for _ in self.m_result_shape:
                 stack_slice.append((None, None, None))
 
@@ -95,7 +96,8 @@ class StackTaskProcessor(TaskProcessor):
                  tasks_queue_in,
                  result_queue_in,
                  function,
-                 function_args):
+                 function_args,
+                 nimages):
         """
         Parameters
         ----------
@@ -104,9 +106,11 @@ class StackTaskProcessor(TaskProcessor):
         result_queue_in : multiprocessing.queues.JoinableQueue
             Results queue.
         function : function
-            Input function.
-        function_args : tuple, None
-            Optional function arguments.
+            Input function that is applied to the images.
+        function_args : tuple, None, optional
+            Function arguments.
+        nimages : int
+            Total number of images.
 
         Returns
         -------
@@ -118,6 +122,7 @@ class StackTaskProcessor(TaskProcessor):
 
         self.m_function = function
         self.m_function_args = function_args
+        self.m_nimages = nimages
 
     def run_job(self,
                 tmp_task):
@@ -125,7 +130,7 @@ class StackTaskProcessor(TaskProcessor):
         Parameters
         ----------
         tmp_task : pynpoint.util.multiproc.TaskInput
-            Task input.
+            Task input with the subsets of images and the job parameters.
 
         Returns
         -------
@@ -136,16 +141,24 @@ class StackTaskProcessor(TaskProcessor):
         result_nimages = tmp_task.m_input_data.shape[0]
         result_shape = tmp_task.m_job_parameter[0]
 
+        # first dimension
         full_shape = [result_nimages]
+
+        # additional dimensions
         for item in result_shape:
             full_shape.append(item)
 
         result_arr = np.zeros(full_shape)
 
         for i in range(result_nimages):
+            # job parameter contains (result_shape, tuple(stack_slice))
+            index = tmp_task.m_job_parameter[1][0][0] + i
+
+            args = update_arguments(index, self.m_nimages, self.m_function_args)
+
             result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, ],
                                              func=self.m_function,
-                                             func_args=self.m_function_args)
+                                             func_args=args)
 
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -166,7 +179,8 @@ class StackProcessingCapsule(MultiprocessingCapsule):
                  function,
                  function_args,
                  stack_size,
-                 result_shape):
+                 result_shape,
+                 nimages):
         """
         Parameters
         ----------
@@ -184,6 +198,8 @@ class StackProcessingCapsule(MultiprocessingCapsule):
             Number of images per stack.
         result_shape : tuple(int, int, int)
             Shape of the array with output results (usually a stack of images).
+        nimages : int
+            Total number of images.
 
         Returns
         -------
@@ -195,6 +211,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         self.m_function_args = function_args
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
+        self.m_nimages = nimages
 
         super(StackProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
 
@@ -213,7 +230,8 @@ class StackProcessingCapsule(MultiprocessingCapsule):
             processors.append(StackTaskProcessor(tasks_queue_in=self.m_tasks_queue,
                                                  result_queue_in=self.m_result_queue,
                                                  function=self.m_function,
-                                                 function_args=self.m_function_args))
+                                                 function_args=self.m_function_args,
+                                                 nimages=self.m_nimages))
 
         return processors
 
@@ -223,7 +241,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         Parameters
         ----------
         image_in_port : pynpoint.core.dataio.InputPort
-            Input port.
+            Input port from where the subsets of images are read.
 
         Returns
         -------

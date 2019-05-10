@@ -64,8 +64,6 @@ class DarkCalibrationModule(ProcessingModule):
                  dark_in_tag="dark_arr",
                  image_out_tag="dark_cal_arr"):
         """
-        Constructor of DarkCalibrationModule.
-
         Parameters
         ----------
         name_in : str
@@ -109,7 +107,7 @@ class DarkCalibrationModule(ProcessingModule):
         self.apply_function_to_images(_dark_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running DarkCalibrationModule...",
+                                      "Running DarkCalibrationModule",
                                       func_args=(master, ))
 
         history = "dark_in_tag = "+self.m_dark_in_port.tag
@@ -129,8 +127,6 @@ class FlatCalibrationModule(ProcessingModule):
                  flat_in_tag="flat_arr",
                  image_out_tag="flat_cal_arr"):
         """
-        Constructor of FlatCalibrationModule.
-
         Parameters
         ----------
         name_in : str
