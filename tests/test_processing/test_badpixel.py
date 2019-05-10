@@ -56,14 +56,14 @@ class TestBadPixelCleaning:
 
     def test_bad_pixel_sigma_filter(self):
 
-        sigma = BadPixelSigmaFilterModule(name_in="sigma",
-                                          image_in_tag="images",
-                                          image_out_tag="sigma",
-                                          box=9,
-                                          sigma=5,
-                                          iterate=1)
+        module = BadPixelSigmaFilterModule(name_in="sigma",
+                                           image_in_tag="images",
+                                           image_out_tag="sigma",
+                                           box=9,
+                                           sigma=5,
+                                           iterate=1)
 
-        self.pipeline.add_module(sigma)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("sigma")
 
         data = self.pipeline.get_data("sigma")
@@ -75,37 +75,37 @@ class TestBadPixelCleaning:
 
     def test_bad_pixel_map(self):
 
-        bp_map = BadPixelMapModule(name_in="bp_map",
+        module = BadPixelMapModule(name_in="bp_map",
                                    dark_in_tag="dark",
                                    flat_in_tag="flat",
                                    bp_map_out_tag="bp_map",
                                    dark_threshold=0.99,
                                    flat_threshold=-0.99)
 
-        self.pipeline.add_module(bp_map)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("bp_map")
 
         data = self.pipeline.get_data("bp_map")
-        assert data[0, 0] == 1.
-        assert data[30, 30] == 1.
-        assert data[10, 10] == 0.
-        assert data[12, 12] == 0.
-        assert data[14, 14] == 0.
-        assert data[20, 20] == 0.
-        assert data[22, 22] == 0.
-        assert data[24, 24] == 0.
+        assert data[0, 0, 0] == 1.
+        assert data[0, 30, 30] == 1.
+        assert data[0, 10, 10] == 0.
+        assert data[0, 12, 12] == 0.
+        assert data[0, 14, 14] == 0.
+        assert data[0, 20, 20] == 0.
+        assert data[0, 22, 22] == 0.
+        assert data[0, 24, 24] == 0.
         assert np.mean(data) == 0.9993
-        assert data.shape == (100, 100)
+        assert data.shape == (1, 100, 100)
 
     def test_bad_pixel_interpolation(self):
 
-        interpolation = BadPixelInterpolationModule(name_in="interpolation",
-                                                    image_in_tag="images",
-                                                    bad_pixel_map_tag="bp_map",
-                                                    image_out_tag="interpolation",
-                                                    iterations=100)
+        module = BadPixelInterpolationModule(name_in="interpolation",
+                                             image_in_tag="images",
+                                             bad_pixel_map_tag="bp_map",
+                                             image_out_tag="interpolation",
+                                             iterations=100)
 
-        self.pipeline.add_module(interpolation)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("interpolation")
 
         data = self.pipeline.get_data("interpolation")
@@ -117,12 +117,12 @@ class TestBadPixelCleaning:
 
     def test_bad_pixel_time(self):
 
-        time = BadPixelTimeFilterModule(name_in="time",
-                                        image_in_tag="images",
-                                        image_out_tag="time",
-                                        sigma=(5., 5.))
+        module = BadPixelTimeFilterModule(name_in="time",
+                                          image_in_tag="images",
+                                          image_out_tag="time",
+                                          sigma=(5., 5.))
 
-        self.pipeline.add_module(time)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("time")
 
         data = self.pipeline.get_data("time")
@@ -134,14 +134,14 @@ class TestBadPixelCleaning:
 
     def test_replace_bad_pixels(self):
 
-        replace = ReplaceBadPixelsModule(name_in="replace1",
-                                         image_in_tag="images",
-                                         map_in_tag="bp_map",
-                                         image_out_tag="replace",
-                                         size=2,
-                                         replace="mean")
+        module = ReplaceBadPixelsModule(name_in="replace1",
+                                        image_in_tag="images",
+                                        map_in_tag="bp_map",
+                                        image_out_tag="replace",
+                                        size=2,
+                                        replace="mean")
 
-        self.pipeline.add_module(replace)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("replace1")
 
         data = self.pipeline.get_data("replace")
@@ -151,14 +151,14 @@ class TestBadPixelCleaning:
         assert np.allclose(np.mean(data), 3.019578931588861e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-        replace = ReplaceBadPixelsModule(name_in="replace2",
-                                         image_in_tag="images",
-                                         map_in_tag="bp_map",
-                                         image_out_tag="replace",
-                                         size=2,
-                                         replace="median")
+        module = ReplaceBadPixelsModule(name_in="replace2",
+                                        image_in_tag="images",
+                                        map_in_tag="bp_map",
+                                        image_out_tag="replace",
+                                        size=2,
+                                        replace="median")
 
-        self.pipeline.add_module(replace)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("replace2")
 
         data = self.pipeline.get_data("replace")
@@ -168,14 +168,14 @@ class TestBadPixelCleaning:
         assert np.allclose(np.mean(data), 2.983915326435115e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-        replace = ReplaceBadPixelsModule(name_in="replace3",
-                                         image_in_tag="images",
-                                         map_in_tag="bp_map",
-                                         image_out_tag="replace",
-                                         size=2,
-                                         replace="nan")
+        module = ReplaceBadPixelsModule(name_in="replace3",
+                                        image_in_tag="images",
+                                        map_in_tag="bp_map",
+                                        image_out_tag="replace",
+                                        size=2,
+                                        replace="nan")
 
-        self.pipeline.add_module(replace)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("replace3")
 
         data = self.pipeline.get_data("replace")

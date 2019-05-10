@@ -31,13 +31,13 @@ class TestFrameSelection:
 
     def test_read_data(self):
 
-        read = FitsReadingModule(name_in="read",
-                                 image_tag="read",
-                                 input_dir=self.test_dir+"images",
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in="read",
+                                   image_tag="read",
+                                   input_dir=self.test_dir+"images",
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -47,11 +47,11 @@ class TestFrameSelection:
 
     def test_remove_last_frame(self):
 
-        last = RemoveLastFrameModule(name_in="last",
-                                     image_in_tag="read",
-                                     image_out_tag="last")
+        module = RemoveLastFrameModule(name_in="last",
+                                       image_in_tag="read",
+                                       image_out_tag="last")
 
-        self.pipeline.add_module(last)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("last")
 
         data = self.pipeline.get_data("last")
@@ -77,12 +77,12 @@ class TestFrameSelection:
 
     def test_remove_start_frame(self):
 
-        start = RemoveStartFramesModule(frames=2,
-                                        name_in="start",
-                                        image_in_tag="last",
-                                        image_out_tag="start")
+        module = RemoveStartFramesModule(frames=2,
+                                         name_in="start",
+                                         image_in_tag="last",
+                                         image_out_tag="start")
 
-        self.pipeline.add_module(start)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("start")
 
         data = self.pipeline.get_data("start")
@@ -100,13 +100,13 @@ class TestFrameSelection:
 
     def test_remove_frames(self):
 
-        remove = RemoveFramesModule(frames=(5, 8, 13, 25, 31),
+        module = RemoveFramesModule(frames=(5, 8, 13, 25, 31),
                                     name_in="remove",
                                     image_in_tag="start",
                                     selected_out_tag="selected",
                                     removed_out_tag="removed")
 
-        self.pipeline.add_module(remove)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("remove")
 
         data = self.pipeline.get_data("selected")
@@ -137,7 +137,7 @@ class TestFrameSelection:
 
     def test_frame_selection(self):
 
-        select = FrameSelectionModule(name_in="select1",
+        module = FrameSelectionModule(name_in="select1",
                                       image_in_tag="start",
                                       selected_out_tag="selected1",
                                       removed_out_tag="removed1",
@@ -148,7 +148,7 @@ class TestFrameSelection:
                                       aperture=("circular", 0.2),
                                       position=(None, None, 0.5))
 
-        self.pipeline.add_module(select)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("select1")
 
         data = self.pipeline.get_data("selected1")
@@ -182,7 +182,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
         assert attribute.shape == (10, 2)
 
-        select = FrameSelectionModule(name_in="select2",
+        module = FrameSelectionModule(name_in="select2",
                                       image_in_tag="start",
                                       selected_out_tag="selected2",
                                       removed_out_tag="removed2",
@@ -193,7 +193,7 @@ class TestFrameSelection:
                                       aperture=("annulus", 0.1, 0.2),
                                       position=None)
 
-        self.pipeline.add_module(select)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("select2")
 
         data = self.pipeline.get_data("selected2")
@@ -253,6 +253,6 @@ class TestFrameSelection:
         self.pipeline.run_module("stat2")
 
         data = self.pipeline.get_data("stat2")
-        assert np.allclose(data[0, 0], -0.00046030773937605655, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 0.19799486555625812, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 0], -0.0006306714900382097, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(data), -0.05448258074038106, rtol=limit, atol=0.)
         assert data.shape == (44, 6)
