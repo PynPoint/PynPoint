@@ -445,11 +445,11 @@ class NoddingBackgroundModule(ProcessingModule):
             """
 
             def __init__(self,
-                         time,
+                         time_in,
                          im_type,
                          index):
 
-                self.m_time = time
+                self.m_time = time_in
                 self.m_im_type = im_type
                 self.m_index = index
 
