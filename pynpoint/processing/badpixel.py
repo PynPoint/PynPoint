@@ -341,10 +341,10 @@ class BadPixelMapModule(ProcessingModule):
             Tag of the database entry with the bad pixel map that is written as output.
         dark_threshold : float
             Fractional threshold with respect to the maximum pixel value in the dark frame to flag
-            bad pixels.
+            bad pixels. Pixels `brighter` than the fractional threshold are flagged as bad.
         flat_threshold : float
             Fractional threshold with respect to the maximum pixel value in the flat field to flag
-            bad pixels.
+            bad pixels. Pixels `fainter` than the fractional threshold are flagged as bad.
 
         Returns
         -------
