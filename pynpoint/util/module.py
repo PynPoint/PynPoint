@@ -15,7 +15,7 @@ from pynpoint.util.image import crop_image, center_pixel
 def progress(current,
              total,
              message,
-             start_time=0):
+             start_time=None):
     """
     Function to show and update the progress as standard output.
 
@@ -27,38 +27,53 @@ def progress(current,
         Total index number.
     message : str
         Message that is printed.
-    start_time : float
-        Start time of the iteration in seconds since epoch
+    start_time : float, None, optional
+        Start time in seconds. Not used if set to None.
 
     Returns
     -------
     NoneType
         None
     """
+
     def time_string(delta_time):
         """
-        Converts a delta_time in seconds to a string which displays the \
-            delta_time as hh:mm:ss
-        """
-        hours = int(delta_time / 3600)
-        minutes = int((delta_time % 3600) / 60)
-        seconds = int(delta_time % 60)
-        return "{:>02}:{:>02}:{:>02}".format(hours, minutes, seconds)
+        Converts to input time in seconds to a string which displays as hh:mm:ss.
+        
+        Parameters
+        ----------
+        delta_time : float
+            Input time in seconds.
 
-    fraction = float(current)/float(total)
-    percentage = fraction * 100
-    if not start_time:
-        sys.stdout.write("\r{}: {:4.1f}% \r".format(message, percentage))
+        Returns
+        -------
+        str:
+            String with the formatted time.
+        """
+
+        hours = int(delta_time / 3600.)
+        minutes = int((delta_time%3600.) / 60.)
+        seconds = int(delta_time%60.)
+
+        return f"{hours:>02}:{minutes:>02}:{seconds:>02}"
+
+    fraction = float(current) / float(total)
+    percentage = 100.*fraction
+
+    if start_time is None:
+        sys.stdout.write(f"\r{message} {percentage:4.1f}% \r")
         sys.stdout.flush()
+
     else:
-        if fraction != 0 and current + 1 != total:
+        if fraction > 0. and current+1 != total:
             time_taken = time.time() - start_time
-            time_left = time_taken / fraction * (1 - fraction)
-            sys.stdout.write("{}: {:4.1f}%  ETR: {}\r".format(message, \
-                percentage, time_string(time_left)))
+            time_left = time_taken / fraction * (1. - fraction)
+
+            sys.stdout.write(f"{message} {percentage:4.1f}% - Time: {time_string(time_left)}\r")
             sys.stdout.flush()
-    if current +1 == total:
-        sys.stdout.write(" " * (24 + len(message)) + "\r")
+
+    if current+1 == total:
+        sys.stdout.write(" " * (29+len(message)) + "\r")
 
 def memory_frames(memory,
                   nimages):

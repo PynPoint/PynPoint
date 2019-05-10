@@ -176,7 +176,7 @@ class StarExtractionModule(ProcessingModule):
         self.apply_function_to_images(_crop_around_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarExtractionModule...",
+                                      "Running StarExtractionModule",
                                       func_args=(self.m_position,
                                                  self.m_image_size,
                                                  self.m_fwhm_star))
@@ -351,7 +351,7 @@ class StarAlignmentModule(ProcessingModule):
         self.apply_function_to_images(_align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running StarAlignmentModule...")
+                                      "Running StarAlignmentModule")
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
