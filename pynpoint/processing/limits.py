@@ -5,6 +5,7 @@ Pipeline modules for estimating detection limits.
 import sys
 import os
 import math
+import time
 import warnings
 import multiprocessing as mp
 
@@ -156,7 +157,6 @@ class ContrastCurveModule(ProcessingModule):
         correction for small sample statistics is applied for both cases. Note that if the sigma
         level is fixed, the false positive fraction changes with separation, following the
         Student's t-distribution (see Mawet et al. 2014 for details).
-
         Returns
         -------
         NoneType
@@ -206,19 +206,13 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        sys.stdout.write("Running ContrastCurveModule...\r")
-        sys.stdout.flush()
-
         positions = []
         for sep in pos_r:
             for ang in pos_t:
                 positions.append((sep, ang))
 
-        # Create a queue object which will contain the results
-        queue = mp.Queue()
-
         result = []
-        jobs = []
+        async_results = []
 
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
@@ -237,57 +231,41 @@ class ContrastCurveModule(ProcessingModule):
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
-        for i, pos in enumerate(positions):
-            process = mp.Process(target=contrast_limit,
-                                 args=(tmp_im_str,
-                                       tmp_psf_str,
-                                       noise,
-                                       mask,
-                                       parang,
-                                       self.m_psf_scaling,
-                                       self.m_extra_rot,
-                                       self.m_pca_number,
-                                       self.m_threshold,
-                                       self.m_aperture,
-                                       self.m_residuals,
-                                       self.m_snr_inject,
-                                       pos,
-                                       queue),
-                                 name=(str(os.path.basename(__file__)) + '_radius=' +
-                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
-                                       str(np.round(pos[1], 1))))
+        pool = mp.Pool(cpu)
 
-            jobs.append(process)
+        for pos in positions:
+            async_results.append(pool.apply_async(contrast_limit,
+                                                  args=(tmp_im_str,
+                                                        tmp_psf_str,
+                                                        noise,
+                                                        mask,
+                                                        parang,
+                                                        self.m_psf_scaling,
+                                                        self.m_extra_rot,
+                                                        self.m_pca_number,
+                                                        self.m_threshold,
+                                                        self.m_aperture,
+                                                        self.m_residuals,
+                                                        self.m_snr_inject,
+                                                        pos)))
 
-        for i, job in enumerate(jobs):
-            job.start()
+        pool.close()
 
-            if (i+1)%cpu == 0:
-                # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
-                # number of processes.
+        # wait for all processes to finish
+        while mp.active_children():
+            # number of finished processes
+            nfinished = sum([i.ready() for i in async_results])
 
-                for k in jobs[i+1-cpu:(i+1)]:
-                    k.join()
+            progress(nfinished/len(positions), 1, "Running ContrastCurveModule...")
 
-            elif (i+1) == len(jobs) and (i+1)%cpu != 0:
-                # Wait for the last processes to finish if number of processes is not a multiple
-                # of *cpu*
+            # check if new processes have finished every 5 seconds
+            time.sleep(5)
 
-                for k in jobs[(i + 1 - (i+1)%cpu):]:
-                    k.join()
+        # get the results for every async_result object
+        for index, async_result in enumerate(async_results):
+            result.append(async_result.get())
 
-            progress(i, len(jobs), "Running ContrastCurveModule...")
-
-        # Send termination sentinel to queue
-        queue.put(None)
-
-        while True:
-            item = queue.get()
-
-            if item is None:
-                break
-            else:
-                result.append(item)
+        pool.terminate()
 
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
@@ -311,8 +289,7 @@ class ContrastCurveModule(ProcessingModule):
         sys.stdout.write("\rRunning ContrastCurveModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
-
+        history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
         self.m_contrast_out_port.add_history("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
@@ -465,13 +442,13 @@ class MassLimitsModule(ProcessingModule):
         grid_values = np.array([])
 
         # create array of available points
-        for age_index, age in enumerate(model_age):
-            mag = model_data[age_index][:, filter_index]
-            time = np.ones_like(mag) * age
-            mass = model_data[age_index][:, 0]
+        for age_index, age_item in enumerate(model_age):
+            iso_mag = model_data[age_index][:, filter_index]
+            iso_age = np.ones_like(iso_mag) * age_item
+            iso_mass = model_data[age_index][:, 0]
 
-            grid_points = np.append(grid_points, np.column_stack((time, mag)))
-            grid_values = np.append(grid_values, mass)
+            grid_points = np.append(grid_points, np.column_stack((iso_age, iso_mag)))
+            grid_values = np.append(grid_values, iso_mass)
 
         grid_points = grid_points.reshape(-1, 2)
         interp = np.column_stack((age_eval, mag_eval))
