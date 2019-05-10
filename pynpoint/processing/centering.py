@@ -180,7 +180,7 @@ class StarExtractionModule(ProcessingModule):
                                                  self.m_image_size,
                                                  self.m_fwhm_star))
 
-        history = "fwhm_star [pix] = "+str(self.m_fwhm_star)
+        history = f"fwhm_star [pix] = {self.m_fwhm_star}"
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
@@ -358,7 +358,7 @@ class StarAlignmentModule(ProcessingModule):
             pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
             self.m_image_out_port.add_attribute("PIXSCALE", pixscale/self.m_resize)
 
-        history = "resize = "+str(self.m_resize)
+        history = f"resize = {self.m_resize}"
         self.m_image_out_port.add_history("StarAlignmentModule", history)
         self.m_image_out_port.close_port()
 
@@ -770,7 +770,7 @@ class StarCenteringModule(ProcessingModule):
         if self.m_count > 0:
             print("Fit could not converge on %s image(s). [WARNING]" % self.m_count)
 
-        history = "method = "+self.m_method
+        history = f"method = {self.m_method}"
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("StarCenteringModule", history)
@@ -1127,7 +1127,7 @@ class WaffleCenteringModule(ProcessingModule):
         sys.stdout.write("Center [x, y] = ["+str(x_center)+", "+str(y_center)+"]\n")
         sys.stdout.flush()
 
-        history = "position [x, y] = "+str([round(x_center, 4), round(y_center, 4)])
+        history = f"[x, y] = [{round(x_center, 2)}, {round(y_center, 2)}]"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("WaffleCenteringModule", history)
         self.m_image_out_port.close_port()
