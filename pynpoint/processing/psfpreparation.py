@@ -477,6 +477,7 @@ class AngleCalculationModule(ProcessingModule):
         if self.m_instrument == "SPHERE/IFS":
             warnings.warn("AngleCalculationModule has not been tested for SPHERE/IFS data.")
 
+        if self.m_instrument in ("SPHERE/IRDIS", "SPHERE/IFS"):
             warnings.warn("For SPHERE data it is recommended to use the header keywords "
                           "\"ESO INS4 DROT2 RA/DEC\" to specify the object's position. "
                           "The input will be parsed accordingly. Using the regular "
