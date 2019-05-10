@@ -146,7 +146,7 @@ class AddImagesModule(ProcessingModule):
         memory = self._m_config_port.get_attribute("MEMORY")
 
         frames = memory_frames(memory, nimages)
-        
+
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), "Running AddImagesModule...", start_time)
