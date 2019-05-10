@@ -32,11 +32,11 @@ class TestPSFpreparation:
 
     def test_read_data(self):
 
-        read = FitsReadingModule(name_in="read",
-                                 image_tag="read",
-                                 input_dir=self.test_dir+"prep")
+        module = FitsReadingModule(name_in="read",
+                                   image_tag="read",
+                                   input_dir=self.test_dir+"prep")
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("read")
 
         data = self.pipeline.get_data("read")
@@ -46,10 +46,10 @@ class TestPSFpreparation:
 
     def test_angle_interpolation(self):
 
-        angle = AngleInterpolationModule(name_in="angle1",
-                                         data_tag="read")
+        module = AngleInterpolationModule(name_in="angle1",
+                                          data_tag="read")
 
-        self.pipeline.add_module(angle)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("angle1")
 
         data = self.pipeline.get_data("header_read/PARANG")
@@ -73,11 +73,11 @@ class TestPSFpreparation:
 
         self.pipeline.set_attribute("read", "DATE", date, static=False)
 
-        angle = AngleCalculationModule(instrument="NACO",
-                                       name_in="angle2",
-                                       data_tag="read")
+        module = AngleCalculationModule(instrument="NACO",
+                                        name_in="angle2",
+                                        data_tag="read")
 
-        self.pipeline.add_module(angle)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("angle2")
 
         data = self.pipeline.get_data("header_read/PARANG")
@@ -88,23 +88,32 @@ class TestPSFpreparation:
         self.pipeline.set_attribute("read", "RA", (60000.0, 60000.0, 60000.0, 60000.0), static=False)
         self.pipeline.set_attribute("read", "DEC", (-510000., -510000., -510000., -510000.), static=False)
 
-        angle = AngleCalculationModule(instrument="SPHERE/IRDIS",
-                                       name_in="angle3",
-                                       data_tag="read")
+        module = AngleCalculationModule(instrument="SPHERE/IRDIS",
+                                        name_in="angle3",
+                                        data_tag="read")
 
-        self.pipeline.add_module(angle)
-        self.pipeline.run_module("angle3")
+        self.pipeline.add_module(module)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module("angle3")
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == "For SPHERE data it is recommended to use the " \
+                                             "header keywords \"ESO INS4 DROT2 RA/DEC\" to " \
+                                             "specify the object's position. The input will be " \
+                                             "parsed accordingly. Using the regular RA/DEC "\
+                                             "parameters will lead to wrong parallactic angles." \
 
         data = self.pipeline.get_data("header_read/PARANG")
         assert np.allclose(data[0], 170.39102715170227, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 170.46341123194824, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-        angle = AngleCalculationModule(instrument="SPHERE/IFS",
-                                       name_in="angle4",
-                                       data_tag="read")
+        module = AngleCalculationModule(instrument="SPHERE/IFS",
+                                        name_in="angle4",
+                                        data_tag="read")
 
-        self.pipeline.add_module(angle)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module("angle4")
@@ -127,10 +136,10 @@ class TestPSFpreparation:
 
         self.pipeline.set_attribute("read", "NDIT", [9, 9, 9, 9], static=False)
 
-        angle = AngleInterpolationModule(name_in="angle5",
-                                         data_tag="read")
+        module = AngleInterpolationModule(name_in="angle5",
+                                          data_tag="read")
 
-        self.pipeline.add_module(angle)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module("angle5")
@@ -150,15 +159,15 @@ class TestPSFpreparation:
 
     def test_psf_preparation_norm_mask(self):
 
-        prep = PSFpreparationModule(name_in="prep1",
-                                    image_in_tag="read",
-                                    image_out_tag="prep1",
-                                    mask_out_tag="mask1",
-                                    norm=True,
-                                    cent_size=0.1,
-                                    edge_size=1.0)
+        module = PSFpreparationModule(name_in="prep1",
+                                      image_in_tag="read",
+                                      image_out_tag="prep1",
+                                      mask_out_tag="mask1",
+                                      norm=True,
+                                      cent_size=0.1,
+                                      edge_size=1.0)
 
-        self.pipeline.add_module(prep)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("prep1")
 
         data = self.pipeline.get_data("prep1")
@@ -175,15 +184,15 @@ class TestPSFpreparation:
 
     def test_psf_preparation_none(self):
 
-        prep = PSFpreparationModule(name_in="prep2",
-                                    image_in_tag="read",
-                                    image_out_tag="prep2",
-                                    mask_out_tag="mask2",
-                                    norm=False,
-                                    cent_size=None,
-                                    edge_size=None)
+        module = PSFpreparationModule(name_in="prep2",
+                                      image_in_tag="read",
+                                      image_out_tag="prep2",
+                                      mask_out_tag="mask2",
+                                      norm=False,
+                                      cent_size=None,
+                                      edge_size=None)
 
-        self.pipeline.add_module(prep)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("prep2")
 
         data = self.pipeline.get_data("prep2")
@@ -195,15 +204,15 @@ class TestPSFpreparation:
 
     def test_psf_preparation_no_mask_out(self):
 
-        prep = PSFpreparationModule(name_in="prep3",
-                                    image_in_tag="read",
-                                    image_out_tag="prep3",
-                                    mask_out_tag=None,
-                                    norm=False,
-                                    cent_size=None,
-                                    edge_size=None)
+        module = PSFpreparationModule(name_in="prep3",
+                                      image_in_tag="read",
+                                      image_out_tag="prep3",
+                                      mask_out_tag=None,
+                                      norm=False,
+                                      cent_size=None,
+                                      edge_size=None)
 
-        self.pipeline.add_module(prep)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("prep3")
 
         data = self.pipeline.get_data("prep3")
@@ -215,13 +224,13 @@ class TestPSFpreparation:
 
     def test_sdi_preparation(self):
 
-        sdi = SDIpreparationModule(name_in="sdi",
-                                   wavelength=(0.65, 0.6),
-                                   width=(0.1, 0.5),
-                                   image_in_tag="read",
-                                   image_out_tag="sdi")
+        module = SDIpreparationModule(name_in="sdi",
+                                      wavelength=(0.65, 0.6),
+                                      width=(0.1, 0.5),
+                                      image_in_tag="read",
+                                      image_out_tag="sdi")
 
-        self.pipeline.add_module(sdi)
+        self.pipeline.add_module(module)
         self.pipeline.run_module("sdi")
 
         data = self.pipeline.get_data("sdi")
