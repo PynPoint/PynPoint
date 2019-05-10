@@ -26,8 +26,7 @@ def contrast_limit(path_images,
                    aperture,
                    residuals,
                    snr_inject,
-                   position,
-                   queue):
+                   position):
 
     """
     Function for calculating the contrast limit at a specified position for a given sigma level or
@@ -158,4 +157,4 @@ def contrast_limit(path_images,
         contrast = np.nan
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
-    queue.put((position[0], position[1], contrast, fpf))
+    return position[0], position[1], contrast, fpf
