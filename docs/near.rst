@@ -18,7 +18,7 @@ Example
 
 The example data reduction is based on simulated data which can be downloaded |data|. The pipeline requires a folder for ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively.
 
-Before we start running PynPoint, we have to sort the data in three different folders such that they can be read separately into the database. The folders can be provided with the ``input_dir`` parameter in the :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` that we will use. The FITS files contain a simulated reference PSF (`Ref_PSF_aCenA.fits`) and the coronagraphic data of Nod A (`set1.fits`) and Nod B (`set2.fits`).
+Before we start running PynPoint, we have to sort the data in three different folders such that they can be read separately into the database. The folders can be provided with the ``input_dir`` parameter in the :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` that we will use. The FITS files contain a simulated reference PSF (`Ref_PSF_aCenA.fits`) and the coronagraphic data of chop A (`set1.fits`) and chop B (`set2.fits`).
 
 A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`.
 
@@ -55,31 +55,30 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # Import the Pypeline and the modules that we will use in this example
 
    from pynpoint import Pypeline, FitsReadingModule, AngleInterpolationModule, \
-                        SubtractImagesModule, StackCubesModule, CropImagesModule, \
-                        NoddingBackgroundModule, StarCenteringModule, PSFpreparationModule, \
-                        PcaPsfSubtractionModule, ContrastCurveModule, FitsWritingModule, \
-                        TextWritingModule
+                        SubtractImagesModule, CropImagesModule, StarCenteringModule \
+                        PSFpreparationModule, PcaPsfSubtractionModule, ContrastCurveModule, \
+                        FitsWritingModule, TextWritingModule
 
    # Create a Pypeline instance
    pipeline = Pypeline(working_place_in='working_folder/',
                        input_place_in='input_folder/',
                        output_place_in='output_folder/')
 
-   # Read FITS file with Nod A data
+   # Read FITS file with chop A data
 
-   module = FitsReadingModule(name_in='read_nodA',
-                              input_dir='nodA_folder/',
-                              image_tag='nodA',
+   module = FitsReadingModule(name_in='read_chopa',
+                              input_dir='chopa_folder/',
+                              image_tag='chopa',
                               overwrite=True,
                               check=True)
 
    pipeline.add_module(module)
 
-   # Read FITS file with Nod B data
+   # Read FITS file with chop B data
 
-   module = FitsReadingModule(name_in='read_nodB',
-                              input_dir='nodB_folder/',
-                              image_tag='nodB',
+   module = FitsReadingModule(name_in='read_chopb',
+                              input_dir='chopb_folder/',
+                              image_tag='chopb',
                               overwrite=True,
                               check=True)
 
@@ -98,46 +97,26 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # Interpolate the parallactic angles between the start and end value
 
    module = AngleInterpolationModule(name_in='angle',
-                                     data_tag='nodA')
+                                     data_tag='chopa')
 
    pipeline.add_module(module)
 
-   # Background subtraction option 1
-   # Subtract Nod B from Nod A on a frame-by-frame basis
+   # Subtract chop B from chop A on a frame-by-frame basis
 
    module = SubtractImagesModule(name_in='subtract',
-                                 image_in_tags=('nodA', 'nodB'),
-                                 image_out_tag='nodA_sub',
+                                 image_in_tags=('chopa', 'chopb'),
+                                 image_out_tag='chopa_sub',
                                  scaling=1.)
 
    pipeline.add_module(module)
 
-   # Background subtraction option 2:
-   # Compute the mean background from each FITS cube of Nod B
-   # and subtract from Nod A, based on the exposure number
-
-   module = StackCubesModule(name_in='mean',
-                             image_in_tag='nodB',
-                             image_out_tag='nodB_mean',
-                             combine='mean')
-
-   pipeline.add_module(module)
-
-   module = NoddingBackgroundModule(name_in='background',
-                                    science_in_tag='nodA',
-                                    sky_in_tag='nodB_mean',
-                                    image_out_tag='nodA_sub',
-                                    mode='both')
-
-   pipeline.add_module(module)
-
-   # Crop the Nod A and reference PSF to a 5 x 5 arcsecond image around the approximate center
+   # Crop the chop A and reference PSF to a 5 x 5 arcsecond image around the approximate center
 
    module = CropImagesModule(size=5.,
                              center=(256, 256),
                              name_in='crop1',
-                             image_in_tag='nodA_sub',
-                             image_out_tag='nodA_crop')
+                             image_in_tag='chopa_sub',
+                             image_out_tag='chopa_crop')
 
    pipeline.add_module(module)
 
@@ -149,19 +128,33 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Center the Nod A data by smoothing and fitting the central part with a negative 2D Gaussian
+   # Align the chop A data by cross-correlating the central 2 arcseconds
+
+   module = StarAlignmentModule(name_in='align',
+                                image_in_tag='chopa_crop',
+                                ref_image_in_tag=None,
+                                image_out_tag='chopa_align',
+                                interpolation='spline',
+                                accuracy=10,
+                                resize=None,
+                                num_references=10,
+                                subframe=2.)
+
+   pipeline.add_module(module)
+
+   # Absolute centering of the chop A data by fitting a 2D function to the mean of the images
 
    module = StarCenteringModule(name_in='center1',
-                                image_in_tag='nodA_crop',
-                                image_out_tag='nodA_center',
-                                mask_out_tag='nodA_mask',
-                                fit_out_tag='nodA_fit',
-                                method='full',
+                                image_in_tag='chopa_align',
+                                image_out_tag='chopa_center',
+                                mask_out_tag='chopa_mask',
+                                fit_out_tag='chopa_fit',
+                                method='mean',
                                 interpolation='spline',
                                 radius=0.3,
-                                sign='negative',
-                                model='gaussian',
-                                filter_size=0.1,
+                                sign='positive',
+                                model='moffat',
+                                filter_size=None,
                                 guess=(0., 0., 10., 10., 1e5, 0., 0.))
 
    pipeline.add_module(module)
@@ -183,11 +176,11 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # To mask the central and outer part of the Nod A data
+   # To mask the central and outer part of the chop A data
 
    module = PSFpreparationModule(name_in='prep',
-                                 image_in_tag='nodA_center',
-                                 image_out_tag='nodA_prep',
+                                 image_in_tag='chopa_center',
+                                 image_out_tag='chopa_prep',
                                  mask_out_tag=None,
                                  norm=False,
                                  resize=None,
@@ -200,8 +193,8 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    module = PcaPsfSubtractionModule(pca_numbers=range(1, 31),
                                     name_in='pca',
-                                    images_in_tag='nodA_prep',
-                                    reference_in_tag='nodA_prep',
+                                    images_in_tag='chopa_prep',
+                                    reference_in_tag='chopa_prep',
                                     res_mean_tag=None,
                                     res_median_tag='residuals',
                                     extra_rot=0.0)
@@ -212,7 +205,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
 
    module = ContrastCurveModule(name_in='limits',
-                                image_in_tag='nodA_center',
+                                image_in_tag='chopa_center',
                                 psf_in_tag='psf_crop',
                                 contrast_out_tag='limits',
                                 separation=(0.8, 2.5, 0.1),
@@ -229,12 +222,12 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.add_module(module)
 
    # Datasets can be exported to FITS files by their tag name in the database
-   # Here we will export the centered Nod A data to the default output place
+   # Here we will export the centered chop A data to the default output place
 
    module = FitsWritingModule(name_in='write1',
-                              file_name='nodA_center.fits',
+                              file_name='chopa_center.fits',
                               output_dir=None,
-                              data_tag='nodA_center',
+                              data_tag='chopa_center',
                               data_range=None,
                               overwrite=True)
 
@@ -269,7 +262,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    # Or to run a module individually
 
-   pipeline.run_module('read_nodA')
+   pipeline.run_module('read_chopa')
 
 .. _near_results:
 
