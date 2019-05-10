@@ -474,7 +474,7 @@ class DerotateAndStackModule(ProcessingModule):
         npix = self.m_image_in_port.get_shape()[1]
 
         nimages, frames, im_tot = _initialize(ndim, npix)
-        
+
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Running DerotateAndStackModule', start_time)

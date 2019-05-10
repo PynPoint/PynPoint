@@ -15,7 +15,7 @@ from pynpoint.util.image import crop_image, center_pixel
 def progress(current,
              total,
              message,
-             start_time = 0):
+             start_time=0):
     """
     Function to show and update the progress as standard output.
 
@@ -35,13 +35,14 @@ def progress(current,
     NoneType
         None
     """
-    def time_string(time):
+    def time_string(delta_time):
         """
-        Converts a time in seconds to a string which displays the time as hh:mm:ss
+        Converts a delta_time in seconds to a string which displays the \
+            delta_time as hh:mm:ss
         """
-        hours = int(time / 3600)
-        minutes = int((time % 3600) / 60)
-        seconds = int(time % 60)
+        hours = int(delta_time / 3600)
+        minutes = int((delta_time % 3600) / 60)
+        seconds = int(delta_time % 60)
         return "{:>02}:{:>02}:{:>02}".format(hours, minutes, seconds)
 
     fraction = float(current)/float(total)
@@ -50,10 +51,11 @@ def progress(current,
         sys.stdout.write("\r{}: {:4.1f}% \r".format(message, percentage))
         sys.stdout.flush()
     else:
-        if fraction != 0 and current +1 !=total:
+        if fraction != 0 and current + 1 != total:
             time_taken = time.time() - start_time
             time_left = time_taken / fraction * (1 - fraction)
-            sys.stdout.write("{}: {:4.1f}%  ETR: {}\r".format(message, percentage, time_string(time_left)))
+            sys.stdout.write("{}: {:4.1f}%  ETR: {}\r".format(message, \
+                percentage, time_string(time_left)))
             sys.stdout.flush()
     if current +1 == total:
         sys.stdout.write(" " * (24 + len(message)) + "\r")
