@@ -361,7 +361,7 @@ class TestStarAlignment:
         assert data.shape == (10, 75, 75)
 
         attribute = self.pipeline.get_attribute("center_odd", "History: WaffleCenteringModule")
-        assert attribute == "position [x, y] = [50.0, 50.0]"
+        assert attribute == "[x, y] = [50.0, 50.0]"
 
     def test_waffle_center_even(self):
 
@@ -390,4 +390,4 @@ class TestStarAlignment:
         assert data.shape == (10, 75, 75)
 
         attribute = self.pipeline.get_attribute("center_even", "History: WaffleCenteringModule")
-        assert attribute == "position [x, y] = [49.5, 49.5]"
+        assert attribute == "[x, y] = [49.5, 49.5]"

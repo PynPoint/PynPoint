@@ -697,45 +697,47 @@ class ImageStatisticsModule(ProcessingModule):
         self.m_stat_out_port.del_all_data()
         self.m_stat_out_port.del_all_attributes()
 
-        memory = self._m_config_port.get_attribute("MEMORY")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
-        if self.m_position is not None:
-            self.m_position = (int(self.m_position[1]), # y position
-                               int(self.m_position[0]), # x position
-                               self.m_position[2]/pixscale) # radius (pix)
 
         nimages = self.m_image_in_port.get_shape()[0]
         im_shape = self.m_image_in_port.get_shape()[1:]
 
-        frames = memory_frames(memory, nimages)
+        if self.m_position is None:
+            indices = None
 
-        start_time = time.time()
-        for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running ImageStatisticsModule...", start_time)
+        else:
+            self.m_position = (int(self.m_position[1]), # y position
+                               int(self.m_position[0]), # x position
+                               self.m_position[2]/pixscale) # radius (pix)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
-            images = np.reshape(images, (images.shape[0], im_shape[0]*im_shape[1]))
+            rr_grid = pixel_distance(im_shape, self.m_position)
+            rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
+            indices = np.where(rr_reshape <= self.m_position[2])[0]
 
-            if self.m_position is not None:
-                rr_grid = pixel_distance(im_shape, self.m_position)
-                indices = np.where(rr_grid <= self.m_position[2])[0]
-                images = images[:, indices]
+        def _image_stat(image_in, indices):
+            if indices is None:
+                image_select = np.copy(image_in)
 
-            nmin = np.nanmin(images, axis=1)
-            nmax = np.nanmax(images, axis=1)
-            nsum = np.nansum(images, axis=1)
-            mean = np.nanmean(images, axis=1)
-            median = np.nanmedian(images, axis=1)
-            std = np.nanstd(images, axis=1)
+            else:
+                image_reshape = np.reshape(image_in, (image_in.shape[0]*image_in.shape[1]))
+                image_select = image_reshape[indices]
 
-            result = np.column_stack((nmin, nmax, nsum, mean, median, std))
-            self.m_stat_out_port.append(result)
+            nmin = np.nanmin(image_select)
+            nmax = np.nanmax(image_select)
+            nsum = np.nansum(image_select)
+            mean = np.nanmean(image_select)
+            median = np.nanmedian(image_select)
+            std = np.nanstd(image_select)
 
-        sys.stdout.write("Running ImageStatisticsModule... [DONE]\n")
-        sys.stdout.flush()
+            return np.asarray([nmin, nmax, nsum, mean, median, std])
 
-        history = "number of images = "+str(nimages)
+        self.apply_function_to_images(_image_stat,
+                                      self.m_image_in_port,
+                                      self.m_stat_out_port,
+                                      "Running ImageStatisticsModule",
+                                      func_args=(indices, ))
+
+        history = f"number of images = {nimages}"
         self.m_stat_out_port.copy_attributes(self.m_image_in_port)
         self.m_stat_out_port.add_history("ImageStatisticsModule", history)
         self.m_stat_out_port.close_port()
