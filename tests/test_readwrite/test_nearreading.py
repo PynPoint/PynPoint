@@ -33,7 +33,7 @@ class TestNearInitModule(object):
         self.pipeline.set_attribute('config', 'PIXSCALE', 0.045, static=True)
         self.pipeline.set_attribute('config', 'MEMORY', 100, static=True)
 
-        self.positions = ('noda_chopa', 'noda_chopb', 'nodb_chopa', 'nodb_chopb')
+        self.positions = ('chopa', 'chopb')
 
     def teardown_class(self):
 
@@ -43,11 +43,8 @@ class TestNearInitModule(object):
 
         module = NearReadingModule(name_in='read1',
                                    input_dir=self.test_dir+'near',
-                                   noda_chopa_tag=self.positions[0],
-                                   noda_chopb_tag=self.positions[1],
-                                   nodb_chopa_tag=self.positions[2],
-                                   nodb_chopb_tag=self.positions[3],
-                                   scheme='ABBA')
+                                   chopa_out_tag=self.positions[0],
+                                   chopb_out_tag=self.positions[1])
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('read1')
@@ -56,52 +53,7 @@ class TestNearInitModule(object):
 
             data = self.pipeline.get_data(item)
             assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
-            assert data.shape == (10, 10, 10)
-
-    def test_near_read_scheme(self):
-
-        module = NearReadingModule(name_in='read2',
-                                   input_dir=self.test_dir+'near',
-                                   noda_chopa_tag=self.positions[0],
-                                   noda_chopb_tag=self.positions[1],
-                                   nodb_chopa_tag=self.positions[2],
-                                   nodb_chopb_tag=self.positions[3],
-                                   scheme='ABAB')
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('read2')
-
-        for item in self.positions:
-
-            data = self.pipeline.get_data(item)
-            assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
-            assert data.shape == (10, 10, 10)
-
-    def test_near_read_tag_check(self):
-
-        with pytest.raises(ValueError) as error:
-            NearReadingModule(name_in='read3',
-                              input_dir=self.test_dir+'near',
-                              noda_chopa_tag=self.positions[0],
-                              noda_chopb_tag=self.positions[0],
-                              nodb_chopa_tag=self.positions[2],
-                              nodb_chopb_tag=self.positions[3],
-                              scheme='ABBA')
-
-        assert str(error.value) == 'Output ports should have different name tags.'
-
-    def test_near_read_scheme_check(self):
-
-        with pytest.raises(ValueError) as error:
-            NearReadingModule(name_in='read4',
-                              input_dir=self.test_dir+'near',
-                              noda_chopa_tag=self.positions[0],
-                              noda_chopb_tag=self.positions[1],
-                              nodb_chopa_tag=self.positions[2],
-                              nodb_chopb_tag=self.positions[3],
-                              scheme='test')
-
-        assert str(error.value) == 'Nodding scheme argument should be set to \'ABBA\' or \'ABAB\'.'
+            assert data.shape == (20, 10, 10)
 
     def test_static_not_found(self):
 
@@ -109,11 +61,8 @@ class TestNearInitModule(object):
 
         module = NearReadingModule(name_in='read5',
                                    input_dir=self.test_dir+'near',
-                                   noda_chopa_tag=self.positions[0],
-                                   noda_chopb_tag=self.positions[1],
-                                   nodb_chopa_tag=self.positions[2],
-                                   nodb_chopb_tag=self.positions[3],
-                                   scheme='ABBA')
+                                   chopa_out_tag=self.positions[0],
+                                   chopb_out_tag=self.positions[1])
 
         self.pipeline.add_module(module)
 
@@ -133,11 +82,8 @@ class TestNearInitModule(object):
 
         module = NearReadingModule(name_in='read6',
                                    input_dir=self.test_dir+'near',
-                                   noda_chopa_tag=self.positions[0],
-                                   noda_chopb_tag=self.positions[1],
-                                   nodb_chopa_tag=self.positions[2],
-                                   nodb_chopb_tag=self.positions[3],
-                                   scheme='ABBA')
+                                   chopa_out_tag=self.positions[0],
+                                   chopb_out_tag=self.positions[1])
 
         self.pipeline.add_module(module)
 
