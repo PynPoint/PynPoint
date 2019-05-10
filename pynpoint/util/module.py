@@ -3,6 +3,7 @@ Functions for Pypeline modules.
 """
 
 import sys
+import time
 import math
 
 import cv2
@@ -13,7 +14,8 @@ from pynpoint.util.image import crop_image, center_pixel
 
 def progress(current,
              total,
-             message):
+             message,
+             start_time=None):
     """
     Function to show and update the progress as standard output.
 
@@ -25,6 +27,8 @@ def progress(current,
         Total index number.
     message : str
         Message that is printed.
+    start_time : float, None, optional
+        Start time in seconds. Not used if set to None.
 
     Returns
     -------
@@ -32,11 +36,44 @@ def progress(current,
         None
     """
 
-    fraction = float(current)/float(total)
-    percentage = round(fraction*100., 1)
+    def time_string(delta_time):
+        """
+        Converts to input time in seconds to a string which displays as hh:mm:ss.
+        
+        Parameters
+        ----------
+        delta_time : float
+            Input time in seconds.
 
-    sys.stdout.write("%s %s%s \r" % (message, percentage, "%"))
-    sys.stdout.flush()
+        Returns
+        -------
+        str:
+            String with the formatted time.
+        """
+
+        hours = int(delta_time / 3600.)
+        minutes = int((delta_time%3600.) / 60.)
+        seconds = int(delta_time%60.)
+
+        return f"{hours:>02}:{minutes:>02}:{seconds:>02}"
+
+    fraction = float(current) / float(total)
+    percentage = 100.*fraction
+
+    if start_time is None:
+        sys.stdout.write(f"\r{message} {percentage:4.1f}% \r")
+        sys.stdout.flush()
+
+    else:
+        if fraction > 0. and current+1 != total:
+            time_taken = time.time() - start_time
+            time_left = time_taken / fraction * (1. - fraction)
+
+            sys.stdout.write(f"{message} {percentage:4.1f}% - Time: {time_string(time_left)}\r")
+            sys.stdout.flush()
+
+    if current+1 == total:
+        sys.stdout.write(" " * (29+len(message)) + "\r")
 
 def memory_frames(memory,
                   nimages):

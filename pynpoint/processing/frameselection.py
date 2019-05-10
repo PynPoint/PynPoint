@@ -3,6 +3,7 @@ Pipeline modules for frame selection.
 """
 
 import sys
+import time
 import math
 import warnings
 
@@ -120,8 +121,9 @@ class RemoveFramesModule(ProcessingModule):
         if memory == 0 or memory >= nimages:
             memory = nimages
 
+        start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), "Running RemoveFramesModule...")
+            progress(i, len(frames[:-1]), "Running RemoveFramesModule...", start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -348,8 +350,9 @@ class FrameSelectionModule(ProcessingModule):
 
         phot = np.zeros(nimages)
 
+        start_time = time.time()
         for i in range(nimages):
-            progress(i, nimages, "Running FrameSelectionModule...")
+            progress(i, nimages, "Running FrameSelectionModule...", start_time)
 
             images = self.m_image_in_port[i]
             phot[i] = _photometry(images, starpos[i, :], aperture)
@@ -490,8 +493,9 @@ class RemoveLastFrameModule(ProcessingModule):
         nframes_new = []
         index_new = []
 
+        start_time = time.time()
         for i, item in enumerate(ndit):
-            progress(i, len(ndit), "Running RemoveLastFrameModule...")
+            progress(i, len(ndit), "Running RemoveLastFrameModule...", start_time)
 
             if nframes[i] != item+1:
                 warnings.warn("Number of frames (%s) is not equal to NDIT+1." % nframes[i])
@@ -596,8 +600,9 @@ class RemoveStartFramesModule(ProcessingModule):
         else:
             star = None
 
+        start_time = time.time()
         for i, _ in enumerate(nframes):
-            progress(i, len(nframes), "Running RemoveStartFramesModule...")
+            progress(i, len(nframes), "Running RemoveStartFramesModule...", start_time)
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
             frame_end = np.sum(nframes[0:i+1])
@@ -710,7 +715,6 @@ class ImageStatisticsModule(ProcessingModule):
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
         def _image_stat(image_in, indices):
-
             if indices is None:
                 image_select = np.copy(image_in)
 
