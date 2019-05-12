@@ -214,6 +214,10 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.run_module('pca')
    pipeline.run_module('write')
 
+The VISIR datasets contain a large number of images so the PynPoint database will use a large amount of disk storage. Therefore, datasets of intermediate results can be removed from the database (together with the related attributes) by their tag name, for example::
+
+   pipeline.delete_data('chopa')
+
 .. _near_results:
 
 Results
