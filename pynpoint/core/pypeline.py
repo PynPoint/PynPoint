@@ -531,10 +531,11 @@ class Pypeline:
         """
 
         self.m_data_storage.open_connection()
+
         tags = list(self.m_data_storage.m_data_bank.keys())
 
         select = []
-        for _, item in enumerate(tags):
+        for item in tags:
 
             if item == "config" or item == "fits_header" or item[0:7] == "header_":
                 continue

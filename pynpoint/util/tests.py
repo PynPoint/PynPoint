@@ -77,16 +77,16 @@ def create_random(path,
     if not os.path.exists(path):
         os.makedirs(path)
 
-    file_in = path + "/PynPoint_database.hdf5"
+    file_in = path + '/PynPoint_database.hdf5'
 
     np.random.seed(1)
     images = np.random.normal(loc=0, scale=2e-4, size=(ndit, 100, 100))
 
-    h5f = h5py.File(file_in, "w")
-    dset = h5f.create_dataset("images", data=images)
+    h5f = h5py.File(file_in, 'w')
+    dset = h5f.create_dataset('images', data=images)
     dset.attrs['PIXSCALE'] = 0.01
     if parang is not None:
-        h5f.create_dataset("header_images/PARANG", data=parang)
+        h5f.create_dataset('header_images/PARANG', data=parang)
     h5f.close()
 
 def create_fits(path,
@@ -301,8 +301,8 @@ def create_star_data(path,
         header['HIERARCH ESO DET NDIT'] = ndit
         header['HIERARCH ESO ADA POSANG'] = parang_start[j]
         header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
-        header['HIERARCH ESO SEQ CUMOFFSETX'] = "None"
-        header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
 
@@ -350,12 +350,12 @@ def create_waffle_data(path,
     hdu = fits.PrimaryHDU()
     header = hdu.header
     header['INSTRUME'] = 'IMAGER'
-    header['HIERARCH ESO DET EXP NO'] = "None"
-    header['HIERARCH ESO DET NDIT'] = "none"
-    header['HIERARCH ESO ADA POSANG'] = "None"
-    header['HIERARCH ESO ADA POSANG END'] = "None"
-    header['HIERARCH ESO SEQ CUMOFFSETX'] = "None"
-    header['HIERARCH ESO SEQ CUMOFFSETY'] = "None"
+    header['HIERARCH ESO DET EXP NO'] = 'None'
+    header['HIERARCH ESO DET NDIT'] = 'none'
+    header['HIERARCH ESO ADA POSANG'] = 'None'
+    header['HIERARCH ESO ADA POSANG END'] = 'None'
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
     hdu.data = image
     hdu.writeto(os.path.join(path, 'image01.fits'))
 
@@ -415,21 +415,21 @@ def create_near_data(path):
     exp_no = [1, 2, 3, 4]
 
     for item in exp_no:
-        fits_file = os.path.join(path, 'images_'+str(item)+'.fits')
+        fits_file = os.path.join(path, f'images_'+str(item)+'.fits')
 
         primary_header = fits.Header()
         primary_header['INSTRUME'] = 'VISIR'
         primary_header['HIERARCH ESO DET SEQ1 DIT'] = 1.
         primary_header['HIERARCH ESO TPL EXPNO'] = item
-        primary_header['HIERARCH ESO DET CHOP ST'] = "T"
+        primary_header['HIERARCH ESO DET CHOP ST'] = 'T'
         primary_header['HIERARCH ESO DET CHOP CYCSKIP'] = 0
-        primary_header['HIERARCH ESO DET CHOP CYCSUM'] = "F"
+        primary_header['HIERARCH ESO DET CHOP CYCSUM'] = 'F'
 
         chopa_header = fits.Header()
-        chopa_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE1"
+        chopa_header['HIERARCH ESO DET FRAM TYPE'] = 'HCYCLE1'
 
         chopb_header = fits.Header()
-        chopb_header['HIERARCH ESO DET FRAM TYPE'] = "HCYCLE2"
+        chopb_header['HIERARCH ESO DET FRAM TYPE'] = 'HCYCLE2'
 
         hdu = [fits.PrimaryHDU(header=primary_header)]
         for _ in range(5):
