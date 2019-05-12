@@ -22,8 +22,8 @@ from pynpoint.util.module import progress, memory_frames
 class NearReadingModule(ReadingModule):
     """
     Pipeline module for reading VLT/VISIR data of the NEAR experiment. The FITS files and required
-    header information are read from the input directory and stored in four datasets, corresponding
-    to nod A/B and chop A/B. The primary HDU of the FITS files should contain the main header
+    header information are read from the input directory and stored in two datasets, corresponding
+    to chop A and chop B. The primary HDU of the FITS files should contain the main header
     information, while the subsequent HDUs contain each a single image (alternated for chop A and
     chop B) and some additional header information for that image. The last HDU is ignored as it
     contains the average of all images.
@@ -314,13 +314,9 @@ class NearReadingModule(ReadingModule):
     def run(self):
         """
         Run the module. The FITS files are collected from the input directory and uncompressed if
-        needed. The images are then sorted by the two nod positions (nod A and nod B) and two chop
-        positions (chop A and chop B) per nod position. The required FITS header keywords (which
-        should be set in the configuration file) are also imported and stored as attributes to the
-        four output datasets in the HDF5 database. The nodding position of each FITS files is
-        determined relative to the exposure number (ESO TPL EXPNO) of the first FITS file that is
-        read. Therefore, the first FITS file should correspond to the first position in the chosen
-        nodding scheme.
+        needed. The images are then sorted by the two chop positions (chop A and chop B). The
+        required FITS header keywords (which should be set in the configuration file) are also
+        imported and stored as attributes to the two output datasets in the HDF5 database.
 
         Returns
         -------
@@ -353,9 +349,10 @@ class NearReadingModule(ReadingModule):
         for i, filename in enumerate(files):
             progress(i, len(files), 'Running NearReadingModule...', start_time)
 
-            # get the images of chop A and B, the primary header data, the nod position,
-            # and the number of images per chop position
+            # get the primary header data and the image shape
             header, im_shape = self.read_header(filename)
+
+            # get the images of chop A and chop B
             chopa, chopb = self.read_images(filename, im_shape)
 
             # append the images of chop A and B

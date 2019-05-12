@@ -26,7 +26,7 @@ class TestNearInitModule(object):
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        self.pipeline.set_attribute('config', 'NFRAMES', 'None', static=True)
+        self.pipeline.set_attribute('config', 'NFRAMES', 'ESO DET CHOP NCYCLES', static=True)
         self.pipeline.set_attribute('config', 'EXP_NO', 'ESO TPL EXPNO', static=True)
         self.pipeline.set_attribute('config', 'NDIT', 'None', static=True)
         self.pipeline.set_attribute('config', 'PARANG_START', 'None', static=True)
