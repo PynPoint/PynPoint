@@ -16,9 +16,7 @@ Alpha Cen Region) experiment. The basic processing steps with PynPoint are descr
 Example
 -------
 
-The example data reduction is based on simulated data which can be downloaded |data|. The pipeline requires a folder for ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively.
-
-Before we start running PynPoint, we have to sort the data in three different folders such that they can be read separately into the database. The folders can be provided with the ``input_dir`` parameter in the :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` that we will use. The FITS files contain a simulated reference PSF (`Ref_PSF_aCenA.fits`) and the coronagraphic data of chop A (`set1.fits`) and chop B (`set2.fits`).
+The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that is provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
 A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`.
 
@@ -27,7 +25,7 @@ First we create a configuration file which contains the global pipeline settings
    [header]
 
    INSTRUMENT: INSTRUME
-   NFRAMES: NAXIS3
+   NFRAMES: ESO DET CHOP NCYCLES
    EXP_NO: ESO TPL EXPNO
    DIT: ESO DET SEQ1 DIT
    NDIT: None
@@ -44,9 +42,9 @@ First we create a configuration file which contains the global pipeline settings
 
    [settings]
 
-   PIXSCALE:  0.045
-   MEMORY: 100
-   CPU: 4
+   PIXSCALE: 0.045
+   MEMORY: 1000
+   CPU: 1
 
 The ``MEMORY`` and ``CPU`` setting can be adjusted. They define the number of images that is simultaneously loaded into the computer memory and the number of parallel processes that are used by some of the pipeline modules.
 
@@ -54,43 +52,25 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    # Import the Pypeline and the modules that we will use in this example
 
-   from pynpoint import Pypeline, FitsReadingModule, AngleInterpolationModule, \
-                        SubtractImagesModule, CropImagesModule, StarCenteringModule \
-                        PSFpreparationModule, PcaPsfSubtractionModule, ContrastCurveModule, \
-                        FitsWritingModule, TextWritingModule
+   from pynpoint import Pypeline, NearReadingModule, AngleInterpolationModule, \
+                        SubtractImagesModule, CropImagesModule, StarAlignmentModule, \
+                        StarCenteringModule, PSFpreparationModule, PcaPsfSubtractionModule, \
+                        FitsWritingModule
 
    # Create a Pypeline instance
+
    pipeline = Pypeline(working_place_in='working_folder/',
                        input_place_in='input_folder/',
                        output_place_in='output_folder/')
 
-   # Read FITS file with chop A data
+   pipeline = Pypeline('./', 'input/', 'output/')
 
-   module = FitsReadingModule(name_in='read_chopa',
-                              input_dir='chopa_folder/',
-                              image_tag='chopa',
-                              overwrite=True,
-                              check=True)
+   # Read the raw data and separate chop A and chop B images
 
-   pipeline.add_module(module)
-
-   # Read FITS file with chop B data
-
-   module = FitsReadingModule(name_in='read_chopb',
-                              input_dir='chopb_folder/',
-                              image_tag='chopb',
-                              overwrite=True,
-                              check=True)
-
-   pipeline.add_module(module)
-
-   # Read the FITS file with the non-coronagrahic reference PSF
-
-   module = FitsReadingModule(name_in='read_psf',
-                              input_dir='psf_folder/',
-                              image_tag='psf',
-                              overwrite=True,
-                              check=True)
+   module = NearReadingModule(name_in='read',
+                              input_dir=None,
+                              chopa_out_tag='chopa',
+                              chopb_out_tag='chopb')
 
    pipeline.add_module(module)
 
@@ -101,7 +81,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Subtract chop B from chop A on a frame-by-frame basis
+   # Subtract frame-by-frame chop B from chop A
 
    module = SubtractImagesModule(name_in='subtract',
                                  image_in_tags=('chopa', 'chopb'),
@@ -110,25 +90,17 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Crop the chop A and reference PSF to a 5 x 5 arcsecond image around the approximate center
+   # Crop the chop A images around the approximate center to 5 x 5 arcsec
 
    module = CropImagesModule(size=5.,
-                             center=(256, 256),
-                             name_in='crop1',
+                             center=(432, 286),
+                             name_in='crop',
                              image_in_tag='chopa_sub',
                              image_out_tag='chopa_crop')
 
    pipeline.add_module(module)
 
-   module = CropImagesModule(size=5.,
-                             center=(256, 256),
-                             name_in='crop2',
-                             image_in_tag='psf',
-                             image_out_tag='psf_crop')
-
-   pipeline.add_module(module)
-
-   # Align the chop A data by cross-correlating the central 2 arcseconds
+   # Align the images by cross-correlating the central 1 arcsec
 
    module = StarAlignmentModule(name_in='align',
                                 image_in_tag='chopa_crop',
@@ -138,73 +110,54 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                                 accuracy=10,
                                 resize=None,
                                 num_references=10,
-                                subframe=2.)
+                                subframe=1.)
 
    pipeline.add_module(module)
 
-   # Absolute centering of the chop A data by fitting a 2D function to the mean of the images
+   # Absolute centering by fitting a 2D Moffat function to the average of all images
 
-   module = StarCenteringModule(name_in='center1',
+   module = StarCenteringModule(name_in='center',
                                 image_in_tag='chopa_align',
                                 image_out_tag='chopa_center',
                                 mask_out_tag='chopa_mask',
                                 fit_out_tag='chopa_fit',
                                 method='mean',
                                 interpolation='spline',
-                                radius=0.3,
+                                radius=2.,
                                 sign='positive',
                                 model='moffat',
-                                filter_size=None,
-                                guess=(0., 0., 10., 10., 1e5, 0., 0.))
+                                filter_size=0.1,
+                                guess=(0., 0., 5., 5., 100., 0., 0., 1.))
 
    pipeline.add_module(module)
 
-   # Center the reference PSF data by smoothing and fitting with a 2D Moffat function
-
-   module = StarCenteringModule(name_in='center2',
-                                image_in_tag='psf_crop',
-                                image_out_tag='psf_center',
-                                mask_out_tag='psf_mask',
-                                fit_out_tag='psf_fit',
-                                method='full',
-                                interpolation='spline',
-                                radius=1.5,
-                                sign='positive',
-                                model='moffat',
-                                filter_size=0.2,
-                                guess=(0., 0., 5., 5., 1e8, 0., 0., 1.))
-
-   pipeline.add_module(module)
-
-   # To mask the central and outer part of the chop A data
+   # Mask the central and outer part of the images
 
    module = PSFpreparationModule(name_in='prep',
                                  image_in_tag='chopa_center',
                                  image_out_tag='chopa_prep',
                                  mask_out_tag=None,
                                  norm=False,
-                                 resize=None,
                                  cent_size=0.3,
                                  edge_size=3.)
 
    pipeline.add_module(module)
 
-   # Do the PSF subtraction with PCA for the first 30 components
+   # Subtract a PSF model with PCA and median-combine the residuals
 
    module = PcaPsfSubtractionModule(pca_numbers=range(1, 31),
                                     name_in='pca',
                                     images_in_tag='chopa_prep',
                                     reference_in_tag='chopa_prep',
-                                    res_mean_tag=None,
-                                    res_median_tag='residuals',
+                                    res_median_tag='chopa_pca',
                                     extra_rot=0.0)
 
    pipeline.add_module(module)
 
-   # Calculate detection limits between 0.8 and 2.5 arcsec
+..   # Calculate detection limits between 0.8 and 2.5 arcsec
    # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
 
-   module = ContrastCurveModule(name_in='limits',
+..   module = ContrastCurveModule(name_in='limits',
                                 image_in_tag='chopa_center',
                                 psf_in_tag='psf_crop',
                                 contrast_out_tag='limits',
@@ -219,50 +172,47 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                                 extra_rot=0.,
                                 residuals='median')
 
-   pipeline.add_module(module)
+..   pipeline.add_module(module)
 
    # Datasets can be exported to FITS files by their tag name in the database
-   # Here we will export the centered chop A data to the default output place
+   # Here we will export the median-combined residuals of the PSF subtraction
 
-   module = FitsWritingModule(name_in='write1',
-                              file_name='chopa_center.fits',
+   module = FitsWritingModule(name_in='write',
+                              file_name='chopa_pca.fits',
                               output_dir=None,
-                              data_tag='chopa_center',
+                              data_tag='chopa_pca',
                               data_range=None,
                               overwrite=True)
 
    pipeline.add_module(module)
 
-   # And the median-combined residuals of the PSF subtraction
+..   # We also write the detection limits to a text file
 
-   module = FitsWritingModule(name_in='write2',
-                              file_name='residuals.fits',
-                              output_dir=None,
-                              data_tag='residuals',
-                              data_range=None,
-                              overwrite=True)
+..   header = 'Separation [arcsec] - Contrast [mag] - Variance [mag] - FPF'
 
-   pipeline.add_module(module)
-
-   # We also write the detection limits to a text file
-
-   header = 'Separation [arcsec] - Contrast [mag] - Variance [mag] - FPF'
-
-   module = TextWritingModule(name_in='write3',
+..   module = TextWritingModule(name_in='write3',
                               file_name='contrast_curve.dat',
                               output_dir=None,
                               data_tag='limits',
                               header=header)
 
-   pipeline.add_module(module)
+..   pipeline.add_module(module)
 
    # Finally, to run all pipeline modules at once
 
    pipeline.run()
 
-   # Or to run a module individually
+   # Or to run the modules individually
 
-   pipeline.run_module('read_chopa')
+   pipeline.run_module('read')
+   pipeline.run_module('angle')
+   pipeline.run_module('subtract')
+   pipeline.run_module('crop')
+   pipeline.run_module('align')
+   pipeline.run_module('center')
+   pipeline.run_module('prep')
+   pipeline.run_module('pca')
+   pipeline.run_module('write')
 
 .. _near_results:
 
@@ -271,7 +221,7 @@ Results
 
 The images that were exported to FITS files can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction::
 
-   data = pipeline.get_data('residuals')
+   data = pipeline.get_data('chopa_pca')
 
 And to plot the residuals for 10 principal components (Python indexing starts at zero)::
 
@@ -284,21 +234,21 @@ And to plot the residuals for 10 principal components (Python indexing starts at
    :width: 60%
    :align: center
 
-Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
+.. Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
+..
+..    data = pipeline.get_data('limits')
+..
+..    plt.figure(figsize=(7, 4))
+..    plt.errorbar(data[:, 0], data[:, 1], data[:, 2])
+..    plt.xlim(0., 2.5)
+..    plt.ylim(18., 9.)
+..    plt.xlabel('Separation [arcsec]')
+..    plt.ylabel('Contrast [mag]')
+..    plt.show()
 
-   data = pipeline.get_data('limits')
-
-   plt.figure(figsize=(7, 4))
-   plt.errorbar(data[:, 0], data[:, 1], data[:, 2])
-   plt.xlim(0., 2.5)
-   plt.ylim(18., 9.)
-   plt.xlabel('Separation [arcsec]')
-   plt.ylabel('Contrast [mag]')
-   plt.show()
-
-.. image:: _static/near_limits.png
-   :width: 70%
-   :align: center
+.. .. image:: _static/near_limits.png
+..    :width: 70%
+..    :align: center
 
 .. |visir| raw:: html
 

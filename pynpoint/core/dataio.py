@@ -740,7 +740,7 @@ class OutputPort(Port):
                 first_data = np.array(first_data, dtype="|S")
 
         except IndexError:
-            warnings.warn("The dataset that is stored under the tag name '"+tag+"' is empty.")
+            warnings.warn(f'The dataset that is stored under the tag name \'{tag}\' is empty.')
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
@@ -870,7 +870,7 @@ class OutputPort(Port):
                     data = np.array(data, dtype="|S")
 
             except IndexError:
-                warnings.warn("The dataset that is stored under the tag name '"+tag+"' is empty.")
+                warnings.warn(f'The dataset that is stored under the tag name \'{tag}\' is empty.')
 
             self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
