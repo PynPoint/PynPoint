@@ -419,6 +419,7 @@ def create_near_data(path):
 
         primary_header = fits.Header()
         primary_header['INSTRUME'] = 'VISIR'
+        primary_header['HIERARCH ESO DET CHOP NCYCLES'] = 5
         primary_header['HIERARCH ESO DET SEQ1 DIT'] = 1.
         primary_header['HIERARCH ESO TPL EXPNO'] = item
         primary_header['HIERARCH ESO DET CHOP ST'] = 'T'
