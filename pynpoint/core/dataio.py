@@ -126,24 +126,10 @@ class Port(metaclass=ABCMeta):
 
         return self._m_tag
 
-    def close_port(self):
-        """
-        Closes the connection to the Data Storage and force it to save the data to the hard drive.
-        All data that was accessed using the port is cleaned from the memory.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        if self._m_data_base_active:
-            self._m_data_storage.close_connection()
-            self._m_data_base_active = False
-
     def open_port(self):
         """
-        Opens the connection to the Data Storage and activates its data bank.
+        Opens the connection to the :class:`~pynpoint.core.dataio.DataStorage` and activates its
+        data bank.
 
         Returns
         -------
@@ -154,6 +140,22 @@ class Port(metaclass=ABCMeta):
         if not self._m_data_base_active:
             self._m_data_storage.open_connection()
             self._m_data_base_active = True
+
+    def close_port(self):
+        """
+        Closes the connection to the :class:`~pynpoint.core.dataio.DataStorage` and forces it to
+        save the data to the hard drive. All data that was accessed using the port is cleaned from
+        the memory.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if self._m_data_base_active:
+            self._m_data_storage.close_connection()
+            self._m_data_base_active = False
 
     def set_database_connection(self,
                                 data_base_in):
