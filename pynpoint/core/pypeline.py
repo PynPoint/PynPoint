@@ -324,17 +324,23 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
+        data_tags = list(self.m_data_storage.m_data_bank.keys())
 
         for module in self._m_modules.values():
-            validation = self._validate(module, existing_data_tags)
+            validation = self._validate(module, data_tags)
 
             if not validation[0]:
-                return validation
+                break
 
-        return True, None
+        else:
+            validation = True, None
 
-    def validate_pipeline_module(self, name):
+        self.m_data_storage.close_connection()
+
+        return validation
+
+    def validate_pipeline_module(self,
+                                 name):
         """
         Checks if the data exists for the module with label *name*.
 
@@ -361,6 +367,8 @@ class Pypeline:
 
         else:
             validate = None
+
+        self.m_data_storage.close_connection()
 
         return validate
 
@@ -391,7 +399,8 @@ class Pypeline:
         for key in self._m_modules:
             self._m_modules[key].run()
 
-    def run_module(self, name):
+    def run_module(self,
+                   name):
         """
         Runs a single processing module.
 
@@ -407,7 +416,7 @@ class Pypeline:
         """
 
         if name in self._m_modules:
-            sys.stdout.write('Validating module '+name+'...')
+            sys.stdout.write(f'Validating module \'{name}\'...')
             sys.stdout.flush()
 
             validation = self.validate_pipeline_module(name)
@@ -442,12 +451,17 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        return np.asarray(self.m_data_storage.m_data_bank[tag])
+        data = np.asarray(self.m_data_storage.m_data_bank[tag])
+
+        self.m_data_storage.close_connection()
+
+        return data
 
     def delete_data(self,
                     tag):
         """
-        Function for deleting a dataset and related attributes from the central database.
+        Function for deleting a dataset and related attributes from the central database. Disk
+        space does not seem to free up when using this function.
 
         Parameters
         ----------
@@ -468,7 +482,7 @@ class Pypeline:
             warnings.warn(f'Dataset \'{tag}\' not found in the database.')
 
         if 'header_' + tag + '/' in self.m_data_storage.m_data_bank:
-            del self.m_data_storage.m_data_bank[('header_' + tag)]
+            del self.m_data_storage.m_data_bank[f'header_{tag}']
         else:
             warnings.warn(f'Attributes of \'{tag}\' not found in the database.')
 
@@ -502,8 +516,10 @@ class Pypeline:
             attr = self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]
 
         else:
-            attr = self.m_data_storage.m_data_bank['header_'+data_tag+'/'+attr_name]
+            attr = self.m_data_storage.m_data_bank[f'header_{data_tag}/{attr_name}']
             attr = np.asarray(attr)
+
+        self.m_data_storage.close_connection()
 
         return attr
 
@@ -542,10 +558,10 @@ class Pypeline:
             if isinstance(attr_value[0], str):
                 attr_value = np.array(attr_value, dtype='|S')
 
-            if attr_name in list(self.m_data_storage.m_data_bank['header_'+data_tag].keys()):
-                del self.m_data_storage.m_data_bank['header_'+data_tag+'/'+attr_name]
+            if attr_name in list(self.m_data_storage.m_data_bank[f'header_{data_tag}'].keys()):
+                del self.m_data_storage.m_data_bank[f'header_{data_tag}/{attr_name}']
 
-            attr_key = 'header_'+data_tag+'/'+attr_name
+            attr_key = f'header_{data_tag}/{attr_name}'
             self.m_data_storage.m_data_bank[attr_key] = np.asarray(attr_value)
 
         self.m_data_storage.close_connection()
@@ -567,14 +583,17 @@ class Pypeline:
         select = []
         for item in tags:
 
-            if item == 'config' or item == 'fits_header' or item[0:7] == 'header_':
+            if item in ('config', 'fits_header') or item[0:7] == 'header_':
                 continue
             else:
                 select.append(item)
 
+        self.m_data_storage.close_connection()
+
         return np.asarray(select)
 
-    def get_shape(self, tag):
+    def get_shape(self,
+                  tag):
         """
         Function for getting the shape of a database entry.
 
@@ -591,4 +610,8 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        return self.m_data_storage.m_data_bank[tag].shape
+        data_shape = self.m_data_storage.m_data_bank[tag].shape
+
+        self.m_data_storage.close_connection()
+
+        return data_shape
