@@ -335,8 +335,6 @@ class Pypeline:
         else:
             validation = True, None
 
-        self.m_data_storage.close_connection()
-
         return validation
 
     def validate_pipeline_module(self,
@@ -367,8 +365,6 @@ class Pypeline:
 
         else:
             validate = None
-
-        self.m_data_storage.close_connection()
 
         return validate
 
