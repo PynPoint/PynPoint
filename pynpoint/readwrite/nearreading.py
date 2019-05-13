@@ -22,8 +22,8 @@ from pynpoint.util.module import progress, memory_frames
 class NearReadingModule(ReadingModule):
     """
     Pipeline module for reading VLT/VISIR data of the NEAR experiment. The FITS files and required
-    header information are read from the input directory and stored in four datasets, corresponding
-    to nod A/B and chop A/B. The primary HDU of the FITS files should contain the main header
+    header information are read from the input directory and stored in two datasets, corresponding
+    to chop A and chop B. The primary HDU of the FITS files should contain the main header
     information, while the subsequent HDUs contain each a single image (alternated for chop A and
     chop B) and some additional header information for that image. The last HDU is ignored as it
     contains the average of all images.
@@ -32,7 +32,7 @@ class NearReadingModule(ReadingModule):
     __author__ = 'Jasper Jonker, Tomas Stolker'
 
     def __init__(self,
-                 name_in='burst',
+                 name_in='near_reading',
                  input_dir=None,
                  chopa_out_tag='chopa',
                  chopb_out_tag='chopb'):
@@ -154,15 +154,14 @@ class NearReadingModule(ReadingModule):
         """
 
         if str(header['ESO DET CHOP ST']) == 'F':
-            warnings.warn('Chopping has been set to disabled.')
+            warnings.warn('Dataset was obtained without chopping.')
 
         skipped = int(header['ESO DET CHOP CYCSKIP'])
         if skipped != 0:
-            warnings.warn('{} chop cycles have been skipped during operation.'.format(skipped))
+            warnings.warn(f'Chop cycles ({skipped}) have been skipped.')
 
         if str(header['ESO DET CHOP CYCSUM']) == 'T':
-            warnings.warn('Frames have been averaged by default. This module will probably not '
-                          'work properly.')
+            warnings.warn('FITS file contains averaged images.')
 
     def read_header(self,
                     filename):
@@ -192,13 +191,21 @@ class NearReadingModule(ReadingModule):
 
         # check if the file contains an even number of images, as expected with two chop positions
         if nimages%2 != 0:
-            warnings.warn('FITS file contains odd number of images: {}'.format(filename))
+            warnings.warn(f'FITS file contains odd number of images: {filename}')
 
             # decreasing nimages to an even number such that nimages // 2 gives the correct size
             nimages -= 1
 
         # primary header
         header = hdulist[0].header
+
+        # number of chop cycles
+        ncycles = header['ESO DET CHOP NCYCLES']
+
+        # number of chop cycles should be equal to half the number of available images
+        if ncycles != nimages // 2:
+            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the ' \
+                          f'number of available HDU images ({nimages // 2}).')
 
         # header of the first image
         header_image = hdulist[1].header
@@ -270,10 +277,8 @@ class NearReadingModule(ReadingModule):
                 cycle = hdulist[i+1].header['ESO DET FRAM TYPE']
 
             else:
-                cycle = None
-
-                warnings.warn('The chop position (=ESO DET FRAM TYPE) is not available '
-                              'in the FITS header. Image number: {}'.format(i))
+                hdulist.close()
+                raise ValueError(f'Frame type not found in the FITS header. Image number: {i}.')
 
             # write the HDU image to the chop A or B array
             # count the number of chop A and B images
@@ -290,16 +295,17 @@ class NearReadingModule(ReadingModule):
                 prev_cycle = cycle
 
             elif cycle == prev_cycle:
-                warnings.warn('Previous and current chop position ({}) are the same. Skipping the '
-                              'current image.'.format(cycle))
+                warnings.warn(f'Previous and current chop position ({cycle}) are the same. '
+                              'Skipping the current image.')
 
             else:
-                raise ValueError('Frame type ({}) not a valid value. Expecting HCYCLE1 or HCYCLE2 '
-                                 'as value for ESO DET FRAM TYPE.'.format(cycle))
+                hdulist.close()
+                raise ValueError(f'Frame type ({cycle}) not a valid value. Expecting HCYCLE1 or '
+                                 'HCYCLE2 as value for ESO DET FRAM TYPE.')
 
         # check if the number of chop A and B images is equal, this error should never occur
         if count_chopa != count_chopb:
-            raise ValueError('The number of images is not equal for chop A and chop B.')
+            warnings.warn('The number of images is not equal for chop A and chop B.')
 
         hdulist.close()
 
@@ -308,13 +314,9 @@ class NearReadingModule(ReadingModule):
     def run(self):
         """
         Run the module. The FITS files are collected from the input directory and uncompressed if
-        needed. The images are then sorted by the two nod positions (nod A and nod B) and two chop
-        positions (chop A and chop B) per nod position. The required FITS header keywords (which
-        should be set in the configuration file) are also imported and stored as attributes to the
-        four output datasets in the HDF5 database. The nodding position of each FITS files is
-        determined relative to the exposure number (ESO TPL EXPNO) of the first FITS file that is
-        read. Therefore, the first FITS file should correspond to the first position in the chosen
-        nodding scheme.
+        needed. The images are then sorted by the two chop positions (chop A and chop B). The
+        required FITS header keywords (which should be set in the configuration file) are also
+        imported and stored as attributes to the two output datasets in the HDF5 database.
 
         Returns
         -------
@@ -341,15 +343,16 @@ class NearReadingModule(ReadingModule):
         files.sort()
 
         # check if there are FITS files present in the input location
-        assert(files), 'No FITS files found in {}.'.format(self.m_input_location)
+        assert(files), f'No FITS files found in {self.m_input_location}.'
 
         start_time = time.time()
         for i, filename in enumerate(files):
             progress(i, len(files), 'Running NearReadingModule...', start_time)
 
-            # get the images of chop A and B, the primary header data, the nod position,
-            # and the number of images per chop position
+            # get the primary header data and the image shape
             header, im_shape = self.read_header(filename)
+
+            # get the images of chop A and chop B
             chopa, chopb = self.read_images(filename, im_shape)
 
             # append the images of chop A and B
