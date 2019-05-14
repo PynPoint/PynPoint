@@ -603,3 +603,14 @@ class TestOutputPort:
         out_port.activate()
         out_port.del_all_data()
         out_port.del_all_attributes()
+
+    def test_append_empty_data(self):
+        out_port = self.create_output_port('empty_data')
+
+        with pytest.warns(UserWarning) as warning:
+            out_port.append([])
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The dataset that is stored under the tag name ' \
+                                             '\'empty_data\' is empty.'
+

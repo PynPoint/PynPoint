@@ -62,14 +62,14 @@ def lnprob(param,
     indices : numpy.ndarray
         Non-masked image indices.
     prior : str
-        Prior can be set to "flat" or "aperture". With "flat", the values of *bounds* are used
-        as uniform priors. With "aperture", the prior probability is set to zero beyond the
+        Prior can be set to 'flat' or 'aperture'. With 'flat', the values of *bounds* are used
+        as uniform priors. With 'aperture', the prior probability is set to zero beyond the
         aperture and unity within the aperture.
     variance : tuple(str, float)
         Variance type and value for the likelihood function. The value is set to None in case
         a Poisson distribution is assumed.
     residuals : str
-        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+        Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
     Returns
     -------
@@ -87,7 +87,7 @@ def lnprob(param,
             Log prior.
         """
 
-        if prior == "flat":
+        if prior == 'flat':
 
             if bounds[0][0] <= param[0] <= bounds[0][1] and \
                bounds[1][0] <= param[1] <= bounds[1][1] and \
@@ -99,14 +99,14 @@ def lnprob(param,
 
                 ln_prior = -np.inf
 
-        elif prior == "aperture":
+        elif prior == 'aperture':
 
             xy_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
 
             delta_x = xy_pos[0] - aperture['pos_x']
             delta_y = xy_pos[1] - aperture['pos_y']
 
-            if aperture['type'] == "circular":
+            if aperture['type'] == 'circular':
 
                 if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
                    bounds[2][0] <= param[2] <= bounds[2][1]:
@@ -117,7 +117,7 @@ def lnprob(param,
 
                     ln_prior = -np.inf
 
-            elif aperture['type'] == "elliptical":
+            elif aperture['type'] == 'elliptical':
 
                 cos_ang = math.cos(math.radians(180.-aperture['angle']))
                 sin_ang = math.sin(math.radians(180.-aperture['angle']))
@@ -135,7 +135,7 @@ def lnprob(param,
 
 
         else:
-            raise ValueError("Prior type not recognized.")
+            raise ValueError('Prior type not recognized.')
 
         return ln_prior
 
@@ -168,7 +168,7 @@ def lnprob(param,
         stack = combine_residuals(method=residuals, res_rot=im_res)
 
         merit = merit_function(residuals=stack[0, ],
-                               function="sum",
+                               function='sum',
                                variance=variance,
                                aperture=aperture,
                                sigma=0.)
@@ -179,7 +179,6 @@ def lnprob(param,
 
     if math.isinf(ln_prior):
         ln_prob = -np.inf
-
     else:
         ln_prob = ln_prior + _lnlike()
 
