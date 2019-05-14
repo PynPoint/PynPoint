@@ -53,7 +53,7 @@ def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
 def _bad_pixel_interpolation(image_in,
                              bad_pixel_map,
                              iterations):
-    """'
+    """
     Internal function to interpolate bad pixels.
 
     Parameters
@@ -138,7 +138,7 @@ def _bad_pixel_interpolation(image_in,
 #                      var_image,
 #                      source_image,
 #                      out_image):
-#     """'
+#     """
 #     Internal function to create a map with ones and zeros.
 #
 #     Parameters
