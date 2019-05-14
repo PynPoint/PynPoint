@@ -1,4 +1,4 @@
-.. _configuration:
+r.. _configuration:
 
 Configuration
 =============
@@ -41,7 +41,7 @@ In this section, several examples are provided of the configuration content for 
 VLT/NACO
 ^^^^^^^^
 
-.. code-block::
+.. code-block:: ini
 
    [header]
 
@@ -72,7 +72,7 @@ VLT/NACO
 VLT/SPHERE
 ^^^^^^^^^^
 
-.. code-block::
+.. code-block:: ini
 
    [header]
 
@@ -103,7 +103,7 @@ VLT/SPHERE
 VLT/VISIR
 ^^^^^^^^^
 
-.. code-block::
+.. code-block:: ini
 
    [header]
 
