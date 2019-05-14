@@ -737,12 +737,12 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
 
-        try:
+        if first_data.size == 0:
+            warnings.warn(f'The dataset that is stored under the tag name \'{tag}\' is empty.')
+
+        else:
             if isinstance(first_data[0], str):
                 first_data = np.array(first_data, dtype="|S")
-
-        except IndexError:
-            warnings.warn(f'The dataset that is stored under the tag name \'{tag}\' is empty.')
 
         self._m_data_storage.m_data_bank.create_dataset(tag,
                                                         data=first_data,
@@ -867,12 +867,13 @@ class OutputPort(Port):
             # we always append in axis one independent of the dimension
             # 1D case
 
-            try:
+            if data.size == 0:
+                warnings.warn(f'The dataset that will be stored under the tag name ' \
+                              '\'{tag}\' is empty.')
+
+            else:
                 if isinstance(data[0], str):
                     data = np.array(data, dtype="|S")
-
-            except IndexError:
-                warnings.warn(f'The dataset that is stored under the tag name \'{tag}\' is empty.')
 
             self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
             self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
