@@ -154,26 +154,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-..   # Calculate detection limits between 0.8 and 2.5 arcsec
-   # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
-
-..   module = ContrastCurveModule(name_in='limits',
-                                image_in_tag='chopa_center',
-                                psf_in_tag='psf_crop',
-                                contrast_out_tag='limits',
-                                separation=(0.8, 2.5, 0.1),
-                                angle=(0., 360., 60.),
-                                threshold=('fpf', 2.87e-6),
-                                psf_scaling=1.,
-                                aperture=0.2,
-                                pca_number=10,
-                                cent_size=0.2,
-                                edge_size=3.,
-                                extra_rot=0.,
-                                residuals='median')
-
-..   pipeline.add_module(module)
-
    # Datasets can be exported to FITS files by their tag name in the database
    # Here we will export the median-combined residuals of the PSF subtraction
 
@@ -185,18 +165,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                               overwrite=True)
 
    pipeline.add_module(module)
-
-..   # We also write the detection limits to a text file
-
-..   header = 'Separation [arcsec] - Contrast [mag] - Variance [mag] - FPF'
-
-..   module = TextWritingModule(name_in='write3',
-                              file_name='contrast_curve.dat',
-                              output_dir=None,
-                              data_tag='limits',
-                              header=header)
-
-..   pipeline.add_module(module)
 
    # Finally, to run all pipeline modules at once
 
@@ -214,16 +182,12 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.run_module('pca')
    pipeline.run_module('write')
 
-.. The VISIR datasets contain a large number of images so the PynPoint database will use a large amount of disk storage. Therefore, datasets of intermediate results can be removed from the database (together with the related attributes) by their tag name, for example::
-..
-..    pipeline.delete_data('chopa')
-
 .. _near_results:
 
 Results
 -------
 
-The images that were exported to FITS files can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction::
+The images that were exported to a FITS file can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction::
 
    data = pipeline.get_data('chopa_pca')
 
@@ -238,22 +202,6 @@ And to plot the residuals for 10 principal components (Python indexing starts at
    :width: 60%
    :align: center
 
-.. Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
-..
-..    data = pipeline.get_data('limits')
-..
-..    plt.figure(figsize=(7, 4))
-..    plt.errorbar(data[:, 0], data[:, 1], data[:, 2])
-..    plt.xlim(0., 2.5)
-..    plt.ylim(18., 9.)
-..    plt.xlabel('Separation [arcsec]')
-..    plt.ylabel('Contrast [mag]')
-..    plt.show()
-
-.. .. image:: _static/near_limits.png
-..    :width: 70%
-..    :align: center
-
 .. |visir| raw:: html
 
    <a href="https://www.eso.org/sci/facilities/paranal/instruments/visir.html" target="_blank">VLT/VISIR</a>
@@ -265,10 +213,6 @@ And to plot the residuals for 10 principal components (Python indexing starts at
 .. |stolker| raw:: html
 
    <a href="http://adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
-
-.. |data| raw:: html
-
-   <a href="https://drive.google.com/open?id=1TPSgXjazewwBsBVe-Zu5fstf9X2nlwQX" target="_blank">here</a>
 
 .. |ds9| raw:: html
 
