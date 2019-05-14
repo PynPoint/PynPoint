@@ -658,6 +658,6 @@ class CombineTagsModule(ProcessingModule):
         sys.stdout.write('Running CombineTagsModule... [DONE]\n')
         sys.stdout.flush()
 
-        history = 'number of input tags = {np.size(self.m_image_in_tags)}'
+        history = f'number of input tags = {np.size(self.m_image_in_tags)}'
         self.m_image_out_port.add_history('CombineTagsModule', history)
         self.m_image_out_port.close_port()
