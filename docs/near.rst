@@ -63,8 +63,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                        input_place_in='input_folder/',
                        output_place_in='output_folder/')
 
-   pipeline = Pypeline('./', 'input/', 'output/')
-
    # Read the raw data and separate chop A and chop B images
 
    module = NearReadingModule(name_in='read',
