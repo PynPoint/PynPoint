@@ -4,6 +4,7 @@ Interfaces for pipeline modules.
 
 import os
 import sys
+import time
 import warnings
 
 from abc import ABCMeta, abstractmethod
@@ -11,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
-from pynpoint.util.module import update_arguments
+from pynpoint.util.module import update_arguments, progress
 from pynpoint.util.multistack import StackProcessingCapsule
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
@@ -542,12 +543,6 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         nimages = image_in_port.get_shape()[0]
 
-        if cpu == 1:
-            message += "..."
-
-        sys.stdout.write(message)
-        sys.stdout.flush()
-
         if memory == 0 or image_out_port.tag == image_in_port.tag:
             # load all images in the memory at once if the input and output tag are the
             # same or if the MEMORY attribute is set to None in the configuration file
@@ -555,7 +550,11 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             result = []
 
+            start_time = time.time()
+
             for i in range(nimages):
+                progress(i, nimages, message+'...', start_time)
+
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
@@ -580,7 +579,11 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
 
+            start_time = time.time()
+
             for i in range(nimages):
+                progress(i, nimages, message+'...', start_time)
+
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
@@ -594,6 +597,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                     image_out_port.append(result, data_dim=3)
 
         else:
+            sys.stdout.write(message)
+            sys.stdout.flush()
+
             # process images in parallel in stacks of MEMORY/CPU images
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
