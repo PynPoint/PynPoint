@@ -1028,23 +1028,23 @@ class FitCenterModule(ProcessingModule):
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
-            try:
-                alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
-                alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
-
-            except RuntimeWarning:
+            if 2.**(1./beta)-1. < 0.
                 alpha_x = np.nan
                 alpha_y = np.nan
 
-            try:
-                a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
-                b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
-                c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
+            else:
+                alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
+                alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
 
-            except RuntimeWarning:
+            if alpha_x == 0. or alpha_y == 0.
                 a_moffat = np.nan
                 b_moffat = np.nan
                 c_moffat = np.nan
+
+            else:
+                a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
+                b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
+                c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
 
             a_term = a_moffat*x_diff**2
             b_term = b_moffat*y_diff**2
@@ -1156,7 +1156,7 @@ class FitCenterModule(ProcessingModule):
         if self.m_count > 0:
             print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
 
-        history = f'method = {self.m_method}'
+        history = f'model = {self.m_model}'
 
         self.m_fit_out_port.copy_attributes(self.m_image_in_port)
         self.m_fit_out_port.add_history('FitCenterModule', history)
