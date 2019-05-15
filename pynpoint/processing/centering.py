@@ -329,7 +329,7 @@ class StarAlignmentModule(ProcessingModule):
                 self.m_num_references = n_ref
 
                 warnings.warn(f'Number of available images ({n_ref}) is smaller than ' \
-                              f'num_references ({self.m_num_refernces}). Using all ' \
+                              f'num_references ({self.m_num_references}). Using all ' \
                               f'available images instead.')
 
             ref_index = np.sort(np.random.choice(n_ref, self.m_num_references, replace=False))
@@ -776,6 +776,385 @@ class StarCenteringModule(ProcessingModule):
             self.m_fit_out_port.add_history('StarCenteringModule', history)
 
         self.m_image_out_port.close_port()
+
+
+class FitProfileModule(ProcessingModule):
+    """
+    Pipeline module for fitting the PSF with a 2D Gaussian or Moffat function.
+    """
+
+    def __init__(self,
+                 name_in='fit_profile',
+                 image_in_tag='im_arr',
+                 fit_out_tag='best_fit',
+                 mask_out_tag=None,
+                 method='full',
+                 radius=0.1,
+                 sign='positive',
+                 model='gaussian',
+                 filter_size=None,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with images that are read as input.
+        fit_out_tag : str
+            Tag of the database entry with the best-fit results of the model fit and the 1-sigma
+            errors. Data is written in the following format: x offset (pix), x offset error (pix)
+            y offset (pix), y offset error (pix), FWHM major axis (arcsec), FWHM major axis error
+            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec), amplitude (counts),
+            amplitude error (counts), angle (deg), angle error (deg) measured in counterclockwise
+            direction with respect to the upward direction (i.e., East of North), offset (counts),
+            offset error (counts), power index (only for Moffat function), and power index error
+            (only for Moffat function). Not used if set to None.
+        mask_out_tag : str, None
+            Tag of the database entry with the masked images that are written as output. The
+            unmasked part of the images is used for the fit. The effect of the smoothing that is
+            applied by setting the *fwhm* parameter is also visible in the data of the
+            *mask_out_tag*. Data is not written when set to None.
+        method : str
+            Fit and shift all the images individually ('full') or only fit the mean of the cube and
+            shift all images to that location ('mean'). The 'mean' method could be used after
+            running the :class:`~pynpoint.processing.centering.StarAlignmentModule`.
+        radius : float
+            Radius (arcsec) around the center of the image beyond which pixels are neglected with
+            the fit. The radius is centered on the position specified in *guess*, which is the
+            center of the image by default.
+        sign : str
+            Fit a 'positive' or 'negative' Gaussian/Moffat. A negative model can be used to center
+            coronagraphic data in which a dark hole is present.
+        model : str
+            Type of 2D model used to fit the PSF ('gaussian' or 'moffat'). Both models are
+            elliptical in shape.
+        filter_size : float, None
+            Standard deviation (arcsec) of the Gaussian filter that is used to smooth the
+            images before fitting the model. No filter is applied if set to None.
+
+        Keyword arguments
+        -----------------
+        guess : tuple(float, float, float, float, float, float, float, float)
+            The initial parameter values for the least squares fit: x offset with respect to center
+            (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
+            (counts), angle (deg), offset (counts), and power index (only for Moffat function).
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if 'guess' in kwargs:
+            self.m_guess = kwargs['guess']
+
+        else:
+            if model == 'gaussian':
+                self.m_guess = (0., 0., 1., 1., 1., 0., 0.)
+
+            elif model == 'moffat':
+                self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
+
+        super(FitProfileModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_fit_out_port = self.add_output_port(fit_out_tag)
+
+        if mask_out_tag is None:
+            self.m_mask_out_port = None
+        else:
+            self.m_mask_out_port = self.add_output_port(mask_out_tag)
+
+        self.m_method = method
+        self.m_radius = radius
+        self.m_sign = sign
+        self.m_model = model
+        self.m_filter_size = filter_size
+        self.m_model_func = None
+
+        self.m_count = 0
+
+    def run(self):
+        """
+        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
+        the individual images or the mean of the stack with a 2D Gaussian or Moffat function, and
+        stores the best fit results. The fitting results contain zeros in case the algorithm could
+        not converge. The `fit_out_tag` can be directly used as input for the `shift_xy` argument
+        of the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if self.m_mask_out_port:
+            self.m_mask_out_port.del_all_data()
+            self.m_mask_out_port.del_all_attributes()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        cpu = self._m_config_port.get_attribute('CPU')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        npix = self.m_image_in_port.get_shape()[-1]
+
+        if cpu > 1:
+            if self.m_mask_out_port is not None:
+                warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
+                              'stored to this output port.')
+
+            self.m_mask_out_port = None
+
+        if self.m_radius:
+            self.m_radius /= pixscale
+
+        if self.m_filter_size:
+            self.m_filter_size /= pixscale
+
+        if npix%2 == 0:
+            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
+            x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
+            y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
+
+        elif npix%2 == 1:
+            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+            x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
+            y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
+
+        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+        xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
+        rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
+
+        def gaussian_2d(grid,
+                        x_center,
+                        y_center,
+                        fwhm_x,
+                        fwhm_y,
+                        amp,
+                        theta,
+                        offset):
+            """
+            Function to create a 2D elliptical Gaussian model.
+
+            Parameters
+            ----------
+            grid : numpy.ndarray
+                Two 2D arrays with the mesh grid points in x and y direction.
+            x_center : float
+                Offset of the model center along the x axis (pix).
+            y_center : float
+                Offset of the model center along the y axis (pix).
+            fwhm_x : float
+                Full width at half maximum along the x axis (pix).
+            fwhm_y : float
+                Full width at half maximum along the y axis (pix).
+            amp : float
+                Peak flux.
+            theta : float
+                Rotation angle in counterclockwise direction (rad).
+            offset : float
+                Flux offset.
+
+            Returns
+            -------
+            numpy.ndimage
+                Raveled 2D elliptical Gaussian model.
+            """
+
+            (xx_grid, yy_grid) = grid
+
+            x_diff = xx_grid - x_center
+            y_diff = yy_grid - y_center
+
+            sigma_x = fwhm_x/math.sqrt(8.*math.log(2.))
+            sigma_y = fwhm_y/math.sqrt(8.*math.log(2.))
+
+            a_gauss = 0.5 * ((np.cos(theta)/sigma_x)**2 + (np.sin(theta)/sigma_y)**2)
+            b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
+            c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
+
+            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + \
+                c_gauss*y_diff**2))
+
+            if self.m_radius:
+                gaussian = gaussian[rr_ap < self.m_radius]
+            else:
+                gaussian = np.ravel(gaussian)
+
+            return gaussian
+
+        def moffat_2d(grid,
+                      x_center,
+                      y_center,
+                      fwhm_x,
+                      fwhm_y,
+                      amp,
+                      theta,
+                      offset,
+                      beta):
+            """
+            Function to create a 2D elliptical Moffat model.
+
+            Parameters
+            ----------
+            grid : numpy.ndarray
+                Two 2D arrays with the mesh grid points in x and y direction.
+            x_center : float
+                Offset of the model center along the x axis (pix).
+            y_center : float
+                Offset of the model center along the y axis (pix).
+            fwhm_x : float
+                Full width at half maximum along the x axis (pix).
+            fwhm_y : float
+                Full width at half maximum along the y axis (pix).
+            amp : float
+                Peak flux.
+            theta : float
+                Rotation angle in counterclockwise direction (rad).
+            offset : float
+                Flux offset.
+            beta : float
+                Power index.
+
+            Returns
+            -------
+            numpy.ndimage
+                Raveled 2D elliptical Moffat model.
+            """
+
+            (xx_grid, yy_grid) = grid
+
+            x_diff = xx_grid - x_center
+            y_diff = yy_grid - y_center
+
+            alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
+            alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
+
+            a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
+            b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
+            c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
+
+            a_term = a_moffat*x_diff**2
+            b_term = b_moffat*y_diff**2
+            c_term = c_moffat*x_diff*y_diff
+
+            moffat = offset + amp / (1.+a_term+b_term+c_term)**beta
+
+            if self.m_radius:
+                moffat = moffat[rr_ap < self.m_radius]
+            else:
+                moffat = np.ravel(moffat)
+
+            return moffat
+
+        def _fit_2d_function(image):
+
+            if self.m_filter_size:
+                image = gaussian_filter(image, self.m_filter_size)
+
+            if self.m_mask_out_port:
+                mask = np.copy(image)
+
+                if self.m_radius:
+                    mask[rr_ap > self.m_radius] = 0.
+
+                self.m_mask_out_port.append(mask, data_dim=3)
+
+            if self.m_sign == 'negative':
+                image = -1.*image + np.abs(np.min(-1.*image))
+
+            if self.m_radius:
+                image = image[rr_ap < self.m_radius]
+            else:
+                image = np.ravel(image)
+
+            if self.m_model == 'gaussian':
+                self.m_model_func = gaussian_2d
+
+            elif self.m_model == 'moffat':
+                self.m_model_func = moffat_2d
+
+            try:
+                popt, pcov = curve_fit(self.m_model_func,
+                                       (xx_grid, yy_grid),
+                                       image,
+                                       p0=self.m_guess,
+                                       sigma=None,
+                                       method='lm')
+
+                perr = np.sqrt(np.diag(pcov))
+
+            except RuntimeError:
+                if self.m_model == 'gaussian':
+                    popt = np.zeros(7)
+                    perr = np.zeros(7)
+
+                elif self.m_model == 'moffat':
+                    popt = np.zeros(8)
+                    perr = np.zeros(8)
+
+                self.m_count += 1
+
+            if self.m_model == 'gaussian':
+
+                res = np.asarray((popt[0], perr[0],
+                                  popt[1], perr[1],
+                                  popt[2]*pixscale, perr[2]*pixscale,
+                                  popt[3]*pixscale, perr[3]*pixscale,
+                                  popt[4], perr[4],
+                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                  popt[6], perr[6]))
+
+            elif self.m_model == 'moffat':
+
+                res = np.asarray((popt[0], perr[0],
+                                  popt[1], perr[1],
+                                  popt[2]*pixscale, perr[2]*pixscale,
+                                  popt[3]*pixscale, perr[3]*pixscale,
+                                  popt[4], perr[4],
+                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                  popt[6], perr[6],
+                                  popt[7], perr[7]))
+
+            return res
+
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
+
+        if self.m_method == 'full':
+
+            self.apply_function_to_images(_fit_2d_function,
+                                          self.m_image_in_port,
+                                          self.m_fit_out_port,
+                                          'Running FitProfileModule')
+
+        elif self.m_method == 'mean':
+            im_mean = np.zeros(self.m_image_in_port.get_shape()[1:3])
+
+            for i, _ in enumerate(frames[:-1]):
+                im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
+
+            res = _fit_2d_function(im_mean/float(nimages))
+
+            res = res[np.newaxis, ...]
+            res = np.repeat(res, nimages, axis=0)
+
+            self.m_fit_out_port.set_all(res, data_dim=2)
+
+        if self.m_count > 0:
+            print('Fit could not converge on %s image(s). [WARNING]' % self.m_count)
+
+        history = f'method = {self.m_method}'
+
+        self.m_fit_out_port.copy_attributes(self.m_image_in_port)
+        self.m_fit_out_port.add_history('FitProfileModule', history)
+
+        if self.m_mask_out_port:
+            self.m_mask_out_port.copy_attributes(self.m_image_in_port)
+            self.m_mask_out_port.add_history('FitProfileModule', history)
+
+        self.m_fit_out_port.close_port()
 
 
 class ShiftImagesModule(ProcessingModule):
