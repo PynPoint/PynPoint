@@ -430,6 +430,9 @@ class StarCenteringModule(ProcessingModule):
             None
         """
 
+        warnings.warn('The StarCenteringModule will be deprecated in a future release. Please use '
+                      'the FitCenterModule and ShiftImagesModule instead.', DeprecationWarning)
+
         if 'guess' in kwargs:
             self.m_guess = kwargs['guess']
 
@@ -1028,7 +1031,7 @@ class FitCenterModule(ProcessingModule):
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
-            if 2.**(1./beta)-1. < 0.
+            if 2.**(1./beta)-1. < 0.:
                 alpha_x = np.nan
                 alpha_y = np.nan
 
@@ -1036,7 +1039,7 @@ class FitCenterModule(ProcessingModule):
                 alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
                 alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
 
-            if alpha_x == 0. or alpha_y == 0.
+            if alpha_x == 0. or alpha_y == 0.:
                 a_moffat = np.nan
                 b_moffat = np.nan
                 c_moffat = np.nan
