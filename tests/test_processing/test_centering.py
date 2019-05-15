@@ -168,7 +168,7 @@ class TestStarAlignment:
             self.pipeline.run_module('extract1')
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'The dataset that is stored under the tag name ' \
+        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
                                              '\'index\' is empty.'
 
         data = self.pipeline.get_data('extract1')
