@@ -16,6 +16,16 @@ Alpha Cen Region) experiment. The basic processing steps with PynPoint are descr
 Example
 -------
 
+The example below is based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
+
+    $ chmod +x near_files.sh
+
+And then execute it as::
+
+   $ ./near_files.sh
+
+Now that we have the data, we can start the data reduction with PynPoint!
+
 The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that is provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
 A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`.
@@ -211,6 +221,10 @@ And to plot the residuals for 10 principal components (Python indexing starts at
 .. |stolker| raw:: html
 
    <a href="http://adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
+
+.. |bash| raw:: html
+
+   <a href="https://people.phys.ethz.ch/~stolkert/pynpoint/near_files.sh" target="_blank">Bash script</a>
 
 .. |ds9| raw:: html
 
