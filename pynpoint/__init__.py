@@ -20,6 +20,7 @@ from pynpoint.processing.basic import SubtractImagesModule, \
 from pynpoint.processing.centering import StarExtractionModule, \
                                           StarAlignmentModule, \
                                           StarCenteringModule, \
+                                          FitProfileModule, \
                                           ShiftImagesModule, \
                                           WaffleCenteringModule
 
