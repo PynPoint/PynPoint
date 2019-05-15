@@ -840,11 +840,11 @@ class ShiftImagesModule(ProcessingModule):
         """
 
         if self.m_fit_in_port is not None:
-            self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]]
+            self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]] # (x, y)
+            self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
 
-        def _image_shift(image, shift, interpolation):
-
-            return shift_image(image, shift, interpolation)
+        def _image_shift(image, shift_yx, interpolation):
+            return shift_image(image, shift_yx, interpolation)
 
         self.apply_function_to_images(_image_shift,
                                       self.m_image_in_port,
