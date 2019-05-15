@@ -778,7 +778,7 @@ class StarCenteringModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
 
-class FitProfileModule(ProcessingModule):
+class FitCenterModule(ProcessingModule):
     """
     Pipeline module for fitting the PSF with a 2D Gaussian or Moffat function.
     """
@@ -856,7 +856,7 @@ class FitProfileModule(ProcessingModule):
             elif model == 'moffat':
                 self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
-        super(FitProfileModule, self).__init__(name_in)
+        super(FitCenterModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_fit_out_port = self.add_output_port(fit_out_tag)
@@ -1028,12 +1028,23 @@ class FitProfileModule(ProcessingModule):
             x_diff = xx_grid - x_center
             y_diff = yy_grid - y_center
 
-            alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
-            alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
+            try:
+                alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
+                alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
 
-            a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
-            b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
-            c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
+            except RuntimeWarning:
+                alpha_x = np.nan
+                alpha_y = np.nan
+
+            try:
+                a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
+                b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
+                c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
+
+            except RuntimeWarning:
+                a_moffat = np.nan
+                b_moffat = np.nan
+                c_moffat = np.nan
 
             a_term = a_moffat*x_diff**2
             b_term = b_moffat*y_diff**2
@@ -1098,26 +1109,26 @@ class FitProfileModule(ProcessingModule):
 
             if self.m_model == 'gaussian':
 
-                res = np.asarray((popt[0], perr[0],
-                                  popt[1], perr[1],
-                                  popt[2]*pixscale, perr[2]*pixscale,
-                                  popt[3]*pixscale, perr[3]*pixscale,
-                                  popt[4], perr[4],
-                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
-                                  popt[6], perr[6]))
+                best_fit = np.asarray((popt[0], perr[0],
+                                       popt[1], perr[1],
+                                       popt[2]*pixscale, perr[2]*pixscale,
+                                       popt[3]*pixscale, perr[3]*pixscale,
+                                       popt[4], perr[4],
+                                       math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                       popt[6], perr[6]))
 
             elif self.m_model == 'moffat':
 
-                res = np.asarray((popt[0], perr[0],
-                                  popt[1], perr[1],
-                                  popt[2]*pixscale, perr[2]*pixscale,
-                                  popt[3]*pixscale, perr[3]*pixscale,
-                                  popt[4], perr[4],
-                                  math.degrees(popt[5])%360., math.degrees(perr[5]),
-                                  popt[6], perr[6],
-                                  popt[7], perr[7]))
+                best_fit = np.asarray((popt[0], perr[0],
+                                       popt[1], perr[1],
+                                       popt[2]*pixscale, perr[2]*pixscale,
+                                       popt[3]*pixscale, perr[3]*pixscale,
+                                       popt[4], perr[4],
+                                       math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                       popt[6], perr[6],
+                                       popt[7], perr[7]))
 
-            return res
+            return best_fit
 
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
@@ -1127,7 +1138,7 @@ class FitProfileModule(ProcessingModule):
             self.apply_function_to_images(_fit_2d_function,
                                           self.m_image_in_port,
                                           self.m_fit_out_port,
-                                          'Running FitProfileModule')
+                                          'Running FitCenterModule')
 
         elif self.m_method == 'mean':
             im_mean = np.zeros(self.m_image_in_port.get_shape()[1:3])
@@ -1135,24 +1146,24 @@ class FitProfileModule(ProcessingModule):
             for i, _ in enumerate(frames[:-1]):
                 im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
-            res = _fit_2d_function(im_mean/float(nimages))
+            best_fit = _fit_2d_function(im_mean/float(nimages))
 
-            res = res[np.newaxis, ...]
-            res = np.repeat(res, nimages, axis=0)
+            best_fit = best_fit[np.newaxis, ...]
+            best_fit = np.repeat(best_fit, nimages, axis=0)
 
-            self.m_fit_out_port.set_all(res, data_dim=2)
+            self.m_fit_out_port.set_all(best_fit, data_dim=2)
 
         if self.m_count > 0:
-            print('Fit could not converge on %s image(s). [WARNING]' % self.m_count)
+            print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
 
         history = f'method = {self.m_method}'
 
         self.m_fit_out_port.copy_attributes(self.m_image_in_port)
-        self.m_fit_out_port.add_history('FitProfileModule', history)
+        self.m_fit_out_port.add_history('FitCenterModule', history)
 
         if self.m_mask_out_port:
             self.m_mask_out_port.copy_attributes(self.m_image_in_port)
-            self.m_mask_out_port.add_history('FitProfileModule', history)
+            self.m_mask_out_port.add_history('FitCenterModule', history)
 
         self.m_fit_out_port.close_port()
 
