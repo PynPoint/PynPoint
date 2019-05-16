@@ -435,13 +435,13 @@ class TestStarAlignment:
 
         data = self.pipeline.get_data('fit_full')
         assert np.allclose(data[0, 0], 5.997834332959175, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 7393.3454701926685, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 13.202402625344051, rtol=1e-4, atol=0.)
         assert data.shape == (40, 14)
 
         data = self.pipeline.get_data('mask')
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
         assert np.allclose(data[0, 43, 55], 0.0, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 26.349870395897373, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010827527282995305, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
     def test_fit_center_mean(self):
@@ -461,7 +461,7 @@ class TestStarAlignment:
 
         data = self.pipeline.get_data('fit_mean')
         assert np.allclose(data[0, 0], 5.999072568941366, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 9296.034957223646, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 14.525054620661948, rtol=1e-4, atol=0.)
         assert data.shape == (40, 16)
 
     def test_shift_images_tag(self):
@@ -477,5 +477,5 @@ class TestStarAlignment:
 
         data = self.pipeline.get_data('shift_tag')
         assert np.allclose(data[0, 39, 39], 0.023563080974545528, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 39.98557979765179, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0001643062943690491, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)

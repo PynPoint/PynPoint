@@ -26,9 +26,9 @@ And then execute it as::
 
 Now that we have the data, we can start the data reduction with PynPoint!
 
-The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that is provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
+The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that will provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
-A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`.
+A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`. In the example, we will only process the images of chop A, which contains alpha Cen A in this case. The same procedure can be applied on the images of chop B for which alpha Cen B was centered behind the AGPM coronagraph.
 
 First we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content::
 
@@ -107,16 +107,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Crop out the non-coronagraphic PSF for chop A from the chop B images.
-
-   module = CropImagesModule(size=5.,
-                             center=(430, 175),
-                             name_in='crop3',
-                             image_in_tag='chopb',
-                             image_out_tag='psfa')
-
-   pipeline.add_module(module)
-
    # Subtract frame-by-frame chop B from chop A.
 
    module = SubtractImagesModule(name_in='subtract1',
@@ -142,37 +132,12 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Fit the center position of the non-coronagraphic PSF.
-
-   module = FitCenterModule(name_in='center3',
-                            image_in_tag='psfa',
-                            fit_out_tag='psfa_fit',
-                            mask_out_tag=None,
-                            method='mean',
-                            radius=1.,
-                            sign='positive',
-                            model='moffat',
-                            filter_size=None,
-                            guess=(0., 0., 10., 10., 1e4, 0., 0., 1.))
-
-   pipeline.add_module(module)
-
    # Center the chop-subtracted images by using the fitted values from the FitCenterModule.
 
    module = ShiftImagesModule(shift_xy='chopa_fit',
                               name_in='shift1',
                               image_in_tag='chopa_sub',
                               image_out_tag='chopa_center',
-                              interpolation='spline')
-
-   pipeline.add_module(module)
-
-   # Center the non-coronagraphic PSF.
-
-   module = ShiftImagesModule(shift_xy='psfa_fit',
-                              name_in='shift2',
-                              image_in_tag='psfa',
-                              image_out_tag='psfa_center',
                               interpolation='spline')
 
    pipeline.add_module(module)
@@ -189,18 +154,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Mask the non-coronagraphic PSF beyond 1 arsec.
-
-   module = PSFpreparationModule(name_in='prep2',
-                                 image_in_tag='psfa_center',
-                                 image_out_tag='psfa_mask',
-                                 mask_out_tag=None,
-                                 norm=False,
-                                 cent_size=None,
-                                 edge_size=1.)
-
-   pipeline.add_module(module)
-
    # Subtract a PSF model with PCA and median-combine the residuals
 
    module = PcaPsfSubtractionModule(pca_numbers=range(1, 31),
@@ -212,26 +165,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Calculate detection limits between 0.8 and 2.0 arcsec
-   # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
-
-   module = ContrastCurveModule(name_in='contrastcurve',
-                                image_in_tag='chopa_center',
-                                psf_in_tag='psfa_prep',
-                                contrast_out_tag='limits',
-                                separation=(0.8, 2., 0.1),
-                                angle=(0., 360., 60.),
-                                threshold=('fpf', 2.87e-6),
-                                psf_scaling=1.,
-                                aperture=0.1,
-                                pca_number=5,
-                                cent_size=0.3,
-                                edge_size=2.,
-                                extra_rot=0.,
-                                residuals='median')
- 
-   pipeline.add_module(module)
-
    # Datasets can be exported to FITS files by their tag name in the database.
    # Here we will export the median-combined residuals of the PSF subtraction.
 
@@ -241,18 +174,6 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                               data_tag='chopa_pca',
                               data_range=None,
                               overwrite=True)
-
-   pipeline.add_module(module)
-
-   # And we write the detection limits to a text file.
-
-   header = 'Separation [arcsec] - Contrast [mag] - Variance [mag] - FPF'
-
-   module = TextWritingModule(name_in='write2',
-                              file_name='contrast_curve.dat',
-                              output_dir=None,
-                              data_tag='limits',
-                              header=header)
 
    pipeline.add_module(module)
 
