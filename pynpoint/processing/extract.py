@@ -198,8 +198,8 @@ class ExtractBinaryModule(ProcessingModule):
 
     @typechecked
     def __init__(self,
-                 pos_center: Tuple[int, int],
-                 pos_binary: Tuple[int, int],
+                 pos_center: Tuple[float, float],
+                 pos_binary: Tuple[float, float],
                  name_in: str = 'extract_binary',
                  image_in_tag: str = 'im_arr',
                  image_out_tag: str = 'im_arr_crop',
@@ -276,7 +276,9 @@ class ExtractBinaryModule(ProcessingModule):
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
         self.m_search_size = int(math.ceil(self.m_search_size/pixscale))
-        self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
+
+        if self.m_filter_size is not None:
+            self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
 
         def _crop_rotating_star(image, position, im_size, filter_size):
 
