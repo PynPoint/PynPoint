@@ -68,6 +68,14 @@ class TestStarAlignment:
         assert np.allclose(np.mean(data), 50.0, rtol=limit, atol=0.)
         assert data.shape == (80, )
 
+        parang = self.pipeline.get_attribute('binary', 'PARANG', static=False)
+        self.pipeline.set_attribute('binary', 'PARANG', -1.*parang, static=False)
+
+        data = self.pipeline.get_attribute('binary', 'PARANG', static=False)
+        assert data[5] == -6.578947368421053
+        assert np.allclose(np.mean(data), -50.0, rtol=limit, atol=0.)
+        assert data.shape == (80, )
+
     def test_extract_binary(self):
 
         module = ExtractBinaryModule(pos_center=(50., 50.),

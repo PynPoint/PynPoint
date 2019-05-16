@@ -272,7 +272,7 @@ class ExtractBinaryModule(ProcessingModule):
             # rotates in counterclockwise direction, hence the minus sign in angle
             positions[i, :] = rotate_coordinates(center=self.m_pos_center,
                                                  position=self.m_pos_binary,
-                                                 angle=-item+parang[0])
+                                                 angle=item-parang[0])
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
         self.m_search_size = int(math.ceil(self.m_search_size/pixscale))

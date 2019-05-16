@@ -175,7 +175,7 @@ class FlatCalibrationModule(ProcessingModule):
         self.apply_function_to_images(_flat_calibration,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Running FlatCalibrationModule...',
+                                      'Running FlatCalibrationModule',
                                       func_args=(master, ))
 
         history = f'flat_in_tag = {self.m_flat_in_port.tag}'
