@@ -63,9 +63,9 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # Import the Pypeline and the modules that we will use in this example.
 
    from pynpoint import Pypeline, NearReadingModule, AngleInterpolationModule, \
-                        SubtractImagesModule, CropImagesModule, StarAlignmentModule, \
-                        StarCenteringModule, PSFpreparationModule, PcaPsfSubtractionModule, \
-                        FitsWritingModule
+                        CropImagesModule, SubtractImagesModule, FitCenterModule, \
+                        ShiftImagesModule, PSFpreparationModule, PcaPsfSubtractionModule, \
+                        ContrastCurveModule, FitsWritingModule, TextWritingModule
 
    # Create a Pypeline instance.
 
@@ -215,7 +215,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # Calculate detection limits between 0.8 and 2.0 arcsec
    # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
 
-   module = ContrastCurveModule(name_in='limits',
+   module = ContrastCurveModule(name_in='contrastcurve',
                                 image_in_tag='chopa_center',
                                 psf_in_tag='psfa_prep',
                                 contrast_out_tag='limits',
