@@ -95,7 +95,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Crop the chop A and chop B images around their approximate center
+   # Crop the chop A and chop B images around the approximate coronagraph position
 
    module = CropImagesModule(size=5.,
                              center=(432, 287),
@@ -113,15 +113,24 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
+   # Subtract chop A from chop B before extracting the non-coronagraphic PSF
+
+   module = SubtractImagesModule(name_in='subtract1',
+                                 image_in_tags=('chopb', 'chopa'),
+                                 image_out_tag='chopb_sub',
+                                 scaling=1.)
+
+   pipeline.add_module(module)
+
    # Crop out the non-coronagraphic PSF for chop A from the chop B images
 
    module = ExtractBinaryModule(pos_center=(432., 287.),
                                 pos_binary=(430., 175.),
                                 name_in='extract',
-                                image_in_tag='chopb',
+                                image_in_tag='chopb_sub',
                                 image_out_tag='psfa',
                                 image_size=5.,
-                                search_size=0.5,
+                                search_size=1.,
                                 filter_size=0.3)
 
    pipeline.add_module(module)
@@ -135,13 +144,28 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
+   # Align the non-coronagraphic PSF images
+
+   module = StarAlignmentModule(name_in='align',
+                                image_in_tag='psfa',
+                                ref_image_in_tag=None,
+                                image_out_tag='psfa_align',
+                                interpolation='spline',
+                                accuracy=10,
+                                resize=None,
+                                num_references=10,
+                                subframe=2.0)
+
+   pipeline.add_module(module)
+
    # Fit the center position of chop A, using the images from before the chop-subtraction
+   # For simplicity, only the mean of all images is fitted
 
    module = FitCenterModule(name_in='center1',
                             image_in_tag='chopa_crop',
                             fit_out_tag='chopa_fit',
                             mask_out_tag=None,
-                            method='full',
+                            method='mean',
                             radius=1.,
                             sign='positive',
                             model='moffat',
@@ -150,13 +174,13 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Fit the center position of the non-coronagraphic PSF images
+   # Fit the center position of the mean, non-coronagraphic PSF
 
    module = FitCenterModule(name_in='center2',
                             image_in_tag='psfa',
                             fit_out_tag='psfa_fit',
                             mask_out_tag=None,
-                            method='full',
+                            method='mean',
                             radius=1.,
                             sign='positive',
                             model='moffat',

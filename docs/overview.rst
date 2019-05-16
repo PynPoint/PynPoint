@@ -62,9 +62,8 @@ Basic Processing
 Centering
 ~~~~~~~~~
 
-* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate the position of the star.
 * :class:`~pynpoint.processing.centering.StarAlignmentModule` (CPU): Align the images with a cross-correlation.
-* :class:`~pynpoint.processing.centering.StarCenteringModule` (CPU): Center the images by fitting a 2D Gaussian or Moffat function.
+* :class:`~pynpoint.processing.centering.FitCenterModule` (CPU): Fit the PSF with a 2D Gaussian or Moffat function.
 * :class:`~pynpoint.processing.centering.ShiftImagesModule` (CPU): Shift a stack of images.
 * :class:`~pynpoint.processing.centering.WaffleCenteringModule`: Use the waffle spots to center the images.
 
@@ -85,6 +84,12 @@ Detection Limits
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
 * :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
+
+Extract Star
+~~~~~~~~~~~~
+
+* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate and crop the position of the star.
+* :class:`~pynpoint.processing.centering.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
