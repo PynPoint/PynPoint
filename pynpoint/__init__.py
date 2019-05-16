@@ -17,8 +17,7 @@ from pynpoint.processing.basic import SubtractImagesModule, \
                                       AddImagesModule, \
                                       RotateImagesModule
 
-from pynpoint.processing.centering import StarExtractionModule, \
-                                          StarAlignmentModule, \
+from pynpoint.processing.centering import StarAlignmentModule, \
                                           StarCenteringModule, \
                                           FitCenterModule, \
                                           ShiftImagesModule, \
@@ -26,6 +25,9 @@ from pynpoint.processing.centering import StarExtractionModule, \
 
 from pynpoint.processing.darkflat import DarkCalibrationModule, \
                                          FlatCalibrationModule
+
+from pynpoint.processing.extract import StarExtractionModule, \
+                                        ExtractBinaryModule
 
 from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              SimplexMinimizationModule, \
