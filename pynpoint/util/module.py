@@ -121,8 +121,8 @@ def locate_star(image,
         Pixel center (y, x) of the subframe. The full image is used if set to None.
     width : int
         The width (pix) of the subframe. The full image is used if set to None.
-    fwhm : int
-        Full width at half maximum of the Gaussian kernel.
+    fwhm : int, None
+        Full width at half maximum (pix) of the Gaussian kernel. Not used if set to None.
 
     Returns
     -------
@@ -136,9 +136,13 @@ def locate_star(image,
 
         image = crop_image(image, center, width)
 
-    sigma = fwhm/math.sqrt(8.*math.log(2.))
-    kernel = (fwhm*2+1, fwhm*2+1)
-    smooth = cv2.GaussianBlur(image, kernel, sigma)
+    if fwhm is None:
+        smooth = np.copy(image)
+
+    else:
+        sigma = fwhm/math.sqrt(8.*math.log(2.))
+        kernel = (fwhm*2+1, fwhm*2+1)
+        smooth = cv2.GaussianBlur(image, kernel, sigma)
 
     # argmax[0] is the y position and argmax[1] is the y position
     argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
