@@ -70,13 +70,14 @@ class TestStarAlignment:
 
     def test_extract_binary(self):
 
-        module = ExtractBinaryModule(pos_center=(50, 50),
-                                     pos_binary=(50, 70),
+        module = ExtractBinaryModule(pos_center=(50., 50.),
+                                     pos_binary=(50., 70.),
                                      name_in='extract_binary',
                                      image_in_tag='binary',
                                      image_out_tag='extract_binary',
                                      image_size=0.5,
-                                     search_size=0.2)
+                                     search_size=0.2,
+                                     filter_size=None)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('extract_binary')
