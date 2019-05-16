@@ -1,5 +1,5 @@
 """
-Pipeline modules for locating, aligning, and centering of the star.
+Pipeline modules for aligning and centering of the star.
 """
 
 import sys

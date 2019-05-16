@@ -1,15 +1,15 @@
 """
-Pipeline modules for locating, aligning, and centering of the star.
+Pipeline modules for locating and extracting the position of a star.
 """
 
 import math
 import warnings
 
-# from typing import Union, Tuple
+from typing import Tuple
 
 import numpy as np
 
-# from typeguard import typechecked
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import locate_star, rotate_coordinates
@@ -196,14 +196,16 @@ class ExtractBinaryModule(ProcessingModule):
     image stack.
     """
 
+    @typechecked
     def __init__(self,
-                 pos_center,
-                 pos_binary,
-                 name_in='extract_binary',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_crop',
-                 image_size=2.,
-                 search_size=0.1):
+                 pos_center: Tuple[int, int],
+                 pos_binary: Tuple[int, int],
+                 name_in: str = 'extract_binary',
+                 image_in_tag: str = 'im_arr',
+                 image_out_tag: str = 'im_arr_crop',
+                 image_size: float = 2.,
+                 search_size: float = 0.1,
+                 filter_size: float = None) -> None:
         """
         Parameters
         ----------
@@ -214,9 +216,9 @@ class ExtractBinaryModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
-        pos_center : tuple(int, int)
+        pos_center : tuple(float, float)
             Approximate position (x, y) of the center of rotation (pix).
-        pos_binary : tuple(int, int)
+        pos_binary : tuple(float, float)
             Approximate position (x, y) of the binary star in the first image (pix).
         image_size : float
             Cropped image size (arcsec).
@@ -224,6 +226,9 @@ class ExtractBinaryModule(ProcessingModule):
             Window size (arcsec) in which the brightest pixel is selected as position of the binary
             star. The search window is centered on the position that for each image is calculated
             from the `pos_center`, `pos_binary`, and parallactic angle (`PARANG`) of the image.
+        filter_size : float, None
+            Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
+            images to lower contributions of bad pixels.
 
         Returns
         -------
@@ -241,14 +246,16 @@ class ExtractBinaryModule(ProcessingModule):
 
         self.m_image_size = image_size
         self.m_search_size = search_size
+        self.m_filter_size = filter_size
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
-        Run method of the module. Locates the position of a binary star (or another point source)
-        which rotates across the stack of images due to parallactic rotation. The approximate
-        position of the binary star is calculated by taking into account the parallactic angle
-        of each image separately. The brightest pixel is then selected as center around which
-        the image is cropped.
+        Run method of the module. Locates the position of a binary star (or some other point
+        source) which rotates across the stack of images due to parallactic rotation. The
+        approximate position of the binary star is calculated by taking into account the
+        parallactic angle of each image separately. The brightest pixel is then selected as
+        center around which the image is cropped.
 
         Returns
         -------
@@ -268,14 +275,15 @@ class ExtractBinaryModule(ProcessingModule):
                                                  angle=-item+parang[0])
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
-        self.m_search_size = math.ceil(self.m_search_size/pixscale)
+        self.m_search_size = int(math.ceil(self.m_search_size/pixscale))
+        self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
 
-        def _crop_rotating_star(image, position, im_size):
+        def _crop_rotating_star(image, position, im_size, filter_size):
 
             starpos = locate_star(image=image,
                                   center=position,
                                   width=self.m_search_size,
-                                  fwhm=None)
+                                  fwhm=filter_size)
 
             return crop_image(image=image,
                               center=starpos,
@@ -286,9 +294,10 @@ class ExtractBinaryModule(ProcessingModule):
                                       self.m_image_out_port,
                                       'Running ExtractBinaryModule',
                                       func_args=(positions,
-                                                 self.m_image_size))
+                                                 self.m_image_size,
+                                                 self.m_filter_size))
 
-        history = f'binary (x, y) = ({self.m_pos_binary[0]}, {self.m_pos_binary[1]})'
+        history = f'filter [pix] = {self.m_filter_size}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('ExtractBinaryModule', history)
         self.m_image_out_port.close_port()
