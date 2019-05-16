@@ -83,9 +83,15 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.add_module(module)
 
    # Interpolate the parallactic angles between the start and end value of each FITS file
+   # The angles will be added as PARANG attribute to the chop A and chop B datasets
 
-   module = AngleInterpolationModule(name_in='angle',
+   module = AngleInterpolationModule(name_in='angle1',
                                      data_tag='chopa')
+
+   pipeline.add_module(module)
+
+   module = AngleInterpolationModule(name_in='angle2',
+                                     data_tag='chopb')
 
    pipeline.add_module(module)
 
@@ -107,9 +113,22 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
+   # Crop out the non-coronagraphic PSF for chop A from the chop B images
+
+   module = ExtractBinaryModule(pos_center=(432., 287.),
+                                pos_binary=(430., 175.),
+                                name_in='extract',
+                                image_in_tag='chopb',
+                                image_out_tag='psfa',
+                                image_size=5.,
+                                search_size=0.5,
+                                filter_size=0.3)
+
+   pipeline.add_module(module)
+
    # Subtract frame-by-frame chop B from chop A
 
-   module = SubtractImagesModule(name_in='subtract1',
+   module = SubtractImagesModule(name_in='subtract',
                                  image_in_tags=('chopa_crop', 'chopb_crop'),
                                  image_out_tag='chopa_sub',
                                  scaling=1.)
@@ -117,13 +136,12 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    pipeline.add_module(module)
 
    # Fit the center position of chop A, using the images from before the chop-subtraction
-   # For simplicity, only the mean of the image stack is fitted
 
-   module = FitCenterModule(name_in='center',
+   module = FitCenterModule(name_in='center1',
                             image_in_tag='chopa_crop',
                             fit_out_tag='chopa_fit',
                             mask_out_tag=None,
-                            method='mean',
+                            method='full',
                             radius=1.,
                             sign='positive',
                             model='moffat',
@@ -132,25 +150,62 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Center the chop-subtracted images by using the best-fit values from the FitCenterModule
+   # Fit the center position of the non-coronagraphic PSF images
+
+   module = FitCenterModule(name_in='center2',
+                            image_in_tag='psfa',
+                            fit_out_tag='psfa_fit',
+                            mask_out_tag=None,
+                            method='full',
+                            radius=1.,
+                            sign='positive',
+                            model='moffat',
+                            filter_size=None,
+                            guess=(0., 0., 10., 10., 1e4, 0., 0., 1.))
+
+   pipeline.add_module(module)
+
+   # Center the chop-subtracted images
 
    module = ShiftImagesModule(shift_xy='chopa_fit',
-                              name_in='shift',
+                              name_in='shift1',
                               image_in_tag='chopa_sub',
                               image_out_tag='chopa_center',
                               interpolation='spline')
 
    pipeline.add_module(module)
 
+   # Center the non-coronagraphic PSF images
+
+   module = ShiftImagesModule(shift_xy='psfa_fit',
+                              name_in='shift2',
+                              image_in_tag='psfa',
+                              image_out_tag='psfa_center',
+                              interpolation='spline')
+
+   pipeline.add_module(module)
+
    # Mask the central and outer part of the chop A images
 
-   module = PSFpreparationModule(name_in='prep',
+   module = PSFpreparationModule(name_in='prep1',
                                  image_in_tag='chopa_center',
                                  image_out_tag='chopa_prep',
                                  mask_out_tag=None,
                                  norm=False,
                                  cent_size=0.3,
                                  edge_size=2.)
+
+   pipeline.add_module(module)
+
+   # Mask the non-coronagraphic PSF beyond 1 arsec
+
+   module = PSFpreparationModule(name_in='prep2',
+                                 image_in_tag='psfa_center',
+                                 image_out_tag='psfa_mask',
+                                 mask_out_tag=None,
+                                 norm=False,
+                                 cent_size=None,
+                                 edge_size=1.)
 
    pipeline.add_module(module)
 
