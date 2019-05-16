@@ -55,25 +55,24 @@ def progress(current,
         minutes = int((delta_time%3600.) / 60.)
         seconds = int(delta_time%60.)
 
-        return f"{hours:>02}:{minutes:>02}:{seconds:>02}"
+        return f'{hours:>02}:{minutes:>02}:{seconds:>02}'
 
     fraction = float(current) / float(total)
     percentage = 100.*fraction
 
     if start_time is None:
-        sys.stdout.write(f"\r{message} {percentage:4.1f}% \r")
-        sys.stdout.flush()
+        sys.stdout.write(f'\r{message} {percentage:4.1f}% \r')
 
     else:
         if fraction > 0. and current+1 != total:
             time_taken = time.time() - start_time
             time_left = time_taken / fraction * (1. - fraction)
-
-            sys.stdout.write(f"{message} {percentage:4.1f}% - Time: {time_string(time_left)}\r")
-            sys.stdout.flush()
+            sys.stdout.write(f'{message} {percentage:4.1f}% - Time: {time_string(time_left)}\r')
 
     if current+1 == total:
-        sys.stdout.write(" " * (29+len(message)) + "\r")
+        sys.stdout.write(' ' * (29+len(message)) + '\r')
+
+    sys.stdout.flush()
 
 def memory_frames(memory,
                   nimages):
@@ -96,9 +95,9 @@ def memory_frames(memory,
         frames = np.asarray([0, nimages])
 
     else:
-        frames = np.linspace(0,
-                             nimages-nimages%memory,
-                             int(float(nimages)/float(memory))+1,
+        frames = np.linspace(start=0,
+                             stop=nimages-nimages%memory,
+                             num=int(float(nimages)/float(memory))+1,
                              endpoint=True,
                              dtype=np.int)
 

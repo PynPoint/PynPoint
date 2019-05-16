@@ -8,7 +8,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.centering import StarExtractionModule, StarAlignmentModule, \
                                           ShiftImagesModule, StarCenteringModule, \
-                                          WaffleCenteringModule
+                                          WaffleCenteringModule, FitCenterModule
 from pynpoint.util.tests import create_config, create_star_data, create_waffle_data, \
                                 remove_test_data
 
@@ -250,34 +250,41 @@ class TestStarAlignment:
     def test_shift_images_fft(self):
 
         module = ShiftImagesModule(shift_xy=(6., 4.),
-                                   interpolation='spline',
+                                   interpolation='fft',
                                    name_in='shift2',
                                    image_in_tag='align',
-                                   image_out_tag='fft')
+                                   image_out_tag='shift_fft')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('shift2')
 
-        data = self.pipeline.get_data('fft')
+        data = self.pipeline.get_data('shift_fft')
         assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00016446205542266847, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
     def test_star_center_full(self):
 
-        module = StarCenteringModule(name_in='center1',
-                                     image_in_tag='shift',
-                                     image_out_tag='center',
-                                     mask_out_tag='mask',
-                                     fit_out_tag=None,
-                                     method='full',
-                                     interpolation='spline',
-                                     radius=0.05,
-                                     sign='positive',
-                                     model='gaussian',
-                                     guess=(6., 4., 3., 3., 1., 0., 0.))
+        with pytest.warns(DeprecationWarning) as warning:
+            module = StarCenteringModule(name_in='center1',
+                                         image_in_tag='shift',
+                                         image_out_tag='center',
+                                         mask_out_tag='mask',
+                                         fit_out_tag=None,
+                                         method='full',
+                                         interpolation='spline',
+                                         radius=0.05,
+                                         sign='positive',
+                                         model='gaussian',
+                                         guess=(6., 4., 3., 3., 1., 0., 0.))
 
-        self.pipeline.add_module(module)
+            self.pipeline.add_module(module)
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The StarCenteringModule will be deprecated in a ' \
+                                             'future release. Please use the FitCenterModule ' \
+                                             'and ShiftImagesModule instead.'
+
         self.pipeline.run_module('center1')
 
         data = self.pipeline.get_data('center')
@@ -293,19 +300,26 @@ class TestStarAlignment:
 
     def test_star_center_mean(self):
 
-        module = StarCenteringModule(name_in='center2',
-                                     image_in_tag='shift',
-                                     image_out_tag='center',
-                                     mask_out_tag=None,
-                                     fit_out_tag=None,
-                                     method='mean',
-                                     interpolation='bilinear',
-                                     radius=0.05,
-                                     sign='positive',
-                                     model='gaussian',
-                                     guess=(6., 4., 3., 3., 1., 0., 0.))
+        with pytest.warns(DeprecationWarning) as warning:
+            module = StarCenteringModule(name_in='center2',
+                                         image_in_tag='shift',
+                                         image_out_tag='center',
+                                         mask_out_tag=None,
+                                         fit_out_tag=None,
+                                         method='mean',
+                                         interpolation='bilinear',
+                                         radius=0.05,
+                                         sign='positive',
+                                         model='gaussian',
+                                         guess=(6., 4., 3., 3., 1., 0., 0.))
 
-        self.pipeline.add_module(module)
+            self.pipeline.add_module(module)
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The StarCenteringModule will be deprecated in a ' \
+                                             'future release. Please use the FitCenterModule ' \
+                                             'and ShiftImagesModule instead.'
+
         self.pipeline.run_module('center2')
 
         data = self.pipeline.get_data('center')
@@ -315,19 +329,25 @@ class TestStarAlignment:
 
     def test_star_center_moffat(self):
 
-        module = StarCenteringModule(name_in='center3',
-                                     image_in_tag='shift',
-                                     image_out_tag='center',
-                                     mask_out_tag=None,
-                                     fit_out_tag='center_fit',
-                                     method='mean',
-                                     interpolation='spline',
-                                     radius=0.05,
-                                     sign='positive',
-                                     model='moffat',
-                                     guess=(6., 4., 3., 3., 1., 0., 0., 1.))
+        with pytest.warns(DeprecationWarning) as warning:
+            module = StarCenteringModule(name_in='center3',
+                                         image_in_tag='shift',
+                                         image_out_tag='center',
+                                         mask_out_tag=None,
+                                         fit_out_tag='center_fit',
+                                         method='mean',
+                                         interpolation='spline',
+                                         radius=0.05,
+                                         sign='positive',
+                                         model='moffat',
+                                         guess=(6., 4., 3., 3., 1., 0., 0., 1.))
 
-        self.pipeline.add_module(module)
+            self.pipeline.add_module(module)
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The StarCenteringModule will be deprecated in a ' \
+                                             'future release. Please use the FitCenterModule ' \
+                                             'and ShiftImagesModule instead.'
 
         with pytest.warns(RuntimeWarning) as warning:
             self.pipeline.run_module('center3')
@@ -397,3 +417,65 @@ class TestStarAlignment:
 
         attribute = self.pipeline.get_attribute('center_even', 'History: WaffleCenteringModule')
         assert attribute == '[x, y] = [49.5, 49.5]'
+
+    def test_fit_center_full(self):
+
+        module = FitCenterModule(name_in='fit1',
+                                 image_in_tag='shift',
+                                 fit_out_tag='fit_full',
+                                 mask_out_tag='mask',
+                                 method='full',
+                                 radius=0.05,
+                                 sign='positive',
+                                 model='gaussian',
+                                 guess=(6., 4., 3., 3., 0.01, 0., 0.))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('fit1')
+
+        data = self.pipeline.get_data('fit_full')
+        assert np.allclose(data[0, 0], 5.997834332959175, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 13.202402625344051, rtol=1e-4, atol=0.)
+        assert data.shape == (40, 14)
+
+        data = self.pipeline.get_data('mask')
+        assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 43, 55], 0.0, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010827527282995305, rtol=limit, atol=0.)
+        assert data.shape == (40, 78, 78)
+
+    def test_fit_center_mean(self):
+
+        module = FitCenterModule(name_in='fit2',
+                                 image_in_tag='shift',
+                                 fit_out_tag='fit_mean',
+                                 mask_out_tag=None,
+                                 method='mean',
+                                 radius=0.05,
+                                 sign='positive',
+                                 model='moffat',
+                                 guess=(6., 4., 3., 3., 0.01, 0., 0., 1.))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('fit2')
+
+        data = self.pipeline.get_data('fit_mean')
+        assert np.allclose(data[0, 0], 5.999072568941366, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 14.525054620661948, rtol=1e-4, atol=0.)
+        assert data.shape == (40, 16)
+
+    def test_shift_images_tag(self):
+
+        module = ShiftImagesModule(shift_xy='fit_full',
+                                   interpolation='spline',
+                                   name_in='shift3',
+                                   image_in_tag='shift',
+                                   image_out_tag='shift_tag')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('shift3')
+
+        data = self.pipeline.get_data('shift_tag')
+        assert np.allclose(data[0, 39, 39], 0.023563080974545528, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0001643062943690491, rtol=limit, atol=0.)
+        assert data.shape == (40, 78, 78)

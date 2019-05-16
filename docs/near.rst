@@ -26,9 +26,9 @@ And then execute it as::
 
 Now that we have the data, we can start the data reduction with PynPoint!
 
-The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that is provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
+The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that will provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
-A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`.
+A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`. In the example, we will only process the images of chop A, which contains alpha Cen A in this case. The same procedure can be applied on the images of chop B for which alpha Cen B was centered behind the AGPM coronagraph.
 
 First we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content::
 
@@ -60,20 +60,20 @@ The ``MEMORY`` and ``CPU`` setting can be adjusted. They define the number of im
 
 Pipeline modules are added sequentially to the pipeline and are executed either individually or all at once (see end of the example script). Each pipeline module requires a ``name_in`` tag which is used as identifier by the pipeline. All intermediate results (typically a stack of images) are stored in the database (`PynPoint_database.hdf5`) which allows the user to rerun particular processing steps without having to rerun the complete pipeline. The script below can now be executed as a text file from the command line, in Python interactive mode, or as a Jupyter notebook::
 
-   # Import the Pypeline and the modules that we will use in this example
+   # Import the Pypeline and the modules that we will use in this example.
 
    from pynpoint import Pypeline, NearReadingModule, AngleInterpolationModule, \
-                        SubtractImagesModule, CropImagesModule, StarAlignmentModule, \
-                        StarCenteringModule, PSFpreparationModule, PcaPsfSubtractionModule, \
-                        FitsWritingModule
+                        CropImagesModule, SubtractImagesModule, FitCenterModule, \
+                        ShiftImagesModule, PSFpreparationModule, PcaPsfSubtractionModule, \
+                        ContrastCurveModule, FitsWritingModule, TextWritingModule
 
-   # Create a Pypeline instance
+   # Create a Pypeline instance.
 
    pipeline = Pypeline(working_place_in='working_folder/',
                        input_place_in='input_folder/',
                        output_place_in='output_folder/')
 
-   # Read the raw data and separate chop A and chop B images
+   # Read the raw data and separate the chop A and chop B images.
 
    module = NearReadingModule(name_in='read',
                               input_dir=None,
@@ -82,72 +82,75 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Interpolate the parallactic angles between the start and end value
+   # Interpolate the parallactic angles between the start and end value of each FITS file.
 
    module = AngleInterpolationModule(name_in='angle',
                                      data_tag='chopa')
 
    pipeline.add_module(module)
 
-   # Subtract frame-by-frame chop B from chop A
+   # Crop the chop A and chop B images around their approximate center.
 
-   module = SubtractImagesModule(name_in='subtract',
-                                 image_in_tags=('chopa', 'chopb'),
+   module = CropImagesModule(size=5.,
+                             center=(432, 287),
+                             name_in='crop1',
+                             image_in_tag='chopa',
+                             image_out_tag='chopa_crop')
+
+   pipeline.add_module(module)
+
+   module = CropImagesModule(size=5.,
+                             center=(432, 287),
+                             name_in='crop2',
+                             image_in_tag='chopb',
+                             image_out_tag='chopb_crop')
+
+   pipeline.add_module(module)
+
+   # Subtract frame-by-frame chop B from chop A.
+
+   module = SubtractImagesModule(name_in='subtract1',
+                                 image_in_tags=('chopa_crop', 'chopb_crop'),
                                  image_out_tag='chopa_sub',
                                  scaling=1.)
 
    pipeline.add_module(module)
 
-   # Crop the chop A images around the approximate center to 5 x 5 arcsec
+   # Fit the center position of chop A, using the images from before the chop-subtraction.
+   # For simplicity, only the mean of the image stack is fitted.
 
-   module = CropImagesModule(size=5.,
-                             center=(432, 286),
-                             name_in='crop',
-                             image_in_tag='chopa_sub',
-                             image_out_tag='chopa_crop')
-
-   pipeline.add_module(module)
-
-   # Align the images by cross-correlating the central 1 arcsec
-
-   module = StarAlignmentModule(name_in='align',
-                                image_in_tag='chopa_crop',
-                                ref_image_in_tag=None,
-                                image_out_tag='chopa_align',
-                                interpolation='spline',
-                                accuracy=10,
-                                resize=None,
-                                num_references=10,
-                                subframe=1.)
+   module = FitCenterModule(name_in='center1',
+                            image_in_tag='chopa_crop',
+                            fit_out_tag='chopa_fit',
+                            mask_out_tag=None,
+                            method='mean',
+                            radius=1.,
+                            sign='positive',
+                            model='moffat',
+                            filter_size=None,
+                            guess=(0., 0., 10., 10., 1e4, 0., 0., 1.))
 
    pipeline.add_module(module)
 
-   # Absolute centering by fitting a 2D Moffat function to the average of all images
+   # Center the chop-subtracted images by using the fitted values from the FitCenterModule.
 
-   module = StarCenteringModule(name_in='center',
-                                image_in_tag='chopa_align',
-                                image_out_tag='chopa_center',
-                                mask_out_tag='chopa_mask',
-                                fit_out_tag='chopa_fit',
-                                method='mean',
-                                interpolation='spline',
-                                radius=2.,
-                                sign='positive',
-                                model='moffat',
-                                filter_size=0.1,
-                                guess=(0., 0., 5., 5., 100., 0., 0., 1.))
+   module = ShiftImagesModule(shift_xy='chopa_fit',
+                              name_in='shift1',
+                              image_in_tag='chopa_sub',
+                              image_out_tag='chopa_center',
+                              interpolation='spline')
 
    pipeline.add_module(module)
 
-   # Mask the central and outer part of the images
+   # Mask the central and outer part of the chop A images.
 
-   module = PSFpreparationModule(name_in='prep',
+   module = PSFpreparationModule(name_in='prep1',
                                  image_in_tag='chopa_center',
                                  image_out_tag='chopa_prep',
                                  mask_out_tag=None,
                                  norm=False,
                                  cent_size=0.3,
-                                 edge_size=3.)
+                                 edge_size=2.)
 
    pipeline.add_module(module)
 
@@ -162,10 +165,10 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Datasets can be exported to FITS files by their tag name in the database
-   # Here we will export the median-combined residuals of the PSF subtraction
+   # Datasets can be exported to FITS files by their tag name in the database.
+   # Here we will export the median-combined residuals of the PSF subtraction.
 
-   module = FitsWritingModule(name_in='write',
+   module = FitsWritingModule(name_in='write1',
                               file_name='chopa_pca.fits',
                               output_dir=None,
                               data_tag='chopa_pca',
@@ -174,21 +177,13 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Finally, to run all pipeline modules at once
+   # Finally, to run all pipeline modules at once:
 
    pipeline.run()
 
-   # Or to run the modules individually
+   # Or to run a module individually:
 
    pipeline.run_module('read')
-   pipeline.run_module('angle')
-   pipeline.run_module('subtract')
-   pipeline.run_module('crop')
-   pipeline.run_module('align')
-   pipeline.run_module('center')
-   pipeline.run_module('prep')
-   pipeline.run_module('pca')
-   pipeline.run_module('write')
 
 .. _near_results:
 
