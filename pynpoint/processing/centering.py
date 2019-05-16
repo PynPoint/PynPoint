@@ -1150,7 +1150,6 @@ class FitCenterModule(ProcessingModule):
                 im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
             best_fit = _fit_2d_function(im_mean/float(nimages))
-
             best_fit = best_fit[np.newaxis, ...]
             best_fit = np.repeat(best_fit, nimages, axis=0)
 
