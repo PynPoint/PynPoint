@@ -131,13 +131,13 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                                 image_out_tag='psfa',
                                 image_size=5.,
                                 search_size=1.,
-                                filter_size=0.3)
+                                filter_size=None)
 
    pipeline.add_module(module)
 
    # Subtract frame-by-frame chop B from chop A
 
-   module = SubtractImagesModule(name_in='subtract',
+   module = SubtractImagesModule(name_in='subtract2',
                                  image_in_tags=('chopa_crop', 'chopb_crop'),
                                  image_out_tag='chopa_sub',
                                  scaling=1.)
@@ -154,7 +154,7 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
                                 accuracy=10,
                                 resize=None,
                                 num_references=10,
-                                subframe=2.0)
+                                subframe=1.)
 
    pipeline.add_module(module)
 
@@ -209,21 +209,9 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
-   # Mask the central and outer part of the chop A images
-
-   module = PSFpreparationModule(name_in='prep1',
-                                 image_in_tag='chopa_center',
-                                 image_out_tag='chopa_prep',
-                                 mask_out_tag=None,
-                                 norm=False,
-                                 cent_size=0.3,
-                                 edge_size=2.)
-
-   pipeline.add_module(module)
-
    # Mask the non-coronagraphic PSF beyond 1 arsec
 
-   module = PSFpreparationModule(name_in='prep2',
+   module = PSFpreparationModule(name_in='prep1',
                                  image_in_tag='psfa_center',
                                  image_out_tag='psfa_mask',
                                  mask_out_tag=None,
@@ -233,9 +221,34 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
+   # Inject a fake planet at a separation of 1 arcsec and a contrast of 10 mag
+
+   module = FakePlanetModule(position=(1., 0.),
+                             magnitude=10.,
+                             psf_scaling=1.,
+                             interpolation='spline',
+                             name_in='fake',
+                             image_in_tag='chopa_center',
+                             psf_in_tag='psfa_mask',
+                             image_out_tag='chopa_fake')
+
+   pipeline.add_module(module)
+
+   # Mask the central and outer part of the chop A images
+
+   module = PSFpreparationModule(name_in='prep2',
+                                 image_in_tag='chopa_fake',
+                                 image_out_tag='chopa_prep',
+                                 mask_out_tag=None,
+                                 norm=False,
+                                 cent_size=0.3,
+                                 edge_size=3.)
+
+   pipeline.add_module(module)
+
    # Subtract a PSF model with PCA and median-combine the residuals
 
-   module = PcaPsfSubtractionModule(pca_numbers=range(1, 31),
+   module = PcaPsfSubtractionModule(pca_numbers=range(1, 51),
                                     name_in='pca',
                                     images_in_tag='chopa_prep',
                                     reference_in_tag='chopa_prep',
@@ -244,15 +257,47 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
 
    pipeline.add_module(module)
 
+   # Calculate detection limits between 0.8 and 2.0 arcsec
+   # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
+
+   module = ContrastCurveModule(name_in='limits',
+                                image_in_tag='chopa_center',
+                                psf_in_tag='psfa_mask',
+                                contrast_out_tag='limits',
+                                separation=(0.3, 2., 0.1),
+                                angle=(0., 360., 60.),
+                                threshold=('fpf', 2.87e-6),
+                                psf_scaling=1.,
+                                aperture=0.15,
+                                pca_number=10,
+                                cent_size=0.3,
+                                edge_size=3.,
+                                extra_rot=0.,
+                                residuals='median')
+ 
+   pipeline.add_module(module)
+
    # Datasets can be exported to FITS files by their tag name in the database
    # Here we will export the median-combined residuals of the PSF subtraction
 
-   module = FitsWritingModule(name_in='write',
+   module = FitsWritingModule(name_in='write1',
                               file_name='chopa_pca.fits',
                               output_dir=None,
                               data_tag='chopa_pca',
                               data_range=None,
                               overwrite=True)
+
+   pipeline.add_module(module)
+
+   # And we write the detection limits to a text file
+
+   header = 'Separation [arcsec] - Contrast [mag] - Variance [mag] - FPF'
+
+   module = TextWritingModule(name_in='write2',
+                              file_name='contrast_curve.dat',
+                              output_dir=None,
+                              data_tag='limits',
+                              header=header)
 
    pipeline.add_module(module)
 
@@ -279,6 +324,22 @@ And to plot the residuals for 10 principal components (Python indexing starts at
 
    plt.imshow(data[9, ], origin='lower')
    plt.show()
+
+Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
+
+   data = pipeline.get_data('limits')
+
+   plt.figure(figsize=(7, 4))
+   plt.errorbar(data[:, 0], data[:, 1], data[:, 2])
+   plt.xlim(0., 2.5)
+   plt.ylim(18., 9.)
+   plt.xlabel('Separation [arcsec]')
+   plt.ylabel('Contrast [mag]')
+   plt.show()
+
+.. image:: _static/near_limits.png
+   :width: 70%
+   :align: center
 
 .. image:: _static/near_residuals.png
    :width: 60%
