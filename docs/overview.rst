@@ -88,8 +88,8 @@ Detection Limits
 Extract Star
 ~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate and crop the position of the star.
-* :class:`~pynpoint.processing.centering.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
+* :class:`~pynpoint.processing.extract.StarExtractionModule` (CPU): Locate and crop the position of the star.
+* :class:`~pynpoint.processing.extract.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
