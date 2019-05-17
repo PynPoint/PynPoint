@@ -970,6 +970,9 @@ class FitCenterModule(ProcessingModule):
                                           'Running FitCenterModule')
 
         elif self.m_method == 'mean':
+            sys.stdout.write("Running FitCenterModule...")
+            sys.stdout.flush()
+
             im_mean = np.zeros(self.m_image_in_port.get_shape()[1:3])
 
             for i, _ in enumerate(frames[:-1]):
@@ -980,6 +983,9 @@ class FitCenterModule(ProcessingModule):
             best_fit = np.repeat(best_fit, nimages, axis=0)
 
             self.m_fit_out_port.set_all(best_fit, data_dim=2)
+
+            sys.stdout.write(" [DONE]\n")
+            sys.stdout.flush()
 
         if self.m_count > 0:
             print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
