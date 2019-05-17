@@ -238,7 +238,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.write("Running PCABackgroundPreparationModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "frames = "+str(sum(star_nframes))+", "+str(len(background_nframes))
+        history = f"frames = {sum(star_nframes)}, {len(background_nframes)}"
         self.m_star_out_port.copy_attributes(self.m_image_in_port)
         self.m_star_out_port.add_history("PCABackgroundPreparationModule", history)
         self.m_star_out_port.add_attribute("NFRAMES", star_nframes, static=False)
@@ -502,7 +502,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write("Calculating background model... [DONE]\n")
         sys.stdout.flush()
 
-        history = "PC number = "+str(self.m_pca_number)
+        history = f"PC number = {self.m_pca_number}"
         self.m_residuals_out_port.copy_attributes(self.m_star_in_port)
         self.m_residuals_out_port.add_history("PCABackgroundSubtractionModule", history)
         self.m_residuals_out_port.add_attribute("STAR_POSITION", star, static=False)

@@ -34,6 +34,7 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
 
    overview
    architecture
+   configuration
    tutorial
    examples
    modules

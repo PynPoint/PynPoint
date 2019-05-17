@@ -57,7 +57,7 @@ class Pypeline:
             None
         """
 
-        sys.stdout.write("Initiating PynPoint v"+pynpoint.__version__+"...")
+        sys.stdout.write('Initiating PynPoint v'+pynpoint.__version__+'...')
         sys.stdout.flush()
 
         self._m_working_place = working_place_in
@@ -69,7 +69,7 @@ class Pypeline:
 
         self._config_init()
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
     def __setattr__(self,
@@ -92,9 +92,9 @@ class Pypeline:
             None
         """
 
-        if key in ["_m_working_place", "_m_input_place", "_m_output_place"]:
-            assert (os.path.isdir(str(value))), "Input directory for " + str(key) + " does not " \
-                                                "exist - input requested: %s." % value
+        if key in ['_m_working_place', '_m_input_place', '_m_output_place']:
+            assert (os.path.isdir(str(value))), f'Input directory for {key} does not exist - ' \
+                                                f'input requested: {value}.'
 
         super(Pypeline, self).__setattr__(key, value)
 
@@ -153,16 +153,16 @@ class Pypeline:
 
         def _create_config(filename, attributes):
             file_obj = open(filename, 'w')
-            file_obj.write("[header]\n\n")
+            file_obj.write('[header]\n\n')
 
             for key, val in attributes.items():
-                if val['config'] == "header":
+                if val['config'] == 'header':
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
-            file_obj.write("\n[settings]\n\n")
+            file_obj.write('\n[settings]\n\n')
 
             for key, val in attributes.items():
-                if val['config'] == "settings":
+                if val['config'] == 'settings':
                     file_obj.write(key+': '+str(val['value'])+'\n')
 
             file_obj.close()
@@ -173,59 +173,59 @@ class Pypeline:
                 config.read_file(cf_open)
 
             for key, val in attributes.items():
-                if config.has_option(val["config"], key):
-                    if config.get(val["config"], key) == "None":
-                        if val["config"] == "header":
-                            attributes[key]["value"] = "None"
+                if config.has_option(val['config'], key):
+                    if config.get(val['config'], key) == 'None':
+                        if val['config'] == 'header':
+                            attributes[key]['value'] = 'None'
 
-                        # elif val["type"] == "str":
-                        #     attributes[key]["value"] = "None"
+                        # elif val['type'] == 'str':
+                        #     attributes[key]['value'] = 'None'
 
-                        elif val["type"] == "float":
-                            attributes[key]["value"] = float(0.)
+                        elif val['type'] == 'float':
+                            attributes[key]['value'] = float(0.)
 
-                        elif val["type"] == "int":
-                            attributes[key]["value"] = int(0)
+                        elif val['type'] == 'int':
+                            attributes[key]['value'] = int(0)
 
                     else:
-                        if val["config"] == "header":
-                            attributes[key]["value"] = str(config.get(val["config"], key))
+                        if val['config'] == 'header':
+                            attributes[key]['value'] = str(config.get(val['config'], key))
 
-                        # elif val["type"] == "str":
-                        #     attributes[key]["value"] = str(config.get(val["config"], key))
+                        # elif val['type'] == 'str':
+                        #     attributes[key]['value'] = str(config.get(val['config'], key))
 
-                        elif val["type"] == "float":
-                            attributes[key]["value"] = float(config.get(val["config"], key))
+                        elif val['type'] == 'float':
+                            attributes[key]['value'] = float(config.get(val['config'], key))
 
-                        elif val["type"] == "int":
-                            attributes[key]["value"] = int(config.get(val["config"], key))
+                        elif val['type'] == 'int':
+                            attributes[key]['value'] = int(config.get(val['config'], key))
 
             return attributes
 
         def _write_config(attributes):
             hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
 
-            if "config" in hdf:
-                del hdf["config"]
+            if 'config' in hdf:
+                del hdf['config']
 
-            config = hdf.create_group("config")
+            config = hdf.create_group('config')
 
             for key in attributes.keys():
-                if attributes[key]["value"] is not None:
-                    config.attrs[key] = attributes[key]["value"]
+                if attributes[key]['value'] is not None:
+                    config.attrs[key] = attributes[key]['value']
 
-            config.attrs["WORKING_PLACE"] = self._m_working_place
+            config.attrs['WORKING_PLACE'] = self._m_working_place
 
             hdf.close()
 
-        config_file = self._m_working_place+"/PynPoint_config.ini"
+        config_file = self._m_working_place+'/PynPoint_config.ini'
 
         attributes = get_attributes()
-        attributes["CPU"]["value"] = multiprocessing.cpu_count()
+        attributes['CPU']['value'] = multiprocessing.cpu_count()
 
         if not os.path.isfile(config_file):
-            warnings.warn("Configuration file not found. Creating PynPoint_config.ini with "
-                          "default values in the working place.")
+            warnings.warn('Configuration file not found. Creating PynPoint_config.ini with '
+                          'default values in the working place.')
 
             _create_config(config_file, attributes)
 
@@ -252,8 +252,8 @@ class Pypeline:
             None
         """
 
-        assert isinstance(module, PypelineModule), "The added module is not a valid " \
-                                                   "Pypeline module."
+        assert isinstance(module, PypelineModule), 'The added module is not a valid ' \
+                                                   'Pypeline module.'
 
         if isinstance(module, WritingModule):
             if module.m_output_location is None:
@@ -266,8 +266,8 @@ class Pypeline:
         module.connect_database(self.m_data_storage)
 
         if module.name in self._m_modules:
-            warnings.warn("Processing module names need to be unique. Overwriting module '%s'."
-                          % module.name)
+            warnings.warn(f'Processing module names need to be unique. Overwriting module ' \
+                          f'\'{module.name}\'.')
 
         self._m_modules[module.name] = module
 
@@ -292,7 +292,7 @@ class Pypeline:
             removed = True
 
         else:
-            warnings.warn("Module name '"+name+"' not found in the Pypeline dictionary.")
+            warnings.warn(f'Module name \'{name}\' not found in the Pypeline dictionary.')
             removed = False
 
         return removed
@@ -324,17 +324,21 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
+        data_tags = list(self.m_data_storage.m_data_bank.keys())
 
         for module in self._m_modules.values():
-            validation = self._validate(module, existing_data_tags)
+            validation = self._validate(module, data_tags)
 
             if not validation[0]:
-                return validation
+                break
 
-        return True, None
+        else:
+            validation = True, None
 
-    def validate_pipeline_module(self, name):
+        return validation
+
+    def validate_pipeline_module(self,
+                                 name):
         """
         Checks if the data exists for the module with label *name*.
 
@@ -375,23 +379,24 @@ class Pypeline:
             None
         """
 
-        sys.stdout.write("Validating Pypeline...")
+        sys.stdout.write('Validating Pypeline...')
         sys.stdout.flush()
 
         validation = self.validate_pipeline()
 
         if not validation[0]:
-            raise AttributeError("Pipeline module '%s' is looking for data under a tag which is "
-                                 "not created by a previous module or does not exist in the "
-                                 "database." % validation[1])
+            raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data ' \
+                                 f'under a tag which is not created by a previous module or ' \
+                                 f'does not exist in the database.')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         for key in self._m_modules:
             self._m_modules[key].run()
 
-    def run_module(self, name):
+    def run_module(self,
+                   name):
         """
         Runs a single processing module.
 
@@ -407,22 +412,22 @@ class Pypeline:
         """
 
         if name in self._m_modules:
-            sys.stdout.write("Validating module "+name+"...")
+            sys.stdout.write(f'Validating module \'{name}\'...')
             sys.stdout.flush()
 
             validation = self.validate_pipeline_module(name)
 
             if not validation[0]:
-                raise AttributeError("Pipeline module '%s' is looking for data under a tag which "
-                                     "does not exist in the database." % validation[1])
+                raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
+                                     f'under a tag which does not exist in the database.')
 
-            sys.stdout.write(" [DONE]\n")
+            sys.stdout.write(' [DONE]\n')
             sys.stdout.flush()
 
             self._m_modules[name].run()
 
         else:
-            warnings.warn("Module '"+name+"' not found.")
+            warnings.warn(f'Module \'{name}\' not found.')
 
     def get_data(self,
                  tag):
@@ -442,7 +447,42 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        return np.asarray(self.m_data_storage.m_data_bank[tag])
+        data = np.asarray(self.m_data_storage.m_data_bank[tag])
+
+        self.m_data_storage.close_connection()
+
+        return data
+
+    def delete_data(self,
+                    tag):
+        """
+        Function for deleting a dataset and related attributes from the central database. Disk
+        space does not seem to free up when using this function.
+
+        Parameters
+        ----------
+        tag : str
+            Database tag.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        self.m_data_storage.open_connection()
+
+        if tag in self.m_data_storage.m_data_bank:
+            del self.m_data_storage.m_data_bank[tag]
+        else:
+            warnings.warn(f'Dataset \'{tag}\' not found in the database.')
+
+        if 'header_' + tag + '/' in self.m_data_storage.m_data_bank:
+            del self.m_data_storage.m_data_bank[f'header_{tag}']
+        else:
+            warnings.warn(f'Attributes of \'{tag}\' not found in the database.')
+
+        self.m_data_storage.close_connection()
 
     def get_attribute(self,
                       data_tag,
@@ -472,8 +512,10 @@ class Pypeline:
             attr = self.m_data_storage.m_data_bank[data_tag].attrs[attr_name]
 
         else:
-            attr = self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+            attr = self.m_data_storage.m_data_bank[f'header_{data_tag}/{attr_name}']
             attr = np.asarray(attr)
+
+        self.m_data_storage.close_connection()
 
         return attr
 
@@ -510,12 +552,12 @@ class Pypeline:
 
         else:
             if isinstance(attr_value[0], str):
-                attr_value = np.array(attr_value, dtype="|S")
+                attr_value = np.array(attr_value, dtype='|S')
 
-            if attr_name in list(self.m_data_storage.m_data_bank["header_"+data_tag].keys()):
-                del self.m_data_storage.m_data_bank["header_"+data_tag+"/"+attr_name]
+            if attr_name in list(self.m_data_storage.m_data_bank[f'header_{data_tag}'].keys()):
+                del self.m_data_storage.m_data_bank[f'header_{data_tag}/{attr_name}']
 
-            attr_key = "header_"+data_tag+"/"+attr_name
+            attr_key = f'header_{data_tag}/{attr_name}'
             self.m_data_storage.m_data_bank[attr_key] = np.asarray(attr_value)
 
         self.m_data_storage.close_connection()
@@ -531,19 +573,23 @@ class Pypeline:
         """
 
         self.m_data_storage.open_connection()
+
         tags = list(self.m_data_storage.m_data_bank.keys())
 
         select = []
-        for _, item in enumerate(tags):
+        for item in tags:
 
-            if item == "config" or item == "fits_header" or item[0:7] == "header_":
+            if item in ('config', 'fits_header') or item[0:7] == 'header_':
                 continue
             else:
                 select.append(item)
 
+        self.m_data_storage.close_connection()
+
         return np.asarray(select)
 
-    def get_shape(self, tag):
+    def get_shape(self,
+                  tag):
         """
         Function for getting the shape of a database entry.
 
@@ -560,4 +606,8 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        return self.m_data_storage.m_data_bank[tag].shape
+        data_shape = self.m_data_storage.m_data_bank[tag].shape
+
+        self.m_data_storage.close_connection()
+
+        return data_shape

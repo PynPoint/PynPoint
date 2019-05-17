@@ -4,6 +4,7 @@ Interfaces for pipeline modules.
 
 import os
 import sys
+import time
 import warnings
 
 from abc import ABCMeta, abstractmethod
@@ -11,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
-from pynpoint.util.module import update_arguments
+from pynpoint.util.module import update_arguments, progress
 from pynpoint.util.multistack import StackProcessingCapsule
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
@@ -45,11 +46,11 @@ class PypelineModule(metaclass=ABCMeta):
             None
         """
 
-        assert isinstance(name_in, str), "Name of the PypelineModule needs to be a string."
+        assert isinstance(name_in, str), 'Name of the PypelineModule needs to be a string.'
 
         self._m_name = name_in
         self._m_data_base = None
-        self._m_config_port = ConfigPort("config")
+        self._m_config_port = ConfigPort('config')
 
     @property
     def name(self):
@@ -155,8 +156,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn("Tag '%s' of ReadingModule '%s' is already used."
-                          % (tag, self._m_name))
+            warnings.warn(f'Tag \'{tag}\' of ReadingModule \'{self._m_name}\' is already used.')
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
@@ -415,8 +415,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn("Tag '%s' of ProcessingModule '%s' is already used."
-                          % (tag, self._m_name))
+            warnings.warn(f'Tag \'{tag}\' of ProcessingModule \'{self._m_name}\' is already used.')
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
@@ -478,7 +477,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        cpu = self._m_config_port.get_attribute("CPU")
+        cpu = self._m_config_port.get_attribute('CPU')
 
         init_line = image_in_port[:, 0, 0]
 
@@ -537,16 +536,10 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-        cpu = self._m_config_port.get_attribute("CPU")
+        memory = self._m_config_port.get_attribute('MEMORY')
+        cpu = self._m_config_port.get_attribute('CPU')
 
         nimages = image_in_port.get_shape()[0]
-
-        if cpu == 1:
-            message += "..."
-
-        sys.stdout.write(message)
-        sys.stdout.flush()
 
         if memory == 0 or image_out_port.tag == image_in_port.tag:
             # load all images in the memory at once if the input and output tag are the
@@ -555,7 +548,11 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             result = []
 
+            start_time = time.time()
+
             for i in range(nimages):
+                progress(i, nimages, message+'...', start_time)
+
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
@@ -569,18 +566,25 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
                 if images.shape[-2] != result.shape[-2] or images.shape[-1] != result.shape[-1]:
 
-                    raise ValueError("Input and output port have the same tag while the input "
-                                     "function is changing the image shape. This is only possible "
-                                     "with MEMORY=None.")
+                    raise ValueError('Input and output port have the same tag while the input '
+                                     'function is changing the image shape. This is only possible '
+                                     'with MEMORY=None.')
 
             image_out_port.set_all(result, keep_attributes=True)
+
+            sys.stdout.write(message+' [DONE]\n')
+            sys.stdout.flush()
 
         elif cpu == 1:
             # process images one-by-one with a single process if CPU is set to 1
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
 
+            start_time = time.time()
+
             for i in range(nimages):
+                progress(i, nimages, message+'...', start_time)
+
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
@@ -593,7 +597,13 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                 elif result.ndim == 2:
                     image_out_port.append(result, data_dim=3)
 
+            sys.stdout.write(message+' [DONE]\n')
+            sys.stdout.flush()
+
         else:
+            sys.stdout.write(message)
+            sys.stdout.flush()
+
             # process images in parallel in stacks of MEMORY/CPU images
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
@@ -623,8 +633,8 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             capsule.run()
 
-        sys.stdout.write(" [DONE]\n")
-        sys.stdout.flush()
+            sys.stdout.write(' [DONE]\n')
+            sys.stdout.flush()
 
     def get_all_input_tags(self):
         """

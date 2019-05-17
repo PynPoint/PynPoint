@@ -82,7 +82,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         sys.stdout.write("Running SimpleBackgroundSubtractionModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "shift = "+str(self.m_shift)
+        history = "shift = {self.m_shift}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("SimpleBackgroundSubtractionModule", history)
         self.m_image_out_port.close_port()
@@ -268,9 +268,9 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         sys.stdout.flush()
 
         if isinstance(self.m_shift, np.ndarray):
-            history = "shift = NFRAMES, cubes = "+str(self.m_cubes)
+            history = f"shift = NFRAMES, cubes = {self.m_cubes}"
         else:
-            history = "shift = "+str(self.m_shift)+", cubes = "+str(self.m_cubes)
+            history = f"shift = {self.m_shift}, cubes = {self.m_cubes}"
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("MeanBackgroundSubtractionModule", history)
@@ -376,7 +376,7 @@ class LineSubtractionModule(ProcessingModule):
                                       "Running LineSubtractionModule",
                                       func_args=(mask, ))
 
-        history = "combine = "+str(self.m_combine)
+        history = f"combine = {self.m_combine}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history("LineSubtractionModule", history)
         self.m_image_out_port.close_port()
@@ -551,7 +551,7 @@ class NoddingBackgroundModule(ProcessingModule):
         sys.stdout.write("Running NoddingBackgroundModule... [DONE]\n")
         sys.stdout.flush()
 
-        history = "mode = "+self.m_mode
+        history = f"mode = {self.m_mode}"
         self.m_image_out_port.copy_attributes(self.m_science_in_port)
         self.m_image_out_port.add_history("NoddingBackgroundModule", history)
         self.m_image_out_port.close_port()

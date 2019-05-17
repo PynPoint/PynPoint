@@ -61,8 +61,8 @@ def false_alarm(image,
         ap_theta = np.delete(ap_theta, [1, np.size(ap_theta)-1])
 
     if num_ap < 3:
-        raise ValueError("Number of apertures (num_ap=%s) is too small to calculate the "
-                         "false positive fraction." % num_ap)
+        raise ValueError(f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
+                         'false positive fraction.')
 
     ap_phot = np.zeros(num_ap)
 
@@ -97,7 +97,7 @@ def student_t(t_input,
     Parameters
     ----------
     t_input : tuple(str, float)
-        Tuple with the input type ("sigma" or "fpf") and the input value.
+        Tuple with the input type ('sigma' or 'fpf') and the input value.
     radius : float
         Aperture radius (pix).
     size : float
@@ -120,10 +120,10 @@ def student_t(t_input,
     # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
 
-    if t_input[0] == "sigma":
+    if t_input[0] == 'sigma':
         t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
 
-    elif t_input[0] == "fpf":
+    elif t_input[0] == 'fpf':
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
 
     return t_result
@@ -134,7 +134,7 @@ def fake_planet(images,
                 position,
                 magnitude,
                 psf_scaling,
-                interpolation="spline"):
+                interpolation='spline'):
     """
     Function to inject artificial planets in a dataset.
 
@@ -154,7 +154,7 @@ def fake_planet(images,
     psf_scaling : float
         Extra factor used to scale input PSF.
     interpolation : str
-        Interpolation type ("spline", "bilinear", or "fft").
+        Interpolation type ('spline', 'bilinear', or 'fft').
 
     Returns
     -------
@@ -202,7 +202,7 @@ def merit_function(residuals,
     residuals : numpy.ndarray
         Residuals of the PSF subtraction (2D).
     function : str
-        Figure of merit ("hessian" or "sum").
+        Figure of merit ('hessian' or 'sum').
     variance : tuple(str, float)
         Variance type and value for the likelihood function. The value is set to None in case a
         Poisson distribution is assumed.
@@ -219,10 +219,10 @@ def merit_function(residuals,
         Merit value.
     """
 
-    if function == "hessian":
+    if function == 'hessian':
 
         if aperture['type'] != 'circular':
-            raise ValueError("Measuring the Hessian is only possible with a circular aperture.")
+            raise ValueError('Measuring the Hessian is only possible with a circular aperture.')
 
         npix = residuals.shape[-1]
 
@@ -245,7 +245,7 @@ def merit_function(residuals,
         hes_det[rr_grid > aperture['radius']] = 0.
         merit = np.sum(np.abs(hes_det))
 
-    elif function == "sum":
+    elif function == 'sum':
 
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
@@ -262,12 +262,12 @@ def merit_function(residuals,
 
         merit = phot_table['aperture_sum'][0]
 
-        if variance[0] == "gaussian":
+        if variance[0] == 'gaussian':
             merit = merit**2/variance[1]
 
     else:
 
-        raise ValueError("Merit function not recognized.")
+        raise ValueError('Merit function not recognized.')
 
     return merit
 
@@ -291,12 +291,12 @@ def create_aperture(aperture):
         Aperture object.
     """
 
-    if aperture['type'] == "circular":
+    if aperture['type'] == 'circular':
 
         phot_ap = CircularAperture((aperture['pos_x'], aperture['pos_y']),
                                    aperture['radius'])
 
-    elif aperture['type'] == "elliptical":
+    elif aperture['type'] == 'elliptical':
 
         phot_ap = EllipticalAperture((aperture['pos_x'], aperture['pos_y']),
                                      aperture['semimajor'],
@@ -305,6 +305,6 @@ def create_aperture(aperture):
 
     else:
 
-        raise ValueError("Aperture type not recognized.")
+        raise ValueError('Aperture type not recognized.')
 
     return phot_ap
