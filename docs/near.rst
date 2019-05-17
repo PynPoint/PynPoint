@@ -325,6 +325,10 @@ And to plot the residuals for 10 principal components (Python indexing starts at
    plt.imshow(data[9, ], origin='lower')
    plt.show()
 
+.. image:: _static/near_residuals.png
+   :width: 60%
+   :align: center
+
 Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
 
    data = pipeline.get_data('limits')
@@ -339,10 +343,6 @@ Or to plot the detection limits with the error bars showing the variance of the 
 
 .. image:: _static/near_limits.png
    :width: 70%
-   :align: center
-
-.. image:: _static/near_residuals.png
-   :width: 60%
    :align: center
 
 .. |visir| raw:: html
