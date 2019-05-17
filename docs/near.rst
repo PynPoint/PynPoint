@@ -63,8 +63,9 @@ Pipeline modules are added sequentially to the pipeline and are executed either 
    # Import the Pypeline and the modules that we will use in this example
 
    from pynpoint import Pypeline, NearReadingModule, AngleInterpolationModule, \
-                        CropImagesModule, SubtractImagesModule, FitCenterModule, \
-                        ShiftImagesModule, PSFpreparationModule, PcaPsfSubtractionModule, \
+                        CropImagesModule, SubtractImagesModule, ExtractBinaryModule, \
+                        StarAlignmentModule, FitCenterModule, ShiftImagesModule, \
+                        FakePlanetModule, PSFpreparationModule, PcaPsfSubtractionModule, \
                         ContrastCurveModule, FitsWritingModule, TextWritingModule
 
    # Create a Pypeline instance
