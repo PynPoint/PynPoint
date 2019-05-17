@@ -240,14 +240,14 @@ class TestFitsReadingModule:
         assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_fits_read_files_absolute(self):
+    def test_fits_read_files_exists(self):
 
         module = FitsReadingModule(name_in='read9',
                                    input_dir=None,
                                    image_tag='files',
                                    overwrite=True,
                                    check=True,
-                                   filenames=['fits/image01.fits',
+                                   filenames=['fits/image00.fits',
                                               'fits/image03.fits'])
 
         self.pipeline.add_module(module)
@@ -255,12 +255,13 @@ class TestFitsReadingModule:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read9')
 
-        assert str(error.value) == 'The list of \'filenames\' should contain absolute file paths.'
+        assert str(error.value) == f'The file fits/image00.fits does not exist. '\
+        'Please check that the path is correct.'
 
-    def test_fits_read_textfile_absolute(self):
+    def test_fits_read_textfile_exists(self):
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
-            file_obj.write('fits/image01.fits\n')
+            file_obj.write('fits/image00.fits\n')
             file_obj.write('fits/image03.fits\n')
 
         module = FitsReadingModule(name_in='read10',
@@ -275,5 +276,5 @@ class TestFitsReadingModule:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read10')
 
-        assert str(error.value) == f'The text file {self.test_dir}filenames.dat should contain ' \
-                                   'absolute file paths.'
+        assert str(error.value) == f'The file fits/image00.fits does not exist. '\
+        'Please check that the path is correct.'

@@ -161,20 +161,19 @@ class FitsReadingModule(ReadingModule):
 
         if isinstance(self.m_filenames, str):
             files = self._txt_file_list()
-            '''
+            
             for item in files:
-                if not os.path.isabs(item):
-                    raise ValueError(f'The text file {self.m_filenames} should contain absolute '
-                                     'file paths.')
-            '''
+                if not os.path.isfile(item):
+                    raise ValueError(f'The file {item} does not exist. Please check that the'
+                                     ' path is correct.')
 
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
 
             for item in files:
-                if not os.path.isabs(item):
-                    raise ValueError('The list of \'filenames\' should contain absolute file '
-                                     'paths.')
+                if not os.path.isfile(item):
+                    raise ValueError(f'The file {item} does not exist. Please check that the'
+                                     ' path is correct.')
 
         elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(self.m_input_location):
