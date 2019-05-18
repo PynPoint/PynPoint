@@ -15,7 +15,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestBadPixelCleaning:
+class TestBadPixel:
 
     def setup_class(self):
 
