@@ -198,3 +198,27 @@ class TestNearInitModule(object):
 
         assert warning[1].message.args[0] == 'The number of images is not equal for chop A and ' \
                                              'chop B.'
+
+    def test_odd_number_images(self):
+
+        with fits.open(self.fitsfile) as hdulist:
+            del hdulist[11]
+            hdulist.writeto(self.fitsfile, overwrite=True)
+
+        module = NearReadingModule(name_in='read8',
+                                   input_dir=self.test_dir+'near',
+                                   chopa_out_tag=self.positions[0],
+                                   chopb_out_tag=self.positions[1])
+
+        self.pipeline.add_module(module)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module('read8')
+
+        assert len(warning) == 2
+
+        assert warning[0].message.args[0] == 'FITS file contains odd number of images: ' \
+                                             f'{self.fitsfile}'
+
+        assert warning[1].message.args[0] == 'The number of chop cycles (5) is not equal to ' \
+                                             'half the number of available HDU images (4).'

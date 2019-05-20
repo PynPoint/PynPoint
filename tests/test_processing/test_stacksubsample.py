@@ -15,7 +15,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestStackingAndSubsampling:
+class TestStackSubset:
 
     def setup_class(self):
 

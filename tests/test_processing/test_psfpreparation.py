@@ -15,7 +15,7 @@ warnings.simplefilter("always")
 limit = 1e-10
 
 
-class TestPSFpreparation:
+class TestPsfPreparation:
 
     def setup_class(self):
 
