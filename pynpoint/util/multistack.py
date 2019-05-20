@@ -69,7 +69,7 @@ class StackReader(TaskCreator):
             # lock mutex and read data
             with self.m_data_mutex:
                 # read images from i to j
-                tmp_data = self.m_data_in_port[i:j, :, :]
+                tmp_data = self.m_data_in_port[i:j, ]
 
             # first dimension (start, stop, step)
             stack_slice = [(i, j, None)]
@@ -156,7 +156,7 @@ class StackTaskProcessor(TaskProcessor):
 
             args = update_arguments(index, self.m_nimages, self.m_function_args)
 
-            result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, :, :],
+            result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, ],
                                              func=self.m_function,
                                              func_args=args)
 
