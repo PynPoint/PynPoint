@@ -7,10 +7,14 @@ import time
 import math
 import warnings
 
+from typing import Union, Tuple
+
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel
 from pynpoint.util.module import progress, memory_frames, locate_star
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
@@ -648,11 +652,12 @@ class ImageStatisticsModule(ProcessingModule):
     images.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='im_stat',
-                 image_in_tag='im_arr',
-                 stat_out_tag='stat',
-                 position=None):
+                 name_in: str = 'im_stat',
+                 image_in_tag: str = 'im_arr',
+                 stat_out_tag: str = 'stat',
+                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
         """
         Parameters
         ----------
@@ -681,7 +686,7 @@ class ImageStatisticsModule(ProcessingModule):
 
         self.m_position = position
 
-    def run(self):
+    def run(self) -> None:
         """
         Run method of the module. Calculates the minimum, maximum, sum, mean, median, and standard
         deviation of the pixel values of each image separately. NaNs are ignored for each

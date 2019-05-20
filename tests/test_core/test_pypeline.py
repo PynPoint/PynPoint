@@ -166,7 +166,7 @@ class TestPypeline:
             pipeline.add_module(read)
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'Processing module names need to be unique. ' \
+        assert warning[0].message.args[0] == 'Pipeline module names need to be unique. ' \
                                              'Overwriting module \'read2\'.'
 
         process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='im_arr1')
