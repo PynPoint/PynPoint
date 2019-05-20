@@ -37,10 +37,9 @@ class StarExtractionModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Tag of the dataset with the input images.
         image_out_tag : str
-            Tag of the database entry that is written as output. Should be different from
-            ``image_in_tag``.
+            Tag of the dataset that is stored as output, containing the extracted images.
         index_out_tag : str, None
             List with image indices for which the image size is too large to be cropped around the
             brightest pixel. No data is written if set to None. This tag name can be provided to
@@ -195,10 +194,9 @@ class ExtractBinaryModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Tag of the dataset with the input images.
         image_out_tag : str
-            Tag of the database entry that is written as output. Should be different from
-            ``image_in_tag``.
+            Tag of the dataset that is stored as output, containing the extracted images.
         pos_center : tuple(float, float)
             Approximate position (x, y) of the center of rotation (pix).
         pos_binary : tuple(float, float)
