@@ -33,11 +33,11 @@ class FakePlanetModule(ProcessingModule):
                  position,
                  magnitude,
                  psf_scaling=1.,
-                 interpolation="spline",
-                 name_in="fake_planet",
-                 image_in_tag="im_arr",
-                 psf_in_tag="im_psf",
-                 image_out_tag="im_fake"):
+                 interpolation='spline',
+                 name_in='fake_planet',
+                 image_in_tag='im_arr',
+                 psf_in_tag='im_psf',
+                 image_out_tag='im_fake'):
         """
         Parameters
         ----------
@@ -100,9 +100,9 @@ class FakePlanetModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
 
-        memory = self._m_config_port.get_attribute("MEMORY")
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        memory = self._m_config_port.get_attribute('MEMORY')
+        parang = self.m_image_in_port.get_attribute('PARANG')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         self.m_position = (self.m_position[0]/pixscale, self.m_position[1])
 
@@ -116,14 +116,14 @@ class FakePlanetModule(ProcessingModule):
                              'the FakePlanetModule.')
 
         if psf_shape[-2:] != im_shape[-2:]:
-            raise ValueError("The images in '"+self.m_image_in_port.tag+"' should have the same "
-                             "dimensions as the images images in '"+self.m_psf_in_port.tag+"'.")
+            raise ValueError('The images in \'{self.m_image_in_port.tag}\' should have the same '
+                             'dimensions as the images images in \'{self.m_psf_in_port.tag}\'.')
 
         frames = memory_frames(memory, im_shape[0])
 
         start_time = time.time()
         for j, _ in enumerate(frames[:-1]):
-            progress(j, len(frames[:-1]), "Running FakePlanetModule...", start_time)
+            progress(j, len(frames[:-1]), 'Running FakePlanetModule...', start_time)
 
             images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
@@ -139,21 +139,21 @@ class FakePlanetModule(ProcessingModule):
                                   position=self.m_position,
                                   magnitude=self.m_magnitude,
                                   psf_scaling=self.m_psf_scaling,
-                                  interpolation="spline")
+                                  interpolation='spline')
 
             if j == 0:
                 self.m_image_out_port.set_all(im_fake)
             else:
                 self.m_image_out_port.append(im_fake, data_dim=3)
 
-        sys.stdout.write("Running FakePlanetModule... [DONE]\n")
+        sys.stdout.write('Running FakePlanetModule... [DONE]\n')
         sys.stdout.flush()
 
-        history = "(sep, angle, mag) = ("+"{0:.2f}".format(self.m_position[0]*pixscale)+", "+ \
-                  "{0:.2f}".format(self.m_position[1])+", "+"{0:.2f}".format(self.m_magnitude)+")"
+        history = '(sep, angle, mag) = ('+'{0:.2f}'.format(self.m_position[0]*pixscale)+', '+ \
+                  '{0:.2f}'.format(self.m_position[1])+', '+'{0:.2f}'.format(self.m_magnitude)+')'
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("FakePlanetModule", history)
+        self.m_image_out_port.add_history('FakePlanetModule', history)
         self.m_image_out_port.close_port()
 
 
@@ -167,12 +167,12 @@ class SimplexMinimizationModule(ProcessingModule):
                  position,
                  magnitude,
                  psf_scaling=-1.,
-                 name_in="simplex",
-                 image_in_tag="im_arr",
-                 psf_in_tag="im_psf",
-                 res_out_tag="simplex_res",
-                 flux_position_tag="flux_position",
-                 merit="hessian",
+                 name_in='simplex',
+                 image_in_tag='im_arr',
+                 psf_in_tag='im_psf',
+                 res_out_tag='simplex_res',
+                 flux_position_tag='flux_position',
+                 merit='hessian',
                  aperture=0.1,
                  sigma=0.027,
                  tolerance=0.1,
@@ -180,7 +180,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
-                 residuals="mean"):
+                 residuals='mean'):
         """
         Parameters
         ----------
@@ -237,7 +237,7 @@ class SimplexMinimizationModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
-            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
         Returns
         -------
@@ -290,8 +290,8 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_flux_position_port.del_all_data()
         self.m_flux_position_port.del_all_attributes()
 
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        parang = self.m_image_in_port.get_attribute('PARANG')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         if isinstance(self.m_aperture, float):
             self.m_aperture = {'type':'circular',
@@ -357,7 +357,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack[0, ],
                                    function=self.m_merit,
-                                   variance="poisson",
+                                   variance='poisson',
                                    aperture=self.m_aperture,
                                    sigma=self.m_sigma)
 
@@ -374,7 +374,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             return merit
 
-        sys.stdout.write("Running SimplexMinimizationModule")
+        sys.stdout.write('Running SimplexMinimizationModule')
         sys.stdout.flush()
 
         pos_init = rotate_coordinates(center,
@@ -386,19 +386,19 @@ class SimplexMinimizationModule(ProcessingModule):
 
         minimize(fun=_objective,
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],
-                 method="Nelder-Mead",
+                 method='Nelder-Mead',
                  tol=None,
-                 options={'xatol':self.m_tolerance, 'fatol':float("inf")})
+                 options={'xatol':self.m_tolerance, 'fatol':float('inf')})
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
-        history = "merit = "+str(self.m_merit)
+        history = 'merit = '+str(self.m_merit)
         self.m_flux_position_port.copy_attributes(self.m_image_in_port)
-        self.m_flux_position_port.add_history("SimplexMinimizationModule", history)
+        self.m_flux_position_port.add_history('SimplexMinimizationModule', history)
 
         self.m_res_out_port.copy_attributes(self.m_image_in_port)
-        self.m_res_out_port.add_history("SimplexMinimizationModule", history)
+        self.m_res_out_port.add_history('SimplexMinimizationModule', history)
         self.m_res_out_port.close_port()
 
 
@@ -413,9 +413,9 @@ class FalsePositiveModule(ProcessingModule):
                  position,
                  aperture=0.1,
                  ignore=False,
-                 name_in="snr",
-                 image_in_tag="im_arr",
-                 snr_out_tag="snr_fpf",
+                 name_in='snr',
+                 image_in_tag='im_arr',
+                 snr_out_tag='snr_fpf',
                  optimize=False,
                  **kwargs):
         """
@@ -455,8 +455,8 @@ class FalsePositiveModule(ProcessingModule):
             None
         """
 
-        if "tolerance" in kwargs:
-            self.m_tolerance = kwargs["tolerance"]
+        if 'tolerance' in kwargs:
+            self.m_tolerance = kwargs['tolerance']
         else:
             self.m_tolerance = 1e-2
 
@@ -500,14 +500,14 @@ class FalsePositiveModule(ProcessingModule):
         self.m_snr_out_port.del_all_data()
         self.m_snr_out_port.del_all_attributes()
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
 
         nimages = self.m_image_in_port.get_shape()[0]
 
         start_time = time.time()
         for j in range(nimages):
-            progress(j, nimages, "Running FalsePositiveModule...", start_time)
+            progress(j, nimages, 'Running FalsePositiveModule...', start_time)
 
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
@@ -515,9 +515,9 @@ class FalsePositiveModule(ProcessingModule):
             if self.m_optimize:
                 result = minimize(fun=_fpf_minimize,
                                   x0=[self.m_position[0], self.m_position[1]],
-                                  method="Nelder-Mead",
+                                  method='Nelder-Mead',
                                   tol=None,
-                                  options={'xatol':self.m_tolerance, 'fatol':float("inf")})
+                                  options={'xatol':self.m_tolerance, 'fatol':float('inf')})
 
                 _, _, snr, fpf = false_alarm(image=image,
                                              x_pos=result.x[0],
@@ -541,12 +541,12 @@ class FalsePositiveModule(ProcessingModule):
 
             self.m_snr_out_port.append(result, data_dim=2)
 
-        sys.stdout.write("Running FalsePositiveModule... [DONE]\n")
+        sys.stdout.write('Running FalsePositiveModule... [DONE]\n')
         sys.stdout.flush()
 
-        history = "aperture [arcsec] = "+str("{:.2f}".format(self.m_aperture*pixscale))
+        history = f'aperture [arcsec] = {self.m_aperture*pixscale:.2f}'
         self.m_snr_out_port.copy_attributes(self.m_image_in_port)
-        self.m_snr_out_port.add_history("FalsePositiveModule", history)
+        self.m_snr_out_port.add_history('FalsePositiveModule', history)
         self.m_snr_out_port.close_port()
 
 
@@ -560,10 +560,10 @@ class MCMCsamplingModule(ProcessingModule):
     def __init__(self,
                  param,
                  bounds,
-                 name_in="mcmc_sampling",
-                 image_in_tag="im_arr",
-                 psf_in_tag="im_arr",
-                 chain_out_tag="samples",
+                 name_in='mcmc_sampling',
+                 image_in_tag='im_arr',
+                 psf_in_tag='im_arr',
+                 chain_out_tag='samples',
                  nwalkers=100,
                  nsteps=200,
                  psf_scaling=-1.,
@@ -571,9 +571,9 @@ class MCMCsamplingModule(ProcessingModule):
                  aperture=0.1,
                  mask=None,
                  extra_rot=0.,
-                 prior="flat",
-                 variance="poisson",
-                 residuals="mean",
+                 prior='flat',
+                 variance='poisson',
+                 residuals='mean',
                  **kwargs):
         """
         Parameters
@@ -585,7 +585,7 @@ class MCMCsamplingModule(ProcessingModule):
             direction (i.e., East of North). The specified separation and angle are also used as
             fixed position for the aperture if *aperture* contains a single value. Furthermore,
             the values are used to remove the planet signal before the noise is estimated when
-            *variance* is set to "gaussian" to prevent that self-subtraction lobes bias the noise
+            *variance* is set to 'gaussian' to prevent that self-subtraction lobes bias the noise
             measurement.
         bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
             The boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each set
@@ -620,13 +620,13 @@ class MCMCsamplingModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images (deg).
         prior : str
-            Prior can be set to "flat" or "aperture". With "flat", the values of *bounds* are used
-            as uniform priors. With "aperture", the prior probability is set to zero beyond the
+            Prior can be set to 'flat' or 'aperture'. With 'flat', the values of *bounds* are used
+            as uniform priors. With 'aperture', the prior probability is set to zero beyond the
             aperture and unity within the aperture.
         variance : str
-            Variance used in the likelihood function ("poisson" or "gaussian").
+            Variance used in the likelihood function ('poisson' or 'gaussian').
         residuals : str
-            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
         Keyword arguments
         -----------------
@@ -644,13 +644,13 @@ class MCMCsamplingModule(ProcessingModule):
             None
         """
 
-        if "scale" in kwargs:
-            self.m_scale = kwargs["scale"]
+        if 'scale' in kwargs:
+            self.m_scale = kwargs['scale']
         else:
             self.m_scale = 2.
 
-        if "sigma" in kwargs:
-            self.m_sigma = kwargs["sigma"]
+        if 'sigma' in kwargs:
+            self.m_sigma = kwargs['sigma']
         else:
             self.m_sigma = (1e-5, 1e-3, 1e-3)
 
@@ -698,7 +698,7 @@ class MCMCsamplingModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         if isinstance(self.m_aperture, float):
             xy_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
@@ -748,7 +748,7 @@ class MCMCsamplingModule(ProcessingModule):
             Variance.
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         fake = fake_planet(images=images,
                            psf=psf,
@@ -785,25 +785,25 @@ class MCMCsamplingModule(ProcessingModule):
         """
 
         if not isinstance(self.m_param, tuple) or len(self.m_param) != 3:
-            raise TypeError("The param argument should contain a tuple with the approximate "
-                            "separation (arcsec), position angle (deg), and contrast (mag).")
+            raise TypeError('The param argument should contain a tuple with the approximate '
+                            'separation (arcsec), position angle (deg), and contrast (mag).')
 
         if not isinstance(self.m_bounds, tuple) or len(self.m_bounds) != 3:
-            raise TypeError("The bounds argument should contain a tuple with three tuples for "
-                            "the boundaries of the separation (arcsec), position angle (deg), and "
-                            "contrast (mag).")
+            raise TypeError('The bounds argument should contain a tuple with three tuples for '
+                            'the boundaries of the separation (arcsec), position angle (deg), and '
+                            'contrast (mag).')
 
         if not isinstance(self.m_sigma, tuple) or len(self.m_sigma) != 3:
-            raise TypeError("The sigma argument should contain a tuple with the standard "
-                            "deviation of the separation (arcsec), position angle (deg), "
-                            "and contrast (mag) that is used to sample the starting position "
-                            "of the walkers.")
+            raise TypeError('The sigma argument should contain a tuple with the standard '
+                            'deviation of the separation (arcsec), position angle (deg), '
+                            'and contrast (mag) that is used to sample the starting position '
+                            'of the walkers.')
 
         ndim = 3
 
-        cpu = self._m_config_port.get_attribute("CPU")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        parang = self.m_image_in_port.get_attribute("PARANG")
+        cpu = self._m_config_port.get_attribute('CPU')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        parang = self.m_image_in_port.get_attribute('PARANG')
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
@@ -834,7 +834,7 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        if self.m_variance == "gaussian":
+        if self.m_variance == 'gaussian':
             student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
             variance = (self.m_variance, student_t)
 
@@ -862,19 +862,19 @@ class MCMCsamplingModule(ProcessingModule):
                                         threads=cpu)
         start_time = time.time()
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, "Running MCMCsamplingModule...", start_time)
+            progress(i, self.m_nsteps, 'Running MCMCsamplingModule...', start_time)
 
-        sys.stdout.write("Running MCMCsamplingModule... [DONE]\n")
+        sys.stdout.write('Running MCMCsamplingModule... [DONE]\n')
         sys.stdout.flush()
 
         self.m_chain_out_port.set_all(sampler.chain)
 
-        history = "walkers = "+str(self.m_nwalkers)+", steps = "+str(self.m_nsteps)
+        history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
         self.m_chain_out_port.copy_attributes(self.m_image_in_port)
-        self.m_chain_out_port.add_history("MCMCsamplingModule", history)
+        self.m_chain_out_port.add_history('MCMCsamplingModule', history)
         self.m_chain_out_port.close_port()
 
-        print("Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction)))
+        print(f'Mean acceptance fraction: {np.mean(sampler.acceptance_fraction):.3f}')
 
         try:
             autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
@@ -886,10 +886,10 @@ class MCMCsamplingModule(ProcessingModule):
                                                       axis=0,
                                                       fast=False)
 
-            print("Integrated autocorrelation time =", autocorr)
+            print('Integrated autocorrelation time =', autocorr)
 
         except emcee.autocorr.AutocorrError:
-            print("The chain is too short to reliably estimate the autocorrelation time. [WARNING]")
+            print('The chain is too short to reliably estimate the autocorrelation time. [WARNING]')
 
 
 class AperturePhotometryModule(ProcessingModule):
@@ -901,9 +901,9 @@ class AperturePhotometryModule(ProcessingModule):
     def __init__(self,
                  radius: float = 0.1,
                  position: Tuple[float, float] = None,
-                 name_in: str = "aperture_photometry",
-                 image_in_tag: str = "im_arr",
-                 phot_out_tag: str = "photometry") -> None:
+                 name_in: str = 'aperture_photometry',
+                 image_in_tag: str = 'im_arr',
+                 phot_out_tag: str = 'photometry') -> None:
         """
         Parameters
         ----------
@@ -949,7 +949,7 @@ class AperturePhotometryModule(ProcessingModule):
         def _photometry(image, aperture):
             return aperture_photometry(image, aperture, method='exact')['aperture_sum']
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_radius /= pixscale
 
         if self.m_position is None:
@@ -961,10 +961,10 @@ class AperturePhotometryModule(ProcessingModule):
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
-                                      "Running AperturePhotometryModule",
+                                      'Running AperturePhotometryModule',
                                       func_args=(aperture, ))
 
-        history = f"radius [arcsec] = {self.m_radius*pixscale:.3f}"
+        history = f'radius [arcsec] = {self.m_radius*pixscale:.3f}'
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
-        self.m_phot_out_port.add_history("AperturePhotometryModule", history)
+        self.m_phot_out_port.add_history('AperturePhotometryModule', history)
         self.m_phot_out_port.close_port()

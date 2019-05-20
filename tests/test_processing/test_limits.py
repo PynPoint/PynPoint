@@ -16,7 +16,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestDetectionLimits:
+class TestLimits:
 
     def setup_class(self):
 

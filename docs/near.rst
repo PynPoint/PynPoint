@@ -337,7 +337,7 @@ Or to plot the detection limits with the error bars showing the variance of the 
    plt.figure(figsize=(7, 4))
    plt.errorbar(data[:, 0], data[:, 1], data[:, 2])
    plt.xlim(0., 2.5)
-   plt.ylim(18., 9.)
+   plt.ylim(12., 0.)
    plt.xlabel('Separation [arcsec]')
    plt.ylabel('Contrast [mag]')
    plt.show()

@@ -15,7 +15,7 @@ warnings.simplefilter("always")
 
 limit = 1e-10
 
-class TestImageResizing:
+class TestResizing:
 
     def setup_class(self):
 
@@ -112,13 +112,7 @@ class TestImageResizing:
                                 image_out_tag="add")
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(UserWarning) as warning:
-            self.pipeline.run_module("add")
-
-        assert len(warning) == 1
-        assert warning[0].message.args[0] == "The dimensions of the output images (109, 107) " \
-                                             "are not equal. PynPoint only supports square images."
+        self.pipeline.run_module("add")
 
         data = self.pipeline.get_data("add")
         assert np.allclose(data[0, 50, 50], 0.02851872141873229, rtol=limit, atol=0.)

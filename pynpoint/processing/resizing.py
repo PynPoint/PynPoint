@@ -19,9 +19,9 @@ class CropImagesModule(ProcessingModule):
     def __init__(self,
                  size,
                  center=None,
-                 name_in="crop_image",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_arr_cropped"):
+                 name_in='crop_image',
+                 image_in_tag='im_arr',
+                 image_out_tag='im_arr_cropped'):
         """
         Parameters
         ----------
@@ -69,24 +69,22 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         self.m_size = int(math.ceil(self.m_size/pixscale))
 
-        def _image_cutting(image_in,
-                           size,
-                           center):
+        def _crop(image_in, size, center):
 
             return crop_image(image_in, center, size)
 
-        self.apply_function_to_images(_image_cutting,
+        self.apply_function_to_images(_crop,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running CropImagesModule",
+                                      'Running CropImagesModule',
                                       func_args=(self.m_size, self.m_center))
 
-        history = "image size [pix] = "+str(self.m_size)
-        self.m_image_out_port.add_history("CropImagesModule", history)
+        history = f'image size [pix] = {self.m_size}'
+        self.m_image_out_port.add_history('CropImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -99,9 +97,9 @@ class ScaleImagesModule(ProcessingModule):
     def __init__(self,
                  scaling=(None, None, None),
                  pixscale=False,
-                 name_in="scaling",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_arr_scaled"):
+                 name_in='scaling',
+                 image_in_tag='im_arr',
+                 image_out_tag='im_arr_scaled'):
         """
         Parameters
         ----------
@@ -131,14 +129,15 @@ class ScaleImagesModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         if len(scaling) == 2:
-            warnings.warn("The 'scaling' parameter requires three values: (scaling_x, scaling_y, "
-                          "scaling_flux). Using the same scaling in x and y direction...")
+            warnings.warn('The \'scaling\' parameter requires three values: (scaling_x, '
+                          'scaling_y, scaling_flux). Using the same scaling in x and y '
+                          'direction...')
 
             scaling = (scaling[0], scaling[0], scaling[1])
 
         elif len(scaling) < 2 or len(scaling) > 3:
-            raise ValueError("The 'scaling' parameter requires three values: (scaling_x, "
-                             "scaling_y, scaling_flux).")
+            raise ValueError('The \'scaling\' parameter requires three values: (scaling_x, '
+                             'scaling_y, scaling_flux).')
 
         if scaling[0] is None:
             self.m_scaling_x = 1.
@@ -168,7 +167,7 @@ class ScaleImagesModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         def _image_scaling(image_in,
                            scaling_x,
@@ -182,21 +181,21 @@ class ScaleImagesModule(ProcessingModule):
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running ScaleImagesModule",
+                                      'Running ScaleImagesModule',
                                       func_args=(self.m_scaling_x,
                                                  self.m_scaling_y,
                                                  self.m_scaling_flux,))
 
-        history = "scaling = ("+str("{:.2f}".format(self.m_scaling_x)) + ", " + \
-                  str("{:.2f}".format(self.m_scaling_y)) + ", " + \
-                  str("{:.2f}".format(self.m_scaling_flux)) + ")"
+        history = 'scaling = ('+str('{:.2f}'.format(self.m_scaling_x)) + ', ' + \
+                  str('{:.2f}'.format(self.m_scaling_y)) + ', ' + \
+                  str('{:.2f}'.format(self.m_scaling_flux)) + ')'
 
-        self.m_image_out_port.add_history("ScaleImagesModule", history)
+        self.m_image_out_port.add_history('ScaleImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_pixscale:
             mean_scaling = (self.m_scaling_x+self.m_scaling_y)/2.
-            self.m_image_out_port.add_attribute("PIXSCALE", pixscale/mean_scaling)
+            self.m_image_out_port.add_attribute('PIXSCALE', pixscale/mean_scaling)
 
         self.m_image_out_port.close_port()
 
@@ -208,9 +207,9 @@ class AddLinesModule(ProcessingModule):
 
     def __init__(self,
                  lines,
-                 name_in="add_lines",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_arr_add"):
+                 name_in='add_lines',
+                 image_in_tag='im_arr',
+                 image_out_tag='im_arr_add'):
         """
         Parameters
         ----------
@@ -252,15 +251,11 @@ class AddLinesModule(ProcessingModule):
         shape_out = (shape_in[-2]+int(self.m_lines[2])+int(self.m_lines[3]),
                      shape_in[-1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        if shape_out[0] != shape_out[1]:
-            warnings.warn("The dimensions of the output images %s are not equal. PynPoint only "
-                          "supports square images." % str(shape_out))
-
-        def _add_lines(image_in):
+        def _add_lines(image_in, lines):
             image_out = np.zeros(shape_out)
 
-            image_out[int(self.m_lines[2]):int(self.m_lines[3]),
-                      int(self.m_lines[0]):int(self.m_lines[1])] = image_in
+            image_out[int(lines[2]):int(lines[3]),
+                      int(lines[0]):int(lines[1])] = image_in
 
             return image_out
 
@@ -270,10 +265,11 @@ class AddLinesModule(ProcessingModule):
         self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running AddLinesModule")
+                                      'Running AddLinesModule',
+                                      func_args=(self.m_lines, ))
 
-        history = "number of lines = "+str(self.m_lines)
-        self.m_image_out_port.add_history("AddLinesModule", history)
+        history = f'number of lines = {self.m_lines}'
+        self.m_image_out_port.add_history('AddLinesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -285,9 +281,9 @@ class RemoveLinesModule(ProcessingModule):
 
     def __init__(self,
                  lines,
-                 name_in="cut_top",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_arr_cut"):
+                 name_in='cut_top',
+                 image_in_tag='im_arr',
+                 image_out_tag='im_arr_cut'):
         """
         Parameters
         ----------
@@ -324,18 +320,19 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        def _remove_lines(image_in):
+        def _remove_lines(image_in, lines):
             shape_in = image_in.shape
 
-            return image_in[int(self.m_lines[2]):shape_in[0]-int(self.m_lines[3]),
-                            int(self.m_lines[0]):shape_in[1]-int(self.m_lines[1])]
+            return image_in[int(lines[2]):shape_in[0]-int(lines[3]),
+                            int(lines[0]):shape_in[1]-int(lines[1])]
 
         self.apply_function_to_images(_remove_lines,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running RemoveLinesModule")
+                                      'Running RemoveLinesModule',
+                                      func_args=(self.m_lines, ))
 
-        history = "number of lines = "+str(self.m_lines)
-        self.m_image_out_port.add_history("RemoveLinesModule", history)
+        history = 'number of lines = '+str(self.m_lines)
+        self.m_image_out_port.add_history('RemoveLinesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
