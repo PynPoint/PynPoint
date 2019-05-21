@@ -20,9 +20,8 @@ class TestDataStorage:
         np.random.seed(1)
         images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
 
-        h5f = h5py.File(self.test_data, "w")
-        h5f.create_dataset("images", data=images)
-        h5f.close()
+        with h5py.File(self.test_data, "w") as hdf_file:
+            hdf_file.create_dataset("images", data=images)
 
         storage = DataStorage(self.test_data)
         storage.open_connection()

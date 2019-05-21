@@ -134,9 +134,8 @@ class TestResizing:
         assert np.allclose(np.mean(data), 0.00011848528804183087, rtol=limit, atol=0.)
         assert data.shape == (40, 91, 93)
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
-        database.close()
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         self.pipeline.run_module("remove")
 

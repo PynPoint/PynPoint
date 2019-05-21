@@ -210,8 +210,8 @@ class TestExtract:
 
     def test_star_extract_cpu(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         module = StarExtractionModule(name_in='extract4',
                                       image_in_tag='star',
@@ -233,8 +233,8 @@ class TestExtract:
 
     def test_extract_binary(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = ExtractBinaryModule(pos_center=(50., 50.),
                                      pos_binary=(50., 70.),

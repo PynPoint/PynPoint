@@ -28,12 +28,11 @@ class TestPypeline:
         science = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
         dark = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
 
-        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "w")
-        h5f.create_dataset("image_3d", data=image_3d)
-        h5f.create_dataset("image_2d", data=image_2d)
-        h5f.create_dataset("science", data=science)
-        h5f.create_dataset("dark", data=dark)
-        h5f.close()
+        with h5py.File(self.test_dir+"PynPoint_database.hdf5", "w") as hdf_file:
+            hdf_file.create_dataset("image_3d", data=image_3d)
+            hdf_file.create_dataset("image_2d", data=image_2d)
+            hdf_file.create_dataset("science", data=science)
+            hdf_file.create_dataset("dark", data=dark)
 
         create_star_data(path=self.test_dir+"images")
         create_config(self.test_dir+"PynPoint_config.ini")
