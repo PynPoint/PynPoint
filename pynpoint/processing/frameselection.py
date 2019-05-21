@@ -841,12 +841,12 @@ class FrameSimilarityModule(ProcessingModule):
         if mode == "MSE":
             return reference_index, compare_nrmse(X_i, M)
 
-        elif mode == "PCC":
+        if mode == "PCC":
             PCC = cov(X_i, M) / (std(X_i) * std(M))
             del X_i, M
             return reference_index, PCC
 
-        elif mode == "SSIM":
+        if mode == "SSIM":
             if int(fwhm) % 2 == 0:
                 winsize = int(fwhm) + 1
             else:
@@ -895,7 +895,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         if self.m_method != 'SSIM':
             images *= mask
-            
+
         # count mask pixels for normalization
         N_pix = int(np.sum(mask))
         # compare images and store similarity
@@ -1070,7 +1070,7 @@ class RemoveFramesByAttributeModule(ProcessingModule):
 
         indices = removed_index
 
-        # copied from FrameSelectionModule ... 
+        # copied from FrameSelectionModule ...
         # possibly refactor to @staticmethod or move to util.remove
         if np.size(indices) > 0:
             memory = self._m_config_port.get_attribute("MEMORY")

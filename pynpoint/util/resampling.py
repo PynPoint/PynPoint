@@ -3,7 +3,7 @@ Module for statistical resampling
 """
 import numpy as np
 
-def jackknife_estimator(data, n, estimator, axis=0):
+def jackknife_estimator(data, n, estimator):
     """
     Grabs n samples out of the data and calculates a jackknife estimator on top along the 0th axis.
     Source: Statistical Methods in Astrophysics and Cosmology Lecture ETHZ HS2019
@@ -60,6 +60,8 @@ def bootstrap_estimator(data, n, bootstrap_samples, estimator):
     n : int
         Size of the subsample on which the *method* estimator is calculated.\
         Must be smaller or equal than data.shape[axis]
+    bootstrap_samples: int
+        Number of subsubsamples of the subsample. Can be at most ((2n-1) choose n)
     estimator : method
         Function which calculates the estimated value
 
