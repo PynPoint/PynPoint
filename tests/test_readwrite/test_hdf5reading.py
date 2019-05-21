@@ -32,10 +32,9 @@ class TestHdf5ReadingModule:
 
         data = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
 
-        h5f = h5py.File(self.test_dir+"data/PynPoint_database.hdf5", "a")
-        h5f.create_dataset("extra", data=data)
-        h5f.create_dataset("header_extra/PARANG", data=[1., 2., 3., 4.])
-        h5f.close()
+        with  h5py.File(self.test_dir+"data/PynPoint_database.hdf5", "a") as hdf_file:
+            hdf_file.create_dataset("extra", data=data)
+            hdf_file.create_dataset("header_extra/PARANG", data=[1., 2., 3., 4.])
 
         read = Hdf5ReadingModule(name_in="read1",
                                  input_filename="PynPoint_database.hdf5",
@@ -81,9 +80,8 @@ class TestHdf5ReadingModule:
         assert warning[0].message.args[0] == "The dataset with tag name 'test' is not found in " \
                                              "the HDF5 file."
 
-        h5f = h5py.File(self.test_dir+"data/PynPoint_database.hdf5", "r")
-        assert set(h5f.keys()) == set(["extra", "header_extra", "header_images", "images"])
-        h5f.close()
+        with h5py.File(self.test_dir+"data/PynPoint_database.hdf5", "r") as hdf_file:
+            assert set(hdf_file.keys()) == set(["extra", "header_extra", "header_images", "images"])
 
     def test_no_input_filename(self):
 

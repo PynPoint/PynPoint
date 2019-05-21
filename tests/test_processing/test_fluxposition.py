@@ -97,8 +97,8 @@ class TestFluxPosition:
 
     def test_aperture_photometry(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = AperturePhotometryModule(radius=0.1,
                                           position=None,
@@ -109,8 +109,8 @@ class TestFluxPosition:
         self.pipeline.add_module(module)
         self.pipeline.run_module('photometry')
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         module = AperturePhotometryModule(radius=0.1,
                                           position=None,
@@ -136,8 +136,8 @@ class TestFluxPosition:
 
     def test_angle_interpolation(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = AngleInterpolationModule(name_in='angle',
                                           data_tag='read')

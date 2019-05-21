@@ -26,12 +26,11 @@ class TestDarkFlat:
         flat = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
         crop = np.random.normal(loc=0, scale=2e-4, size=(10, 60, 60))
 
-        h5f = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w')
-        h5f.create_dataset('images', data=images)
-        h5f.create_dataset('dark', data=dark)
-        h5f.create_dataset('flat', data=flat)
-        h5f.create_dataset('crop', data=crop)
-        h5f.close()
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
+            hdf_file.create_dataset('images', data=images)
+            hdf_file.create_dataset('dark', data=dark)
+            hdf_file.create_dataset('flat', data=flat)
+            hdf_file.create_dataset('crop', data=crop)
 
         create_config(self.test_dir+'PynPoint_config.ini')
 
