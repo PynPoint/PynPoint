@@ -69,9 +69,8 @@ class TestTextReading:
 
         data_4d = np.random.normal(loc=0, scale=2e-4, size=(5, 5, 5, 5))
 
-        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "a")
-        h5f.create_dataset("data_4d", data=data_4d)
-        h5f.close()
+        with h5py.File(self.test_dir+"PynPoint_database.hdf5", "a") as hdf_file:
+            hdf_file.create_dataset("data_4d", data=data_4d)
 
         text_write = TextWritingModule(file_name="data.dat",
                                        name_in="write_4d",
@@ -90,9 +89,8 @@ class TestTextReading:
 
         data_int = np.arange(1, 101, 1)
 
-        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "a")
-        h5f.create_dataset("data_int", data=data_int)
-        h5f.close()
+        with h5py.File(self.test_dir+"PynPoint_database.hdf5", "a") as hdf_file:
+            hdf_file.create_dataset("data_int", data=data_int)
 
         text_write = TextWritingModule(file_name="data.dat",
                                        name_in="write_int",
@@ -186,9 +184,8 @@ class TestTextReading:
 
     def test_parang_writing_not_present(self):
 
-        h5f = h5py.File(self.test_dir+"PynPoint_database.hdf5", "a")
-        del h5f["header_images/PARANG"]
-        h5f.close()
+        with h5py.File(self.test_dir+"PynPoint_database.hdf5", "a") as hdf_file:
+            del hdf_file["header_images/PARANG"]
 
         parang_write = ParangWritingModule(file_name="parang.dat",
                                            name_in="parang_write3",

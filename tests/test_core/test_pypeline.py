@@ -129,10 +129,9 @@ class TestPypeline:
         np.random.seed(1)
         images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
 
-        h5f = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w')
-        dset = h5f.create_dataset('images', data=images)
-        dset.attrs['PIXSCALE'] = 0.01
-        h5f.close()
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
+            dset = hdf_file.create_dataset('images', data=images)
+            dset.attrs['PIXSCALE'] = 0.01
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
         data = pipeline.get_data('images')

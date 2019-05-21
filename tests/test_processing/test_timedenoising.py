@@ -81,8 +81,8 @@ class TestTimeDenoising:
         assert np.allclose(np.mean(data), 0.002502083112599873, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         self.pipeline.run_module("wavelet_cwt_dog")
 
@@ -92,8 +92,8 @@ class TestTimeDenoising:
 
     def test_wavelet_denoising_cwt_morlet(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         cwt_config = CwtWaveletConfiguration(wavelet="morlet",
                                              wavelet_order=5,
