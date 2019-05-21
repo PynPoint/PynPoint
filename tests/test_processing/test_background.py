@@ -1,7 +1,6 @@
 import os
 import warnings
 
-import h5py
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
