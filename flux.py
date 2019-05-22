@@ -130,6 +130,8 @@ pipeline.run()
 photometry = pipeline.get_data("photometry")
 print(photometry)
 
+print(shape(pipeline.get_data("science_cropped")))
+
 residuals = pipeline.get_data("residuals")
 fake = pipeline.get_data("im_fake")
 

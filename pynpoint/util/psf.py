@@ -6,6 +6,7 @@ import numpy as np
 
 from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
+from copy import deepcopy
 
 
 def pca_psf_subtraction(images,
@@ -95,6 +96,7 @@ def iterative_pca_psf_subtraction(images,
                         angles,
                         pca_number,
                         pca_number_init,
+                        interval,
                         indices=None):
     """
     Function for PSF subtraction with  iterative PCA.
@@ -140,6 +142,11 @@ def iterative_pca_psf_subtraction(images,
     S = im_reshape - LRA(im_reshape, pca_number_init)
     for i in range(pca_number_init, pca_number+1):
         S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), images, angles), i)
+        S_step = deepcopy(S)
+        if i > pca_number_init:
+            if (i == 1) or ((i % interval) == 0 ):
+                #output step!
+                np.savetxt(output_path + prefix + "_ipca_" + str(pmin) + "_" + str(i) + ".txt", red(A, angles))
 
     #
     # create original array size

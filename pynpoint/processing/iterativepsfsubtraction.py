@@ -30,7 +30,8 @@ class IterativePcaPsfSubtractionModule(ProcessingModule):
 
     def __init__(self,
                  pca_numbers,
-                 pca_number_init = 1,
+                 pca_number_init,
+                 interval=1,
                  name_in="it_psf_subtraction",
                  images_in_tag="im_arr",
                  reference_in_tag="ref_arr",
