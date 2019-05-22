@@ -11,7 +11,7 @@ import multiprocessing as mp
 from typing import Union, Tuple
 
 import numpy as np
-from skimage.measure import compare_ssim, compare_nrmse
+from skimage.measure import compare_ssim, compare_mse
 
 from typeguard import typechecked
 
@@ -779,8 +779,8 @@ class FrameSimilarityModule(ProcessingModule):
             Tag of the database entry that is read as input.
         method : str
             Name of the similarity measure to be calculated
-        mask_radius : list
-            mask radii to be applied to the images, inner and outer.
+        mask_radius : list(float, float)
+            inner and outer mask radii in arcsec to be applied to the images.
         fwhm : float
             FWHM
         temporal_median : str
@@ -812,46 +812,48 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_fwhm = fwhm
 
     @staticmethod
-    def _similarity(images, reference_index, N_pix, mode, fwhm, temporal_median=False):
+    def _similarity(images, reference_index, n_pix, mode, fwhm, temporal_median=False):
         """
         Internal function. Returns the MSE as defined by Ruane et al. 2019
         """
-        def cov(P, Q):
+        def cov(image_p, image_q):
             """
             Internal function. Returns the covariance as defined by Ruane et al. 2019
             """
-            return 1 / (N_pix - 1) * np.sum((P - np.nanmean(P)) * (Q - np.nanmean(Q)))
-        def std(P):
+            return 1 / (n_pix - 1) * np.sum((image_p - np.nanmean(image_p)) * \
+                (image_q - np.nanmean(image_q)))
+        def std(image_p):
             """
             Internal function. Returns the standard deviation as defined by Ruane et al. 2019
             """
-            return np.sqrt(1 / (N_pix - 1) * np.sum(((P - np.nanmean(P)))**2))
+            return np.sqrt(1 / (n_pix - 1) * np.sum(((image_p - np.nanmean(image_p)))**2))
 
         def _temporal_median(reference_index, images):
             """
             Internal function. Calculates the temporal median for all frames, except the one \
                 with the reference_index
             """
-            M = np.concatenate((images[:reference_index], images[reference_index+1:]))
-            return np.median(M, axis=0)
+            image_m = np.concatenate((images[:reference_index], images[reference_index+1:]))
+            return np.median(image_m, axis=0)
 
-        X_i = images[reference_index]
+        image_x_i = images[reference_index]
         if not temporal_median:
-            M = _temporal_median(reference_index, images=images)
+            image_m = _temporal_median(reference_index, images=images)
+        else:
+            image_m = temporal_median
+
         if mode == "MSE":
-            return reference_index, compare_nrmse(X_i, M)
+            return reference_index, compare_mse(image_x_i, image_m)
 
         if mode == "PCC":
-            PCC = cov(X_i, M) / (std(X_i) * std(M))
-            del X_i, M
-            return reference_index, PCC
+            return reference_index, cov(image_x_i, image_m) / (std(image_x_i) * std(image_m))
 
         if mode == "SSIM":
             if int(fwhm) % 2 == 0:
                 winsize = int(fwhm) + 1
             else:
                 winsize = int(fwhm)
-            return reference_index, compare_ssim(X_i, M, win_size=winsize)
+            return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
 
         # elif mode == "DSC":
         #     # make the images to binaries
@@ -897,7 +899,7 @@ class FrameSimilarityModule(ProcessingModule):
             images *= mask
 
         # count mask pixels for normalization
-        N_pix = int(np.sum(mask))
+        n_pix = int(np.sum(mask))
         # compare images and store similarity
         similarities = np.zeros(nimages)
 
@@ -911,7 +913,7 @@ class FrameSimilarityModule(ProcessingModule):
             async_results.append(pool.apply_async(FrameSimilarityModule._similarity,
                                                   args=(images,
                                                         i,
-                                                        N_pix,
+                                                        n_pix,
                                                         self.m_method,
                                                         self.m_fwhm,
                                                         temporal_median)))
@@ -1066,7 +1068,6 @@ class RemoveFramesByAttributeModule(ProcessingModule):
         index = index[sorting_order]
 
         removed_index = index[:self.m_frames]
-        selected_index = index[self.m_frames:]
 
         indices = removed_index
 
@@ -1105,7 +1106,7 @@ class RemoveFramesByAttributeModule(ProcessingModule):
 
         # write the selected and removed data to the respective output ports
         write_selected_attributes(
-            selected_index,
+            indices,
             self.m_image_in_port,
             self.m_removed_out_port,
             self.m_selected_out_port)
