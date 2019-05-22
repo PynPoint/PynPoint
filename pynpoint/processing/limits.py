@@ -17,7 +17,7 @@ from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
 from pynpoint.util.limits import contrast_limit
 from pynpoint.util.module import progress
-from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.psf import pca_psf_subtraction, iterative_pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
@@ -39,6 +39,7 @@ class ContrastCurveModule(ProcessingModule):
                  psf_scaling=1.,
                  aperture=0.05,
                  pca_number=20,
+                 pca_number_init=None,
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
@@ -80,6 +81,9 @@ class ContrastCurveModule(ProcessingModule):
             Aperture radius (arcsec).
         pca_number : int
             Number of principal components used for the PSF subtraction.
+        pca_number_init : int
+        	Number of principal components, where the iteration is started. Ordinary PCA is
+        	performed when set to None. 
         cent_size : float
             Central mask radius (arcsec). No mask is used when set to None.
         edge_size : float
@@ -137,6 +141,7 @@ class ContrastCurveModule(ProcessingModule):
         self.m_threshold = threshold
         self.m_aperture = aperture
         self.m_pca_number = pca_number
+        self.m_pca_number_init = pca_number_init
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
@@ -229,9 +234,16 @@ class ContrastCurveModule(ProcessingModule):
 
         mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
 
-        _, im_res = pca_psf_subtraction(images=images*mask,
-                                        angles=-1.*parang+self.m_extra_rot,
-                                        pca_number=self.m_pca_number)
+
+        if self.m_pca_number_init is None:
+            _, im_res = pca_psf_subtraction(images=images*mask,
+	                                        angles=-1.*parang+self.m_extra_rot,
+	                                        pca_number=self.m_pca_number)
+        else:
+            _, im_res = iterative_pca_psf_subtraction(images=images*mask,
+	                                        angles=-1.*parang+self.m_extra_rot,
+	                                        pca_number=self.m_pca_number,
+	                                        pca_number_init=self.m_pca_number_init)
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
@@ -247,6 +259,7 @@ class ContrastCurveModule(ProcessingModule):
                                                         self.m_psf_scaling,
                                                         self.m_extra_rot,
                                                         self.m_pca_number,
+                                                        self.m_pca_number_init,
                                                         self.m_threshold,
                                                         self.m_aperture,
                                                         self.m_residuals,

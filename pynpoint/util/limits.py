@@ -10,7 +10,7 @@ from photutils import aperture_photometry
 
 from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
-from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.psf import pca_psf_subtraction, iterative_pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
@@ -22,6 +22,7 @@ def contrast_limit(path_images,
                    psf_scaling,
                    extra_rot,
                    pca_number,
+                   pca_number_init,
                    threshold,
                    aperture,
                    residuals,
@@ -53,6 +54,9 @@ def contrast_limit(path_images,
         Additional rotation angle of the images in clockwise direction (deg).
     pca_number : int
         Number of principal components used for the PSF subtraction.
+    pca_number_init : int
+        Number of principal components, where the iteration is started. Ordinary PCA is
+        performed when set to None. 
     threshold : tuple(str, float)
         Detection threshold for the contrast curve, either in terms of "sigma" or the false
         positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.) or
@@ -130,9 +134,19 @@ def contrast_limit(path_images,
                        psf_scaling=psf_scaling)
 
     # Run the PSF subtraction
-    _, im_res = pca_psf_subtraction(images=fake*mask,
+    '''_, im_res = pca_psf_subtraction(images=fake*mask,
                                     angles=-1.*parang+extra_rot,
-                                    pca_number=pca_number)
+                                    pca_number=pca_number)'''
+                                    
+    if pca_number_init is None:
+        _, im_res = pca_psf_subtraction(images=fake*mask,
+	                                        angles=-1.*parang+extra_rot,
+	                                        pca_number=pca_number)
+    else:
+        _, im_res = iterative_pca_psf_subtraction(images=fake*mask,
+	                                        angles=-1.*parang+extra_rot,
+	                                        pca_number=pca_number,
+	                                        pca_number_init=pca_number_init)
 
     # Stack the residuals
     im_res = combine_residuals(method=residuals, res_rot=im_res)
