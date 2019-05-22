@@ -166,6 +166,10 @@ class ContrastCurveModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
+        '''TEMPORARY FIX PHILIPP'''
+        if len(psf.shape) == 2:
+            psf = np.dstack([1]*psf)
+
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
                              'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
