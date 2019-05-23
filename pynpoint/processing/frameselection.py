@@ -1022,12 +1022,10 @@ class RemoveFramesByAttributeModule(ProcessingModule):
         if self.m_selected_out_port is not None:
             self.m_selected_out_port.del_all_data()
             self.m_selected_out_port.del_all_attributes()
-            print("removed all old data")
 
         if self.m_removed_out_port is not None:
             self.m_removed_out_port.del_all_data()
             self.m_removed_out_port.del_all_attributes()
-            print("removed all old data")
 
     def run(self):
         """
@@ -1074,6 +1072,7 @@ class RemoveFramesByAttributeModule(ProcessingModule):
 
         # copied from FrameSelectionModule ...
         # possibly refactor to @staticmethod or move to util.remove
+        start_time = time.time()
         if np.size(indices) > 0:
             memory = self._m_config_port.get_attribute("MEMORY")
             frames = memory_frames(memory, nimages)
@@ -1092,6 +1091,7 @@ class RemoveFramesByAttributeModule(ProcessingModule):
                     indices[index_del]%memory,
                     self.m_removed_out_port,
                     self.m_selected_out_port)
+                progress(i, len(frames[:-1]), 'Running RemoveFramesByAttribute...', start_time)
 
         else:
             warnings.warn("No frames were removed.")
@@ -1111,3 +1111,6 @@ class RemoveFramesByAttributeModule(ProcessingModule):
             self.m_image_in_port,
             self.m_removed_out_port,
             self.m_selected_out_port)
+
+        sys.stdout.write('Running RemoveFramesByAttribute... [DONE]\n')
+        sys.stdout.flush()
