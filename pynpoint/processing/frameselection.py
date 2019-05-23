@@ -888,6 +888,8 @@ class FrameSimilarityModule(ProcessingModule):
 
         if self.m_method != 'SSIM':
             images *= mask
+        else:
+            images = crop_image(images, None, int(self.m_mask_radii[1] * pixscale) + 1)
 
         # compare images and store similarity
         similarities = np.zeros(nimages)
