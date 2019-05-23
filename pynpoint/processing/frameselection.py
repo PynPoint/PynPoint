@@ -252,9 +252,10 @@ class FrameSelectionModule(ProcessingModule):
         self.m_position = position
 
     def _initialize(self):
-        if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
-                self.m_image_in_port.tag == self.m_removed_out_port.tag:
-            raise ValueError('Input and output ports should have a different tag.')
+        if self.m_selected_out_port is not None and self.m_removed_out_port is not None:
+            if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
+                    self.m_image_in_port.tag == self.m_removed_out_port.tag:
+                raise ValueError('Input and output ports should have a different tag.')
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.del_all_data()
@@ -782,7 +783,8 @@ class FrameSimilarityModule(ProcessingModule):
         mask_radius : list(float, float)
             inner and outer mask radii in arcsec to be applied to the images.
         fwhm : float
-            FWHM
+            The full width at half maximum. It is used by the sliding windows used in the SSIM
+            similarity calculation to find structures in the relevant scale.
         temporal_median : str
             option to calculate the temporal median every time('slow', like in source paper)
             or once for the entire set('fast', not like the source paper)
@@ -812,21 +814,10 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_fwhm = fwhm
 
     @staticmethod
-    def _similarity(images, reference_index, n_pix, mode, fwhm, temporal_median=False):
+    def _similarity(images, reference_index, mode, fwhm, temporal_median=False):
         """
         Internal function. Returns the MSE as defined by Ruane et al. 2019
         """
-        def cov(image_p, image_q):
-            """
-            Internal function. Returns the covariance as defined by Ruane et al. 2019
-            """
-            return 1 / (n_pix - 1) * np.sum((image_p - np.nanmean(image_p)) * \
-                (image_q - np.nanmean(image_q)))
-        def std(image_p):
-            """
-            Internal function. Returns the standard deviation as defined by Ruane et al. 2019
-            """
-            return np.sqrt(1 / (n_pix - 1) * np.sum(((image_p - np.nanmean(image_p)))**2))
 
         def _temporal_median(reference_index, images):
             """
@@ -846,7 +837,12 @@ class FrameSimilarityModule(ProcessingModule):
             return reference_index, compare_mse(image_x_i, image_m)
 
         if mode == "PCC":
-            return reference_index, cov(image_x_i, image_m) / (std(image_x_i) * std(image_m))
+            # calculate the covariance matrix of the flattend images
+            cov_mat = np.cov(image_x_i.flatten(), image_m.flatten(), ddof=1)
+            # the variances are stored in the diagonal, therefore take the sqrt to obtain std
+            std = np.sqrt(np.diag(cov_mat))
+            # does not matter whether [0, 1] or [1, 0] as cov_mat is symmetrics
+            return reference_index, cov_mat[0, 1] / (std[0] * std[1])
 
         if mode == "SSIM":
             if int(fwhm) % 2 == 0:
@@ -854,14 +850,6 @@ class FrameSimilarityModule(ProcessingModule):
             else:
                 winsize = int(fwhm)
             return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
-
-        # elif mode == "DSC":
-        #     # make the images to binaries
-        #     X_i -= np.median(X_i)
-        #     X_i = X_i > 0
-        #     M = np.mean(M)
-        #     M = M > 0
-        #     return reference_index, np.sum(2 * X_i * M / (np.sum(X_i) + np.sum(M)))
 
 
     def run(self):
@@ -881,7 +869,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         # get pixscale
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-        
+
         # convert arcsecs to pixels
         self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
         self.m_fwhm = int(self.m_fwhm / pixscale)
@@ -901,8 +889,6 @@ class FrameSimilarityModule(ProcessingModule):
         if self.m_method != 'SSIM':
             images *= mask
 
-        # count mask pixels for normalization
-        n_pix = int(np.sum(mask))
         # compare images and store similarity
         similarities = np.zeros(nimages)
 
@@ -916,7 +902,6 @@ class FrameSimilarityModule(ProcessingModule):
             async_results.append(pool.apply_async(FrameSimilarityModule._similarity,
                                                   args=(images,
                                                         i,
-                                                        n_pix,
                                                         self.m_method,
                                                         self.m_fwhm,
                                                         temporal_median)))
@@ -1046,7 +1031,14 @@ class RemoveFramesByAttributeModule(ProcessingModule):
 
     def run(self):
         """
-        Run function of RemoveFramesByAttributeModule
+        Run function of RemoveFramesByAttributeModule. Removes Frames according to a specified
+        attribute tag and ordering, e.g. the highest 150 INDEX frames, or the lowest 50
+        SIMILARITY_PCC frames.
+
+        Returns
+        -------
+        NoneType
+            None
         """
         self._initialize()
         images = self.m_image_in_port.get_all()
@@ -1059,6 +1051,10 @@ class RemoveFramesByAttributeModule(ProcessingModule):
         else:
             attribute = self.m_image_in_port.get_attribute("{}"\
                 .format(self.m_attribute_tag))
+
+        assert nimages == len(attribute), 'The attribute {} does not have the same length ({})'\
+            'as the tag has images({}). Please check the attribute you have chosen for selection.'\
+            .format(self.m_attribute_tag, len(attribute), nimages)
 
         index = self.m_image_in_port.get_attribute("INDEX")
 
