@@ -101,7 +101,7 @@ class FitsWritingModule(WritingModule):
                     value = str(attributes[attr])
                     max_val_len = 75 - len(key)
 
-                    if len(key + value) >= 75:
+                    if len(key + value) > 75:
                         warnings.warn("Key '{}' with value '{}' is too long "
                                       "for the FITS format. To avoid an "
                                       "error, the value was truncated to '{}'."
