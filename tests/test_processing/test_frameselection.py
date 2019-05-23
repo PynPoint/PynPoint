@@ -286,8 +286,6 @@ class TestFrameSelection:
 
         similarity = self.pipeline.get_attribute('read', "SIMILARITY_PCC", static=False)
 
-        print(np.sum(similarity))
-        print(similarity[0])
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
@@ -305,14 +303,13 @@ class TestFrameSelection:
         self.pipeline.run_module("simi3")
 
         similarity = self.pipeline.get_attribute('read', "SIMILARITY_SSIM", static=False)
-        print(np.sum(similarity))
-        print(similarity[0])
+
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.99898705850548, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9999770624519112, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 43.99963790246955, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 0.9999963699170822, rtol=limit, atol=0.)
 
     def test_frame_remove_by_attribute(self):
 
