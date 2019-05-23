@@ -881,7 +881,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         # get pixscale
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
-
+        
         # convert arcsecs to pixels
         self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
         self.m_fwhm = int(self.m_fwhm / pixscale)
@@ -889,6 +889,9 @@ class FrameSimilarityModule(ProcessingModule):
         # overlay the same mask over all images
         mask = create_mask(im_shape, self.m_mask_radii)
         images = self.m_image_in_port.get_all()
+
+        # close the port during the calculations
+        self.m_image_out_port.close_port()
 
         if self.m_temporal_median == 'fast':
             temporal_median = np.median(images, axis=0)
@@ -937,6 +940,8 @@ class FrameSimilarityModule(ProcessingModule):
 
         pool.terminate()
 
+        # reopen the port after the calculation
+        self.m_image_out_port.open_port()
         self.m_image_out_port.add_attribute("SIMILARITY" + "_" + self.m_method, \
             similarities, static=False)
         self.m_image_out_port.close_port()
