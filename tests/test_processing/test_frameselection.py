@@ -308,8 +308,8 @@ class TestFrameSelection:
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.99963790246955, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9999963699170822, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 43.99900092706276, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 0.9999775533904105, rtol=limit, atol=0.)
 
     def test_frame_remove_by_attribute(self):
 
