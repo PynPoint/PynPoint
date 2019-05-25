@@ -12,16 +12,18 @@ import sys
 
 from pynpoint import Pypeline, Hdf5ReadingModule, FitsReadingModule,\
                      PSFpreparationModule, ParangReadingModule,\
-                     IterativePcaPsfSubtractionModule, PcaPsfSubtractionModule,\
-                     FalsePositiveModule
+                     PcaPsfSubtractionModule,\
+                     FalsePositiveModule, CropImagesModule
+
+from pynpoint.processing.iterativepsfsubtraction import IterativePcaPsfSubtractionModule
 
 working_place = "/home/Dropbox/Dropbox/1_Philipp/1_UZH/8_FS19/BachelorProject/PynPoint"
-input_place = "/home/philipp/Documents/BA_In_out/raw/tauceti/"
+input_place = "/home/philipp/Documents/BA_In_out/raw/hd101412/"
 output_place = "output/"
 
 
 '''initial and ending ranks'''
-rank_ipca_init = 5
+rank_ipca_init = 1
 rank_ipca_end = 15
 
 # Python 3
@@ -53,6 +55,15 @@ module = ParangReadingModule(file_name="parang.dat",
 pipeline.add_module(module)
 
 
+module = CropImagesModule(2,
+                 center=None,
+                 name_in="crop_image",
+                 image_in_tag="science",
+                 image_out_tag="science_cropped")
+                 
+pipeline.add_module(module)
+
+
 #module = PSFpreparationModule(name_in="prep",
 #                              image_in_tag="science",
 #                              image_out_tag="prep",
@@ -75,11 +86,11 @@ pipeline.add_module(module)
 #pipeline.add_module(module)
 
 
-module = IterativePcaPsfSubtractionModule(pca_numbers=(rank_ipca_end, ),
+module = IterativePcaPsfSubtractionModule(pca_numbers=(3, 4, 5),
                                  pca_number_init = rank_ipca_init,
                                  name_in="ipca",
-                                 images_in_tag="science",
-                                 reference_in_tag="science",
+                                 images_in_tag="science_cropped",
+                                 reference_in_tag="science_cropped",
                                  res_mean_tag= "residuals",
                                  subtract_mean = False)
 
@@ -88,6 +99,10 @@ pipeline.add_module(module)
 
 pipeline.run()
 residuals = pipeline.get_data("residuals")
+
+np.savetxt(output_place + "3new.txt", residuals[0])
+np.savetxt(output_place + "4new.txt", residuals[1])
+np.savetxt(output_place + "5new.txt", residuals[2])
 
 pixscale = pipeline.get_attribute("science", "PIXSCALE")
 size = pixscale*residuals.shape[-1]/2.
@@ -98,7 +113,24 @@ plt.title("Challenge Pynpoint - %i PCs"%(15))
 plt.xlabel('R.A. offset [arcsec]', fontsize=12)
 plt.ylabel('Dec. offset [arcsec]', fontsize=12)
 plt.colorbar()
+plt.show()
 plt.savefig(os.path.join(output_place, "pynpoint.png"), bbox_inches='tight')
+
+plt.figure()
+plt.imshow(residuals[1, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
+plt.title("Challenge Pynpoint - %i PCs"%(15))
+plt.xlabel('R.A. offset [arcsec]', fontsize=12)
+plt.ylabel('Dec. offset [arcsec]', fontsize=12)
+plt.colorbar()
+plt.show()
+
+plt.figure()
+plt.imshow(residuals[2, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
+plt.title("Challenge Pynpoint - %i PCs"%(15))
+plt.xlabel('R.A. offset [arcsec]', fontsize=12)
+plt.ylabel('Dec. offset [arcsec]', fontsize=12)
+plt.colorbar()
+plt.show()
 #hdu = fits.PrimaryHDU(data=residuals)
 #hdu.writeto(os.path.join(output_place, "residuals_ipca_%i_%i.fits"%(rank_ipca_init, rank_ipca_end)))
 

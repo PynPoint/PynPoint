@@ -132,29 +132,31 @@ class IterativePcaPsfSubtractionModule(ProcessingModule):
 
         :return: None
         """
-        sys.stdout.write("Start iterative PCA calculation...")
+        sys.stdout.write("Starting iterative PCA...")
 
-        for i, pca_number in enumerate(self.m_components):
-            progress(i, len(self.m_components), "Creating residuals...")
+        parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
-            parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
-            
-            pca_number_init = self.m_pca_number_init
-
-            residuals, res_rot = iterative_pca_psf_subtraction(images=star_reshape,
+        pca_number_init = self.m_pca_number_init
+        
+        pca_numbers = self.m_components
+        
+        residuals_list, res_rot_list = iterative_pca_psf_subtraction(images=star_reshape,
                                                      angles=parang,
-                                                     pca_number=pca_number,
+                                                     pca_numbers=pca_numbers,
                                                      pca_number_init=pca_number_init,
                                                      indices=indices)
+
+        for i, res_rot in enumerate(res_rot_list):
+            #progress(i, len(self.m_components), "Creating residuals...")
 
             history = "max iter PC number = "+str(np.amax(self.m_components))
 
             # 1.) derotated residuals
             if self.m_res_arr_out_ports is not None:
-                self.m_res_arr_out_ports[pca_number].set_all(res_rot)
-                self.m_res_arr_out_ports[pca_number].copy_attributes_from_input_port(
+                self.m_res_arr_out_ports[pca_numbers[i]].set_all(res_rot)
+                self.m_res_arr_out_ports[pca_numbers[i]].copy_attributes_from_input_port(
                     self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history_information( \
+                self.m_res_arr_out_ports[pca_numbers[i]].add_history_information( \
                     "IterativePcaPsfSubtractionModule", history)
 
             # 2.) mean residuals
@@ -171,7 +173,7 @@ class IterativePcaPsfSubtractionModule(ProcessingModule):
             if self.m_res_weighted_out_port is not None:
                 stack = combine_residuals(method="weighted",
                                           res_rot=res_rot,
-                                          residuals=residuals,
+                                          residuals=residuals_list[i],
                                           angles=parang)
 
                 self.m_res_weighted_out_port.append(stack, data_dim=3)

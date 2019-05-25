@@ -95,7 +95,7 @@ def pca_psf_subtraction(images,
 
 def iterative_pca_psf_subtraction(images,
                         angles,
-                        pca_number,
+                        pca_numbers,
                         pca_number_init,
                         interval=1,
                         indices=None):
@@ -124,6 +124,11 @@ def iterative_pca_psf_subtraction(images,
 
     #pca_sklearn = PCA(n_components=pca_number, svd_solver="arpack")
 
+    residuals_list = []
+    res_rot_list = []
+
+    pca_number = max(pca_numbers)
+
     im_shape = images.shape
     
 
@@ -143,19 +148,21 @@ def iterative_pca_psf_subtraction(images,
     S = im_reshape - LRA(im_reshape, pca_number_init)
     for i in range(pca_number_init, pca_number+1):
         S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), images, angles), i)
-        S_step = deepcopy(S)
-        if i > pca_number_init:
-            if (i == 1) or ((i % interval) == 0 ):
-                abc = "abc"
-                #output step!
-                #np.savetxt(output_path + prefix + "_ipca_" + str(pmin) + "_" + str(i) + ".txt", red(A, angles))
-
+        if i in pca_numbers:
+            residuals = deepcopy(S)
+            residuals = residuals.reshape(im_shape)
+            res_rot = np.zeros(residuals.shape)
+            for j, item in enumerate(angles):
+                res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
+            residuals_list.append(residuals)
+            res_rot_list.append(res_rot)
+            
     #
     # create original array size
     #residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
     # subtract the psf model
-    residuals = copy(S)
+    residuals = deepcopy(S)
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
@@ -166,7 +173,10 @@ def iterative_pca_psf_subtraction(images,
     for j, item in enumerate(angles):
         res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
     
-    return residuals, res_rot#red(S, im_shape, angles), why does this not work?
+    residuals_list.append(residuals)
+    res_rot_list.append(res_rot)        
+    
+    return residuals_list, res_rot_list#red(S, im_shape, angles), why does this not work?
     
 
 def SVD(A):
