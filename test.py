@@ -100,9 +100,9 @@ pipeline.add_module(module)
 pipeline.run()
 residuals = pipeline.get_data("residuals")
 
-np.savetxt(output_place + "3new.txt", residuals[0])
-np.savetxt(output_place + "4new.txt", residuals[1])
-np.savetxt(output_place + "5new.txt", residuals[2])
+np.savetxt(output_place + "3new2.txt", residuals[0])
+np.savetxt(output_place + "4new2.txt", residuals[1])
+np.savetxt(output_place + "5new2.txt", residuals[2])
 
 pixscale = pipeline.get_attribute("science", "PIXSCALE")
 size = pixscale*residuals.shape[-1]/2.

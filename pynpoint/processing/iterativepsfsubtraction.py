@@ -132,7 +132,6 @@ class IterativePcaPsfSubtractionModule(ProcessingModule):
 
         :return: None
         """
-        sys.stdout.write("Starting iterative PCA...")
 
         parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 

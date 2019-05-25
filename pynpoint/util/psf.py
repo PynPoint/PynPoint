@@ -8,6 +8,7 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 from scipy.linalg import svd
 from copy import deepcopy, copy
+from pynpoint.util.module import progress
 
 
 def pca_psf_subtraction(images,
@@ -108,8 +109,8 @@ def iterative_pca_psf_subtraction(images,
     :type images: numpy.ndarray
     :param parang: Derotation angles (deg).
     :type parang: numpy.ndarray
-    :param pca_number: Number of principal components used for the PSF model.
-    :type pca_number: int
+    :param pca_numbers: Number or list of numbers of principal components used for the PSF model.
+    :type pca_numbers: int
     :param pca_number_init: Number of principal component of first iteration
     :type pca_number_init: int
     :param indices: Non-masked image indices, required if pca_sklearn is not set to None. Optional
@@ -120,18 +121,11 @@ def iterative_pca_psf_subtraction(images,
     :rtype: numpy.ndarray, numpy.ndarray
     """
 
-
-
-    #pca_sklearn = PCA(n_components=pca_number, svd_solver="arpack")
-
     residuals_list = []
     res_rot_list = []
 
-    pca_number = max(pca_numbers)
-
     im_shape = images.shape
     
-
     if indices is None:
         # select the first image and get the unmasked image indices
         im_star = images[0, ].reshape(-1)
@@ -139,15 +133,22 @@ def iterative_pca_psf_subtraction(images,
 
     # reshape the images and select the unmasked pixels
     im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
-    #im_reshape = im_reshape[:, indices]
+    im_reshape = im_reshape[:, indices]
 
     # subtract mean image
     #im_reshape -= np.mean(im_reshape, axis=0)
 
     # create first iteration
     S = im_reshape - LRA(im_reshape, pca_number_init)
-    for i in range(pca_number_init, pca_number+1):
-        S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), images, angles), i)
+    
+    pca_number = max(pca_numbers)    
+
+    #iterate through all values between initial and final pca number
+    pca_numbers_range = range(pca_number_init, pca_number+1)
+    for counter, i in enumerate(pca_numbers_range):
+        progress(i, len(pca_numbers_range), "Creating residuals...")
+        S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), im_shape, angles), i)
+        #save intermediate results to lists if the current pca_number corresponds to a final pca_number in pca_numbers
         if i in pca_numbers:
             residuals = deepcopy(S)
             residuals = residuals.reshape(im_shape)
@@ -157,22 +158,19 @@ def iterative_pca_psf_subtraction(images,
             residuals_list.append(residuals)
             res_rot_list.append(res_rot)
             
-    #
-    # create original array size
-    #residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
-
-    # subtract the psf model
+    # subtract the psf model IMPLEMENT THIS?
+        
     residuals = deepcopy(S)
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
 
-
     # derotate the images
     res_rot = np.zeros(residuals.shape)
     for j, item in enumerate(angles):
         res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
-    
+
+    #append the results to the lists    
     residuals_list.append(residuals)
     res_rot_list.append(res_rot)        
     
@@ -187,34 +185,24 @@ def SVD(A):
         Sigma[i][i] = sigma[i]
     return U, Sigma, Vh
 
-def LRA(A, rank):
+def LRA(A, pca_number):
     U, Sigma, Vh = SVD(A)
-    L = trimatmul(U[:, :rank], Sigma[:rank, :rank], Vh[:rank, :])
+    L = np.matmul(U[:, :pca_number], np.matmul(Sigma[:pca_number, :pca_number], Vh[:pca_number, :]))
     return L
 
-def red(S, im_shape, angles = None): #takes t x n^2 matrix S, reshapes it to cube S_cube and rotates each frame if angles list is given and returns mean of cube, i.e. processed frame
+def red(S, im_shape, angles): #takes t x n^2 matrix S, reshapes it to cube S_cube, rotates each frame, and returns mean of cube, i.e. processed frame
     S = np.reshape(S, (im_shape[0], im_shape[1], im_shape[2]))
     if angles is not None:
         for i in range(len(S)):
             S[i] = rotate(S[i], angles[i], reshape = False)
     return np.mean(S, axis = 0)
 
-def theta(frame, original_cube, angles = None): #takes a (PCA processed) frame, sets negative parts of it to zero, reshapes it into t x n x n cube, rotates frames according to list and returns t x n^2 matrix
+def theta(frame, im_shape, angles = None): #takes a (PCA processed) frame, sets negative parts of it to zero, reshapes it into t x n x n cube, rotates frames according to list and returns t x n^2 matrix
     d = frame.clip(min = 0)
-    d = frame2cube(d, original_cube)
+    d = np.stack([d]*im_shape[0], axis = 0)
     if angles is not None:
         for i in range(len(d)):
             d[i] = rotate(d[i], -1*angles[i], reshape = False)
     d_shape = np.shape(d)
     d = np.reshape(d,(d_shape[0], d_shape[1]*d_shape[2]))
     return d
-
-def trimatmul(A, B, C):
-    return np.matmul(A, np.matmul(B, C))
-
-def frame2cube(frame, original_cube): #takes a (PCA processed) n x n frame and returns a t x n x n cube with t copies of it, gets value of t from length of original cube
-    t = len(original_cube)
-    return np.stack([frame]*t, axis = 0)
-
-def cube2mat(A): #take t x n x n data cube and reshape it to t x n^2 matrix
-   return A.reshape((len(A), len(A[0])* len(A)[1]))
