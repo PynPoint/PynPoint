@@ -58,6 +58,7 @@ Basic Processing
 * :class:`~pynpoint.processing.basic.SubtractImagesModule`: Subtract two stacks of images.
 * :class:`~pynpoint.processing.basic.AddImagesModule`: Add two stacks of images
 * :class:`~pynpoint.processing.basic.RotateImagesModule`: Rotate a stack of images.
+* :class:`~pynpoint.processing.basic.RepeatImagesModule`: Repeat a stack of images.
 
 Centering
 ~~~~~~~~~
