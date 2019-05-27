@@ -108,8 +108,8 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
 * :class:`~pynpoint.processing.frameselection.RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
 * :class:`~pynpoint.processing.frameselection.ImageStatisticsModule` (CPU): Compute statistics of the pixel values for each image.
-* :class:`~pynpoint.processing.frameselection.FrameSimilariyModule`: Compute different similarity measures of a set of frames.
-* :class:`~pynpoint.processing.frameselection.RemoveFrameByAttribute`: Remove frames by sorting them according to an attribute and selecting the interesting ones.
+* :class:`~pynpoint.processing.frameselection.FrameSimilarityModule` (CPU): Compute different similarity measures of a set of images.
+* :class:`~pynpoint.processing.frameselection.SelectByAttributeModule`: Select images by the ascending/descending attribute values.
 
 Image Resizing
 ~~~~~~~~~~~~~~

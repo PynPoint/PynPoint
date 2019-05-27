@@ -8,7 +8,7 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectionModule, \
                                                RemoveLastFrameModule, RemoveStartFramesModule, \
                                                ImageStatisticsModule, FrameSimilarityModule, \
-                                               RemoveFramesByAttributeModule
+                                               SelectByAttributeModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
 warnings.simplefilter("always")
@@ -258,7 +258,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(data), -0.05448258074038106, rtol=limit, atol=0.)
         assert data.shape == (44, 6)
 
-    def test_frame_similarity_MSE(self):
+    def test_frame_similarity_mse(self):
 
         module = FrameSimilarityModule(name_in="simi1",
                                        image_tag="read",
@@ -267,7 +267,7 @@ class TestFrameSelection:
         self.pipeline.add_module(module)
         self.pipeline.run_module("simi1")
 
-        similarity = self.pipeline.get_attribute('read', "SIMILARITY_MSE", static=False)
+        similarity = self.pipeline.get_attribute('read', "MSE", static=False)
 
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
@@ -275,7 +275,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 1.4345237709250252e-06, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 3.292787144877646e-08, rtol=limit, atol=0.)
 
-    def test_frame_similarity_PCC(self):
+    def test_frame_similarity_pcc(self):
 
         module = FrameSimilarityModule(name_in="simi2",
                                        image_tag="read",
@@ -284,7 +284,7 @@ class TestFrameSelection:
         self.pipeline.add_module(module)
         self.pipeline.run_module("simi2")
 
-        similarity = self.pipeline.get_attribute('read', "SIMILARITY_PCC", static=False)
+        similarity = self.pipeline.get_attribute('read', "PCC", static=False)
 
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
@@ -293,7 +293,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 43.854202044574045, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 0.9966447074865488, rtol=limit, atol=0.)
 
-    def test_frame_similarity_SSIM(self):
+    def test_frame_similarity_ssim(self):
 
         module = FrameSimilarityModule(name_in="simi3",
                                        image_tag="read",
@@ -302,7 +302,7 @@ class TestFrameSelection:
         self.pipeline.add_module(module)
         self.pipeline.run_module("simi3")
 
-        similarity = self.pipeline.get_attribute('read', "SIMILARITY_SSIM", static=False)
+        similarity = self.pipeline.get_attribute('read', "SSIM", static=False)
 
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
@@ -311,36 +311,34 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 43.99900092706276, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 0.9999775533904105, rtol=limit, atol=0.)
 
-    def test_frame_remove_by_attribute(self):
+    def test_select_by_attribute(self):
 
         total_length = self.pipeline.get_shape('read')[0]
         self.pipeline.set_attribute('read', 'INDEX', range(total_length), static=False)
 
-        module = RemoveFramesByAttributeModule(
-            name_in='frame_removal_1',
-            image_in_tag='read',
-            attribute_tag='SSIM',
-            selected_frames=6,
-            order='descending',
-            selected_out_tag='select_similarity',
-            removed_out_tag='remove_similarity')
+        module = SelectByAttributeModule(name_in='frame_removal_1',
+                                         image_in_tag='read',
+                                         attribute_tag='SSIM',
+                                         number_frames=6,
+                                         order='descending',
+                                         selected_out_tag='select_sim',
+                                         removed_out_tag='remove_sim')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('frame_removal_1')
 
-        index = self.pipeline.get_attribute('select_similarity', 'INDEX', \
-            static=False)
-        similarity = self.pipeline.get_attribute('select_similarity', 'SIMILARITY_SSIM', \
-            static=False)
-        similarity_removed = self.pipeline.get_attribute('remove_similarity', 'SIMILARITY_SSIM', \
-            static=False)
+        index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
+        similarity = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
+        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
 
         # check attribute length
-        assert self.pipeline.get_shape('select_similarity')[0] == 6
+        assert self.pipeline.get_shape('select_sim')[0] == 6
         assert len(similarity) == 6
         assert len(similarity) == len(index)
-        assert len(similarity) + len(similarity_removed) == total_length
+        assert len(similarity) + len(sim_removed) == total_length
+
         # check sorted
         assert all(similarity[i] >= similarity[i+1] for i in range(len(similarity)-1))
+
         # check that the selected attributes are in the correct tags
-        assert np.min(similarity) > np.max(similarity_removed)
+        assert np.min(similarity) > np.max(sim_removed)
