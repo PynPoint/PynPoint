@@ -30,7 +30,10 @@ class ContrastCurveModule(ProcessingModule):
 
     def __init__(self,
                  name_in="contrast",
-                 image_in_tag="im_arr",
+                 image_in_tag_1="im_arr",
+                 image_in_tag_2="im_arr",
+                 image_in_tag_3="im_arr",
+                 image_in_tag_4="im_arr",
                  psf_in_tag="im_psf",
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
@@ -122,7 +125,14 @@ class ContrastCurveModule(ProcessingModule):
             warnings.warn("The 'ignore' parameter has been deprecated. The parameter is no "
                           "longer required.", DeprecationWarning)
 
-        self.m_image_in_port = self.add_input_port(image_in_tag)
+        if image_in_tag_1:
+            self.m_image_in_port_1 = self.add_input_port(image_in_tag_1)
+        if image_in_tag_2:
+            self.m_image_in_port_2 = self.add_input_port(image_in_tag_2)
+        if image_in_tag_3:
+            self.m_image_in_port_3 = self.add_input_port(image_in_tag_3)
+        if image_in_tag_4:
+            self.m_image_in_port_4 = self.add_input_port(image_in_tag_4)
 
         if psf_in_tag == image_in_tag:
             self.m_psf_in_port = self.m_image_in_port
@@ -163,18 +173,28 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
-        images = self.m_image_in_port.get_all()
+        temp_images = []
+        if hasattr(self, 'm_image_in_port_1'):
+            temp_images += [self.m_image_in_port_1.get_all()]
+        if hasattr(self, 'm_image_in_port_2'):
+            temp_images += [self.m_image_in_port_2.get_all()]
+        if hasattr(self, 'm_image_in_port_3'):
+            temp_images += [self.m_image_in_port_3.get_all()]
+        if hasattr(self, 'm_image_in_port_4'):
+            temp_images += [self.m_image_in_port_4.get_all()]
+
+        
         psf = self.m_psf_in_port.get_all()
 
-        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+        if psf.shape[0] != 1 and psf.shape[0] != temp_images[0].shape[0]:
             raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
                              'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
                              'be used to average the PSF frames (without derotating) before '
-                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
+                             'applying the ContrastCurveModule.'.format(psf.shape, temp_images[0].shape))
 
         cpu = self._m_config_port.get_attribute("CPU")
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        parang = self.m_image_in_port_1.get_attribute("PARANG")
+        pixscale = self.m_image_in_port_1.get_attribute("PIXSCALE")
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -199,8 +219,8 @@ class ContrastCurveModule(ProcessingModule):
 
         pos_r = np.delete(pos_r, index_del)
 
-        if self.m_edge_size is None or self.m_edge_size > images.shape[1]/2.:
-            index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
+        if self.m_edge_size is None or self.m_edge_size > temp_images[0].shape[1]/2.:
+            index_del = np.argwhere(pos_r+self.m_aperture >= temp_images[0].shape[1]/2.)
         else:
             index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size)
 
@@ -215,21 +235,29 @@ class ContrastCurveModule(ProcessingModule):
         async_results = []
 
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
-
+        
+        noise = []
+        im_res = []
         # Create temporary files
+        for _, images in enumerate(temp_images):
+            sh = images.shape[-2:]
+            mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+
+            _, im_res_ = pca_psf_subtraction(images=images*mask,
+                                            angles=-1.*parang+self.m_extra_rot,
+                                            pca_number=self.m_pca_number)
+            im_res += [im_res_]
+            noise += [combine_residuals(method=self.m_residuals, res_rot=im_res)]
+
+        images = np.array(temp_images).reshape((-1, *sh))
+        im_res = np.nanmedian(im_res, axis=0)
+        noise = np.nanmedian(noise, axis=0)
+
         tmp_im_str = os.path.join(working_place, "tmp_images.npy")
         tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
-
-        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
-
-        _, im_res = pca_psf_subtraction(images=images*mask,
-                                        angles=-1.*parang+self.m_extra_rot,
-                                        pca_number=self.m_pca_number)
-
-        noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
         pool = mp.Pool(cpu)
 
