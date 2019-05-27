@@ -21,6 +21,9 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
+from sklearn.decomposition import PCA
+
+
 class ContrastCurveModule(ProcessingModule):
     """
     Pipeline module to calculate contrast limits for a given sigma level or false positive
@@ -134,8 +137,8 @@ class ContrastCurveModule(ProcessingModule):
         if image_in_tag_4:
             self.m_image_in_port_4 = self.add_input_port(image_in_tag_4)
 
-        if psf_in_tag == image_in_tag:
-            self.m_psf_in_port = self.m_image_in_port
+        if psf_in_tag == image_in_tag_1:
+            self.m_psf_in_port = self.m_image_in_port_1
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
 
@@ -183,7 +186,7 @@ class ContrastCurveModule(ProcessingModule):
         if hasattr(self, 'm_image_in_port_4'):
             temp_images += [self.m_image_in_port_4.get_all()]
 
-        
+
         psf = self.m_psf_in_port.get_all()
 
         if psf.shape[0] != 1 and psf.shape[0] != temp_images[0].shape[0]:
@@ -235,21 +238,59 @@ class ContrastCurveModule(ProcessingModule):
         async_results = []
 
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
-        
+
         noise = []
         im_res = []
+
+        pca_sklearn = []
+        PC_bases = np.array([])
+        explained_var = np.array([])
+
         # Create temporary files
         for _, images in enumerate(temp_images):
-            sh = images.shape[-2:]
-            mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+            # create PCA basis for each set individually
+            # store these bases
+            #
+            # ALLOW FOR PCA NUMBER TO BE CHOSEN INDIVIDUALLY FOR EACH SET
+            #
+            pca_sklearn += [PCA(n_components=self.m_pca_number, svd_solver="arpack").fit(images)]
+            explained_var = np.append(explained_var, pca_sklearn[-1].explained_variance_, axis=0)
+            PC_bases += np.append(PC_bases, pca_sklearn[-1].components_, axis=0)
 
-            _, im_res_ = pca_psf_subtraction(images=images*mask,
-                                            angles=-1.*parang+self.m_extra_rot,
-                                            pca_number=self.m_pca_number)
-            im_res += [im_res_]
-            noise += [combine_residuals(method=self.m_residuals, res_rot=im_res)]
+        # sort the explained_variances_
+        sorting_order = np.argsort(explained_var)[::-1]
+        # sort the bases by explained_variance_
+        explained_var = explained_var[sorting_order]
+        PC_bases = PC_bases[sorting_order]
+        # sort paralactic angles
+        parang = parang[sorting_order]
+        # fuck up a new PCA class
+        pca_model = PCA(n_components=len(sorting_order), svd_solver="arpack")
 
+        sh = images.shape[-2:]
+        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+
+        # for _, images in enumerate(temp_images):
+            # sh = images.shape[-2:]
+            # mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+
+            # _, im_res_ = pca_psf_subtraction(images=images*mask,
+            #                                 angles=-1.*parang+self.m_extra_rot,
+            #                                 pca_number=self.m_pca_number)
+            # im_res += [im_res_]
+            # noise += [combine_residuals(method=self.m_residuals, res_rot=im_res)]
+
+
+        # run new PCA class on all images
         images = np.array(temp_images).reshape((-1, *sh))
+
+        _, im_res_ = pca_psf_subtraction(images=images*mask,
+                                            angles=-1.*parang+self.m_extra_rot,
+                                            pca_number=self.m_pca_number,
+                                            pca_sklearn=pca_model,
+                                            im_shape=images.shape)
+
+
         im_res = np.nanmedian(im_res, axis=0)
         noise = np.nanmedian(noise, axis=0)
 
@@ -319,7 +360,7 @@ class ContrastCurveModule(ProcessingModule):
 
         history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
         self.m_contrast_out_port.add_history("ContrastCurveModule", history)
-        self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
+        self.m_contrast_out_port.copy_attributes(self.m_image_in_port_1)
         self.m_contrast_out_port.close_port()
 
 
