@@ -122,7 +122,7 @@ class FitsReadingModule(ReadingModule):
 
         hdulist.close()
 
-        header_out_port = self.add_output_port('fits_header/'+fits_file)
+        header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
         header_out_port.set_all(fits_header)
 
         return header, images.shape

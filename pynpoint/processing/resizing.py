@@ -5,7 +5,11 @@ Pipeline modules for resizing of images.
 import math
 import warnings
 
+from typing import Union, Tuple
+
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, scale_image
@@ -16,23 +20,16 @@ class CropImagesModule(ProcessingModule):
     Pipeline module for cropping of images around a given position.
     """
 
+    @typechecked
     def __init__(self,
-                 size,
-                 center=None,
-                 name_in='crop_image',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_cropped'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 size: float,
+                 center: Union[Tuple[int, int], None]) -> None:
         """
         Parameters
         ----------
-        size : float
-            New image size (arcsec). The same size will be used for both image dimensions.
-        center : tuple(int, int)
-            Tuple (x0, y0) with the new image center. Python indexing starts at 0. The center of
-            the input images will be used when *center* is set to *None*. Note that if the image
-            is even-sized, it is not possible to a uniquely define a pixel position in the center
-            of the image. The image center is determined (with pixel precision) with the
-            :func:`~pynpoint.util.image.center_pixel` function.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -40,6 +37,14 @@ class CropImagesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        size : float
+            New image size (arcsec). The same size will be used for both image dimensions.
+        center : tuple(int, int), None
+            Tuple (x0, y0) with the new image center. Python indexing starts at 0. The center of
+            the input images will be used when *center* is set to *None*. Note that if the image
+            is even-sized, it is not possible to a uniquely define a pixel position in the center
+            of the image. The image center is determined (with pixel precision) with the
+            :func:`~pynpoint.util.image.center_pixel` function.
 
         Returns
         -------
@@ -58,7 +63,8 @@ class CropImagesModule(ProcessingModule):
         if self.m_center is not None:
             self.m_center = (self.m_center[1], self.m_center[0]) # (y, x)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Decreases the image size by cropping around an given position.
         The module always returns odd-sized images.
@@ -94,21 +100,18 @@ class ScaleImagesModule(ProcessingModule):
     Pipeline module for rescaling of an image.
     """
 
+    @typechecked
     def __init__(self,
-                 scaling=(None, None, None),
-                 pixscale=False,
-                 name_in='scaling',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_scaled'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 scaling: Union[Tuple[float, float, float],
+                                Tuple[None, None, float],
+                                Tuple[float, float, None]],
+                 pixscale: bool = False) -> None:
         """
         Parameters
         ----------
-        scaling : tuple(float, float, float)
-            Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
-            scaling_flux). Upsampling and downsampling of the image corresponds to
-            *scaling_x/y* > 1 and 0 < *scaling_x/y* < 1, respectively.
-        pixscale : bool
-            Adjust the pixel scale by the average scaling in x and y direction.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -116,6 +119,12 @@ class ScaleImagesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        scaling : tuple(float, float, float)
+            Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
+            scaling_flux). Upsampling and downsampling of the image corresponds to
+            ``scaling_x/y`` > 1 and 0 < ``scaling_x/y`` < 1, respectively.
+        pixscale : bool
+            Adjust the pixel scale by the average scaling in x and y direction.
 
         Returns
         -------
@@ -127,17 +136,6 @@ class ScaleImagesModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
-
-        if len(scaling) == 2:
-            warnings.warn('The \'scaling\' parameter requires three values: (scaling_x, '
-                          'scaling_y, scaling_flux). Using the same scaling in x and y '
-                          'direction...')
-
-            scaling = (scaling[0], scaling[0], scaling[1])
-
-        elif len(scaling) < 2 or len(scaling) > 3:
-            raise ValueError('The \'scaling\' parameter requires three values: (scaling_x, '
-                             'scaling_y, scaling_flux).')
 
         if scaling[0] is None:
             self.m_scaling_x = 1.
@@ -156,7 +154,8 @@ class ScaleImagesModule(ProcessingModule):
 
         self.m_pixscale = pixscale
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Rescales an image with a fifth order spline interpolation and a
         reflecting boundary condition.
@@ -169,14 +168,9 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        def _image_scaling(image_in,
-                           scaling_x,
-                           scaling_y,
-                           scaling_flux):
+        def _image_scaling(image_in, scaling_x, scaling_y, scaling_flux):
 
-            tmp_image = scale_image(image_in, scaling_x, scaling_y)
-
-            return scaling_flux * tmp_image
+            return scaling_flux * scale_image(image_in, scaling_x, scaling_y)
 
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
@@ -186,9 +180,8 @@ class ScaleImagesModule(ProcessingModule):
                                                  self.m_scaling_y,
                                                  self.m_scaling_flux,))
 
-        history = 'scaling = ('+str('{:.2f}'.format(self.m_scaling_x)) + ', ' + \
-                  str('{:.2f}'.format(self.m_scaling_y)) + ', ' + \
-                  str('{:.2f}'.format(self.m_scaling_flux)) + ')'
+        history = f'scaling = ({self.m_scaling_x:.2f}, {self.m_scaling_y:.2f}, ' \
+                  f'{self.m_scaling_flux:.2f})'
 
         self.m_image_out_port.add_history('ScaleImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -205,16 +198,15 @@ class AddLinesModule(ProcessingModule):
     Module to add lines of pixels to increase the size of an image.
     """
 
+    @typechecked
     def __init__(self,
-                 lines,
-                 name_in='add_lines',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_add'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 lines: Tuple[int, int, int, int]) -> None:
         """
         Parameters
         ----------
-        lines : tuple(int, int, int, int)
-            The number of lines that are added in left, right, bottom, and top direction.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -222,6 +214,8 @@ class AddLinesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output, including the images with
             increased size. Should be different from *image_in_tag*.
+        lines : tuple(int, int, int, int)
+            The number of lines that are added in left, right, bottom, and top direction.
 
         Returns
         -------
@@ -236,7 +230,8 @@ class AddLinesModule(ProcessingModule):
 
         self.m_lines = np.asarray(lines)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Adds lines of zero-value pixels to increase the size of an image.
 
@@ -279,16 +274,15 @@ class RemoveLinesModule(ProcessingModule):
     Module to decrease the dimensions of an image by removing lines of pixels.
     """
 
+    @typechecked
     def __init__(self,
-                 lines,
-                 name_in='cut_top',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_cut'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 lines: Tuple[int, int, int, int]) -> None:
         """
         Parameters
         ----------
-        lines : tuple(int, int, int, int)
-            The number of lines that are removed in left, right, bottom, and top direction.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -296,6 +290,8 @@ class RemoveLinesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output, including the images with
             decreased size. Should be different from *image_in_tag*.
+        lines : tuple(int, int, int, int)
+            The number of lines that are removed in left, right, bottom, and top direction.
 
         Returns
         -------
@@ -310,7 +306,8 @@ class RemoveLinesModule(ProcessingModule):
 
         self.m_lines = lines
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Removes the lines given by *lines* from each frame.
 
@@ -332,7 +329,7 @@ class RemoveLinesModule(ProcessingModule):
                                       'Running RemoveLinesModule',
                                       func_args=(self.m_lines, ))
 
-        history = 'number of lines = '+str(self.m_lines)
+        history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('RemoveLinesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
