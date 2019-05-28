@@ -689,6 +689,7 @@ class ImageStatisticsModule(ProcessingModule):
 
         self.m_position = position
 
+    @typechecked
     def run(self) -> None:
         """
         Run method of the module. Calculates the minimum, maximum, sum, mean, median, and standard
@@ -769,7 +770,7 @@ class FrameSimilarityModule(ProcessingModule):
                  image_tag: str,
                  method: str = 'MSE',
                  mask_radius: Tuple[float, float] = (0., 5.),
-                 fwhm: float = 0.1,
+                 window_size: float = 0.1,
                  temporal_median: str = 'full') -> None:
         """
         Parameters
@@ -780,15 +781,17 @@ class FrameSimilarityModule(ProcessingModule):
             Tag of the database entry that is read as input.
         method : str
             Method for the similarity measure. There are three measures available:
+
                 - `MSE` - Mean Squared Error
                 - `PCC` - Pearson Correlation Coefficient
                 - `SSIM` - Structural Similarity
+
             These measures compare each image to the temporal median of the image set.
         mask_radius : list(float, float)
             Inner and outer radius (arcsec) of the mask that is applied to the images.
-        fwhm : float
-            The full width at half maximum (arcsec) of the point spread function. It is used by 
-            the sliding window that is used when the SSIM similarity is calculated.
+        window_size : float
+            Size (arcsec) of the sliding window that is used when the SSIM similarity is
+            calculated.
         temporal_median : str
             Option to calculate the temporal median for each position ('full') or as a constant
             value ('constant') for the entire set. The latter is computationally less expensive.
@@ -816,10 +819,10 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_method = method
         self.m_temporal_median = temporal_median
         self.m_mask_radii = mask_radius
-        self.m_fwhm = fwhm
+        self.m_window_size = window_size
 
     @staticmethod
-    def _similarity(images, reference_index, mode, fwhm, temporal_median=False):
+    def _similarity(images, reference_index, mode, window_size, temporal_median=False):
         """
         Internal function to compute the MSE as defined by Ruane et al. 2019.
         """
@@ -856,18 +859,18 @@ class FrameSimilarityModule(ProcessingModule):
 
         if mode == 'SSIM':
             # winsize needs to be odd
-            if int(fwhm) % 2 == 0:
-                winsize = int(fwhm) + 1
+            if int(window_size) % 2 == 0:
+                winsize = int(window_size) + 1
             else:
-                winsize = int(fwhm)
+                winsize = int(window_size)
 
             return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
 
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Computes the similarity between frames based on the 'MSE', 'PCC',
-        or 'SSIM'.
+        Run method of the module. Computes the similarity between frames based on the Mean Squared
+        Error (MSE), the Pearson Correlation Coefficient (PCC), or the Structural Similarity (SSIM).
 
         Returns
         -------
@@ -884,7 +887,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         # convert arcsecs to pixels
         self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
-        self.m_fwhm = int(self.m_fwhm / pixscale)
+        self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images
         mask = create_mask(im_shape, self.m_mask_radii)
@@ -914,7 +917,7 @@ class FrameSimilarityModule(ProcessingModule):
                                                   args=(images,
                                                         i,
                                                         self.m_method,
-                                                        self.m_fwhm,
+                                                        self.m_window_size,
                                                         temporal_median)))
 
         pool.close()
@@ -1063,7 +1066,7 @@ class SelectByAttributeModule(ProcessingModule):
             sorting_order = np.argsort(attribute)
 
         attribute = attribute[sorting_order]
-        index = index[sorting_order]
+        index  = index[sorting_order]
 
         indices = index[:self.m_number_frames]
 

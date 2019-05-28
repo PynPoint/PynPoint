@@ -320,9 +320,11 @@ class MassLimitsModule(ProcessingModule):
             this website can be used.
         star_prop : dict
             Dictionary containing host star properties. Must have the following keys:
-             - ``magnitude`` - Apparent magnitude, in the same band as the `instr_filter`.
-             - ``distance`` - Distance in parsec.
-             - ``age`` - Age of the system in the Myr.
+
+                - ``magnitude`` - Apparent magnitude, in the same band as the `instr_filter`.
+                - ``distance`` - Distance in parsec.
+                - ``age`` - Age of the system in the Myr.
+
         name_in : str
             Unique name of the module instance.
         contrast_in_tag : str
