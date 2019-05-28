@@ -6,15 +6,17 @@ import sys
 import time
 import math
 import warnings
+import multiprocessing as mp
 
 from typing import Union, Tuple
 
 import numpy as np
+from skimage.measure import compare_ssim, compare_mse
 
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask
 from pynpoint.util.module import progress, memory_frames, locate_star
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
@@ -250,9 +252,10 @@ class FrameSelectionModule(ProcessingModule):
         self.m_position = position
 
     def _initialize(self):
-        if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
-                self.m_image_in_port.tag == self.m_removed_out_port.tag:
-            raise ValueError('Input and output ports should have a different tag.')
+        if self.m_selected_out_port is not None and self.m_removed_out_port is not None:
+            if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
+                    self.m_image_in_port.tag == self.m_removed_out_port.tag:
+                raise ValueError('Input and output ports should have a different tag.')
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.del_all_data()
@@ -686,6 +689,7 @@ class ImageStatisticsModule(ProcessingModule):
 
         self.m_position = position
 
+    @typechecked
     def run(self) -> None:
         """
         Run method of the module. Calculates the minimum, maximum, sum, mean, median, and standard
@@ -751,3 +755,361 @@ class ImageStatisticsModule(ProcessingModule):
         self.m_stat_out_port.copy_attributes(self.m_image_in_port)
         self.m_stat_out_port.add_history('ImageStatisticsModule', history)
         self.m_stat_out_port.close_port()
+
+
+class FrameSimilarityModule(ProcessingModule):
+    """
+    Pipeline module for measuring the similarity between frames.
+    """
+
+    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
+
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_tag: str,
+                 method: str = 'MSE',
+                 mask_radius: Tuple[float, float] = (0., 5.),
+                 window_size: float = 0.1,
+                 temporal_median: str = 'full') -> None:
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_tag : str
+            Tag of the database entry that is read as input.
+        method : str
+            Method for the similarity measure. There are three measures available:
+
+                - `MSE` - Mean Squared Error
+                - `PCC` - Pearson Correlation Coefficient
+                - `SSIM` - Structural Similarity
+
+            These measures compare each image to the temporal median of the image set.
+        mask_radius : list(float, float)
+            Inner and outer radius (arcsec) of the mask that is applied to the images.
+        window_size : float
+            Size (arcsec) of the sliding window that is used when the SSIM similarity is
+            calculated.
+        temporal_median : str
+            Option to calculate the temporal median for each position ('full') or as a constant
+            value ('constant') for the entire set. The latter is computationally less expensive.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(FrameSimilarityModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_tag)
+        self.m_image_out_port = self.add_output_port(image_tag)
+
+        if method not in ('MSE', 'PCC', 'SSIM'):
+            raise ValueError(f'The chosen method \'{method}\' is not available. Please ensure ' \
+                             f'that you have selected one of \'MSE\', \'PCC\', \'SSIM\'.')
+
+        if temporal_median not in ('full', 'constant'):
+            raise ValueError(f'The chosen temporal_median \'{temporal_median}\' is not ' \
+                             f'available. Please ensure that you have selected one of \'full\', ' \
+                             f'\'constant\'.')
+
+        self.m_method = method
+        self.m_temporal_median = temporal_median
+        self.m_mask_radii = mask_radius
+        self.m_window_size = window_size
+
+    @staticmethod
+    def _similarity(images, reference_index, mode, window_size, temporal_median=False):
+        """
+        Internal function to compute the MSE as defined by Ruane et al. 2019.
+        """
+
+        def _temporal_median(reference_index, images):
+            """
+            Internal function to calculate the temporal median for all frames, except the one with
+            the ``reference_index``.
+            """
+
+            image_m = np.concatenate((images[:reference_index], images[reference_index+1:]))
+
+            return np.median(image_m, axis=0)
+
+        image_x_i = images[reference_index]
+
+        if not temporal_median:
+            image_m = _temporal_median(reference_index, images=images)
+        else:
+            image_m = temporal_median
+
+        if mode == 'MSE':
+            return reference_index, compare_mse(image_x_i, image_m)
+
+        if mode == 'PCC':
+            # calculate the covariance matrix of the flattend images
+            cov_mat = np.cov(image_x_i.flatten(), image_m.flatten(), ddof=1)
+
+            # the variances are stored in the diagonal, therefore take the sqrt to obtain std
+            std = np.sqrt(np.diag(cov_mat))
+
+            # does not matter whether [0, 1] or [1, 0] as cov_mat is symmetrics
+            return reference_index, cov_mat[0, 1] / (std[0] * std[1])
+
+        if mode == 'SSIM':
+            # winsize needs to be odd
+            if int(window_size) % 2 == 0:
+                winsize = int(window_size) + 1
+            else:
+                winsize = int(window_size)
+
+            return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
+
+    @typechecked
+    def run(self) -> None:
+        """
+        Run method of the module. Computes the similarity between frames based on the Mean Squared
+        Error (MSE), the Pearson Correlation Coefficient (PCC), or the Structural Similarity (SSIM).
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        # get image number and image shapes
+        nimages = self.m_image_in_port.get_shape()[0]
+        im_shape = self.m_image_in_port.get_shape()[1:]
+
+        cpu = self._m_config_port.get_attribute('CPU')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        # convert arcsecs to pixels
+        self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
+        self.m_window_size = int(self.m_window_size / pixscale)
+
+        # overlay the same mask over all images
+        mask = create_mask(im_shape, self.m_mask_radii)
+        images = self.m_image_in_port.get_all()
+
+        # close the port during the calculations
+        self.m_image_out_port.close_port()
+
+        if self.m_temporal_median == 'constant':
+            temporal_median = np.median(images, axis=0)
+        else:
+            temporal_median = False
+
+        if self.m_method != 'SSIM':
+            images *= mask
+        else:
+            images = crop_image(images, None, int(self.m_mask_radii[1]))
+
+        # compare images and store similarity
+        similarities = np.zeros(nimages)
+
+        pool = mp.Pool(cpu)
+        async_results = []
+
+        for i in range(nimages):
+            async_results.append(pool.apply_async(FrameSimilarityModule._similarity,
+                                                  args=(images,
+                                                        i,
+                                                        self.m_method,
+                                                        self.m_window_size,
+                                                        temporal_median)))
+
+        pool.close()
+
+        start_time = time.time()
+
+        # wait for all processes to finish
+        while mp.active_children():
+            # number of finished processes
+            nfinished = sum([i.ready() for i in async_results])
+
+            progress(nfinished, nimages, 'Running FrameSimilarityModule', start_time)
+
+            # check if new processes have finished every 5 seconds
+            time.sleep(5)
+
+        # get the results for every async_result object
+        for async_result in async_results:
+            reference, similarity = async_result.get()
+            similarities[reference] = similarity
+
+        pool.terminate()
+
+        # reopen the port after the calculation
+        self.m_image_out_port.open_port()
+        self.m_image_out_port.add_attribute(f'{self.m_method}', similarities, static=False)
+        self.m_image_out_port.close_port()
+
+
+class SelectByAttributeModule(ProcessingModule):
+    """
+    Pipeline module for selecting frames based on attribute values.
+    """
+
+    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
+
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 selected_out_tag: str,
+                 removed_out_tag: str,
+                 attribute_tag: str,
+                 number_frames: int = 100,
+                 order: str = 'descending') -> None:
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_tag : str
+            Tag of the database entry that is read as input.
+        selected_out_tag : str
+            Tag of the database entry to which the selected frames are written.
+        removed_out_tag : str
+            Tag of the database entry to which the removed frames are written.
+        attribute_tag : str
+            Name of the attribute which is used to sort and select the frames.
+        number_frames : int
+            Number of frames that are selected.
+        order : str
+            Order in which the frames are selected. Can be either 'descending' (will select the
+            lowest attribute values) or 'ascending' (will select the highest attribute values).
+
+        Returns
+        -------
+        NoneType
+            None
+
+        Examples
+        --------
+        The example below selects the first 100 frames with an ascending order of the ``INDEX``
+        values that are stored to the 'im_arr' dataset::
+
+            SelectByAttributeModule(name_in='frame_selection',
+                                    image_in_tag='im_arr',
+                                    attribute_tag='INDEX',
+                                    selected_frames=100,
+                                    order='ascending',
+                                    selected_out_tag='im_arr_selected',
+                                    removed_out_tag='im_arr_removed'))
+
+        The example below selects the 200 frames with the largest ``SSIM`` values that
+        are stored to the 'im_arr' dataset::
+
+            SelectByAttributeModule(name_in='frame_selection',
+                                    image_in_tag='im_arr',
+                                    attribute_tag='SSIM',
+                                    selected_frames=200,
+                                    order='descending',
+                                    selected_out_tag='im_arr_selected',
+                                    removed_out_tag='im_arr_removed'))
+        """
+
+        super(SelectByAttributeModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_selected_out_port = self.add_output_port(selected_out_tag)
+        self.m_removed_out_port = self.add_output_port(removed_out_tag)
+
+        if order not in ('ascending', 'descending'):
+            raise ValueError('The selected order is not available. The available options are ' \
+                             '\'ascending\' or \'descending\'.')
+
+        self.m_attribute_tag = attribute_tag
+        self.m_number_frames = number_frames
+        self.m_order = order
+
+    @typechecked
+    def run(self) -> None:
+        """
+        Run method of the module. Selects images according to a specified attribute tag and
+        ordering, e.g. the highest 150 ``INDEX`` frames, or the lowest 50 ``PCC`` frames.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        if self.m_selected_out_port is not None:
+            self.m_selected_out_port.del_all_data()
+            self.m_selected_out_port.del_all_attributes()
+
+        if self.m_removed_out_port is not None:
+            self.m_removed_out_port.del_all_data()
+            self.m_removed_out_port.del_all_attributes()
+
+        images = self.m_image_in_port.get_all()
+        nimages = images.shape[0]
+
+        attribute = self.m_image_in_port.get_attribute(f'{self.m_attribute_tag}')
+
+        if nimages != len(attribute):
+            raise ValueError(f'The attribute {{self.m_attribute_tag}} does not have the same ' \
+                             f'length ({len(attribute)}) as the tag has images ({nimages}). ' \
+                             f'Please check the attribute you have chosen for selection.')
+
+        index = self.m_image_in_port.get_attribute('INDEX')
+
+        if self.m_order == 'descending':
+            # sort attribute in descending order
+            sorting_order = np.argsort(attribute)[::-1]
+        else:
+            # sort attribute in ascending order
+            sorting_order = np.argsort(attribute)
+
+        attribute = attribute[sorting_order]
+        index  = index[sorting_order]
+
+        indices = index[:self.m_number_frames]
+
+        # copied from FrameSelectionModule ...
+        # possibly refactor to @staticmethod or move to util.remove
+        start_time = time.time()
+        if np.size(indices) > 0:
+            memory = self._m_config_port.get_attribute('MEMORY')
+            frames = memory_frames(memory, nimages)
+
+            if memory == 0 or memory >= nimages:
+                memory = nimages
+
+            for i, _ in enumerate(frames[:-1]):
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+                index_del = np.where(np.logical_and(indices >= frames[i], \
+                                                    indices < frames[i+1]))
+
+                write_selected_data(images,
+                                    indices[index_del]%memory,
+                                    self.m_removed_out_port,
+                                    self.m_selected_out_port)
+
+                progress(i, len(frames[:-1]), 'Running SelectByAttributeModule...', start_time)
+
+        else:
+            warnings.warn('No frames were removed.')
+
+
+        if self.m_selected_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
+            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
+
+        if self.m_removed_out_port is not None:
+            # Copy attributes before write_selected_attributes is used
+            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
+
+        # write the selected and removed data to the respective output ports
+        write_selected_attributes(indices,
+                                  self.m_image_in_port,
+                                  self.m_removed_out_port,
+                                  self.m_selected_out_port)
+
+        sys.stdout.write('Running SelectByAttributeModule... [DONE]\n')
+        sys.stdout.flush()
