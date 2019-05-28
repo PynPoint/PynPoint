@@ -452,22 +452,7 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
 
-    def run(self):
-        """
-        Run method of the module. Calculates the parallactic angles from the position of the object
-        on the sky and the telescope location on earth. The start of the observation is used to
-        extrapolate for the observation time of each individual image of a data cube. The values
-        are written as PARANG attributes to *data_tag*.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        # Load cube sizes
-        steps = self.m_data_in_port.get_attribute('NFRAMES')
-        ndit = self.m_data_in_port.get_attribute('NDIT')
+    def _attribute_check(self, ndit, steps):
 
         if not np.all(ndit == steps):
             warnings.warn('There is a mismatch between the NDIT and NFRAMES values. A frame '
@@ -492,6 +477,25 @@ class AngleCalculationModule(ProcessingModule):
                               '\'ESO INS4 DROT2 DEC\' to specify the object\'s declination. '
                               'The input will be parsed accordingly. Using the regular '
                               '\'DEC\' keyword will lead to wrong parallactic angles.')
+
+    def run(self):
+        """
+        Run method of the module. Calculates the parallactic angles from the position of the object
+        on the sky and the telescope location on earth. The start of the observation is used to
+        extrapolate for the observation time of each individual image of a data cube. The values
+        are written as PARANG attributes to *data_tag*.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        # Load cube sizes
+        steps = self.m_data_in_port.get_attribute('NFRAMES')
+        ndit = self.m_data_in_port.get_attribute('NDIT')
+
+        self._attribute_check(ndit, steps)
 
         # Load exposure time [hours]
         exptime = self.m_data_in_port.get_attribute('DIT')/3600.
