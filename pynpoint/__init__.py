@@ -15,7 +15,8 @@ from pynpoint.processing.badpixel import BadPixelSigmaFilterModule, \
 
 from pynpoint.processing.basic import SubtractImagesModule, \
                                       AddImagesModule, \
-                                      RotateImagesModule
+                                      RotateImagesModule, \
+                                      RepeatImagesModule
 
 from pynpoint.processing.centering import StarAlignmentModule, \
                                           StarCenteringModule, \
