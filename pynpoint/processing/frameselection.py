@@ -779,12 +779,16 @@ class FrameSimilarityModule(ProcessingModule):
         image_tag : str
             Tag of the database entry that is read as input.
         method : str
-            Method for the similarity measure.
+            Method for the similarity measure. There are three measures available:
+                - `MSE` - Mean Squared Error
+                - `PCC` - Pearson Correlation Coefficient
+                - `SSIM` - Structural Similarity
+            These measures compare each image to the temporal median of the image set.
         mask_radius : list(float, float)
             Inner and outer radius (arcsec) of the mask that is applied to the images.
         fwhm : float
-            The full width at half maximum. It is used by the sliding window that is used when the
-            SSIM similarity is calculated to find structures in the relevant scale.
+            The full width at half maximum (arcsec) of the point spread function. It is used by 
+            the sliding window that is used when the SSIM similarity is calculated.
         temporal_median : str
             Option to calculate the temporal median for each position ('full') or as a constant
             value ('constant') for the entire set. The latter is computationally less expensive.
