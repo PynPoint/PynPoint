@@ -40,7 +40,9 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \
                                                RemoveLastFrameModule, \
                                                RemoveStartFramesModule, \
-                                               ImageStatisticsModule
+                                               ImageStatisticsModule, \
+                                               FrameSimilarityModule, \
+                                               SelectByAttributeModule
 
 from pynpoint.processing.limits import ContrastCurveModule, \
                                        MassLimitsModule
