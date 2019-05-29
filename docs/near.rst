@@ -8,15 +8,25 @@ Data Reduction
 Introduction
 ------------
 
-The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the
-Alpha Cen Region) experiment. The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. To get started, use the instructions available in the :ref:`installation_github` section. Please have a look at the :ref:`attribution` section when using PynPoint results in a publication. Further details about the pipeline architecture and data processing are also available in |stolker|.
+The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the Alpha Cen Region) experiment. 
+
+The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. Further details about the pipeline architecture and data processing are also available in |stolker|. More in-depth information of the input parameters for individual PynPoint modules can be found in the :ref:`api`. 
+
+Please also have a look at the :ref:`attribution` section when using PynPoint results in a publication. 
 
 .. _near_example:
 
 Example
 -------
 
-The example below is based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
+In this example, we will process the images of chop A for which alpha Cen A was centered behind the AGPM coronagraph. Note that the same procedure can be applied on the images of chop B (i.e., with alpha Cen B centered behind the coronagraph).
+
+Setup
+^^^^^
+
+To get started, use the instructions available in the :ref:`installation_github` section to install PynPoint.
+
+The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
 
     $ chmod +x near_files.sh
 
@@ -26,11 +36,9 @@ And then execute it as::
 
 Now that we have the data, we can start the data reduction with PynPoint!
 
-The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. These are the working folder with the database and configuration file, the default data input folder, and default output folder for results, respectively. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that will provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
+The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that will provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
-A basic description of the pipeline modules is given in the comments of the example script. More in-depth information of all the input parameters can be found in the :ref:`api`. In the example, we will only process the images of chop A for which alpha Cen A was centered behind the AGPM coronagraph. The same procedure can be applied on the images of chop B (i.e., with alpha Cen B centered behind the coronagraph).
-
-First we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content::
+Then we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content::
 
    [header]
 
@@ -58,9 +66,13 @@ First we create a configuration file which contains the global pipeline settings
 
 The ``MEMORY`` and ``CPU`` setting can be adjusted. They define the number of images that is simultaneously loaded into the computer memory and the number of parallel processes that are used by some of the pipeline modules.
 
-Pipeline modules are added sequentially to the pipeline. Each pipeline module requires a ``name_in`` tag which is used by the pipeline to identifiy the module. Once added, modules can be executed either individually using ``pipeline.run_module(name_in)``, which takes the module's ``name_in`` tag as input, or all at once using using ``pipeline.run()``. All intermediate results (typically a stack of images) are stored in the database (`PynPoint_database.hdf5`) which allows the user to rerun particular processing steps without having to rerun the complete pipeline. 
+Note that in addition to the config file above, the ``working_place`` directory is also used to store the database file (`PynPoint_database.hdf5`). This database stores all intermediate results (typically a stack of images), which allows the user to rerun particular processing steps without having to rerun the complete pipeline. 
 
-Example code snippets for the different steps to reduce NEAR data are included below. These code snippets can be executed in Python interactive mode, as a Jupyter notebook.py file, or combined into a python script and executed from the command line.
+
+Running PynPoint
+^^^^^^^^^^^^^^^^
+
+Example code snippets for the different steps to reduce NEAR data with PynPoint are included below. These code snippets can be executed in Python interactive mode, as a Jupyter notebook.py file, or combined into a python script and executed from the command line.
 
 The first steps are to initialize the pipeline and read in the data contained in the given ``input_place_in`` directory. Data are automatically divided into the chop A and chop B data sets. Here we also use the :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule` to calculate the parallactic angle for each individual frame, which is necessary for de-rotating and stacking of the frames after PSF subtraction::
 
@@ -74,7 +86,7 @@ The first steps are to initialize the pipeline and read in the data contained in
 
    # Create a Pypeline instance
 
-   pipeline = Pypeline(working_place_in='working_folder/',  # directory for PynPoint_database.hdf5 file
+   pipeline = Pypeline(working_place_in='working_folder/',  # directory for database and config files
                        input_place_in='input_folder/',      # default directory for reading in input data
                        output_place_in='output_folder/')    # default directory for saving output files 
                                                             #   (i.e., with FitsWritingModule used below)
@@ -164,13 +176,17 @@ The next step is to reduce the chop A frames with alpha Cen A behind the corogna
 
    pipeline.add_module(module)
    
-   # Run each of the above modules
+   # Run each of the above modules using their 'name_in' tags
    
    pipeline.run_module('crop1')
    pipeline.run_module('crop2')
    pipeline.run_module('subtract_aminusb')
    pipeline.run_module('center1')
    pipeline.run_module('shift1')
+   
+   # Note that you can also run all the added modules using this function:
+   # pipeline.run()
+
 
 Next, we use the chop B frames where alpha Cen A if off of the coronagraph to extract a reference PSF. This reference PSF will later be used for calculating the detection limits::
 
