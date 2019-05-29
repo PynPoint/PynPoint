@@ -9,7 +9,7 @@ Introduction
 ------------
 
 The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the
-Alpha Cen Region) experiment. The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. To get started, installation instructions are available in the :ref:`installation` section. Please have a look at the :ref:`attribution` section when using PynPoint results in a publication. Further details about the pipeline architecture and data processing are also available in |stolker|.
+Alpha Cen Region) experiment. The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. To get started, use the instructions available in the :ref:`installation_github` section. Please have a look at the :ref:`attribution` section when using PynPoint results in a publication. Further details about the pipeline architecture and data processing are also available in |stolker|.
 
 .. _near_example:
 
@@ -74,7 +74,7 @@ The first steps are to initialize the pipeline and read in the data contained in
 
    # Create a Pypeline instance
 
-   pipeline = Pypeline(working_place_in='working_folder/',  # directory in which PynPoint_database.hdf5 is saved
+   pipeline = Pypeline(working_place_in='working_folder/',  # directory for PynPoint_database.hdf5 file
                        input_place_in='input_folder/',      # default directory for reading in input data
                        output_place_in='output_folder/')    # default directory for saving output files 
                                                             #   (i.e., with FitsWritingModule used below)
