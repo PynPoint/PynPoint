@@ -20,9 +20,9 @@ input_place = "/home/philipp/Documents/BA_In_out/raw/tauceti/"
 output_place = "output/"
 
 
-'''initial and ending ranks'''
-rank_ipca_init = 5
-rank_ipca_end = 8
+'''initial and final number of principal components'''
+pca_number_init = 5
+pca_number_end = 8
 
 # Python 3
 #urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
@@ -42,6 +42,8 @@ module = Hdf5ReadingModule(name_in="hdf5_reading",
 pipeline.add_module(module)
 #
 #pipeline.run_module("hdf5_reading")
+#print(pipeline.get_shape("stack"))
+
 #psf_in_stack = np.dstack([1]*pipeline.get_data("psf_in"))
 #
 #print(pipeline.get_tags())
@@ -84,7 +86,7 @@ module = ContrastCurveModule(name_in="contrast",
                  threshold=("sigma", 5.),
                  psf_scaling=1,
                  aperture=0.05,
-                 pca_number=6,
+                 pca_number=1,
                  pca_number_init=None,
                  cent_size=None,
                  edge_size=None,
@@ -105,8 +107,8 @@ pipeline.add_module(module)
 #pipeline.add_module(module)
 
 
-#module = IterativePcaPsfSubtractionModule(pca_numbers=(rank_ipca_end, ),
-#                                 pca_number_init = rank_ipca_init,
+#module = IterativePcaPsfSubtractionModule(pca_numbers=(pca_number_end, ),
+#                                 pca_number_init = pca_number_init,
 #                                 name_in="ipca",
 #                                 images_in_tag="science",
 #                                 reference_in_tag="science",

@@ -18,13 +18,13 @@ from pynpoint import Pypeline, Hdf5ReadingModule, FitsReadingModule,\
 from pynpoint.processing.iterativepsfsubtraction import IterativePcaPsfSubtractionModule
 
 working_place = "/home/Dropbox/Dropbox/1_Philipp/1_UZH/8_FS19/BachelorProject/PynPoint"
-input_place = "/home/philipp/Documents/BA_In_out/raw/hd101412/"
+input_place = "/home/philipp/Documents/BA_In_out/raw/tauceti/"
 output_place = "output/"
 
 
 '''initial and ending ranks'''
-rank_ipca_init = 1
-rank_ipca_end = 15
+rank_ipca_init = 10
+rank_ipca_end = 5
 
 # Python 3
 #urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
@@ -86,8 +86,8 @@ pipeline.add_module(module)
 #pipeline.add_module(module)
 
 
-module = IterativePcaPsfSubtractionModule(pca_numbers=(3, 4, 5),
-                                 pca_number_init = rank_ipca_init,
+module = IterativePcaPsfSubtractionModule(pca_numbers=(6, 7,),
+                                 pca_number_init = 5,
                                  name_in="ipca",
                                  images_in_tag="science_cropped",
                                  reference_in_tag="science_cropped",
@@ -98,11 +98,11 @@ pipeline.add_module(module)
 
 
 pipeline.run()
-residuals = pipeline.get_data("residuals")
+print(pipeline.get_shape("residuals"))
 
-np.savetxt(output_place + "3new2.txt", residuals[0])
-np.savetxt(output_place + "4new2.txt", residuals[1])
-np.savetxt(output_place + "5new2.txt", residuals[2])
+#np.savetxt(output_place + "3new2.txt", residuals[0])
+#np.savetxt(output_place + "4new2.txt", residuals[1])
+#np.savetxt(output_place + "5new2.txt", residuals[2])
 
 pixscale = pipeline.get_attribute("science", "PIXSCALE")
 size = pixscale*residuals.shape[-1]/2.

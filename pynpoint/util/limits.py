@@ -145,7 +145,7 @@ def contrast_limit(path_images,
     else:
         _, im_res = iterative_pca_psf_subtraction(images=fake*mask,
 	                                        angles=-1.*parang+extra_rot,
-	                                        pca_number=pca_number,
+	                                        pca_numbers=pca_number,
 	                                        pca_number_init=pca_number_init)
 
     # Stack the residuals

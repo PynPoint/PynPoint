@@ -124,6 +124,15 @@ def iterative_pca_psf_subtraction(images,
     residuals_list = []
     res_rot_list = []
 
+    #set pca_number to maximum number if multiple are given
+    if isinstance(pca_numbers, int):
+        pca_number = pca_numbers
+        pca_numbers = np.asarray([pca_numbers])
+    elif len(pca_numbers) > 1:
+        pca_number = max(pca_numbers)
+    else:
+        pca_number = int(pca_numbers)
+
     im_shape = images.shape
     
     if indices is None:
@@ -134,47 +143,36 @@ def iterative_pca_psf_subtraction(images,
     # reshape the images and select the unmasked pixels
     im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
     im_reshape = im_reshape[:, indices]
-
     # subtract mean image
     #im_reshape -= np.mean(im_reshape, axis=0)
 
     # create first iteration
     S = im_reshape - LRA(im_reshape, pca_number_init)
-    
-    pca_number = max(pca_numbers)    
-
+  
     #iterate through all values between initial and final pca number
     pca_numbers_range = range(pca_number_init, pca_number+1)
+    
     for counter, i in enumerate(pca_numbers_range):
-        progress(i, len(pca_numbers_range), "Creating residuals...")
+        progress(counter, len(pca_numbers_range), "Creating residuals...")
         S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), im_shape, angles), i)
         #save intermediate results to lists if the current pca_number corresponds to a final pca_number in pca_numbers
         if i in pca_numbers:
+            # subtract the psf model IMPLEMENT THIS?
             residuals = deepcopy(S)
+            
+            # reshape to the original image size
             residuals = residuals.reshape(im_shape)
+            
+            # derotate the images
             res_rot = np.zeros(residuals.shape)
             for j, item in enumerate(angles):
                 res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
+                
+            #append the results to the lists   
             residuals_list.append(residuals)
             res_rot_list.append(res_rot)
-            
-    # subtract the psf model IMPLEMENT THIS?
-        
-    residuals = deepcopy(S)
-
-    # reshape to the original image size
-    residuals = residuals.reshape(im_shape)
-
-    # derotate the images
-    res_rot = np.zeros(residuals.shape)
-    for j, item in enumerate(angles):
-        res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
-
-    #append the results to the lists    
-    residuals_list.append(residuals)
-    res_rot_list.append(res_rot)        
-    
-    return residuals_list, res_rot_list#red(S, im_shape, angles), why does this not work?
+      
+    return residuals_list, res_rot_list
     
 
 def SVD(A):

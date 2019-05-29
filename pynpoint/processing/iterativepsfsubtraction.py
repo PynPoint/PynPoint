@@ -88,6 +88,19 @@ class IterativePcaPsfSubtractionModule(ProcessingModule):
         super(IterativePcaPsfSubtractionModule, self).__init__(name_in)
         self.m_pca_number_init = pca_number_init        
         self.m_components = np.sort(np.atleast_1d(pca_numbers))
+        
+        #check if any pca_numbers are smaller than pca_number_init and if so, remove them from pca_numbers array
+        if self.m_pca_number_init >= min(self.m_components):
+            components_keep = []
+            components_omit = []
+            for pca_number_init in self.m_components:
+                if self.m_pca_number_init < pca_number_init:
+                    components_keep.append(pca_number_init)
+                else:
+                    components_omit.append(pca_number_init)
+            self.m_components = np.asarray(components_keep)
+            sys.stdout.write("<pca_number_init> must be smaller than <pca_numbers>. Omitting the following elements of <pca_numbers>: " + ', '.join(str(e) for e in components_omit) + ". New <pca_numbers>: " + ', '.join(str(e) for e in components_keep) + ".")            
+            
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
 

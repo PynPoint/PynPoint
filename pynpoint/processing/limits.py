@@ -242,7 +242,7 @@ class ContrastCurveModule(ProcessingModule):
         else:
             _, im_res = iterative_pca_psf_subtraction(images=images*mask,
 	                                        angles=-1.*parang+self.m_extra_rot,
-	                                        pca_number=self.m_pca_number,
+	                                        pca_numbers=self.m_pca_number,
 	                                        pca_number_init=self.m_pca_number_init)
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
