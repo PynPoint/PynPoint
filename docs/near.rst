@@ -19,7 +19,7 @@ Please also have a look at the :ref:`attribution` section when using PynPoint re
 Example
 -------
 
-In this example, we will process the images of chop A for which alpha Cen A was centered behind the AGPM coronagraph. Note that the same procedure can be applied on the images of chop B (i.e., with alpha Cen B centered behind the coronagraph).
+In this example, we will process the images of chop A (i.e., frames in which alpha Cen A was centered behind the AGPM coronagraph). Note that the same procedure can be applied on the images of chop B (i.e., with alpha Cen B centered behind the coronagraph).
 
 Setup
 ^^^^^
@@ -33,6 +33,8 @@ The results shown below are based on 1 hour of commissioning data of alpha Cen. 
 And then execute it as::
 
    $ ./near_files.sh
+
+You can also start by downloading only a few files by running a subset of the bash script lines (useful for validating the pipeline installation because analyzing the full data set takes hours).
 
 Now that we have the data, we can start the data reduction with PynPoint!
 
@@ -74,7 +76,7 @@ Running PynPoint
 
 Example code snippets for the different steps to reduce NEAR data with PynPoint are included below. These code snippets can be executed in Python interactive mode, as a Jupyter notebook.py file, or combined into a python script and executed from the command line.
 
-The first steps are to initialize the pipeline and read in the data contained in the given ``input_place_in`` directory. Data are automatically divided into the chop A and chop B data sets. Here we also use the :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule` to calculate the parallactic angle for each individual frame, which is necessary for de-rotating and stacking of the frames after PSF subtraction::
+The first steps are to initialize the pipeline and read in the data contained in the given ``input_place_in`` directory. Data are automatically divided into the chop A and chop B data sets. Here we also use the :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule` to calculate the parallactic angle for each individual frame, which is necessary for derotating and combining the frames after PSF subtraction::
 
    # Import the Pypeline and the modules that we will use in this example
 
@@ -84,7 +86,7 @@ The first steps are to initialize the pipeline and read in the data contained in
                         FakePlanetModule, PSFpreparationModule, PcaPsfSubtractionModule, \
                         ContrastCurveModule, FitsWritingModule, TextWritingModule
 
-   # Create a Pypeline instance
+   # Create a Pypeline instance (change the directories to the correct paths)
 
    pipeline = Pypeline(working_place_in='working_folder/',  # directory for database and config files
                        input_place_in='input_folder/',      # default directory for reading in input data
@@ -114,11 +116,14 @@ The first steps are to initialize the pipeline and read in the data contained in
 
    pipeline.add_module(module)
 
-   # Run each of the above modules
+   # Run each of the above modules using their 'name_in' tags
    
    pipeline.run_module('read')
    pipeline.run_module('angle1')
    pipeline.run_module('angle2')
+   
+   # Note that you can also run all the added modules using this function:
+   # pipeline.run()
    
 The next step is to reduce the chop A frames with alpha Cen A behind the corognagraph. Here we crop the chop A and chop B images around the coronagraph position, subtract chop B from chop A to remove the sky background, and center the subtracted chop A frames::
 
@@ -176,16 +181,13 @@ The next step is to reduce the chop A frames with alpha Cen A behind the corogna
 
    pipeline.add_module(module)
    
-   # Run each of the above modules using their 'name_in' tags
+   # Run each of the above modules
    
    pipeline.run_module('crop1')
    pipeline.run_module('crop2')
    pipeline.run_module('subtract_aminusb')
    pipeline.run_module('center1')
    pipeline.run_module('shift1')
-   
-   # Note that you can also run all the added modules using this function:
-   # pipeline.run()
 
 
 Next, we use the chop B frames where alpha Cen A if off of the coronagraph to extract a reference PSF. This reference PSF will later be used for calculating the detection limits::
@@ -272,7 +274,7 @@ Next, we use the chop B frames where alpha Cen A if off of the coronagraph to ex
    pipeline.run_module('shift_refpsf')
    pipeline.run_module('prep_refpsf')
 
-Finally, we use PCA to subtract the stellar PSF of alpha Cen A. For testing purposes, we first use the reference PSF created above to inject a fake planet into the chop A data. The median combination of the PSF-subtracted frames is saved in its own tag and then written out to a fits file::
+Finally, we use PCA to subtract the stellar PSF of alpha Cen A. For testing purposes, we first use the reference PSF created above to inject a fake planet into the chop A data. The median combination of the PSF-subtracted and derotated frames is saved in its own tag and then written out to a fits file::
 
    # Inject a fake planet at a separation of 1 arcsec and a contrast of 10 mag
 
