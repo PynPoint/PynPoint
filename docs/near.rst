@@ -40,7 +40,9 @@ Now that we have the data, we can start the data reduction with PynPoint!
 
 The :class:`~pynpoint.core.pypeline.Pypeline` of PynPoint requires a folder for the ``working_place``, ``input_place``, and ``output_place``. Before we start running PynPoint, we have to put the raw NEAR data in the default input folder or the location that will provided as ``input_dir`` in the :class:`~pynpoint.readwrite.nearreading.NearReadingModule`.
 
-Then we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content::
+Then we create a configuration file which contains the global pipeline settings and is used to select the required FITS header keywords. Create a text file called ``PynPoint_config.ini`` in the ``working_place`` folder with the following content:
+
+.. code-block:: ini
 
    [header]
 
