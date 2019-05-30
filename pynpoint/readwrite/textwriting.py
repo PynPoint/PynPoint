@@ -19,9 +19,9 @@ class TextWritingModule(WritingModule):
 
     def __init__(self,
                  file_name,
-                 name_in="text_writing",
+                 name_in='text_writing',
                  output_dir=None,
-                 data_tag="im_arr",
+                 data_tag='im_arr',
                  header=None):
         """
         Parameters
@@ -47,7 +47,7 @@ class TextWritingModule(WritingModule):
         super(TextWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output 'file_name' needs to be a string.")
+            raise ValueError('Output \'file_name\' needs to be a string.')
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -65,9 +65,9 @@ class TextWritingModule(WritingModule):
         """
 
         if self.m_header is None:
-            self.m_header = ""
+            self.m_header = ''
 
-        sys.stdout.write("Running TextWritingModule...")
+        sys.stdout.write('Running TextWritingModule...')
         sys.stdout.flush()
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
@@ -78,15 +78,15 @@ class TextWritingModule(WritingModule):
             data = np.squeeze(data, axis=0)
 
         if data.ndim > 2:
-            raise ValueError("Only 1D or 2D arrays can be written to a text file.")
+            raise ValueError('Only 1D or 2D arrays can be written to a text file.')
 
-        if data.dtype == "int32" or data.dtype == "int64":
-            np.savetxt(out_name, data, header=self.m_header, comments='# ', fmt="%i")
+        if data.dtype == 'int32' or data.dtype == 'int64':
+            np.savetxt(out_name, data, header=self.m_header, comments='# ', fmt='%i')
 
-        elif data.dtype == "float32" or data.dtype == "float64":
+        elif data.dtype == 'float32' or data.dtype == 'float64':
             np.savetxt(out_name, data, header=self.m_header, comments='# ')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         self.m_data_port.close_port()
@@ -98,11 +98,11 @@ class ParangWritingModule(WritingModule):
     """
 
     def __init__(self,
-                 file_name="parang.dat",
-                 name_in="parang_writing",
+                 file_name='parang.dat',
+                 name_in='parang_writing',
                  output_dir=None,
-                 data_tag="im_arr",
-                 header="Parallactic angle [deg]"):
+                 data_tag='im_arr',
+                 header='Parallactic angle [deg]'):
         """
         Parameters
         ----------
@@ -127,7 +127,7 @@ class ParangWritingModule(WritingModule):
         super(ParangWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output 'file_name' needs to be a string.")
+            raise ValueError('Output \'file_name\' needs to be a string.')
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -145,22 +145,22 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write("Running ParangWritingModule...")
+        sys.stdout.write('Running ParangWritingModule...')
         sys.stdout.flush()
 
         if self.m_header is None:
-            self.m_header = ""
+            self.m_header = ''
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        if "PARANG" not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError("The PARANG attribute is not present in '%s'." % self.m_data_port.tag)
+        if 'PARANG' not in self.m_data_port.get_all_non_static_attributes():
+            raise ValueError(f'The PARANG attribute is not present in \'{self.m_data_port.tag}\'.')
 
-        parang = self.m_data_port.get_attribute("PARANG")
+        parang = self.m_data_port.get_attribute('PARANG')
 
         np.savetxt(out_name, parang, header=self.m_header, comments='# ')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         self.m_data_port.close_port()
@@ -172,11 +172,11 @@ class AttributeWritingModule(WritingModule):
     """
 
     def __init__(self,
-                 file_name="attributes.dat",
-                 name_in="attribute_writing",
+                 file_name='attributes.dat',
+                 name_in='attribute_writing',
                  output_dir=None,
-                 data_tag="im_arr",
-                 attribute="INDEX",
+                 data_tag='im_arr',
+                 attribute='INDEX',
                  header=None):
         """
         Parameters
@@ -191,8 +191,8 @@ class AttributeWritingModule(WritingModule):
         data_tag : str
             Tag of the database entry from which the PARANG attribute is read.
         attribute : str
-            Name of the non-static attribute as given in the central database (e.g., "INDEX" or
-            "STAR_POSITION").
+            Name of the non-static attribute as given in the central database (e.g., 'INDEX' or
+            'STAR_POSITION').
         header : str
             Header that is written at the top of the text file.
 
@@ -205,7 +205,7 @@ class AttributeWritingModule(WritingModule):
         super(AttributeWritingModule, self).__init__(name_in, output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output 'file_name' needs to be a string.")
+            raise ValueError('Output \'file_name\' needs to be a string.')
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -224,22 +224,22 @@ class AttributeWritingModule(WritingModule):
         """
 
         if self.m_header is None:
-            self.m_header = ""
+            self.m_header = ''
 
-        sys.stdout.write("Running AttributeWritingModule...")
+        sys.stdout.write('Running AttributeWritingModule...')
         sys.stdout.flush()
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         if self.m_attribute not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError("The '%s' attribute is not present in '%s'."
-                             % (self.m_attribute, self.m_data_port.tag))
+            raise ValueError(f'The \'{self.m_attribute}\' attribute is not present in '
+                             f'\'{self.m_data_port.tag}\'.')
 
         values = self.m_data_port.get_attribute(self.m_attribute)
 
         np.savetxt(out_name, values, header=self.m_header, comments='# ')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         self.m_data_port.close_port()

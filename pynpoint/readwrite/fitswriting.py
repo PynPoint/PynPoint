@@ -24,9 +24,9 @@ class FitsWritingModule(WritingModule):
 
     def __init__(self,
                  file_name,
-                 name_in="fits_writing",
+                 name_in='fits_writing',
                  output_dir=None,
-                 data_tag="im_arr",
+                 data_tag='im_arr',
                  data_range=None,
                  overwrite=True):
         """
@@ -56,10 +56,10 @@ class FitsWritingModule(WritingModule):
         super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Output 'file_name' needs to be a string.")
+            raise ValueError('Output \'file_name\' needs to be a string.')
 
-        if not file_name.endswith(".fits"):
-            raise ValueError("Output 'file_name' requires the FITS extension.")
+        if not file_name.endswith('.fits'):
+            raise ValueError('Output \'file_name\' requires the FITS extension.')
 
         self.m_file_name = file_name
         self.m_data_port = self.add_input_port(data_tag)
@@ -79,12 +79,12 @@ class FitsWritingModule(WritingModule):
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        sys.stdout.write("Running FitsWritingModule...")
+        sys.stdout.write('Running FitsWritingModule...')
         sys.stdout.flush()
 
         if os.path.isfile(out_name) and not self.m_overwrite:
-            warnings.warn("Filename already present. Use overwrite=True to overwrite an existing "
-                          "FITS file.")
+            warnings.warn('Filename already present. Use overwrite=True to overwrite an existing '
+                          'FITS file.')
 
         else:
             prihdr = fits.Header()
@@ -97,15 +97,14 @@ class FitsWritingModule(WritingModule):
                     # Check if the header keyword together with its value is
                     # too long for the FITS format. If that is the case, raise
                     # a warning and truncate the value to avoid a ValueError.
-                    key = "hierarch " + attr
+                    key = 'hierarch ' + attr
                     value = str(attributes[attr])
                     max_val_len = 75 - len(key)
 
                     if len(key + value) > 75:
-                        warnings.warn("Key '{}' with value '{}' is too long "
-                                      "for the FITS format. To avoid an "
-                                      "error, the value was truncated to '{}'."
-                                      .format(key, value, value[:max_val_len]))
+                        warnings.warn(f'Key \'{key}\' with value \'{value}\' is too long for ' \
+                                      f'the FITS format. To avoid an error, the value was ' \
+                                      f'truncated to \'{value[:max_val_len]}\'.')
 
                     prihdr[key] = value[:max_val_len]
 
@@ -122,7 +121,7 @@ class FitsWritingModule(WritingModule):
             hdulist = fits.HDUList([hdu])
             hdulist.writeto(out_name, overwrite=self.m_overwrite)
 
-            sys.stdout.write(" [DONE]\n")
+            sys.stdout.write(' [DONE]\n')
             sys.stdout.flush()
 
         self.m_data_port.close_port()
