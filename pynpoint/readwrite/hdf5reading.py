@@ -1,5 +1,6 @@
 """
-Module for reading HDF5 files that were created with the Hdf5WritingModule.
+Module for reading HDF5 files that were created with the
+:class:`~pynpoint.readwrite.hdf5writing.Hdf5WritingModule`.
 """
 
 import os
@@ -25,7 +26,7 @@ class Hdf5ReadingModule(ReadingModule):
     """
 
     def __init__(self,
-                 name_in="hdf5_reading",
+                 name_in='hdf5_reading',
                  input_filename=None,
                  input_dir=None,
                  tag_dictionary=None):
@@ -86,8 +87,9 @@ class Hdf5ReadingModule(ReadingModule):
             tag_out = self._m_tag_dictionary[tag_in]
 
             if tag_in not in hdf5_file:
-                warnings.warn("The dataset with tag name '{0}' is not found in the HDF5 file."
-                              .format(tag_in))
+                warnings.warn(f'The dataset with tag name \'{tag_in}\' is not found in the HDF5 '
+                              f'file.')
+
                 continue
 
             # add data
@@ -99,9 +101,9 @@ class Hdf5ReadingModule(ReadingModule):
                 port_out.add_attribute(name=attr_name, value=attr_value)
 
             # add non-static attributes
-            if "header_" + tag_in in hdf5_file:
-                for attr_name in hdf5_file["header_" + tag_in]:
-                    attr_val = hdf5_file["header_" + tag_in + "/" + attr_name][...]
+            if 'header_' + tag_in in hdf5_file:
+                for attr_name in hdf5_file['header_' + tag_in]:
+                    attr_val = hdf5_file['header_' + tag_in + '/' + attr_name][...]
                     port_out.add_attribute(name=attr_name, value=attr_val, static=False)
 
     def run(self):
@@ -124,7 +126,7 @@ class Hdf5ReadingModule(ReadingModule):
         if self.m_filename is not None:
             # create file path + filename
             assert(os.path.isfile((tmp_dir + str(self.m_filename)))), \
-                   "Error: Input file does not exist. Input requested: %s" % str(self.m_filename)
+                   f'Error: Input file does not exist. Input requested: {self.m_filename}'
 
             files.append((tmp_dir + str(self.m_filename)))
 
@@ -133,11 +135,11 @@ class Hdf5ReadingModule(ReadingModule):
             for tmp_file in os.listdir(self.m_input_location):
                 if tmp_file.endswith('.hdf5') or tmp_file.endswith('.h5'):
                     files.append(tmp_dir + str(tmp_file))
-        
+
         start_time = time.time()
         for i, tmp_file in enumerate(files):
-            progress(i, len(files), "Running Hdf5ReadingModule...", start_time)
+            progress(i, len(files), 'Running Hdf5ReadingModule...', start_time)
             self._read_single_hdf5(tmp_file)
 
-        sys.stdout.write("Running Hdf5ReadingModule... [DONE]\n")
+        sys.stdout.write('Running Hdf5ReadingModule... [DONE]\n')
         sys.stdout.flush()

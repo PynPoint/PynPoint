@@ -19,7 +19,7 @@ class Hdf5WritingModule(WritingModule):
 
     def __init__(self,
                  file_name,
-                 name_in="hdf5_writing",
+                 name_in='hdf5_writing',
                  output_dir=None,
                  tag_dictionary=None,
                  keep_attributes=True,
@@ -70,7 +70,7 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write("Running Hdf5WritingModule...")
+        sys.stdout.write('Running Hdf5WritingModule...')
         sys.stdout.flush()
 
         if self.m_overwrite:
@@ -101,12 +101,12 @@ class Hdf5WritingModule(WritingModule):
                 if non_static_attr_keys is not None:
                     for key in non_static_attr_keys:
                         tmp_data_attr = tmp_port.get_attribute(key)
-                        attr_tag = "header_" + out_tag + "/" + key
+                        attr_tag = 'header_' + out_tag + '/' + key
                         out_file.create_dataset(attr_tag, data=tmp_data_attr)
 
             tmp_port.close_port()
 
         out_file.close()
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()

@@ -19,9 +19,9 @@ class ParangReadingModule(ReadingModule):
 
     def __init__(self,
                  file_name,
-                 name_in="parang_reading",
+                 name_in='parang_reading',
                  input_dir=None,
-                 data_tag="im_arr",
+                 data_tag='im_arr',
                  overwrite=False):
         """
         Parameters
@@ -47,7 +47,7 @@ class ParangReadingModule(ReadingModule):
         super(ParangReadingModule, self).__init__(name_in, input_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Input 'file_name' needs to be a string.")
+            raise ValueError('Input \'file_name\' needs to be a string.')
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -65,33 +65,33 @@ class ParangReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write("Running ParangReadingModule...")
+        sys.stdout.write('Running ParangReadingModule...')
         sys.stdout.flush()
 
         parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
 
         if parang.ndim != 1:
-            raise ValueError("The input file %s should contain a 1D data set with the parallactic "
-                             "angles." % self.m_file_name)
+            raise ValueError(f'The input file {self.m_file_name} should contain a 1D data set with '
+                             f'the parallactic angles.')
 
-        status = self.m_data_port.check_non_static_attribute("PARANG", parang)
+        status = self.m_data_port.check_non_static_attribute('PARANG', parang)
 
         if status == 1:
-            self.m_data_port.add_attribute("PARANG", parang, static=False)
+            self.m_data_port.add_attribute('PARANG', parang, static=False)
 
         elif status == -1 and self.m_overwrite:
-            self.m_data_port.add_attribute("PARANG", parang, static=False)
+            self.m_data_port.add_attribute('PARANG', parang, static=False)
 
         elif status == -1 and not self.m_overwrite:
-            warnings.warn("The PARANG attribute is already present. Set the 'overwrite' parameter "
-                          "to True in order to overwrite the values with "+str(self.m_file_name)+
-                          ".")
+            warnings.warn(f'The PARANG attribute is already present. Set the \'overwrite\' '
+                          f'parameter to True in order to overwrite the values with '
+                          f'{self.m_file_name}.')
 
         elif status == 0:
-            warnings.warn("The PARANG attribute is already present and contains the same values "
-                          "as are present in "+str(self.m_file_name)+".")
+            warnings.warn(f'The PARANG attribute is already present and contains the same values '
+                          f'as are present in {self.m_file_name}.')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         self.m_data_port.close_port()
@@ -106,9 +106,9 @@ class AttributeReadingModule(ReadingModule):
     def __init__(self,
                  file_name,
                  attribute,
-                 name_in="attribute_reading",
+                 name_in='attribute_reading',
                  input_dir=None,
-                 data_tag="im_arr",
+                 data_tag='im_arr',
                  overwrite=False):
         """
         Parameters
@@ -136,7 +136,7 @@ class AttributeReadingModule(ReadingModule):
         super(AttributeReadingModule, self).__init__(name_in, input_dir)
 
         if not isinstance(file_name, str):
-            raise ValueError("Input 'file_name' needs to be a string.")
+            raise ValueError('Input \'file_name\' needs to be a string.')
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -155,20 +155,20 @@ class AttributeReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write("Running AttributeReadingModule...")
+        sys.stdout.write('Running AttributeReadingModule...')
         sys.stdout.flush()
 
         attributes = get_attributes()
 
         if self.m_attribute not in attributes:
-            raise ValueError("'%s' is not a valid attribute." % self.m_attribute)
+            raise ValueError(f'\'{self.m_attribute}\' is not a valid attribute.')
 
         values = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name),
-                            dtype=attributes[self.m_attribute]["type"])
+                            dtype=attributes[self.m_attribute]['type'])
 
         if values.ndim != 1:
-            raise ValueError("The input file %s should contain a 1D list with attributes."
-                             % self.m_file_name)
+            raise ValueError(f'The input file {self.m_file_name} should contain a 1D list with '
+                             f'attributes.')
 
         status = self.m_data_port.check_non_static_attribute(self.m_attribute, values)
 
@@ -179,15 +179,15 @@ class AttributeReadingModule(ReadingModule):
             self.m_data_port.add_attribute(self.m_attribute, values, static=False)
 
         elif status == -1 and not self.m_overwrite:
-            warnings.warn("The attribute '"+str(self.m_attribute)+"' is already present. Set the "
-                          "'overwrite' parameter to True in order to overwrite the values with "
-                          +str(self.m_file_name)+".")
+            warnings.warn(f'The attribute \'{self.m_attribute}\' is already present. Set the '
+                          f'\'overwrite\' parameter to True in order to overwrite the values with '
+                          f'{self.m_file_name}.')
 
         elif status == 0:
-            warnings.warn("The '"+str(self.m_attribute)+"' attribute is already present and "
-                          "contains the same values as are present in "+str(self.m_file_name)+".")
+            warnings.warn(f'The \'{self.m_attribute}\' attribute is already present and '
+                          f'contains the same values as are present in {self.m_file_name}.')
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         self.m_data_port.close_port()
