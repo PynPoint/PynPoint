@@ -217,7 +217,7 @@ class TestNearInitModule(object):
 
         assert len(warning) == 2
 
-        assert warning[0].message.args[0] == 'FITS file contains odd number of images: ' \
+        assert warning[0].message.args[0] == f'FITS file contains odd number of images: ' \
                                              f'{self.fitsfile}'
 
         assert warning[1].message.args[0] == 'The number of chop cycles (5) is not equal to ' \
