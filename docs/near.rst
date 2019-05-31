@@ -24,9 +24,9 @@ In this example, we will process the images of chop A (i.e., frames in which alp
 Setup
 ^^^^^
 
-To get started, use the instructions available in the :ref:`installation_github` section to install PynPoint.
+To get started, use the instructions available in the :ref:`installation` section to install PynPoint.
 
-The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
+The results shown below are based on 1 hour of commissioning data of alpha Cen, which are available in the ESO archive under program ID |archive|. Alternatively, there is a |bash| available to download all the uncompressed FITS files directly (126 Gb). First make the bash script executable::
 
     $ chmod +x near_files.sh
 
@@ -419,6 +419,10 @@ Or to plot the detection limits with the error bars showing the variance of the 
 .. |stolker| raw:: html
 
    <a href="http://adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
+
+.. |archive| raw:: html
+
+   <a href="http://archive.eso.org/wdb/wdb/eso/sched_rep_arc/query?progid=2102.C-5011(A)" target="_blank">2102.C-5011(A)</a>
 
 .. |bash| raw:: html
 
