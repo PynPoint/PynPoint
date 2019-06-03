@@ -174,6 +174,7 @@ class ContrastCurveModule(ProcessingModule):
         '''TEMPORARY FIX PHILIPP'''
         if len(psf.shape) == 2:
             psf = np.dstack([1]*psf)
+        '''FIX END'''
 
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
@@ -244,6 +245,8 @@ class ContrastCurveModule(ProcessingModule):
 	                                        angles=-1.*parang+self.m_extra_rot,
 	                                        pca_numbers=self.m_pca_number,
 	                                        pca_number_init=self.m_pca_number_init)
+
+        
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 

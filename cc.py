@@ -13,7 +13,8 @@ import sys
 from pynpoint import Pypeline, Hdf5ReadingModule, FitsReadingModule,\
                      PSFpreparationModule, ParangReadingModule,\
                      PcaPsfSubtractionModule,\
-                     FalsePositiveModule, ContrastCurveModule, DerotateAndStackModule
+                     FalsePositiveModule, ContrastCurveModule, DerotateAndStackModule,\
+                     RemoveFramesModule
 
 working_place = "/home/Dropbox/Dropbox/1_Philipp/1_UZH/8_FS19/BachelorProject/PynPoint"
 input_place = "/home/philipp/Documents/BA_In_out/raw/tauceti/"
@@ -59,8 +60,17 @@ pipeline.add_module(module)
 module = ParangReadingModule(file_name="parang.dat",
                              name_in="parang",
                              input_dir=input_place,
-                             data_tag="science")
+                             data_tag="stack")
 
+pipeline.add_module(module)
+
+
+module = RemoveFramesModule(np.arange(0, 410, 1),
+                 name_in="remove_frames",
+                 image_in_tag="stack",
+                 selected_out_tag="stack_short",
+                 removed_out_tag="im_arr_removed")
+                 
 pipeline.add_module(module)
 
 
@@ -78,16 +88,16 @@ pipeline.add_module(module)
 
 
 module = ContrastCurveModule(name_in="contrast",
-                 image_in_tag="stack",
+                 image_in_tag="stack_short",
                  psf_in_tag="psf_in",
                  contrast_out_tag="contrast_limits",
-                 separation=(0.1, 1, 0.5),
-                 angle=(0., 360., 90.),
+                 separation=(0.1, 1.0, 0.01),
+                 angle=(0., 360., 60.),
                  threshold=("sigma", 5.),
                  psf_scaling=1,
-                 aperture=0.05,
-                 pca_number=1,
-                 pca_number_init=None,
+                 aperture=0.1,
+                 pca_number=2,
+                 pca_number_init=1,
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
@@ -125,7 +135,7 @@ pipeline.run()
 #print(dic)
 
 contrast = pipeline.get_data("contrast_limits")
-print(contrast)
+#print(contrast)
 
 #pixscale = pipeline.get_attribute("science", "PIXSCALE")
 #size = pixscale*residuals.shape[-1]/2.

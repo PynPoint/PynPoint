@@ -1,3 +1,4 @@
+
 import os
 import urllib
 import numpy as np
@@ -24,8 +25,7 @@ output_place = "output/"
 
 
 '''initial and ending ranks'''
-rank_ipca_init = 20
-rank_ipca_end = 21
+rank_ipca_init = 1
 
 # Python 3
 #urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
@@ -84,29 +84,29 @@ pipeline.add_module(module)
 ##pipeline.add_module(module)
 #
 #
-#module = PcaPsfSubtractionModule(pca_numbers=(20),
-#                                 name_in="pca",
-#                                 images_in_tag="science_cropped",
-#                                 reference_in_tag="science_cropped",
-#                                 res_mean_tag="residuals")
-#
-#
-#pipeline.add_module(module)
-
-
-module = IterativePcaPsfSubtractionModule(pca_numbers=(rank_ipca_end, ),
-                                 pca_number_init = rank_ipca_init,
-                                 name_in="ipca",
+module = PcaPsfSubtractionModule(pca_numbers=(2),
+                                 name_in="pca",
                                  images_in_tag="science_cropped",
                                  reference_in_tag="science_cropped",
-                                 res_mean_tag= "residuals",
-                                 subtract_mean = False)
+                                 res_mean_tag="residuals")
+
 
 pipeline.add_module(module)
 
 
+#module = IterativePcaPsfSubtractionModule(pca_numbers=(20, ),
+#                                 pca_number_init = 15,
+#                                 name_in="ipca",
+#                                 images_in_tag="science_cropped",
+#                                 reference_in_tag="science_cropped",
+#                                 res_mean_tag= "residuals",
+#                                 subtract_mean = False)
+#
+#pipeline.add_module(module)
+
+
 module = AperturePhotometryModule(radius=0.1,
-                 position=(49, 54),
+                 position=(49, 52),
                  name_in="aperture_photometry",
                  image_in_tag="residuals",
                  phot_out_tag="photometry")
@@ -120,10 +120,10 @@ pipeline.run()
 photometry = pipeline.get_data("photometry")
 print(photometry)
 
-print(np.shape(pipeline.get_data("science_cropped")))
-
+#print(np.shape(pipeline.get_data("science_cropped")))
+#
 residuals = pipeline.get_data("residuals")
-fake = pipeline.get_data("im_fake")
+#fake = pipeline.get_data("im_fake")
 
 pixscale = pipeline.get_attribute("science_cropped", "PIXSCALE")
 size = pixscale*residuals.shape[-1]/2.
@@ -134,14 +134,15 @@ plt.title("Challenge Pynpoint - %i PCs"%(15))
 plt.xlabel('R.A. offset [arcsec]', fontsize=12)
 plt.ylabel('Dec. offset [arcsec]', fontsize=12)
 plt.colorbar()
-plt.savefig(os.path.join(output_place, "flux_real.png"), bbox_inches='tight')
+plt.show()
+#plt.savefig(os.path.join(output_place, "flux_real.png"), bbox_inches='tight')
 
-plt.figure()
-plt.imshow(fake[0, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
-plt.title("Challenge Pynpoint - %i PCs"%(15))
-plt.xlabel('R.A. offset [arcsec]', fontsize=12)
-plt.ylabel('Dec. offset [arcsec]', fontsize=12)
-plt.colorbar()
-plt.savefig(os.path.join(output_place, "flux_fake.png"), bbox_inches='tight')
+#plt.figure()
+#plt.imshow(fake[0, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
+#plt.title("Challenge Pynpoint - %i PCs"%(15))
+#plt.xlabel('R.A. offset [arcsec]', fontsize=12)
+#plt.ylabel('Dec. offset [arcsec]', fontsize=12)
+#plt.colorbar()
+#plt.savefig(os.path.join(output_place, "flux_fake.png"), bbox_inches='tight')
 ##hdu = fits.PrimaryHDU(data=residuals)
 ##hdu.writeto(os.path.join(output_place, "residuals_ipca_%i_%i.fits"%(rank_ipca_init, rank_ipca_end)))

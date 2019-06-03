@@ -90,6 +90,9 @@ def pca_psf_subtraction(images,
     res_rot = np.zeros(residuals.shape)
     for j, item in enumerate(angles):
         res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
+        
+    print(res_rot)
+    print(np.shape(res_rot))
 
     return residuals, res_rot
 
@@ -135,6 +138,7 @@ def iterative_pca_psf_subtraction(images,
 
     im_shape = images.shape
     
+    
     if indices is None:
         # select the first image and get the unmasked image indices
         im_star = images[0, ].reshape(-1)
@@ -142,7 +146,9 @@ def iterative_pca_psf_subtraction(images,
 
     # reshape the images and select the unmasked pixels
     im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
-    im_reshape = im_reshape[:, indices]
+    
+    '''what does this do? causes problem in contrastcurvemodule if active'''
+    #im_reshape = im_reshape[:, indices]
     # subtract mean image
     #im_reshape -= np.mean(im_reshape, axis=0)
 
@@ -157,7 +163,9 @@ def iterative_pca_psf_subtraction(images,
         S = im_reshape - LRA(im_reshape-theta(red(S, im_shape, angles), im_shape, angles), i)
         #save intermediate results to lists if the current pca_number corresponds to a final pca_number in pca_numbers
         if i in pca_numbers:
+            '''implement this?'''
             # subtract the psf model IMPLEMENT THIS?
+        
             residuals = deepcopy(S)
             
             # reshape to the original image size
@@ -171,8 +179,15 @@ def iterative_pca_psf_subtraction(images,
             #append the results to the lists   
             residuals_list.append(residuals)
             res_rot_list.append(res_rot)
-      
-    return residuals_list, res_rot_list
+            
+    residuals = np.asarray(residuals_list)
+    res_rot = np.asarray(res_rot_list)
+    
+    
+    print(res_rot[0])
+    print(np.shape(res_rot[0]))
+    
+    return residuals[0], res_rot[0]
     
 
 def SVD(A):
