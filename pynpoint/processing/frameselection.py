@@ -1069,7 +1069,6 @@ class SelectByAttributeModule(ProcessingModule):
         index = index[sorting_order]
 
         indices = index[:self.m_number_frames]
-        print(attribute, indices, sorting_order)
         # copied from FrameSelectionModule ...
         # possibly refactor to @staticmethod or move to util.remove
         start_time = time.time()

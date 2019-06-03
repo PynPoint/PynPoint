@@ -339,7 +339,7 @@ class TestFrameSelection:
         assert len(similarity) + len(sim_removed) == total_length
 
         # check sorted
-        assert all([similarity[i] >= similarity[i+1] for i in range(len(similarity)-1)])
+        assert all(similarity[i] >= similarity[i+1] for i in range(len(similarity)-1))
 
         # check that the selected attributes are in the correct tags
         assert np.min(similarity) > np.max(sim_removed)
