@@ -839,7 +839,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         image_x_i = images[reference_index]
 
-        if not temporal_median:
+        if isinstance(temporal_median, bool):
             image_m = _temporal_median(reference_index, images=images)
         else:
             image_m = temporal_median
@@ -863,7 +863,6 @@ class FrameSimilarityModule(ProcessingModule):
                 winsize = int(window_size) + 1
             else:
                 winsize = int(window_size)
-
             return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
 
     @typechecked
@@ -905,6 +904,7 @@ class FrameSimilarityModule(ProcessingModule):
             images *= mask
         else:
             images = crop_image(images, None, int(self.m_mask_radii[1]))
+            temporal_median = crop_image(temporal_median, None, int(self.m_mask_radii[1]))
 
         # compare images and store similarity
         similarities = np.zeros(nimages)
@@ -1066,10 +1066,9 @@ class SelectByAttributeModule(ProcessingModule):
             sorting_order = np.argsort(attribute)
 
         attribute = attribute[sorting_order]
-        index  = index[sorting_order]
+        index = index[sorting_order]
 
         indices = index[:self.m_number_frames]
-
         # copied from FrameSelectionModule ...
         # possibly refactor to @staticmethod or move to util.remove
         start_time = time.time()

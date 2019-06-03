@@ -297,7 +297,8 @@ class TestFrameSelection:
 
         module = FrameSimilarityModule(name_in='simi3',
                                        image_tag='read',
-                                       method='SSIM')
+                                       method='SSIM',
+                                       temporal_median='constant')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi3')
@@ -308,17 +309,17 @@ class TestFrameSelection:
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.99900092706276, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9999775533904105, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 43.99904804731305, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 0.9999785978135135, rtol=limit, atol=0.)
 
     def test_select_by_attribute(self):
 
         total_length = self.pipeline.get_shape('read')[0]
         self.pipeline.set_attribute('read', 'INDEX', range(total_length), static=False)
-
+        attribute_tag = 'SSIM'
         module = SelectByAttributeModule(name_in='frame_removal_1',
                                          image_in_tag='read',
-                                         attribute_tag='SSIM',
+                                         attribute_tag=attribute_tag,
                                          number_frames=6,
                                          order='descending',
                                          selected_out_tag='select_sim',
@@ -328,8 +329,8 @@ class TestFrameSelection:
         self.pipeline.run_module('frame_removal_1')
 
         index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
-        similarity = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
-        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
+        similarity = self.pipeline.get_attribute('select_sim', attribute_tag, static=False)
+        sim_removed = self.pipeline.get_attribute('remove_sim', attribute_tag, static=False)
 
         # check attribute length
         assert self.pipeline.get_shape('select_sim')[0] == 6
