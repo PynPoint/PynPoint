@@ -74,6 +74,7 @@ def false_alarm(image,
                             (y_pos-center[0])*math.cos(theta)
 
         aperture = CircularAperture((x_tmp, y_tmp), size)
+
         phot_table = aperture_photometry(image, aperture, method='exact')
         ap_phot[i] = phot_table['aperture_sum']
 

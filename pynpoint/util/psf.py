@@ -183,11 +183,7 @@ def iterative_pca_psf_subtraction(images,
     residuals = np.asarray(residuals_list)
     res_rot = np.asarray(res_rot_list)
     
-    
-    print(res_rot[0])
-    print(np.shape(res_rot[0]))
-    
-    return residuals[0], res_rot[0]
+    return residuals, res_rot
     
 
 def SVD(A):
