@@ -19,7 +19,7 @@ from pynpoint.util.limits import contrast_limit
 from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction, iterative_pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-from copy import deepcopy
+from copy import deepcopy, copy
 
 
 class ContrastCurveModule(ProcessingModule):
@@ -241,9 +241,7 @@ class ContrastCurveModule(ProcessingModule):
             _, im_res = pca_psf_subtraction(images=images*mask,
 	                                        angles=-1.*parang+self.m_extra_rot,
 	                                        pca_number=self.m_pca_number)
-                                         
-            print(im_res)
-            print(np.shape(im_res))
+                           
         else:
             _, im_res = iterative_pca_psf_subtraction(images=images*mask,
 	                                        angles=-1.*parang+self.m_extra_rot,
@@ -251,8 +249,7 @@ class ContrastCurveModule(ProcessingModule):
 	                                        pca_number_init=self.m_pca_number_init)
             
             im_res = im_res[0]
-        
-
+            
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
         pool = mp.Pool(cpu)

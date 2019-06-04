@@ -147,6 +147,8 @@ def contrast_limit(path_images,
 	                                        angles=-1.*parang+extra_rot,
 	                                        pca_numbers=pca_number,
 	                                        pca_number_init=pca_number_init)
+                                         
+        im_res = im_res[0]
 
     # Stack the residuals
     im_res = combine_residuals(method=residuals, res_rot=im_res)

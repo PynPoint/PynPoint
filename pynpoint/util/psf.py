@@ -90,9 +90,6 @@ def pca_psf_subtraction(images,
     res_rot = np.zeros(residuals.shape)
     for j, item in enumerate(angles):
         res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
-        
-    print(res_rot)
-    print(np.shape(res_rot))
 
     return residuals, res_rot
 
