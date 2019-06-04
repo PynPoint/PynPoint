@@ -393,13 +393,12 @@ class MassLimitsModule(ProcessingModule):
             if '(Gyr)' in _line:
                 # get time line
                 ages += [float(_line[-1])]
-                k += 1
                 isochrones += [[]]
+                k += 1
 
             elif 'lg(g)' in _line:
                 # get header line
-                temp = ['M/Ms', 'Teff(K)'] + _line[1:]
-                header = temp
+                header = ['M/Ms', 'Teff(K)'] + _line[1:]
 
             else:
                 # save the data

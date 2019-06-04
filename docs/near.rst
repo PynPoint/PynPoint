@@ -8,7 +8,7 @@ Data Reduction
 Introduction
 ------------
 
-The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the Alpha Cen Region) experiment. 
+The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the Alpha Cen Region) experiment. All data are available in the ESO archive under program ID |archive|.
 
 The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. Further details about the pipeline architecture and data processing are also available in |stolker|. More in-depth information of the input parameters for individual PynPoint modules can be found in the :ref:`api`. 
 
@@ -26,7 +26,7 @@ Setup
 
 To get started, use the instructions available in the :ref:`installation` section to install PynPoint.
 
-The results shown below are based on 1 hour of commissioning data of alpha Cen, which are available in the ESO archive under program ID |archive|. Alternatively, there is a |bash| available to download all the uncompressed FITS files directly (126 Gb). First make the bash script executable::
+The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
 
     $ chmod +x near_files.sh
 
