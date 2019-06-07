@@ -177,16 +177,22 @@ class ContrastCurveModule(ProcessingModule):
         """
 
         temp_images = []
+        angles = []
         if hasattr(self, 'm_image_in_port_1'):
             temp_images += [self.m_image_in_port_1.get_all()]
+            angles += [self.m_image_in_port_1.get_attribute("PARANG")]
         if hasattr(self, 'm_image_in_port_2'):
             temp_images += [self.m_image_in_port_2.get_all()]
+            angles += [self.m_image_in_port_2.get_attribute("PARANG")]
         if hasattr(self, 'm_image_in_port_3'):
             temp_images += [self.m_image_in_port_3.get_all()]
+            angles += [self.m_image_in_port_3.get_attribute("PARANG")]
         if hasattr(self, 'm_image_in_port_4'):
             temp_images += [self.m_image_in_port_4.get_all()]
+            angles += [self.m_image_in_port_4.get_attribute("PARANG")]
 
-
+        images = np.concatenate(temp_images)
+        parang = np.concatenate(angles)
         psf = self.m_psf_in_port.get_all()
 
         if psf.shape[0] != 1 and psf.shape[0] != temp_images[0].shape[0]:
@@ -196,7 +202,6 @@ class ContrastCurveModule(ProcessingModule):
                              'applying the ContrastCurveModule.'.format(psf.shape, temp_images[0].shape))
 
         cpu = self._m_config_port.get_attribute("CPU")
-        parang = self.m_image_in_port_1.get_attribute("PARANG")
         pixscale = self.m_image_in_port_1.get_attribute("PIXSCALE")
 
         if self.m_cent_size is not None:
@@ -239,66 +244,28 @@ class ContrastCurveModule(ProcessingModule):
 
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
-        noise = []
-        im_res = []
-
-        pca_sklearn = []
-        PC_bases = np.array([])
-        explained_var = np.array([])
-
         # Create temporary files
-        for _, images in enumerate(temp_images):
-            # create PCA basis for each set individually
-            # store these bases
-            #
-            # ALLOW FOR PCA NUMBER TO BE CHOSEN INDIVIDUALLY FOR EACH SET
-            #
-            pca_sklearn += [PCA(n_components=self.m_pca_number, svd_solver="arpack").fit(images)]
-            explained_var = np.append(explained_var, pca_sklearn[-1].explained_variance_, axis=0)
-            PC_bases += np.append(PC_bases, pca_sklearn[-1].components_, axis=0)
-
-        # sort the explained_variances_
-        sorting_order = np.argsort(explained_var)[::-1]
-        # sort the bases by explained_variance_
-        explained_var = explained_var[sorting_order]
-        PC_bases = PC_bases[sorting_order]
-        # sort paralactic angles
-        parang = parang[sorting_order]
-        # fuck up a new PCA class
-        pca_model = PCA(n_components=len(sorting_order), svd_solver="arpack")
-
-        sh = images.shape[-2:]
-        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
-
-        # for _, images in enumerate(temp_images):
-            # sh = images.shape[-2:]
-            # mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
-
-            # _, im_res_ = pca_psf_subtraction(images=images*mask,
-            #                                 angles=-1.*parang+self.m_extra_rot,
-            #                                 pca_number=self.m_pca_number)
-            # im_res += [im_res_]
-            # noise += [combine_residuals(method=self.m_residuals, res_rot=im_res)]
-
-
-        # run new PCA class on all images
-        images = np.array(temp_images).reshape((-1, *sh))
-
-        _, im_res_ = pca_psf_subtraction(images=images*mask,
-                                            angles=-1.*parang+self.m_extra_rot,
-                                            pca_number=self.m_pca_number,
-                                            pca_sklearn=pca_model,
-                                            im_shape=images.shape)
-
-
-        im_res = np.nanmedian(im_res, axis=0)
-        noise = np.nanmedian(noise, axis=0)
-
         tmp_im_str = os.path.join(working_place, "tmp_images.npy")
         tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
+
+        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+        
+        temp_im_res = []
+        temp_noise = []
+        for i, image in enumerate(temp_images):
+            _, im_res = pca_psf_subtraction(images=image*mask,
+                                            angles=-1.*angles[i]+self.m_extra_rot,
+                                            pca_number=self.m_pca_number)
+            temp_im_res += [im_res]
+
+            noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
+            temp_noise += [noise]
+
+        
+
 
         pool = mp.Pool(cpu)
 
