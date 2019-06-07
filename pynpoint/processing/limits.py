@@ -29,20 +29,20 @@ class ContrastCurveModule(ProcessingModule):
     """
 
     def __init__(self,
-                 name_in="contrast",
-                 image_in_tag="im_arr",
-                 psf_in_tag="im_psf",
-                 contrast_out_tag="contrast_limits",
+                 name_in='contrast',
+                 image_in_tag='im_arr',
+                 psf_in_tag='im_psf',
+                 contrast_out_tag='contrast_limits',
                  separation=(0.1, 1., 0.01),
                  angle=(0., 360., 60.),
-                 threshold=("sigma", 5.),
+                 threshold=('sigma', 5.),
                  psf_scaling=1.,
                  aperture=0.05,
                  pca_number=20,
                  cent_size=None,
                  edge_size=None,
                  extra_rot=0.,
-                 residuals="median",
+                 residuals='median',
                  snr_inject=100.,
                  **kwargs):
         """
@@ -68,9 +68,9 @@ class ContrastCurveModule(ProcessingModule):
             (lower limit, upper limit, step size), measured counterclockwise with respect to the
             vertical image axis, i.e. East of North.
         threshold : tuple(str, float)
-            Detection threshold for the contrast curve, either in terms of "sigma" or the false
-            positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.)
-            or ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will
+            Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.)
+            or ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will
             change with separation. Also, sigma only corresponds to the standard deviation of a
             normal distribution at large separations (i.e., large number of samples).
         psf_scaling : float
@@ -89,7 +89,7 @@ class ContrastCurveModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
-            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
@@ -102,25 +102,25 @@ class ContrastCurveModule(ProcessingModule):
 
         super(ContrastCurveModule, self).__init__(name_in)
 
-        if "sigma" in kwargs:
-            warnings.warn("The 'sigma' parameter has been deprecated. Please use the 'threshold' "
-                          "parameter instead.", DeprecationWarning)
+        if 'sigma' in kwargs:
+            warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
+                          '\'threshold\' parameter instead.', DeprecationWarning)
 
-        if "norm" in kwargs:
-            warnings.warn("The 'norm' parameter has been deprecated. It is not recommended to "
-                          "normalize the images before PSF subtraction.", DeprecationWarning)
+        if 'norm' in kwargs:
+            warnings.warn('The \'norm\' parameter has been deprecated. It is not recommended to '
+                          'normalize the images before PSF subtraction.', DeprecationWarning)
 
-        if "accuracy" in kwargs:
-            warnings.warn("The 'accuracy' parameter has been deprecated. The parameter is no "
-                          "longer required.", DeprecationWarning)
+        if 'accuracy' in kwargs:
+            warnings.warn('The \'accuracy\' parameter has been deprecated. The parameter is no '
+                          'longer required.', DeprecationWarning)
 
-        if "magnitude" in kwargs:
-            warnings.warn("The 'magnitude' parameter has been deprecated. The parameter is no "
-                          "longer required.", DeprecationWarning)
+        if 'magnitude' in kwargs:
+            warnings.warn('The \'magnitude\' parameter has been deprecated. The parameter is no '
+                          'longer required.', DeprecationWarning)
 
-        if "ignore" in kwargs:
-            warnings.warn("The 'ignore' parameter has been deprecated. The parameter is no "
-                          "longer required.", DeprecationWarning)
+        if 'ignore' in kwargs:
+            warnings.warn('The \'ignore\' parameter has been deprecated. The parameter is no '
+                          'longer required.', DeprecationWarning)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -146,8 +146,8 @@ class ContrastCurveModule(ProcessingModule):
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
            self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
 
-            raise ValueError("The angular positions of the fake planets should lie between "
-                             "0 deg and 360 deg.")
+            raise ValueError('The angular positions of the fake planets should lie between '
+                             '0 deg and 360 deg.')
 
     def run(self):
         """
@@ -167,14 +167,14 @@ class ContrastCurveModule(ProcessingModule):
         psf = self.m_psf_in_port.get_all()
 
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
-            raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
-                             'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
-                             'be used to average the PSF frames (without derotating) before '
-                             'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
+            raise ValueError(f'The number of frames in psf_in_tag {psf.shape} does not match with '
+                             f'the number of frames in image_in_tag {images.shape}. The '
+                             f'DerotateAndStackModule can be used to average the PSF frames '
+                             f'(without derotating) before applying the ContrastCurveModule.')
 
-        cpu = self._m_config_port.get_attribute("CPU")
-        parang = self.m_image_in_port.get_attribute("PARANG")
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        cpu = self._m_config_port.get_attribute('CPU')
+        parang = self.m_image_in_port.get_attribute('PARANG')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -214,11 +214,11 @@ class ContrastCurveModule(ProcessingModule):
         result = []
         async_results = []
 
-        working_place = self._m_config_port.get_attribute("WORKING_PLACE")
+        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
 
         # Create temporary files
-        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
-        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
+        tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
+        tmp_psf_str = os.path.join(working_place, 'tmp_psf.npy')
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
@@ -256,7 +256,7 @@ class ContrastCurveModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished/len(positions), 1, "Running ContrastCurveModule...")
+            progress(nfinished/len(positions), 1, 'Running ContrastCurveModule...')
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
@@ -286,11 +286,11 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        sys.stdout.write("\rRunning ContrastCurveModule... [DONE]\n")
+        sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
         sys.stdout.flush()
 
-        history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
-        self.m_contrast_out_port.add_history("ContrastCurveModule", history)
+        history = f'{self.m_threshold[0]} = {self.m_threshold[1]}'
+        self.m_contrast_out_port.add_history('ContrastCurveModule', history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
 
@@ -301,15 +301,15 @@ class MassLimitsModule(ProcessingModule):
     downloaded from https://phoenix.ens-lyon.fr/Grids/.
     """
 
-    __author__ = "Benedikt Schmidhuber, Tomas Stolker"
+    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
 
     def __init__(self,
                  model_file,
                  star_prop,
-                 name_in="mass",
-                 contrast_in_tag="contrast_limits",
-                 mass_out_tag="mass_limits",
-                 instr_filter="L\'"):
+                 name_in='mass',
+                 contrast_in_tag='contrast_limits',
+                 mass_out_tag='mass_limits',
+                 instr_filter='L\''):
 
         """
         Parameters
@@ -471,13 +471,13 @@ class MassLimitsModule(ProcessingModule):
             None
         """
 
-        sys.stdout.write("Running MassLimitsModule...")
+        sys.stdout.write('Running MassLimitsModule...')
         sys.stdout.flush()
 
         model_age, model_data, model_header = self.read_model()
 
-        assert self.m_instr_filter in model_header, "The selected filter was not found in the " \
-                                                    "list of available filters from the model."
+        assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
+                                                    'list of available filters from the model.'
 
         # find the correct filter
         # simple argwhere gives empty list?!
@@ -513,10 +513,10 @@ class MassLimitsModule(ProcessingModule):
         mass_limits = np.column_stack((separation, mass, mass_upper, mass_lower))
         self.m_mass_out_port.set_all(mass_limits, data_dim=2)
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
-        history = f"filter = {self.m_instr_filter}"
-        self.m_mass_out_port.add_history("MassLimitsModule", history)
+        history = f'filter = {self.m_instr_filter}'
+        self.m_mass_out_port.add_history('MassLimitsModule', history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
