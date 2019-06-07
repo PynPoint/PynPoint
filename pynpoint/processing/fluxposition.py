@@ -189,7 +189,7 @@ class SimplexMinimizationModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with images that are read as input.
+            Tag of the database entry with the science images that are read as input.
         psf_in_tag : str
             Tag of the database entry with the reference PSF that is used as fake planet. Can be
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
@@ -357,16 +357,16 @@ class SimplexMinimizationModule(ProcessingModule):
             ref_reshape -= mean_ref
 
             # create the PCA basis
-            self.m_pca = PCA(n_components=self.m_pca_number, svd_solver='arpack')
-            self.m_pca.fit(ref_reshape)
+            sklearn_pca = PCA(n_components=self.m_pca_number, svd_solver='arpack')
+            sklearn_pca.fit(ref_reshape)
 
             # add mean of reference array as 1st PC and orthogonalize it to the PCA basis
             mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
 
             q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
-                                                 self.m_pca.components_[:-1, ])).T)
+                                                 sklearn_pca.components_[:-1, ])).T)
 
-            self.m_pca.components_ = q_ortho.T
+            sklearn_pca.components_ = q_ortho.T
 
         def _objective(arg):
             sys.stdout.write('.')
@@ -402,7 +402,7 @@ class SimplexMinimizationModule(ProcessingModule):
                 _, im_res = pca_psf_subtraction(images=im_reshape,
                                                 angles=-1.*parang+self.m_extra_rot,
                                                 pca_number=self.m_pca_number,
-                                                pca_sklearn=self.m_pca,
+                                                pca_sklearn=sklearn_pca,
                                                 im_shape=im_shape,
                                                 indices=None)
 
