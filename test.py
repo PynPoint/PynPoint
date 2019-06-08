@@ -13,18 +13,18 @@ import sys
 from pynpoint import Pypeline, Hdf5ReadingModule, FitsReadingModule,\
                      PSFpreparationModule, ParangReadingModule,\
                      PcaPsfSubtractionModule,\
-                     FalsePositiveModule, CropImagesModule
+                     FalsePositiveModule, CropImagesModule, FitsWritingModule
 
 from pynpoint.processing.iterativepsfsubtraction import IterativePcaPsfSubtractionModule
 
 working_place = "/home/Dropbox/Dropbox/1_Philipp/1_UZH/8_FS19/BachelorProject/PynPoint"
-input_place = "/home/philipp/Documents/BA_In_out/raw/tauceti/"
+input_place = "/home/philipp/Documents/BA_In_out/raw/hd101412/"
 output_place = "output/"
 
 
 '''initial and ending ranks'''
-rank_ipca_init = 10
-rank_ipca_end = 5
+rank_ipca_init = 15
+rank_ipca_end = 30
 
 # Python 3
 #urllib.request.urlretrieve("https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5",
@@ -55,7 +55,7 @@ module = ParangReadingModule(file_name="parang.dat",
 pipeline.add_module(module)
 
 
-module = CropImagesModule(2,
+module = CropImagesModule(0.2,
                  center=None,
                  name_in="crop_image",
                  image_in_tag="science",
@@ -86,8 +86,8 @@ pipeline.add_module(module)
 #pipeline.add_module(module)
 
 
-module = IterativePcaPsfSubtractionModule(pca_numbers=(6, 7,),
-                                 pca_number_init = 5,
+module = IterativePcaPsfSubtractionModule(pca_numbers=(25,),
+                                 pca_number_init = 15,
                                  name_in="ipca",
                                  images_in_tag="science_cropped",
                                  reference_in_tag="science_cropped",
@@ -97,8 +97,20 @@ module = IterativePcaPsfSubtractionModule(pca_numbers=(6, 7,),
 pipeline.add_module(module)
 
 
+module = FitsWritingModule("out.fits",
+                 name_in='fits_writing',
+                 output_dir=None,
+                 data_tag='residuals',
+                 data_range=None,
+                 overwrite=True)
+                 
+pipeline.add_module(module)
+
+
 pipeline.run()
+residuals = pipeline.get_data("residuals")
 print(pipeline.get_shape("residuals"))
+print(pipeline.get_attribute("science_cropped", "PIXSCALE"))
 
 #np.savetxt(output_place + "3new2.txt", residuals[0])
 #np.savetxt(output_place + "4new2.txt", residuals[1])
@@ -109,28 +121,28 @@ size = pixscale*residuals.shape[-1]/2.
 
 plt.figure()
 plt.imshow(residuals[0, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
-plt.title("Challenge Pynpoint - %i PCs"%(15))
+plt.title("IPCA 15 - 25 PC")
 plt.xlabel('R.A. offset [arcsec]', fontsize=12)
 plt.ylabel('Dec. offset [arcsec]', fontsize=12)
 plt.colorbar()
 plt.show()
-plt.savefig(os.path.join(output_place, "pynpoint.png"), bbox_inches='tight')
-
-plt.figure()
-plt.imshow(residuals[1, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
-plt.title("Challenge Pynpoint - %i PCs"%(15))
-plt.xlabel('R.A. offset [arcsec]', fontsize=12)
-plt.ylabel('Dec. offset [arcsec]', fontsize=12)
-plt.colorbar()
-plt.show()
-
-plt.figure()
-plt.imshow(residuals[2, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
-plt.title("Challenge Pynpoint - %i PCs"%(15))
-plt.xlabel('R.A. offset [arcsec]', fontsize=12)
-plt.ylabel('Dec. offset [arcsec]', fontsize=12)
-plt.colorbar()
-plt.show()
+plt.savefig(os.path.join(output_place, "ipca_best.png"), bbox_inches='tight')
+#
+#plt.figure()
+#plt.imshow(residuals[1, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
+#plt.title("Challenge Pynpoint - %i PCs"%(15))
+#plt.xlabel('R.A. offset [arcsec]', fontsize=12)
+#plt.ylabel('Dec. offset [arcsec]', fontsize=12)
+#plt.colorbar()
+#plt.show()
+#
+#plt.figure()
+#plt.imshow(residuals[2, ], origin='lower', extent=[size, -size, -size, size], vmax=None)
+#plt.title("Challenge Pynpoint - %i PCs"%(15))
+#plt.xlabel('R.A. offset [arcsec]', fontsize=12)
+#plt.ylabel('Dec. offset [arcsec]', fontsize=12)
+#plt.colorbar()
+#plt.show()
 #hdu = fits.PrimaryHDU(data=residuals)
 #hdu.writeto(os.path.join(output_place, "residuals_ipca_%i_%i.fits"%(rank_ipca_init, rank_ipca_end)))
 

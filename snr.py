@@ -35,8 +35,8 @@ pipeline = Pypeline(working_place_in=working_place,
 pca_numbers = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65]
 ipca_numbers_init = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 
-
-
+#
+#
 #pipeline = Pypeline(working_place_in=working_place,
 #                    input_place_in=input_place,
 #                    output_place_in=output_place)
@@ -80,12 +80,12 @@ ipca_numbers_init = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 #
 #
 #module = FalsePositiveModule(position=(49, 52),
-#                                         aperture=0.1,
+#                                         aperture=0.0083,
 #                                         ignore=True,
 #                                         name_in="snr_pca",
 #                                         image_in_tag="residuals_pca", #residuals
 #                                         snr_out_tag="snr_pca",
-#                                         optimize=True,
+#                                         optimize=False,
 #                                         tolerance=0.01)
 #            
 #pipeline.add_module(module)
@@ -104,20 +104,20 @@ ipca_numbers_init = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 #    pipeline.add_module(module)
 #    
 #    module = FalsePositiveModule(position=(49, 52),
-#                                         aperture=0.1,
+#                                         aperture=0.0083,
 #                                         ignore=True,
 #                                         name_in="snr_ipca_" + str(ipca_number_init),
 #                                         image_in_tag="residuals_ipca_" + str(ipca_number_init),
 #                                         snr_out_tag="snr_ipca_" + str(ipca_number_init),
-#                                         optimize=True,
+#                                         optimize=False,
 #                                         tolerance=0.01)
 #            
 #    pipeline.add_module(module)
 #    
 #    
 #pipeline.run()
-
-#create pca snr array
+#
+##create pca snr array
 #snr_pca = np.zeros((len(pca_numbers)))
 #for i in range(len(pca_numbers)):
 #    snr_pca[i] = pipeline.get_data("snr_pca")[i][4]
@@ -149,18 +149,19 @@ ipca_numbers_init = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 #        else:
 #            snr_all[i][j] = matrix_ipca[i-1][j]
 
-snr_all = np.loadtxt(output_place + "snr_all_2_bothfalse.txt")
+snr_all = np.loadtxt(output_place + "snr_final.txt")
                         
-#np.savetxt(output_place + "snr_all.txt", snr_all)
+#np.savetxt(output_place + "snr_final.txt", snr_all)
     
 sizex = max(pca_numbers)
 sizey = max(ipca_numbers_init)
 
 plt.figure()
 plt.imshow(snr_all, origin='lower')
-plt.title("Signal-To-Noise Ratio of IPCA and PCA")
+plt.title("Signal-To-Noise Ratio")
 plt.xlabel('Number of PC', fontsize=12)
+plt.ylabel('Number of initial PC', fontsize=12)
 plt.xticks(np.arange(0, len(pca_numbers), 1), pca_numbers)
 plt.yticks(np.arange(0, len(ipca_numbers_init)+1, 1), ["PCA"] + ipca_numbers_init)
 plt.colorbar()
-plt.savefig(os.path.join(output_place, "snr_all_2_bothfalse.pdf"), bbox_inches='tight')
+plt.savefig(os.path.join(output_place, "snr_final.pdf"), bbox_inches='tight')
