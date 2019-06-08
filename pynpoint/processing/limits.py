@@ -35,8 +35,8 @@ class ContrastCurveModule(ProcessingModule):
                  name_in="contrast",
                  image_in_tag_1="im_arr",
                  image_in_tag_2="im_arr",
-                 image_in_tag_3="im_arr",
-                 image_in_tag_4="im_arr",
+                 image_in_tag_3=None,
+                 image_in_tag_4=None,
                  psf_in_tag="im_psf",
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
@@ -248,13 +248,16 @@ class ContrastCurveModule(ProcessingModule):
         tmp_im_str = os.path.join(working_place, "tmp_images.npy")
         tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
-        np.save(tmp_im_str, images)
+        
         np.save(tmp_psf_str, psf)
 
         mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
         
         temp_im_res = []
         temp_noise = []
+
+        image_paths = []
+
         for i, image in enumerate(temp_images):
             _, im_res = pca_psf_subtraction(images=image*mask,
                                             angles=-1.*angles[i]+self.m_extra_rot,
@@ -264,18 +267,20 @@ class ContrastCurveModule(ProcessingModule):
             noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
             temp_noise += [noise]
 
+            image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
+            np.save(image_paths[-1], image)
         
 
-
+        
         pool = mp.Pool(cpu)
 
         for pos in positions:
             async_results.append(pool.apply_async(contrast_limit,
-                                                  args=(tmp_im_str,
+                                                  args=(image_paths, # list
                                                         tmp_psf_str,
-                                                        noise,
+                                                        temp_noise, # list
                                                         mask,
-                                                        parang,
+                                                        angles, # list
                                                         self.m_psf_scaling,
                                                         self.m_extra_rot,
                                                         self.m_pca_number,
@@ -302,8 +307,9 @@ class ContrastCurveModule(ProcessingModule):
             result.append(async_result.get())
 
         pool.terminate()
-
-        os.remove(tmp_im_str)
+        
+        for image_path in image_paths:
+            os.remove(image_path)
         os.remove(tmp_psf_str)
 
         result = np.asarray(result)

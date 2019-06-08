@@ -75,67 +75,75 @@ def contrast_limit(path_images,
         None
     """
 
-    images = np.load(path_images)
-    psf = np.load(path_psf)
+    temp_im_res = []
 
-    if threshold[0] == "sigma":
-        sigma = threshold[1]
+    for i, images in enumerate(path_images):
+        images = np.load(images)
+        psf = np.load(path_psf)
 
-        # Calculate the FPF for a given sigma level
-        fpf = student_t(t_input=threshold,
-                        radius=position[0],
-                        size=aperture,
-                        ignore=False)
+        if threshold[0] == "sigma":
+            sigma = threshold[1]
 
-    elif threshold[0] == "fpf":
-        fpf = threshold[1]
+            # Calculate the FPF for a given sigma level
+            fpf = student_t(t_input=threshold,
+                            radius=position[0],
+                            size=aperture,
+                            ignore=False)
 
-        # Calculate the sigma level for a given FPF
-        sigma = student_t(t_input=threshold,
-                          radius=position[0],
-                          size=aperture,
-                          ignore=False)
+        elif threshold[0] == "fpf":
+            fpf = threshold[1]
 
-    else:
-        raise ValueError("Threshold type not recognized.")
+            # Calculate the sigma level for a given FPF
+            sigma = student_t(t_input=threshold,
+                            radius=position[0],
+                            size=aperture,
+                            ignore=False)
 
-    # Cartesian coordinates of the fake planet
-    xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+        else:
+            raise ValueError("Threshold type not recognized.")
 
-    # Determine the noise level
-    _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                   x_pos=xy_fake[0],
-                                   y_pos=xy_fake[1],
-                                   size=aperture,
-                                   ignore=False)
+        # Cartesian coordinates of the fake planet
+        xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
-    # Aperture properties
-    im_center = center_subpixel(images)
-    ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
+        # Determine the noise level
+        _, t_noise, _, _ = false_alarm(image=noise[i][0, ],
+                                    x_pos=xy_fake[0],
+                                    y_pos=xy_fake[1],
+                                    size=aperture,
+                                    ignore=False)
 
-    # Measure the flux of the star
-    phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
-    star = phot_table['aperture_sum'][0]
+        # Aperture properties
+        im_center = center_subpixel(images)
+        ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
 
-    # Magnitude of the injected planet
-    flux_in = snr_inject*t_noise
-    mag = -2.5*math.log10(flux_in/star)
+        # Measure the flux of the star
+        phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
+        star = phot_table['aperture_sum'][0]
 
-    # Inject the fake planet
-    fake = fake_planet(images=images,
-                       psf=psf,
-                       parang=parang,
-                       position=(position[0], position[1]),
-                       magnitude=mag,
-                       psf_scaling=psf_scaling)
+        # Magnitude of the injected planet
+        flux_in = snr_inject*t_noise
+        mag = -2.5*math.log10(flux_in/star)
 
-    # Run the PSF subtraction
-    _, im_res = pca_psf_subtraction(images=fake*mask,
-                                    angles=-1.*parang+extra_rot,
-                                    pca_number=pca_number)
+        # Inject the fake planet
+        fake = fake_planet(images=images,
+                        psf=psf,
+                        parang=parang[i],
+                        position=(position[0], position[1]),
+                        magnitude=mag,
+                        psf_scaling=psf_scaling)
 
-    # Stack the residuals
-    im_res = combine_residuals(method=residuals, res_rot=im_res)
+        # Run the PSF subtraction
+        _, im_res = pca_psf_subtraction(images=fake*mask,
+                                        angles=-1.*parang[i]+extra_rot,
+                                        pca_number=pca_number)
+
+        # Stack the residuals
+        im_res = combine_residuals(method=residuals, res_rot=im_res)
+        temp_im_res += [im_res]
+
+    im_res = np.concatenate(temp_im_res)
+    im_res = np.median(im_res, axis=0, keepdims=True)
+    print("im_res.shape: ", im_res.shape)
 
     # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],
