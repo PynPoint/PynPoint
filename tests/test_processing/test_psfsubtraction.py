@@ -14,7 +14,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestPSFSubtractionPCA:
+class TestPsfSubtraction:
 
     def setup_class(self):
 
@@ -418,8 +418,8 @@ class TestPSFSubtractionPCA:
 
     def test_psf_subtraction_pca_multi(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in='pca_multi',

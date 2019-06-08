@@ -5,7 +5,7 @@ Pipeline modules for locating and extracting the position of a star.
 import math
 import warnings
 
-from typing import Tuple
+from typing import Union, Tuple
 
 import numpy as np
 
@@ -22,28 +22,28 @@ class StarExtractionModule(ProcessingModule):
     around this position.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='star_cutting',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_crop',
-                 index_out_tag=None,
-                 image_size=2.,
-                 fwhm_star=0.2,
-                 position=None):
+                 name_in: str = 'star_cutting',
+                 image_in_tag: str = 'im_arr',
+                 image_out_tag: str = 'im_arr_crop',
+                 index_out_tag: str = None,
+                 image_size: float = 2.,
+                 fwhm_star: float = 0.2,
+                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Tag of the dataset with the input images.
         image_out_tag : str
-            Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
-        index_out_tag : str
+            Tag of the dataset that is stored as output, containing the extracted images.
+        index_out_tag : str, None
             List with image indices for which the image size is too large to be cropped around the
             brightest pixel. No data is written if set to None. This tag name can be provided to
-            the *frames* parameter in
+            the ``frames``` parameter in
             :class:`~pynpoint.processing.frameselection.RemoveFramesModule`. This argument is
             ignored if ``CPU`` is set to a value larger than 1.
         image_size : float
@@ -51,12 +51,10 @@ class StarExtractionModule(ProcessingModule):
         fwhm_star : float
             Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
             images to lower contributions of bad pixels.
-        position : tuple(int, int, float)
-            Subframe that is selected to search for the star. The tuple can contain a single
-            position (pix) and size (arcsec) as (pos_x, pos_y, size), or the position and size can
-            be defined for each image separately in which case the tuple should be 2D
-            (nframes x 3). Setting *position* to None will use the full image to search for the
-            star. If *position=(None, None, size)* then the center of the image will be used.
+        position : tuple(int, int, float), None
+            Subframe that is selected to search for the star. The tuple should contain a position
+            (pix) and size (arcsec) as (pos_x, pos_y, size). The full image is used if set to None.
+            The center of the image will be used with ``position=(None, None, size)``.
 
         Returns
         -------
@@ -80,13 +78,15 @@ class StarExtractionModule(ProcessingModule):
 
         self.m_count = 0
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Locates the position of the star (only pixel precision) by
         selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
-        used to lower the contribution of bad pixels which may have higher values than the
-        peak of the PSF. Images are cropped and written to an output port. The position of the
-        star is attached to the input images as the non-static attribute STAR_POSITION (y, x).
+        used to lower the contribution of bad pixels which may have higher values than the peak
+        of the PSF. Images are cropped and written to an output port. The position of the star
+        is attached to the input images (only with ``CPU == 1``) as the non-static attribute
+        ``STAR_POSITION`` (y, x).
 
         Returns
         -------
@@ -100,19 +100,6 @@ class StarExtractionModule(ProcessingModule):
             self.m_index_out_port = None
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-        nimages = self.m_image_in_port.get_shape()[0]
-
-        if self.m_position is not None:
-            self.m_position = np.asarray(self.m_position)
-
-            if self.m_position.ndim == 2 and self.m_position.shape[0] != nimages:
-                raise ValueError('Either a single \'position\' should be specified or an array '
-                                 'equal in size to the number of images in \'image_in_tag\'.')
-
-            if self.m_position.ndim == 2 and cpu > 1:
-                raise ValueError('Multiprocessing is only implemented for a single position. '
-                                 'Set CPU=1 in the configuration file or use a single '
-                                 'value for the \'position\' argument.')
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
         self.m_fwhm_star = int(math.ceil(self.m_fwhm_star/pixscale))
@@ -127,17 +114,12 @@ class StarExtractionModule(ProcessingModule):
                 width = None
 
             else:
-                if position.ndim == 1:
-                    if position[0] is None and position[1] is None:
-                        center = None
-                    else:
-                        center = (int(position[1]), int(position[0]))
+                if position[0] is None and position[1] is None:
+                    center = None
+                else:
+                    center = (position[1], position[0]) # (y, x)
 
-                    width = int(math.ceil(position[2]/pixscale))
-
-                elif position.ndim == 2:
-                    center = (int(position[self.m_count, 1]), int(position[self.m_count, 0]))
-                    width = int(math.ceil(position[self.m_count, 2]/pixscale))
+                width = int(math.ceil(position[2]/pixscale))
 
             starpos = locate_star(image, center, width, fwhm)
 
@@ -146,16 +128,16 @@ class StarExtractionModule(ProcessingModule):
 
             except ValueError:
                 if cpu == 1:
-                    warnings.warn('PSF size is too large to crop the image around the brightest '
-                                  'pixel (image index = '+str(self.m_count)+', pixel [x, y] = '
-                                  +str([starpos[0]]+[starpos[1]])+'). Using the center of the '
-                                  'image instead.')
+                    warnings.warn(f'Chosen image size is too large to crop the image around the '
+                                  f'brightest pixel (image index = {self.m_count}, pixel [x, y] '
+                                  f'= [{starpos[0]}, {starpos[1]}]). Using the center of the '
+                                  f'image instead.')
 
                     index.append(self.m_count)
 
                 else:
-                    warnings.warn('PSF size is too large to crop the image around the brightest '
-                                  'pixel. Using the center of the image instead.')
+                    warnings.warn('Chosen image size is too large to crop the image around the '
+                                  'brightest pixel. Using the center of the image instead.')
 
                 starpos = center_pixel(image)
                 im_crop = crop_image(image, starpos, im_size)
@@ -212,10 +194,9 @@ class ExtractBinaryModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Tag of the dataset with the input images.
         image_out_tag : str
-            Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            Tag of the dataset that is stored as output, containing the extracted images.
         pos_center : tuple(float, float)
             Approximate position (x, y) of the center of rotation (pix).
         pos_binary : tuple(float, float)
@@ -225,7 +206,8 @@ class ExtractBinaryModule(ProcessingModule):
         search_size : float
             Window size (arcsec) in which the brightest pixel is selected as position of the binary
             star. The search window is centered on the position that for each image is calculated
-            from the `pos_center`, `pos_binary`, and parallactic angle (`PARANG`) of the image.
+            from the ``pos_center``, ``pos_binary``, and parallactic angle (``PARANG``) of the
+            image.
         filter_size : float, None
             Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
             images to lower contributions of bad pixels.

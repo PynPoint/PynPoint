@@ -929,7 +929,7 @@ class OutputPort(Port):
                 data_dim=None,
                 keep_attributes=False):
         """
-        Set the data in the data base by replacing all old values with the values of the input data.
+        Set the data in the database by replacing all old values with the values of the input data.
         If no old values exists the data is just stored. Since it is not possible to change the
         number of dimensions of a data set later in the processing history one can choose a
         dimension different to the input data. The following cases are implemented:

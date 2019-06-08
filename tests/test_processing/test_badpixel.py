@@ -15,7 +15,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestBadPixelCleaning:
+class TestBadPixel:
 
     def setup_class(self):
 
@@ -39,12 +39,11 @@ class TestBadPixelCleaning:
         flat[:, 22, 22] = -1.
         flat[:, 24, 24] = -1.
 
-        h5f = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w')
-        h5f.create_dataset('images', data=images)
-        h5f.create_dataset('dark', data=dark)
-        h5f.create_dataset('flat', data=flat)
-        h5f.create_dataset('header_images/STAR_POSITION', data=np.full((40, 2), 50.))
-        h5f.close()
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
+            hdf_file.create_dataset('images', data=images)
+            hdf_file.create_dataset('dark', data=dark)
+            hdf_file.create_dataset('flat', data=flat)
+            hdf_file.create_dataset('header_images/STAR_POSITION', data=np.full((40, 2), 50.))
 
         create_config(self.test_dir+'PynPoint_config.ini')
 

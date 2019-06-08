@@ -31,9 +31,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
     def __init__(self,
                  pca_numbers,
-                 name_in="psf_subtraction",
-                 images_in_tag="im_arr",
-                 reference_in_tag="ref_arr",
+                 name_in='psf_subtraction',
+                 images_in_tag='im_arr',
+                 reference_in_tag='ref_arr',
                  res_mean_tag=None,
                  res_median_tag=None,
                  res_weighted_tag=None,
@@ -90,7 +90,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
 
-        self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver="arpack")
+        self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
 
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
         self.m_star_in_port = self.add_input_port(images_in_tag)
@@ -153,21 +153,21 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        angles = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
+        angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-        pca_capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
-                                                self.m_res_median_out_port,
-                                                self.m_res_weighted_out_port,
-                                                self.m_res_rot_mean_clip_out_port,
-                                                self._m_config_port.get_attribute("CPU"),
-                                                deepcopy(self.m_components),
-                                                deepcopy(self.m_pca),
-                                                deepcopy(star_reshape),
-                                                deepcopy(angles),
-                                                im_shape,
-                                                indices)
+        capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
+                                            self.m_res_median_out_port,
+                                            self.m_res_weighted_out_port,
+                                            self.m_res_rot_mean_clip_out_port,
+                                            self._m_config_port.get_attribute('CPU'),
+                                            deepcopy(self.m_components),
+                                            deepcopy(self.m_pca),
+                                            deepcopy(star_reshape),
+                                            deepcopy(angles),
+                                            im_shape,
+                                            indices)
 
-        pca_capsule.run()
+        capsule.run()
 
     def _run_single_processing(self, star_reshape, im_shape, indices):
         """
@@ -181,9 +181,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         start_time = time.time()
         for i, pca_number in enumerate(self.m_components):
-            progress(i, len(self.m_components), "Creating residuals...", start_time)
+            progress(i, len(self.m_components), 'Creating residuals...', start_time)
 
-            parang = -1.*self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
+            parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
             residuals, res_rot = pca_psf_subtraction(images=star_reshape,
                                                      angles=parang,
@@ -192,27 +192,27 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                      im_shape=im_shape,
                                                      indices=indices)
 
-            hist = "max PC number = "+str(np.amax(self.m_components))
+            hist = f'max PC number = {np.amax(self.m_components)}'
 
             # 1.) derotated residuals
             if self.m_res_arr_out_ports is not None:
                 self.m_res_arr_out_ports[pca_number].set_all(res_rot)
                 self.m_res_arr_out_ports[pca_number].copy_attributes(self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history("PcaPsfSubtractionModule", hist)
+                self.m_res_arr_out_ports[pca_number].add_history('PcaPsfSubtractionModule', hist)
 
             # 2.) mean residuals
             if self.m_res_mean_out_port is not None:
-                stack = combine_residuals(method="mean", res_rot=res_rot)
+                stack = combine_residuals(method='mean', res_rot=res_rot)
                 self.m_res_mean_out_port.append(stack, data_dim=3)
 
             # 3.) median residuals
             if self.m_res_median_out_port is not None:
-                stack = combine_residuals(method="median", res_rot=res_rot)
+                stack = combine_residuals(method='median', res_rot=res_rot)
                 self.m_res_median_out_port.append(stack, data_dim=3)
 
             # 4.) noise-weighted residuals
             if self.m_res_weighted_out_port is not None:
-                stack = combine_residuals(method="weighted",
+                stack = combine_residuals(method='weighted',
                                           res_rot=res_rot,
                                           residuals=residuals,
                                           angles=parang)
@@ -221,10 +221,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             # 5.) clipped mean residuals
             if self.m_res_rot_mean_clip_out_port is not None:
-                stack = combine_residuals(method="clipped", res_rot=res_rot)
+                stack = combine_residuals(method='clipped', res_rot=res_rot)
                 self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
 
-        sys.stdout.write("Creating residuals... [DONE]\n")
+        sys.stdout.write('Creating residuals... [DONE]\n')
         sys.stdout.flush()
 
     def _clear_output_ports(self):
@@ -262,10 +262,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
             None
         """
 
-        cpu = self._m_config_port.get_attribute("CPU")
+        cpu = self._m_config_port.get_attribute('CPU')
 
         if cpu > 1 and self.m_res_arr_out_ports is not None:
-            warnings.warn("Multiprocessing not possible if 'res_arr_out_tag' is not set to None.")
+            warnings.warn(f'Multiprocessing not possible if \'res_arr_out_tag\' is not set '
+                          f'to None.')
 
         self._clear_output_ports()
 
@@ -289,8 +290,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
             ref_shape = ref_data.shape
 
             if ref_shape[-2:] != im_shape[-2:]:
-                raise ValueError("The image size of the science data and the reference data "
-                                 "should be identical.")
+                raise ValueError('The image size of the science data and the reference data '
+                                 'should be identical.')
 
             # reshape reference data and select the unmasked pixels
             ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
@@ -306,7 +307,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         ref_reshape -= mean_ref
 
         # create the PCA basis
-        sys.stdout.write("Constructing PSF model...")
+        sys.stdout.write('Constructing PSF model...')
         sys.stdout.flush()
 
         self.m_pca.fit(ref_reshape)
@@ -320,7 +321,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             self.m_pca.components_ = q_ortho.T
 
-        sys.stdout.write(" [DONE]\n")
+        sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         if self.m_basis_out_port is not None:
@@ -336,32 +337,32 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self._run_single_processing(star_reshape, im_shape, indices)
 
         else:
-            sys.stdout.write("Creating residuals")
+            sys.stdout.write('Creating residuals')
             sys.stdout.flush()
 
             self._run_multi_processing(star_reshape, im_shape, indices)
 
-            sys.stdout.write(" [DONE]\n")
+            sys.stdout.write(' [DONE]\n')
             sys.stdout.flush()
 
-        history = "max PC number = "+str(np.amax(self.m_components))
+        history = f'max PC number = {np.amax(self.m_components)}'
 
         # save history for all other ports
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_mean_out_port.add_history("PcaPsfSubtractionModule", history)
+            self.m_res_mean_out_port.add_history('PcaPsfSubtractionModule', history)
 
         if self.m_res_median_out_port is not None:
             self.m_res_median_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_median_out_port.add_history("PcaPsfSubtractionModule", history)
+            self.m_res_median_out_port.add_history('PcaPsfSubtractionModule', history)
 
         if self.m_res_weighted_out_port is not None:
             self.m_res_weighted_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_weighted_out_port.add_history("PcaPsfSubtractionModule", history)
+            self.m_res_weighted_out_port.add_history('PcaPsfSubtractionModule', history)
 
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_rot_mean_clip_out_port.add_history("PcaPsfSubtractionModule", history)
+            self.m_res_rot_mean_clip_out_port.add_history('PcaPsfSubtractionModule', history)
 
         self.m_star_in_port.close_port()
 
@@ -376,12 +377,12 @@ class ClassicalADIModule(ProcessingModule):
     def __init__(self,
                  threshold,
                  nreference=5,
-                 residuals="median",
+                 residuals='median',
                  extra_rot=0.,
-                 name_in="cadi",
-                 image_in_tag="im_arr",
-                 res_out_tag="residuals",
-                 stack_out_tag="stacked"):
+                 name_in='cadi',
+                 image_in_tag='im_arr',
+                 res_out_tag='residuals',
+                 stack_out_tag='stacked'):
         """
         Parameters
         ----------
@@ -393,7 +394,7 @@ class ClassicalADIModule(ProcessingModule):
             Number of reference image, closest in line to the science image. All images are used if
             *threshold* is None or *nreference* is None.
         residuals : str
-            Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
         extra_rot : float
             Additional rotation angle of the images (deg).
         name_in : str
@@ -453,8 +454,8 @@ class ClassicalADIModule(ProcessingModule):
 
                 if index_thres.size == 0:
                     reference = self.m_image_in_port.get_all()
-                    warnings.warn("No images meet the rotation threshold. Creating a reference "
-                                  "PSF from the median of all images instead.")
+                    warnings.warn('No images meet the rotation threshold. Creating a reference '
+                                  'PSF from the median of all images instead.')
 
                 else:
                     if nref:
@@ -472,7 +473,7 @@ class ClassicalADIModule(ProcessingModule):
 
             return image-reference
 
-        parang = -1.*self.m_image_in_port.get_attribute("PARANG") + self.m_extra_rot
+        parang = -1.*self.m_image_in_port.get_attribute('PARANG') + self.m_extra_rot
 
         if self.m_threshold:
             parang_thres = 2.*math.atan2(self.m_threshold[2]*self.m_threshold[1],
@@ -488,7 +489,7 @@ class ClassicalADIModule(ProcessingModule):
         self.apply_function_to_images(_subtract_psf,
                                       self.m_image_in_port,
                                       self.m_res_out_port,
-                                      "Running ClassicalADIModule",
+                                      'Running ClassicalADIModule',
                                       func_args=(parang_thres, self.m_nreference, reference))
 
         im_res = self.m_res_inout_port.get_all()
@@ -505,14 +506,14 @@ class ClassicalADIModule(ProcessingModule):
         self.m_stack_out_port.set_all(stack)
 
         if self.m_threshold:
-            history = "threshold [deg] = "+'{0:.2f}'.format(parang_thres)
+            history = f'threshold [deg] = {parang_thres:.2f}'
         else:
-            history = "threshold [deg] = None"
+            history = 'threshold [deg] = None'
 
         self.m_res_out_port.copy_attributes(self.m_image_in_port)
-        self.m_res_out_port.add_history("ClassicalADIModule", history)
+        self.m_res_out_port.add_history('ClassicalADIModule', history)
 
         self.m_stack_out_port.copy_attributes(self.m_image_in_port)
-        self.m_stack_out_port.add_history("ClassicalADIModule", history)
+        self.m_stack_out_port.add_history('ClassicalADIModule', history)
 
         self.m_res_out_port.close_port()

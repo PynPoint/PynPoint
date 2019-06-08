@@ -266,7 +266,7 @@ class Pypeline:
         module.connect_database(self.m_data_storage)
 
         if module.name in self._m_modules:
-            warnings.warn(f'Processing module names need to be unique. Overwriting module ' \
+            warnings.warn(f'Pipeline module names need to be unique. Overwriting module ' \
                           f'\'{module.name}\'.')
 
         self._m_modules[module.name] = module

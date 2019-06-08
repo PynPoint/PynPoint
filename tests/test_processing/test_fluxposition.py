@@ -20,13 +20,15 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestFluxAndPosition:
+class TestFluxPosition:
 
     def setup_class(self):
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(path=self.test_dir+'flux', npix_x=101, npix_y=101)
+
+        create_star_data(path=self.test_dir+'ref', npix_x=101, npix_y=101)
 
         create_star_data(path=self.test_dir+'psf',
                          npix_x=15,
@@ -55,7 +57,7 @@ class TestFluxAndPosition:
 
     def teardown_class(self):
 
-        remove_test_data(self.test_dir, folders=['flux', 'adi', 'psf'])
+        remove_test_data(self.test_dir, folders=['flux', 'adi', 'psf', 'ref'])
 
     def test_read_data(self):
 
@@ -95,10 +97,22 @@ class TestFluxAndPosition:
         assert np.allclose(np.mean(data), 0.004444444429123135, rtol=limit, atol=0.)
         assert data.shape == (4, 15, 15)
 
+        module = FitsReadingModule(name_in='read4',
+                                   image_tag='ref',
+                                   input_dir=self.test_dir+'ref')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read4')
+
+        data = self.pipeline.get_data('ref')
+        assert np.allclose(data[0, 50, 50], 0.0986064357966972, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.827812356946396e-05, rtol=limit, atol=0.)
+        assert data.shape == (40, 101, 101)
+
     def test_aperture_photometry(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = AperturePhotometryModule(radius=0.1,
                                           position=None,
@@ -109,8 +123,8 @@ class TestFluxAndPosition:
         self.pipeline.add_module(module)
         self.pipeline.run_module('photometry')
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         module = AperturePhotometryModule(radius=0.1,
                                           position=None,
@@ -136,8 +150,8 @@ class TestFluxAndPosition:
 
     def test_angle_interpolation(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = AngleInterpolationModule(name_in='angle',
                                           data_tag='read')
@@ -211,14 +225,14 @@ class TestFluxAndPosition:
 
     def test_simplex_minimization(self):
 
-        module = SimplexMinimizationModule(position=(31., 49.),
-                                           magnitude=6.,
-                                           psf_scaling=-1.,
-                                           name_in='simplex',
+        module = SimplexMinimizationModule(name_in='simplex1',
                                            image_in_tag='fake',
                                            psf_in_tag='read',
                                            res_out_tag='simplex_res',
                                            flux_position_tag='flux_position',
+                                           position=(31., 49.),
+                                           magnitude=6.,
+                                           psf_scaling=-1.,
                                            merit='hessian',
                                            aperture=0.1,
                                            sigma=0.,
@@ -226,10 +240,11 @@ class TestFluxAndPosition:
                                            pca_number=1,
                                            cent_size=0.1,
                                            edge_size=None,
-                                           extra_rot=0.)
+                                           extra_rot=0.,
+                                           reference_in_tag=None)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('simplex')
+        self.pipeline.run_module('simplex1')
 
         data = self.pipeline.get_data('simplex_res')
         assert np.allclose(data[0, 50, 31], 0.00012976212788352575, rtol=limit, atol=0.)
@@ -244,6 +259,43 @@ class TestFluxAndPosition:
         assert np.allclose(data[42, 3], 90.24985480686087, rtol=limit, atol=0.)
         assert np.allclose(data[42, 4], 5.683191873535635, rtol=limit, atol=0.)
         assert data.shape == (43, 6)
+
+    def test_simplex_minimization_reference(self):
+
+        module = SimplexMinimizationModule(name_in='simplex2',
+                                           image_in_tag='fake',
+                                           psf_in_tag='read',
+                                           res_out_tag='simplex_res_ref',
+                                           flux_position_tag='flux_position_ref',
+                                           position=(31., 49.),
+                                           magnitude=6.,
+                                           psf_scaling=-1.,
+                                           merit='sum',
+                                           aperture=0.1,
+                                           sigma=0.,
+                                           tolerance=0.1,
+                                           pca_number=1,
+                                           cent_size=0.1,
+                                           edge_size=None,
+                                           extra_rot=0.,
+                                           reference_in_tag='ref')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('simplex2')
+
+        data = self.pipeline.get_data('simplex_res_ref')
+        assert np.allclose(data[0, 50, 31], 0.00014188043631450017, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 50, 31], 8.260705332688204e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.3084672332295342e-06, rtol=limit, atol=0.)
+        assert data.shape == (36, 101, 101)
+
+        data = self.pipeline.get_data('flux_position_ref')
+        assert np.allclose(data[35, 0], 31.523599108957953, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 1], 49.80956476439131, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 2], 0.49888932122698404, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 3], 90.59052349996864, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 4], 6.021039673141669, rtol=limit, atol=0.)
+        assert data.shape == (36, 6)
 
     def test_mcmc_sampling_gaussian(self):
 
