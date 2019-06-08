@@ -33,7 +33,7 @@ class FitsReadingModule(ReadingModule):
     def __init__(self,
                  name_in: str,
                  input_dir: str = None,
-                 image_tag: str = "im_arr",
+                 image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
                  filenames: Union[str, List] = None) -> None:
@@ -118,11 +118,11 @@ class FitsReadingModule(ReadingModule):
 
         fits_header = []
         for key in header:
-            fits_header.append(str(key)+" = "+str(header[key]))
+            fits_header.append(str(key)+' = '+str(header[key]))
 
         hdulist.close()
 
-        header_out_port = self.add_output_port('fits_header/'+fits_file)
+        header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
         header_out_port.set_all(fits_header)
 
         return header, images.shape
@@ -164,16 +164,16 @@ class FitsReadingModule(ReadingModule):
 
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the'
-                                     ' path is correct.')
+                    raise ValueError(f'The file {item} does not exist. Please check that the '
+                                     f'path is correct.')
 
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
 
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the'
-                                     ' path is correct.')
+                    raise ValueError(f'The file {item} does not exist. Please check that the '
+                                     f'path is correct.')
 
         elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(self.m_input_location):
@@ -189,7 +189,7 @@ class FitsReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, fits_file in enumerate(files):
-            progress(i, len(files), "Running FitsReadingModule...", start_time)
+            progress(i, len(files), 'Running FitsReadingModule...', start_time)
 
             header, shape = self._read_single_file(fits_file, overwrite_tags)
 
@@ -219,7 +219,7 @@ class FitsReadingModule(ReadingModule):
 
             self.m_image_out_port.flush()
 
-        sys.stdout.write("Running FitsReadingModule... [DONE]\n")
+        sys.stdout.write('Running FitsReadingModule... [DONE]\n')
         sys.stdout.flush()
 
         self.m_image_out_port.close_port()

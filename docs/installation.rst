@@ -42,6 +42,8 @@ PynPoint is actively being developed. To update the installation to the latest v
 
    $ pip install --upgrade PynPoint
 
+.. _installation_github:
+
 Installation from Github
 ------------------------
 

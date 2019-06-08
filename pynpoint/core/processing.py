@@ -575,7 +575,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             sys.stdout.write(message+' [DONE]\n')
             sys.stdout.flush()
 
-        elif cpu == 1:
+        elif cpu == 1 or cpu > 1:
             # process images one-by-one with a single process if CPU is set to 1
             image_out_port.del_all_attributes()
             image_out_port.del_all_data()
@@ -600,41 +600,41 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             sys.stdout.write(message+' [DONE]\n')
             sys.stdout.flush()
 
-        else:
-            sys.stdout.write(message)
-            sys.stdout.flush()
-
-            # process images in parallel in stacks of MEMORY/CPU images
-            image_out_port.del_all_attributes()
-            image_out_port.del_all_data()
-
-            result = apply_function(tmp_data=image_in_port[0, :, :],
-                                    func=func,
-                                    func_args=update_arguments(0, nimages, func_args))
-
-            result_shape = result.shape
-
-            out_shape = [nimages]
-            for item in result_shape:
-                out_shape.append(item)
-
-            image_out_port.set_all(data=np.zeros(out_shape),
-                                   data_dim=len(result_shape)+1,
-                                   keep_attributes=False)
-
-            capsule = StackProcessingCapsule(image_in_port=image_in_port,
-                                             image_out_port=image_out_port,
-                                             num_proc=cpu,
-                                             function=func,
-                                             function_args=func_args,
-                                             stack_size=int(memory/cpu),
-                                             result_shape=result_shape,
-                                             nimages=nimages)
-
-            capsule.run()
-
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
+        # else:
+        #     sys.stdout.write(message)
+        #     sys.stdout.flush()
+        #
+        #     # process images in parallel in stacks of MEMORY/CPU images
+        #     image_out_port.del_all_attributes()
+        #     image_out_port.del_all_data()
+        #
+        #     result = apply_function(tmp_data=image_in_port[0, :, :],
+        #                             func=func,
+        #                             func_args=update_arguments(0, nimages, func_args))
+        #
+        #     result_shape = result.shape
+        #
+        #     out_shape = [nimages]
+        #     for item in result_shape:
+        #         out_shape.append(item)
+        #
+        #     image_out_port.set_all(data=np.zeros(out_shape),
+        #                            data_dim=len(result_shape)+1,
+        #                            keep_attributes=False)
+        #
+        #     capsule = StackProcessingCapsule(image_in_port=image_in_port,
+        #                                      image_out_port=image_out_port,
+        #                                      num_proc=cpu,
+        #                                      function=func,
+        #                                      function_args=func_args,
+        #                                      stack_size=int(memory/cpu),
+        #                                      result_shape=result_shape,
+        #                                      nimages=nimages)
+        #
+        #     capsule.run()
+        #
+        #     sys.stdout.write(' [DONE]\n')
+        #     sys.stdout.flush()
 
     def get_all_input_tags(self):
         """

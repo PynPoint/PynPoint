@@ -71,7 +71,7 @@ class StackReader(TaskCreator):
                 # read images from i to j
                 tmp_data = self.m_data_in_port[i:j, ]
 
-            # first dimensiosn (start, stop, step)
+            # first dimension (start, stop, step)
             stack_slice = [(i, j, None)]
 
             # additional dimensions
@@ -220,7 +220,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         Returns
         -------
         list(pynpoint.util.multiproc.StackTaskProcessor, )
-            List with instances of :class:`~pynpoint.util.multiproc.StackTaskProcessor`
+            List with instances of :class:`~pynpoint.util.multiproc.StackTaskProcessor`.
         """
 
         processors = []
@@ -249,9 +249,9 @@ class StackProcessingCapsule(MultiprocessingCapsule):
             Reader of stacks of images.
         """
 
-        return StackReader(image_in_port,
-                           self.m_tasks_queue,
-                           self.m_data_mutex,
-                           self.m_num_proc,
-                           self.m_stack_size,
-                           self.m_result_shape)
+        return StackReader(data_port_in=image_in_port,
+                           tasks_queue_in=self.m_tasks_queue,
+                           data_mutex_in=self.m_data_mutex,
+                           num_proc=self.m_num_proc,
+                           stack_size=self.m_stack_size,
+                           result_shape=self.m_result_shape)

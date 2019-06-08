@@ -15,7 +15,8 @@ from pynpoint.processing.badpixel import BadPixelSigmaFilterModule, \
 
 from pynpoint.processing.basic import SubtractImagesModule, \
                                       AddImagesModule, \
-                                      RotateImagesModule
+                                      RotateImagesModule, \
+                                      RepeatImagesModule
 
 from pynpoint.processing.centering import StarAlignmentModule, \
                                           StarCenteringModule, \
@@ -39,7 +40,9 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \
                                                RemoveLastFrameModule, \
                                                RemoveStartFramesModule, \
-                                               ImageStatisticsModule
+                                               ImageStatisticsModule, \
+                                               FrameSimilarityModule, \
+                                               SelectByAttributeModule
 
 from pynpoint.processing.limits import ContrastCurveModule, \
                                        MassLimitsModule
@@ -94,7 +97,7 @@ warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __license__ = 'GPLv3'
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'

@@ -125,9 +125,6 @@ def create_fits(path,
         None
     """
 
-    if not os.path.exists(path):
-        os.makedirs(path)
-
     hdu = fits.PrimaryHDU()
     header = hdu.header
     header['INSTRUME'] = 'IMAGER'

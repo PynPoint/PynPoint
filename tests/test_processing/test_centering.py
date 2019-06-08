@@ -17,7 +17,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestStarAlignment:
+class TestCentering:
 
     def setup_class(self):
 
@@ -153,7 +153,7 @@ class TestStarAlignment:
         assert np.allclose(np.mean(data), 9.99999999999951e-05, rtol=1e-4, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_star_extract_full(self):
+    def test_star_extract(self):
 
         module = StarExtractionModule(name_in='extract1',
                                       image_in_tag='dither',
@@ -181,45 +181,11 @@ class TestStarAlignment:
         attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 75
 
-    def test_star_extract_subframe(self):
-
-        top_left = np.array([25, 75, 0.5])
-        top_left = np.broadcast_to(top_left, (10, 3))
-
-        top_right = np.array([75, 75, 0.5])
-        top_right = np.broadcast_to(top_right, (10, 3))
-
-        bottom_right = np.array([75, 25, 0.5])
-        bottom_right = np.broadcast_to(bottom_right, (10, 3))
-
-        bottom_left = np.array([25, 25, 0.5])
-        bottom_left = np.broadcast_to(bottom_left, (10, 3))
-
-        position = np.concatenate((top_left, top_right, bottom_right, bottom_left))
-
-        module = StarExtractionModule(name_in='extract2',
-                                      image_in_tag='dither',
-                                      image_out_tag='extract2',
-                                      image_size=1.0,
-                                      fwhm_star=0.1,
-                                      position=position)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('extract2')
-
-        data = self.pipeline.get_data('extract2')
-        assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
-        assert data.shape == (40, 39, 39)
-
-        attr = self.pipeline.get_attribute('extract2', 'STAR_POSITION', static=False)
-        assert attr[10, 0] == attr[10, 1] == 75
-
     def test_star_align(self):
 
         module = StarAlignmentModule(name_in='align',
                                      image_in_tag='extract1',
-                                     ref_image_in_tag='extract2',
+                                     ref_image_in_tag=None,
                                      image_out_tag='align',
                                      accuracy=10,
                                      resize=2.)

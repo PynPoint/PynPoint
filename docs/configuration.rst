@@ -69,8 +69,8 @@ VLT/NACO
 
 .. _config_sphere:
 
-VLT/SPHERE
-^^^^^^^^^^
+VLT/SPHERE/IRDIS
+^^^^^^^^^^^^^^^^
 
 .. code-block:: ini
 
@@ -94,7 +94,7 @@ VLT/SPHERE
 
    [settings]
 
-   PIXSCALE: 0.01227
+   PIXSCALE: 0.01226
    MEMORY: 1000
    CPU: 1
 
