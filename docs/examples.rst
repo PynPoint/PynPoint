@@ -6,12 +6,12 @@ Examples
 VLT/SPHERE H-alpha data
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <http://adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
+An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of HD 142527 (see `Cugno et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_) can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 VLT/NACO M' dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2019) <http://adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
+Here we show an end-to-end processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the M' band. A dithering pattern was applied to sample the sky background.
 
 First we need to import the Pypeline, as well as the I/O and processing modules. These can be directly imported from the package, for example::
 
