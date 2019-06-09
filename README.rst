@@ -31,7 +31,7 @@ PynPoint is a generic, end-to-end pipeline for the data reduction and analysis o
 
 The pipeline has a modular architecture with a central data storage in which all results are stored by the processing modules. These modules have specific tasks such as the subtraction of the thermal background emission, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available I/O modules.
 
-To get a first impression, there is an end-to-end example available of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of `HD 142527 <http://adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_, which can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
+To get a first impression, there is an end-to-end example available of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of `HD 142527 <http://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_, which can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
 
 Documentation
 -------------
@@ -46,7 +46,7 @@ Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest
 Attribution
 -----------
 
-If you use PynPoint in your publication then please cite `Stolker et al. (2019) <http://adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_. Please also cite `Amara & Quanz (2012) <http://adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method. In case you use specifically the PCA-based background subtraction module or the wavelet based speckle suppression module, please give credit to `Hunziker et al. (2018) <http://adsabs.harvard.edu/abs/2018A%26A...611A..23H>`_ or `Bonse, Quanz & Amara (2018) <http://adsabs.harvard.edu/abs/2018arXiv180405063B>`_, respectively.
+If you use PynPoint in your publication then please cite `Stolker et al. (2019) <http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_. Please also cite `Amara & Quanz (2012) <http://ui.adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method. In case you use specifically the PCA-based background subtraction module or the wavelet based speckle suppression module, please give credit to `Hunziker et al. (2018) <http://ui.adsabs.harvard.edu/abs/2018A%26A...611A..23H>`_ or `Bonse, Quanz & Amara (2018) <http://ui.adsabs.harvard.edu/abs/2018arXiv180405063B>`_, respectively.
 
 Contributing
 ------------
