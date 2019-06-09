@@ -173,7 +173,7 @@ class TestStackSubset:
 
     def test_combine_tags(self):
 
-        combine = CombineTagsModule(image_in_tags=('images', 'extra'),
+        combine = CombineTagsModule(image_in_tags=['images', 'extra'],
                                     check_attr=True,
                                     index_init=False,
                                     name_in='combine1',
@@ -199,7 +199,7 @@ class TestStackSubset:
         assert data[40] == 0
         assert data.shape == (80, )
 
-        combine = CombineTagsModule(image_in_tags=('images', 'extra'),
+        combine = CombineTagsModule(image_in_tags=['images', 'extra'],
                                     check_attr=False,
                                     index_init=True,
                                     name_in='combine2',

@@ -8,7 +8,11 @@ import math
 import cmath
 import warnings
 
+from typing import List
+
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress, memory_frames
@@ -20,13 +24,14 @@ class StackAndSubsetModule(ProcessingModule):
     Pipeline module for stacking subsets of images and/or selecting a random sample of images.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='stacking_subset',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr',
-                 random=None,
-                 stacking=None,
-                 combine='mean'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 random: int = None,
+                 stacking: int = None,
+                 combine: str = 'mean') -> None:
         """
         Parameters
         ----------
@@ -62,7 +67,8 @@ class StackAndSubsetModule(ProcessingModule):
         if self.m_stacking is None and self.m_random is None:
             warnings.warn('Both \'stacking\' and \'random\' are set to None.')
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Stacks subsets of images and/or selects a random subset. Also
         the parallactic angles are mean-combined if images are stacked.
@@ -192,10 +198,11 @@ class MeanCubeModule(ProcessingModule):
     tag.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='mean_cube',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_mean'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -221,7 +228,8 @@ class MeanCubeModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
         calculates the mean of each cube, and saves the data and attributes.
@@ -288,11 +296,12 @@ class StackCubesModule(ProcessingModule):
     database tag.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='stack_cube',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_stack',
-                 combine='mean'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 combine: str = 'mean') -> None:
         """
         Parameters
         ----------
@@ -319,7 +328,8 @@ class StackCubesModule(ProcessingModule):
 
         self.m_combine = combine
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
         calculates the mean or median of each cube, and saves the data and attributes.
@@ -390,13 +400,14 @@ class DerotateAndStackModule(ProcessingModule):
     images.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in='derotate_stack',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_stack',
-                 derotate=True,
-                 stack=None,
-                 extra_rot=0.):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 derotate: bool = True,
+                 stack: str = None,
+                 extra_rot: float = 0.) -> None:
         """
         Parameters
         ----------
@@ -430,7 +441,8 @@ class DerotateAndStackModule(ProcessingModule):
         self.m_stack = stack
         self.m_extra_rot = extra_rot
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
         is set to True) and applies an optional mean or median stacking afterwards.
@@ -516,28 +528,29 @@ class CombineTagsModule(ProcessingModule):
     Pipeline module for combining tags from multiple database entries into a single tag.
     """
 
+    @typechecked
     def __init__(self,
-                 image_in_tags,
-                 check_attr=True,
-                 index_init=False,
-                 name_in='combine_tags',
-                 image_out_tag='im_arr_combined'):
+                 name_in: str,
+                 image_in_tags: List[str],
+                 image_out_tag: str,
+                 check_attr: bool = True,
+                 index_init: bool = False) -> None:
         """
         Parameters
         ----------
-        image_in_tags : tuple(str, )
+        name_in : str
+            Unique name of the module instance.
+        image_in_tags : list(str, )
             Tags of the database entries that are read as input and combined.
+        image_out_tag : str
+            Tag of the database entry that is written as output. Should not be present in
+            *image_in_tags*.
         check_attr : bool
             Compare non-static attributes between the tags or combine all non-static attributes
             into the new database tag.
         index_init : bool
             Reinitialize the ``INDEX`` attribute. The frames are indexed in the order of tags names
             that are provided in *image_in_tags*.
-        name_in : str
-            Unique name of the module instance.
-        image_out_tag : str
-            Tag of the database entry that is written as output. Should not be present in
-            *image_in_tags*.
 
         Returns
         -------
@@ -559,7 +572,8 @@ class CombineTagsModule(ProcessingModule):
         self.m_check_attr = check_attr
         self.m_index_init = index_init
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Combines the frames of multiple tags into a single dataset
         and adds the static and non-static attributes. The values of the attributes are compared
