@@ -651,10 +651,7 @@ class MCMCsamplingModule(ProcessingModule):
             obtained with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
             The angle is measured in counterclockwise direction with respect to the upward
             direction (i.e., East of North). The specified separation and angle are also used as
-            fixed position for the aperture if *aperture* contains a single value. Furthermore,
-            the values are used to remove the planet signal before the noise is estimated when
-            *variance* is set to 'gaussian' to prevent that self-subtraction lobes bias the noise
-            measurement.
+            fixed position for the aperture if *aperture* contains a float value.
         bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
             The boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each set
             of boundaries is specified as a tuple.
@@ -765,9 +762,15 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_aperture = {'type':'circular',
                                'pos_x':xy_pos[0],
                                'pos_y':xy_pos[1],
-                               'radius':self.m_aperture/pixscale}
+                               'radius':self.m_aperture/pixscale,
+                               'separation':self.m_param[0]/pixscale,
+                               'angle':self.m_param[1]}
 
         elif isinstance(self.m_aperture, dict):
+            sep_ang = cartesian_to_polar(center=center_subpixel(images),
+                                         x_pos=self.m_aperture['pos_x'],
+                                         y_pos=self.m_aperture['pos_y'])
+
             if self.m_aperture['type'] == 'circular':
                 self.m_aperture['radius'] /= pixscale
 
@@ -775,61 +778,64 @@ class MCMCsamplingModule(ProcessingModule):
                 self.m_aperture['semimajor'] /= pixscale
                 self.m_aperture['semiminor'] /= pixscale
 
+            self.m_aperture['separation'] = sep_ang[0]
+            self.m_aperture['angle'] = sep_ang[1]
+
         if self.m_variance == 'gaussian' and self.m_aperture['type'] != 'circular':
             raise ValueError('Gaussian variance can only be used in combination with a'
                              'circular aperture.')
 
-    @typechecked
-    def gaussian_noise(self,
-                       images: np.ndarray,
-                       psf: np.ndarray,
-                       parang: np.ndarray,
-                       aperture: dict) -> float:
-        """
-        Function to compute the (constant) variance for the likelihood function when the
-        variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
-        from the dataset with the values specified as *param* in the constructor of the instance.
-
-        Parameters
-        ----------
-        images : numpy.ndarray
-            Input images.
-        psf : numpy.ndarray
-            PSF template.
-        parang : numpy.ndarray
-            Parallactic angles (deg).
-        aperture : dict
-            Properties of the circular aperture. The radius is recommended to be larger than or
-            equal to 0.5*lambda/D.
-
-        Returns
-        -------
-        float
-            Variance.
-        """
-
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-
-        fake = fake_planet(images=images,
-                           psf=psf,
-                           parang=parang,
-                           position=(self.m_param[0]/pixscale, self.m_param[1]),
-                           magnitude=self.m_param[2],
-                           psf_scaling=self.m_psf_scaling)
-
-        _, res_arr = pca_psf_subtraction(images=fake,
-                                         angles=-1.*parang+self.m_extra_rot,
-                                         pca_number=self.m_pca_number)
-
-        stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
-
-        _, noise, _, _ = false_alarm(image=stack[0, ],
-                                     x_pos=aperture['pos_x'],
-                                     y_pos=aperture['pos_y'],
-                                     size=aperture['radius'],
-                                     ignore=False)
-
-        return noise**2
+    # @typechecked
+    # def gaussian_noise(self,
+    #                    images: np.ndarray,
+    #                    psf: np.ndarray,
+    #                    parang: np.ndarray,
+    #                    aperture: dict) -> float:
+    #     """
+    #     Function to compute the (constant) variance for the likelihood function when the
+    #     variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
+    #     from the dataset with the values specified as *param* in the constructor of the instance.
+    #
+    #     Parameters
+    #     ----------
+    #     images : numpy.ndarray
+    #         Input images.
+    #     psf : numpy.ndarray
+    #         PSF template.
+    #     parang : numpy.ndarray
+    #         Parallactic angles (deg).
+    #     aperture : dict
+    #         Properties of the circular aperture. The radius is recommended to be larger than or
+    #         equal to 0.5*lambda/D.
+    #
+    #     Returns
+    #     -------
+    #     float
+    #         Variance.
+    #     """
+    #
+    #     pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+    #
+    #     fake = fake_planet(images=images,
+    #                        psf=psf,
+    #                        parang=parang,
+    #                        position=(self.m_param[0]/pixscale, self.m_param[1]),
+    #                        magnitude=self.m_param[2],
+    #                        psf_scaling=self.m_psf_scaling)
+    #
+    #     _, res_arr = pca_psf_subtraction(images=fake,
+    #                                      angles=-1.*parang+self.m_extra_rot,
+    #                                      pca_number=self.m_pca_number)
+    #
+    #     stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
+    #
+    #     _, noise, _, _ = false_alarm(image=stack[0, ],
+    #                                  x_pos=aperture['pos_x'],
+    #                                  y_pos=aperture['pos_y'],
+    #                                  size=aperture['radius'],
+    #                                  ignore=False)
+    #
+    #     return noise**2
 
     @typechecked
     def run(self) -> None:
@@ -895,12 +901,12 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        if self.m_variance == 'gaussian':
-            student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
-            variance = (self.m_variance, student_t)
-
-        else:
-            variance = (self.m_variance, None)
+        # if self.m_variance == 'gaussian':
+        #     student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
+        #     variance = (self.m_variance, student_t)
+        #
+        # else:
+        #     variance = (self.m_variance, None)
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
@@ -918,7 +924,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_aperture,
                                                indices,
                                                self.m_prior,
-                                               variance,
+                                               self.m_variance,
                                                self.m_residuals]),
                                         threads=cpu)
         start_time = time.time()

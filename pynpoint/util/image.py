@@ -3,15 +3,19 @@ Functions for image processing.
 """
 
 import math
-import warnings
+
+from typing import Tuple
 
 import numpy as np
+
+from typeguard import typechecked
 
 from skimage.transform import rescale
 from scipy.ndimage import fourier_shift, shift, rotate
 
 
-def center_pixel(image):
+@typechecked
+def center_pixel(image: np.ndarray) -> Tuple[int, int]:
     """
     Function to get the pixel position of the image center. Note that this position
     can not be unambiguously defined for an even-sized image. Python indexing starts
@@ -42,7 +46,8 @@ def center_pixel(image):
 
     return center
 
-def center_subpixel(image):
+@typechecked
+def center_subpixel(image: np.ndarray) -> Tuple[float, float]:
     """
     Function to get the precise position of the image center. The center of the pixel in the
     bottom left corner of the image is defined as (0, 0), so the bottom left corner of the
@@ -89,9 +94,9 @@ def crop_image(image,
         center = center_pixel(image)
 
         # if image.shape[-1]%2 == 0:
-        #     warnings.warn("The image is even-size so there is not a uniquely defined pixel in "
-        #                   "the center of the image. The image center is determined (with pixel "
-        #                   "precision) with the pynpoint.util.image.center_pixel function.")
+        #     warnings.warn('The image is even-size so there is not a uniquely defined pixel in '
+        #                   'the center of the image. The image center is determined (with pixel '
+        #                   'precision) with the pynpoint.util.image.center_pixel function.')
 
     if size%2 == 0:
         size += 1
@@ -103,7 +108,7 @@ def crop_image(image,
     y_end = center[0] + (size-1)//2 + 1
 
     if x_start < 0 or y_start < 0 or x_end > image.shape[-1] or y_end > image.shape[-2]:
-        raise ValueError("Target image resolution does not fit inside the input image resolution.")
+        raise ValueError('Target image resolution does not fit inside the input image resolution.')
 
     if image.ndim == 2:
         im_return = np.copy(image[y_start:y_end, x_start:x_end])
@@ -193,7 +198,7 @@ def shift_image(image,
     shift_yx : tuple(float, float)
         Shift (y, x) to be applied (pix).
     interpolation : str
-        Interpolation type ("spline", "bilinear", or "fft").
+        Interpolation type ('spline', 'bilinear', or 'fft').
 
     Returns
     -------
@@ -201,13 +206,13 @@ def shift_image(image,
         Shifted image.
     """
 
-    if interpolation == "spline":
+    if interpolation == 'spline':
         im_center = shift(image, shift_yx, order=5, mode=mode)
 
-    elif interpolation == "bilinear":
+    elif interpolation == 'bilinear':
         im_center = shift(image, shift_yx, order=1, mode=mode)
 
-    elif interpolation == "fft":
+    elif interpolation == 'fft':
         fft_shift = fourier_shift(np.fft.fftn(image), shift_yx)
         im_center = np.fft.ifftn(fft_shift).real
 
@@ -239,7 +244,7 @@ def scale_image(image,
     im_scale = rescale(image=np.asarray(image, dtype=np.float64),
                        scale=(scaling_y, scaling_x),
                        order=5,
-                       mode="reflect",
+                       mode='reflect',
                        anti_aliasing=True,
                        multichannel=False)
 
@@ -305,8 +310,9 @@ def polar_to_cartesian(image,
 
     return tuple([x_pos, y_pos])
 
-def pixel_distance(im_shape,
-                   position=None):
+@typechecked
+def pixel_distance(im_shape: Tuple[int, int],
+                   position: Tuple[int, int] = None) -> np.ndarray:
     """
     Function to calculate the distance of each pixel with respect to a given pixel position.
 
@@ -344,3 +350,92 @@ def pixel_distance(im_shape,
     xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
 
     return np.sqrt(xx_grid**2 + yy_grid**2)
+
+@typechecked
+def subpixel_distance(im_shape: Tuple[int, int],
+                      position: Tuple[float, float]) -> np.ndarray:
+    """
+    Function to calculate the distance of each pixel with respect to a given subpixel position.
+
+    Parameters
+    ----------
+    im_shape : tuple(int, int)
+        Image shape (y, x).
+    position : tuple(float, float)
+        Pixel center (y, x) from which the distance is calculated. Python indexing starts at zero
+        so the bottom left image corner is (-0.5, -0.5).
+
+    Returns
+    -------
+    numpy.ndarray
+        2D array with the distances of each pixel from the provided pixel position.
+    """
+
+    if im_shape[0]%2 == 0:
+        raise ValueError('The subpixel_distance function has only been implemented for '
+                         'odd-sized images.')
+
+    y_size = (im_shape[0]-1)/2
+    x_size = (im_shape[1]-1)/2
+
+    y_grid = np.linspace(-y_size, y_size, im_shape[0])
+    x_grid = np.linspace(-x_size, x_size, im_shape[1])
+
+    y_pos = position[0] - y_size
+    x_pos = position[1] - x_size
+
+    y_grid -= y_pos
+    x_grid -= x_pos
+
+    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+
+    return np.sqrt(xx_grid**2 + yy_grid**2)
+
+@typechecked
+def select_annulus(image_in: np.ndarray,
+                   radius_in: float,
+                   radius_out: float,
+                   mask_position: Tuple[float, float] = None,
+                   mask_radius: float = None) -> np.ndarray:
+    """
+    image_in : numpy.ndarray
+        Input image.
+    radius_in : float
+        Inner radius of the annulus (pix).
+    radius_out : float
+        Outer radius of the annulus (pix).
+    mask_position : tuple(float, float), None
+        Center (pix, pix) position (y, x) in of the circular region that is excluded. Not used
+        if set to None.
+    mask_radius : float, None
+        Radius (pix) of the circular region that is excluded. Not used if set to None.
+    """
+
+    im_shape = image_in.shape
+
+    if im_shape[0]%2 == 0:
+        y_grid = np.linspace(-im_shape[0]/2+0.5, im_shape[0]/2-0.5, im_shape[0])
+    elif im_shape[0]%2 == 1:
+        y_grid = np.linspace(-(im_shape[0]-1)/2, (im_shape[0]-1)/2, im_shape[0])
+
+    if im_shape[1]%2 == 0:
+        x_grid = np.linspace(-im_shape[1]/2+0.5, im_shape[1]/2-0.5, im_shape[1])
+    elif im_shape[0]%2 == 1:
+        x_grid = np.linspace(-(im_shape[1]-1)/2, (im_shape[1]-1)/2, im_shape[1])
+
+    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+    rr_grid = np.sqrt(xx_grid**2+yy_grid**2)
+
+    mask = np.ones(im_shape)
+
+    indices = np.where((rr_grid < radius_in) | (rr_grid > radius_out))
+    mask[indices[0], indices[1]] = 0.
+
+    if mask_position is not None and mask_radius is not None:
+        distance = subpixel_distance(im_shape=im_shape, position=mask_position)
+        indices = np.where(distance < mask_radius)
+        mask[indices[0], indices[1]] = 0.
+
+    indices = np.where(mask == 1.)
+
+    return image_in[indices[0], indices[1]]
