@@ -788,7 +788,6 @@ class MCMCsamplingModule(ProcessingModule):
     @typechecked
     def gaussian_noise(self,
                        images: np.ndarray,
-                       psf: np.ndarray,
                        parang: np.ndarray,
                        aperture: dict) -> float:
         """
@@ -799,9 +798,7 @@ class MCMCsamplingModule(ProcessingModule):
         Parameters
         ----------
         images : numpy.ndarray
-            Input images.
-        psf : numpy.ndarray
-            PSF template.
+            Masked input images.
         parang : numpy.ndarray
             Parallactic angles (deg).
         aperture : dict
@@ -814,16 +811,7 @@ class MCMCsamplingModule(ProcessingModule):
             Variance.
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-
-        fake = fake_planet(images=images,
-                           psf=psf,
-                           parang=parang,
-                           position=(self.m_param[0]/pixscale, self.m_param[1]),
-                           magnitude=self.m_param[2],
-                           psf_scaling=self.m_psf_scaling)
-
-        _, res_arr = pca_psf_subtraction(images=fake,
+        _, res_arr = pca_psf_subtraction(images=images,
                                          angles=-1.*parang+self.m_extra_rot,
                                          pca_number=self.m_pca_number)
 
@@ -902,7 +890,7 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
         if self.m_variance == 'gaussian':
-            student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
+            student_t = self.gaussian_noise(images*mask, parang, self.m_aperture)
             variance = (self.m_variance, student_t)
 
         else:

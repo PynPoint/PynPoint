@@ -101,11 +101,11 @@ class TestFrameSelection:
 
     def test_remove_frames(self):
 
-        module = RemoveFramesModule(frames=(5, 8, 13, 25, 31),
-                                    name_in='remove',
+        module = RemoveFramesModule(name_in='remove',
                                     image_in_tag='start',
                                     selected_out_tag='selected',
-                                    removed_out_tag='removed')
+                                    removed_out_tag='removed',
+                                    frames=[5, 8, 13, 25, 31])
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('remove')
