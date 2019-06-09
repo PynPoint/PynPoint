@@ -418,7 +418,7 @@ Or to plot the detection limits with the error bars showing the variance of the 
 
 .. |stolker| raw:: html
 
-   <a href="http://adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
+   <a href="http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
 
 .. |archive| raw:: html
 
