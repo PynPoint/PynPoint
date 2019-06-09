@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
-                                center_subpixel
+                                center_subpixel, select_annulus
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames, rotate_coordinates
 from pynpoint.util.psf import pca_psf_subtraction
@@ -785,57 +785,57 @@ class MCMCsamplingModule(ProcessingModule):
             raise ValueError('Gaussian variance can only be used in combination with a'
                              'circular aperture.')
 
-    # @typechecked
-    # def gaussian_noise(self,
-    #                    images: np.ndarray,
-    #                    psf: np.ndarray,
-    #                    parang: np.ndarray,
-    #                    aperture: dict) -> float:
-    #     """
-    #     Function to compute the (constant) variance for the likelihood function when the
-    #     variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
-    #     from the dataset with the values specified as *param* in the constructor of the instance.
-    #
-    #     Parameters
-    #     ----------
-    #     images : numpy.ndarray
-    #         Input images.
-    #     psf : numpy.ndarray
-    #         PSF template.
-    #     parang : numpy.ndarray
-    #         Parallactic angles (deg).
-    #     aperture : dict
-    #         Properties of the circular aperture. The radius is recommended to be larger than or
-    #         equal to 0.5*lambda/D.
-    #
-    #     Returns
-    #     -------
-    #     float
-    #         Variance.
-    #     """
-    #
-    #     pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-    #
-    #     fake = fake_planet(images=images,
-    #                        psf=psf,
-    #                        parang=parang,
-    #                        position=(self.m_param[0]/pixscale, self.m_param[1]),
-    #                        magnitude=self.m_param[2],
-    #                        psf_scaling=self.m_psf_scaling)
-    #
-    #     _, res_arr = pca_psf_subtraction(images=fake,
-    #                                      angles=-1.*parang+self.m_extra_rot,
-    #                                      pca_number=self.m_pca_number)
-    #
-    #     stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
-    #
-    #     _, noise, _, _ = false_alarm(image=stack[0, ],
-    #                                  x_pos=aperture['pos_x'],
-    #                                  y_pos=aperture['pos_y'],
-    #                                  size=aperture['radius'],
-    #                                  ignore=False)
-    #
-    #     return noise**2
+    @typechecked
+    def gaussian_noise(self,
+                       images: np.ndarray,
+                       psf: np.ndarray,
+                       parang: np.ndarray,
+                       aperture: dict) -> float:
+        """
+        Function to compute the (constant) variance for the likelihood function when the
+        variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
+        from the dataset with the values specified as *param* in the constructor of the instance.
+
+        Parameters
+        ----------
+        images : numpy.ndarray
+            Input images.
+        psf : numpy.ndarray
+            PSF template.
+        parang : numpy.ndarray
+            Parallactic angles (deg).
+        aperture : dict
+            Properties of the circular aperture. The radius is recommended to be larger than or
+            equal to 0.5*lambda/D.
+
+        Returns
+        -------
+        float
+            Variance.
+        """
+
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang,
+                           position=(self.m_param[0]/pixscale, self.m_param[1]),
+                           magnitude=self.m_param[2],
+                           psf_scaling=self.m_psf_scaling)
+
+        _, res_arr = pca_psf_subtraction(images=fake,
+                                         angles=-1.*parang+self.m_extra_rot,
+                                         pca_number=self.m_pca_number)
+
+        residuals = combine_residuals(method=self.m_residuals, res_rot=res_arr)
+
+        selected = select_annulus(image_in=residuals[0, ],
+                                  radius_in=aperture['separation']-aperture['radius'],
+                                  radius_out=aperture['separation']+aperture['radius'],
+                                  mask_position=(aperture['pos_y'], aperture['pos_x']),
+                                  mask_radius=aperture['radius'])
+
+        return np.var(selected)
 
     @typechecked
     def run(self) -> None:
@@ -901,12 +901,12 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        # if self.m_variance == 'gaussian':
-        #     student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
-        #     variance = (self.m_variance, student_t)
-        #
-        # else:
-        #     variance = (self.m_variance, None)
+        if self.m_variance == 'gaussian':
+            student_t = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
+            variance = (self.m_variance, student_t)
+
+        else:
+            variance = (self.m_variance, None)
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
@@ -924,7 +924,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_aperture,
                                                indices,
                                                self.m_prior,
-                                               self.m_variance,
+                                               variance,
                                                self.m_residuals]),
                                         threads=cpu)
         start_time = time.time()

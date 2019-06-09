@@ -11,7 +11,7 @@ from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 
-from pynpoint.util.image import shift_image, center_subpixel, select_annulus
+from pynpoint.util.image import shift_image, center_subpixel
 
 
 def false_alarm(image,
@@ -261,14 +261,8 @@ def merit_function(residuals,
 
         merit = phot_table['aperture_sum'][0]
 
-        if variance == 'gaussian':
-            annulus = select_annulus(image_in=residuals,
-                                     radius_in=aperture['separation']-aperture['radius'],
-                                     radius_out=aperture['separation']+aperture['radius'],
-                                     mask_position=(aperture['pos_y'], aperture['pos_x']),
-                                     mask_radius=aperture['radius'])
-
-            merit = merit**2/np.var(annulus)
+        if variance[0] == 'gaussian':
+            merit = merit**2/variance[1]
 
     else:
 
