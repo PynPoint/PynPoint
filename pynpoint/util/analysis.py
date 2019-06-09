@@ -203,8 +203,9 @@ def merit_function(residuals,
         Residuals of the PSF subtraction (2D).
     function : str
         Figure of merit ('hessian' or 'sum').
-    variance : str
-        Variance type for the likelihood function ('poisson' or 'gaussian').
+    variance : tuple(str, float)
+        Variance type and value for the likelihood function. The value is set to None in case a
+        Poisson distribution is assumed for the noise.
     aperture : dict
         Dictionary with the aperture properties. See for more information
         :func:`~pynpoint.util.analysis.create_aperture`.

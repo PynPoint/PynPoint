@@ -185,7 +185,7 @@ class TestFluxPosition:
 
     def test_psf_subtraction(self):
 
-        module = PcaPsfSubtractionModule(pca_numbers=(2, ),
+        module = PcaPsfSubtractionModule(pca_numbers=[2, ],
                                          name_in='pca',
                                          images_in_tag='fake',
                                          reference_in_tag='fake',
