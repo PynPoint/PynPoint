@@ -126,7 +126,7 @@ class StarExtractionModule(ProcessingModule):
             starpos = locate_star(image, center, width, fwhm)
 
             try:
-                im_crop = crop_image(image, starpos, im_size)
+                im_crop = crop_image(image, tuple(starpos), im_size)
 
             except ValueError:
                 if cpu == 1:
@@ -142,7 +142,7 @@ class StarExtractionModule(ProcessingModule):
                                   'brightest pixel. Using the center of the image instead.')
 
                 starpos = center_pixel(image)
-                im_crop = crop_image(image, starpos, im_size)
+                im_crop = crop_image(image, tuple(starpos), im_size)
 
             if cpu == 1:
                 star.append((starpos[1], starpos[0]))
@@ -269,12 +269,12 @@ class ExtractBinaryModule(ProcessingModule):
         def _crop_rotating_star(image, position, im_size, filter_size):
 
             starpos = locate_star(image=image,
-                                  center=position,
+                                  center=tuple(position),
                                   width=self.m_search_size,
                                   fwhm=filter_size)
 
             return crop_image(image=image,
-                              center=starpos,
+                              center=tuple(starpos),
                               size=im_size)
 
         self.apply_function_to_images(_crop_rotating_star,

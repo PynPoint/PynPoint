@@ -335,7 +335,7 @@ class FrameSelectionModule(ProcessingModule):
                 phot = np.nan
 
             else:
-                im_crop = crop_image(images, starpos, 2*int(math.ceil(aperture[1])))
+                im_crop = crop_image(images, tuple(starpos), 2*int(math.ceil(aperture[1])))
 
                 npix = im_crop.shape[0]
 
