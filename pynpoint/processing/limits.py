@@ -263,7 +263,7 @@ class ContrastCurveModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished/len(positions), 1, 'Running ContrastCurveModule...')
+            progress(int(nfinished/len(positions)), 1, 'Running ContrastCurveModule...')
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)

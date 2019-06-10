@@ -264,14 +264,21 @@ def merit_function(residuals: np.ndarray,
         # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
         # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
 
-        phot_table = aperture_photometry(np.abs(residuals),
-                                         create_aperture(aperture),
-                                         method='exact')
+        if variance[0] == 'poisson':
 
-        merit = phot_table['aperture_sum'][0]
+            phot_table = aperture_photometry(np.abs(residuals),
+                                             create_aperture(aperture),
+                                             method='exact')
 
-        if variance[0] == 'gaussian':
-            merit = (merit-variance[1])**2/variance[2]
+            merit = phot_table['aperture_sum'][0]
+
+        elif variance[0] == 'gaussian':
+
+            phot_table = aperture_photometry(residuals,
+                                             create_aperture(aperture),
+                                             method='exact')
+
+            merit = (phot_table['aperture_sum'][0]-variance[1])**2/variance[2]
 
     else:
 
