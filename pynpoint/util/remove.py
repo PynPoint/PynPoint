@@ -4,11 +4,16 @@ Functions to write selected data and attributes to the central database.
 
 import numpy as np
 
+from typeguard import typechecked
 
-def write_selected_data(images,
-                        indices,
-                        port_selected,
-                        port_removed):
+from pynpoint.core.dataio import InputPort, OutputPort
+
+
+@typechecked
+def write_selected_data(images: np.ndarray,
+                        indices: np.ndarray,
+                        port_selected: OutputPort,
+                        port_removed: OutputPort) -> None:
     """
     Function to write a selected number of images from a data set.
 
@@ -42,10 +47,11 @@ def write_selected_data(images,
     if port_selected is not None and images is not None:
         port_selected.append(images)
 
-def write_selected_attributes(indices,
-                              port_input,
-                              port_selected,
-                              port_removed):
+@typechecked
+def write_selected_attributes(indices: np.ndarray,
+                              port_input: InputPort,
+                              port_selected: OutputPort,
+                              port_removed: OutputPort) -> None:
     """
     Function to write the attributes of a selected number of images.
 

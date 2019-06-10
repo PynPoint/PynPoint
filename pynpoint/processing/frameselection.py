@@ -787,7 +787,7 @@ class FrameSimilarityModule(ProcessingModule):
                  name_in: str,
                  image_tag: str,
                  method: str = 'MSE',
-                 mask_radius: Tuple[float] = (0., 5.),
+                 mask_radius: Tuple[float, float] = (0., 5.),
                  window_size: float = 0.1,
                  temporal_median: str = 'full') -> None:
         """
@@ -919,11 +919,11 @@ class FrameSimilarityModule(ProcessingModule):
         else:
             temporal_median = False
 
-        if self.m_method != 'SSIM':
-            images *= mask
-        else:
+        if self.m_method == 'SSIM':
             images = crop_image(images, None, int(self.m_mask_radii[1]))
             temporal_median = crop_image(temporal_median, None, int(self.m_mask_radii[1]))
+        else:
+            images *= mask
 
         # compare images and store similarity
         similarities = np.zeros(nimages)

@@ -298,6 +298,7 @@ class TestFrameSelection:
         module = FrameSimilarityModule(name_in='simi3',
                                        image_tag='read',
                                        method='SSIM',
+                                       mask_radius=(0., 1.),
                                        temporal_median='constant')
 
         self.pipeline.add_module(module)
@@ -309,8 +310,8 @@ class TestFrameSelection:
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.99904804731305, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9999785978135135, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 43.999059977871184, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 0.9999793908738922, rtol=limit, atol=0.)
 
     def test_select_by_attribute(self):
 
