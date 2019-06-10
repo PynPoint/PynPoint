@@ -230,7 +230,7 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
-        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+        mask = create_mask(images.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
         _, im_res = pca_psf_subtraction(images=images*mask,
                                         angles=-1.*parang+self.m_extra_rot,

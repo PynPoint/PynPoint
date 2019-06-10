@@ -787,7 +787,7 @@ class FrameSimilarityModule(ProcessingModule):
                  name_in: str,
                  image_tag: str,
                  method: str = 'MSE',
-                 mask_radius: List[float] = [0., 5.],
+                 mask_radius: Tuple[float] = (0., 5.),
                  window_size: float = 0.1,
                  temporal_median: str = 'full') -> None:
         """
@@ -805,7 +805,7 @@ class FrameSimilarityModule(ProcessingModule):
                 - `SSIM` - Structural Similarity
 
             These measures compare each image to the temporal median of the image set.
-        mask_radius : list(float, float)
+        mask_radius : tuple(float, float)
             Inner and outer radius (arcsec) of the mask that is applied to the images.
         window_size : float
             Size (arcsec) of the sliding window that is used when the SSIM similarity is
@@ -903,8 +903,8 @@ class FrameSimilarityModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         # convert arcsecs to pixels
-        self.m_mask_radii[0] = math.floor(self.m_mask_radii[0] / pixscale)
-        self.m_mask_radii[1] = math.floor(self.m_mask_radii[1] / pixscale)
+        self.m_mask_radii = (math.floor(self.m_mask_radii[0] / pixscale),
+                             math.floor(self.m_mask_radii[1] / pixscale))
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images

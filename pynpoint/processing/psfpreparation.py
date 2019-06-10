@@ -123,7 +123,7 @@ class PSFpreparationModule(ProcessingModule):
 
         # Create 2D disk mask which will be applied to every frame
         mask = create_mask((int(im_shape[-2]), int(im_shape[-1])),
-                           [self.m_cent_size, self.m_edge_size]).astype(bool)
+                           (self.m_cent_size, self.m_edge_size)).astype(bool)
 
         # Keep track of the normalization vectors in case we are normalizing the images (if
         # we are not normalizing, this list will remain empty)
