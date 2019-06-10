@@ -4,12 +4,12 @@ Functions for image processing.
 
 import math
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple
 
+import cv2
 import numpy as np
 
 from typeguard import typechecked
-
 from skimage.transform import rescale
 from scipy.ndimage import fourier_shift, shift, rotate
 
@@ -449,3 +449,81 @@ def select_annulus(image_in: np.ndarray,
     indices = np.where(mask == 1.)
 
     return image_in[indices[0], indices[1]]
+
+@typechecked
+def locate_star(image: np.ndarray,
+                center: Union[tuple, None],
+                width: Union[int, None],
+                fwhm: Union[int, None]) -> np.ndarray:
+    """
+    Function to locate the star by finding the brightest pixel.
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Input image (2D).
+    center : tuple(int, int), None
+        Pixel center (y, x) of the subframe. The full image is used if set to None.
+    width : int, None
+        The width (pix) of the subframe. The full image is used if set to None.
+    fwhm : int, None
+        Full width at half maximum (pix) of the Gaussian kernel. Not used if set to None.
+
+    Returns
+    -------
+    numpy.ndarray
+        Position (y, x) of the brightest pixel.
+    """
+
+    if width is not None:
+        if center is None:
+            center = center_pixel(image)
+
+        image = crop_image(image, center, width)
+
+    if fwhm is None:
+        smooth = np.copy(image)
+
+    else:
+        sigma = fwhm/math.sqrt(8.*math.log(2.))
+        kernel = (fwhm*2+1, fwhm*2+1)
+        smooth = cv2.GaussianBlur(image, kernel, sigma)
+
+    # argmax[0] is the y position and argmax[1] is the y position
+    argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
+
+    if center is not None and width is not None:
+        argmax[0] += center[0] - (image.shape[0]-1) // 2 # y
+        argmax[1] += center[1] - (image.shape[1]-1) // 2 # x
+
+    return argmax
+
+@typechecked
+def rotate_coordinates(center: Tuple[float, float],
+                       position: Tuple[float, float],
+                       angle: float) -> Tuple[float, float]:
+    """
+    Function to rotate coordinates around the image center.
+
+    Parameters
+    ----------
+    center : tuple(float, float)
+        Image center (y, x).
+    position : tuple(float, float)
+        Position (y, x) in the image.
+    angle : float
+        Angle (deg) to rotate in counterclockwise direction.
+
+    Returns
+    -------
+    tuple(float, float)
+        New position (y, x).
+    """
+
+    pos_x = (position[1]-center[1])*math.cos(np.radians(angle)) - \
+            (position[0]-center[0])*math.sin(np.radians(angle))
+
+    pos_y = (position[1]-center[1])*math.sin(np.radians(angle)) + \
+            (position[0]-center[0])*math.cos(np.radians(angle))
+
+    return (center[0]+pos_y, center[1]+pos_x)
