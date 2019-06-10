@@ -8,13 +8,15 @@ from typing import Union, Tuple
 
 import numpy as np
 
+from typeguard import typechecked
 from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
-from typeguard import typechecked
 
-from pynpoint.util.image import shift_image, center_subpixel
+from pynpoint.util.image import shift_image, center_subpixel, pixel_distance
+
+from astropy.io import fits
 
 
 @typechecked
@@ -46,6 +48,8 @@ def false_alarm(image: np.ndarray,
     -------
     float
         Signal.
+    float
+        Bias offset.
     float
         Noise level.
     float
@@ -227,21 +231,12 @@ def merit_function(residuals: np.ndarray,
         Merit value.
     """
 
+    rr_grid = pixel_distance(im_shape=residuals.shape,
+                             position=(aperture['pos_y'], aperture['pos_x']))
+
+    indices = np.where(rr_grid < aperture['radius'])
+
     if function == 'hessian':
-
-        if aperture['type'] != 'circular':
-            raise ValueError('Measuring the Hessian is only possible with a circular aperture.')
-
-        npix = residuals.shape[-1]
-
-        pos_x = aperture['pos_x']
-        pos_y = aperture['pos_y']
-
-        x_grid = np.linspace(-(pos_x+0.5), npix-(pos_x+0.5), npix)
-        y_grid = np.linspace(-(pos_y+0.5), npix-(pos_y+0.5), npix)
-
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-        rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
 
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
@@ -250,8 +245,8 @@ def merit_function(residuals: np.ndarray,
                                                             order='rc')
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-        hes_det[rr_grid > aperture['radius']] = 0.
-        merit = np.sum(np.abs(hes_det))
+
+        merit = np.sum(np.abs(hes_det[indices]))
 
     elif function == 'sum':
 
@@ -265,20 +260,10 @@ def merit_function(residuals: np.ndarray,
         # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
 
         if variance[0] == 'poisson':
-
-            phot_table = aperture_photometry(np.abs(residuals),
-                                             create_aperture(aperture),
-                                             method='exact')
-
-            merit = phot_table['aperture_sum'][0]
+            merit = np.sum(np.abs(residuals[indices]))
 
         elif variance[0] == 'gaussian':
-
-            phot_table = aperture_photometry(residuals,
-                                             create_aperture(aperture),
-                                             method='exact')
-
-            merit = (phot_table['aperture_sum'][0]-variance[1])**2/variance[2]
+            merit = np.sum((residuals[indices]-variance[1])**2)/variance[2]
 
     else:
 

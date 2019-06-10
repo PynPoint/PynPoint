@@ -12,15 +12,15 @@ import emcee
 
 from typeguard import typechecked
 from scipy.optimize import minimize
-from photutils import aperture_photometry, CircularAperture
 from sklearn.decomposition import PCA
+from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
-                                center_subpixel, select_annulus
+                                center_subpixel, select_annulus, rotate_coordinates
 from pynpoint.util.mcmc import lnprob
-from pynpoint.util.module import progress, memory_frames, rotate_coordinates
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
@@ -174,7 +174,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  psf_in_tag: str,
                  res_out_tag: str,
                  flux_position_tag: str,
-                 position: Tuple[float, float],
+                 position: Tuple[int, int],
                  magnitude: float,
                  psf_scaling: float = -1.,
                  merit: str = 'hessian',
@@ -206,7 +206,7 @@ class SimplexMinimizationModule(ProcessingModule):
             Each step of the minimization saves the x position (pix), y position (pix), separation
             (arcsec), angle (deg), contrast (mag), and the function of merit. The last row of
             values contain the best-fit results.
-        position : tuple(float, float)
+        position : tuple(int, int)
             Approximate position (x, y) of the planet (pix). This is also the location where the
             function of merit is calculated with an aperture of radius *aperture*.
         magnitude : float
@@ -218,7 +218,7 @@ class SimplexMinimizationModule(ProcessingModule):
             Function of merit for the minimization. Can be either *hessian*, to minimize the sum of
             the absolute values of the determinant of the Hessian matrix, or *sum*, to minimize the
             sum of the absolute pixel values (Wertz et al. 2017).
-        aperture : float
+        aperture : float or dict
             Either the aperture radius (arcsec) at the position specified at *position* or a
             dictionary with the aperture properties. See
             :class:`~pynpoint.util.analysis.create_aperture` for details.
@@ -318,12 +318,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                'radius':self.m_aperture/pixscale}
 
         elif isinstance(self.m_aperture, dict):
-            if self.m_aperture['type'] == 'circular':
-                self.m_aperture['radius'] /= pixscale
-
-            elif self.m_aperture['type'] == 'elliptical':
-                self.m_aperture['semimajor'] /= pixscale
-                self.m_aperture['semiminor'] /= pixscale
+            self.m_aperture['radius'] /= pixscale
 
         self.m_sigma /= pixscale
 
@@ -768,8 +763,8 @@ class MCMCsamplingModule(ProcessingModule):
             xy_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
 
             self.m_aperture = {'type':'circular',
-                               'pos_x':xy_pos[0],
-                               'pos_y':xy_pos[1],
+                               'pos_x':int(xy_pos[0]),
+                               'pos_y':int(xy_pos[1]),
                                'radius':self.m_aperture/pixscale,
                                'separation':self.m_param[0]/pixscale,
                                'angle':self.m_param[1]}
@@ -779,19 +774,9 @@ class MCMCsamplingModule(ProcessingModule):
                                          x_pos=self.m_aperture['pos_x'],
                                          y_pos=self.m_aperture['pos_y'])
 
-            if self.m_aperture['type'] == 'circular':
-                self.m_aperture['radius'] /= pixscale
-
-            elif self.m_aperture['type'] == 'elliptical':
-                self.m_aperture['semimajor'] /= pixscale
-                self.m_aperture['semiminor'] /= pixscale
-
+            self.m_aperture['radius'] /= pixscale
             self.m_aperture['separation'] = sep_ang[0]
             self.m_aperture['angle'] = sep_ang[1]
-
-        if self.m_variance == 'gaussian' and self.m_aperture['type'] != 'circular':
-            raise ValueError('Gaussian variance can only be used in combination with a'
-                             'circular aperture.')
 
     @typechecked
     def gaussian_noise(self,

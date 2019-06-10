@@ -16,8 +16,8 @@ from skimage.measure import compare_ssim, compare_mse
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask
-from pynpoint.util.module import progress, memory_frames, locate_star
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask, locate_star
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
 

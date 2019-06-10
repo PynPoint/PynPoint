@@ -111,33 +111,14 @@ def lnprob(param: np.ndarray,
             delta_x = xy_pos[0] - aperture['pos_x']
             delta_y = xy_pos[1] - aperture['pos_y']
 
-            if aperture['type'] == 'circular':
+            if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
+               bounds[2][0] <= param[2] <= bounds[2][1]:
 
-                if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
-                   bounds[2][0] <= param[2] <= bounds[2][1]:
+                ln_prior = 0.
 
-                    ln_prior = 0.
+            else:
 
-                else:
-
-                    ln_prior = -np.inf
-
-            elif aperture['type'] == 'elliptical':
-
-                cos_ang = math.cos(math.radians(180.-aperture['angle']))
-                sin_ang = math.sin(math.radians(180.-aperture['angle']))
-
-                x_rot = delta_x*cos_ang - delta_y*sin_ang
-                y_rot = delta_x*sin_ang + delta_y*cos_ang
-
-                r_check = (x_rot/aperture['semimajor'])**2 + (y_rot/aperture['semiminor'])**2
-
-                if r_check <= 1. and bounds[2][0] <= param[2] <= bounds[2][1]:
-                    ln_prior = 0.
-
-                else:
-                    ln_prior = -np.inf
-
+                ln_prior = -np.inf
 
         else:
             raise ValueError('Prior type not recognized.')
