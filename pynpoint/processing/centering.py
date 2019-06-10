@@ -143,7 +143,7 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            return shift_image(tmp_image, offset, self.m_interpolation)
+            return shift_image(tmp_image, tuple(offset), self.m_interpolation)
 
         if self.m_ref_image_in_port is None:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
@@ -654,7 +654,7 @@ class ShiftImagesModule(ProcessingModule):
             self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
 
         def _image_shift(image, shift_yx, interpolation):
-            return shift_image(image, shift_yx, interpolation)
+            return shift_image(image, tuple(shift_yx), interpolation)
 
         self.apply_function_to_images(_image_shift,
                                       self.m_image_in_port,
@@ -920,7 +920,7 @@ class WaffleCenteringModule(ProcessingModule):
                 shift_yx[0] += 0.5
                 shift_yx[1] += 0.5
 
-            im_shift = shift_image(image, shift_yx, 'spline')
+            im_shift = shift_image(image, tuple(shift_yx), 'spline')
 
             if self.m_size is not None:
                 im_crop = crop_image(im_shift, None, self.m_size)
