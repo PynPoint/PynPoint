@@ -56,18 +56,6 @@ class TestFitsWritingModule:
         self.pipeline.add_module(write)
         self.pipeline.run_module('write1')
 
-    def test_filename_string(self):
-
-        with pytest.raises(ValueError) as error:
-            FitsWritingModule(file_name=0.,
-                              name_in='write2',
-                              output_dir=None,
-                              data_tag='images',
-                              data_range=None,
-                              overwrite=True)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
-
     def test_filename_extension(self):
 
         with pytest.raises(ValueError) as error:

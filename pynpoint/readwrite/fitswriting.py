@@ -6,7 +6,10 @@ import os
 import sys
 import warnings
 
+from typing import Tuple
+
 from astropy.io import fits
+from typeguard import typechecked
 
 from pynpoint.core.processing import WritingModule
 
@@ -22,26 +25,27 @@ class FitsWritingModule(WritingModule):
     this module will overwrite an existing FITS file with the same filename.
     """
 
+    @typechecked
     def __init__(self,
-                 file_name,
-                 name_in='fits_writing',
-                 output_dir=None,
-                 data_tag='im_arr',
-                 data_range=None,
-                 overwrite=True):
+                 name_in: str,
+                 data_tag: str,
+                 file_name: str,
+                 output_dir: str = None,
+                 data_range: Tuple[int, int] = None,
+                 overwrite: bool = True) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-        file_name : str
-            Name of the FITS output file. Requires the FITS extension.
-        output_dir : str
-            Output directory where the FITS file will be stored. If no folder is specified the
-            Pypeline default is chosen.
         data_tag : str
             Tag of the database entry the module has to export as FITS file.
-        data_range : tuple
+        file_name : str
+            Name of the FITS output file. Requires the FITS extension.
+        output_dir : str, None
+            Output directory where the FITS file will be stored. If no folder is specified the
+            Pypeline default is chosen.
+        data_range : tuple, None
             A two element tuple which specifies a begin and end frame of the export. This can be
             used to save a subsets of huge dataset. If None the whole dataset will be exported.
         overwrite : bool
@@ -55,9 +59,6 @@ class FitsWritingModule(WritingModule):
 
         super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
 
-        if not isinstance(file_name, str):
-            raise ValueError('Output \'file_name\' needs to be a string.')
-
         if not file_name.endswith('.fits'):
             raise ValueError('Output \'file_name\' requires the FITS extension.')
 
@@ -66,7 +67,8 @@ class FitsWritingModule(WritingModule):
         self.m_range = data_range
         self.m_overwrite = overwrite
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a FITS file and saves the data as well as the
         corresponding attributes.

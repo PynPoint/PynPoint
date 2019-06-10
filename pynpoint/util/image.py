@@ -4,7 +4,7 @@ Functions for image processing.
 
 import math
 
-from typing import Tuple
+from typing import Union, Tuple, List
 
 import numpy as np
 
@@ -69,9 +69,10 @@ def center_subpixel(image: np.ndarray) -> Tuple[float, float]:
 
     return (center_y, center_x)
 
-def crop_image(image,
-               center,
-               size):
+@typechecked
+def crop_image(image: np.ndarray,
+               center: Union[tuple, None],
+               size: int) -> np.ndarray:
     """
     Function to crop square images around a specified position.
 
@@ -79,7 +80,7 @@ def crop_image(image,
     ----------
     image : numpy.ndarray
         Input image (2D or 3D).
-    center : tuple(int, int)
+    center : tuple(int, int), None
         The new image center (y, x). The center of the image is used if set to None.
     size : int
         Image size (pix) for both dimensions. Increased by 1 pixel if size is an even number.
@@ -117,8 +118,9 @@ def crop_image(image,
 
     return im_return
 
-def rotate_images(images,
-                  angles):
+@typechecked
+def rotate_images(images: np.ndarray,
+                  angles: np.ndarray) -> np.ndarray:
     """
     Function to rotate all images in clockwise direction.
 
@@ -142,8 +144,9 @@ def rotate_images(images,
 
     return im_rot
 
-def create_mask(im_shape,
-                size):
+@typechecked
+def create_mask(im_shape: Tuple[int, int],
+                size: List) -> np.ndarray:
     """
     Function to create a mask for the central and outer image regions.
 
@@ -184,10 +187,11 @@ def create_mask(im_shape,
 
     return mask
 
-def shift_image(image,
-                shift_yx,
-                interpolation,
-                mode='constant'):
+@typechecked
+def shift_image(image: np.ndarray,
+                shift_yx: Tuple[float, float],
+                interpolation: str,
+                mode: str = 'constant') -> np.ndarray:
     """
     Function to shift an image.
 
@@ -199,6 +203,8 @@ def shift_image(image,
         Shift (y, x) to be applied (pix).
     interpolation : str
         Interpolation type ('spline', 'bilinear', or 'fft').
+    mode : str
+        Interpolation mode.
 
     Returns
     -------
@@ -218,9 +224,10 @@ def shift_image(image,
 
     return im_center
 
-def scale_image(image,
-                scaling_x,
-                scaling_y):
+@typechecked
+def scale_image(image: np.ndarray,
+                scaling_x: float,
+                scaling_y: float) -> np.ndarray:
     """
     Function to spatially scale an image.
 
@@ -252,9 +259,10 @@ def scale_image(image,
 
     return im_scale * (sum_before / sum_after)
 
-def cartesian_to_polar(center,
-                       x_pos,
-                       y_pos):
+@typechecked
+def cartesian_to_polar(center: Tuple[float, float],
+                       x_pos: float,
+                       y_pos: float) -> Tuple[float, float]:
     """
     Function to convert pixel coordinates to polar coordinates.
 
@@ -282,9 +290,10 @@ def cartesian_to_polar(center,
 
     return tuple([sep, ang])
 
-def polar_to_cartesian(image,
-                       sep,
-                       ang):
+@typechecked
+def polar_to_cartesian(image: np.ndarray,
+                       sep: float,
+                       ang: float) -> Tuple[float, float]:
     """
     Function to convert polar coordinates to pixel coordinates.
 
