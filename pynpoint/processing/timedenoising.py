@@ -4,10 +4,13 @@ suppression in the time domain. The module can be used as additional preprocessi
 Bonse et al. 2018 more information.
 """
 
+from typing import Union
+
 import pywt
 import numpy as np
 
 from statsmodels.robust import mad
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.wavelets import WaveletAnalysisCapsule
@@ -19,11 +22,14 @@ class CwtWaveletConfiguration:
     original paper.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 wavelet="dog",
-                 wavelet_order=2,
-                 keep_mean=False,
-                 resolution=0.5):
+                 wavelet: str = 'dog',
+                 wavelet_order: int = 2,
+                 keep_mean: bool = False,
+                 resolution: float = 0.5) -> None:
         """
         Parameters
         ----------
@@ -42,8 +48,8 @@ class CwtWaveletConfiguration:
             None
         """
 
-        if wavelet not in ["dog", "morlet"]:
-            raise ValueError("CWT supports only 'dog' and 'morlet' wavelets.")
+        if wavelet not in ['dog', 'morlet']:
+            raise ValueError('CWT supports only \'dog\' and \'morlet\' wavelets.')
 
         self.m_wavelet = wavelet
         self.m_wavelet_order = wavelet_order
@@ -58,8 +64,11 @@ class DwtWaveletConfiguration:
     CWT DOG wavelet.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 wavelet="db8"):
+                 wavelet: str = 'db8') -> None:
         """
         Parameters
         ----------
@@ -79,7 +88,7 @@ class DwtWaveletConfiguration:
 
         # check if wavelet is supported
         if wavelet not in supported:
-            raise ValueError("DWT supports only " + str(supported) + " as input wavelet.")
+            raise ValueError('DWT supports only ' + str(supported) + ' as input wavelet.')
 
         self.m_wavelet = wavelet
 
@@ -90,34 +99,37 @@ class WaveletTimeDenoisingModule(ProcessingModule):
     shrinkage (see Bonse et al. 2018).
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 wavelet_configuration,
-                 name_in="time_denoising",
-                 image_in_tag="star_arr",
-                 image_out_tag="star_arr_denoised",
-                 padding="zero",
-                 median_filter=False,
-                 threshold_function="soft"):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 wavelet_configuration: Union[CwtWaveletConfiguration, DwtWaveletConfiguration],
+                 padding: str = 'zero',
+                 median_filter: bool = False,
+                 threshold_function: str = 'soft') -> None:
         """
         Parameters
         ----------
-        wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
-                                pynpoint.processing.timedenoising.DwtWaveletConfiguration
-            Instance of DwtWaveletConfiguration or CwtWaveletConfiguration which gives the
-            parameters of the wavelet transformation to be used.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
+        wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
+                                pynpoint.processing.timedenoising.DwtWaveletConfiguration
+            Instance of DwtWaveletConfiguration or CwtWaveletConfiguration which gives the
+            parameters of the wavelet transformation to be used.
         padding : str
-            Padding method ("zero", "mirror", or "none").
+            Padding method ('zero', 'mirror', or 'none').
         median_filter : bool
             If true a median filter in time is applied which removes outliers in time like cosmic
             rays.
         threshold_function : str
-            Threshold function used for wavelet shrinkage in the wavelet space ("soft" or "hard").
+            Threshold function used for wavelet shrinkage in the wavelet space ('soft' or 'hard').
 
         Returns
         -------
@@ -133,13 +145,14 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         self.m_wavelet_configuration = wavelet_configuration
         self.m_median_filter = median_filter
 
-        assert padding in ["zero", "mirror", "none"]
+        assert padding in ['zero', 'mirror', 'none']
         self.m_padding = padding
 
-        assert threshold_function in ["soft", "hard"]
-        self.m_threshold_function = threshold_function == "soft"
+        assert threshold_function in ['soft', 'hard']
+        self.m_threshold_function = threshold_function == 'soft'
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Applies the time denoising for the lines in time in parallel.
 
@@ -151,13 +164,14 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         if isinstance(self.m_wavelet_configuration, DwtWaveletConfiguration):
 
-            if self.m_padding == "const_mean":
-                self.m_padding = "constant"
+            if self.m_padding == 'const_mean':
+                self.m_padding = 'constant'
 
-            if self.m_padding == "none":
-                self.m_padding = "periodic"
+            if self.m_padding == 'none':
+                self.m_padding = 'periodic'
 
-            def denoise_line_in_time(signal_in):
+            @typechecked
+            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
                 """
                 Definition of the temporal denoising for DWT.
 
@@ -173,9 +187,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                 """
 
                 if self.m_threshold_function:
-                    threshold_mode = "soft"
+                    threshold_mode = 'soft'
                 else:
-                    threshold_mode = "hard"
+                    threshold_mode = 'hard'
 
                 coef = pywt.wavedec(signal_in,
                                     wavelet=self.m_wavelet_configuration.m_wavelet,
@@ -198,7 +212,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         elif isinstance(self.m_wavelet_configuration, CwtWaveletConfiguration):
 
-            def denoise_line_in_time(signal_in):
+            @typechecked
+            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
                 """
                 Definition of temporal denoising for CWT.
 
@@ -238,12 +253,12 @@ class WaveletTimeDenoisingModule(ProcessingModule):
                                     self.m_image_out_port)
 
         if self.m_threshold_function:
-            history = "threshold_function = soft"
+            history = 'threshold_function = soft'
         else:
-            history = "threshold_function = hard"
+            history = 'threshold_function = hard'
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("WaveletTimeDenoisingModule", history)
+        self.m_image_out_port.add_history('WaveletTimeDenoisingModule', history)
         self.m_image_out_port.close_port()
 
 
@@ -253,10 +268,13 @@ class TimeNormalizationModule(ProcessingModule):
     (see Bonse et al. 2018).
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in="normalization",
-                 image_in_tag="im_arr",
-                 image_out_tag="im_arr_normalized"):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -278,7 +296,8 @@ class TimeNormalizationModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module.
 
@@ -294,8 +313,8 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running TimeNormalizationModule")
+                                      'Running TimeNormalizationModule')
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("TimeNormalizationModule", "normalization = median")
+        self.m_image_out_port.add_history('TimeNormalizationModule', 'normalization = median')
         self.m_image_out_port.close_port()

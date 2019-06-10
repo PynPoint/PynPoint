@@ -6,6 +6,7 @@ import os
 import sys
 
 import h5py
+from typeguard import typechecked
 
 from pynpoint.core.processing import WritingModule
 
@@ -17,13 +18,14 @@ class Hdf5WritingModule(WritingModule):
     the static and non-static attributes.
     """
 
+    @typechecked
     def __init__(self,
-                 file_name,
-                 name_in='hdf5_writing',
-                 output_dir=None,
-                 tag_dictionary=None,
-                 keep_attributes=True,
-                 overwrite=False):
+                 name_in: str,
+                 file_name: str,
+                 output_dir: str = None,
+                 tag_dictionary: dict = None,
+                 keep_attributes: bool = True,
+                 overwrite: bool = False) -> None:
         """
         Parameters
         ----------
@@ -31,10 +33,10 @@ class Hdf5WritingModule(WritingModule):
             Unique name of the module instance.
         file_name : str
             Name of the file which will be created by the module.
-        output_dir : str
+        output_dir : str, None
             Location where the HDF5 file will be stored. The Pypeline default output location is
             used when no location is given.
-        tag_dictionary : dict
+        tag_dictionary : dict, None
             Directory containing all tags / keys of the datasets which will be exported from the
             PynPoint internal database. The datasets will be exported as
             {*input_tag*:*output_tag*, }.
@@ -59,7 +61,8 @@ class Hdf5WritingModule(WritingModule):
         self.m_keep_attributes = keep_attributes
         self.m_overwrite = overwrite
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Exports all datasets defined in the *tag_dictionary* to an
         external HDF5 file.

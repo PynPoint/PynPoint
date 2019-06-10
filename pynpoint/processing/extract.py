@@ -22,6 +22,8 @@ class StarExtractionModule(ProcessingModule):
     around this position.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str = 'star_cutting',
@@ -177,6 +179,8 @@ class ExtractBinaryModule(ProcessingModule):
     Pipeline module to extract a binary star (or another point source) which is rotating across the
     image stack.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,

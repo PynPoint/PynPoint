@@ -8,7 +8,7 @@ import math
 import warnings
 import multiprocessing as mp
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 import numpy as np
 
@@ -25,6 +25,8 @@ class RemoveFramesModule(ProcessingModule):
     """
     Pipeline module for removing images by their index number.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -170,6 +172,8 @@ class FrameSelectionModule(ProcessingModule):
     """
     Pipeline module for frame selection.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -455,6 +459,8 @@ class RemoveLastFrameModule(ProcessingModule):
     frame contains the average pixel values of the cube.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -545,6 +551,8 @@ class RemoveStartFramesModule(ProcessingModule):
     be useful for NACO data in which the background is significantly higher in the first several
     frames of a data cube.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -663,6 +671,8 @@ class ImageStatisticsModule(ProcessingModule):
     images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -777,7 +787,7 @@ class FrameSimilarityModule(ProcessingModule):
                  name_in: str,
                  image_tag: str,
                  method: str = 'MSE',
-                 mask_radius: Tuple[float, float] = (0., 5.),
+                 mask_radius: List[float] = [0., 5.],
                  window_size: float = 0.1,
                  temporal_median: str = 'full') -> None:
         """
@@ -893,7 +903,8 @@ class FrameSimilarityModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         # convert arcsecs to pixels
-        self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
+        self.m_mask_radii[0] = math.floor(self.m_mask_radii[0] / pixscale)
+        self.m_mask_radii[1] = math.floor(self.m_mask_radii[1] / pixscale)
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images

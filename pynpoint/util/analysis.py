@@ -4,21 +4,25 @@ Functions for analysis of a point source.
 
 import math
 
+from typing import Union, Tuple
+
 import numpy as np
 
 from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
+from typeguard import typechecked
 
 from pynpoint.util.image import shift_image, center_subpixel
 
 
-def false_alarm(image,
-                x_pos,
-                y_pos,
-                size,
-                ignore):
+@typechecked
+def false_alarm(image: np.ndarray,
+                x_pos: float,
+                y_pos: float,
+                size: float,
+                ignore: bool) -> Tuple[float, float, float, float, float]:
     """
     Function for the formal t-test for high-contrast imaging at small working angles and the
     related false positive fraction (Mawet et al. 2014).
@@ -79,18 +83,20 @@ def false_alarm(image,
 
     # Note: ddof=1 is a necessary argument in order to compute the *unbiased* estimate of the
     # standard deviation, as suggested by eq. 8 of Mawet et al. (2014).
+    bias = np.mean(ap_phot[1:])
     noise = np.std(ap_phot[1:], ddof=1) * math.sqrt(1.+1./float(num_ap-1))
-    t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
+    t_test = (ap_phot[0] - bias) / noise
 
     # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
     # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
-    return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
+    return ap_phot[0], bias, noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
-def student_t(t_input,
-              radius,
-              size,
-              ignore):
+@typechecked
+def student_t(t_input: Tuple[str, float],
+              radius: float,
+              size: float,
+              ignore: bool) -> float:
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
 
@@ -128,13 +134,14 @@ def student_t(t_input,
 
     return t_result
 
-def fake_planet(images,
-                psf,
-                parang,
-                position,
-                magnitude,
-                psf_scaling,
-                interpolation='spline'):
+@typechecked
+def fake_planet(images: np.ndarray,
+                psf: np.ndarray,
+                parang: np.ndarray,
+                position: Tuple[float, float],
+                magnitude: float,
+                psf_scaling: float,
+                interpolation: str = 'spline') -> np.ndarray:
     """
     Function to inject artificial planets in a dataset.
 
@@ -144,7 +151,7 @@ def fake_planet(images,
         Input images (3D).
     psf : numpy.ndarray
         PSF template (3D).
-    parang : float
+    parang : numpy.ndarray
         Parallactic angles (deg).
     position : tuple(float, float)
         Separation (pix) and position angle (deg) measured in counterclockwise with respect to the
@@ -188,11 +195,12 @@ def fake_planet(images,
 
     return images + im_shift
 
-def merit_function(residuals,
-                   function,
-                   variance,
-                   aperture,
-                   sigma):
+@typechecked
+def merit_function(residuals: np.ndarray,
+                   function: str,
+                   variance: Union[Tuple[str, float, float], Tuple[str, None, None]],
+                   aperture: dict,
+                   sigma: float) -> float:
 
     """
     Function to calculate the merit function at a given position in the image residuals.
@@ -203,9 +211,9 @@ def merit_function(residuals,
         Residuals of the PSF subtraction (2D).
     function : str
         Figure of merit ('hessian' or 'sum').
-    variance : tuple(str, float)
-        Variance type and value for the likelihood function. The value is set to None in case a
-        Poisson distribution is assumed for the noise.
+    variance : tuple(str, float, float)
+        Variance type, bias, and value for the likelihood function. The bias and value are set to
+        None in case a Poisson distribution is assumed.
     aperture : dict
         Dictionary with the aperture properties. See for more information
         :func:`~pynpoint.util.analysis.create_aperture`.
@@ -263,7 +271,7 @@ def merit_function(residuals,
         merit = phot_table['aperture_sum'][0]
 
         if variance[0] == 'gaussian':
-            merit = merit**2/variance[1]
+            merit = (merit-variance[1])**2/variance[2]
 
     else:
 
@@ -271,7 +279,8 @@ def merit_function(residuals,
 
     return merit
 
-def create_aperture(aperture):
+@typechecked
+def create_aperture(aperture: dict) -> Union[CircularAperture, EllipticalAperture]:
     """
     Function to create a circular or elliptical aperture.
 

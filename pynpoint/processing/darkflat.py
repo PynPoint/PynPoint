@@ -4,13 +4,17 @@ Pipeline modules for dark frame and flat field calibrations.
 
 import warnings
 
+from typing import Tuple
+
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 
-
-def _master_frame(data,
-                  im_shape):
+@typechecked
+def _master_frame(data: np.ndarray,
+                  im_shape: Tuple[int, int, int]) -> np.ndarray:
     """
     Internal function which creates a master dark/flat by calculating the mean (3D data) and
     cropping the frames to the shape of the science images if needed.
@@ -19,7 +23,7 @@ def _master_frame(data,
     ----------
     data : numpy.ndarray
         Input array (2D) with mean of the dark or flat frames.
-    im_shape : numpy.ndarray
+    im_shape : tuple(int, int, int)
         Shape of the science images (3D).
 
     Returns
@@ -52,11 +56,14 @@ class DarkCalibrationModule(ProcessingModule):
     Pipeline module to subtract a master dark from the science data.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='dark_calibration',
-                 image_in_tag='im_arr',
-                 dark_in_tag='dark_arr',
-                 image_out_tag='dark_cal_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 dark_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -81,7 +88,8 @@ class DarkCalibrationModule(ProcessingModule):
         self.m_dark_in_port = self.add_input_port(dark_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master dark with the same shape as the science
         data and subtracts the dark frame from the science data.
@@ -117,11 +125,14 @@ class FlatCalibrationModule(ProcessingModule):
     Pipeline module to apply a flat field correction to the science data.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='flat_calibration',
-                 image_in_tag='dark_cal_arr',
-                 flat_in_tag='flat_arr',
-                 image_out_tag='flat_cal_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 flat_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -146,7 +157,8 @@ class FlatCalibrationModule(ProcessingModule):
         self.m_flat_in_port = self.add_input_port(flat_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master flat with the same shape as the science
         image and divides the science images by the flat field.

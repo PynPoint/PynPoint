@@ -30,6 +30,8 @@ class FakePlanetModule(ProcessingModule):
     Pipeline module to inject a positive or negative artificial planet into a stack of images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -162,6 +164,8 @@ class SimplexMinimizationModule(ProcessingModule):
     Pipeline module to measure the flux and position of a planet by injecting negative fake planets
     and minimizing a function of merit.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -412,7 +416,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             merit = merit_function(residuals=stack[0, ],
                                    function=self.m_merit,
-                                   variance='poisson',
+                                   variance=('poisson', None, None),
                                    aperture=self.m_aperture,
                                    sigma=self.m_sigma)
 
@@ -463,6 +467,8 @@ class FalsePositiveModule(ProcessingModule):
     at a specified location in an image by using the Student's t-test (Mawet et al. 2014).
     Optionally, the SNR can be optimized with the aperture position as free parameter.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -543,11 +549,11 @@ class FalsePositiveModule(ProcessingModule):
             pos_x, pos_y = arg
 
             try:
-                _, _, _, fpf = false_alarm(image=image,
-                                           x_pos=pos_x,
-                                           y_pos=pos_y,
-                                           size=self.m_aperture,
-                                           ignore=self.m_ignore)
+                _, _, _, _, fpf = false_alarm(image=image,
+                                              x_pos=pos_x,
+                                              y_pos=pos_y,
+                                              size=self.m_aperture,
+                                              ignore=self.m_ignore)
 
             except ValueError:
                 fpf = float('inf')
@@ -576,20 +582,20 @@ class FalsePositiveModule(ProcessingModule):
                                   tol=None,
                                   options={'xatol':self.m_tolerance, 'fatol':float('inf')})
 
-                _, _, snr, fpf = false_alarm(image=image,
-                                             x_pos=result.x[0],
-                                             y_pos=result.x[1],
-                                             size=self.m_aperture,
-                                             ignore=self.m_ignore)
+                _, _, _, snr, fpf = false_alarm(image=image,
+                                                x_pos=result.x[0],
+                                                y_pos=result.x[1],
+                                                size=self.m_aperture,
+                                                ignore=self.m_ignore)
 
                 x_pos, y_pos = result.x[0], result.x[1]
 
             else:
-                _, _, snr, fpf = false_alarm(image=image,
-                                             x_pos=self.m_position[0],
-                                             y_pos=self.m_position[1],
-                                             size=self.m_aperture,
-                                             ignore=self.m_ignore)
+                _, _, _, snr, fpf = false_alarm(image=image,
+                                                x_pos=self.m_position[0],
+                                                y_pos=self.m_position[1],
+                                                size=self.m_aperture,
+                                                ignore=self.m_ignore)
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
@@ -613,6 +619,8 @@ class MCMCsamplingModule(ProcessingModule):
     injection of negative artificial planets and sampling of the posterior distributions with
     emcee, an affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -788,8 +796,9 @@ class MCMCsamplingModule(ProcessingModule):
     @typechecked
     def gaussian_noise(self,
                        images: np.ndarray,
+                       psf: np.ndarray,
                        parang: np.ndarray,
-                       aperture: dict) -> float:
+                       aperture: dict) -> Tuple[float, float]:
         """
         Function to compute the (constant) variance for the likelihood function when the
         variance parameter is set to gaussian (see Mawet et al. 2014). The planet is first removed
@@ -799,6 +808,8 @@ class MCMCsamplingModule(ProcessingModule):
         ----------
         images : numpy.ndarray
             Masked input images.
+        psf : numpy.ndarray
+            PSF template.
         parang : numpy.ndarray
             Parallactic angles (deg).
         aperture : dict
@@ -808,22 +819,42 @@ class MCMCsamplingModule(ProcessingModule):
         Returns
         -------
         float
-            Variance.
+            Bias (counts).
+        float
+            Variance (counts).
         """
 
-        _, res_arr = pca_psf_subtraction(images=images,
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang,
+                           position=(self.m_param[0]/pixscale, self.m_param[1]),
+                           magnitude=self.m_param[2],
+                           psf_scaling=self.m_psf_scaling)
+
+        _, res_arr = pca_psf_subtraction(images=fake,
                                          angles=-1.*parang+self.m_extra_rot,
                                          pca_number=self.m_pca_number)
 
         residuals = combine_residuals(method=self.m_residuals, res_rot=res_arr)
 
-        selected = select_annulus(image_in=residuals[0, ],
-                                  radius_in=aperture['separation']-aperture['radius'],
-                                  radius_out=aperture['separation']+aperture['radius'],
-                                  mask_position=(aperture['pos_y'], aperture['pos_x']),
-                                  mask_radius=aperture['radius'])
+        _, bias, noise, _, _ = false_alarm(image=residuals[0, ],
+                                           x_pos=aperture['pos_x'],
+                                           y_pos=aperture['pos_y'],
+                                           size=aperture['radius'],
+                                           ignore=False)
 
-        return np.var(selected)
+        print(f'Bias [counts] = {bias}')
+        print(f'Noise [counts] = {noise}')
+
+        # selected = select_annulus(image_in=residuals[0, ],
+        #                           radius_in=aperture['separation']-aperture['radius'],
+        #                           radius_out=aperture['separation']+aperture['radius'],
+        #                           mask_position=(aperture['pos_y'], aperture['pos_x']),
+        #                           mask_radius=aperture['radius'])
+
+        return bias, noise**2
 
     @typechecked
     def run(self) -> None:
@@ -890,11 +921,11 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
         if self.m_variance == 'gaussian':
-            student_t = self.gaussian_noise(images*mask, parang, self.m_aperture)
-            variance = (self.m_variance, student_t)
+            bias, var = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
+            variance = (self.m_variance, bias, var)
 
         else:
-            variance = (self.m_variance, None)
+            variance = (self.m_variance, None, None)
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
@@ -951,6 +982,8 @@ class AperturePhotometryModule(ProcessingModule):
     """
     Pipeline module for calculating the counts within a circular area.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,

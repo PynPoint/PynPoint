@@ -54,7 +54,10 @@ class TestPypeline:
         assert warning[0].message.args[0] == 'Tag \'test\' of ReadingModule \'read\' is already ' \
                                              'used.'
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='images')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='images',
+                                            image_out_tag='im_out')
+
         process.add_output_port('test')
 
         with pytest.warns(UserWarning) as warning:
