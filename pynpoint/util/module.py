@@ -6,16 +6,21 @@ import sys
 import time
 import math
 
+from typing import Union, Tuple
+
 import cv2
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.util.image import crop_image, center_pixel
 
 
-def progress(current,
-             total,
-             message,
-             start_time=None):
+@typechecked
+def progress(current: int,
+             total: int,
+             message: str,
+             start_time: float = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -39,7 +44,7 @@ def progress(current,
     def time_string(delta_time):
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
-        
+
         Parameters
         ----------
         delta_time : float
@@ -74,8 +79,9 @@ def progress(current,
 
     sys.stdout.flush()
 
-def memory_frames(memory,
-                  nimages):
+@typechecked
+def memory_frames(memory: Union[int, np.int64],
+                  nimages: int) -> np.ndarray:
     """
     Function to subdivide the input images is in quantities of MEMORY.
 
@@ -106,10 +112,11 @@ def memory_frames(memory,
 
     return frames
 
-def locate_star(image,
-                center,
-                width,
-                fwhm):
+@typechecked
+def locate_star(image: np.ndarray,
+                center: Union[tuple, None],
+                width: Union[int, None],
+                fwhm: Union[int, None]) -> np.ndarray:
     """
     Function to locate the star by finding the brightest pixel.
 
@@ -117,16 +124,16 @@ def locate_star(image,
     ----------
     image : numpy.ndarray
         Input image (2D).
-    center : tuple(int, int)
+    center : tuple(int, int), None
         Pixel center (y, x) of the subframe. The full image is used if set to None.
-    width : int
+    width : int, None
         The width (pix) of the subframe. The full image is used if set to None.
     fwhm : int, None
         Full width at half maximum (pix) of the Gaussian kernel. Not used if set to None.
 
     Returns
     -------
-    tuple(int, int)
+    numpy.ndarray
         Position (y, x) of the brightest pixel.
     """
 
@@ -153,9 +160,10 @@ def locate_star(image,
 
     return argmax
 
-def rotate_coordinates(center,
-                       position,
-                       angle):
+@typechecked
+def rotate_coordinates(center: Tuple[float, float],
+                       position: Tuple[float, float],
+                       angle: float) -> Tuple[float, float]:
     """
     Function to rotate coordinates around the image center.
 
@@ -182,9 +190,10 @@ def rotate_coordinates(center,
 
     return (center[0]+pos_y, center[1]+pos_x)
 
-def update_arguments(index,
-                     nimages,
-                     args_in):
+@typechecked
+def update_arguments(index: int,
+                     nimages: int,
+                     args_in: Union[tuple, None]) -> Union[tuple, None]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -196,12 +205,12 @@ def update_arguments(index,
         Image index in the stack.
     nimages : int
         Total number of images in the stack.
-    args_in : tuple
+    args_in : tuple, None
         Function arguments that have to be updated.
 
     Returns
     -------
-    tuple
+    tuple, None
         Updated function arguments.
     """
 
