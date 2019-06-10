@@ -146,7 +146,8 @@ def rotate_images(images: np.ndarray,
 
 @typechecked
 def create_mask(im_shape: Tuple[int, int],
-                size: List) -> np.ndarray:
+                size: Union[Tuple[float, float], Tuple[float, None],
+                            Tuple[None, float], Tuple[None, None]]) -> np.ndarray:
     """
     Function to create a mask for the central and outer image regions.
 
@@ -154,7 +155,7 @@ def create_mask(im_shape: Tuple[int, int],
     ----------
     im_shape : tuple(int, int)
         Image size in both dimensions.
-    size : list(float, float)
+    size : tuple(float, float)
         Size (pix) of the inner and outer mask.
 
     Returns
@@ -181,7 +182,7 @@ def create_mask(im_shape: Tuple[int, int],
 
     if size[1] is not None:
         if size[1] > npix/2.:
-            size[1] = npix/2.
+            size = (size[0], npix/2.)
 
         mask[rr_grid > size[1]] = 0.
 

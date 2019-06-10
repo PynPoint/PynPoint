@@ -378,9 +378,9 @@ class LineSubtractionModule(ProcessingModule):
             return image_in - subtract
 
         if self.m_mask:
-            size = [self.m_mask/pixscale, None]
+            size = (self.m_mask/pixscale, None)
         else:
-            size = [None, None]
+            size = (None, None)
 
         mask = create_mask(im_shape, size)
 

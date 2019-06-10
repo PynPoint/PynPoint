@@ -390,7 +390,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                psf_scaling=self.m_psf_scaling)
 
             mask_shape = (fake.shape[-2], fake.shape[-1])
-            mask = create_mask(mask_shape, [self.m_cent_size, self.m_edge_size])
+            mask = create_mask(mask_shape, (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
                 _, im_res = pca_psf_subtraction(images=fake*mask,
@@ -741,9 +741,9 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_residuals = residuals
 
         if mask is None:
-            self.m_mask = np.array((None, None))
+            self.m_mask = (None, None)
         else:
-            self.m_mask = np.array(mask)
+            self.m_mask = mask
 
     @typechecked
     def aperture_dict(self,
@@ -903,10 +903,10 @@ class MCMCsamplingModule(ProcessingModule):
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
         if self.m_mask[0] is not None:
-            self.m_mask[0] /= pixscale
+            self.m_mask = (self.m_mask[0]/pixscale, self.m_mask[1])
 
         if self.m_mask[1] is not None:
-            self.m_mask[1] /= pixscale
+            self.m_mask = (self.m_mask[0], self.m_mask[1]/pixscale)
 
         # create the mask and get the unmasked image indices
         mask = create_mask(im_shape[-2:], self.m_mask)
