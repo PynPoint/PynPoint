@@ -833,11 +833,18 @@ class MCMCsamplingModule(ProcessingModule):
         print(f'Bias [counts] = {bias}')
         print(f'Noise [counts] = {noise}')
 
-        # selected = select_annulus(image_in=residuals[0, ],
-        #                           radius_in=aperture['separation']-aperture['radius'],
-        #                           radius_out=aperture['separation']+aperture['radius'],
-        #                           mask_position=(aperture['pos_y'], aperture['pos_x']),
-        #                           mask_radius=aperture['radius'])
+        selected = select_annulus(image_in=residuals[0, ],
+                                  radius_in=aperture['separation']-aperture['radius'],
+                                  radius_out=aperture['separation']+aperture['radius'],
+                                  mask_position=(aperture['pos_y'], aperture['pos_x']),
+                                  mask_radius=aperture['radius'])
+
+        print(selected.shape)
+        bias = np.mean(selected)
+        noise = np.std(selected)
+
+        print(f'Bias [counts] = {bias}')
+        print(f'Noise [counts] = {noise}')
 
         return bias, noise**2
 
@@ -854,21 +861,6 @@ class MCMCsamplingModule(ProcessingModule):
         NoneType
             None
         """
-
-        if not isinstance(self.m_param, tuple) or len(self.m_param) != 3:
-            raise TypeError('The param argument should contain a tuple with the approximate '
-                            'separation (arcsec), position angle (deg), and contrast (mag).')
-
-        if not isinstance(self.m_bounds, tuple) or len(self.m_bounds) != 3:
-            raise TypeError('The bounds argument should contain a tuple with three tuples for '
-                            'the boundaries of the separation (arcsec), position angle (deg), and '
-                            'contrast (mag).')
-
-        if not isinstance(self.m_sigma, tuple) or len(self.m_sigma) != 3:
-            raise TypeError('The sigma argument should contain a tuple with the standard '
-                            'deviation of the separation (arcsec), position angle (deg), '
-                            'and contrast (mag) that is used to sample the starting position '
-                            'of the walkers.')
 
         ndim = 3
 

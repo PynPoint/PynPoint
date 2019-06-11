@@ -16,8 +16,6 @@ from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance
 
-from astropy.io import fits
-
 
 @typechecked
 def false_alarm(image: np.ndarray,
