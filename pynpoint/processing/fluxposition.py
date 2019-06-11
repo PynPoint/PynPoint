@@ -763,8 +763,8 @@ class MCMCsamplingModule(ProcessingModule):
             xy_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
 
             self.m_aperture = {'type':'circular',
-                               'pos_x':int(xy_pos[0]),
-                               'pos_y':int(xy_pos[1]),
+                               'pos_x':xy_pos[0],
+                               'pos_y':xy_pos[1],
                                'radius':self.m_aperture/pixscale,
                                'separation':self.m_param[0]/pixscale,
                                'angle':self.m_param[1]}
@@ -833,18 +833,18 @@ class MCMCsamplingModule(ProcessingModule):
         print(f'Bias [counts] = {bias}')
         print(f'Noise [counts] = {noise}')
 
-        selected = select_annulus(image_in=residuals[0, ],
-                                  radius_in=aperture['separation']-aperture['radius'],
-                                  radius_out=aperture['separation']+aperture['radius'],
-                                  mask_position=(aperture['pos_y'], aperture['pos_x']),
-                                  mask_radius=aperture['radius'])
-
-        print(selected.shape)
-        bias = np.mean(selected)
-        noise = np.std(selected)
-
-        print(f'Bias [counts] = {bias}')
-        print(f'Noise [counts] = {noise}')
+        # selected = select_annulus(image_in=residuals[0, ],
+        #                           radius_in=aperture['separation']-aperture['radius'],
+        #                           radius_out=aperture['separation']+aperture['radius'],
+        #                           mask_position=(aperture['pos_y'], aperture['pos_x']),
+        #                           mask_radius=aperture['radius'])
+        #
+        # print(selected.shape)
+        # bias = np.mean(selected)
+        # noise = np.std(selected)
+        #
+        # print(f'Bias [counts] = {bias}')
+        # print(f'Noise [counts] = {noise}')
 
         return bias, noise**2
 
