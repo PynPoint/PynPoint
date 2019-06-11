@@ -97,8 +97,8 @@ def write_selected_attributes(indices: np.ndarray,
 
                 port_removed.add_attribute(item, removed, static=False)
 
-    if "NFRAMES" in non_static:
-        nframes = port_input.get_attribute("NFRAMES")
+    if 'NFRAMES' in non_static:
+        nframes = port_input.get_attribute('NFRAMES')
 
         nframes_sel = np.zeros(nframes.shape, dtype=np.int)
         nframes_del = np.zeros(nframes.shape, dtype=np.int)
@@ -118,7 +118,7 @@ def write_selected_attributes(indices: np.ndarray,
                 nframes_del[i] = 0
 
         if port_selected is not None:
-            port_selected.add_attribute("NFRAMES", nframes_sel, static=False)
+            port_selected.add_attribute('NFRAMES', nframes_sel, static=False)
 
         if port_removed is not None:
-            port_removed.add_attribute("NFRAMES", nframes_del, static=False)
+            port_removed.add_attribute('NFRAMES', nframes_del, static=False)

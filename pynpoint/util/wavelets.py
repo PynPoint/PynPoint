@@ -5,6 +5,7 @@ Wrapper utils for the wavelet functions for the mlpy cwt implementation (see con
 import numpy as np
 
 from numba import jit
+from typeguard import typechecked
 from scipy.special import gamma, hermite
 from scipy.signal import medfilt
 from statsmodels.robust import mad
@@ -59,23 +60,24 @@ class WaveletAnalysisCapsule:
     shrinkage.
     """
 
+    @typechecked
     def __init__(self,
-                 signal_in,
-                 wavelet_in='dog',
-                 order=2,
-                 padding="none",
-                 frequency_resolution=0.5):
+                 signal_in: np.ndarray,
+                 wavelet_in: str = 'dog',
+                 order: int = 2,
+                 padding: str = 'none',
+                 frequency_resolution: float = 0.5) -> None:
         """
         Parameters
         ----------
         signal_in : numpy.ndarray
             1D input signal.
         wavelet_in : str
-            Wavelet function ("dog" or "morlet").
+            Wavelet function ('dog' or 'morlet').
         order : int
             Order of the wavelet function.
         padding : str
-            Padding method ("zero", "mirror", or "none").
+            Padding method ('zero', 'mirror', or 'none').
         frequency_resolution : float
             Wavelet space resolution in scale/frequency.
 
@@ -90,7 +92,7 @@ class WaveletAnalysisCapsule:
 
         # check supported wavelets
         if wavelet_in not in self.m_supported_wavelets:
-            raise ValueError('Wavelet ' + str(wavelet_in) + ' is not supported')
+            raise ValueError(f'Wavelet {wavelet_in} is not supported')
 
         if wavelet_in == 'dog':
             self._m_c_reconstructions = {2: 3.5987,
@@ -115,8 +117,8 @@ class WaveletAnalysisCapsule:
                                          20: 0.2272}
         self.m_wavelet = wavelet_in
 
-        if padding not in ["none", "zero", "mirror"]:
-            raise ValueError("Padding can only be none, zero or mirror")
+        if padding not in ['none', 'zero', 'mirror']:
+            raise ValueError('Padding can only be none, zero or mirror')
 
         self._m_data = signal_in - np.ones(len(signal_in)) * np.mean(signal_in)
         self.m_padding = padding
@@ -182,11 +184,11 @@ class WaveletAnalysisCapsule:
 
         padding_length = int(len(self._m_data) * 0.5)
 
-        if self.m_padding == "zero":
+        if self.m_padding == 'zero':
             new_data = np.append(self._m_data, np.zeros(padding_length, dtype=np.float64))
             self._m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
 
-        elif self.m_padding == "mirror":
+        elif self.m_padding == 'mirror':
             left_half_signal = self._m_data[:padding_length]
             right_half_signal = self._m_data[padding_length:]
             new_data = np.append(self._m_data, right_half_signal[::-1])
@@ -217,7 +219,8 @@ class WaveletAnalysisCapsule:
 
         return reconstruction_factor.real
 
-    def compute_cwt(self):
+    @typechecked
+    def compute_cwt(self) -> None:
         """
         Compute the wavelet space of the given input signal.
 
@@ -233,7 +236,8 @@ class WaveletAnalysisCapsule:
                               wf=self.m_wavelet,
                               p=self.m_order)
 
-    def update_signal(self):
+    @typechecked
+    def update_signal(self) -> None:
         """
         Updates the internal signal by the reconstruction of the current wavelet space.
 
@@ -247,8 +251,9 @@ class WaveletAnalysisCapsule:
         reconstruction_factor = self.__compute_reconstruction_factor()
         self._m_data *= reconstruction_factor
 
+    @typechecked
     def denoise_spectrum(self,
-                         soft=False):
+                         soft: bool = False) -> None:
         """
         Applies wavelet shrinkage on the current wavelet space (m_spectrum) by either a hard of
         soft threshold function.
@@ -264,10 +269,11 @@ class WaveletAnalysisCapsule:
             None
         """
 
-        if self.m_padding != "none":
+        if self.m_padding != 'none':
             # Python 2
             # noise_length_4 = len(self._m_data) / 4
-            # Python 2+3?
+
+            # Python 3?
             noise_length_4 = len(self._m_data) // 4
             noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
 
@@ -279,7 +285,8 @@ class WaveletAnalysisCapsule:
 
         self.m_spectrum = _fast_zeros(soft, self.m_spectrum, uthresh)
 
-    def median_filter(self):
+    @typechecked
+    def median_filter(self) -> None:
         """
         Applies a median filter on the internal 1d signal. Can be useful for cosmic ray correction
         after temporal de-noising
@@ -292,7 +299,8 @@ class WaveletAnalysisCapsule:
 
         self._m_data = medfilt(self._m_data, 19)
 
-    def get_signal(self):
+    @typechecked
+    def get_signal(self) -> np.ndarray:
         """
         Returns the current version of the 1d signal. Use update_signal() in advance in order to get
         the current reconstruction of the wavelet space. Removes padded values as well.
@@ -305,13 +313,13 @@ class WaveletAnalysisCapsule:
 
         tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
 
-        if self.m_padding == "none":
+        if self.m_padding == 'none':
             return tmp_data
 
         # Python 2
         # return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
 
-        # Python 2+3?
+        # Python 3?
         return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
 
     # def __transform_period(self,
