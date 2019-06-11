@@ -47,22 +47,20 @@ class PCABackgroundPreparationModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         star_out_tag : str
-            Tag of the database entry with frames that include the star. Should be different
-            from *image_in_tag*.
+            Tag of the database entry that is read as output, containing the images with the star.
         mean_out_tag : str
             Tag of the database entry with frames that include the star and for which a mean
-            background subtraction has been applied. Should be different from *image_in_tag*.
+            background subtraction has been applied.
         background_out_tag : str
             Tag of the the database entry with frames that contain only background and no star.
-            Should be different from *image_in_tag*.
         dither : tuple(int, int, int), tuple(int, None, tuple(float, float))
             Tuple with the parameters for separating the star and background frames. The tuple
             should contain three values (positions, cubes, first) with *positions* the number
             of unique dithering position, *cubes* the number of consecutive cubes per dithering
             position, and *first* the index value of the first cube which contains the star
-            (Python indexing starts at zero). Sorting is based on the DITHER_X and DITHER_Y
+            (Python indexing starts at zero). Sorting is based on the ``DITHER_X`` and ``DITHER_Y``
             attributes when *cubes* is set to None. In that case, the *first* value should be
-            a tuple with the DITHER_X and DITHER_Y values in which the star appears first.
+            a tuple with the ``DITHER_X`` and ``DITHER_Y`` values in which the star appears first.
 
         Returns
         -------
