@@ -3,6 +3,7 @@ Pipeline modules for photometric and astrometric measurements.
 """
 
 import sys
+import math
 import time
 
 from typing import Union, Tuple
@@ -13,12 +14,14 @@ import emcee
 from typeguard import typechecked
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
+from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
-                                center_subpixel, select_annulus, rotate_coordinates
+                                center_subpixel, select_annulus, rotate_coordinates, \
+                                pixel_distance
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.psf import pca_psf_subtraction
@@ -788,6 +791,65 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_aperture['angle'] = sep_ang[1]
 
     @typechecked
+    def hessian_noise(self,
+                      images: np.ndarray,
+                      psf: np.ndarray,
+                      parang: np.ndarray,
+                      aperture: dict) -> Tuple[float, float]:
+
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang,
+                           position=(self.m_param[0]/pixscale, self.m_param[1]),
+                           magnitude=self.m_param[2],
+                           psf_scaling=self.m_psf_scaling)
+
+        _, res_arr = pca_psf_subtraction(images=fake,
+                                         angles=-1.*parang+self.m_extra_rot,
+                                         pca_number=self.m_pca_number)
+
+        residuals = combine_residuals(method=self.m_residuals, res_rot=res_arr)
+
+        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals[0, ],
+                                                            sigma=0.,
+                                                            mode='constant',
+                                                            cval=0.,
+                                                            order='rc')
+
+        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+
+        center = center_subpixel(residuals)
+        radius = math.sqrt((center[0]-aperture['pos_y'])**2.+(center[1]-aperture['pos_x'])**2.)
+
+        num_ap = int(math.pi*radius/aperture['radius'])
+        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
+
+        if num_ap < 3:
+            raise ValueError(f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
+                             'false positive fraction.')
+
+        ap_phot = np.zeros(num_ap)
+
+        for i, theta in enumerate(ap_theta):
+            x_tmp = center[1] + (aperture['pos_x']-center[1])*math.cos(theta) - \
+                                (aperture['pos_y']-center[0])*math.sin(theta)
+
+            y_tmp = center[0] + (aperture['pos_x']-center[1])*math.sin(theta) + \
+                                (aperture['pos_y']-center[0])*math.cos(theta)
+
+            rr_grid = pixel_distance(im_shape=residuals.shape[1:],
+                                     position=(int(round(y_tmp)),
+                                               int(round(x_tmp))))
+
+            indices = np.where(rr_grid < aperture['radius'])
+
+            ap_phot[i] = np.sum(np.abs(hes_det[indices]))
+
+        return np.mean(ap_phot), np.var(ap_phot)
+
+    @typechecked
     def gaussian_noise(self,
                        images: np.ndarray,
                        psf: np.ndarray,
@@ -909,6 +971,11 @@ class MCMCsamplingModule(ProcessingModule):
         if self.m_variance == 'gaussian':
             bias, var = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
             variance = (self.m_variance, bias, var)
+
+        elif self.m_variance == 'hessian':
+            bias, var = self.hessian_noise(images*mask, psf, parang, self.m_aperture)
+            variance = (self.m_variance, bias, var)
+            print(variance)
 
         else:
             variance = (self.m_variance, None, None)
