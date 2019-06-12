@@ -33,8 +33,8 @@ class ContrastCurveModule(ProcessingModule):
 
     def __init__(self,
                  name_in="contrast",
-                 image_in_tag_1="im_arr",
-                 image_in_tag_2="im_arr",
+                 image_in_tag_1=None,
+                 image_in_tag_2=None,
                  image_in_tag_3=None,
                  image_in_tag_4=None,
                  psf_in_tag="im_psf",
