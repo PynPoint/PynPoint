@@ -31,7 +31,7 @@ def combine_residuals(method: str,
     Returns
     -------
     numpy.ndarray
-        Combined residuals.
+        Combined residuals (3D).
     """
 
     if method == 'mean':
