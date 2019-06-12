@@ -229,7 +229,7 @@ def merit_function(residuals: np.ndarray,
         Merit value.
     """
 
-    if function == 'hessian' or (function == 'hessian' and variance[0] == 'poisson'):
+    if function == 'hessian' or (function == 'sum' and variance[0] == 'poisson'):
 
         rr_grid = pixel_distance(im_shape=residuals.shape,
                                  position=(int(round(aperture['pos_y'])),
@@ -265,7 +265,7 @@ def merit_function(residuals: np.ndarray,
 
         elif variance[0] == 'gaussian':
 
-            phot_table = aperture_photometry(residuals,
+            phot_table = aperture_photometry(np.abs(residuals),
                                              create_aperture(aperture),
                                              method='exact')
 
