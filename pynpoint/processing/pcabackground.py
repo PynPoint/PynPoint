@@ -35,10 +35,12 @@ class PCABackgroundPreparationModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  star_out_tag: str,
-                 mean_out_tag: str,
+                 subtracted_out_tag: str,
                  background_out_tag: str,
                  dither: Union[Tuple[int, int, int],
-                               Tuple[int, None, Tuple[float, float]]]) -> None:
+                               Tuple[int, None, Tuple[float, float]]],
+                 combine: str = 'mean',
+                 **kwargs: str) -> None:
         """
         Parameters
         ----------
@@ -48,7 +50,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
             Tag of the database entry that is read as input.
         star_out_tag : str
             Tag of the database entry that is read as output, containing the images with the star.
-        mean_out_tag : str
+        subtracted_out_tag : str
             Tag of the database entry with frames that include the star and for which a mean
             background subtraction has been applied.
         background_out_tag : str
@@ -61,6 +63,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
             (Python indexing starts at zero). Sorting is based on the ``DITHER_X`` and ``DITHER_Y``
             attributes when *cubes* is set to None. In that case, the *first* value should be
             a tuple with the ``DITHER_X`` and ``DITHER_Y`` values in which the star appears first.
+        combine : str
+            Method to combine the background images ('mean' or 'median').
 
         Returns
         -------
@@ -68,17 +72,22 @@ class PCABackgroundPreparationModule(ProcessingModule):
             None
         """
 
+        if 'mask_planet' in kwargs:
+            warnings.warn('The \'mean_out_tag\' has been replaced by the \'subtracted_out_tag\'.',
+                          DeprecationWarning)
+
         super(PCABackgroundPreparationModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_star_out_port = self.add_output_port(star_out_tag)
-        self.m_mean_out_port = self.add_output_port(mean_out_tag)
+        self.m_subtracted_out_port = self.add_output_port(subtracted_out_tag)
         self.m_background_out_port = self.add_output_port(background_out_tag)
 
         if len(dither) != 3:
             raise ValueError('The \'dither\' argument should contain three values.')
 
         self.m_dither = dither
+        self.m_combine = combine
 
     def _prepare(self):
         nframes = self.m_image_in_port.get_attribute('NFRAMES')
@@ -89,7 +98,11 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         count = 0
         for i, item in enumerate(nframes):
-            cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
+            if self.m_combine == 'mean':
+                cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
+            elif self.m_combine == 'median':
+                cube_mean[i, ] = np.median(self.m_image_in_port[count:count+item, ], axis=0)
+
             count += item
 
         if self.m_dither[1] is None:
@@ -196,7 +209,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 background = _select_background(i)
 
                 self.m_star_out_port.append(im_tmp)
-                self.m_mean_out_port.append(im_tmp-background)
+                self.m_subtracted_out_port.append(im_tmp-background)
 
                 star_nframes = np.append(star_nframes, nframes[i])
                 star_index = np.append(star_index, index[count:count+item])
@@ -213,8 +226,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
     def run(self) -> None:
         """
         Run method of the module. Separates the star and background frames, subtracts the mean
-        background from both the star and background frames, and writes the star and background
-        frames separately.
+        or median background from both the star and background frames, and writes the star and
+        background frames separately.
 
         Returns
         -------
@@ -225,8 +238,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_star_out_port.del_all_data()
         self.m_star_out_port.del_all_attributes()
 
-        self.m_mean_out_port.del_all_data()
-        self.m_mean_out_port.del_all_attributes()
+        self.m_subtracted_out_port.del_all_data()
+        self.m_subtracted_out_port.del_all_attributes()
 
         self.m_background_out_port.del_all_data()
         self.m_background_out_port.del_all_attributes()
@@ -247,6 +260,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         sys.stdout.flush()
 
         history = f'frames = {sum(star_nframes)}, {len(background_nframes)}'
+
         self.m_star_out_port.copy_attributes(self.m_image_in_port)
         self.m_star_out_port.add_history('PCABackgroundPreparationModule', history)
         self.m_star_out_port.add_attribute('NFRAMES', star_nframes, static=False)
@@ -255,13 +269,13 @@ class PCABackgroundPreparationModule(ProcessingModule):
         if parang is not None:
             self.m_star_out_port.add_attribute('PARANG', star_parang, static=False)
 
-        self.m_mean_out_port.copy_attributes(self.m_image_in_port)
-        self.m_mean_out_port.add_history('PCABackgroundPreparationModule', history)
-        self.m_mean_out_port.add_attribute('NFRAMES', star_nframes, static=False)
-        self.m_mean_out_port.add_attribute('INDEX', star_index, static=False)
+        self.m_subtracted_out_port.copy_attributes(self.m_image_in_port)
+        self.m_subtracted_out_port.add_history('PCABackgroundPreparationModule', history)
+        self.m_subtracted_out_port.add_attribute('NFRAMES', star_nframes, static=False)
+        self.m_subtracted_out_port.add_attribute('INDEX', star_index, static=False)
 
         if parang is not None:
-            self.m_mean_out_port.add_attribute('PARANG', star_parang, static=False)
+            self.m_subtracted_out_port.add_attribute('PARANG', star_parang, static=False)
 
         self.m_background_out_port.copy_attributes(self.m_image_in_port)
         self.m_background_out_port.add_history('PCABackgroundPreparationModule', history)
@@ -718,13 +732,13 @@ class DitheringBackgroundModule(ProcessingModule):
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
-                module = CropImagesModule(size=self.m_size,
-                                          center=(int(math.ceil(position[0])),
-                                                  int(math.ceil(position[1]))),
-                                          name_in='crop'+str(i),
+                module = CropImagesModule(name_in='crop'+str(i),
                                           image_in_tag=self.m_image_in_tag,
                                           image_out_tag=self.m_image_in_tag+ \
-                                                        '_dither_crop'+str(i+1))
+                                                        '_dither_crop'+str(i+1),
+                                          size=self.m_size,
+                                          center=(int(math.ceil(position[0])),
+                                                  int(math.ceil(position[1]))))
 
                 module.connect_database(self._m_data_base)
                 module.run()
@@ -735,17 +749,18 @@ class DitheringBackgroundModule(ProcessingModule):
                 else:
                     dither_val = (n_dither, self.m_cubes, int(star_pos[i]))
 
-                module = PCABackgroundPreparationModule(dither=dither_val,
-                                                        name_in='prepare'+str(i),
+                module = PCABackgroundPreparationModule(name_in='prepare'+str(i),
                                                         image_in_tag=self.m_image_in_tag+ \
                                                                      '_dither_crop'+str(i+1),
                                                         star_out_tag=self.m_image_in_tag+ \
                                                                      '_dither_star'+str(i+1),
-                                                        mean_out_tag=self.m_image_in_tag+ \
+                                                        subtracted_out_tag=self.m_image_in_tag+ \
                                                                      '_dither_mean'+str(i+1),
                                                         background_out_tag=self.m_image_in_tag+ \
                                                                            '_dither_background'+ \
-                                                                           str(i+1))
+                                                                           str(i+1),
+                                                        dither=dither_val,
+                                                        combine='median')
 
                 module.connect_database(self._m_data_base)
                 module.run()
