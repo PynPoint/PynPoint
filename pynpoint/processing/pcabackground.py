@@ -45,16 +45,15 @@ class PCABackgroundPreparationModule(ProcessingModule):
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name of the pipeline module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
         star_out_tag : str
-            Tag of the database entry that is read as output, containing the images with the star.
+            Output tag with the images containing the star.
         subtracted_out_tag : str
-            Tag of the database entry with frames that include the star and for which a mean
-            background subtraction has been applied.
+            Output tag with the mean/median background subtracted images with the star.
         background_out_tag : str
-            Tag of the the database entry with frames that contain only background and no star.
+            Output tag with the images containing only background emission.
         dither : tuple(int, int, int), tuple(int, None, tuple(float, float))
             Tuple with the parameters for separating the star and background frames. The tuple
             should contain three values (positions, cubes, first) with *positions* the number

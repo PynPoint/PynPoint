@@ -265,7 +265,7 @@ def merit_function(residuals: np.ndarray,
 
         elif variance[0] == 'gaussian':
 
-            phot_table = aperture_photometry(np.abs(residuals),
+            phot_table = aperture_photometry(residuals,
                                              create_aperture(aperture),
                                              method='exact')
 

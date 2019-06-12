@@ -174,7 +174,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  psf_in_tag: str,
                  res_out_tag: str,
                  flux_position_tag: str,
-                 position: Tuple[int, int],
+                 position: Tuple[float, float],
                  magnitude: float,
                  psf_scaling: float = -1.,
                  merit: str = 'hessian',
@@ -206,7 +206,7 @@ class SimplexMinimizationModule(ProcessingModule):
             Each step of the minimization saves the x position (pix), y position (pix), separation
             (arcsec), angle (deg), contrast (mag), and the function of merit. The last row of
             values contain the best-fit results.
-        position : tuple(int, int)
+        position : tuple(float, float)
             Approximate position (x, y) of the planet (pix). This is also the location where the
             function of merit is calculated with an aperture of radius *aperture*.
         magnitude : float
