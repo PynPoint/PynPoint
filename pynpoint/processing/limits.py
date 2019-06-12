@@ -261,7 +261,7 @@ class ContrastCurveModule(ProcessingModule):
         for i, image in enumerate(temp_images):
             _, im_res = pca_psf_subtraction(images=image*mask,
                                             angles=-1.*angles[i]+self.m_extra_rot,
-                                            pca_number=self.m_pca_number)
+                                            pca_number=self.m_pca_number[i])
             temp_im_res += [im_res]
 
             noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
