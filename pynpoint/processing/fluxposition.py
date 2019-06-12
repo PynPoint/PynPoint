@@ -474,7 +474,7 @@ class FalsePositiveModule(ProcessingModule):
                  aperture: float = 0.1,
                  ignore: bool = False,
                  optimize: bool = False,
-                 **kwargs: float) -> None:
+                 **kwargs: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]]) -> None:
         """
         Parameters
         ----------
@@ -503,8 +503,11 @@ class FalsePositiveModule(ProcessingModule):
         Keyword arguments
         -----------------
         tolerance : float
-            The absolute tolerance (pix) on the position for the optimization to end. Default is
-            set to 0.01 pix.
+            The fractional tolerance on the position for the optimization to end. Default is set
+            to 1e-6.
+        bounds : tuple(tuple(float, float), tuple(float, float))
+            Boundaries (pix) for the horizontal and vertical offset with respect to the `position`.
+            The default is set to (-3, 3) for both directions.
 
         Returns
         -------
@@ -515,7 +518,12 @@ class FalsePositiveModule(ProcessingModule):
         if 'tolerance' in kwargs:
             self.m_tolerance = kwargs['tolerance']
         else:
-            self.m_tolerance = 1e-2
+            self.m_tolerance = 1e-6
+
+        if 'bounds' in kwargs:
+            self.m_bounds = kwargs['bounds']
+        else:
+            self.m_bounds = ((-3., 3.), (-3., 3.))
 
         super(FalsePositiveModule, self).__init__(name_in)
 
@@ -573,9 +581,10 @@ class FalsePositiveModule(ProcessingModule):
             if self.m_optimize:
                 result = minimize(fun=_fpf_minimize,
                                   x0=[self.m_position[0], self.m_position[1]],
-                                  method='Nelder-Mead',
+                                  method='L-BFGS-B',
+                                  bounds=self.m_bounds,
                                   tol=None,
-                                  options={'xatol':self.m_tolerance, 'fatol':float('inf')})
+                                  options={'ftol':self.m_tolerance, 'gtol':float('inf')})
 
                 _, _, _, snr, fpf = false_alarm(image=image,
                                                 x_pos=result.x[0],
