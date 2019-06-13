@@ -507,7 +507,7 @@ class FalsePositiveModule(ProcessingModule):
         -----------------
         tolerance : float
             The fractional tolerance on the position for the optimization to end. Default is set
-            to 1e-6.
+            to 1e-3.
         bounds : tuple(tuple(float, float), tuple(float, float))
             Boundaries (pix) for the horizontal and vertical offset with respect to the `position`.
             The default is set to (-3, 3) for both directions.
@@ -521,7 +521,7 @@ class FalsePositiveModule(ProcessingModule):
         if 'tolerance' in kwargs:
             self.m_tolerance = kwargs['tolerance']
         else:
-            self.m_tolerance = 1e-6
+            self.m_tolerance = 1e-3
 
         if 'bounds' in kwargs:
             self.m_bounds = kwargs['bounds']
@@ -551,20 +551,16 @@ class FalsePositiveModule(ProcessingModule):
             None
         """
 
-        def _fpf_minimize(arg):
+        def _snr_optimize(arg):
             pos_x, pos_y = arg
 
-            try:
-                _, _, _, _, fpf = false_alarm(image=image,
-                                              x_pos=pos_x,
-                                              y_pos=pos_y,
-                                              size=self.m_aperture,
-                                              ignore=self.m_ignore)
+            _, _, _, snr, _ = false_alarm(image=image,
+                                          x_pos=pos_x,
+                                          y_pos=pos_y,
+                                          size=self.m_aperture,
+                                          ignore=self.m_ignore)
 
-            except ValueError:
-                fpf = float('inf')
-
-            return fpf
+            return -snr
 
         self.m_snr_out_port.del_all_data()
         self.m_snr_out_port.del_all_attributes()
@@ -574,6 +570,9 @@ class FalsePositiveModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
 
+        bounds = ((self.m_position[0]+self.m_bounds[0][0], self.m_position[0]+self.m_bounds[0][1]),
+                  (self.m_position[1]+self.m_bounds[1][0], self.m_position[1]+self.m_bounds[1][1]))
+
         start_time = time.time()
         for j in range(nimages):
             progress(j, nimages, 'Running FalsePositiveModule...', start_time)
@@ -582,12 +581,12 @@ class FalsePositiveModule(ProcessingModule):
             center = center_subpixel(image)
 
             if self.m_optimize:
-                result = minimize(fun=_fpf_minimize,
+                result = minimize(fun=_snr_optimize,
                                   x0=[self.m_position[0], self.m_position[1]],
-                                  method='L-BFGS-B',
-                                  bounds=self.m_bounds,
+                                  method='SLSQP',
+                                  bounds=bounds,
                                   tol=None,
-                                  options={'ftol':self.m_tolerance, 'gtol':float('inf')})
+                                  options={'ftol':self.m_tolerance})
 
                 _, _, _, snr, fpf = false_alarm(image=image,
                                                 x_pos=result.x[0],
@@ -791,65 +790,6 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_aperture['angle'] = sep_ang[1]
 
     @typechecked
-    def hessian_noise(self,
-                      images: np.ndarray,
-                      psf: np.ndarray,
-                      parang: np.ndarray,
-                      aperture: dict) -> Tuple[float, float]:
-
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-
-        fake = fake_planet(images=images,
-                           psf=psf,
-                           parang=parang,
-                           position=(self.m_param[0]/pixscale, self.m_param[1]),
-                           magnitude=self.m_param[2],
-                           psf_scaling=self.m_psf_scaling)
-
-        _, res_arr = pca_psf_subtraction(images=fake,
-                                         angles=-1.*parang+self.m_extra_rot,
-                                         pca_number=self.m_pca_number)
-
-        residuals = combine_residuals(method=self.m_residuals, res_rot=res_arr)
-
-        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals[0, ],
-                                                            sigma=0.,
-                                                            mode='constant',
-                                                            cval=0.,
-                                                            order='rc')
-
-        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-
-        center = center_subpixel(residuals)
-        radius = math.sqrt((center[0]-aperture['pos_y'])**2.+(center[1]-aperture['pos_x'])**2.)
-
-        num_ap = int(math.pi*radius/aperture['radius'])
-        ap_theta = np.linspace(0, 2.*math.pi, num_ap, endpoint=False)
-
-        if num_ap < 3:
-            raise ValueError(f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
-                             'false positive fraction.')
-
-        ap_phot = np.zeros(num_ap)
-
-        for i, theta in enumerate(ap_theta):
-            x_tmp = center[1] + (aperture['pos_x']-center[1])*math.cos(theta) - \
-                                (aperture['pos_y']-center[0])*math.sin(theta)
-
-            y_tmp = center[0] + (aperture['pos_x']-center[1])*math.sin(theta) + \
-                                (aperture['pos_y']-center[0])*math.cos(theta)
-
-            rr_grid = pixel_distance(im_shape=residuals.shape[1:],
-                                     position=(int(round(y_tmp)),
-                                               int(round(x_tmp))))
-
-            indices = np.where(rr_grid < aperture['radius'])
-
-            ap_phot[i] = np.sum(np.abs(hes_det[indices]))
-
-        return np.mean(ap_phot), np.var(ap_phot)
-
-    @typechecked
     def gaussian_noise(self,
                        images: np.ndarray,
                        psf: np.ndarray,
@@ -903,19 +843,6 @@ class MCMCsamplingModule(ProcessingModule):
 
         print(f'Bias [counts] = {bias}')
         print(f'Noise [counts] = {noise}')
-
-        # selected = select_annulus(image_in=residuals[0, ],
-        #                           radius_in=aperture['separation']-aperture['radius'],
-        #                           radius_out=aperture['separation']+aperture['radius'],
-        #                           mask_position=(aperture['pos_y'], aperture['pos_x']),
-        #                           mask_radius=aperture['radius'])
-        #
-        # print(selected.shape)
-        # bias = np.mean(selected)
-        # noise = np.std(selected)
-        #
-        # print(f'Bias [counts] = {bias}')
-        # print(f'Noise [counts] = {noise}')
 
         return bias, noise**2
 
@@ -971,11 +898,6 @@ class MCMCsamplingModule(ProcessingModule):
         if self.m_variance == 'gaussian':
             bias, var = self.gaussian_noise(images*mask, psf, parang, self.m_aperture)
             variance = (self.m_variance, bias, var)
-
-        elif self.m_variance == 'hessian':
-            bias, var = self.hessian_noise(images*mask, psf, parang, self.m_aperture)
-            variance = (self.m_variance, bias, var)
-            print(variance)
 
         else:
             variance = (self.m_variance, None, None)
