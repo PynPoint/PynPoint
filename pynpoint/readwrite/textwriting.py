@@ -7,6 +7,8 @@ import sys
 
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.core.processing import WritingModule
 
 
@@ -17,25 +19,26 @@ class TextWritingModule(WritingModule):
     the use of the Pypeline default output directory as well as a specified location.
     """
 
+    @typechecked
     def __init__(self,
-                 file_name,
-                 name_in='text_writing',
-                 output_dir=None,
-                 data_tag='im_arr',
-                 header=None):
+                 name_in: str,
+                 data_tag: str,
+                 file_name: str,
+                 output_dir: str = None,
+                 header: str = None) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-        file_name : str
-            Name of the output file.
-        output_dir : str
-            Output directory where the text file will be stored. If no path is specified then the
-            Pypeline default output location is used.
         data_tag : str
             Tag of the database entry from which data is exported.
-        header : str
+        file_name : str
+            Name of the output file.
+        output_dir : str, None
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        header : str, None
             Header that is written at the top of the text file.
 
         Returns
@@ -46,15 +49,13 @@ class TextWritingModule(WritingModule):
 
         super(TextWritingModule, self).__init__(name_in, output_dir)
 
-        if not isinstance(file_name, str):
-            raise ValueError('Output \'file_name\' needs to be a string.')
-
         self.m_data_port = self.add_input_port(data_tag)
 
         self.m_file_name = file_name
         self.m_header = header
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Saves the specified data from the database to a text file.
 
@@ -97,25 +98,26 @@ class ParangWritingModule(WritingModule):
     Module for writing a list of parallactic angles to a text file.
     """
 
+    @typechecked
     def __init__(self,
-                 file_name='parang.dat',
-                 name_in='parang_writing',
-                 output_dir=None,
-                 data_tag='im_arr',
-                 header='Parallactic angle [deg]'):
+                 name_in: str,
+                 data_tag: str,
+                 file_name: str = 'parang.dat',
+                 output_dir: str = None,
+                 header: str = None) -> None:
         """
         Parameters
         ----------
-        file_name : str
-            Name of the output file.
         name_in : str
             Unique name of the module instance.
-        output_dir : str
-            Output directory where the text file will be stored. If no path is specified then the
-            Pypeline default output location is used.
         data_tag : str
             Tag of the database entry from which the PARANG attribute is read.
-        header : str
+        file_name : str
+            Name of the output file.
+        output_dir : str, None
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        header : str, None
             Header that is written at the top of the text file.
 
         Returns
@@ -126,15 +128,13 @@ class ParangWritingModule(WritingModule):
 
         super(ParangWritingModule, self).__init__(name_in, output_dir)
 
-        if not isinstance(file_name, str):
-            raise ValueError('Output \'file_name\' needs to be a string.')
-
         self.m_data_port = self.add_input_port(data_tag)
 
         self.m_file_name = file_name
         self.m_header = header
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Writes the parallactic angles from the PARANG attribute of
         the specified database tag to a a text file.
@@ -171,29 +171,30 @@ class AttributeWritingModule(WritingModule):
     Module for writing a 1D or 2D array of non-static attributes to a text file.
     """
 
+    @typechecked
     def __init__(self,
-                 file_name='attributes.dat',
-                 name_in='attribute_writing',
-                 output_dir=None,
-                 data_tag='im_arr',
-                 attribute='INDEX',
-                 header=None):
+                 name_in: str,
+                 data_tag: str,
+                 attribute: str,
+                 file_name: str = 'attributes.dat',
+                 output_dir: str = None,
+                 header: str = None) -> None:
         """
         Parameters
         ----------
-        file_name : str
-            Name of the output file.
         name_in : str
             Unique name of the module instance.
-        output_dir : str
-            Output directory where the text file will be stored. If no path is specified then the
-            Pypeline default output location is used.
         data_tag : str
             Tag of the database entry from which the PARANG attribute is read.
         attribute : str
             Name of the non-static attribute as given in the central database (e.g., 'INDEX' or
             'STAR_POSITION').
-        header : str
+        file_name : str
+            Name of the output file.
+        output_dir : str, None
+            Output directory where the text file will be stored. If no path is specified then the
+            Pypeline default output location is used.
+        header : str, None
             Header that is written at the top of the text file.
 
         Returns
@@ -204,16 +205,14 @@ class AttributeWritingModule(WritingModule):
 
         super(AttributeWritingModule, self).__init__(name_in, output_dir)
 
-        if not isinstance(file_name, str):
-            raise ValueError('Output \'file_name\' needs to be a string.')
-
         self.m_data_port = self.add_input_port(data_tag)
 
         self.m_file_name = file_name
         self.m_attribute = attribute
         self.m_header = header
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Writes the non-static attributes (1D or 2D) to a a text file.
 
