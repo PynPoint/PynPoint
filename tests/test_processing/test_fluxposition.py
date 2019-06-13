@@ -223,79 +223,79 @@ class TestFluxPosition:
         assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
         assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
 
-    # def test_simplex_minimization(self):
-    #
-    #     module = SimplexMinimizationModule(name_in='simplex1',
-    #                                        image_in_tag='fake',
-    #                                        psf_in_tag='read',
-    #                                        res_out_tag='simplex_res',
-    #                                        flux_position_tag='flux_position',
-    #                                        position=(31, 49),
-    #                                        magnitude=6.,
-    #                                        psf_scaling=-1.,
-    #                                        merit='hessian',
-    #                                        aperture=0.1,
-    #                                        sigma=0.,
-    #                                        tolerance=0.1,
-    #                                        pca_number=1,
-    #                                        cent_size=0.1,
-    #                                        edge_size=None,
-    #                                        extra_rot=0.,
-    #                                        reference_in_tag=None)
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('simplex1')
-    #
-    #     data = self.pipeline.get_data('simplex_res')
-    #     assert np.allclose(data[0, 50, 31], 0.00012976212788352575, rtol=limit, atol=0.)
-    #     assert np.allclose(data[41, 50, 31], 1.7176632474300478e-05, rtol=limit, atol=0.)
-    #     assert np.allclose(np.mean(data), 9.470306099078656e-09, rtol=limit, atol=0.)
-    #     assert data.shape == (42, 101, 101)
-    #
-    #     data = self.pipeline.get_data('flux_position')
-    #     assert np.allclose(data[41, 0], 31.67747653034013, rtol=limit, atol=0.)
-    #     assert np.allclose(data[41, 1], 49.91874032275719, rtol=limit, atol=0.)
-    #     assert np.allclose(data[41, 2], 0.4947129988341501, rtol=limit, atol=0.)
-    #     assert np.allclose(data[41, 3], 90.25410288237038, rtol=limit, atol=0.)
-    #     assert np.allclose(data[41, 4], 5.691970059845411, rtol=limit, atol=0.)
-    #     assert data.shape == (42, 6)
-    #
-    # def test_simplex_minimization_reference(self):
-    #
-    #     module = SimplexMinimizationModule(name_in='simplex2',
-    #                                        image_in_tag='fake',
-    #                                        psf_in_tag='read',
-    #                                        res_out_tag='simplex_res_ref',
-    #                                        flux_position_tag='flux_position_ref',
-    #                                        position=(31, 49),
-    #                                        magnitude=6.,
-    #                                        psf_scaling=-1.,
-    #                                        merit='sum',
-    #                                        aperture=0.1,
-    #                                        sigma=0.,
-    #                                        tolerance=0.1,
-    #                                        pca_number=1,
-    #                                        cent_size=0.1,
-    #                                        edge_size=None,
-    #                                        extra_rot=0.,
-    #                                        reference_in_tag='ref')
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('simplex2')
-    #
-    #     data = self.pipeline.get_data('simplex_res_ref')
-    #     assert np.allclose(data[0, 50, 31], 0.00014188043631450017, rtol=limit, atol=0.)
-    #     assert np.allclose(data[35, 50, 31], 6.660723685443821e-05, rtol=limit, atol=0.)
-    #     assert np.allclose(np.mean(data), 1.3228426986034557e-06, rtol=limit, atol=0.)
-    #     assert data.shape == (44, 101, 101)
-    #
-    #     data = self.pipeline.get_data('flux_position_ref')
-    #     assert np.allclose(data[43, 0], 31.519027018276986, rtol=limit, atol=0.)
-    #     assert np.allclose(data[43, 1], 49.85541939005469, rtol=limit, atol=0.)
-    #     assert np.allclose(data[43, 2], 0.4990015399214498, rtol=limit, atol=0.)
-    #     assert np.allclose(data[43, 3], 90.44822801080721, rtol=limit, atol=0.)
-    #     assert np.allclose(data[43, 4], 5.9953709695084605, rtol=limit, atol=0.)
-    #     assert data.shape == (44, 6)
+    def test_simplex_minimization(self):
+
+        module = SimplexMinimizationModule(name_in='simplex1',
+                                           image_in_tag='fake',
+                                           psf_in_tag='read',
+                                           res_out_tag='simplex_res',
+                                           flux_position_tag='flux_position',
+                                           position=(31, 49),
+                                           magnitude=6.,
+                                           psf_scaling=-1.,
+                                           merit='hessian',
+                                           aperture=0.1,
+                                           sigma=0.,
+                                           tolerance=0.1,
+                                           pca_number=1,
+                                           cent_size=0.1,
+                                           edge_size=None,
+                                           extra_rot=0.,
+                                           reference_in_tag=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('simplex1')
+
+        data = self.pipeline.get_data('simplex_res')
+        assert np.allclose(data[0, 50, 31], 0.00012976212788352575, rtol=limit, atol=0.)
+        assert np.allclose(data[41, 50, 31], 1.7176632474300478e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 9.470306099078656e-09, rtol=limit, atol=0.)
+        assert data.shape == (42, 101, 101)
+
+        data = self.pipeline.get_data('flux_position')
+        assert np.allclose(data[41, 0], 31.67747653034013, rtol=limit, atol=0.)
+        assert np.allclose(data[41, 1], 49.91874032275719, rtol=limit, atol=0.)
+        assert np.allclose(data[41, 2], 0.4947129988341501, rtol=limit, atol=0.)
+        assert np.allclose(data[41, 3], 90.25410288237038, rtol=limit, atol=0.)
+        assert np.allclose(data[41, 4], 5.691970059845411, rtol=limit, atol=0.)
+        assert data.shape == (42, 6)
+
+    def test_simplex_minimization_reference(self):
+
+        module = SimplexMinimizationModule(name_in='simplex2',
+                                           image_in_tag='fake',
+                                           psf_in_tag='read',
+                                           res_out_tag='simplex_res_ref',
+                                           flux_position_tag='flux_position_ref',
+                                           position=(31, 49),
+                                           magnitude=6.,
+                                           psf_scaling=-1.,
+                                           merit='sum',
+                                           aperture=0.1,
+                                           sigma=0.,
+                                           tolerance=0.1,
+                                           pca_number=1,
+                                           cent_size=0.1,
+                                           edge_size=None,
+                                           extra_rot=0.,
+                                           reference_in_tag='ref')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('simplex2')
+
+        data = self.pipeline.get_data('simplex_res_ref')
+        assert np.allclose(data[0, 50, 31], 0.00014188043631450017, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 50, 31], 6.660723685443821e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.3228426986034557e-06, rtol=limit, atol=0.)
+        assert data.shape == (44, 101, 101)
+
+        data = self.pipeline.get_data('flux_position_ref')
+        assert np.allclose(data[43, 0], 31.519027018276986, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 1], 49.85541939005469, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 2], 0.4990015399214498, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 3], 90.44822801080721, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 4], 5.9953709695084605, rtol=limit, atol=0.)
+        assert data.shape == (44, 6)
 
     def test_mcmc_sampling_gaussian(self):
 
@@ -360,7 +360,7 @@ class TestFluxPosition:
                                     scale=2.,
                                     sigma=(1e-3, 1e-1, 1e-2),
                                     prior='flat',
-                                    variance='hessian')
+                                    variance='gaussian')
 
         self.pipeline.add_module(module)
 

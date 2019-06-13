@@ -229,8 +229,7 @@ def merit_function(residuals: np.ndarray,
         Merit value.
     """
 
-    if function == 'hessian' or variance[0] == 'hessian' or \
-        (function == 'sum' and variance[0] == 'poisson'):
+    if function == 'hessian' or (function == 'sum' and variance[0] == 'poisson'):
 
         rr_grid = pixel_distance(im_shape=residuals.shape,
                                  position=(int(round(aperture['pos_y'])),
@@ -238,7 +237,7 @@ def merit_function(residuals: np.ndarray,
 
         indices = np.where(rr_grid < aperture['radius'])
 
-    if function == 'hessian' or variance[0] == 'hessian':
+    if function == 'hessian':
 
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
@@ -249,7 +248,6 @@ def merit_function(residuals: np.ndarray,
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
         merit = np.sum(np.abs(hes_det[indices]))
-        print(merit)
 
     elif function == 'sum':
 
@@ -272,7 +270,6 @@ def merit_function(residuals: np.ndarray,
                                              method='exact')
 
             merit = phot_table['aperture_sum'][0]**2/variance[2]
-            # merit = np.sum((residuals[indices]-variance[1])**2)/variance[2]
 
     else:
 
