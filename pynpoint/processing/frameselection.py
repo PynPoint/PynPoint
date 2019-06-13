@@ -8,16 +8,16 @@ import math
 import warnings
 import multiprocessing as mp
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 import numpy as np
-from skimage.measure import compare_ssim, compare_mse
 
+from skimage.measure import compare_ssim, compare_mse
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask
-from pynpoint.util.module import progress, memory_frames, locate_star
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask, locate_star
+from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 
 
@@ -26,18 +26,18 @@ class RemoveFramesModule(ProcessingModule):
     Pipeline module for removing images by their index number.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 frames,
-                 name_in='remove_frames',
-                 image_in_tag='im_arr',
-                 selected_out_tag='im_arr_selected',
-                 removed_out_tag='im_arr_removed'):
+                 name_in: str,
+                 image_in_tag: str,
+                 selected_out_tag: str,
+                 removed_out_tag: str,
+                 frames: Union[str, range, list, np.ndarray]) -> None:
         """
         Parameters
         ----------
-        frames : str, list, tuple, range, or numpy.ndarray
-            A tuple or array with the frame indices that have to be removed or a database tag
-            pointing to a list of frame indices.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -49,6 +49,9 @@ class RemoveFramesModule(ProcessingModule):
         removed_out_tag : str
             Tag of the database entry with the images that are removed. Should be different
             from *image_in_tag*. No data is written when set to *None*.
+        frames : str, list, range, numpy.ndarray
+            A tuple or array with the frame indices that have to be removed or a database tag
+            pointing to a list of frame indices.
 
         Returns
         -------
@@ -106,7 +109,8 @@ class RemoveFramesModule(ProcessingModule):
             self.m_removed_out_port.del_all_data()
             self.m_removed_out_port.del_all_attributes()
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Removes the frames and corresponding attributes, updates the
         NFRAMES attribute, and saves the data and attributes.
@@ -169,17 +173,20 @@ class FrameSelectionModule(ProcessingModule):
     Pipeline module for frame selection.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='frame_selection',
-                 image_in_tag='im_arr',
-                 selected_out_tag='im_arr_selected',
-                 removed_out_tag='im_arr_removed',
-                 index_out_tag=None,
+                 name_in: str,
+                 image_in_tag: str,
+                 selected_out_tag: str,
+                 removed_out_tag: str,
+                 index_out_tag: str = None,
                  method='median',
-                 threshold=4.,
-                 fwhm=0.1,
-                 aperture=('circular', 0.2),
-                 position=(None, None, 0.5)):
+                 threshold: float = 4.,
+                 fwhm: float = 0.1,
+                 aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
+                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
         """
         Parameters
         ----------
@@ -193,7 +200,7 @@ class FrameSelectionModule(ProcessingModule):
         removed_out_tag : str
             Tag of the database entry with the removed images that are written as output. Should
             be different from *image_in_tag*. No data is written when set to None.
-        index_out_tag : str
+        index_out_tag : str, None
             Tag of the database entry with the list of frames indices that are removed with the
             frames selection. No data is written when set to *None*.
         method : str
@@ -202,11 +209,11 @@ class FrameSelectionModule(ProcessingModule):
         threshold : float
             Threshold in units of sigma for the frame selection. All images that are a *threshold*
             number of sigmas away from the median photometry will be removed.
-        fwhm : float
+        fwhm : float, None
             The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is used to
             smooth the images before the brightest pixel is located. Should be similar in size to
             the FWHM of the stellar PSF. A fixed position, specified by *position*, is used when
-            *fwhm* is set to None
+            *fwhm* is set to None.
         aperture : tuple(str, float, float)
             Tuple with the aperture properties for measuring the photometry around the location of
             the brightest pixel. The first element contains the aperture type ('circular',
@@ -214,7 +221,7 @@ class FrameSelectionModule(ProcessingModule):
             aperture radius (arcsec). For the other two types, the second and third element are the
             inner and outer radii (arcsec) of the aperture. The position of the aperture has to be
             specified with *position* when *fwhm* is set to None.
-        position : tuple(int, int, float)
+        position : tuple(int, int, float), None
             Subframe that is selected to search for the star. The tuple contains the center (pix)
             and size (arcsec) (pos_x, pos_y, size). Setting *position* to None will use the full
             image to search for the star. If *position=(None, None, size)* then the center of the
@@ -269,7 +276,8 @@ class FrameSelectionModule(ProcessingModule):
             self.m_removed_out_port.del_all_data()
             self.m_removed_out_port.del_all_attributes()
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
         pixel in each image, measures the integrated flux around the brightest pixel, calculates
@@ -327,7 +335,7 @@ class FrameSelectionModule(ProcessingModule):
                 phot = np.nan
 
             else:
-                im_crop = crop_image(images, starpos, 2*int(math.ceil(aperture[1])))
+                im_crop = crop_image(images, tuple(starpos), 2*int(math.ceil(aperture[1])))
 
                 npix = im_crop.shape[0]
 
@@ -451,10 +459,13 @@ class RemoveLastFrameModule(ProcessingModule):
     frame contains the average pixel values of the cube.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='remove_last_frame',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_last'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -477,7 +488,8 @@ class RemoveLastFrameModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Removes every NDIT+1 frame and saves the data and attributes.
 
@@ -540,16 +552,17 @@ class RemoveStartFramesModule(ProcessingModule):
     frames of a data cube.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 frames=1,
-                 name_in='remove_last_frame',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_first'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 frames: int = 1) -> None:
         """
         Parameters
         ----------
-        frames : int
-            Number of frames that are removed at the beginning of each cube.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -557,6 +570,8 @@ class RemoveStartFramesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        frames : int
+            Number of frames that are removed at the beginning of each cube.
 
         Returns
         -------
@@ -571,7 +586,8 @@ class RemoveStartFramesModule(ProcessingModule):
 
         self.m_frames = int(frames)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Removes a constant number of images at the beginning of each cube
         and saves the data and attributes.
@@ -655,11 +671,13 @@ class ImageStatisticsModule(ProcessingModule):
     images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
-                 name_in: str = 'im_stat',
-                 image_in_tag: str = 'im_arr',
-                 stat_out_tag: str = 'stat',
+                 name_in: str,
+                 image_in_tag: str,
+                 stat_out_tag: str,
                  position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
         """
         Parameters
@@ -724,7 +742,7 @@ class ImageStatisticsModule(ProcessingModule):
                                    int(self.m_position[0]), # x position
                                    self.m_position[2]/pixscale) # radius (pix)
 
-            rr_grid = pixel_distance(im_shape, self.m_position)
+            rr_grid = pixel_distance(im_shape, self.m_position[0:2])
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
@@ -787,7 +805,7 @@ class FrameSimilarityModule(ProcessingModule):
                 - `SSIM` - Structural Similarity
 
             These measures compare each image to the temporal median of the image set.
-        mask_radius : list(float, float)
+        mask_radius : tuple(float, float)
             Inner and outer radius (arcsec) of the mask that is applied to the images.
         window_size : float
             Size (arcsec) of the sliding window that is used when the SSIM similarity is
@@ -885,7 +903,8 @@ class FrameSimilarityModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         # convert arcsecs to pixels
-        self.m_mask_radii = np.floor(np.array(self.m_mask_radii) / pixscale)
+        self.m_mask_radii = (math.floor(self.m_mask_radii[0] / pixscale),
+                             math.floor(self.m_mask_radii[1] / pixscale))
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images
@@ -900,11 +919,11 @@ class FrameSimilarityModule(ProcessingModule):
         else:
             temporal_median = False
 
-        if self.m_method != 'SSIM':
-            images *= mask
-        else:
+        if self.m_method == 'SSIM':
             images = crop_image(images, None, int(self.m_mask_radii[1]))
             temporal_median = crop_image(temporal_median, None, int(self.m_mask_radii[1]))
+        else:
+            images *= mask
 
         # compare images and store similarity
         similarities = np.zeros(nimages)

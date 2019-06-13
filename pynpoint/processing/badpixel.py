@@ -6,10 +6,13 @@ import sys
 import copy
 import warnings
 
+from typing import Union, Tuple
+
 import cv2
 import numpy as np
 
 from numba import jit
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 
@@ -50,9 +53,10 @@ def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
     return tmp_G
 
 
-def _bad_pixel_interpolation(image_in,
-                             bad_pixel_map,
-                             iterations):
+@typechecked
+def _bad_pixel_interpolation(image_in: np.ndarray,
+                             bad_pixel_map: np.ndarray,
+                             iterations: int) -> np.ndarray:
     """
     Internal function to interpolate bad pixels.
 
@@ -172,6 +176,8 @@ class BadPixelSigmaFilterModule(ProcessingModule):
     value of the surrounding pixels.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @staticmethod
     @jit(cache=True)
     def _sigma_filter(dev_image,
@@ -191,14 +197,15 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                     out_image[i][j] = mean_image[i][j]
                     bad_pixel_map[i][j] = 0
 
+    @typechecked
     def __init__(self,
-                 name_in='sigma_filtering',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_bp_clean',
-                 map_out_tag=None,
-                 box=9,
-                 sigma=5,
-                 iterate=1):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 map_out_tag: str = None,
+                 box: int = 9,
+                 sigma: float = 5.,
+                 iterate: int = 1) -> None:
         """
         Parameters
         ----------
@@ -239,7 +246,8 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         self.m_sigma = sigma
         self.m_iterate = iterate
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Finds bad pixels with a sigma filter, replaces bad pixels with
         the mean value of the surrounding pixels, and writes the cleaned images to the database.
@@ -250,10 +258,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        def _bad_pixel_sigma_filter(image_in,
-                                    box,
-                                    sigma,
-                                    iterate):
+        def _bad_pixel_sigma_filter(image_in, box, sigma, iterate):
 
             # algorithm adapted from http://idlastro.gsfc.nasa.gov/ftp/pro/image/sigma_filter.pro
 
@@ -329,22 +334,25 @@ class BadPixelMapModule(ProcessingModule):
     Pipeline module to create a bad pixel map from the dark frames and flat fields.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='bad_pixel_map',
-                 dark_in_tag='dark',
-                 flat_in_tag='flat',
-                 bp_map_out_tag='bp_map',
-                 dark_threshold=0.2,
-                 flat_threshold=0.2):
+                 name_in: str,
+                 dark_in_tag: Union[str, None],
+                 flat_in_tag: Union[str, None],
+                 bp_map_out_tag: str,
+                 dark_threshold: float = 0.2,
+                 flat_threshold: float = 0.2) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-        dark_in_tag : str
+        dark_in_tag : str, None
             Tag of the database entry with the dark frames that are read as input. Not read if set
             to None.
-        flat_in_tag : str
+        flat_in_tag : str, None
             Tag of the database entry with the flat fields that are read as input. Not read if set
             to None.
         bp_map_out_tag : str
@@ -379,7 +387,8 @@ class BadPixelMapModule(ProcessingModule):
         self.m_dark_threshold = dark_threshold
         self.m_flat_threshold = flat_threshold
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Collapses a cube of dark frames and flat fields if needed, flags
         bad pixels by comparing the pixel values with the threshold times the maximum value, and
@@ -445,12 +454,15 @@ class BadPixelInterpolationModule(ProcessingModule):
     Pipeline module to interpolate bad pixels with spectral deconvolution.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='bad_pixel_interpolation',
-                 image_in_tag='im_arr',
-                 bad_pixel_map_tag='bp_map',
-                 image_out_tag='im_arr_bp_clean',
-                 iterations=1000):
+                 name_in: str,
+                 image_in_tag: str,
+                 bad_pixel_map_tag: str,
+                 image_out_tag: str,
+                 iterations: int = 1000) -> None:
         """
         Parameters
         ----------
@@ -479,7 +491,8 @@ class BadPixelInterpolationModule(ProcessingModule):
 
         self.m_iterations = iterations
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Interpolates bad pixels with an iterative spectral deconvolution.
 
@@ -524,11 +537,14 @@ class BadPixelTimeFilterModule(ProcessingModule):
     processed in parallel by setting the CPU keyword in the configuration file.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='bp_time',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_bp_time',
-                 sigma=(5., 5.)):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 sigma: Tuple[float, float] = (5., 5.)) -> None:
         """
         Parameters
         ----------
@@ -554,7 +570,8 @@ class BadPixelTimeFilterModule(ProcessingModule):
 
         self.m_sigma = sigma
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Finds bad pixels along a pixel line, replaces the bad pixels with
         the mean value of the pixels (excluding the bad pixels), and writes the cleaned images to
@@ -608,13 +625,16 @@ class ReplaceBadPixelsModule(ProcessingModule):
     pixels. The bad pixels are selected from the input bad pixel map.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='bp_replace',
-                 image_in_tag='im_arr',
-                 map_in_tag='bp_map',
-                 image_out_tag='im_arr_bp_replace',
-                 size=2,
-                 replace='mean'):
+                 name_in: str,
+                 image_in_tag: str,
+                 map_in_tag: str,
+                 image_out_tag: str,
+                 size: int = 2,
+                 replace: str = 'mean') -> None:
         """
         Parameters
         ----------
@@ -628,7 +648,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
             Lower and upper sigma threshold as (lower, upper).
         size : int
             Number of pixel lines around the bad pixel that is used to calculate the mean or median
-            replacement value. For example, a 5x5 window is used if _size_=2.
+            replacement value. For example, a 5x5 window is used if ``size=2``.
         replace : str
             Replace the bad pixel with the mean ('mean'), median ('median'), or NaN ('nan').
 
@@ -647,7 +667,8 @@ class ReplaceBadPixelsModule(ProcessingModule):
         self.m_size = size
         self.m_replace = replace
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Masks the bad pixels with NaN and replaces the bad pixels with the
         mean or median value (excluding the bad pixels) within a window centered on the bad pixel.

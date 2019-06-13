@@ -4,9 +4,12 @@ Functions for calculating detection limits.
 
 import math
 
+from typing import Tuple
+
 import numpy as np
 
 from photutils import aperture_photometry
+from typeguard import typechecked
 
 from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
@@ -14,19 +17,20 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def contrast_limit(path_images,
-                   path_psf,
-                   noise,
-                   mask,
-                   parang,
-                   psf_scaling,
-                   extra_rot,
-                   pca_number,
-                   threshold,
-                   aperture,
-                   residuals,
-                   snr_inject,
-                   position):
+@typechecked
+def contrast_limit(path_images: str,
+                   path_psf: str,
+                   noise: np.ndarray,
+                   mask: np.ndarray,
+                   parang: np.ndarray,
+                   psf_scaling: float,
+                   extra_rot: float,
+                   pca_number: int,
+                   threshold: Tuple[str, float],
+                   aperture: float,
+                   residuals: str,
+                   snr_inject: float,
+                   position: Tuple[float, float]) -> Tuple[float, float, float, float]:
 
     """
     Function for calculating the contrast limit at a specified position for a given sigma level or
@@ -63,16 +67,22 @@ def contrast_limit(path_images,
         Aperture radius (pix) for the calculation of the false positive fraction.
     residuals : str
         Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
-    position : tuple(float, float)
-        The separation (pix) and position angle (deg) of the fake planet.
     snr_inject : float
         Signal-to-noise ratio of the injected planet signal that is used to measure the amount
         of self-subtraction.
+    position : tuple(float, float)
+        The separation (pix) and position angle (deg) of the fake planet.
 
     Returns
     -------
-    NoneType
-        None
+    float
+        Separation (pix).
+    float
+        Position angle (deg).
+    float
+        Contrast (mag).
+    float
+        False positive fraction.
     """
 
     images = np.load(path_images)
@@ -103,11 +113,11 @@ def contrast_limit(path_images,
     xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     # Determine the noise level
-    _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                   x_pos=xy_fake[0],
-                                   y_pos=xy_fake[1],
-                                   size=aperture,
-                                   ignore=False)
+    _, _, t_noise, _, _ = false_alarm(image=noise[0, ],
+                                      x_pos=xy_fake[0],
+                                      y_pos=xy_fake[1],
+                                      size=aperture,
+                                      ignore=False)
 
     # Aperture properties
     im_center = center_subpixel(images)
@@ -138,11 +148,11 @@ def contrast_limit(path_images,
     im_res = combine_residuals(method=residuals, res_rot=im_res)
 
     # Measure the flux of the fake planet
-    flux_out, _, _, _ = false_alarm(image=im_res[0, ],
-                                    x_pos=xy_fake[0],
-                                    y_pos=xy_fake[1],
-                                    size=aperture,
-                                    ignore=False)
+    flux_out, _, _, _, _ = false_alarm(image=im_res[0, ],
+                                       x_pos=xy_fake[0],
+                                       y_pos=xy_fake[1],
+                                       size=aperture,
+                                       ignore=False)
 
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
