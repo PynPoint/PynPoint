@@ -202,7 +202,7 @@ def shift_image(image,
     """
 
     if image.ndim == 3:
-        shift_zyx = np.stack((np.zeros_like(shift_yx[0]), shift_yx[0], shift_yx[1])).T
+        shift_zyx = [0, shift_yx[0], shift_yx[1]]
     else:
         shift_zyx = shift_yx
 

@@ -1067,20 +1067,41 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
+        # set the 'constant' flag to true
+        constant = True
+
         # grab the fit results from the self.m_fit_in_port if available
-        # since each frame is shifted individually, it can not be easily applied to
-        # stacks of frames
         if self.m_fit_in_port is not None:
             self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]] # (x, y)
             self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
-            for i, shift in enumerate(self.m_shift):
-                shifted_image = shift_image(
-                    self.m_image_in_port[i, ],
-                    shift,
-                    self.m_interpolation)
-                # append the shifted images to the selt.m_image_out_port database entry
-                self.m_image_out_port.append([shifted_image])
-        else:
+
+            # check if data in self.m_fit_in_port is constant for all images using the
+            # constant flag
+            for i in range(self.m_fit_in_port.get_shape()[0]):
+                if not np.allclose(self.m_fit_in_port[0, ], self.m_fit_in_port[i, ]):
+                    constant = False
+            
+            # if the offset is constant, grab the first element of the shift for the second part
+            # of the function
+            if constant:
+                self.m_shift = self.m_shift[0, ]
+
+            # if the offset is not constant, then the apply the shifts to each frame individually
+            # since each frame is shifted individually, it can not be easily applied to
+            # stacks of frames due to the way scipy.interpolate.shift handles shifts
+            else:
+                for i, shift in enumerate(self.m_shift):
+                    shifted_image = shift_image(self.m_image_in_port[i, ],
+                                                shift,
+                                                self.m_interpolation)
+                    # append the shifted images to the selt.m_image_out_port database entry
+                    self.m_image_out_port.append([shifted_image])
+            
+                mean_shift = np.mean(self.m_shift, axis=0)
+                history = f'shift_xy = {mean_shift[0]:.2f}, {mean_shift[1]:.2f}'
+
+        # if the shifts are constant, might be constant and read in from self.m_fit_in_port
+        if constant:
             # get memory from config tag
             memory = self._m_config_port.get_attribute('MEMORY')
             # get number of images
@@ -1103,12 +1124,8 @@ class ShiftImagesModule(ProcessingModule):
                 # write out the progress
                 progress(i, len(frames[:-1]), 'Running ShiftImagesModule...', start_time)
 
-
-        if self.m_fit_in_port is None:
+            # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
-        else:
-            mean_shift = np.mean(self.m_shift, axis=0)
-            history = f'shift_xy = {mean_shift[0]:.2f}, {mean_shift[1]:.2f}'
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('ShiftImagesModule', history)
