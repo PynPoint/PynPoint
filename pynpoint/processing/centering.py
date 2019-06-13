@@ -1063,18 +1063,46 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
+        # delete all data stored in self.m_image_out_port
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        # grab the fit results from the self.m_fit_in_port if available
+        # since each frame is shifted individually, it can not be easily applied to
+        # stacks of frames
         if self.m_fit_in_port is not None:
             self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]] # (x, y)
             self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
+            for i, shift in enumerate(self.m_shift):
+                shifted_image = shift_image(
+                    self.m_image_in_port[i, ],
+                    shift,
+                    self.m_interpolation)
+                # append the shifted images to the selt.m_image_out_port database entry
+                self.m_image_out_port.append([shifted_image])
+        else:
+            # get memory from config tag
+            memory = self._m_config_port.get_attribute('MEMORY')
+            # get number of images
+            nimages = self.m_image_in_port.get_shape()[0]
+            # calculate the boundaries indices of each stack of frames
+            frames = memory_frames(memory, nimages)
 
-        def _image_shift(image, shift_yx, interpolation):
-            return shift_image(image, shift_yx, interpolation)
+            # set a start_time for the progress information
+            start_time = time.time()
 
-        self.apply_function_to_images(_image_shift,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running ShiftImagesModule',
-                                      func_args=(self.m_shift, self.m_interpolation))
+            # iterate over all stacks of frames
+            for i, _ in enumerate(frames[:-1]):
+                # shift a stack of images using _image_shift
+                shifted_image = shift_image(
+                    self.m_image_in_port[frames[i]:frames[i+1], ],
+                    self.m_shift,
+                    self.m_interpolation)
+                # append the shifted images to the selt.m_image_out_port database entry
+                self.m_image_out_port.append(shifted_image)
+                # write out the progress
+                progress(i, len(frames[:-1]), 'Running ShiftImagesModule...', start_time)
+
 
         if self.m_fit_in_port is None:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'

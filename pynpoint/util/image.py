@@ -189,7 +189,7 @@ def shift_image(image,
     Parameters
     ----------
     image : numpy.ndarray
-        Input image (2D).
+        Input image (2D or 3D). If 3D the image is not shifted along the 0th axis.
     shift_yx : tuple(float, float)
         Shift (y, x) to be applied (pix).
     interpolation : str
@@ -201,14 +201,19 @@ def shift_image(image,
         Shifted image.
     """
 
+    if image.ndim == 3:
+        shift_zyx = np.stack((np.zeros_like(shift_yx[0]), shift_yx[0], shift_yx[1])).T
+    else:
+        shift_zyx = shift_yx
+
     if interpolation == "spline":
-        im_center = shift(image, shift_yx, order=5, mode=mode)
+        im_center = shift(image, shift_zyx, order=5, mode=mode)
 
     elif interpolation == "bilinear":
-        im_center = shift(image, shift_yx, order=1, mode=mode)
+        im_center = shift(image, shift_zyx, order=1, mode=mode)
 
     elif interpolation == "fft":
-        fft_shift = fourier_shift(np.fft.fftn(image), shift_yx)
+        fft_shift = fourier_shift(np.fft.fftn(image), shift_zyx)
         im_center = np.fft.ifftn(fft_shift).real
 
     return im_center
