@@ -209,8 +209,8 @@ class TestBackground:
         assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data('dither_dither_mean1')
-        assert np.allclose(data[0, 14, 14], 0.0530465391626132, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0010426228104479674, rtol=1e-6, atol=0.)
+        assert np.allclose(data[0, 14, 14], 0.05301381322278885, rtol=1e-6, atol=0.)
+        assert np.allclose(np.mean(data), 0.0010437176423139449, rtol=1e-6, atol=0.)
         assert data.shape == (20, 31, 31)
 
         data = self.pipeline.get_data('dither_dither_background1')
@@ -258,7 +258,6 @@ class TestBackground:
                                                subframe=None,
                                                pca_number=5,
                                                mask_star=0.1,
-                                               bad_pixel=None,
                                                crop=True,
                                                prepare=True,
                                                pca_background=True,

@@ -4,41 +4,43 @@ Functions for combining the residuals of the PSF subtraction.
 
 import numpy as np
 
+from typeguard import typechecked
 from scipy.ndimage import rotate
 
 
-def combine_residuals(method,
-                      res_rot,
-                      residuals=None,
-                      angles=None):
+@typechecked
+def combine_residuals(method: str,
+                      res_rot: np.ndarray,
+                      residuals: np.ndarray = None,
+                      angles: np.ndarray = None) -> np.ndarray:
     """
     Function for combining the derotated residuals of the PSF subtraction.
 
     Parameters
     ----------
     method : str
-        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
-    res_rot : numpy.ndimage
+        Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+    res_rot : numpy.ndarray
         Derotated residuals of the PSF subtraction (3D).
-    residuals : numpy.ndimage
+    residuals : numpy.ndarray, None
         Non-derotated residuals of the PSF subtraction (3D). Only required for the noise-weighted
         residuals.
-    angles : numpy.ndimage
+    angles : numpy.ndarray, None
         Derotation angles (deg). Only required for the noise-weighted residuals.
 
     Returns
     -------
-    numpy.ndimage
-        Combined residuals.
+    numpy.ndarray
+        Combined residuals (3D).
     """
 
-    if method == "mean":
+    if method == 'mean':
         stack = np.mean(res_rot, axis=0)
 
-    elif method == "median":
+    elif method == 'median':
         stack = np.median(res_rot, axis=0)
 
-    elif method == "weighted":
+    elif method == 'weighted':
         tmp_res_var = np.var(residuals, axis=0)
 
         res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
@@ -70,7 +72,7 @@ def combine_residuals(method,
                           out=np.zeros_like(sum2),
                           where=(np.abs(sum2) > 1e-100) & (sum2 != np.nan))
 
-    elif method == "clipped":
+    elif method == 'clipped':
         stack = np.zeros(res_rot.shape[-2:])
 
         for i in range(stack.shape[0]):
@@ -85,6 +87,4 @@ def combine_residuals(method,
 
                     stack[i, j] = temp.mean() + part2.mean()
 
-    stack = stack[np.newaxis, ...]
-
-    return stack
+    return stack[np.newaxis, ...]

@@ -4,7 +4,11 @@ Functions for MCMC sampling.
 
 import math
 
+from typing import Union, Tuple
+
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.util.analysis import fake_planet, merit_function
 from pynpoint.util.image import polar_to_cartesian
@@ -12,26 +16,27 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def lnprob(param,
-           bounds,
-           images,
-           psf,
-           mask,
-           parang,
-           psf_scaling,
-           pixscale,
-           pca_number,
-           extra_rot,
-           aperture,
-           indices,
-           prior,
-           variance,
-           residuals):
+@typechecked
+def lnprob(param: np.ndarray,
+           bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
+           images: np.ndarray,
+           psf: np.ndarray,
+           mask: np.ndarray,
+           parang: np.ndarray,
+           psf_scaling: float,
+           pixscale: float,
+           pca_number: int,
+           extra_rot: float,
+           aperture: dict,
+           indices: np.ndarray,
+           prior: str,
+           variance: Union[Tuple[str, float, float], Tuple[str, None, None]],
+           residuals: str) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
 
-    param : tuple(float, float, float)
+    param : np.ndarray
         Tuple with the separation (arcsec), angle (deg), and contrast (mag). The angle is measured
         in counterclockwise direction with respect to the positive y-axis.
     bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
@@ -65,9 +70,9 @@ def lnprob(param,
         Prior can be set to 'flat' or 'aperture'. With 'flat', the values of *bounds* are used
         as uniform priors. With 'aperture', the prior probability is set to zero beyond the
         aperture and unity within the aperture.
-    variance : tuple(str, float)
-        Variance type and value for the likelihood function. The value is set to None in case
-        a Poisson distribution is assumed.
+    variance : tuple(str, float, float)
+        Variance type, bias, and value for the likelihood function. The bias and value are set to
+        None in case a Poisson distribution is assumed.
     residuals : str
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -106,33 +111,14 @@ def lnprob(param,
             delta_x = xy_pos[0] - aperture['pos_x']
             delta_y = xy_pos[1] - aperture['pos_y']
 
-            if aperture['type'] == 'circular':
+            if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
+               bounds[2][0] <= param[2] <= bounds[2][1]:
 
-                if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
-                   bounds[2][0] <= param[2] <= bounds[2][1]:
+                ln_prior = 0.
 
-                    ln_prior = 0.
+            else:
 
-                else:
-
-                    ln_prior = -np.inf
-
-            elif aperture['type'] == 'elliptical':
-
-                cos_ang = math.cos(math.radians(180.-aperture['angle']))
-                sin_ang = math.sin(math.radians(180.-aperture['angle']))
-
-                x_rot = delta_x*cos_ang - delta_y*sin_ang
-                y_rot = delta_x*sin_ang + delta_y*cos_ang
-
-                r_check = (x_rot/aperture['semimajor'])**2 + (y_rot/aperture['semiminor'])**2
-
-                if r_check <= 1. and bounds[2][0] <= param[2] <= bounds[2][1]:
-                    ln_prior = 0.
-
-                else:
-                    ln_prior = -np.inf
-
+                ln_prior = -np.inf
 
         else:
             raise ValueError('Prior type not recognized.')

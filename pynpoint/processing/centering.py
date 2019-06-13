@@ -28,16 +28,19 @@ class StarAlignmentModule(ProcessingModule):
     Pipeline module to align the images with a cross-correlation in Fourier space.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='star_align',
-                 image_in_tag='im_arr',
-                 ref_image_in_tag=None,
-                 image_out_tag='im_arr_aligned',
-                 interpolation='spline',
-                 accuracy=10,
-                 resize=None,
-                 num_references=10,
-                 subframe=None):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 ref_image_in_tag: str = None,
+                 interpolation: str = 'spline',
+                 accuracy: float = 10.,
+                 resize: float = None,
+                 num_references: int = 10,
+                 subframe: float = None) -> None:
         """
         Parameters
         ----------
@@ -45,7 +48,7 @@ class StarAlignmentModule(ProcessingModule):
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry with the stack of images that is read as input.
-        ref_image_in_tag : str
+        ref_image_in_tag : str, None
             Tag of the database entry with the reference image(s) that are read as input. If it is
             set to None, a random subsample of *num_references* elements of *image_in_tag* is taken
             as reference images.
@@ -87,7 +90,8 @@ class StarAlignmentModule(ProcessingModule):
         self.m_num_references = num_references
         self.m_subframe = subframe
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Applies a cross-correlation of the input images with respect to
         a stack of reference images, rescales the image dimensions, and shifts the images to a
@@ -139,7 +143,7 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            return shift_image(tmp_image, offset, self.m_interpolation)
+            return shift_image(tmp_image, tuple(offset), self.m_interpolation)
 
         if self.m_ref_image_in_port is None:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
@@ -186,6 +190,8 @@ class StarCenteringModule(ProcessingModule):
     Pipeline module for centering the star by fitting the PSF with a 2D Gaussian or Moffat
     function.
     """
+
+    __author__ = 'Tomas Stolker'
 
     def __init__(self,
                  name_in='centering',
@@ -612,17 +618,20 @@ class FitCenterModule(ProcessingModule):
     Pipeline module for fitting the PSF with a 2D Gaussian or Moffat function.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='fit_profile',
-                 image_in_tag='im_arr',
-                 fit_out_tag='best_fit',
-                 mask_out_tag=None,
-                 method='full',
-                 radius=0.1,
-                 sign='positive',
-                 model='gaussian',
-                 filter_size=None,
-                 **kwargs):
+                 name_in: str,
+                 image_in_tag: str,
+                 fit_out_tag: str,
+                 mask_out_tag: str = None,
+                 method: str = 'full',
+                 radius: float = 0.1,
+                 sign: str = 'positive',
+                 model: str = 'gaussian',
+                 filter_size: float = None,
+                 **kwargs: tuple) -> None:
         """
         Parameters
         ----------
@@ -704,7 +713,8 @@ class FitCenterModule(ProcessingModule):
 
         self.m_count = 0
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
         the individual images or the mean of the stack with a 2D Gaussian or Moffat function, and
@@ -755,14 +765,15 @@ class FitCenterModule(ProcessingModule):
         xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
         rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
-        def gaussian_2d(grid,
-                        x_center,
-                        y_center,
-                        fwhm_x,
-                        fwhm_y,
-                        amp,
-                        theta,
-                        offset):
+        @typechecked
+        def gaussian_2d(grid: np.ndarray,
+                        x_center: float,
+                        y_center: float,
+                        fwhm_x: float,
+                        fwhm_y: float,
+                        amp: float,
+                        theta: float,
+                        offset: float) -> np.ndarray:
             """
             Function to create a 2D elliptical Gaussian model.
 
@@ -813,15 +824,16 @@ class FitCenterModule(ProcessingModule):
 
             return gaussian
 
-        def moffat_2d(grid,
-                      x_center,
-                      y_center,
-                      fwhm_x,
-                      fwhm_y,
-                      amp,
-                      theta,
-                      offset,
-                      beta):
+        @typechecked
+        def moffat_2d(grid: np.ndarray,
+                      x_center: float,
+                      y_center: float,
+                      fwhm_x: float,
+                      fwhm_y: float,
+                      amp: float,
+                      theta: float,
+                      offset: float,
+                      beta: float) -> np.ndarray:
             """
             Function to create a 2D elliptical Moffat model.
 
@@ -1007,19 +1019,18 @@ class ShiftImagesModule(ProcessingModule):
     Pipeline module for shifting a stack of images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
                  shift_xy: Union[Tuple[float, float], str],
-                 name_in: str = 'shift',
-                 image_in_tag: str = 'im_arr',
-                 image_out_tag: str = 'im_arr_shifted',
                  interpolation: str = 'spline') -> None:
         """
         Parameters
         ----------
-        shift_xy : tuple(float, float), str
-            The shift (pix) in x and y direction as (delta_x, delta_y). Or, a database tag with
-            the fit results from the :class:`~pynpoint.processing.centering.StarCenteringModule`.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -1027,6 +1038,9 @@ class ShiftImagesModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        shift_xy : tuple(float, float), str
+            The shift (pix) in x and y direction as (delta_x, delta_y). Or, a database tag with
+            the fit results from the :class:`~pynpoint.processing.centering.StarCenteringModule`.
         interpolation : str
             Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
 
@@ -1140,17 +1154,18 @@ class WaffleCenteringModule(ProcessingModule):
 
     __author__ = 'Alexander Bohn'
 
+    @typechecked
     def __init__(self,
-                 name_in='center_images',
-                 image_in_tag='im_arr',
-                 center_in_tag='center_frame',
-                 image_out_tag='im_arr_centered_cut',
-                 size=2.,
-                 center=None,
-                 radius=45.,
-                 pattern='x',
-                 sigma=0.06,
-                 dither=False):
+                 name_in: str,
+                 image_in_tag: str,
+                 center_in_tag: str,
+                 image_out_tag: str,
+                 size: float = 2.,
+                 center: Tuple[float, float] = None,
+                 radius: float = 45.,
+                 pattern: str = 'x',
+                 sigma: float = 0.06,
+                 dither: bool = False) -> None:
         """
         Parameters
         ----------
@@ -1165,7 +1180,7 @@ class WaffleCenteringModule(ProcessingModule):
             be different from *image_in_tag*.
         size : float
             Image size (arcsec) for both dimensions. Original image size is used if set to None.
-        center : tuple(float, float)
+        center : tuple(float, float), None
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
             set to None.
         radius : float
@@ -1197,7 +1212,8 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_sigma = sigma
         self.m_dither = dither
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Locates the position of the calibration spots in the center
         frame. From the four spots, the position of the star behind the coronagraph is fitted,
@@ -1377,7 +1393,7 @@ class WaffleCenteringModule(ProcessingModule):
                 shift_yx[0] += 0.5
                 shift_yx[1] += 0.5
 
-            im_shift = shift_image(image, shift_yx, 'spline')
+            im_shift = shift_image(image, tuple(shift_yx), 'spline')
 
             if self.m_size is not None:
                 im_crop = crop_image(im_shift, None, self.m_size)

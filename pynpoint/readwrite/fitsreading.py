@@ -36,7 +36,7 @@ class FitsReadingModule(ReadingModule):
                  image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
-                 filenames: Union[str, List] = None) -> None:
+                 filenames: Union[str, List[str]] = None) -> None:
         """
         Parameters
         ----------
@@ -76,16 +76,16 @@ class FitsReadingModule(ReadingModule):
         self.m_filenames = filenames
 
     @typechecked
-    def _read_single_file(self,
-                          fits_file: str,
-                          overwrite_tags: List) -> Union[fits.header.Header, Tuple]:
+    def read_single_file(self,
+                         fits_file: str,
+                         overwrite_tags: list) -> Tuple[fits.header.Header, tuple]:
         """
-        Internal function which reads a single FITS file and appends it to the database. The
-        function gets a list of *overwriting_tags*. If a new key (header entry or image data) is
-        found that is not on this list the old entry is overwritten if *self.m_overwrite* is
-        active. After replacing the old entry the key is added to the *overwriting_tags*. This
-        procedure guaranties that all previous database information, that does not belong to the
-        new data set that is read by FitsReadingModule is replaced and the rest is kept.
+        Function which reads a single FITS file and appends it to the database. The function gets
+        a list of *overwriting_tags*. If a new key (header entry or image data) is found that is
+        not on this list the old entry is overwritten if *self.m_overwrite* is active. After
+        replacing the old entry the key is added to the *overwriting_tags*. This procedure
+        guaranties that all previous database information, that does not belong to the new data
+        set that is read by FitsReadingModule is replaced and the rest is kept.
 
         Parameters
         ----------
@@ -128,7 +128,7 @@ class FitsReadingModule(ReadingModule):
         return header, images.shape
 
     @typechecked
-    def _txt_file_list(self) -> List:
+    def _txt_file_list(self) -> list:
         """
         Internal function to import a list of FITS files from a text file.
         """
@@ -191,7 +191,7 @@ class FitsReadingModule(ReadingModule):
         for i, fits_file in enumerate(files):
             progress(i, len(files), 'Running FitsReadingModule...', start_time)
 
-            header, shape = self._read_single_file(fits_file, overwrite_tags)
+            header, shape = self.read_single_file(fits_file, overwrite_tags)
 
             if len(shape) == 2:
                 nimages = 1
