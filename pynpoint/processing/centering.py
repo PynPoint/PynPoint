@@ -1098,7 +1098,7 @@ class ShiftImagesModule(ProcessingModule):
             # if the offset is constant, grab the first element of the shift for the second part
             # of the function
             if constant:
-                self.m_shift = self.m_shift[0, ]
+                self.m_shift = tuple(self.m_shift[0, ])
 
             # if the offset is not constant, then the apply the shifts to each frame individually
             # since each frame is shifted individually, it can not be easily applied to
@@ -1106,7 +1106,7 @@ class ShiftImagesModule(ProcessingModule):
             else:
                 for i, shift in enumerate(self.m_shift):
                     shifted_image = shift_image(self.m_image_in_port[i, ],
-                                                shift,
+                                                tuple(shift),
                                                 self.m_interpolation)
                     # append the shifted images to the selt.m_image_out_port database entry
                     self.m_image_out_port.append([shifted_image])
