@@ -377,7 +377,7 @@ class TestFluxPosition:
         single = self.pipeline.get_data('mcmc')
         single = single[:, 20:, :].reshape((-1, 3))
         assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
+        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.5)
         assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
 
     def test_mcmc_sampling_poisson(self):
