@@ -445,12 +445,27 @@ class TestCentering:
                                    interpolation='spline',
                                    name_in='shift3',
                                    image_in_tag='shift',
-                                   image_out_tag='shift_tag')
+                                   image_out_tag='shift_tag_1')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('shift3')
 
-        data = self.pipeline.get_data('shift_tag')
+        data = self.pipeline.get_data('shift_tag_1')
         assert np.allclose(data[0, 39, 39], 0.023563080974545528, rtol=1e-8, atol=0.)
         assert np.allclose(np.mean(data), 0.0001643062943690491, rtol=limit, atol=0.)
+        assert data.shape == (40, 78, 78)
+
+    def test_shift_images_tag_mean(self):
+
+        module = ShiftImagesModule(shift_xy='fit_mean',
+                                   interpolation='spline',
+                                   name_in='shift4',
+                                   image_in_tag='shift',
+                                   image_out_tag='shift_tag_2')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('shift4')
+        data = self.pipeline.get_data('shift_tag_2')
+        assert np.allclose(data[0, 20, 31], 5.348337712000518e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00016430318227546225, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
