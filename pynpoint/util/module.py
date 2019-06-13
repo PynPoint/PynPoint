@@ -4,18 +4,19 @@ Functions for Pypeline modules.
 
 import sys
 import time
-import math
 
-import cv2
+from typing import Union
+
 import numpy as np
 
-from pynpoint.util.image import crop_image, center_pixel
+from typeguard import typechecked
 
 
-def progress(current,
-             total,
-             message,
-             start_time=None):
+@typechecked
+def progress(current: int,
+             total: int,
+             message: str,
+             start_time: float = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -39,7 +40,7 @@ def progress(current,
     def time_string(delta_time):
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
-        
+
         Parameters
         ----------
         delta_time : float
@@ -74,8 +75,9 @@ def progress(current,
 
     sys.stdout.flush()
 
-def memory_frames(memory,
-                  nimages):
+@typechecked
+def memory_frames(memory: Union[int, np.int64],
+                  nimages: int) -> np.ndarray:
     """
     Function to subdivide the input images is in quantities of MEMORY.
 
@@ -106,85 +108,10 @@ def memory_frames(memory,
 
     return frames
 
-def locate_star(image,
-                center,
-                width,
-                fwhm):
-    """
-    Function to locate the star by finding the brightest pixel.
-
-    Parameters
-    ----------
-    image : numpy.ndarray
-        Input image (2D).
-    center : tuple(int, int)
-        Pixel center (y, x) of the subframe. The full image is used if set to None.
-    width : int
-        The width (pix) of the subframe. The full image is used if set to None.
-    fwhm : int, None
-        Full width at half maximum (pix) of the Gaussian kernel. Not used if set to None.
-
-    Returns
-    -------
-    tuple(int, int)
-        Position (y, x) of the brightest pixel.
-    """
-
-    if width is not None:
-        if center is None:
-            center = center_pixel(image)
-
-        image = crop_image(image, center, width)
-
-    if fwhm is None:
-        smooth = np.copy(image)
-
-    else:
-        sigma = fwhm/math.sqrt(8.*math.log(2.))
-        kernel = (fwhm*2+1, fwhm*2+1)
-        smooth = cv2.GaussianBlur(image, kernel, sigma)
-
-    # argmax[0] is the y position and argmax[1] is the y position
-    argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
-
-    if center is not None and width is not None:
-        argmax[0] += center[0] - (image.shape[0]-1) // 2 # y
-        argmax[1] += center[1] - (image.shape[1]-1) // 2 # x
-
-    return argmax
-
-def rotate_coordinates(center,
-                       position,
-                       angle):
-    """
-    Function to rotate coordinates around the image center.
-
-    Parameters
-    ----------
-    center : tuple(float, float)
-        Image center (y, x).
-    position : tuple(float, float)
-        Position (y, x) in the image.
-    angle : float
-        Angle (deg) to rotate in counterclockwise direction.
-
-    Returns
-    -------
-    tuple(float, float)
-        New position (y, x).
-    """
-
-    pos_x = (position[1]-center[1])*math.cos(np.radians(angle)) - \
-            (position[0]-center[0])*math.sin(np.radians(angle))
-
-    pos_y = (position[1]-center[1])*math.sin(np.radians(angle)) + \
-            (position[0]-center[0])*math.cos(np.radians(angle))
-
-    return (center[0]+pos_y, center[1]+pos_x)
-
-def update_arguments(index,
-                     nimages,
-                     args_in):
+@typechecked
+def update_arguments(index: int,
+                     nimages: int,
+                     args_in: Union[tuple, None]) -> Union[tuple, None]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -196,12 +123,12 @@ def update_arguments(index,
         Image index in the stack.
     nimages : int
         Total number of images in the stack.
-    args_in : tuple
+    args_in : tuple, None
         Function arguments that have to be updated.
 
     Returns
     -------
-    tuple
+    tuple, None
         Updated function arguments.
     """
 

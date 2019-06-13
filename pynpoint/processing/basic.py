@@ -19,6 +19,8 @@ class SubtractImagesModule(ProcessingModule):
     Pipeline module for subtracting two sets of images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -97,6 +99,8 @@ class AddImagesModule(ProcessingModule):
     """
     Pipeline module for adding two sets of images.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -177,6 +181,8 @@ class RotateImagesModule(ProcessingModule):
     Pipeline module for rotating images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -255,6 +261,8 @@ class RepeatImagesModule(ProcessingModule):
     """
     Pipeline module for repeating the images from a dataset.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,

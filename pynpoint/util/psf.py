@@ -2,18 +2,20 @@
 Functions for PSF subtraction.
 """
 
+from typing import Tuple
+
 import numpy as np
 
 from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 
 
-def pca_psf_subtraction(images,
-                        angles,
-                        pca_number,
-                        pca_sklearn=None,
-                        im_shape=None,
-                        indices=None):
+def pca_psf_subtraction(images: np.ndarray,
+                        angles: np.ndarray,
+                        pca_number: int,
+                        pca_sklearn: PCA = None,
+                        im_shape: Tuple[int, int, int] = None,
+                        indices: np.ndarray = None) -> np.ndarray:
     """
     Function for PSF subtraction with PCA.
 
@@ -43,7 +45,7 @@ def pca_psf_subtraction(images,
     """
 
     if pca_sklearn is None:
-        pca_sklearn = PCA(n_components=pca_number, svd_solver="arpack")
+        pca_sklearn = PCA(n_components=pca_number, svd_solver='arpack')
 
         im_shape = images.shape
 
