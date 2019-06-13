@@ -75,8 +75,7 @@ def contrast_limit(path_images,
         None
     """
 
-    temp_im_res = []
-
+    temp_flux_in = []
     for i, images in enumerate(path_images):
         images = np.load(images)
         psf = np.load(path_psf)
@@ -122,6 +121,18 @@ def contrast_limit(path_images,
 
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
+        temp_flux_in += [flux_in]
+        print("flux_in", flux_in)
+
+    flux_in = np.median(flux_in)
+    print("temp_flux_in", temp_flux_in)
+
+    temp_im_res = []
+
+    for i, images in enumerate(path_images):
+        images = np.load(images)
+        psf = np.load(path_psf)
+
         mag = -2.5*math.log10(flux_in/star)
 
         # Inject the fake planet
@@ -143,7 +154,7 @@ def contrast_limit(path_images,
 
     im_res = np.concatenate(temp_im_res)
     im_res = np.median(im_res, axis=0, keepdims=True)
-    print("im_res.shape: ", im_res.shape)
+    print("flux_in", flux_in)
 
     # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],

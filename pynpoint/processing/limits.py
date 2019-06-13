@@ -248,11 +248,11 @@ class ContrastCurveModule(ProcessingModule):
         tmp_im_str = os.path.join(working_place, "tmp_images.npy")
         tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
-        
+
         np.save(tmp_psf_str, psf)
 
         mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
-        
+
         temp_im_res = []
         temp_noise = []
 
@@ -269,9 +269,9 @@ class ContrastCurveModule(ProcessingModule):
 
             image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
             np.save(image_paths[-1], image)
-        
 
-        
+
+
         pool = mp.Pool(cpu)
 
         for pos in positions:
@@ -307,7 +307,7 @@ class ContrastCurveModule(ProcessingModule):
             result.append(async_result.get())
 
         pool.terminate()
-        
+
         for image_path in image_paths:
             os.remove(image_path)
         os.remove(tmp_psf_str)
