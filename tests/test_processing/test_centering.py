@@ -401,8 +401,13 @@ class TestCentering:
         self.pipeline.run_module('fit1')
 
         data = self.pipeline.get_data('fit_full')
-        assert np.allclose(data[0, 0], 5.997834332959175, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 13.202402625344051, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data[:, 0]), 5.999068486622676, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 2]), 4.000055166165185, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 4]), 0.08106141046470318, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 6]), 0.0810026137349896, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 8]), 0.024462594420743763, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 10]), 162.72401732793077, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 12]), 3.0281141786814477e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 14)
 
         data = self.pipeline.get_data('mask')
@@ -427,8 +432,13 @@ class TestCentering:
         self.pipeline.run_module('fit2')
 
         data = self.pipeline.get_data('fit_mean')
-        assert np.allclose(data[0, 0], 5.999072568941366, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 14.525054620661948, rtol=1e-4, atol=0.)
+        assert np.allclose(np.mean(data[:, 0]), 5.999072568941366, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 2]), 4.000051869708742, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 4]), 0.08384036587023312, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 6]), 0.08379313488754872, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 8]), 0.025631328037795074, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 10]), 189.5286326110363, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data[:, 12]), -0.0011275279023032867, rtol=limit, atol=0.)
         assert data.shape == (40, 16)
 
     def test_shift_images_tag(self):
