@@ -759,7 +759,7 @@ class DitheringBackgroundModule(ProcessingModule):
                                                                            '_dither_background'+ \
                                                                            str(i+1),
                                                         dither=dither_val,
-                                                        combine='median')
+                                                        combine='mean')
 
                 module.connect_database(self._m_data_base)
                 module.run()
