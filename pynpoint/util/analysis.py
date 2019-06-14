@@ -185,13 +185,13 @@ def fake_planet(images: np.ndarray,
     for i in range(images.shape[0]):
         if psf.shape[0] == 1:
             im_shift[i, ] = shift_image(psf[0, ],
-                                        (y_shift[i], x_shift[i]),
+                                        [y_shift[i], x_shift[i]],
                                         interpolation,
                                         mode='reflect')
 
         else:
             im_shift[i, ] = shift_image(psf[i, ],
-                                        (y_shift[i], x_shift[i]),
+                                        [y_shift[i], x_shift[i]],
                                         interpolation,
                                         mode='reflect')
 
