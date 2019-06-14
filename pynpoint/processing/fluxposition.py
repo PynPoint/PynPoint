@@ -678,7 +678,7 @@ class MCMCsamplingModule(ProcessingModule):
             filter). Should be negative in order to inject negative fake planets.
         pca_number : int
             Number of principal components used for the PSF subtraction.
-        aperture : float or dict
+        aperture : float, dict
             Either the aperture radius (arcsec) at the position specified in *param* or a
             dictionary with the aperture properties. See for more information
             :class:`~pynpoint.util.analysis.create_aperture`.
@@ -693,7 +693,15 @@ class MCMCsamplingModule(ProcessingModule):
             as uniform priors. With 'aperture', the prior probability is set to zero beyond the
             aperture and unity within the aperture.
         variance : str
-            Variance used in the likelihood function ('poisson' or 'gaussian').
+            Variance used in the likelihood function ('poisson' or 'gaussian'). With 'poisson',
+            the chi-square function will sum over the absolute pixel values within the aperture
+            (see Wertz et al. 2017), assuming a Poisson distribution for the variance of each
+            pixel. With 'gaussian', the chi-square function includes a single measurement,
+            obtained with aperture photometry of the absolute pixel values. The variance is
+            measured with reference apertures and a correction for small sample statistics
+            (see Mawet et al. 2014). Note that the absolute values of the pixels are required
+            because negative an positive regions caused by PCA will cancel out otherwise,
+            resulting in a maximum in the likelihood function.
         residuals : str
             Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
