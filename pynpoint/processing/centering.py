@@ -143,7 +143,7 @@ class StarAlignmentModule(ProcessingModule):
             else:
                 tmp_image = image_in
 
-            return shift_image(tmp_image, tuple(offset), self.m_interpolation)
+            return shift_image(tmp_image, offset, self.m_interpolation)
 
         if self.m_ref_image_in_port is None:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
@@ -1019,7 +1019,7 @@ class ShiftImagesModule(ProcessingModule):
     Pipeline module for shifting a stack of images.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = 'Tomas Stolker, Benedikt Schmidhuber'
 
     @typechecked
     def __init__(self,
@@ -1036,13 +1036,12 @@ class ShiftImagesModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
-            Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            Tag of the database entry that is written as output.
         shift_xy : tuple(float, float), str
             The shift (pix) in x and y direction as (delta_x, delta_y). Or, a database tag with
-            the fit results from the :class:`~pynpoint.processing.centering.StarCenteringModule`.
+            the fit results from the :class:`~pynpoint.processing.centering.FitCenterModule`.
         interpolation : str
-            Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
+            Interpolation type for shifting of the images ('spline', 'bilinear', or 'fft').
 
         Returns
         -------
@@ -1077,24 +1076,72 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
+        # delete all data stored in self.m_image_out_port
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        # set the 'constant' flag to true
+        constant = True
+
+        # read the fit results from the self.m_fit_in_port if available
         if self.m_fit_in_port is not None:
+
             self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]] # (x, y)
             self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
 
-        def _image_shift(image, shift_yx, interpolation):
-            return shift_image(image, tuple(shift_yx), interpolation)
+            # check if data in self.m_fit_in_port is constant for all images using the
+            # constant flag
+            for i in range(self.m_fit_in_port.get_shape()[0]):
+                if not np.allclose(self.m_fit_in_port[0, ], self.m_fit_in_port[i, ]):
+                    constant = False
 
-        self.apply_function_to_images(_image_shift,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running ShiftImagesModule',
-                                      func_args=(self.m_shift, self.m_interpolation))
+            if constant:
+                # if the offset is constant then use the first element for all images
+                self.m_shift = self.m_shift[0, ]
 
-        if self.m_fit_in_port is None:
+            else:
+                # if the offset is not constant, then apply the shifts to each frame individually
+                for i, shift in enumerate(self.m_shift):
+                    shifted_image = shift_image(self.m_image_in_port[i, ],
+                                                shift,
+                                                self.m_interpolation)
+
+                    # append the shifted images to the selt.m_image_out_port database entry
+                    self.m_image_out_port.append(shifted_image, data_dim=3)
+
+                mean_shift = np.mean(self.m_shift, axis=0)
+                history = f'shift_xy = {mean_shift[0]:.2f}, {mean_shift[1]:.2f}'
+
+        # apply a constant shift
+        if constant:
+
+            # get memory from config tag
+            memory = self._m_config_port.get_attribute('MEMORY')
+
+            # get number of images
+            nimages = self.m_image_in_port.get_shape()[0]
+
+            # calculate the boundaries indices of each stack of frames
+            frames = memory_frames(memory, nimages)
+
+            # set a start_time for the progress information
+            start_time = time.time()
+
+            # iterate over all stacks of frames
+            for i, _ in enumerate(frames[:-1]):
+                # shift a stack of images using _image_shift
+                shifted_image = shift_image(self.m_image_in_port[frames[i]:frames[i+1], ],
+                                            self.m_shift,
+                                            self.m_interpolation)
+
+                # append the shifted images to the selt.m_image_out_port database entry
+                self.m_image_out_port.append(shifted_image, data_dim=3)
+
+                # write out the progress
+                progress(i, len(frames[:-1]), 'Running ShiftImagesModule...', start_time)
+
+            # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
-        else:
-            mean_shift = np.mean(self.m_shift, axis=0)
-            history = f'shift_xy = {mean_shift[0]:.2f}, {mean_shift[1]:.2f}'
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('ShiftImagesModule', history)
@@ -1331,8 +1378,8 @@ class WaffleCenteringModule(ProcessingModule):
 
             image = self.m_image_in_port[i, ]
 
-            shift_yx = [(float(im_shape[-2])-1.)/2. - y_center,
-                        (float(im_shape[-1])-1.)/2. - x_center]
+            shift_yx = np.array([(float(im_shape[-2])-1.)/2. - y_center,
+                                 (float(im_shape[-1])-1.)/2. - x_center])
 
             if self.m_dither:
                 index = np.digitize(i, nframes, right=False) - 1
@@ -1348,7 +1395,7 @@ class WaffleCenteringModule(ProcessingModule):
                 shift_yx[0] += 0.5
                 shift_yx[1] += 0.5
 
-            im_shift = shift_image(image, tuple(shift_yx), 'spline')
+            im_shift = shift_image(image, shift_yx, 'spline')
 
             if self.m_size is not None:
                 im_crop = crop_image(im_shift, None, self.m_size)
