@@ -4,7 +4,7 @@ Functions for image processing.
 
 import math
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 import cv2
 import numpy as np
@@ -190,7 +190,7 @@ def create_mask(im_shape: Tuple[int, int],
 
 @typechecked
 def shift_image(image: np.ndarray,
-                shift_yx: Tuple[float, float],
+                shift_yx: Union[Tuple[float, float], np.ndarray],
                 interpolation: str,
                 mode: str = 'constant') -> np.ndarray:
     """
@@ -199,9 +199,10 @@ def shift_image(image: np.ndarray,
     Parameters
     ----------
     image : numpy.ndarray
-        Input image (2D).
-    shift_yx : tuple(float, float)
-        Shift (y, x) to be applied (pix).
+        Input image (2D or 3D). If 3D the image is not shifted along the 0th axis.
+    shift_yx : tuple(float, float), np.ndarray
+        Shift (y, x) to be applied (pix). An additional shift of zero pixels will be added
+        for the first dimension in case the input image is 3D.
     interpolation : str
         Interpolation type ('spline', 'bilinear', or 'fft').
     mode : str
@@ -213,14 +214,19 @@ def shift_image(image: np.ndarray,
         Shifted image.
     """
 
+    if image.ndim == 2:
+        shift_val = (shift_yx[0], shift_yx[1])
+    elif image.ndim == 3:
+        shift_val = (0, shift_yx[0], shift_yx[1])
+
     if interpolation == 'spline':
-        im_center = shift(image, shift_yx, order=5, mode=mode)
+        im_center = shift(image, shift_val, order=5, mode=mode)
 
     elif interpolation == 'bilinear':
-        im_center = shift(image, shift_yx, order=1, mode=mode)
+        im_center = shift(image, shift_val, order=1, mode=mode)
 
     elif interpolation == 'fft':
-        fft_shift = fourier_shift(np.fft.fftn(image), shift_yx)
+        fft_shift = fourier_shift(np.fft.fftn(image), shift_val)
         im_center = np.fft.ifftn(fft_shift).real
 
     return im_center
