@@ -3,7 +3,10 @@ Pipeline modules for resizing of images.
 """
 
 import math
-import warnings
+
+import threading
+import time
+import sys
 
 from typing import Union, Tuple
 
@@ -13,6 +16,7 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, scale_image
+from pynpoint.util.module import memory_frames, progress
 
 
 class CropImagesModule(ProcessingModule):
@@ -73,21 +77,96 @@ class CropImagesModule(ProcessingModule):
         -------
         NoneType
             None
+
         """
 
+        def _crop(image_in, center, size, start, start_cpu, end_cpu):
+
+            # Crop the image
+            cropped_im = crop_image(image_in, center, size)
+
+            # Write the cropped image to the *cropped_image* variable
+            append_start = start + start_cpu
+            append_end = start + end_cpu
+            cropped_image[append_start:append_end, :, :] = cropped_im
+
+        start_time = time.time()
+
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        cpu = self._m_config_port.get_attribute("CPU")
+        mem = self._m_config_port.get_attribute("MEMORY")
 
         self.m_size = int(math.ceil(self.m_size/pixscale))
 
-        def _crop(image_in, size, center):
+        # Make sure the image size is uneven
+        if self.m_size%2 == 0:
+            cropped_size = self.m_size + 1
+        else:
+            cropped_size = self.m_size
 
-            return crop_image(image_in, center, size)
+        # Get number of images
+        nimages = self.m_image_in_port.get_shape()[0]
 
-        self.apply_function_to_images(_crop,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running CropImagesModule',
-                                      func_args=(self.m_size, self.m_center))
+        # Initialize cropped output array
+        cropped_image = np.zeros((nimages, cropped_size, cropped_size))
+
+        # Calculate the boundaries indices of each stack of frames
+        frames = memory_frames(mem, nimages)
+
+        # Create a list not containing the last chunk. Used for the looping
+        frame_loop = frames[0:-1]
+
+        # Loop over chunks of images set by memory size
+        for iterator, _ in enumerate(frame_loop):
+            progress(iterator, len(frame_loop), 'Running CropImagesModule...', start_time)
+
+            # Set *images* to chunk-size
+            start = frames[iterator]
+            end = frames[iterator + 1]
+            images = self.m_image_in_port[start:end]
+
+            # Split *images* into smaller chunks, given to #cpu
+            split_size = max(1, int(len(images) / cpu))
+            cpu_frames = memory_frames(split_size, len(images))
+            cpu_frames_loop = cpu_frames[0:-1]
+
+            threads = []
+
+            for cpu_iterator, _ in enumerate(cpu_frames_loop):
+                # Initialize smaller chunk of images given to each cpu
+                start_cpu = cpu_frames[cpu_iterator]
+                end_cpu = cpu_frames[cpu_iterator + 1]
+                cpu_images = images[start_cpu:end_cpu]
+
+                t = threading.Thread(target=_crop,
+                                     args=[cpu_images, self.m_center, self.m_size,
+                                           start, start_cpu, end_cpu])
+
+                threads.append(t)
+
+            for t in threads:
+                t.start()
+
+            for t in threads:
+                t.join()
+
+        sys.stdout.write('Running CropImagesModule... [DONE]\n')
+        sys.stdout.flush()
+
+		# OLD
+        # def _crop(image_in, size, center):
+
+        #     return crop_image(image_in, center, size)
+
+        # self.apply_function_to_images(_crop,
+        #                               self.m_image_in_port,
+        #                               self.m_image_out_port,
+        #                               'Running CropImagesModule',
+									  # func_args=(self.m_size, self.m_center))
+
+        print("--- Time it took: %0.2f seconds ---" % (time.time() - start_time))
+
+        self.m_image_out_port.set_all(cropped_image)
 
         history = f'image size [pix] = {self.m_size}'
         self.m_image_out_port.add_history('CropImagesModule', history)
