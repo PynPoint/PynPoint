@@ -795,8 +795,8 @@ class MCMCsamplingModule(ProcessingModule):
         indices = np.where(mask.reshape(-1) != 0.)[0]
 
         if isinstance(self.m_aperture, float):
-            xy_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
-            aperture = (int(round(xy_pos[1])), int(round(xy_pos[0])), self.m_aperture/pixscale)
+            yx_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
+            aperture = (int(round(yx_pos[0])), int(round(yx_pos[1])), self.m_aperture/pixscale)
 
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2])
@@ -814,6 +814,8 @@ class MCMCsamplingModule(ProcessingModule):
                                        combine=self.m_residuals,
                                        aperture=aperture,
                                        sigma=0.)
+
+        print(variance)
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,

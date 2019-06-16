@@ -168,17 +168,17 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        def _image_scaling(image_in, scaling_x, scaling_y, scaling_flux):
+        def _image_scaling(image_in, scaling_y, scaling_x, scaling_flux):
 
-            return scaling_flux * scale_image(image_in, scaling_x, scaling_y)
+            return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
 
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Running ScaleImagesModule',
-                                      func_args=(self.m_scaling_x,
-                                                 self.m_scaling_y,
-                                                 self.m_scaling_flux,))
+                                      func_args=(self.m_scaling_y,
+                                                 self.m_scaling_x,
+                                                 self.m_scaling_flux))
 
         history = f'scaling = ({self.m_scaling_x:.2f}, {self.m_scaling_y:.2f}, ' \
                   f'{self.m_scaling_flux:.2f})'

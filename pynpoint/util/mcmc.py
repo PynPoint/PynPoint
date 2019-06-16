@@ -124,6 +124,16 @@ def lnprob(param: np.ndarray,
 
         res_stack = combine_residuals(method=residuals, res_rot=im_res)
 
+        variance = chi_square_variance(images=res_stack[0, ],
+                                       angles=-1.*parang+extra_rot,
+                                       pca_number=pca_number,
+                                       merit=merit,
+                                       combine=residuals,
+                                       aperture=aperture,
+                                       sigma=0.)
+
+        print(variance)
+
         chi_square = merit_function(residuals=res_stack[0, ],
                                     merit=merit,
                                     aperture=aperture,

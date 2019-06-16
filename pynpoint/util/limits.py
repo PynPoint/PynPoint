@@ -110,12 +110,12 @@ def contrast_limit(path_images: str,
         raise ValueError("Threshold type not recognized.")
 
     # Cartesian coordinates of the fake planet
-    xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+    yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     # Determine the noise level
     _, _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                      x_pos=xy_fake[0],
-                                      y_pos=xy_fake[1],
+                                      x_pos=yx_fake[1],
+                                      y_pos=yx_fake[0],
                                       size=aperture,
                                       ignore=False)
 
@@ -149,8 +149,8 @@ def contrast_limit(path_images: str,
 
     # Measure the flux of the fake planet
     flux_out, _, _, _, _ = false_alarm(image=im_res[0, ],
-                                       x_pos=xy_fake[0],
-                                       y_pos=xy_fake[1],
+                                       x_pos=yx_fake[1],
+                                       y_pos=yx_fake[0],
                                        size=aperture,
                                        ignore=False)
 
