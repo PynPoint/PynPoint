@@ -14,7 +14,10 @@ from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 
-from pynpoint.util.image import shift_image, center_subpixel, pixel_distance
+from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
+                                cartesian_to_polar
+from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
@@ -197,47 +200,104 @@ def fake_planet(images: np.ndarray,
 
     return images + im_shift
 
+
+@typechecked
+def chi_square_variance(images: np.ndarray,
+                        angles: np.ndarray,
+                        pca_number: int,
+                        merit: str,
+                        combine: str,
+                        aperture: Tuple[int, int, float],
+                        sigma: float) -> Union[float, None]:
+    """
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+
+    if merit == 'poisson':
+        variance = None
+
+    else:
+        _, res_arr = pca_psf_subtraction(images=images,
+                                         angles=angles,
+                                         pca_number=pca_number)
+
+        res_stack = combine_residuals(method=combine, res_rot=res_arr)
+
+        # separation (pix) and position angle (deg)
+        sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
+                                     x_pos=aperture[1],
+                                     y_pos=aperture[0])
+
+        if sigma > 0.:
+            res_stack = gaussian_filter(input=res_stack, sigma=sigma)
+
+        if merit == 'gaussian':
+
+            selected = select_annulus(image_in=res_stack[0, ],
+                                      radius_in=sep_ang[0]-aperture[2],
+                                      radius_out=sep_ang[0]+aperture[2],
+                                      mask_position=aperture[0:2],
+                                      mask_radius=aperture[2])
+
+        elif merit == 'hessian':
+
+            hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_stack[0, ],
+                                                                sigma=sigma,
+                                                                mode='constant',
+                                                                cval=0.,
+                                                                order='rc')
+
+            hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+
+            selected = select_annulus(image_in=hes_det,
+                                      radius_in=sep_ang[0]-aperture[2],
+                                      radius_out=sep_ang[0]+aperture[2],
+                                      mask_position=aperture[0:2],
+                                      mask_radius=aperture[2])
+
+        variance = np.var(selected)
+
+    return variance
+
 @typechecked
 def merit_function(residuals: np.ndarray,
-                   function: str,
-                   variance: Union[Tuple[str, float, float], Tuple[str, None, None]],
-                   aperture: dict,
-                   sigma: float) -> float:
+                   merit: str,
+                   aperture: Tuple[int, int, float],
+                   sigma: float,
+                   variance: Union[float, None]) -> float:
 
     """
-    Function to calculate the merit function at a given position in the image residuals.
+    Function to calculate the figure of merit at a given position in the image residuals.
 
     Parameters
     ----------
     residuals : numpy.ndarray
         Residuals of the PSF subtraction (2D).
-    function : str
-        Figure of merit ('hessian' or 'sum').
-    variance : tuple(str, float, float)
-        Variance type, bias, and value for the likelihood function. The bias and value are set to
-        None in case a Poisson distribution is assumed.
-    aperture : dict
-        Dictionary with the aperture properties. See for more information
-        :func:`~pynpoint.util.analysis.create_aperture`.
+    merit : str
+        Figure of merit for the chi-square function ('hessian', 'poisson', or 'gaussian').
+    aperture : tuple(int, int, float)
+        Position (y, x) of the aperture center (pix) and aperture radius (pix).
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
-        before the function of merit is calculated.
+        before the chi-square is calculated.
+    variance : float, None
 
     Returns
     -------
     float
-        Merit value.
+        Chi-square value.
     """
 
-    if function == 'hessian' or (function == 'sum' and variance[0] == 'poisson'):
+    rr_grid = pixel_distance(im_shape=residuals.shape,
+                             position=(aperture[0], aperture[1]))
 
-        rr_grid = pixel_distance(im_shape=residuals.shape,
-                                 position=(int(round(aperture['pos_y'])),
-                                           int(round(aperture['pos_x']))))
+    indices = np.where(rr_grid < aperture[2])
 
-        indices = np.where(rr_grid < aperture['radius'])
-
-    if function == 'hessian':
+    if merit == 'hessian':
 
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
@@ -247,36 +307,27 @@ def merit_function(residuals: np.ndarray,
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
-        merit = np.sum(np.abs(hes_det[indices]))
+        chi_square = np.sum(np.abs(hes_det[indices]))
 
-    elif function == 'sum':
+    elif merit == 'poisson':
 
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        if variance[0] == 'poisson':
+        chi_square = np.sum(np.abs(residuals[indices]))
 
-            merit = np.sum(np.abs(residuals[indices]))
+    elif merit == 'gaussian':
 
-        elif variance[0] == 'gaussian':
+        if sigma > 0.:
+            residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-            # https://photutils.readthedocs.io/en/stable/overview.html
-            # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
-            # corresponds to the center of the lowest, leftmost array element. This means that
-            # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
-            # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
-
-            phot_table = aperture_photometry(np.abs(residuals),
-                                             create_aperture(aperture),
-                                             method='exact')
-
-            merit = phot_table['aperture_sum'][0]**2/variance[2]
+        chi_square = np.sum(residuals[indices]**2)/variance
 
     else:
 
-        raise ValueError('Merit function not recognized.')
+        raise ValueError('Figure of merit not recognized.')
 
-    return merit
+    return chi_square
 
 @typechecked
 def create_aperture(aperture: dict) -> Union[CircularAperture, EllipticalAperture]:

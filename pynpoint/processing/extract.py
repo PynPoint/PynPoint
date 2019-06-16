@@ -25,9 +25,9 @@ class StarExtractionModule(ProcessingModule):
 
     @typechecked
     def __init__(self,
-                 name_in: str = 'star_cutting',
-                 image_in_tag: str = 'im_arr',
-                 image_out_tag: str = 'im_arr_crop',
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
                  index_out_tag: str = None,
                  image_size: float = 2.,
                  fwhm_star: float = 0.2,
@@ -183,11 +183,11 @@ class ExtractBinaryModule(ProcessingModule):
 
     @typechecked
     def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
                  pos_center: Tuple[float, float],
                  pos_binary: Tuple[float, float],
-                 name_in: str = 'extract_binary',
-                 image_in_tag: str = 'im_arr',
-                 image_out_tag: str = 'im_arr_crop',
                  image_size: float = 2.,
                  search_size: float = 0.1,
                  filter_size: float = None) -> None:
