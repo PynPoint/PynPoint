@@ -4,7 +4,7 @@ Functions for image processing.
 
 import math
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple
 
 import cv2
 import numpy as np
@@ -295,7 +295,7 @@ def cartesian_to_polar(center: Tuple[float, float],
     ang = math.atan2(y_pos-center[1], x_pos-center[0])
     ang = (math.degrees(ang)-90.)%360.
 
-    return tuple([sep, ang])
+    return (sep, ang)
 
 @typechecked
 def polar_to_cartesian(image: np.ndarray,
@@ -324,7 +324,7 @@ def polar_to_cartesian(image: np.ndarray,
     x_pos = center[1] + sep*math.cos(math.radians(ang+90.))
     y_pos = center[0] + sep*math.sin(math.radians(ang+90.))
 
-    return tuple([x_pos, y_pos])
+    return (x_pos, y_pos)
 
 @typechecked
 def pixel_distance(im_shape: Tuple[int, int],
