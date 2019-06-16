@@ -14,6 +14,8 @@ from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 
+from astropy.io import fits
+
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
                                 cartesian_to_polar
 from pynpoint.util.psf import pca_psf_subtraction
@@ -229,8 +231,8 @@ def chi_square_variance(images: np.ndarray,
 
         # separation (pix) and position angle (deg)
         sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
-                                     x_pos=aperture[1],
-                                     y_pos=aperture[0])
+                                     y_pos=aperture[0],
+                                     x_pos=aperture[1])
 
         if sigma > 0.:
             res_stack = gaussian_filter(input=res_stack, sigma=sigma)
