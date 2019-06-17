@@ -72,7 +72,8 @@ def center_subpixel(image: np.ndarray) -> Tuple[float, float]:
 @typechecked
 def crop_image(image: np.ndarray,
                center: Union[tuple, None],
-               size: int) -> np.ndarray:
+               size: int,
+               copy: bool = True) -> np.ndarray:
     """
     Function to crop square images around a specified position.
 
@@ -84,6 +85,8 @@ def crop_image(image: np.ndarray,
         The new image center (y, x). The center of the image is used if set to None.
     size : int
         Image size (pix) for both dimensions. Increased by 1 pixel if size is an even number.
+    copy : bool
+        Whether or not to return a copy (instead of a view) of the cropped image (default: True).
 
     Returns
     -------
@@ -111,12 +114,7 @@ def crop_image(image: np.ndarray,
     if x_start < 0 or y_start < 0 or x_end > image.shape[-1] or y_end > image.shape[-2]:
         raise ValueError('Target image resolution does not fit inside the input image resolution.')
 
-    if image.ndim == 2:
-        im_return = np.copy(image[y_start:y_end, x_start:x_end])
-    if image.ndim == 3:
-        im_return = np.copy(image[:, y_start:y_end, x_start:x_end])
-
-    return im_return
+    return np.array(image[..., y_start:y_end, x_start:x_end], copy=copy)
 
 @typechecked
 def rotate_images(images: np.ndarray,
