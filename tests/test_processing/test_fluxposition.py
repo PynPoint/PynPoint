@@ -344,6 +344,7 @@ class TestFluxPosition:
 
         data = self.pipeline.get_data('mcmc')
         data = data[:, 20:, :].reshape((-1, 3))
+        print(np.median(data[:, 0]), np.median(data[:, 1]), np.median(data[:, 2]))
         assert np.allclose(np.median(data[:, 0]), 0.15, rtol=0., atol=0.05)
-        assert np.allclose(np.median(data[:, 1]), 0., rtol=0., atol=1.0)
+        assert np.allclose(np.median(data[:, 1]), 0., rtol=0., atol=0.05)
         assert np.allclose(np.median(data[:, 2]), 1., rtol=0., atol=1.0)

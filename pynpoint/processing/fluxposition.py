@@ -19,7 +19,7 @@ from photutils import aperture_photometry, CircularAperture
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
-                                center_subpixel, rotate_coordinates
+                                center_subpixel, rotate_coordinates, select_annulus
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.psf import pca_psf_subtraction
@@ -407,7 +407,8 @@ class SimplexMinimizationModule(ProcessingModule):
             chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
                                         aperture=aperture,
-                                        sigma=self.m_sigma)
+                                        sigma=self.m_sigma,
+                                        variance=None)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -745,6 +746,67 @@ class MCMCsamplingModule(ProcessingModule):
             self.m_mask = mask
 
     @typechecked
+    def gaussian_variance(self,
+                          images: np.ndarray,
+                          psf: np.ndarray,
+                          parang: np.ndarray,
+                          aperture: Tuple[int, int, float]) -> float:
+        """
+        Function to compute the (constant) variance for the likelihood function when the
+        merit parameter is set to 'gaussian'. The planet is first removed from the dataset
+        with the `param` values.
+        Parameters
+        ----------
+        images : numpy.ndarray
+            Masked input images.
+        psf : numpy.ndarray
+            PSF template.
+        parang : numpy.ndarray
+            Parallactic angles (deg).
+        aperture : tuple(int, int, float)
+            Properties of the circular aperture. The radius is recommended to be larger than or
+            equal to 0.5*lambda/D.
+
+        Returns
+        -------
+        float
+            Variance (counts).
+        """
+
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        fake = fake_planet(images=images,
+                           psf=psf,
+                           parang=parang,
+                           position=(self.m_param[0]/pixscale, self.m_param[1]),
+                           magnitude=self.m_param[2],
+                           psf_scaling=self.m_psf_scaling)
+
+        _, res_arr = pca_psf_subtraction(images=fake,
+                                         angles=-1.*parang+self.m_extra_rot,
+                                         pca_number=self.m_pca_number)
+
+        res_stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
+
+        # separation (pix) and position angle (deg)
+        sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
+                                     y_pos=aperture[0],
+                                     x_pos=aperture[1])
+
+        print(aperture)
+        print(sep_ang)
+
+        selected = select_annulus(image_in=res_stack[0, ],
+                                  radius_in=sep_ang[0]-aperture[2],
+                                  radius_out=sep_ang[0]+aperture[2],
+                                  mask_position=aperture[0:2],
+                                  mask_radius=aperture[2])
+
+        print(np.var(selected))
+
+        return np.var(selected)
+
+    @typechecked
     def run(self) -> None:
         """
         Run method of the module. The posterior distributions of the separation, position angle,
@@ -798,6 +860,11 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
+        if self.m_merit == 'gaussian':
+            variance = self.gaussian_variance(images*mask, psf, parang, aperture)
+        else:
+            variance = None
+
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
                                         lnpostfn=lnprob,
@@ -814,7 +881,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                aperture,
                                                indices,
                                                self.m_merit,
-                                               self.m_residuals]),
+                                               self.m_residuals,
+                                               variance]),
                                         threads=cpu)
 
         start_time = time.time()
@@ -921,7 +989,7 @@ class AperturePhotometryModule(ProcessingModule):
             self.m_position = center_subpixel(self.m_image_in_port[0, ])
 
         # Position in CircularAperture is defined as (x, y)
-        aperture = CircularAperture(self.m_position, self.m_radius)
+        aperture = CircularAperture((self.m_position[1], self.m_position[0]), self.m_radius)
 
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
