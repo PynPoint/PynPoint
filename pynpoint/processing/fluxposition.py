@@ -3,8 +3,8 @@ Pipeline modules for photometric and astrometric measurements.
 """
 
 import sys
-import math
 import time
+import warnings
 
 from typing import Union, Tuple
 
@@ -17,9 +17,9 @@ from sklearn.decomposition import PCA
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, chi_square_variance
+from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
-                                center_subpixel, select_annulus, rotate_coordinates
+                                center_subpixel, rotate_coordinates
 from pynpoint.util.mcmc import lnprob
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.psf import pca_psf_subtraction
@@ -335,14 +335,6 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        variance = chi_square_variance(images=images,
-                                       angles=-1.*parang+self.m_extra_rot,
-                                       pca_number=self.m_pca_number,
-                                       merit=self.m_merit,
-                                       combine=self.m_residuals,
-                                       aperture=aperture,
-                                       sigma=self.m_sigma)
-
         if self.m_reference_in_port is not None:
             ref_data = self.m_reference_in_port.get_all()
 
@@ -379,7 +371,7 @@ class SimplexMinimizationModule(ProcessingModule):
             pos_x = arg[1]
             mag = arg[2]
 
-            sep_ang = cartesian_to_polar(center, pos_x, pos_y)
+            sep_ang = cartesian_to_polar(center, pos_y, pos_x)
 
             fake = fake_planet(images=images,
                                psf=psf,
@@ -388,8 +380,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                magnitude=mag,
                                psf_scaling=self.m_psf_scaling)
 
-            mask_shape = (fake.shape[-2], fake.shape[-1])
-            mask = create_mask(mask_shape, (self.m_cent_size, self.m_edge_size))
+            mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
                 _, im_res = pca_psf_subtraction(images=fake*mask,
@@ -409,24 +400,23 @@ class SimplexMinimizationModule(ProcessingModule):
                                                 im_shape=im_shape,
                                                 indices=None)
 
-            stack = combine_residuals(method=self.m_residuals, res_rot=im_res)
+            res_stack = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
-            self.m_res_out_port.append(stack, data_dim=3)
+            self.m_res_out_port.append(res_stack, data_dim=3)
 
-            chi_square = merit_function(residuals=stack[0, ],
+            chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
                                         aperture=aperture,
-                                        sigma=self.m_sigma,
-                                        variance=variance)
+                                        sigma=self.m_sigma)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
-            res = np.asarray((position[1],
+            res = np.asarray([position[1],
                               position[0],
                               sep_ang[0]*pixscale,
                               (sep_ang[1]-self.m_extra_rot)%360.,
                               mag,
-                              chi_square))
+                              chi_square])
 
             self.m_flux_position_port.append(res, data_dim=2)
 
@@ -436,10 +426,8 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.flush()
 
         pos_init = rotate_coordinates(center,
-                                      (self.m_position[1], self.m_position[0]),
+                                      (self.m_position[1], self.m_position[0]), # (y, x)
                                       self.m_extra_rot)
-
-        pos_init = (pos_init[0], pos_init[1]) # (y, x)
 
         minimize(fun=_objective,
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],
@@ -605,7 +593,7 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
-            sep_ang = cartesian_to_polar(center, x_pos, y_pos)
+            sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
@@ -669,7 +657,7 @@ class MCMCsamplingModule(ProcessingModule):
             The boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each set
             of boundaries is specified as a tuple.
         nwalkers : int
-            Number of ensemble members (i.e. chains).
+            Number of ensemble members.
         nsteps : int
             Number of steps to run per walker.
         psf_scaling : float
@@ -688,12 +676,12 @@ class MCMCsamplingModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
-            Variance used in the likelihood function ('gaussian' or 'poisson'). Pixels are assumed
-            to be independent measurements which are equal to zero in case the best-fit negative
-            PSF template is injected. With 'gaussian', the variance is estimated from the pixel
-            values within an annulus at the separation of the aperture (but excluding the pixels
-            within the aperture). With 'poisson', a Poisson distribution is assumed for the
-            variance of each pixel.
+            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
+            Pixels are assumed to be independent measurements which are expected to be equal to
+            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
+            variance is estimated from the pixel values within an annulus at the separation of
+            the aperture (but excluding the pixels within the aperture). With 'poisson', a
+            Poisson distribution is assumed for the variance of each pixel value.
         residuals : str
             Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -807,16 +795,6 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        variance = chi_square_variance(images=images,
-                                       angles=-1.*parang+self.m_extra_rot,
-                                       pca_number=self.m_pca_number,
-                                       merit=self.m_merit,
-                                       combine=self.m_residuals,
-                                       aperture=aperture,
-                                       sigma=0.)
-
-        print(variance)
-
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,
                                         lnpostfn=lnprob,
@@ -833,9 +811,9 @@ class MCMCsamplingModule(ProcessingModule):
                                                aperture,
                                                indices,
                                                self.m_merit,
-                                               self.m_residuals,
-                                               variance]),
+                                               self.m_residuals]),
                                         threads=cpu)
+
         start_time = time.time()
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
             progress(i, self.m_nsteps, 'Running MCMCsamplingModule...', start_time)
