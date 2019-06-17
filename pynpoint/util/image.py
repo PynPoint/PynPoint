@@ -353,7 +353,7 @@ def pixel_distance(im_shape: Tuple[int, int],
 
     if im_shape[1]%2 == 0:
         x_grid = np.linspace(-im_shape[1]/2+0.5, im_shape[1]/2-0.5, im_shape[1])
-    elif im_shape[0]%2 == 1:
+    elif im_shape[1]%2 == 1:
         x_grid = np.linspace(-(im_shape[1]-1)/2, (im_shape[1]-1)/2, im_shape[1])
 
     if position is not None:
@@ -421,7 +421,7 @@ def select_annulus(image_in: np.ndarray,
     radius_out : float
         Outer radius of the annulus (pix).
     mask_position : tuple(float, float), None
-        Center (pix, pix) position (y, x) in of the circular region that is excluded. Not used
+        Center (pix) position (y, x) in of the circular region that is excluded. Not used
         if set to None.
     mask_radius : float, None
         Radius (pix) of the circular region that is excluded. Not used if set to None.

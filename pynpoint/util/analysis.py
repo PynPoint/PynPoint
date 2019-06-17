@@ -14,12 +14,8 @@ from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture, EllipticalAperture
 
-from astropy.io import fits
-
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
                                 cartesian_to_polar
-from pynpoint.util.psf import pca_psf_subtraction
-from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
@@ -203,74 +199,73 @@ def fake_planet(images: np.ndarray,
     return images + im_shift
 
 
-@typechecked
-def chi_square_variance(images: np.ndarray,
-                        angles: np.ndarray,
-                        pca_number: int,
-                        merit: str,
-                        combine: str,
-                        aperture: Tuple[int, int, float],
-                        sigma: float) -> Union[float, None]:
-    """
-    Parameters
-    ----------
-
-    Returns
-    -------
-    """
-
-    if merit == 'poisson':
-        variance = None
-
-    else:
-        _, res_arr = pca_psf_subtraction(images=images,
-                                         angles=angles,
-                                         pca_number=pca_number)
-
-        res_stack = combine_residuals(method=combine, res_rot=res_arr)
-
-        # separation (pix) and position angle (deg)
-        sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
-                                     y_pos=aperture[0],
-                                     x_pos=aperture[1])
-
-        if sigma > 0.:
-            res_stack = gaussian_filter(input=res_stack, sigma=sigma)
-
-        if merit == 'gaussian':
-
-            selected = select_annulus(image_in=res_stack[0, ],
-                                      radius_in=sep_ang[0]-aperture[2],
-                                      radius_out=sep_ang[0]+aperture[2],
-                                      mask_position=aperture[0:2],
-                                      mask_radius=aperture[2])
-
-        elif merit == 'hessian':
-
-            hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_stack[0, ],
-                                                                sigma=sigma,
-                                                                mode='constant',
-                                                                cval=0.,
-                                                                order='rc')
-
-            hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-
-            selected = select_annulus(image_in=hes_det,
-                                      radius_in=sep_ang[0]-aperture[2],
-                                      radius_out=sep_ang[0]+aperture[2],
-                                      mask_position=aperture[0:2],
-                                      mask_radius=aperture[2])
-
-        variance = np.var(selected)
-
-    return variance
+# @typechecked
+# def chi_square_variance(images: np.ndarray,
+#                         angles: np.ndarray,
+#                         pca_number: int,
+#                         merit: str,
+#                         combine: str,
+#                         aperture: Tuple[int, int, float],
+#                         sigma: float) -> Union[float, None]:
+#     """
+#     Parameters
+#     ----------
+#
+#     Returns
+#     -------
+#     """
+#
+#     if merit == 'poisson':
+#         variance = None
+#
+#     else:
+#         _, res_arr = pca_psf_subtraction(images=images,
+#                                          angles=angles,
+#                                          pca_number=pca_number)
+#
+#         res_stack = combine_residuals(method=combine, res_rot=res_arr)
+#
+#         # separation (pix) and position angle (deg)
+#         sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
+#                                      y_pos=aperture[0],
+#                                      x_pos=aperture[1])
+#
+#         if sigma > 0.:
+#             res_stack = gaussian_filter(input=res_stack, sigma=sigma)
+#
+#         if merit == 'gaussian':
+#
+#             selected = select_annulus(image_in=res_stack[0, ],
+#                                       radius_in=sep_ang[0]-aperture[2],
+#                                       radius_out=sep_ang[0]+aperture[2],
+#                                       mask_position=aperture[0:2],
+#                                       mask_radius=aperture[2])
+#
+#         elif merit == 'hessian':
+#
+#             hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_stack[0, ],
+#                                                                 sigma=sigma,
+#                                                                 mode='constant',
+#                                                                 cval=0.,
+#                                                                 order='rc')
+#
+#             hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+#
+#             selected = select_annulus(image_in=hes_det,
+#                                       radius_in=sep_ang[0]-aperture[2],
+#                                       radius_out=sep_ang[0]+aperture[2],
+#                                       mask_position=aperture[0:2],
+#                                       mask_radius=aperture[2])
+#
+#         variance = np.var(selected)
+#
+#     return variance
 
 @typechecked
 def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
-                   sigma: float,
-                   variance: Union[float, None]) -> float:
+                   sigma: float) -> float:
 
     """
     Function to calculate the figure of merit at a given position in the image residuals.
@@ -286,12 +281,11 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
-    variance : float, None
 
     Returns
     -------
     float
-        Chi-square value.
+        Chi-square ('poisson' and 'gaussian') or sum of the absolute values ('hessian').
     """
 
     rr_grid = pixel_distance(im_shape=residuals.shape,
@@ -300,6 +294,8 @@ def merit_function(residuals: np.ndarray,
     indices = np.where(rr_grid < aperture[2])
 
     if merit == 'hessian':
+
+        # This is not the chi-square but simply the sum of the absolute values
 
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
@@ -320,14 +316,26 @@ def merit_function(residuals: np.ndarray,
 
     elif merit == 'gaussian':
 
+        # separation (pix) and position angle (deg)
+        sep_ang = cartesian_to_polar(center=center_subpixel(residuals),
+                                     y_pos=aperture[0],
+                                     x_pos=aperture[1])
+
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        chi_square = np.sum(residuals[indices]**2)/variance
+        selected = select_annulus(image_in=residuals,
+                                  radius_in=sep_ang[0]-aperture[2],
+                                  radius_out=sep_ang[0]+aperture[2],
+                                  mask_position=aperture[0:2],
+                                  mask_radius=aperture[2])
+
+        chi_square = np.sum(residuals[indices]**2)/np.var(selected)
 
     else:
 
-        raise ValueError('Figure of merit not recognized.')
+        raise ValueError('Figure of merit not recognized. Please use \'hessian\', \'poisson\' '
+                         'or \'gaussian\'.')
 
     return chi_square
 
