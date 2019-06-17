@@ -1,10 +1,10 @@
 """
-Functions for analysis of a point source.
+Functions for point source analysis.
 """
 
 import math
 
-from typing import Union, Tuple
+from typing import Tuple
 
 import numpy as np
 
@@ -12,7 +12,7 @@ from typeguard import typechecked
 from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
-from photutils import aperture_photometry, CircularAperture, EllipticalAperture
+from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
                                 cartesian_to_polar
@@ -23,7 +23,7 @@ def false_alarm(image: np.ndarray,
                 x_pos: float,
                 y_pos: float,
                 size: float,
-                ignore: bool) -> Tuple[float, float, float, float, float]:
+                ignore: bool) -> Tuple[float, float, float, float]:
     """
     Function for the formal t-test for high-contrast imaging at small working angles and the
     related false positive fraction (Mawet et al. 2014).
@@ -47,8 +47,6 @@ def false_alarm(image: np.ndarray,
     -------
     float
         Signal.
-    float
-        Bias offset.
     float
         Noise level.
     float
@@ -86,14 +84,13 @@ def false_alarm(image: np.ndarray,
 
     # Note: ddof=1 is a necessary argument in order to compute the *unbiased* estimate of the
     # standard deviation, as suggested by eq. 8 of Mawet et al. (2014).
-    bias = np.mean(ap_phot[1:])
     noise = np.std(ap_phot[1:], ddof=1) * math.sqrt(1.+1./float(num_ap-1))
-    t_test = (ap_phot[0] - bias) / noise
+    t_test = (ap_phot[0] - np.mean(ap_phot[1:])) / noise
 
     # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
     # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
-    return ap_phot[0], bias, noise, t_test, 1.-t.cdf(t_test, num_ap-2)
+    return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
 @typechecked
 def student_t(t_input: Tuple[str, float],
@@ -198,69 +195,6 @@ def fake_planet(images: np.ndarray,
 
     return images + im_shift
 
-
-# @typechecked
-# def chi_square_variance(images: np.ndarray,
-#                         angles: np.ndarray,
-#                         pca_number: int,
-#                         merit: str,
-#                         combine: str,
-#                         aperture: Tuple[int, int, float],
-#                         sigma: float) -> Union[float, None]:
-#     """
-#     Parameters
-#     ----------
-#
-#     Returns
-#     -------
-#     """
-#
-#     if merit == 'poisson':
-#         variance = None
-#
-#     else:
-#         _, res_arr = pca_psf_subtraction(images=images,
-#                                          angles=angles,
-#                                          pca_number=pca_number)
-#
-#         res_stack = combine_residuals(method=combine, res_rot=res_arr)
-#
-#         # separation (pix) and position angle (deg)
-#         sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
-#                                      y_pos=aperture[0],
-#                                      x_pos=aperture[1])
-#
-#         if sigma > 0.:
-#             res_stack = gaussian_filter(input=res_stack, sigma=sigma)
-#
-#         if merit == 'gaussian':
-#
-#             selected = select_annulus(image_in=res_stack[0, ],
-#                                       radius_in=sep_ang[0]-aperture[2],
-#                                       radius_out=sep_ang[0]+aperture[2],
-#                                       mask_position=aperture[0:2],
-#                                       mask_radius=aperture[2])
-#
-#         elif merit == 'hessian':
-#
-#             hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_stack[0, ],
-#                                                                 sigma=sigma,
-#                                                                 mode='constant',
-#                                                                 cval=0.,
-#                                                                 order='rc')
-#
-#             hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-#
-#             selected = select_annulus(image_in=hes_det,
-#                                       radius_in=sep_ang[0]-aperture[2],
-#                                       radius_out=sep_ang[0]+aperture[2],
-#                                       mask_position=aperture[0:2],
-#                                       mask_radius=aperture[2])
-#
-#         variance = np.var(selected)
-#
-#     return variance
-
 @typechecked
 def merit_function(residuals: np.ndarray,
                    merit: str,
@@ -335,45 +269,7 @@ def merit_function(residuals: np.ndarray,
     else:
 
         raise ValueError('Figure of merit not recognized. Please use \'hessian\', \'poisson\' '
-                         'or \'gaussian\'.')
+                         'or \'gaussian\'. Previous use of \'sum\' should now be set as '
+                         '\'poisson\'.')
 
     return chi_square
-
-@typechecked
-def create_aperture(aperture: dict) -> Union[CircularAperture, EllipticalAperture]:
-    """
-    Function to create a circular or elliptical aperture.
-
-    Parameters
-    ----------
-    aperture : dict
-        Dictionary with the aperture properties. The aperture 'type' can be 'circular' or
-        'elliptical' (str). Both types of apertures require a position, 'pos_x' and 'pos_y'
-        (float), where the aperture is placed. The circular aperture requires a 'radius'
-        (in pixels, float) and the elliptical aperture requires a 'semimajor' and 'semiminor'
-        axis (in pixels, float), and an 'angle' (deg). The rotation angle in degrees of the
-        semimajor axis from the positive x axis. The rotation angle increases counterclockwise.
-
-    Returns
-    -------
-    photutils.aperture.circle.CircularAperture or photutils.aperture.circle.EllipticalAperture
-        Aperture object.
-    """
-
-    if aperture['type'] == 'circular':
-
-        phot_ap = CircularAperture((aperture['pos_x'], aperture['pos_y']),
-                                   aperture['radius'])
-
-    elif aperture['type'] == 'elliptical':
-
-        phot_ap = EllipticalAperture((aperture['pos_x'], aperture['pos_y']),
-                                     aperture['semimajor'],
-                                     aperture['semiminor'],
-                                     math.radians(aperture['angle']))
-
-    else:
-
-        raise ValueError('Aperture type not recognized.')
-
-    return phot_ap

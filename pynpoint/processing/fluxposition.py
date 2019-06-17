@@ -542,11 +542,11 @@ class FalsePositiveModule(ProcessingModule):
         def _snr_optimize(arg):
             pos_x, pos_y = arg
 
-            _, _, _, snr, _ = false_alarm(image=image,
-                                          x_pos=pos_x,
-                                          y_pos=pos_y,
-                                          size=self.m_aperture,
-                                          ignore=self.m_ignore)
+            _, _, snr, _ = false_alarm(image=image,
+                                       x_pos=pos_x,
+                                       y_pos=pos_y,
+                                       size=self.m_aperture,
+                                       ignore=self.m_ignore)
 
             return -snr
 
@@ -576,20 +576,20 @@ class FalsePositiveModule(ProcessingModule):
                                   tol=None,
                                   options={'ftol':self.m_tolerance})
 
-                _, _, _, snr, fpf = false_alarm(image=image,
-                                                x_pos=result.x[0],
-                                                y_pos=result.x[1],
-                                                size=self.m_aperture,
-                                                ignore=self.m_ignore)
+                _, _, snr, fpf = false_alarm(image=image,
+                                             x_pos=result.x[0],
+                                             y_pos=result.x[1],
+                                             size=self.m_aperture,
+                                             ignore=self.m_ignore)
 
                 x_pos, y_pos = result.x[0], result.x[1]
 
             else:
-                _, _, _, snr, fpf = false_alarm(image=image,
-                                                x_pos=self.m_position[0],
-                                                y_pos=self.m_position[1],
-                                                size=self.m_aperture,
-                                                ignore=self.m_ignore)
+                _, _, snr, fpf = false_alarm(image=image,
+                                             x_pos=self.m_position[0],
+                                             y_pos=self.m_position[1],
+                                             size=self.m_aperture,
+                                             ignore=self.m_ignore)
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
@@ -666,9 +666,8 @@ class MCMCsamplingModule(ProcessingModule):
         pca_number : int
             Number of principal components used for the PSF subtraction.
         aperture : float, tuple(int, int, float)
-            Either the aperture radius (arcsec) at the position specified in *param* or a
-            dictionary with the aperture properties. See for more information
-            :class:`~pynpoint.util.analysis.create_aperture`.
+            Either the aperture radius (arcsec) at the position of `param` or tuple with the
+            position and aperture radius (arcsec) as (pos_x, pos_y, radius).
         mask : tuple(float, float)
             Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of the
             tuple can be set to None. Masked pixels are excluded from the PCA computation,
@@ -680,8 +679,8 @@ class MCMCsamplingModule(ProcessingModule):
             Pixels are assumed to be independent measurements which are expected to be equal to
             zero in case the best-fit negative PSF template is injected. With 'gaussian', the
             variance is estimated from the pixel values within an annulus at the separation of
-            the aperture (but excluding the pixels within the aperture). With 'poisson', a
-            Poisson distribution is assumed for the variance of each pixel value.
+            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
+            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
         residuals : str
             Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -703,6 +702,10 @@ class MCMCsamplingModule(ProcessingModule):
 
         if 'prior' in kwargs:
             warnings.warn('The \'prior\' parameter has been deprecated.', DeprecationWarning)
+
+        if 'variance' in kwargs:
+            warnings.warn('The \'variance\' parameter has been deprecated. Please use the '
+                          '\'merit\' parameter instead.', DeprecationWarning)
 
         if 'scale' in kwargs:
             self.m_scale = kwargs['scale']
