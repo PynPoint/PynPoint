@@ -41,8 +41,11 @@ def center_pixel(image: np.ndarray) -> Tuple[int, int]:
     elif image.shape[-2] % 2 == 1 and image.shape[-1] % 2 == 0:
         center = ((image.shape[-2] - 1) // 2, image.shape[-1] // 2 - 1)
 
-    else:
+    elif image.shape[-2] % 2 == 1 and image.shape[-1] % 2 == 1:
         center = ((image.shape[-2] - 1) // 2, (image.shape[-1] - 1) // 2)
+
+    else:
+        raise RuntimeError()
 
     return center
 
