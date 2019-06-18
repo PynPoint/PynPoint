@@ -848,7 +848,7 @@ class MCMCsamplingModule(ProcessingModule):
             aperture = (int(round(yx_pos[0])), int(round(yx_pos[1])), self.m_aperture/pixscale)
 
         elif isinstance(self.m_aperture, tuple):
-            aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2])
+            aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
