@@ -85,7 +85,6 @@ class StackAndSubsetModule(ProcessingModule):
 
             return math.degrees(cmath_phase)
 
-
         def _stack(nimages, im_shape, parang):
             im_new = None
             parang_new = None
@@ -156,12 +155,12 @@ class StackAndSubsetModule(ProcessingModule):
 
         if self.m_random is not None:
             if self.m_stacking is None and im_shape[0] < self.m_random:
-                raise ValueError('The number of images of the destination subset is larger than ' \
+                raise ValueError('The number of images of the destination subset is larger than '
                                  'the number of images in the source.')
 
             if self.m_stacking is not None and \
-                        int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
-                raise ValueError('The number of images of the destination subset is larger than ' \
+                    int(float(im_shape[0])/float(self.m_stacking)) < self.m_random:
+                raise ValueError('The number of images of the destination subset is larger than '
                                  'the number of images in the stacked source.')
 
         if 'PARANG' in non_static:

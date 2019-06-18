@@ -125,8 +125,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_res_arr_out_ports = {}
             for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag
-                                                                            +str(pca_number))
+                self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag +
+                                                                            str(pca_number))
 
         if basis_out_tag is None:
             self.m_basis_out_port = None

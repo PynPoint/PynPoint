@@ -415,7 +415,7 @@ class SimplexMinimizationModule(ProcessingModule):
             res = np.asarray([position[1],
                               position[0],
                               sep_ang[0]*pixscale,
-                              (sep_ang[1]-self.m_extra_rot)%360.,
+                              (sep_ang[1]-self.m_extra_rot) % 360.,
                               mag,
                               chi_square])
 
@@ -427,14 +427,14 @@ class SimplexMinimizationModule(ProcessingModule):
         sys.stdout.flush()
 
         pos_init = rotate_coordinates(center,
-                                      (self.m_position[1], self.m_position[0]), # (y, x)
+                                      (self.m_position[1], self.m_position[0]),  # (y, x)
                                       self.m_extra_rot)
 
         minimize(fun=_objective,
                  x0=[pos_init[0], pos_init[1], self.m_magnitude],
                  method='Nelder-Mead',
                  tol=None,
-                 options={'xatol':self.m_tolerance, 'fatol':float('inf')})
+                 options={'xatol': self.m_tolerance, 'fatol': float('inf')})
 
         sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
@@ -575,7 +575,7 @@ class FalsePositiveModule(ProcessingModule):
                                   method='SLSQP',
                                   bounds=bounds,
                                   tol=None,
-                                  options={'ftol':self.m_tolerance})
+                                  options={'ftol': self.m_tolerance})
 
                 _, _, snr, fpf = false_alarm(image=image,
                                              x_pos=result.x[0],

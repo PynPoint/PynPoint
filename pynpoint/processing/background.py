@@ -371,7 +371,7 @@ class LineSubtractionModule(ProcessingModule):
 
                 row_median = np.nanmedian(image_tmp, axis=1)
                 row_2d = np.tile(row_median, (im_shape[0], 1))
-                row_2d = np.rot90(row_2d) # 90 deg rotation in clockwise direction
+                row_2d = np.rot90(row_2d)  # 90 deg rotation in clockwise direction
 
                 subtract = col_2d + row_2d
 

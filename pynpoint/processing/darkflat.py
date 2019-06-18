@@ -12,6 +12,7 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 
+
 @typechecked
 def _master_frame(data: np.ndarray,
                   im_shape: Tuple[int, int, int]) -> np.ndarray:

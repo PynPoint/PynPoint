@@ -209,6 +209,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         algorithm behind the module.
         """
 
+
 class WritingModule(PypelineModule, metaclass=ABCMeta):
     """
     The abstract class WritingModule is an interface for processing steps in the pipeline which

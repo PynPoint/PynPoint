@@ -35,12 +35,12 @@ def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
         for m in range(0, N[0], 1):
             for j in range(0, N[1], 1):
                 new[m, j] = (F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]] +
-                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) % N[0], (j + \
-                             tmp_s[1]) % N[1]])
+                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) %
+                             N[0], (j + tmp_s[1]) % N[1]])
 
     if ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
             ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)): # causes problems, unknown why
+            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):  # causes problems, unknown why
 
         res = new / float(N_size)
 

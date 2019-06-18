@@ -142,7 +142,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 star_parang = np.empty(0, dtype=np.float64)
 
             return star_index, star_parang, star_nframes, background_index, \
-                   background_parang, background_nframes
+                background_parang, background_nframes
 
         def _select_background(i):
 
@@ -219,7 +219,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
             count += item
 
         return star_index, star_parang, star_nframes, background_index, \
-               background_parang, background_nframes
+            background_parang, background_nframes
 
     @typechecked
     def run(self) -> None:
@@ -721,8 +721,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 tags.append(self.m_image_in_tag+'_dither_pca_res'+str(count+1))
 
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print('Processing dither position '+str(count+1)+ \
-                      ' out of '+str(n_dither)+'... [DONE]')
+                print(f'Processing dither position {count+1} out of {n_dither}... [DONE]')
 
         n_dither, star_pos = self._initialize()
         tags = []
@@ -731,10 +730,10 @@ class DitheringBackgroundModule(ProcessingModule):
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
-                module = CropImagesModule(name_in='crop'+str(i),
+                module = CropImagesModule(name_in='crop' + str(i),
                                           image_in_tag=self.m_image_in_tag,
-                                          image_out_tag=self.m_image_in_tag+ \
-                                                        '_dither_crop'+str(i+1),
+                                          image_out_tag=self.m_image_in_tag + '_dither_crop' +
+                                          str(i+1),
                                           size=self.m_size,
                                           center=(int(math.ceil(position[0])),
                                                   int(math.ceil(position[1]))))
@@ -748,16 +747,15 @@ class DitheringBackgroundModule(ProcessingModule):
                 else:
                     dither_val = (n_dither, self.m_cubes, int(star_pos[i]))
 
-                module = PCABackgroundPreparationModule(name_in='prepare'+str(i),
-                                                        image_in_tag=self.m_image_in_tag+ \
-                                                                     '_dither_crop'+str(i+1),
-                                                        star_out_tag=self.m_image_in_tag+ \
-                                                                     '_dither_star'+str(i+1),
-                                                        subtracted_out_tag=self.m_image_in_tag+ \
-                                                                     '_dither_mean'+str(i+1),
-                                                        background_out_tag=self.m_image_in_tag+ \
-                                                                           '_dither_background'+ \
-                                                                           str(i+1),
+                module = PCABackgroundPreparationModule(name_in='prepare' + str(i),
+                                                        image_in_tag=self.m_image_in_tag +
+                                                        '_dither_crop'+str(i+1),
+                                                        star_out_tag=self.m_image_in_tag +
+                                                        '_dither_star'+str(i+1),
+                                                        subtracted_out_tag=self.m_image_in_tag +
+                                                        '_dither_mean'+str(i+1),
+                                                        background_out_tag=self.m_image_in_tag +
+                                                        '_dither_background' + str(i+1),
                                                         dither=dither_val,
                                                         combine='mean')
 
@@ -769,19 +767,17 @@ class DitheringBackgroundModule(ProcessingModule):
                                                         mask_star=self.m_mask_star,
                                                         subtract_mean=self.m_subtract_mean,
                                                         subframe=self.m_subframe,
-                                                        name_in='pca_background'+str(i),
-                                                        star_in_tag=self.m_image_in_tag+ \
-                                                                    '_dither_star'+str(i+1),
-                                                        background_in_tag=self.m_image_in_tag+ \
-                                                                          '_dither_background'+ \
-                                                                          str(i+1),
-                                                        residuals_out_tag=self.m_image_in_tag+ \
-                                                                          '_dither_pca_res'+ \
-                                                                          str(i+1),
-                                                        fit_out_tag=self.m_image_in_tag+ \
-                                                                    '_dither_pca_fit'+str(i+1),
-                                                        mask_out_tag=self.m_image_in_tag+ \
-                                                                     '_dither_pca_mask'+str(i+1))
+                                                        name_in='pca_background' + str(i),
+                                                        star_in_tag=self.m_image_in_tag +
+                                                        '_dither_star' + str(i+1),
+                                                        background_in_tag=self.m_image_in_tag +
+                                                        '_dither_background' + str(i+1),
+                                                        residuals_out_tag=self.m_image_in_tag +
+                                                        '_dither_pca_res' + str(i+1),
+                                                        fit_out_tag=self.m_image_in_tag +
+                                                        '_dither_pca_fit' + str(i+1),
+                                                        mask_out_tag=self.m_image_in_tag +
+                                                        '_dither_pca_mask' + str(i+1))
 
                 module.connect_database(self._m_data_base)
                 module.run()
