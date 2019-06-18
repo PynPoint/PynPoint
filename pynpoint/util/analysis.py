@@ -260,11 +260,11 @@ def merit_function(residuals: np.ndarray,
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        selected = select_annulus(image_in=residuals,
-                                  radius_in=sep_ang[0]-aperture[2],
-                                  radius_out=sep_ang[0]+aperture[2],
-                                  mask_position=aperture[0:2],
-                                  mask_radius=aperture[2])
+        # selected = select_annulus(image_in=residuals,
+        #                           radius_in=sep_ang[0]-aperture[2],
+        #                           radius_out=sep_ang[0]+aperture[2],
+        #                           mask_position=aperture[0:2],
+        #                           mask_radius=aperture[2])
 
         chi_square = np.sum(residuals[indices]**2)/variance
 

@@ -793,16 +793,11 @@ class MCMCsamplingModule(ProcessingModule):
                                      y_pos=aperture[0],
                                      x_pos=aperture[1])
 
-        print(aperture)
-        print(sep_ang)
-
         selected = select_annulus(image_in=res_stack[0, ],
                                   radius_in=sep_ang[0]-aperture[2],
                                   radius_out=sep_ang[0]+aperture[2],
                                   mask_position=aperture[0:2],
                                   mask_radius=aperture[2])
-
-        print(np.var(selected))
 
         return np.var(selected)
 
