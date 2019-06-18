@@ -104,8 +104,8 @@ class FitsWritingModule(WritingModule):
                     max_val_len = 75 - len(key)
 
                     if len(key + value) > 75:
-                        warnings.warn(f'Key \'{key}\' with value \'{value}\' is too long for ' \
-                                      f'the FITS format. To avoid an error, the value was ' \
+                        warnings.warn(f'Key \'{key}\' with value \'{value}\' is too long for '
+                                      f'the FITS format. To avoid an error, the value was '
                                       f'truncated to \'{value[:max_val_len]}\'.')
 
                     prihdr[key] = value[:max_val_len]

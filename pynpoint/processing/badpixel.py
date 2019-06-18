@@ -35,12 +35,12 @@ def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
         for m in range(0, N[0], 1):
             for j in range(0, N[1], 1):
                 new[m, j] = (F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]] +
-                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) % N[0], (j + \
-                             tmp_s[1]) % N[1]])
+                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) %
+                             N[0], (j + tmp_s[1]) % N[1]])
 
     if ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
             ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)): # causes problems, unknown why
+            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):  # causes problems, unknown why
 
         res = new / float(N_size)
 
@@ -634,7 +634,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
                  map_in_tag: str,
                  image_out_tag: str,
                  size: int = 2,
-                 replace: str = 'mean') -> None:
+                 replace: str = 'median') -> None:
         """
         Parameters
         ----------
@@ -647,10 +647,10 @@ class ReplaceBadPixelsModule(ProcessingModule):
         sigma : tuple(float, float)
             Lower and upper sigma threshold as (lower, upper).
         size : int
-            Number of pixel lines around the bad pixel that is used to calculate the mean or median
+            Number of pixel lines around the bad pixel that are used to calculate the median or mean
             replacement value. For example, a 5x5 window is used if ``size=2``.
         replace : str
-            Replace the bad pixel with the mean ('mean'), median ('median'), or NaN ('nan').
+            Replace the bad pixel with the 'median', 'mean' or 'nan'.
 
         Returns
         -------
@@ -696,11 +696,14 @@ class ReplaceBadPixelsModule(ProcessingModule):
 
                 if np.size(np.where(im_tmp != np.nan)[0]) == 0:
                     im_mask[item[0], item[1]] = image[item[0], item[1]]
+
                 else:
                     if self.m_replace == 'mean':
                         im_mask[item[0], item[1]] = np.nanmean(im_tmp)
+
                     elif self.m_replace == 'median':
                         im_mask[item[0], item[1]] = np.nanmedian(im_tmp)
+
                     elif self.m_replace == 'nan':
                         im_mask[item[0], item[1]] = np.nan
 

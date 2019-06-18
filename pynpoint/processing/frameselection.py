@@ -8,7 +8,7 @@ import math
 import warnings
 import multiprocessing as mp
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple
 
 import numpy as np
 
@@ -137,11 +137,11 @@ class RemoveFramesModule(ProcessingModule):
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            index_del = np.where(np.logical_and(self.m_frames >= frames[i], \
+            index_del = np.where(np.logical_and(self.m_frames >= frames[i],
                                                 self.m_frames < frames[i+1]))
 
             write_selected_data(images,
-                                self.m_frames[index_del]%memory,
+                                self.m_frames[index_del] % memory,
                                 self.m_selected_out_port,
                                 self.m_removed_out_port)
 
@@ -397,11 +397,11 @@ class FrameSelectionModule(ProcessingModule):
             for i, _ in enumerate(frames[:-1]):
                 images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-                index_del = np.where(np.logical_and(indices >= frames[i], \
+                index_del = np.where(np.logical_and(indices >= frames[i],
                                                     indices < frames[i+1]))
 
                 write_selected_data(images,
-                                    indices[index_del]%memory,
+                                    indices[index_del] % memory,
                                     self.m_selected_out_port,
                                     self.m_removed_out_port)
 
@@ -733,14 +733,14 @@ class ImageStatisticsModule(ProcessingModule):
             if self.m_position[0] is None and self.m_position[1] is None:
                 center = center_pixel(self.m_image_in_port[0, ])
 
-                self.m_position = (center[0], # y position
-                                   center[1], # x position
-                                   self.m_position[2]/pixscale) # radius (pix)
+                self.m_position = (center[0],  # y position
+                                   center[1],  # x position
+                                   self.m_position[2]/pixscale)  # radius (pix)
 
             else:
-                self.m_position = (int(self.m_position[1]), # y position
-                                   int(self.m_position[0]), # x position
-                                   self.m_position[2]/pixscale) # radius (pix)
+                self.m_position = (int(self.m_position[1]),  # y position
+                                   int(self.m_position[0]),  # x position
+                                   self.m_position[2]/pixscale)  # radius (pix)
 
             rr_grid = pixel_distance(im_shape, self.m_position[0:2])
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
@@ -826,12 +826,12 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_tag)
 
         if method not in ('MSE', 'PCC', 'SSIM'):
-            raise ValueError(f'The chosen method \'{method}\' is not available. Please ensure ' \
+            raise ValueError(f'The chosen method \'{method}\' is not available. Please ensure '
                              f'that you have selected one of \'MSE\', \'PCC\', \'SSIM\'.')
 
         if temporal_median not in ('full', 'constant'):
-            raise ValueError(f'The chosen temporal_median \'{temporal_median}\' is not ' \
-                             f'available. Please ensure that you have selected one of \'full\', ' \
+            raise ValueError(f'The chosen temporal_median \'{temporal_median}\' is not '
+                             f'available. Please ensure that you have selected one of \'full\', '
                              f'\'constant\'.')
 
         self.m_method = method
@@ -1038,7 +1038,7 @@ class SelectByAttributeModule(ProcessingModule):
         self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
         if order not in ('ascending', 'descending'):
-            raise ValueError('The selected order is not available. The available options are ' \
+            raise ValueError('The selected order is not available. The available options are '
                              '\'ascending\' or \'descending\'.')
 
         self.m_attribute_tag = attribute_tag
@@ -1071,8 +1071,8 @@ class SelectByAttributeModule(ProcessingModule):
         attribute = self.m_image_in_port.get_attribute(f'{self.m_attribute_tag}')
 
         if nimages != len(attribute):
-            raise ValueError(f'The attribute {{self.m_attribute_tag}} does not have the same ' \
-                             f'length ({len(attribute)}) as the tag has images ({nimages}). ' \
+            raise ValueError(f'The attribute {{self.m_attribute_tag}} does not have the same '
+                             f'length ({len(attribute)}) as the tag has images ({nimages}). '
                              f'Please check the attribute you have chosen for selection.')
 
         index = self.m_image_in_port.get_attribute('INDEX')
@@ -1101,11 +1101,11 @@ class SelectByAttributeModule(ProcessingModule):
             for i, _ in enumerate(frames[:-1]):
                 images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-                index_del = np.where(np.logical_and(indices >= frames[i], \
+                index_del = np.where(np.logical_and(indices >= frames[i],
                                                     indices < frames[i+1]))
 
                 write_selected_data(images,
-                                    indices[index_del]%memory,
+                                    indices[index_del] % memory,
                                     self.m_removed_out_port,
                                     self.m_selected_out_port)
 
@@ -1113,7 +1113,6 @@ class SelectByAttributeModule(ProcessingModule):
 
         else:
             warnings.warn('No frames were removed.')
-
 
         if self.m_selected_out_port is not None:
             # Copy attributes before write_selected_attributes is used

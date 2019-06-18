@@ -569,8 +569,8 @@ class AngleCalculationModule(ProcessingModule):
 
             # Extrapolate sideral times from start time of the cube for each frame of it
             sid_time_arr = np.linspace(sid_time+self.m_O_START,
-                                       (sid_time+self.m_O_START) + (exptime+self.m_DIT_DELAY+ \
-                                                 self.m_ROT)*(tmp_steps-1),
+                                       (sid_time+self.m_O_START) +
+                                       (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
                                        tmp_steps)
 
             # Convert to degrees
@@ -585,7 +585,7 @@ class AngleCalculationModule(ProcessingModule):
             lat_rad = np.deg2rad(tel_lat)
 
             p_angle = np.arctan2(np.sin(hour_angle_rad),
-                                 (np.cos(dec_rad)*np.tan(lat_rad) - \
+                                 (np.cos(dec_rad)*np.tan(lat_rad) -
                                   np.sin(dec_rad)*np.cos(hour_angle_rad)))
 
             new_angles = np.append(new_angles, np.rad2deg(p_angle))
@@ -698,7 +698,7 @@ class SDIpreparationModule(ProcessingModule):
             if i == 0:
                 npix_del = im_scale.shape[-1] - image.shape[-1]
 
-                if npix_del%2 == 0:
+                if npix_del % 2 == 0:
                     npix_del_a = int(npix_del/2)
                     npix_del_b = int(npix_del/2)
 
@@ -708,7 +708,7 @@ class SDIpreparationModule(ProcessingModule):
 
             im_crop = im_scale[npix_del_a:-npix_del_b, npix_del_a:-npix_del_b]
 
-            if npix_del%2 == 1:
+            if npix_del % 2 == 1:
                 im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation='spline')
 
             self.m_image_out_port.append(im_crop, data_dim=3)

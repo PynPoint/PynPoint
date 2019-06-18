@@ -158,8 +158,8 @@ class StarAlignmentModule(ProcessingModule):
             if n_ref < self.m_num_references:
                 self.m_num_references = n_ref
 
-                warnings.warn(f'Number of available images ({n_ref}) is smaller than ' \
-                              f'num_references ({self.m_num_references}). Using all ' \
+                warnings.warn(f'Number of available images ({n_ref}) is smaller than '
+                              f'num_references ({self.m_num_references}). Using all '
                               f'available images instead.')
 
             ref_index = np.sort(np.random.choice(n_ref, self.m_num_references, replace=False))
@@ -352,12 +352,12 @@ class StarCenteringModule(ProcessingModule):
         if self.m_filter_size:
             self.m_filter_size /= pixscale
 
-        if npix%2 == 0:
+        if npix % 2 == 0:
             x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
             x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
             y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
 
-        elif npix%2 == 1:
+        elif npix % 2 == 1:
             x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
             x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
             y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
@@ -414,8 +414,8 @@ class StarCenteringModule(ProcessingModule):
             b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
-            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + \
-                c_gauss*y_diff**2))
+            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
+                                           c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -547,7 +547,7 @@ class StarCenteringModule(ProcessingModule):
                                       popt[2]*pixscale, perr[2]*pixscale,
                                       popt[3]*pixscale, perr[3]*pixscale,
                                       popt[4], perr[4],
-                                      math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                      math.degrees(popt[5]) % 360., math.degrees(perr[5]),
                                       popt[6], perr[6]))
 
                 elif self.m_model == 'moffat':
@@ -557,7 +557,7 @@ class StarCenteringModule(ProcessingModule):
                                       popt[2]*pixscale, perr[2]*pixscale,
                                       popt[3]*pixscale, perr[3]*pixscale,
                                       popt[4], perr[4],
-                                      math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                      math.degrees(popt[5]) % 360., math.degrees(perr[5]),
                                       popt[6], perr[6],
                                       popt[7], perr[7]))
 
@@ -751,12 +751,12 @@ class FitCenterModule(ProcessingModule):
         if self.m_filter_size:
             self.m_filter_size /= pixscale
 
-        if npix%2 == 0:
+        if npix % 2 == 0:
             x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
             x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
             y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
 
-        elif npix%2 == 1:
+        elif npix % 2 == 1:
             x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
             x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
             y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
@@ -814,8 +814,8 @@ class FitCenterModule(ProcessingModule):
             b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
-            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff + \
-                c_gauss*y_diff**2))
+            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
+                                           c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -955,7 +955,7 @@ class FitCenterModule(ProcessingModule):
                                        popt[2]*pixscale, perr[2]*pixscale,
                                        popt[3]*pixscale, perr[3]*pixscale,
                                        popt[4], perr[4],
-                                       math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
                                        popt[6], perr[6]))
 
             elif self.m_model == 'moffat':
@@ -965,7 +965,7 @@ class FitCenterModule(ProcessingModule):
                                        popt[2]*pixscale, perr[2]*pixscale,
                                        popt[3]*pixscale, perr[3]*pixscale,
                                        popt[4], perr[4],
-                                       math.degrees(popt[5])%360., math.degrees(perr[5]),
+                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
                                        popt[6], perr[6],
                                        popt[7], perr[7]))
 
@@ -1086,8 +1086,8 @@ class ShiftImagesModule(ProcessingModule):
         # read the fit results from the self.m_fit_in_port if available
         if self.m_fit_in_port is not None:
 
-            self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]] # (x, y)
-            self.m_shift = self.m_shift[:, [1, 0]] # (y, x)
+            self.m_shift = -1.*self.m_fit_in_port[:, [0, 2]]  # (x, y)
+            self.m_shift = self.m_shift[:, [1, 0]]  # (y, x)
 
             # check if data in self.m_fit_in_port is constant for all images using the
             # constant flag
@@ -1361,13 +1361,13 @@ class WaffleCenteringModule(ProcessingModule):
 
         # Find star position as intersection of two lines
 
-        x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) - \
+        x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
                     (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
-                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) - \
-                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+            ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
+                (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
 
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
-                   (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+            (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
 
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[1]
@@ -1387,7 +1387,7 @@ class WaffleCenteringModule(ProcessingModule):
                 shift_yx[0] -= dither_y[index]
                 shift_yx[1] -= dither_x[index]
 
-            if npix%2 == 0 and self.m_size is not None:
+            if npix % 2 == 0 and self.m_size is not None:
                 im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
                 im_tmp[:-1, :-1] = image
                 image = im_tmp

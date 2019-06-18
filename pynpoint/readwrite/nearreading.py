@@ -198,7 +198,7 @@ class NearReadingModule(ReadingModule):
         nimages = len(hdulist) - 2
 
         # check if the file contains an even number of images, as expected with two chop positions
-        if nimages%2 != 0:
+        if nimages % 2 != 0:
             warnings.warn(f'FITS file contains odd number of images: {filename}')
 
             # decreasing nimages to an even number such that nimages // 2 gives the correct size
@@ -212,7 +212,7 @@ class NearReadingModule(ReadingModule):
 
         # number of chop cycles should be equal to half the number of available images
         if ncycles != nimages // 2:
-            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the ' \
+            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the '
                           f'number of available HDU images ({nimages // 2}).')
 
         # header of the first image

@@ -8,10 +8,10 @@ from typing import Tuple
 
 import numpy as np
 
-from photutils import aperture_photometry
+from photutils import aperture_photometry, CircularAperture
 from typeguard import typechecked
 
-from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
+from pynpoint.util.analysis import student_t, fake_planet, false_alarm
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
@@ -58,15 +58,15 @@ def contrast_limit(path_images: str,
     pca_number : int
         Number of principal components used for the PSF subtraction.
     threshold : tuple(str, float)
-        Detection threshold for the contrast curve, either in terms of "sigma" or the false
-        positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.) or
-        ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will change with
+        Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+        positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.) or
+        ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will change with
         separation. Also, sigma only corresponds to the standard deviation of a normal distribution
         at large separations (i.e., large number of samples).
     aperture : float
         Aperture radius (pix) for the calculation of the false positive fraction.
     residuals : str
-        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+        Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
     snr_inject : float
         Signal-to-noise ratio of the injected planet signal that is used to measure the amount
         of self-subtraction.
@@ -88,7 +88,7 @@ def contrast_limit(path_images: str,
     images = np.load(path_images)
     psf = np.load(path_psf)
 
-    if threshold[0] == "sigma":
+    if threshold[0] == 'sigma':
         sigma = threshold[1]
 
         # Calculate the FPF for a given sigma level
@@ -97,7 +97,7 @@ def contrast_limit(path_images: str,
                         size=aperture,
                         ignore=False)
 
-    elif threshold[0] == "fpf":
+    elif threshold[0] == 'fpf':
         fpf = threshold[1]
 
         # Calculate the sigma level for a given FPF
@@ -107,24 +107,24 @@ def contrast_limit(path_images: str,
                           ignore=False)
 
     else:
-        raise ValueError("Threshold type not recognized.")
+        raise ValueError('Threshold type not recognized.')
 
     # Cartesian coordinates of the fake planet
-    xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+    yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     # Determine the noise level
-    _, _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                      x_pos=xy_fake[0],
-                                      y_pos=xy_fake[1],
-                                      size=aperture,
-                                      ignore=False)
+    _, t_noise, _, _ = false_alarm(image=noise[0, ],
+                                   x_pos=yx_fake[1],
+                                   y_pos=yx_fake[0],
+                                   size=aperture,
+                                   ignore=False)
 
     # Aperture properties
     im_center = center_subpixel(images)
-    ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
 
     # Measure the flux of the star
-    phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
+    ap_phot = CircularAperture((im_center[1], im_center[0]), aperture)
+    phot_table = aperture_photometry(psf_scaling*psf[0, ], ap_phot, method='exact')
     star = phot_table['aperture_sum'][0]
 
     # Magnitude of the injected planet
@@ -148,11 +148,11 @@ def contrast_limit(path_images: str,
     im_res = combine_residuals(method=residuals, res_rot=im_res)
 
     # Measure the flux of the fake planet
-    flux_out, _, _, _, _ = false_alarm(image=im_res[0, ],
-                                       x_pos=xy_fake[0],
-                                       y_pos=xy_fake[1],
-                                       size=aperture,
-                                       ignore=False)
+    flux_out, _, _, _ = false_alarm(image=im_res[0, ],
+                                    x_pos=yx_fake[1],
+                                    y_pos=yx_fake[0],
+                                    size=aperture,
+                                    ignore=False)
 
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in

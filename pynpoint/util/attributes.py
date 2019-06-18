@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 from typeguard import typechecked
 
-import os
 import warnings
 
 import six
@@ -81,6 +80,7 @@ def set_static_attr(fits_file: str,
                 warnings.warn(f'Static attribute {attr} (={fitskey}) not found in the FITS '
                               'header.')
 
+
 @typechecked
 def set_nonstatic_attr(header: fits.header.Header,
                        config_port: ConfigPort,
@@ -130,6 +130,7 @@ def set_nonstatic_attr(header: fits.header.Header,
                                   'FITS header.' % (attr, fitskey))
 
                     image_out_port.append_attribute_data(attr, -1)
+
 
 @typechecked
 def set_extra_attr(fits_file: str,

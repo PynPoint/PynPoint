@@ -47,6 +47,7 @@ def write_selected_data(images: np.ndarray,
     if port_selected is not None and images is not None:
         port_selected.append(images)
 
+
 @typechecked
 def write_selected_attributes(indices: np.ndarray,
                               port_input: InputPort,
@@ -107,7 +108,7 @@ def write_selected_attributes(indices: np.ndarray,
             total = np.sum(nframes[0:i])
 
             if np.size(indices) > 0:
-                index_del = np.where(np.logical_and(indices >= total, \
+                index_del = np.where(np.logical_and(indices >= total,
                                      indices < total+frames))[0]
 
                 nframes_sel[i] = frames-np.size(index_del)

@@ -56,6 +56,7 @@ def create_config(filename: str) -> None:
         file_obj.write('MEMORY: 39\n')
         file_obj.write('CPU: 1\n')
 
+
 @typechecked
 def create_random(path: str,
                   ndit: int = 10,
@@ -92,6 +93,7 @@ def create_random(path: str,
     if parang is not None:
         h5f.create_dataset('header_images/PARANG', data=parang)
     h5f.close()
+
 
 @typechecked
 def create_fits(path: str,
@@ -142,6 +144,7 @@ def create_fits(path: str,
     header['HIERARCH ESO SEQ CUMOFFSETY'] = y0
     hdu.data = image
     hdu.writeto(os.path.join(path, filename))
+
 
 @typechecked
 def create_fake(path: str,
@@ -219,8 +222,8 @@ def create_fake(path: str,
                 image[i, 0:npix[1], 0:npix[0]] += star
 
             if contrast is not None and sep is not None:
-                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
-                         (2.*sigma**2))
+                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
+                                                                  (2.*sigma**2))
                 x_shift = sep*math.cos(parang[count]*math.pi/180.)
                 y_shift = sep*math.sin(parang[count]*math.pi/180.)
                 planet = shift(planet, (x_shift, y_shift), order=5)
@@ -230,6 +233,7 @@ def create_fake(path: str,
 
         create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j],
                     angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
+
 
 @typechecked
 def create_star_data(path: str,
@@ -293,8 +297,8 @@ def create_star_data(path: str,
         image = np.zeros((nframes, npix_x, npix_y))
 
         for i in range(nframes):
-            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
-                         (2.*sigma**2))
+            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
+                                                         (2.*sigma**2))
             if noise:
                 image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
 
@@ -309,6 +313,7 @@ def create_star_data(path: str,
         header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
+
 
 @typechecked
 def create_waffle_data(path: str,
@@ -348,8 +353,8 @@ def create_waffle_data(path: str,
     image = np.zeros((npix, npix))
 
     for j, _ in enumerate(x_spot):
-        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2)/ \
-               (2.*sigma**2))
+        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2) /
+                                               (2.*sigma**2))
         image += star
 
     hdu = fits.PrimaryHDU()
@@ -363,6 +368,7 @@ def create_waffle_data(path: str,
     header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
     hdu.data = image
     hdu.writeto(os.path.join(path, 'image01.fits'))
+
 
 @typechecked
 def remove_test_data(path: str,
@@ -396,6 +402,7 @@ def remove_test_data(path: str,
     if files is not None:
         for item in files:
             os.remove(path+item)
+
 
 @typechecked
 def create_near_data(path: str) -> None:

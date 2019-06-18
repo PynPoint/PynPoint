@@ -87,7 +87,7 @@ class Hdf5ReadingModule(ReadingModule):
         hdf5_file = h5py.File(file_in, mode='r')
 
         for tag_in in self._m_tag_dictionary:
-            tag_in = str(tag_in) # unicode keys cause errors
+            tag_in = str(tag_in)  # unicode keys cause errors
             tag_out = self._m_tag_dictionary[tag_in]
 
             if tag_in not in hdf5_file:
