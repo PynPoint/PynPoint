@@ -4,7 +4,7 @@ Functions for point source analysis.
 
 import math
 
-from typing import Union, Tuple
+from typing import Tuple
 
 import numpy as np
 
@@ -202,8 +202,7 @@ def fake_planet(images: np.ndarray,
 def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
-                   sigma: float,
-                   variance: Union[float, None]) -> float:
+                   sigma: float) -> float:
 
     """
     Function to calculate the figure of merit at a given position in the image residuals.
@@ -219,7 +218,6 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
-    variance : float, None
 
     Returns
     -------
@@ -263,13 +261,13 @@ def merit_function(residuals: np.ndarray,
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        # selected = select_annulus(image_in=residuals,
-        #                           radius_in=sep_ang[0]-aperture[2],
-        #                           radius_out=sep_ang[0]+aperture[2],
-        #                           mask_position=aperture[0:2],
-        #                           mask_radius=aperture[2])
+        selected = select_annulus(image_in=residuals,
+                                  radius_in=sep_ang[0]-aperture[2],
+                                  radius_out=sep_ang[0]+aperture[2],
+                                  mask_position=aperture[0:2],
+                                  mask_radius=aperture[2])
 
-        chi_square = np.sum(residuals[indices]**2)/variance
+        chi_square = np.sum(residuals[indices]**2)/np.var(selected)
 
     else:
 
