@@ -353,7 +353,7 @@ class MassLimitsModule(ProcessingModule):
 
         super(MassLimitsModule, self).__init__(name_in)
 
-        self.m_star_age = star_prop['age']/1000. # [Myr]
+        self.m_star_age = star_prop['age']/1000.  # [Myr]
         self.m_star_abs = star_prop['magnitude'] - 5.*math.log10(star_prop['distance']/10.)
 
         self.m_instr_filter = instr_filter

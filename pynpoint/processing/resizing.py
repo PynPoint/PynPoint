@@ -60,7 +60,7 @@ class CropImagesModule(ProcessingModule):
         self.m_center = center
 
         if self.m_center is not None:
-            self.m_center = (self.m_center[1], self.m_center[0]) # (y, x)
+            self.m_center = (self.m_center[1], self.m_center[0])  # (y, x)
 
     @typechecked
     def run(self) -> None:
@@ -253,8 +253,8 @@ class AddLinesModule(ProcessingModule):
 
             return image_out
 
-        self.m_lines[1] = shape_out[1] - self.m_lines[1] # right side of image
-        self.m_lines[3] = shape_out[0] - self.m_lines[3] # top side of image
+        self.m_lines[1] = shape_out[1] - self.m_lines[1]  # right side of image
+        self.m_lines[3] = shape_out[0] - self.m_lines[3]  # top side of image
 
         self.apply_function_to_images(_add_lines,
                                       self.m_image_in_port,

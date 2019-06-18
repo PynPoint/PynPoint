@@ -53,8 +53,8 @@ def progress(current: int,
         """
 
         hours = int(delta_time / 3600.)
-        minutes = int((delta_time%3600.) / 60.)
-        seconds = int(delta_time%60.)
+        minutes = int((delta_time % 3600.) / 60.)
+        seconds = int(delta_time % 60.)
 
         return f'{hours:>02}:{minutes:>02}:{seconds:>02}'
 
@@ -74,6 +74,7 @@ def progress(current: int,
         sys.stdout.write(' ' * (29+len(message)) + '\r')
 
     sys.stdout.flush()
+
 
 @typechecked
 def memory_frames(memory: Union[int, np.int64],
@@ -98,15 +99,16 @@ def memory_frames(memory: Union[int, np.int64],
 
     else:
         frames = np.linspace(start=0,
-                             stop=nimages-nimages%memory,
+                             stop=nimages - nimages % memory,
                              num=int(float(nimages)/float(memory))+1,
                              endpoint=True,
                              dtype=np.int)
 
-        if nimages%memory > 0:
+        if nimages % memory > 0:
             frames = np.append(frames, nimages)
 
     return frames
+
 
 @typechecked
 def update_arguments(index: int,

@@ -92,6 +92,7 @@ def false_alarm(image: np.ndarray,
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
     return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
+
 @typechecked
 def student_t(t_input: Tuple[str, float],
               radius: float,
@@ -133,6 +134,7 @@ def student_t(t_input: Tuple[str, float],
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
 
     return t_result
+
 
 @typechecked
 def fake_planet(images: np.ndarray,
@@ -194,6 +196,7 @@ def fake_planet(images: np.ndarray,
                                         mode='reflect')
 
     return images + im_shift
+
 
 @typechecked
 def merit_function(residuals: np.ndarray,

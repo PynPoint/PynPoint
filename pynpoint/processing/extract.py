@@ -118,7 +118,7 @@ class StarExtractionModule(ProcessingModule):
                 if position[0] is None and position[1] is None:
                     center = None
                 else:
-                    center = (position[1], position[0]) # (y, x)
+                    center = (position[1], position[0])  # (y, x)
 
                 width = int(math.ceil(position[2]/pixscale))
 
@@ -226,8 +226,8 @@ class ExtractBinaryModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_pos_center = (pos_center[1], pos_center[0]) # (y, x)
-        self.m_pos_binary = (pos_binary[1], pos_binary[0]) # (y, x)
+        self.m_pos_center = (pos_center[1], pos_center[0])  # (y, x)
+        self.m_pos_binary = (pos_binary[1], pos_binary[0])  # (y, x)
 
         self.m_image_size = image_size
         self.m_search_size = search_size
