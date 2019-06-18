@@ -3,7 +3,6 @@ Pipeline modules for resizing of images.
 """
 
 import math
-import warnings
 
 from typing import Union, Tuple
 

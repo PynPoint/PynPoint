@@ -8,7 +8,7 @@ import math
 import warnings
 import multiprocessing as mp
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple
 
 import numpy as np
 

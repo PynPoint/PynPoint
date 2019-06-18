@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 from typeguard import typechecked
 
-import os
 import warnings
 
 import six
