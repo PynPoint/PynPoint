@@ -755,6 +755,7 @@ class MCMCsamplingModule(ProcessingModule):
         Function to compute the (constant) variance for the likelihood function when the
         merit parameter is set to 'gaussian'. The planet is first removed from the dataset
         with the `param` values.
+
         Parameters
         ----------
         images : numpy.ndarray

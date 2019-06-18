@@ -35,6 +35,8 @@ def lnprob(param: np.ndarray,
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
 
+    Parameters
+    ----------
     param : numpy.ndarray
         The separation (arcsec), angle (deg), and contrast (mag). The angle is measured in
         counterclockwise direction with respect to the positive y-axis.
