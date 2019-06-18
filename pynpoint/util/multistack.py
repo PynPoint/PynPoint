@@ -61,15 +61,15 @@ class StackReader(TaskCreator):
         """
 
         nimages = self.m_data_in_port.get_shape()[0]
-
+        images = self.m_data_in_port.get_all()
         i = 0
         while i < nimages:
             j = min((i + self.m_stack_size), nimages)
 
             # lock mutex and read data
-            with self.m_data_mutex:
-                # read images from i to j
-                tmp_data = self.m_data_in_port[i:j, ]
+            # with self.m_data_mutex:
+            # read images from i to j
+            tmp_data = images[i:j, ]
 
             # first dimension (start, stop, step)
             stack_slice = [(i, j, None)]
@@ -82,7 +82,7 @@ class StackReader(TaskCreator):
             self.m_task_queue.put(TaskInput(tmp_data, param))
 
             i = j
-
+        del images  # for space
         self.create_poison_pills()
 
 

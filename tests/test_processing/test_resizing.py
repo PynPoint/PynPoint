@@ -154,6 +154,8 @@ class TestResizing:
         self.pipeline.add_module(module)
         self.pipeline.run_module('repeat')
 
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = RemoveLinesModule(lines=(2, 5, 0, 9),
                                    name_in='remove_slow',
@@ -174,9 +176,9 @@ class TestResizing:
         data_multi = self.pipeline.get_data('remove_slow')
         bad_frames = np.argwhere(data - data_multi)
 
-        for i in np.unique(bad_frames[:, 0]):
-            fits.writeto(f'../../image1_{i}.fits', data[i, ], overwrite=True)
-            fits.writeto(f'../../image2_{i}.fits', data_multi[i, ], overwrite=True)
+        # for i in np.unique(bad_frames[:, 0]):
+        #     fits.writeto(f'../../image1_{i}.fits', data[i, ], overwrite=True)
+        #     fits.writeto(f'../../image2_{i}.fits', data_multi[i, ], overwrite=True)
 
         assert np.allclose(data, data_multi, rtol=limit, atol=0.)
         assert data.shape == data_multi.shape
