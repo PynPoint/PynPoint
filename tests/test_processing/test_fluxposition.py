@@ -347,4 +347,4 @@ class TestFluxPosition:
         print(np.median(data[:, 0]), np.median(data[:, 1]), np.median(data[:, 2]))
         assert np.allclose(np.median(data[:, 0]), 0.15, rtol=0., atol=0.05)
         assert np.allclose(np.median(data[:, 1]), 0., rtol=0., atol=0.5)
-        assert np.allclose(np.median(data[:, 2]), 1., rtol=0., atol=1.0)
+        assert np.allclose(np.median(data[:, 2]), 0.5, rtol=0., atol=1.0)
