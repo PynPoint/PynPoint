@@ -2,7 +2,9 @@
 Pipeline modules for resizing of images.
 """
 
+import sys
 import math
+import time
 
 from typing import Union, Tuple
 
@@ -12,6 +14,7 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, scale_image
+from pynpoint.util.module import progress, memory_frames
 
 
 class CropImagesModule(ProcessingModule):
@@ -74,20 +77,34 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
+        # Get memory and number of images to split the frames into chunks
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
+
+        # Convert size parameter from arcseconds to pixels
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        self.m_size = int(math.ceil(self.m_size / pixscale))
 
-        self.m_size = int(math.ceil(self.m_size/pixscale))
+        # Crop images chunk by chunk
+        start_time = time.time()
+        for i in range(len(frames[:-1])):
 
-        def _crop(image_in, size, center):
+            # Update progress bar
+            progress(i, len(frames[:-1]), 'Running CropImagesModule...', start_time)
 
-            return crop_image(image_in, center, size)
+            # Select and crop images in the current chunk
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = crop_image(images, self.m_center, self.m_size, copy=False)
 
-        self.apply_function_to_images(_crop,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running CropImagesModule',
-                                      func_args=(self.m_size, self.m_center))
+            # Write cropped images to output port
+            self.m_image_out_port.append(images)
 
+        # Update progress bar (cropping of images is finished)
+        sys.stdout.write('Running CropImagesModule... [DONE]\n')
+        sys.stdout.flush()
+
+        # Save history and copy attributes
         history = f'image size [pix] = {self.m_size}'
         self.m_image_out_port.add_history('CropImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
