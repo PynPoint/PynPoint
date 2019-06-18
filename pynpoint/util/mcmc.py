@@ -4,7 +4,7 @@ Functions for MCMC sampling.
 
 import math
 
-from typing import Union, Tuple
+from typing import Tuple
 
 import numpy as np
 
@@ -29,8 +29,7 @@ def lnprob(param: np.ndarray,
            aperture: Tuple[int, int, float],
            indices: np.ndarray,
            merit: str,
-           residuals: str,
-           variance: Union[float, None]) -> float:
+           residuals: str) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -75,7 +74,6 @@ def lnprob(param: np.ndarray,
         Poisson distribution is assumed for the variance of each pixel value.
     residuals : str
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
-    variance : float, None
 
     Returns
     -------
@@ -134,8 +132,7 @@ def lnprob(param: np.ndarray,
         chi_square = merit_function(residuals=res_stack[0, ],
                                     merit=merit,
                                     aperture=aperture,
-                                    sigma=0.,
-                                    variance=variance)
+                                    sigma=0.)
 
         return -0.5*chi_square
 
