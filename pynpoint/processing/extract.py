@@ -25,9 +25,9 @@ class StarExtractionModule(ProcessingModule):
 
     @typechecked
     def __init__(self,
-                 name_in: str = 'star_cutting',
-                 image_in_tag: str = 'im_arr',
-                 image_out_tag: str = 'im_arr_crop',
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
                  index_out_tag: str = None,
                  image_size: float = 2.,
                  fwhm_star: float = 0.2,
@@ -118,7 +118,7 @@ class StarExtractionModule(ProcessingModule):
                 if position[0] is None and position[1] is None:
                     center = None
                 else:
-                    center = (position[1], position[0]) # (y, x)
+                    center = (position[1], position[0])  # (y, x)
 
                 width = int(math.ceil(position[2]/pixscale))
 
@@ -183,11 +183,11 @@ class ExtractBinaryModule(ProcessingModule):
 
     @typechecked
     def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
                  pos_center: Tuple[float, float],
                  pos_binary: Tuple[float, float],
-                 name_in: str = 'extract_binary',
-                 image_in_tag: str = 'im_arr',
-                 image_out_tag: str = 'im_arr_crop',
                  image_size: float = 2.,
                  search_size: float = 0.1,
                  filter_size: float = None) -> None:
@@ -226,8 +226,8 @@ class ExtractBinaryModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-        self.m_pos_center = (pos_center[1], pos_center[0]) # (y, x)
-        self.m_pos_binary = (pos_binary[1], pos_binary[0]) # (y, x)
+        self.m_pos_center = (pos_center[1], pos_center[0])  # (y, x)
+        self.m_pos_binary = (pos_binary[1], pos_binary[0])  # (y, x)
 
         self.m_image_size = image_size
         self.m_search_size = search_size

@@ -13,7 +13,7 @@ import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
 from pynpoint.util.module import update_arguments, progress
-from pynpoint.util.multistack import StackProcessingCapsule
+# from pynpoint.util.multistack import StackProcessingCapsule
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
 
@@ -208,6 +208,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         Abstract interface for the run method of a ReadingModule which inheres the actual
         algorithm behind the module.
         """
+
 
 class WritingModule(PypelineModule, metaclass=ABCMeta):
     """

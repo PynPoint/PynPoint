@@ -121,7 +121,6 @@ class LineTaskProcessor(TaskProcessor):
             Task result.
         """
 
-
         result_arr = np.zeros((tmp_task.m_job_parameter[0],
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))

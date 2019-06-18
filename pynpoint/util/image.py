@@ -45,7 +45,7 @@ def center_pixel(image: np.ndarray) -> Tuple[int, int]:
         center = ((image.shape[-2] - 1) // 2, (image.shape[-1] - 1) // 2)
 
     else:
-        raise RuntimeError()
+        raise RuntimeError('Unexpected image shape. This error should not occur.')
 
     return center
 
@@ -102,7 +102,7 @@ def crop_image(image: np.ndarray,
     if center is None or (center[0] is None and center[1] is None):
         center = center_pixel(image)
 
-        # if image.shape[-1]%2 == 0:
+        # if image.shape[-1] % 2 == 0:
         #     warnings.warn('The image is even-size so there is not a uniquely defined pixel in '
         #                   'the center of the image. The image center is determined (with pixel '
         #                   'precision) with the pynpoint.util.image.center_pixel function.')
@@ -246,8 +246,8 @@ def shift_image(image: np.ndarray,
 
 @typechecked
 def scale_image(image: np.ndarray,
-                scaling_x: float,
-                scaling_y: float) -> np.ndarray:
+                scaling_y: float,
+                scaling_x: float) -> np.ndarray:
     """
     Function to spatially scale an image.
 
@@ -255,10 +255,10 @@ def scale_image(image: np.ndarray,
     ----------
     image : numpy.ndarray
         Input image (2D).
-    scaling_x : float
-        Scaling factor x.
     scaling_y : float
         Scaling factor y.
+    scaling_x : float
+        Scaling factor x.
 
     Returns
     -------
@@ -282,8 +282,8 @@ def scale_image(image: np.ndarray,
 
 @typechecked
 def cartesian_to_polar(center: Tuple[float, float],
-                       x_pos: float,
-                       y_pos: float) -> Tuple[float, float]:
+                       y_pos: float,
+                       x_pos: float) -> Tuple[float, float]:
     """
     Function to convert pixel coordinates to polar coordinates.
 
@@ -291,11 +291,11 @@ def cartesian_to_polar(center: Tuple[float, float],
     ----------
     center : tuple(float, float)
         Image center (y, x) from :func:`~pynpoint.util.image.center_subpixel`.
-    x_pos : float
-        Pixel coordinate along the horizontal axis. The bottom left corner of the image is
-        (-0.5, -0.5).
     y_pos : float
         Pixel coordinate along the vertical axis. The bottom left corner of the image is
+        (-0.5, -0.5).
+    x_pos : float
+        Pixel coordinate along the horizontal axis. The bottom left corner of the image is
         (-0.5, -0.5).
 
     Returns
@@ -331,7 +331,7 @@ def polar_to_cartesian(image: np.ndarray,
     Returns
     -------
     tuple(float, float)
-        Cartesian coordinates (x, y). The bottom left corner of the image is (-0.5, -0.5).
+        Cartesian coordinates (y, x). The bottom left corner of the image is (-0.5, -0.5).
     """
 
     center = center_subpixel(image)  # (y, x)
@@ -339,7 +339,7 @@ def polar_to_cartesian(image: np.ndarray,
     x_pos = center[1] + sep * math.cos(math.radians(ang + 90))
     y_pos = center[0] + sep * math.sin(math.radians(ang + 90))
 
-    return x_pos, y_pos
+    return y_pos, x_pos
 
 
 @typechecked
@@ -439,7 +439,7 @@ def select_annulus(image_in: np.ndarray,
     radius_out : float
         Outer radius of the annulus (pix).
     mask_position : tuple(float, float), None
-        Center (pix, pix) position (y, x) in of the circular region that is excluded. Not used
+        Center (pix) position (y, x) in of the circular region that is excluded. Not used
         if set to None.
     mask_radius : float, None
         Radius (pix) of the circular region that is excluded. Not used if set to None.
@@ -546,10 +546,10 @@ def rotate_coordinates(center: Tuple[float, float],
         New position (y, x).
     """
 
-    pos_x = (position[1] - center[1]) * math.cos(np.radians(angle)) - \
-            (position[0] - center[0]) * math.sin(np.radians(angle))
-
     pos_y = (position[1] - center[1]) * math.sin(np.radians(angle)) + \
             (position[0] - center[0]) * math.cos(np.radians(angle))
+
+    pos_x = (position[1] - center[1]) * math.cos(np.radians(angle)) - \
+            (position[0] - center[0]) * math.sin(np.radians(angle))
 
     return center[0] + pos_y, center[1] + pos_x
