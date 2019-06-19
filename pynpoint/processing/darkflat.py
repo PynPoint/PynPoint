@@ -107,6 +107,7 @@ class DarkCalibrationModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
+        print(self.m_image_in_port.get_shape())
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
