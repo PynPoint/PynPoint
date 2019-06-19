@@ -33,10 +33,7 @@ class ContrastCurveModule(ProcessingModule):
 
     def __init__(self,
                  name_in="contrast",
-                 image_in_tag_1=None,
-                 image_in_tag_2=None,
-                 image_in_tag_3=None,
-                 image_in_tag_4=None,
+                 image_in_tag=None,
                  psf_in_tag="im_psf",
                  contrast_out_tag="contrast_limits",
                  separation=(0.1, 1., 0.01),
@@ -49,6 +46,7 @@ class ContrastCurveModule(ProcessingModule):
                  edge_size=None,
                  extra_rot=0.,
                  residuals="median",
+                 mode="combined",
                  snr_inject=100.,
                  **kwargs):
         """
@@ -96,6 +94,10 @@ class ContrastCurveModule(ProcessingModule):
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
             Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
+        mode : str
+            Whether to individually compute the residuals for each tag or to concatenate them before
+            computing them ("individually" or "combined"). Using "individually" on a single input set
+            has no effect.
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
@@ -128,17 +130,18 @@ class ContrastCurveModule(ProcessingModule):
             warnings.warn("The 'ignore' parameter has been deprecated. The parameter is no "
                           "longer required.", DeprecationWarning)
 
-        if image_in_tag_1:
-            self.m_image_in_port_1 = self.add_input_port(image_in_tag_1)
-        if image_in_tag_2:
-            self.m_image_in_port_2 = self.add_input_port(image_in_tag_2)
-        if image_in_tag_3:
-            self.m_image_in_port_3 = self.add_input_port(image_in_tag_3)
-        if image_in_tag_4:
-            self.m_image_in_port_4 = self.add_input_port(image_in_tag_4)
 
-        if psf_in_tag == image_in_tag_1:
-            self.m_psf_in_port = self.m_image_in_port_1
+        self.m_image_in_ports = []
+        if isinstance(image_in_tag, str):
+            self.m_image_in_ports.append(self.add_input_port(image_in_tag))
+        elif isinstance(image_in_tag, tuple):
+            for tag in image_in_tag:
+                self.m_image_in_ports.append(self.add_input_port(tag))
+
+        where_psf = np.argwhere(psf_in_tag == tag for tag in image_in_tag)
+
+        if where_psf.size > 0:
+            self.m_psf_in_port = self.m_image_in_ports[where_psf[0][0]]
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
 
@@ -149,11 +152,17 @@ class ContrastCurveModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_threshold = threshold
         self.m_aperture = aperture
-        self.m_pca_number = pca_number
+        if isinstance(pca_number, int):
+            self.m_pca_number = [pca_number] * len(image_in_tag)
+        elif isinstance(pca_number, list):
+            assert len(pca_number) == len(image_in_tag), f'The number of provided PCA numbers must'\
+                                                         f'be equal to the number of input tags'
+            self.m_pca_number = pca_number
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
+        self.m_mode = mode
         self.m_snr_inject = snr_inject
 
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
@@ -161,7 +170,9 @@ class ContrastCurveModule(ProcessingModule):
 
             raise ValueError("The angular positions of the fake planets should lie between "
                              "0 deg and 360 deg.")
-
+        if self.m_mode != 'combined' and self.m_mode != 'individual':
+            raise AttributeError('mode must be either "individual" or "combined" but '
+                                 'is {}'.format(self.m_mode))
     def run(self):
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
@@ -178,21 +189,11 @@ class ContrastCurveModule(ProcessingModule):
 
         temp_images = []
         angles = []
-        if hasattr(self, 'm_image_in_port_1'):
-            temp_images += [self.m_image_in_port_1.get_all()]
-            angles += [self.m_image_in_port_1.get_attribute("PARANG")]
-        if hasattr(self, 'm_image_in_port_2'):
-            temp_images += [self.m_image_in_port_2.get_all()]
-            angles += [self.m_image_in_port_2.get_attribute("PARANG")]
-        if hasattr(self, 'm_image_in_port_3'):
-            temp_images += [self.m_image_in_port_3.get_all()]
-            angles += [self.m_image_in_port_3.get_attribute("PARANG")]
-        if hasattr(self, 'm_image_in_port_4'):
-            temp_images += [self.m_image_in_port_4.get_all()]
-            angles += [self.m_image_in_port_4.get_attribute("PARANG")]
 
-        images = np.concatenate(temp_images)
-        parang = np.concatenate(angles)
+        for input_port in self.m_image_in_ports:
+            temp_images += [input_port.get_all()]
+            angles += [input_port.get_attribute("PARANG")]
+
         psf = self.m_psf_in_port.get_all()
 
         if psf.shape[0] != 1 and psf.shape[0] != temp_images[0].shape[0]:
@@ -202,7 +203,7 @@ class ContrastCurveModule(ProcessingModule):
                              'applying the ContrastCurveModule.'.format(psf.shape, temp_images[0].shape))
 
         cpu = self._m_config_port.get_attribute("CPU")
-        pixscale = self.m_image_in_port_1.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_ports[0].get_attribute("PIXSCALE")
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -245,30 +246,41 @@ class ContrastCurveModule(ProcessingModule):
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
         # Create temporary files
-        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
         tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
-
-
         np.save(tmp_psf_str, psf)
 
-        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+        mask = create_mask(temp_images[0].shape[-2:], [self.m_cent_size, self.m_edge_size])
 
-        temp_im_res = []
         temp_noise = []
-
         image_paths = []
 
-        for i, image in enumerate(temp_images):
-            _, im_res = pca_psf_subtraction(images=image*mask,
-                                            angles=-1.*angles[i]+self.m_extra_rot,
-                                            pca_number=self.m_pca_number[i])
-            temp_im_res += [im_res]
+        if self.m_mode == 'individual':
+            for i, image in enumerate(temp_images):
+                _, im_res = pca_psf_subtraction(images=image*mask,
+                                                angles=-1.*angles[i]+self.m_extra_rot,
+                                                pca_number=self.m_pca_number[i])
+
+                noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
+                temp_noise += [noise]
+
+                # Create temporary files
+                image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
+                np.save(image_paths[-1], image)
+        elif self.m_mode == 'combined':
+            images = np.concatenate(temp_images)
+            parang = np.concatenate(angles)
+
+            _, im_res = pca_psf_subtraction(images=images*mask,
+                                            angles=-1.*parang+self.m_extra_rot,
+                                            pca_number=self.m_pca_number[0])
 
             noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
             temp_noise += [noise]
-
-            image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
-            np.save(image_paths[-1], image)
+            tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
+            image_paths = [tmp_im_str]
+            np.save(image_paths[-1], images)
+        else:
+            pass #value error is raised in init
 
 
 
@@ -333,7 +345,7 @@ class ContrastCurveModule(ProcessingModule):
 
         history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
         self.m_contrast_out_port.add_history("ContrastCurveModule", history)
-        self.m_contrast_out_port.copy_attributes(self.m_image_in_port_1)
+        self.m_contrast_out_port.copy_attributes(self.m_image_in_ports[0])
         self.m_contrast_out_port.close_port()
 
 

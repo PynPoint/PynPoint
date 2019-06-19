@@ -122,10 +122,8 @@ def contrast_limit(path_images,
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
         temp_flux_in += [flux_in]
-        print("flux_in", flux_in)
 
     flux_in = np.median(flux_in)
-    print("temp_flux_in", temp_flux_in)
 
     temp_im_res = []
 
@@ -153,8 +151,7 @@ def contrast_limit(path_images,
         temp_im_res += [im_res]
 
     im_res = np.concatenate(temp_im_res)
-    im_res = np.median(im_res, axis=0, keepdims=True)
-    print("flux_in", flux_in)
+    im_res = combine_residuals(method=residuals, res_rot=im_res)
 
     # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],

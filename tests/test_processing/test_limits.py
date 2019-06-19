@@ -123,6 +123,50 @@ class TestDetectionLimits:
         assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 
+    def test_contrast_curve_individual(self):
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+
+        module = FitsReadingModule(name_in='read_2',
+                                   image_tag='read_2',
+                                   input_dir=self.test_dir+'limits')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read_2')
+
+        module = AngleInterpolationModule(name_in='angle_2',
+                                          data_tag='read_2')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('angle_2')
+
+        module = ContrastCurveModule(name_in='contrast_fpf_individual',
+                                     image_in_tag=('read', 'read_2'),
+                                     psf_in_tag='read',
+                                     contrast_out_tag='limits_fpf_individual',
+                                     separation=(0.5, 0.6, 0.1),
+                                     angle=(0., 360., 180.),
+                                     threshold=('fpf', 1e-6),
+                                     psf_scaling=1.,
+                                     aperture=0.1,
+                                     pca_number=[15, 20],
+                                     cent_size=None,
+                                     edge_size=None,
+                                     mode='individual',
+                                     extra_rot=0.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('contrast_fpf_individual')
+
+        data = self.pipeline.get_data('limits_fpf_individual')
+        assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 2.3845541366093315, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.0023017968862672285, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
+        assert data.shape == (1, 4)
+
+
     def test_mass_limits(self):
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
