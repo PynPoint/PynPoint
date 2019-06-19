@@ -2,6 +2,7 @@
 Pipeline modules for dark frame and flat field calibrations.
 """
 
+import time
 import warnings
 
 from typing import Tuple
@@ -11,6 +12,7 @@ import numpy as np
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.module import progress, memory_frames
 
 
 @typechecked
@@ -101,19 +103,27 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        def _dark_calibration(image_in, dark_in):
-            return image_in - dark_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        print(self.m_image_in_port.get_shape())
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         dark = self.m_dark_in_port.get_all()
 
         master = _master_frame(data=np.mean(dark, axis=0),
                                im_shape=self.m_image_in_port.get_shape())
 
-        self.apply_function_to_images(_dark_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running DarkCalibrationModule',
-                                      func_args=(master, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running DarkCalibrationModule...', start_time)
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images - master, data_dim=3)
 
         history = f'dark_in_tag = {self.m_dark_in_port.tag}'
         self.m_image_out_port.add_history('DarkCalibrationModule', history)
@@ -170,8 +180,12 @@ class FlatCalibrationModule(ProcessingModule):
             None
         """
 
-        def _flat_calibration(image_in, flat_in):
-            return image_in / flat_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         flat = self.m_flat_in_port.get_all()
 
@@ -185,11 +199,14 @@ class FlatCalibrationModule(ProcessingModule):
         # normalization, median value is 1 afterwards
         master /= np.median(master)
 
-        self.apply_function_to_images(_flat_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running FlatCalibrationModule',
-                                      func_args=(master, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running FlatCalibrationModule...', start_time)
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images/master, data_dim=3)
 
         history = f'flat_in_tag = {self.m_flat_in_port.tag}'
         self.m_image_out_port.add_history('FlatCalibrationModule', history)
