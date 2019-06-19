@@ -85,9 +85,11 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), -54.99858360618869, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-        self.pipeline.set_attribute('read', 'RA', (60000.0, 60000.0, 60000.0, 60000.0), static=False)
+        self.pipeline.set_attribute('read', 'RA', (60000.0, 60000.0, 60000.0, 60000.0),
+                                    static=False)
 
-        self.pipeline.set_attribute('read', 'DEC', (-510000., -510000., -510000., -510000.), static=False)
+        self.pipeline.set_attribute('read', 'DEC', (-510000., -510000., -510000., -510000.),
+                                    static=False)
 
         module = AngleCalculationModule(instrument='SPHERE/IRDIS',
                                         name_in='angle3',
