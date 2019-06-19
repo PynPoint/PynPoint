@@ -622,6 +622,14 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                    data_dim=len(result_shape)+1,
                                    keep_attributes=False)
 
+            image_in_port.close_port()
+            image_in_port._m_data_storage.m_data_bank = None
+            image_in_port._m_data_storage.m_open = False
+
+            image_out_port.close_port()
+            image_out_port._m_data_storage.m_data_bank = None
+            image_out_port._m_data_storage.m_open = False
+
             capsule = StackProcessingCapsule(image_in_port=image_in_port,
                                              image_out_port=image_out_port,
                                              num_proc=cpu,
