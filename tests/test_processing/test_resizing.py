@@ -148,12 +148,12 @@ class TestResizing:
     def test_remove_lines_long(self):
 
         module = RepeatImagesModule(name_in='repeat',
-        image_in_tag='read',
-        image_out_tag='read_repeated',
-        repeat=50)
+                                    image_in_tag='read',
+                                    image_out_tag='read_repeated',
+                                    repeat=50)
+
         self.pipeline.add_module(module)
         self.pipeline.run_module('repeat')
-
 
         module = RemoveLinesModule(lines=(2, 5, 0, 9),
                                    name_in='remove_slow',

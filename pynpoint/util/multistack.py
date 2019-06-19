@@ -4,6 +4,7 @@ Utilities for multiprocessing of stacks of images.
 
 import sys
 
+import h5py
 import numpy as np
 
 from pynpoint.util.module import update_arguments
@@ -60,7 +61,13 @@ class StackReader(TaskCreator):
             None
         """
 
-        nimages = self.m_data_in_port.get_shape()[0]
+        with self.m_data_mutex:
+            self.m_data_in_port._check_status_and_activate()
+            nimages = self.m_data_in_port.get_shape()[0]
+
+            self.m_data_in_port.close_port()
+            self.m_data_in_port._m_data_storage.m_data_bank = None
+            self.m_data_in_port._m_data_storage.m_open = False
 
         i = 0
         while i < nimages:
@@ -68,8 +75,14 @@ class StackReader(TaskCreator):
 
             # lock mutex and read data
             with self.m_data_mutex:
+                self.m_data_in_port._check_status_and_activate()
+
                 # read images from i to j
                 tmp_data = self.m_data_in_port[i:j, ]
+
+                self.m_data_in_port.close_port()
+                self.m_data_in_port._m_data_storage.m_data_bank = None
+                self.m_data_in_port._m_data_storage.m_open = False
 
             # first dimension (start, stop, step)
             stack_slice = [(i, j, None)]

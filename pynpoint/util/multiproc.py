@@ -4,6 +4,8 @@ Abstract interfaces for multiprocessing applications with the poison pill patter
 
 import multiprocessing
 
+import h5py
+
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -343,7 +345,13 @@ class TaskWriter(multiprocessing.Process):
                 continue
 
             with self.m_data_mutex:
+                self.m_data_out_port._check_status_and_activate()
+
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
+
+                self.m_data_out_port.close_port()
+                self.m_data_out_port._m_data_storage.m_data_bank = None
+                self.m_data_out_port._m_data_storage.m_open = False
 
             self.m_result_queue.task_done()
 
