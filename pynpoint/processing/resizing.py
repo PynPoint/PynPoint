@@ -77,6 +77,9 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
         # Get memory and number of images to split the frames into chunks
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
@@ -98,7 +101,7 @@ class CropImagesModule(ProcessingModule):
             images = crop_image(images, self.m_center, self.m_size, copy=False)
 
             # Write cropped images to output port
-            self.m_image_out_port.append(images)
+            self.m_image_out_port.append(images, data_dim=3)
 
         # Update progress bar (cropping of images is finished)
         sys.stdout.write('Running CropImagesModule... [DONE]\n')
@@ -257,27 +260,35 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
+
         shape_in = self.m_image_in_port.get_shape()
 
         shape_out = (shape_in[-2]+int(self.m_lines[2])+int(self.m_lines[3]),
                      shape_in[-1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        def _add_lines(image_in, lines):
-            image_out = np.zeros(shape_out)
-
-            image_out[int(lines[2]):int(lines[3]),
-                      int(lines[0]):int(lines[1])] = image_in
-
-            return image_out
-
         self.m_lines[1] = shape_out[1] - self.m_lines[1]  # right side of image
         self.m_lines[3] = shape_out[0] - self.m_lines[3]  # top side of image
 
-        self.apply_function_to_images(_add_lines,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running AddLinesModule',
-                                      func_args=(self.m_lines, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running AddLinesModule...', start_time)
+
+            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            image_out = np.zeros((frames[i+1]-frames[i], shape_out[0], shape_out[1]))
+
+            image_out[:,
+                      int(self.m_lines[2]):int(self.m_lines[3]),
+                      int(self.m_lines[0]):int(self.m_lines[1])] = image_in
+
+            self.m_image_out_port.append(image_out, data_dim=3)
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('AddLinesModule', history)
@@ -333,17 +344,25 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        def _remove_lines(image_in, lines):
-            shape_in = image_in.shape
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
 
-            return image_in[int(lines[2]):shape_in[0]-int(lines[3]),
-                            int(lines[0]):shape_in[1]-int(lines[1])]
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
-        self.apply_function_to_images(_remove_lines,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running RemoveLinesModule',
-                                      func_args=(self.m_lines, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running RemoveLinesModule...', start_time)
+
+            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            image_out = image_in[:,
+                                 int(self.m_lines[2]):image_in.shape[1]-int(self.m_lines[3]),
+                                 int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
+
+            self.m_image_out_port.append(image_out, data_dim=3)
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('RemoveLinesModule', history)
