@@ -2,6 +2,7 @@
 Pipeline modules for dark frame and flat field calibrations.
 """
 
+import sys
 import time
 import warnings
 
