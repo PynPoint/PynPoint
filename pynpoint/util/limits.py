@@ -4,7 +4,7 @@ Functions for calculating detection limits.
 
 import math
 
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 
@@ -18,14 +18,14 @@ from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
-def contrast_limit(path_images: str,
+def contrast_limit(path_images: List[str],
                    path_psf: str,
-                   noise: np.ndarray,
+                   noise: List[np.ndarray],
                    mask: np.ndarray,
-                   parang: np.ndarray,
+                   parang: List[np.ndarray],
                    psf_scaling: float,
                    extra_rot: float,
-                   pca_number: int,
+                   pca_number: Tuple[int, ...],
                    threshold: Tuple[str, float],
                    aperture: float,
                    residuals: str,
@@ -86,9 +86,9 @@ def contrast_limit(path_images: str,
     """
 
     temp_flux_in = []
+    psf = np.load(path_psf)
     for i, images in enumerate(path_images):
         images = np.load(images)
-        psf = np.load(path_psf)
 
         if threshold[0] == "sigma":
             sigma = threshold[1]
@@ -112,34 +112,36 @@ def contrast_limit(path_images: str,
             raise ValueError("Threshold type not recognized.")
 
         # Cartesian coordinates of the fake planet
-        xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+        yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
         # Determine the noise level
         _, t_noise, _, _ = false_alarm(image=noise[i][0, ],
-                                    x_pos=xy_fake[0],
-                                    y_pos=xy_fake[1],
+                                    x_pos=yx_fake[1],
+                                    y_pos=yx_fake[0],
                                     size=aperture,
                                     ignore=False)
 
         # Aperture properties
         im_center = center_subpixel(images)
-        ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
 
         # Measure the flux of the star
-        phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
+        ap_phot = CircularAperture((im_center[1], im_center[0]), aperture)
+        phot_table = aperture_photometry(psf_scaling*psf[0, ], ap_phot, method='exact')
         star = phot_table['aperture_sum'][0]
 
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
         temp_flux_in += [flux_in]
 
-    flux_in = np.median(flux_in)
+    flux_in = np.mean(flux_in)
 
     temp_im_res = []
 
     for i, images in enumerate(path_images):
         images = np.load(images)
-        psf = np.load(path_psf)
+
+        # Cartesian coordinates of the fake planet
+        yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
         mag = -2.5*math.log10(flux_in/star)
 
@@ -160,6 +162,7 @@ def contrast_limit(path_images: str,
         im_res = combine_residuals(method=residuals, res_rot=im_res)
         temp_im_res += [im_res]
 
+    # Stack the residuals
     im_res = np.concatenate(temp_im_res)
     im_res = combine_residuals(method=residuals, res_rot=im_res)
 

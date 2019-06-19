@@ -9,7 +9,7 @@ import time
 import warnings
 import multiprocessing as mp
 
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Sequence
 
 import numpy as np
 
@@ -24,9 +24,6 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-from sklearn.decomposition import PCA
-
-
 class ContrastCurveModule(ProcessingModule):
     """
     Pipeline module to calculate contrast limits for a given sigma level or false positive
@@ -39,7 +36,7 @@ class ContrastCurveModule(ProcessingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 image_in_tag: Union[str, Tuple[str]],
+                 image_in_tag: Union[str, Tuple[str, ...]],
                  psf_in_tag: str,
                  contrast_out_tag: str,
                  separation: Tuple[float, float, float] = (0.1, 1., 0.01),
@@ -47,7 +44,7 @@ class ContrastCurveModule(ProcessingModule):
                  threshold: Tuple[str, float] = ('sigma', 5.),
                  psf_scaling: float = 1.,
                  aperture: float = 0.05,
-                 pca_number: Union[int, List[int]] = 20,
+                 pca_number: Union[int, Tuple[int, ...]] = 20,
                  cent_size: float = None,
                  edge_size: float = None,
                  extra_rot: float = 0.,
@@ -159,11 +156,12 @@ class ContrastCurveModule(ProcessingModule):
         self.m_threshold = threshold
         self.m_aperture = aperture
         if isinstance(pca_number, int):
-            self.m_pca_number = [pca_number] * len(image_in_tag)
-        elif isinstance(pca_number, list):
+            self.m_pca_number = tuple([pca_number] * len(image_in_tag))
+        elif isinstance(pca_number, tuple):
             assert len(pca_number) == len(image_in_tag), f'The number of provided PCA numbers must'\
                                                          f'be equal to the number of input tags'
             self.m_pca_number = pca_number
+
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
@@ -202,14 +200,14 @@ class ContrastCurveModule(ProcessingModule):
 
         psf = self.m_psf_in_port.get_all()
 
-        if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+        if psf.shape[0] != 1 and psf.shape[0] != temp_images[0].shape[0]:
             raise ValueError(f'The number of frames in psf_in_tag {psf.shape} does not match with '
-                             f'the number of frames in image_in_tag {images.shape}. The '
+                             f'the number of frames in image_in_tag {temp_images[0].shape}. The '
                              f'DerotateAndStackModule can be used to average the PSF frames '
                              f'(without derotating) before applying the ContrastCurveModule.')
 
         cpu = self._m_config_port.get_attribute('CPU')
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_ports[0].get_attribute('PIXSCALE')
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -252,17 +250,17 @@ class ContrastCurveModule(ProcessingModule):
         working_place = self._m_config_port.get_attribute('WORKING_PLACE')
 
         # Create temporary files
-        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
+        tmp_psf_str = os.path.join(working_place, 'tmp_psf.npy')
         np.save(tmp_psf_str, psf)
 
-        mask = create_mask(temp_images[0].shape[-2:], [self.m_cent_size, self.m_edge_size])
+        mask = create_mask(temp_images[0].shape[-2:], (self.m_cent_size, self.m_edge_size))
 
         temp_noise = []
         image_paths = []
 
         if self.m_mode == 'individual':
-            for i, image in enumerate(temp_images):
-                _, im_res = pca_psf_subtraction(images=image*mask,
+            for i, images in enumerate(temp_images):
+                _, im_res = pca_psf_subtraction(images=images*mask,
                                                 angles=-1.*angles[i]+self.m_extra_rot,
                                                 pca_number=self.m_pca_number[i])
 
@@ -271,7 +269,7 @@ class ContrastCurveModule(ProcessingModule):
 
                 # Create temporary files
                 image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
-                np.save(image_paths[-1], image)
+                np.save(image_paths[-1], images)
         elif self.m_mode == 'combined':
             images = np.concatenate(temp_images)
             parang = np.concatenate(angles)
@@ -292,11 +290,11 @@ class ContrastCurveModule(ProcessingModule):
 
         for pos in positions:
             async_results.append(pool.apply_async(contrast_limit,
-                                                  args=(image_paths, # list
+                                                  args=(image_paths,
                                                         tmp_psf_str,
-                                                        temp_noise, # list
+                                                        temp_noise,
                                                         mask,
-                                                        angles, # list
+                                                        angles,
                                                         self.m_psf_scaling,
                                                         self.m_extra_rot,
                                                         self.m_pca_number,
@@ -349,7 +347,8 @@ class ContrastCurveModule(ProcessingModule):
 
         history = f'{self.m_threshold[0]} = {self.m_threshold[1]}'
         self.m_contrast_out_port.add_history('ContrastCurveModule', history)
-        self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
+        for image_in_port in self.m_image_in_ports:
+            self.m_contrast_out_port.copy_attributes(image_in_port)
         self.m_contrast_out_port.close_port()
 
 

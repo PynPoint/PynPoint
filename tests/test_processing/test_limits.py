@@ -151,7 +151,7 @@ class TestLimits:
                                      threshold=('fpf', 1e-6),
                                      psf_scaling=1.,
                                      aperture=0.1,
-                                     pca_number=[15, 20],
+                                     pca_number=(15, 20),
                                      cent_size=None,
                                      edge_size=None,
                                      mode='individual',
