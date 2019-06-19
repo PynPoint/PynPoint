@@ -4,39 +4,44 @@ Functions for MCMC sampling.
 
 import math
 
+from typing import Tuple
+
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.util.analysis import fake_planet, merit_function
-from pynpoint.util.image import polar_to_cartesian
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def lnprob(param,
-           bounds,
-           images,
-           psf,
-           mask,
-           parang,
-           psf_scaling,
-           pixscale,
-           pca_number,
-           extra_rot,
-           aperture,
-           indices,
-           prior,
-           variance,
-           residuals):
+@typechecked
+def lnprob(param: np.ndarray,
+           bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
+           images: np.ndarray,
+           psf: np.ndarray,
+           mask: np.ndarray,
+           parang: np.ndarray,
+           psf_scaling: float,
+           pixscale: float,
+           pca_number: int,
+           extra_rot: float,
+           aperture: Tuple[int, int, float],
+           indices: np.ndarray,
+           merit: str,
+           residuals: str) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
 
-    param : tuple(float, float, float)
-        Tuple with the separation (arcsec), angle (deg), and contrast (mag). The angle is measured
-        in counterclockwise direction with respect to the positive y-axis.
+    Parameters
+    ----------
+    param : numpy.ndarray
+        The separation (arcsec), angle (deg), and contrast (mag). The angle is measured in
+        counterclockwise direction with respect to the positive y-axis.
     bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
-        Tuple with the boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each
-        set of boundaries is specified as a tuple.
+        The boundaries of the separation (arcsec), angle (deg), and contrast (mag). Each set of
+        boundaries is specified as a tuple.
     images : numpy.ndarray
         Stack with images.
     psf : numpy.ndarray
@@ -56,18 +61,17 @@ def lnprob(param,
         Number of principal components used for the PSF subtraction.
     extra_rot : float
         Additional rotation angle of the images (deg).
-    aperture : dict
-        Dictionary with the aperture properties. See for more information
-        :func:`~pynpoint.util.analysis.create_aperture`.
+    aperture : tuple(int, int, float)
+        Position (y, x) of the aperture center (pix) and aperture radius (pix).
     indices : numpy.ndarray
         Non-masked image indices.
-    prior : str
-        Prior can be set to 'flat' or 'aperture'. With 'flat', the values of *bounds* are used
-        as uniform priors. With 'aperture', the prior probability is set to zero beyond the
-        aperture and unity within the aperture.
-    variance : tuple(str, float)
-        Variance type and value for the likelihood function. The value is set to None in case
-        a Poisson distribution is assumed.
+    merit : str
+        Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
+        Pixels are assumed to be independent measurements which are expected to be equal to
+        zero in case the best-fit negative PSF template is injected. With 'gaussian', the
+        variance is estimated from the pixel values within an annulus at the separation of
+        the aperture (but excluding the pixels within the aperture). With 'poisson', a
+        Poisson distribution is assumed for the variance of each pixel value.
     residuals : str
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -87,63 +91,21 @@ def lnprob(param,
             Log prior.
         """
 
-        if prior == 'flat':
+        if bounds[0][0] <= param[0] <= bounds[0][1] and \
+           bounds[1][0] <= param[1] <= bounds[1][1] and \
+           bounds[2][0] <= param[2] <= bounds[2][1]:
 
-            if bounds[0][0] <= param[0] <= bounds[0][1] and \
-               bounds[1][0] <= param[1] <= bounds[1][1] and \
-               bounds[2][0] <= param[2] <= bounds[2][1]:
-
-                ln_prior = 0.
-
-            else:
-
-                ln_prior = -np.inf
-
-        elif prior == 'aperture':
-
-            xy_pos = polar_to_cartesian(images, param[0]/pixscale, param[1])
-
-            delta_x = xy_pos[0] - aperture['pos_x']
-            delta_y = xy_pos[1] - aperture['pos_y']
-
-            if aperture['type'] == 'circular':
-
-                if math.sqrt(delta_x**2+delta_y**2) < aperture['radius'] and \
-                   bounds[2][0] <= param[2] <= bounds[2][1]:
-
-                    ln_prior = 0.
-
-                else:
-
-                    ln_prior = -np.inf
-
-            elif aperture['type'] == 'elliptical':
-
-                cos_ang = math.cos(math.radians(180.-aperture['angle']))
-                sin_ang = math.sin(math.radians(180.-aperture['angle']))
-
-                x_rot = delta_x*cos_ang - delta_y*sin_ang
-                y_rot = delta_x*sin_ang + delta_y*cos_ang
-
-                r_check = (x_rot/aperture['semimajor'])**2 + (y_rot/aperture['semiminor'])**2
-
-                if r_check <= 1. and bounds[2][0] <= param[2] <= bounds[2][1]:
-                    ln_prior = 0.
-
-                else:
-                    ln_prior = -np.inf
-
+            ln_prior = 0.
 
         else:
-            raise ValueError('Prior type not recognized.')
+
+            ln_prior = -np.inf
 
         return ln_prior
 
     def _lnlike():
         """
-        Internal function for the log likelihood function. Noise of each pixel is assumed to follow
-        either a Poisson distribution (see Wertz et al. 2017) or a Gaussian distribution with a
-        correction for small sample statistics (see Mawet et al. 2014).
+        Internal function for the log likelihood function.
 
         Returns
         -------
@@ -165,15 +127,14 @@ def lnprob(param,
                                         pca_number=pca_number,
                                         indices=indices)
 
-        stack = combine_residuals(method=residuals, res_rot=im_res)
+        res_stack = combine_residuals(method=residuals, res_rot=im_res)
 
-        merit = merit_function(residuals=stack[0, ],
-                               function='sum',
-                               variance=variance,
-                               aperture=aperture,
-                               sigma=0.)
+        chi_square = merit_function(residuals=res_stack[0, ],
+                                    merit=merit,
+                                    aperture=aperture,
+                                    sigma=0.)
 
-        return -0.5*merit
+        return -0.5*chi_square
 
     ln_prior = _lnprior()
 

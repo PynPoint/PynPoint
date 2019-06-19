@@ -15,7 +15,8 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestStackingAndSubsampling:
+
+class TestStackSubset:
 
     def setup_class(self):
 
@@ -173,12 +174,11 @@ class TestStackingAndSubsampling:
 
     def test_combine_tags(self):
 
-        combine = CombineTagsModule(image_in_tags=('images', 'extra'),
+        combine = CombineTagsModule(image_in_tags=['images', 'extra'],
                                     check_attr=True,
                                     index_init=False,
                                     name_in='combine1',
                                     image_out_tag='combine1')
-
 
         self.pipeline.add_module(combine)
 
@@ -199,12 +199,11 @@ class TestStackingAndSubsampling:
         assert data[40] == 0
         assert data.shape == (80, )
 
-        combine = CombineTagsModule(image_in_tags=('images', 'extra'),
+        combine = CombineTagsModule(image_in_tags=['images', 'extra'],
                                     check_attr=False,
                                     index_init=True,
                                     name_in='combine2',
                                     image_out_tag='combine2')
-
 
         self.pipeline.add_module(combine)
         self.pipeline.run_module('combine2')

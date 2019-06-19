@@ -14,7 +14,8 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestPSFSubtractionPCA:
+
+class TestPsfSubtraction:
 
     def setup_class(self):
 
@@ -418,8 +419,8 @@ class TestPSFSubtractionPCA:
 
     def test_psf_subtraction_pca_multi(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in='pca_multi',
@@ -480,17 +481,20 @@ class TestPSFSubtractionPCA:
 
         data_single = self.pipeline.get_data('res_mean_single_mask')
         data_multi = self.pipeline.get_data('res_mean_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('res_median_single_mask')
         data_multi = self.pipeline.get_data('res_median_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('res_weighted_single_mask')
         data_multi = self.pipeline.get_data('res_weighted_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('basis_single_mask')

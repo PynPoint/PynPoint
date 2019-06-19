@@ -4,29 +4,33 @@ Functions for calculating detection limits.
 
 import math
 
+from typing import Tuple
+
 import numpy as np
 
-from photutils import aperture_photometry
+from photutils import aperture_photometry, CircularAperture
+from typeguard import typechecked
 
-from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
+from pynpoint.util.analysis import student_t, fake_planet, false_alarm
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def contrast_limit(path_images,
-                   path_psf,
-                   noise,
-                   mask,
-                   parang,
-                   psf_scaling,
-                   extra_rot,
-                   pca_number,
-                   threshold,
-                   aperture,
-                   residuals,
-                   snr_inject,
-                   position):
+@typechecked
+def contrast_limit(path_images: str,
+                   path_psf: str,
+                   noise: np.ndarray,
+                   mask: np.ndarray,
+                   parang: np.ndarray,
+                   psf_scaling: float,
+                   extra_rot: float,
+                   pca_number: int,
+                   threshold: Tuple[str, float],
+                   aperture: float,
+                   residuals: str,
+                   snr_inject: float,
+                   position: Tuple[float, float]) -> Tuple[float, float, float, float]:
 
     """
     Function for calculating the contrast limit at a specified position for a given sigma level or
@@ -54,25 +58,31 @@ def contrast_limit(path_images,
     pca_number : int
         Number of principal components used for the PSF subtraction.
     threshold : tuple(str, float)
-        Detection threshold for the contrast curve, either in terms of "sigma" or the false
-        positive fraction (FPF). The value is a tuple, for example provided as ("sigma", 5.) or
-        ("fpf", 1e-6). Note that when sigma is fixed, the false positive fraction will change with
+        Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+        positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.) or
+        ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will change with
         separation. Also, sigma only corresponds to the standard deviation of a normal distribution
         at large separations (i.e., large number of samples).
     aperture : float
         Aperture radius (pix) for the calculation of the false positive fraction.
     residuals : str
-        Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
-    position : tuple(float, float)
-        The separation (pix) and position angle (deg) of the fake planet.
+        Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
     snr_inject : float
         Signal-to-noise ratio of the injected planet signal that is used to measure the amount
         of self-subtraction.
+    position : tuple(float, float)
+        The separation (pix) and position angle (deg) of the fake planet.
 
     Returns
     -------
-    NoneType
-        None
+    float
+        Separation (pix).
+    float
+        Position angle (deg).
+    float
+        Contrast (mag).
+    float
+        False positive fraction.
     """
 
     temp_flux_in = []
@@ -155,8 +165,8 @@ def contrast_limit(path_images,
 
     # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],
-                                    x_pos=xy_fake[0],
-                                    y_pos=xy_fake[1],
+                                    x_pos=yx_fake[1],
+                                    y_pos=yx_fake[0],
                                     size=aperture,
                                     ignore=False)
 

@@ -58,6 +58,7 @@ Basic Processing
 * :class:`~pynpoint.processing.basic.SubtractImagesModule`: Subtract two stacks of images.
 * :class:`~pynpoint.processing.basic.AddImagesModule`: Add two stacks of images
 * :class:`~pynpoint.processing.basic.RotateImagesModule`: Rotate a stack of images.
+* :class:`~pynpoint.processing.basic.RepeatImagesModule`: Repeat a stack of images.
 
 Centering
 ~~~~~~~~~
@@ -88,8 +89,8 @@ Detection Limits
 Extract Star
 ~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate and crop the position of the star.
-* :class:`~pynpoint.processing.centering.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
+* :class:`~pynpoint.processing.extract.StarExtractionModule` (CPU): Locate and crop the position of the star.
+* :class:`~pynpoint.processing.extract.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
@@ -108,6 +109,8 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
 * :class:`~pynpoint.processing.frameselection.RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
 * :class:`~pynpoint.processing.frameselection.ImageStatisticsModule` (CPU): Compute statistics of the pixel values for each image.
+* :class:`~pynpoint.processing.frameselection.FrameSimilarityModule` (CPU): Compute different similarity measures of a set of images.
+* :class:`~pynpoint.processing.frameselection.SelectByAttributeModule`: Select images by the ascending/descending attribute values.
 
 Image Resizing
 ~~~~~~~~~~~~~~

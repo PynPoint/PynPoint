@@ -16,7 +16,8 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestDetectionLimits:
+
+class TestLimits:
 
     def setup_class(self):
 
@@ -67,8 +68,8 @@ class TestDetectionLimits:
         for item in proc:
 
             if item == 'multi':
-                database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-                database['config'].attrs['CPU'] = 4
+                with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+                    hdf_file['config'].attrs['CPU'] = 4
 
             module = ContrastCurveModule(name_in='contrast_'+item,
                                          image_in_tag='read',
@@ -96,8 +97,8 @@ class TestDetectionLimits:
 
     def test_contrast_curve_fpf(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         module = ContrastCurveModule(name_in='contrast_fpf',
                                      image_in_tag='read',
@@ -169,8 +170,6 @@ class TestDetectionLimits:
 
     def test_mass_limits(self):
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-
         separation = np.linspace(0.1, 1.0, 10)
         contrast = -2.5*np.log10(1e-4/separation)
         variance = 0.1*contrast
@@ -180,7 +179,8 @@ class TestDetectionLimits:
         limits[:, 1] = contrast
         limits[:, 2] = variance
 
-        database['contrast_limits'] = limits
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['contrast_limits'] = limits
 
         url = 'https://phoenix.ens-lyon.fr/Grids/AMES-Cond/ISOCHRONES/' \
               'model.AMES-Cond-2000.M-0.0.NaCo.Vega'
@@ -190,7 +190,7 @@ class TestDetectionLimits:
         urlretrieve(url, filename)
 
         module = MassLimitsModule(model_file=filename,
-                                  star_prop={'magnitude':10., 'distance':100., 'age':20.},
+                                  star_prop={'magnitude': 10., 'distance': 100., 'age': 20.},
                                   name_in='mass',
                                   contrast_in_tag='contrast_limits',
                                   mass_out_tag='mass_limits',

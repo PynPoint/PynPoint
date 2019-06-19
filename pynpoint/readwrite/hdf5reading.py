@@ -1,5 +1,6 @@
 """
-Module for reading HDF5 files that were created with the Hdf5WritingModule.
+Module for reading HDF5 files that were created with the
+:class:`~pynpoint.readwrite.hdf5writing.Hdf5WritingModule`.
 """
 
 import os
@@ -9,6 +10,8 @@ import warnings
 
 import h5py
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.module import progress
@@ -24,23 +27,24 @@ class Hdf5ReadingModule(ReadingModule):
     may lead to inconsistencies in the central database.
     """
 
+    @typechecked
     def __init__(self,
-                 name_in="hdf5_reading",
-                 input_filename=None,
-                 input_dir=None,
-                 tag_dictionary=None):
+                 name_in: str,
+                 input_filename: str = None,
+                 input_dir: str = None,
+                 tag_dictionary: dict = None):
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-        input_filename : str
+        input_filename : str, None
             The file name of the HDF5 input file. All files inside the input location will be
             imported if no filename is provided.
-        input_dir : str
+        input_dir : str, None
             The directory of the input HDF5 file. If no location is given, the default input
             location of the Pypeline is used.
-        tag_dictionary : dict
+        tag_dictionary : dict, None
             Dictionary of all data sets that will be imported. The dictionary format is
             {*tag_name_in_input_file*:*tag_name_in_database*, }. All data sets in the input HDF5
             file that match one of the *tag_name_in_input_file* will be imported. The tag name
@@ -63,10 +67,11 @@ class Hdf5ReadingModule(ReadingModule):
         self.m_filename = input_filename
         self._m_tag_dictionary = tag_dictionary
 
-    def _read_single_hdf5(self,
-                          file_in):
+    @typechecked
+    def read_single_hdf5(self,
+                         file_in: str) -> None:
         """
-        Internal function which reads a single HDF5 file.
+        Function which reads a single HDF5 file.
 
         Parameters
         ----------
@@ -82,12 +87,13 @@ class Hdf5ReadingModule(ReadingModule):
         hdf5_file = h5py.File(file_in, mode='r')
 
         for tag_in in self._m_tag_dictionary:
-            tag_in = str(tag_in) # unicode keys cause errors
+            tag_in = str(tag_in)  # unicode keys cause errors
             tag_out = self._m_tag_dictionary[tag_in]
 
             if tag_in not in hdf5_file:
-                warnings.warn("The dataset with tag name '{0}' is not found in the HDF5 file."
-                              .format(tag_in))
+                warnings.warn(f'The dataset with tag name \'{tag_in}\' is not found in the HDF5 '
+                              f'file.')
+
                 continue
 
             # add data
@@ -99,12 +105,13 @@ class Hdf5ReadingModule(ReadingModule):
                 port_out.add_attribute(name=attr_name, value=attr_value)
 
             # add non-static attributes
-            if "header_" + tag_in in hdf5_file:
-                for attr_name in hdf5_file["header_" + tag_in]:
-                    attr_val = hdf5_file["header_" + tag_in + "/" + attr_name][...]
+            if 'header_' + tag_in in hdf5_file:
+                for attr_name in hdf5_file['header_' + tag_in]:
+                    attr_val = hdf5_file['header_' + tag_in + '/' + attr_name][...]
                     port_out.add_attribute(name=attr_name, value=attr_val, static=False)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Looks for all HDF5 files in the input directory and reads the
         datasets that are provided in the tag dictionary.
@@ -124,7 +131,7 @@ class Hdf5ReadingModule(ReadingModule):
         if self.m_filename is not None:
             # create file path + filename
             assert(os.path.isfile((tmp_dir + str(self.m_filename)))), \
-                   "Error: Input file does not exist. Input requested: %s" % str(self.m_filename)
+                   f'Error: Input file does not exist. Input requested: {self.m_filename}'
 
             files.append((tmp_dir + str(self.m_filename)))
 
@@ -133,11 +140,11 @@ class Hdf5ReadingModule(ReadingModule):
             for tmp_file in os.listdir(self.m_input_location):
                 if tmp_file.endswith('.hdf5') or tmp_file.endswith('.h5'):
                     files.append(tmp_dir + str(tmp_file))
-        
+
         start_time = time.time()
         for i, tmp_file in enumerate(files):
-            progress(i, len(files), "Running Hdf5ReadingModule...", start_time)
-            self._read_single_hdf5(tmp_file)
+            progress(i, len(files), 'Running Hdf5ReadingModule...', start_time)
+            self.read_single_hdf5(tmp_file)
 
-        sys.stdout.write("Running Hdf5ReadingModule... [DONE]\n")
+        sys.stdout.write('Running Hdf5ReadingModule... [DONE]\n')
         sys.stdout.flush()

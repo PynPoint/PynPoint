@@ -33,10 +33,10 @@ class FitsReadingModule(ReadingModule):
     def __init__(self,
                  name_in: str,
                  input_dir: str = None,
-                 image_tag: str = "im_arr",
+                 image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
-                 filenames: Union[str, List] = None) -> None:
+                 filenames: Union[str, List[str]] = None) -> None:
         """
         Parameters
         ----------
@@ -76,16 +76,16 @@ class FitsReadingModule(ReadingModule):
         self.m_filenames = filenames
 
     @typechecked
-    def _read_single_file(self,
-                          fits_file: str,
-                          overwrite_tags: List) -> Union[fits.header.Header, Tuple]:
+    def read_single_file(self,
+                         fits_file: str,
+                         overwrite_tags: list) -> Tuple[fits.header.Header, tuple]:
         """
-        Internal function which reads a single FITS file and appends it to the database. The
-        function gets a list of *overwriting_tags*. If a new key (header entry or image data) is
-        found that is not on this list the old entry is overwritten if *self.m_overwrite* is
-        active. After replacing the old entry the key is added to the *overwriting_tags*. This
-        procedure guaranties that all previous database information, that does not belong to the
-        new data set that is read by FitsReadingModule is replaced and the rest is kept.
+        Function which reads a single FITS file and appends it to the database. The function gets
+        a list of *overwriting_tags*. If a new key (header entry or image data) is found that is
+        not on this list the old entry is overwritten if *self.m_overwrite* is active. After
+        replacing the old entry the key is added to the *overwriting_tags*. This procedure
+        guaranties that all previous database information, that does not belong to the new data
+        set that is read by FitsReadingModule is replaced and the rest is kept.
 
         Parameters
         ----------
@@ -118,17 +118,17 @@ class FitsReadingModule(ReadingModule):
 
         fits_header = []
         for key in header:
-            fits_header.append(str(key)+" = "+str(header[key]))
+            fits_header.append(str(key)+' = '+str(header[key]))
 
         hdulist.close()
 
-        header_out_port = self.add_output_port('fits_header/'+fits_file)
+        header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
         header_out_port.set_all(fits_header)
 
         return header, images.shape
 
     @typechecked
-    def _txt_file_list(self) -> List:
+    def _txt_file_list(self) -> list:
         """
         Internal function to import a list of FITS files from a text file.
         """
@@ -164,16 +164,16 @@ class FitsReadingModule(ReadingModule):
             
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the'
-                                     ' path is correct.')
+                    raise ValueError(f'The file {item} does not exist. Please check that the '
+                                     f'path is correct.')
 
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
 
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the'
-                                     ' path is correct.')
+                    raise ValueError(f'The file {item} does not exist. Please check that the '
+                                     f'path is correct.')
 
         elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(self.m_input_location):
@@ -189,9 +189,9 @@ class FitsReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, fits_file in enumerate(files):
-            progress(i, len(files), "Running FitsReadingModule...", start_time)
+            progress(i, len(files), 'Running FitsReadingModule...', start_time)
 
-            header, shape = self._read_single_file(fits_file, overwrite_tags)
+            header, shape = self.read_single_file(fits_file, overwrite_tags)
 
             if len(shape) == 2:
                 nimages = 1
@@ -219,7 +219,7 @@ class FitsReadingModule(ReadingModule):
 
             self.m_image_out_port.flush()
 
-        sys.stdout.write("Running FitsReadingModule... [DONE]\n")
+        sys.stdout.write('Running FitsReadingModule... [DONE]\n')
         sys.stdout.flush()
 
         self.m_image_out_port.close_port()

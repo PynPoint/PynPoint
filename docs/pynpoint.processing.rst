@@ -44,6 +44,14 @@ pynpoint.processing.darkflat module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.processing.extract module
+----------------------------------
+
+.. automodule:: pynpoint.processing.extract
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.processing.fluxposition module
 ---------------------------------------
 

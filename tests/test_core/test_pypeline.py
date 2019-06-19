@@ -129,10 +129,9 @@ class TestPypeline:
         np.random.seed(1)
         images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
 
-        h5f = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w')
-        dset = h5f.create_dataset('images', data=images)
-        dset.attrs['PIXSCALE'] = 0.01
-        h5f.close()
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
+            dset = hdf_file.create_dataset('images', data=images)
+            dset.attrs['PIXSCALE'] = 0.01
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
         data = pipeline.get_data('images')
@@ -166,10 +165,13 @@ class TestPypeline:
             pipeline.add_module(read)
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'Processing module names need to be unique. ' \
+        assert warning[0].message.args[0] == 'Pipeline module names need to be unique. ' \
                                              'Overwriting module \'read2\'.'
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='im_arr1')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_arr1',
+                                            image_out_tag='im_out')
+
         assert pipeline.add_module(process) is None
 
         write = FitsWritingModule(name_in='write1', file_name='result.fits', data_tag='im_arr1')
@@ -214,7 +216,10 @@ class TestPypeline:
         write = FitsWritingModule(name_in='write', file_name='result.fits', data_tag='im_list')
         pipeline.add_module(write)
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='im_list')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_list',
+                                            image_out_tag='im_out')
+
         pipeline.add_module(process)
 
         with pytest.raises(AttributeError) as error:
@@ -258,7 +263,10 @@ class TestPypeline:
         read = FitsReadingModule(name_in='read')
         pipeline.add_module(read)
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_arr1',
+                                            image_out_tag='im_out')
+
         pipeline.add_module(process)
 
         assert pipeline.get_module_names() == ['read', 'badpixel']
