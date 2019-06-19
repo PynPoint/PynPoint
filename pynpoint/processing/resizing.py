@@ -290,6 +290,9 @@ class AddLinesModule(ProcessingModule):
 
             self.m_image_out_port.append(image_out, data_dim=3)
 
+        sys.stdout.write('Running AddLinesModule... [DONE]\n')
+        sys.stdout.flush()
+
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('AddLinesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -363,6 +366,9 @@ class RemoveLinesModule(ProcessingModule):
                                  int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
 
             self.m_image_out_port.append(image_out, data_dim=3)
+
+        sys.stdout.write('Running RemoveLinesModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('RemoveLinesModule', history)

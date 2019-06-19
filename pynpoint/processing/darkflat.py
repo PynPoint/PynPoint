@@ -107,7 +107,6 @@ class DarkCalibrationModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
-        print(self.m_image_in_port.get_shape())
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
@@ -124,6 +123,9 @@ class DarkCalibrationModule(ProcessingModule):
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             self.m_image_out_port.append(images - master, data_dim=3)
+
+        sys.stdout.write('Running DarkCalibrationModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'dark_in_tag = {self.m_dark_in_port.tag}'
         self.m_image_out_port.add_history('DarkCalibrationModule', history)
@@ -207,6 +209,9 @@ class FlatCalibrationModule(ProcessingModule):
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             self.m_image_out_port.append(images/master, data_dim=3)
+
+        sys.stdout.write('Running FlatCalibrationModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'flat_in_tag = {self.m_flat_in_port.tag}'
         self.m_image_out_port.add_history('FlatCalibrationModule', history)
