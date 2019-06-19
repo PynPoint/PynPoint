@@ -10,7 +10,7 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.fluxposition import FakePlanetModule, AperturePhotometryModule, \
                                              FalsePositiveModule, SimplexMinimizationModule, \
                                              MCMCsamplingModule
-from pynpoint.processing.resizing import ScaleImagesModule
+
 from pynpoint.processing.stacksubset import DerotateAndStackModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule
@@ -19,6 +19,7 @@ from pynpoint.util.tests import create_config, create_star_data, create_fake, re
 warnings.simplefilter('always')
 
 limit = 1e-10
+
 
 class TestFluxPosition:
 
@@ -185,14 +186,11 @@ class TestFluxPosition:
 
     def test_psf_subtraction(self):
 
-        module = PcaPsfSubtractionModule(pca_numbers=(2, ),
+        module = PcaPsfSubtractionModule(pca_numbers=[2, ],
                                          name_in='pca',
                                          images_in_tag='fake',
                                          reference_in_tag='fake',
                                          res_mean_tag='res_mean',
-                                         res_median_tag=None,
-                                         res_arr_out_tag=None,
-                                         res_rot_mean_clip_tag=None,
                                          extra_rot=0.)
 
         self.pipeline.add_module(module)
@@ -223,14 +221,14 @@ class TestFluxPosition:
         assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
         assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
 
-    def test_simplex_minimization(self):
+    def test_simplex_minimization_hessian(self):
 
         module = SimplexMinimizationModule(name_in='simplex1',
                                            image_in_tag='fake',
                                            psf_in_tag='read',
                                            res_out_tag='simplex_res',
                                            flux_position_tag='flux_position',
-                                           position=(31., 49.),
+                                           position=(31, 49),
                                            magnitude=6.,
                                            psf_scaling=-1.,
                                            merit='hessian',
@@ -241,24 +239,25 @@ class TestFluxPosition:
                                            cent_size=0.1,
                                            edge_size=None,
                                            extra_rot=0.,
-                                           reference_in_tag=None)
+                                           reference_in_tag=None,
+                                           residuals='median')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simplex1')
 
         data = self.pipeline.get_data('simplex_res')
-        assert np.allclose(data[0, 50, 31], 0.00012976212788352575, rtol=limit, atol=0.)
-        assert np.allclose(data[42, 50, 31], 1.2141761821389107e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.461337432531517e-09, rtol=limit, atol=0.)
-        assert data.shape == (43, 101, 101)
+        assert np.allclose(data[0, 50, 31], 0.00013866444247059368, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 50, 31], 3.482226033356121e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.125137239656066e-07, rtol=limit, atol=0.)
+        assert data.shape == (36, 101, 101)
 
         data = self.pipeline.get_data('flux_position')
-        assert np.allclose(data[42, 0], 31.6456737445356, rtol=limit, atol=0.)
-        assert np.allclose(data[42, 1], 49.9199601480223, rtol=limit, atol=0.)
-        assert np.allclose(data[42, 2], 0.49557152090327206, rtol=limit, atol=0.)
-        assert np.allclose(data[42, 3], 90.24985480686087, rtol=limit, atol=0.)
-        assert np.allclose(data[42, 4], 5.683191873535635, rtol=limit, atol=0.)
-        assert data.shape == (43, 6)
+        assert np.allclose(data[35, 0], 31.420497036174158, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 1], 50.03219573166646, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 2], 0.5016473331983896, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 3], 89.90071436787039, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 4], 6.012537296489204, rtol=limit, atol=0.)
+        assert data.shape == (36, 6)
 
     def test_simplex_minimization_reference(self):
 
@@ -267,10 +266,10 @@ class TestFluxPosition:
                                            psf_in_tag='read',
                                            res_out_tag='simplex_res_ref',
                                            flux_position_tag='flux_position_ref',
-                                           position=(31., 49.),
+                                           position=(31, 49),
                                            magnitude=6.,
                                            psf_scaling=-1.,
-                                           merit='sum',
+                                           merit='poisson',
                                            aperture=0.1,
                                            sigma=0.,
                                            tolerance=0.1,
@@ -278,89 +277,59 @@ class TestFluxPosition:
                                            cent_size=0.1,
                                            edge_size=None,
                                            extra_rot=0.,
-                                           reference_in_tag='ref')
+                                           reference_in_tag='ref',
+                                           residuals='mean')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simplex2')
 
         data = self.pipeline.get_data('simplex_res_ref')
         assert np.allclose(data[0, 50, 31], 0.00014188043631450017, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 50, 31], 8.260705332688204e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.3084672332295342e-06, rtol=limit, atol=0.)
-        assert data.shape == (36, 101, 101)
+        assert np.allclose(data[43, 50, 31], 7.217091961625108e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 1.3228426986034557e-06, rtol=limit, atol=0.)
+        assert data.shape == (44, 101, 101)
 
         data = self.pipeline.get_data('flux_position_ref')
-        assert np.allclose(data[35, 0], 31.523599108957953, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 1], 49.80956476439131, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 2], 0.49888932122698404, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 3], 90.59052349996864, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 4], 6.021039673141669, rtol=limit, atol=0.)
-        assert data.shape == (36, 6)
+        assert np.allclose(data[43, 0], 31.519027018276986, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 1], 49.85541939005469, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 2], 0.4990015399214498, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 3], 90.44822801080721, rtol=limit, atol=0.)
+        assert np.allclose(data[43, 4], 5.9953709695084605, rtol=limit, atol=0.)
+        assert data.shape == (44, 6)
 
-    def test_mcmc_sampling_gaussian(self):
+    def test_mcmc_sampling(self):
 
         self.pipeline.set_attribute('adi', 'PARANG', np.arange(0., 200., 10.), static=False)
 
-        module = ScaleImagesModule(scaling=(None, None, 100.),
-                                   pixscale=False,
-                                   name_in='scale1',
-                                   image_in_tag='adi',
-                                   image_out_tag='adi_scale')
-
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('scale1')
-
-        data = self.pipeline.get_data('adi_scale')
-        assert np.allclose(data[0, 7, 7], 9.82388817812263, rtol=limit, atol=0.)
-        assert data.shape == (20, 15, 15)
-
-        module = ScaleImagesModule(scaling=(None, None, 100.),
-                                   pixscale=False,
-                                   name_in='scale2',
-                                   image_in_tag='psf',
-                                   image_out_tag='psf_scale')
-
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('scale2')
-
-        data = self.pipeline.get_data('psf_scale')
-        assert np.allclose(data[0, 7, 7], 9.806026673451198, rtol=limit, atol=0.)
-        assert data.shape == (4, 15, 15)
-
-        module = DerotateAndStackModule(name_in='take_psf_avg',
-                                        image_in_tag='psf_scale',
-                                        image_out_tag='psf_avg',
+        module = DerotateAndStackModule(name_in='stack',
+                                        image_in_tag='psf',
+                                        image_out_tag='psf_stack',
                                         derotate=False,
                                         stack='mean')
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('take_psf_avg')
+        self.pipeline.run_module('stack')
 
-        data = self.pipeline.get_data('psf_avg')
+        data = self.pipeline.get_data('psf_stack')
         assert data.shape == (1, 15, 15)
 
-        module = MCMCsamplingModule(param=(0.1485, 0., 0.),
-                                    bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),
-                                    name_in='mcmc',
-                                    image_in_tag='adi_scale',
-                                    psf_in_tag='psf_avg',
+        module = MCMCsamplingModule(name_in='mcmc',
+                                    image_in_tag='adi',
+                                    psf_in_tag='psf_stack',
                                     chain_out_tag='mcmc',
+                                    param=(0.15, 0., 1.),
+                                    bounds=((0.1, 0.2), (-2., 2.), (-1., 2.)),
                                     nwalkers=50,
                                     nsteps=150,
                                     psf_scaling=-1.,
                                     pca_number=1,
-                                    aperture={'type':'circular',
-                                              'pos_x':7.0,
-                                              'pos_y':12.5,
-                                              'radius':0.1},
+                                    aperture=(7, 13, 0.1),
                                     mask=None,
                                     extra_rot=0.,
+                                    merit='gaussian',
+                                    residuals='median',
                                     scale=2.,
-                                    sigma=(1e-3, 1e-1, 1e-2),
-                                    prior='flat',
-                                    variance='gaussian')
+                                    sigma=(1e-3, 1e-1, 1e-2))
 
         self.pipeline.add_module(module)
 
@@ -374,81 +343,8 @@ class TestFluxPosition:
                                              '`arr[np.array(seq)]`, which will result either ' \
                                              'in an error or a different result.'
 
-        single = self.pipeline.get_data('mcmc')
-        single = single[:, 20:, :].reshape((-1, 3))
-        assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
-        assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
-
-    def test_mcmc_sampling_poisson(self):
-
-        module = MCMCsamplingModule(param=(0.1485, 0., 0.),
-                                    bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),
-                                    name_in='mcmc_prior',
-                                    image_in_tag='adi_scale',
-                                    psf_in_tag='psf_avg',
-                                    chain_out_tag='mcmc_prior',
-                                    nwalkers=50,
-                                    nsteps=150,
-                                    psf_scaling=-1.,
-                                    pca_number=1,
-                                    aperture={'type':'elliptical',
-                                              'pos_x':7.0,
-                                              'pos_y':12.5,
-                                              'semimajor':0.1,
-                                              'semiminor':0.1,
-                                              'angle':0.0},
-                                    mask=None,
-                                    extra_rot=0.,
-                                    scale=2.,
-                                    sigma=(1e-3, 1e-1, 1e-2),
-                                    prior='aperture',
-                                    variance='poisson')
-
-        self.pipeline.add_module(module)
-
-        with pytest.warns(FutureWarning) as warning:
-            self.pipeline.run_module('mcmc_prior')
-
-        assert warning[0].message.args[0] == 'Using a non-tuple sequence for multidimensional ' \
-                                             'indexing is deprecated; use `arr[tuple(seq)]` ' \
-                                             'instead of `arr[seq]`. In the future this will be ' \
-                                             'interpreted as an array index, ' \
-                                             '`arr[np.array(seq)]`, which will result either ' \
-                                             'in an error or a different result.'
-
-        single = self.pipeline.get_data('mcmc_prior')
-        single = single[:, 20:, :].reshape((-1, 3))
-        assert np.allclose(np.median(single[:, 0]), 0.148, rtol=0., atol=0.01)
-        assert np.allclose(np.median(single[:, 1]), 0., rtol=0., atol=0.2)
-        assert np.allclose(np.median(single[:, 2]), 0., rtol=0., atol=0.1)
-
-    def test_mcmc_sampling_wrong_prior(self):
-
-        module = MCMCsamplingModule(param=(0.1485, 0., 0.),
-                                    bounds=((0.1, 0.25), (-5., 5.), (-0.5, 0.5)),
-                                    name_in='mcmc_wrong_prior',
-                                    image_in_tag='adi_scale',
-                                    psf_in_tag='psf_avg',
-                                    chain_out_tag='mcmc_prior',
-                                    nwalkers=50,
-                                    nsteps=150,
-                                    psf_scaling=-1.,
-                                    pca_number=1,
-                                    aperture={'type':'circular',
-                                              'pos_x':7.0,
-                                              'pos_y':12.5,
-                                              'radius':0.1},
-                                    mask=None,
-                                    extra_rot=0.,
-                                    scale=2.,
-                                    sigma=(1e-3, 1e-1, 1e-2),
-                                    prior='test',
-                                    variance='gaussian')
-
-        self.pipeline.add_module(module)
-
-        with pytest.raises(ValueError) as error:
-            self.pipeline.run_module('mcmc_wrong_prior')
-
-        assert str(error.value) == 'Prior type not recognized.'
+        data = self.pipeline.get_data('mcmc')
+        data = data[:, 50:, :].reshape((-1, 3))
+        assert np.allclose(np.median(data[:, 0]), 0.15, rtol=0., atol=0.1)
+        assert np.allclose(np.median(data[:, 1]), 0., rtol=0., atol=1.0)
+        assert np.allclose(np.median(data[:, 2]), 0.0, rtol=0., atol=1.)

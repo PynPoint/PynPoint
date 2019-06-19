@@ -19,6 +19,8 @@ class SubtractImagesModule(ProcessingModule):
     Pipeline module for subtracting two sets of images.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -71,7 +73,6 @@ class SubtractImagesModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in1_port.get_shape()[0]
-
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
@@ -82,7 +83,7 @@ class SubtractImagesModule(ProcessingModule):
             images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
             images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
 
-            self.m_image_out_port.append(self.m_scaling*(images1-images2))
+            self.m_image_out_port.append(self.m_scaling*(images1-images2), data_dim=3)
 
         sys.stdout.write('Running SubtractImagesModule... [DONE]\n')
         sys.stdout.flush()
@@ -97,6 +98,8 @@ class AddImagesModule(ProcessingModule):
     """
     Pipeline module for adding two sets of images.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -148,9 +151,8 @@ class AddImagesModule(ProcessingModule):
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
             raise ValueError('The shape of the two input tags has to be the same.')
 
-        nimages = self.m_image_in1_port.get_shape()[0]
         memory = self._m_config_port.get_attribute('MEMORY')
-
+        nimages = self.m_image_in1_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
@@ -161,7 +163,7 @@ class AddImagesModule(ProcessingModule):
             images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
             images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
 
-            self.m_image_out_port.append(self.m_scaling*(images1+images2))
+            self.m_image_out_port.append(self.m_scaling*(images1+images2), data_dim=3)
 
         sys.stdout.write('Running AddImagesModule... [DONE]\n')
         sys.stdout.flush()
@@ -176,6 +178,8 @@ class RotateImagesModule(ProcessingModule):
     """
     Pipeline module for rotating images.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -221,10 +225,7 @@ class RotateImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
-
-        ndim = self.m_image_in_port.get_ndim()
         nimages = self.m_image_in_port.get_shape()[0]
-
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
@@ -240,7 +241,7 @@ class RotateImagesModule(ProcessingModule):
                 # ndimage.rotate rotates in clockwise direction for positive angles
                 im_tmp = rotate(im_tmp, self.m_angle, reshape=False)
 
-                self.m_image_out_port.append(im_tmp, data_dim=ndim)
+                self.m_image_out_port.append(im_tmp, data_dim=3)
 
         sys.stdout.write('Running RotateImagesModule... [DONE]\n')
         sys.stdout.flush()
@@ -255,6 +256,8 @@ class RepeatImagesModule(ProcessingModule):
     """
     Pipeline module for repeating the images from a dataset.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,
@@ -313,7 +316,7 @@ class RepeatImagesModule(ProcessingModule):
 
             for j, _ in enumerate(frames[:-1]):
                 images = self.m_image_in_port[frames[j]:frames[j+1], ]
-                self.m_image_out_port.append(images)
+                self.m_image_out_port.append(images, data_dim=3)
 
         sys.stdout.write('Running RepeatImagesModule... [DONE]\n')
         sys.stdout.flush()

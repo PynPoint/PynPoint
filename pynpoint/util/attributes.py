@@ -4,20 +4,25 @@ Functions for adding attributes to a dataset in the central database.
 
 from __future__ import absolute_import
 
-import os
+from typeguard import typechecked
+
 import warnings
 
 import six
 import numpy as np
 
+from astropy.io import fits
+
 from pynpoint.core.attributes import get_attributes
+from pynpoint.core.dataio import ConfigPort, OutputPort
 
 
-def set_static_attr(fits_file,
-                    header,
-                    config_port,
-                    image_out_port,
-                    check=True):
+@typechecked
+def set_static_attr(fits_file: str,
+                    header: fits.header.Header,
+                    config_port: ConfigPort,
+                    image_out_port: OutputPort,
+                    check: bool = True) -> None:
     """
     Function which adds the static attributes to the central database.
 
@@ -75,10 +80,12 @@ def set_static_attr(fits_file,
                 warnings.warn(f'Static attribute {attr} (={fitskey}) not found in the FITS '
                               'header.')
 
-def set_nonstatic_attr(header,
-                       config_port,
-                       image_out_port,
-                       check=True):
+
+@typechecked
+def set_nonstatic_attr(header: fits.header.Header,
+                       config_port: ConfigPort,
+                       image_out_port: OutputPort,
+                       check: bool = True) -> None:
     """
     Function which adds the non-static attributes to the central database.
 
@@ -124,11 +131,13 @@ def set_nonstatic_attr(header,
 
                     image_out_port.append_attribute_data(attr, -1)
 
-def set_extra_attr(fits_file,
-                   nimages,
-                   config_port,
-                   image_out_port,
-                   first_index):
+
+@typechecked
+def set_extra_attr(fits_file: str,
+                   nimages: int,
+                   config_port: ConfigPort,
+                   image_out_port: OutputPort,
+                   first_index: int) -> int:
     """
     Function which adds extra attributes to the central database.
 

@@ -6,10 +6,13 @@ import sys
 import time
 import warnings
 
+from typing import Tuple
+
 import numpy as np
 
 from astropy.coordinates import EarthLocation
 from astropy.time import Time
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress, memory_frames
@@ -22,44 +25,41 @@ class PSFpreparationModule(ProcessingModule):
     and image normalization.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker, Timothy Gebhard'
+
+    @typechecked
     def __init__(self,
-                 name_in='psf_preparation',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr',
-                 mask_out_tag='mask_arr',
-                 norm=False,
-                 resize=None,
-                 cent_size=None,
-                 edge_size=None):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 mask_out_tag: str = None,
+                 norm: bool = False,
+                 resize: float = None,
+                 cent_size: float = None,
+                 edge_size: float = None) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
-            Default: 'psf_preparation'.
         image_in_tag : str
             Tag of the database entry that is read as input.
-            Default: 'im_arr'.
         image_out_tag : str
             Tag of the database entry with images that is written as output.
-            Default: 'im_arr'.
-        mask_out_tag : str, optional
+        mask_out_tag : str, None, optional
             Tag of the database entry with the mask that is written as output. If set to None, no
             mask array is saved.
-            Default: 'mask_arr'.
         norm : bool
-            Normalize each image by its Frobenius norm. Default: False.
-        resize : float
+            Normalize each image by its Frobenius norm.
+        resize : float, None
             DEPRECATED. This parameter is currently ignored by the module and will be removed in a
             future version of PynPoint.
-        cent_size : float, optional
+        cent_size : float, None, optional
             Radius of the central mask (in arcsec). No mask is used when set to None.
-            Default: None.
-        edge_size : float, optional
+        edge_size : float, None, optional
             Outer radius (in arcsec) beyond which pixels are masked. No outer mask is used when set
             to None. If the value is larger than half the image size then it will be set to half
             the image size.
-            Default: None.
 
         Returns
         -------
@@ -88,7 +88,8 @@ class PSFpreparationModule(ProcessingModule):
                           'being ignored, and the argument will be removed in a future version '
                           'of PynPoint.', DeprecationWarning)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Masks and normalizes the images.
 
@@ -122,7 +123,7 @@ class PSFpreparationModule(ProcessingModule):
 
         # Create 2D disk mask which will be applied to every frame
         mask = create_mask((int(im_shape[-2]), int(im_shape[-1])),
-                           [self.m_cent_size, self.m_edge_size]).astype(bool)
+                           (self.m_cent_size, self.m_edge_size)).astype(bool)
 
         # Keep track of the normalization vectors in case we are normalizing the images (if
         # we are not normalizing, this list will remain empty)
@@ -192,9 +193,12 @@ class AngleInterpolationModule(ProcessingModule):
     value of a data cube.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='angle_interpolation',
-                 data_tag='im_arr'):
+                 name_in: str,
+                 data_tag: str) -> None:
         """
         Parameters
         ----------
@@ -214,7 +218,8 @@ class AngleInterpolationModule(ProcessingModule):
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Calculates the parallactic angles of each frame by linearly
         interpolating between the start and end values of the data cubes. The values are written
@@ -271,10 +276,13 @@ class SortParangModule(ProcessingModule):
     Module to sort the images and non-static attributes with increasing INDEX.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='sort',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_sort'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -297,7 +305,8 @@ class SortParangModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Sorts the images and relevant non-static attributes.
 
@@ -377,21 +386,22 @@ class AngleCalculationModule(ProcessingModule):
     the cube. Instrument specific overheads are included.
     """
 
-    __author__ = 'Alexander Bohn'
+    __author__ = 'Alexander Bohn, Tomas Stolker'
 
+    @typechecked
     def __init__(self,
-                 instrument='NACO',
-                 name_in='angle_calculation',
-                 data_tag='im_arr'):
+                 name_in: str,
+                 data_tag: str,
+                 instrument: str = 'NACO') -> None:
         """
         Parameters
         ----------
-        instrument : str
-            Instrument name (*NACO*, *SPHERE/IRDIS*, or *SPHERE/IFS*)
         name_in : str
             Unique name of the module instance.
         data_tag : str
             Tag of the database entry for which the parallactic angles are written as attributes.
+        instrument : str
+            Instrument name ('NACO', 'SPHERE/IRDIS', or 'SPHERE/IFS').
 
         Returns
         -------
@@ -478,7 +488,8 @@ class AngleCalculationModule(ProcessingModule):
                               'The input will be parsed accordingly. Using the regular '
                               '\'DEC\' keyword will lead to wrong parallactic angles.')
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Calculates the parallactic angles from the position of the object
         on the sky and the telescope location on earth. The start of the observation is used to
@@ -558,8 +569,8 @@ class AngleCalculationModule(ProcessingModule):
 
             # Extrapolate sideral times from start time of the cube for each frame of it
             sid_time_arr = np.linspace(sid_time+self.m_O_START,
-                                       (sid_time+self.m_O_START) + (exptime+self.m_DIT_DELAY+ \
-                                                 self.m_ROT)*(tmp_steps-1),
+                                       (sid_time+self.m_O_START) +
+                                       (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
                                        tmp_steps)
 
             # Convert to degrees
@@ -574,7 +585,7 @@ class AngleCalculationModule(ProcessingModule):
             lat_rad = np.deg2rad(tel_lat)
 
             p_angle = np.arctan2(np.sin(hour_angle_rad),
-                                 (np.cos(dec_rad)*np.tan(lat_rad) - \
+                                 (np.cos(dec_rad)*np.tan(lat_rad) -
                                   np.sin(dec_rad)*np.cos(hour_angle_rad)))
 
             new_angles = np.append(new_angles, np.rad2deg(p_angle))
@@ -612,23 +623,18 @@ class SDIpreparationModule(ProcessingModule):
     Module for preparing continuum frames for SDI subtraction.
     """
 
-    __author__ = 'Gabriele Cugno'
+    __author__ = 'Gabriele Cugno, Tomas Stolker'
 
+    @typechecked
     def __init__(self,
-                 wavelength,
-                 width,
-                 name_in='SDI_preparation',
-                 image_in_tag='im_arr',
-                 image_out_tag='im_arr_SDI'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 wavelength: Tuple[float, float],
+                 width: Tuple[float, float]) -> None:
         """
         Parameters
         ----------
-        wavelength : tuple(float, float)
-            The central wavelengths of the line and continuum filter, (line, continuum), in
-            arbitrary but identical units.
-        width : tuple(float, float)
-            The equivalent widths of the line and continuum filter, (line, continuum), in
-            arbitrary but identical units.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -636,6 +642,12 @@ class SDIpreparationModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        wavelength : tuple(float, float)
+            The central wavelengths of the line and continuum filter, (line, continuum), in
+            arbitrary but identical units.
+        width : tuple(float, float)
+            The equivalent widths of the line and continuum filter, (line, continuum), in
+            arbitrary but identical units.
 
         Returns
         -------
@@ -654,7 +666,8 @@ class SDIpreparationModule(ProcessingModule):
         self.m_line_width = width[0]
         self.m_cnt_width = width[1]
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Normalizes the images for the different filter widths,
         upscales the images, and crops the images to the initial image shape in order to
@@ -685,7 +698,7 @@ class SDIpreparationModule(ProcessingModule):
             if i == 0:
                 npix_del = im_scale.shape[-1] - image.shape[-1]
 
-                if npix_del%2 == 0:
+                if npix_del % 2 == 0:
                     npix_del_a = int(npix_del/2)
                     npix_del_b = int(npix_del/2)
 
@@ -695,7 +708,7 @@ class SDIpreparationModule(ProcessingModule):
 
             im_crop = im_scale[npix_del_a:-npix_del_b, npix_del_a:-npix_del_b]
 
-            if npix_del%2 == 1:
+            if npix_del % 2 == 1:
                 im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation='spline')
 
             self.m_image_out_port.append(im_crop, data_dim=3)

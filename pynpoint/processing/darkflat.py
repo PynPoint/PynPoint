@@ -2,15 +2,23 @@
 Pipeline modules for dark frame and flat field calibrations.
 """
 
+import sys
+import time
 import warnings
+
+from typing import Tuple
 
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.module import progress, memory_frames
 
 
-def _master_frame(data,
-                  im_shape):
+@typechecked
+def _master_frame(data: np.ndarray,
+                  im_shape: Tuple[int, int, int]) -> np.ndarray:
     """
     Internal function which creates a master dark/flat by calculating the mean (3D data) and
     cropping the frames to the shape of the science images if needed.
@@ -19,7 +27,7 @@ def _master_frame(data,
     ----------
     data : numpy.ndarray
         Input array (2D) with mean of the dark or flat frames.
-    im_shape : numpy.ndarray
+    im_shape : tuple(int, int, int)
         Shape of the science images (3D).
 
     Returns
@@ -52,11 +60,14 @@ class DarkCalibrationModule(ProcessingModule):
     Pipeline module to subtract a master dark from the science data.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='dark_calibration',
-                 image_in_tag='im_arr',
-                 dark_in_tag='dark_arr',
-                 image_out_tag='dark_cal_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 dark_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -81,7 +92,8 @@ class DarkCalibrationModule(ProcessingModule):
         self.m_dark_in_port = self.add_input_port(dark_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master dark with the same shape as the science
         data and subtracts the dark frame from the science data.
@@ -92,19 +104,29 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        def _dark_calibration(image_in, dark_in):
-            return image_in - dark_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         dark = self.m_dark_in_port.get_all()
 
         master = _master_frame(data=np.mean(dark, axis=0),
                                im_shape=self.m_image_in_port.get_shape())
 
-        self.apply_function_to_images(_dark_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running DarkCalibrationModule',
-                                      func_args=(master, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running DarkCalibrationModule...', start_time)
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images - master, data_dim=3)
+
+        sys.stdout.write('Running DarkCalibrationModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'dark_in_tag = {self.m_dark_in_port.tag}'
         self.m_image_out_port.add_history('DarkCalibrationModule', history)
@@ -117,11 +139,14 @@ class FlatCalibrationModule(ProcessingModule):
     Pipeline module to apply a flat field correction to the science data.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='flat_calibration',
-                 image_in_tag='dark_cal_arr',
-                 flat_in_tag='flat_arr',
-                 image_out_tag='flat_cal_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 flat_in_tag: str,
+                 image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -146,7 +171,8 @@ class FlatCalibrationModule(ProcessingModule):
         self.m_flat_in_port = self.add_input_port(flat_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master flat with the same shape as the science
         image and divides the science images by the flat field.
@@ -157,8 +183,12 @@ class FlatCalibrationModule(ProcessingModule):
             None
         """
 
-        def _flat_calibration(image_in, flat_in):
-            return image_in / flat_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         flat = self.m_flat_in_port.get_all()
 
@@ -172,11 +202,17 @@ class FlatCalibrationModule(ProcessingModule):
         # normalization, median value is 1 afterwards
         master /= np.median(master)
 
-        self.apply_function_to_images(_flat_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running FlatCalibrationModule',
-                                      func_args=(master, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running FlatCalibrationModule...', start_time)
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images/master, data_dim=3)
+
+        sys.stdout.write('Running FlatCalibrationModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'flat_in_tag = {self.m_flat_in_port.tag}'
         self.m_image_out_port.add_history('FlatCalibrationModule', history)
