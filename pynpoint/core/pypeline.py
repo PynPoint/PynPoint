@@ -266,7 +266,7 @@ class Pypeline:
         module.connect_database(self.m_data_storage)
 
         if module.name in self._m_modules:
-            warnings.warn(f'Pipeline module names need to be unique. Overwriting module ' \
+            warnings.warn(f'Pipeline module names need to be unique. Overwriting module '
                           f'\'{module.name}\'.')
 
         self._m_modules[module.name] = module
@@ -385,8 +385,8 @@ class Pypeline:
         validation = self.validate_pipeline()
 
         if not validation[0]:
-            raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data ' \
-                                 f'under a tag which is not created by a previous module or ' \
+            raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
+                                 f'under a tag which is not created by a previous module or '
                                  f'does not exist in the database.')
 
         sys.stdout.write(' [DONE]\n')

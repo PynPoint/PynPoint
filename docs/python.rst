@@ -36,16 +36,20 @@ Conventions
 Before we start writing a new PynPoint module, please take notice of the following style conventions:
 
     * |pep8| -- style guide for Python code
-    * We recommend using |pylint| to analyze newly written code in order to keep PynPoint well structured, readable, and documented.
+    * We recommend using |pylint| and |pycodestyle| to analyze newly written code in order to keep PynPoint well structured, readable, and documented.
     * Names of class member should start with ``m_``.
     * Images should ideally not be read from and written to the central database at once but in amounts of ``MEMORY``.
 
 .. |pep8| raw:: html
 
-   <a href="https://www.python.org/dev/peps/pep-0008" target="_blank">PEP 8</a>
+   <a href="https://www.python.org/dev/peps/pep-0008/" target="_blank">PEP 8</a>
 
 .. |pylint| raw:: html
 
    <a href="https://www.pylint.org" target="_blank">pylint</a>
+
+.. |pycodestyle| raw:: html
+
+   <a href="https://pypi.org/project/pycodestyle/" target="_blank">pycodestyle</a>
 
 Now we are ready to code!

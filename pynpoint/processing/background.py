@@ -8,6 +8,8 @@ import warnings
 
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
 from pynpoint.util.module import progress
@@ -19,23 +21,26 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 shift,
-                 name_in='simple_background',
-                 image_in_tag='im_arr',
-                 image_out_tag='bg_sub_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 shift: int) -> None:
         """
         Parameters
         ----------
-        shift : int
-            Frame index offset for the background subtraction. Typically equal to the number of
-            frames per dither location.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
+        shift : int
+            Frame index offset for the background subtraction. Typically equal to the number of
+            frames per dither location.
 
         Returns
         -------
@@ -50,7 +55,8 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
 
         self.m_shift = shift
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Simple background subtraction with a constant index offset.
 
@@ -94,20 +100,16 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 shift=None,
-                 cubes=1,
-                 name_in='mean_background',
-                 image_in_tag='im_arr',
-                 image_out_tag='bg_sub_arr'):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 shift: int = None,
+                 cubes: int = 1) -> None:
         """
-        shift : int
-            Image index offset for the background subtraction. Typically equal to the number of
-            frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
-            select the background frames automatically. The *cubes* parameters should be set when
-            *shift* is set to None.
-        cubes : int
-            Number of consecutive cubes per dithering position.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -115,6 +117,13 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        shift : int, None
+            Image index offset for the background subtraction. Typically equal to the number of
+            frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
+            select the background frames automatically. The *cubes* parameters should be set when
+            *shift* is set to None.
+        cubes : int
+            Number of consecutive cubes per dithering position.
 
         Returns
         -------
@@ -130,7 +139,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         self.m_shift = shift
         self.m_cubes = cubes
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Mean background subtraction which uses either a constant index
         offset or the ``NFRAMES`` attributes. The mean background is calculated from the cubes
@@ -284,12 +294,15 @@ class LineSubtractionModule(ProcessingModule):
     used if no background data is available or to remove a detector bias.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='line_background',
-                 image_in_tag='im_arr',
-                 image_out_tag='bg_sub_arr',
-                 combine='median',
-                 mask=None):
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 combine: str = 'median',
+                 mask=None) -> None:
         """
         Parameters
         ----------
@@ -302,7 +315,7 @@ class LineSubtractionModule(ProcessingModule):
         combine : str
             The method by which the column and row pixel values are combined ('median' or 'mean').
             Using a mean-combination is computationally faster than a median-combination.
-        mask : float
+        mask : float, None
             The radius of the mask within which pixel values are ignored. No mask is used if set
             to None.
 
@@ -320,7 +333,8 @@ class LineSubtractionModule(ProcessingModule):
         self.m_combine = combine
         self.m_mask = mask
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Selects the pixel values in the column and row at each pixel
         position, computes the mean or median value while excluding pixels within the radius of
@@ -357,7 +371,7 @@ class LineSubtractionModule(ProcessingModule):
 
                 row_median = np.nanmedian(image_tmp, axis=1)
                 row_2d = np.tile(row_median, (im_shape[0], 1))
-                row_2d = np.rot90(row_2d) # 90 deg rotation in clockwise direction
+                row_2d = np.rot90(row_2d)  # 90 deg rotation in clockwise direction
 
                 subtract = col_2d + row_2d
 
@@ -390,12 +404,15 @@ class NoddingBackgroundModule(ProcessingModule):
     single FITS data cube.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 name_in='sky_subtraction',
-                 science_in_tag='im_arr',
-                 sky_in_tag='sky_arr',
-                 image_out_tag='im_arr',
-                 mode='both'):
+                 name_in: str,
+                 science_in_tag: str,
+                 sky_in_tag: str,
+                 image_out_tag: str,
+                 mode: str = 'both') -> None:
         """
         Parameters
         ----------
@@ -444,10 +461,7 @@ class NoddingBackgroundModule(ProcessingModule):
             Class for creating a time stamp.
             """
 
-            def __init__(self,
-                         time_in,
-                         im_type,
-                         index):
+            def __init__(self, time_in, im_type, index):
 
                 self.m_time = time_in
                 self.m_im_type = im_type
@@ -520,7 +534,8 @@ class NoddingBackgroundModule(ProcessingModule):
 
             return (previous_sky+next_sky)/2.
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Create list of time stamps, get sky and science images, and
         subtract the sky images from the science images.

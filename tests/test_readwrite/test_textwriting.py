@@ -54,17 +54,6 @@ class TestTextReading:
         assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
         assert data.shape == (100, 100)
 
-    def test_text_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            TextWritingModule(file_name=0.,
-                              name_in='text_write',
-                              output_dir=None,
-                              data_tag='images',
-                              header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
-
     def test_text_writing_ndim(self):
 
         data_4d = np.random.normal(loc=0, scale=2e-4, size=(5, 5, 5, 5))
@@ -124,17 +113,6 @@ class TestTextReading:
         assert np.allclose(np.mean(data), 5.5, rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_parang_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            ParangWritingModule(file_name=0.,
-                                name_in='parang_write2',
-                                output_dir=None,
-                                data_tag='images',
-                                header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
-
     def test_attribute_writing(self):
 
         attr_write = AttributeWritingModule(file_name='attribute.dat',
@@ -153,18 +131,6 @@ class TestTextReading:
         assert np.allclose(data[9], 10.0, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 5.5, rtol=limit, atol=0.)
         assert data.shape == (10, )
-
-    def test_attribute_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            AttributeWritingModule(file_name=0.,
-                                   name_in='attr_write2',
-                                   output_dir=None,
-                                   data_tag='images',
-                                   attribute='PARANG',
-                                   header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
 
     def test_attribute_not_present(self):
 

@@ -1,24 +1,29 @@
 """
-Functions for analysis of a point source.
+Functions for point source analysis.
 """
 
 import math
 
+from typing import Tuple
+
 import numpy as np
 
+from typeguard import typechecked
 from scipy.stats import t
 from scipy.ndimage.filters import gaussian_filter
 from skimage.feature import hessian_matrix
-from photutils import aperture_photometry, CircularAperture, EllipticalAperture
+from photutils import aperture_photometry, CircularAperture
 
-from pynpoint.util.image import shift_image, center_subpixel
+from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
+                                cartesian_to_polar
 
 
-def false_alarm(image,
-                x_pos,
-                y_pos,
-                size,
-                ignore):
+@typechecked
+def false_alarm(image: np.ndarray,
+                x_pos: float,
+                y_pos: float,
+                size: float,
+                ignore: bool) -> Tuple[float, float, float, float]:
     """
     Function for the formal t-test for high-contrast imaging at small working angles and the
     related false positive fraction (Mawet et al. 2014).
@@ -87,10 +92,12 @@ def false_alarm(image,
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
     return ap_phot[0], noise, t_test, 1.-t.cdf(t_test, num_ap-2)
 
-def student_t(t_input,
-              radius,
-              size,
-              ignore):
+
+@typechecked
+def student_t(t_input: Tuple[str, float],
+              radius: float,
+              size: float,
+              ignore: bool) -> float:
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
 
@@ -128,13 +135,15 @@ def student_t(t_input,
 
     return t_result
 
-def fake_planet(images,
-                psf,
-                parang,
-                position,
-                magnitude,
-                psf_scaling,
-                interpolation='spline'):
+
+@typechecked
+def fake_planet(images: np.ndarray,
+                psf: np.ndarray,
+                parang: np.ndarray,
+                position: Tuple[float, float],
+                magnitude: float,
+                psf_scaling: float,
+                interpolation: str = 'spline') -> np.ndarray:
     """
     Function to inject artificial planets in a dataset.
 
@@ -144,7 +153,7 @@ def fake_planet(images,
         Input images (3D).
     psf : numpy.ndarray
         PSF template (3D).
-    parang : float
+    parang : numpy.ndarray
         Parallactic angles (deg).
     position : tuple(float, float)
         Separation (pix) and position angle (deg) measured in counterclockwise with respect to the
@@ -188,52 +197,42 @@ def fake_planet(images,
 
     return images + im_shift
 
-def merit_function(residuals,
-                   function,
-                   variance,
-                   aperture,
-                   sigma):
+
+@typechecked
+def merit_function(residuals: np.ndarray,
+                   merit: str,
+                   aperture: Tuple[int, int, float],
+                   sigma: float) -> float:
 
     """
-    Function to calculate the merit function at a given position in the image residuals.
+    Function to calculate the figure of merit at a given position in the image residuals.
 
     Parameters
     ----------
     residuals : numpy.ndarray
         Residuals of the PSF subtraction (2D).
-    function : str
-        Figure of merit ('hessian' or 'sum').
-    variance : tuple(str, float)
-        Variance type and value for the likelihood function. The value is set to None in case a
-        Poisson distribution is assumed.
-    aperture : dict
-        Dictionary with the aperture properties. See for more information
-        :func:`~pynpoint.util.analysis.create_aperture`.
+    merit : str
+        Figure of merit for the chi-square function ('hessian', 'poisson', or 'gaussian').
+    aperture : tuple(int, int, float)
+        Position (y, x) of the aperture center (pix) and aperture radius (pix).
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
-        before the function of merit is calculated.
+        before the chi-square is calculated.
 
     Returns
     -------
     float
-        Merit value.
+        Chi-square ('poisson' and 'gaussian') or sum of the absolute values ('hessian').
     """
 
-    if function == 'hessian':
+    rr_grid = pixel_distance(im_shape=residuals.shape,
+                             position=(aperture[0], aperture[1]))
 
-        if aperture['type'] != 'circular':
-            raise ValueError('Measuring the Hessian is only possible with a circular aperture.')
+    indices = np.where(rr_grid < aperture[2])
 
-        npix = residuals.shape[-1]
+    if merit == 'hessian':
 
-        pos_x = aperture['pos_x']
-        pos_y = aperture['pos_y']
-
-        x_grid = np.linspace(-(pos_x+0.5), npix-(pos_x+0.5), npix)
-        y_grid = np.linspace(-(pos_y+0.5), npix-(pos_y+0.5), npix)
-
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-        rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
+        # This is not the chi-square but simply the sum of the absolute values
 
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
@@ -242,69 +241,38 @@ def merit_function(residuals,
                                                             order='rc')
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-        hes_det[rr_grid > aperture['radius']] = 0.
-        merit = np.sum(np.abs(hes_det))
 
-    elif function == 'sum':
+        chi_square = np.sum(np.abs(hes_det[indices]))
+
+    elif merit == 'poisson':
 
         if sigma > 0.:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-        # https://photutils.readthedocs.io/en/stable/overview.html
-        # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
-        # corresponds to the center of the lowest, leftmost array element. This means that
-        # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
-        # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
+        chi_square = np.sum(np.abs(residuals[indices]))
 
-        phot_table = aperture_photometry(np.abs(residuals),
-                                         create_aperture(aperture),
-                                         method='exact')
+    elif merit == 'gaussian':
 
-        merit = phot_table['aperture_sum'][0]
+        # separation (pix) and position angle (deg)
+        sep_ang = cartesian_to_polar(center=center_subpixel(residuals),
+                                     y_pos=aperture[0],
+                                     x_pos=aperture[1])
 
-        if variance[0] == 'gaussian':
-            merit = merit**2/variance[1]
+        if sigma > 0.:
+            residuals = gaussian_filter(input=residuals, sigma=sigma)
 
-    else:
+        selected = select_annulus(image_in=residuals,
+                                  radius_in=sep_ang[0]-aperture[2],
+                                  radius_out=sep_ang[0]+aperture[2],
+                                  mask_position=aperture[0:2],
+                                  mask_radius=aperture[2])
 
-        raise ValueError('Merit function not recognized.')
-
-    return merit
-
-def create_aperture(aperture):
-    """
-    Function to create a circular or elliptical aperture.
-
-    Parameters
-    ----------
-    aperture : dict
-        Dictionary with the aperture properties. The aperture 'type' can be 'circular' or
-        'elliptical' (str). Both types of apertures require a position, 'pos_x' and 'pos_y'
-        (float), where the aperture is placed. The circular aperture requires a 'radius'
-        (in pixels, float) and the elliptical aperture requires a 'semimajor' and 'semiminor'
-        axis (in pixels, float), and an 'angle' (deg). The rotation angle in degrees of the
-        semimajor axis from the positive x axis. The rotation angle increases counterclockwise.
-
-    Returns
-    -------
-    photutils.aperture.circle.CircularAperture or photutils.aperture.circle.EllipticalAperture
-        Aperture object.
-    """
-
-    if aperture['type'] == 'circular':
-
-        phot_ap = CircularAperture((aperture['pos_x'], aperture['pos_y']),
-                                   aperture['radius'])
-
-    elif aperture['type'] == 'elliptical':
-
-        phot_ap = EllipticalAperture((aperture['pos_x'], aperture['pos_y']),
-                                     aperture['semimajor'],
-                                     aperture['semiminor'],
-                                     math.radians(aperture['angle']))
+        chi_square = np.sum(residuals[indices]**2)/np.var(selected)
 
     else:
 
-        raise ValueError('Aperture type not recognized.')
+        raise ValueError('Figure of merit not recognized. Please use \'hessian\', \'poisson\' '
+                         'or \'gaussian\'. Previous use of \'sum\' should now be set as '
+                         '\'poisson\'.')
 
-    return phot_ap
+    return chi_square

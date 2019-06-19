@@ -2,8 +2,9 @@
 Pipeline modules for resizing of images.
 """
 
+import sys
 import math
-import warnings
+import time
 
 from typing import Union, Tuple
 
@@ -13,6 +14,7 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, scale_image
+from pynpoint.util.module import progress, memory_frames
 
 
 class CropImagesModule(ProcessingModule):
@@ -61,7 +63,7 @@ class CropImagesModule(ProcessingModule):
         self.m_center = center
 
         if self.m_center is not None:
-            self.m_center = (self.m_center[1], self.m_center[0]) # (y, x)
+            self.m_center = (self.m_center[1], self.m_center[0])  # (y, x)
 
     @typechecked
     def run(self) -> None:
@@ -75,20 +77,37 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        # Get memory and number of images to split the frames into chunks
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
+
+        # Convert size parameter from arcseconds to pixels
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        self.m_size = int(math.ceil(self.m_size / pixscale))
 
-        self.m_size = int(math.ceil(self.m_size/pixscale))
+        # Crop images chunk by chunk
+        start_time = time.time()
+        for i in range(len(frames[:-1])):
 
-        def _crop(image_in, size, center):
+            # Update progress bar
+            progress(i, len(frames[:-1]), 'Running CropImagesModule...', start_time)
 
-            return crop_image(image_in, center, size)
+            # Select and crop images in the current chunk
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = crop_image(images, self.m_center, self.m_size, copy=False)
 
-        self.apply_function_to_images(_crop,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running CropImagesModule',
-                                      func_args=(self.m_size, self.m_center))
+            # Write cropped images to output port
+            self.m_image_out_port.append(images, data_dim=3)
 
+        # Update progress bar (cropping of images is finished)
+        sys.stdout.write('Running CropImagesModule... [DONE]\n')
+        sys.stdout.flush()
+
+        # Save history and copy attributes
         history = f'image size [pix] = {self.m_size}'
         self.m_image_out_port.add_history('CropImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -168,17 +187,17 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        def _image_scaling(image_in, scaling_x, scaling_y, scaling_flux):
+        def _image_scaling(image_in, scaling_y, scaling_x, scaling_flux):
 
-            return scaling_flux * scale_image(image_in, scaling_x, scaling_y)
+            return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
 
         self.apply_function_to_images(_image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Running ScaleImagesModule',
-                                      func_args=(self.m_scaling_x,
-                                                 self.m_scaling_y,
-                                                 self.m_scaling_flux,))
+                                      func_args=(self.m_scaling_y,
+                                                 self.m_scaling_x,
+                                                 self.m_scaling_flux))
 
         history = f'scaling = ({self.m_scaling_x:.2f}, {self.m_scaling_y:.2f}, ' \
                   f'{self.m_scaling_flux:.2f})'
@@ -241,27 +260,38 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
+
         shape_in = self.m_image_in_port.get_shape()
 
         shape_out = (shape_in[-2]+int(self.m_lines[2])+int(self.m_lines[3]),
                      shape_in[-1]+int(self.m_lines[0])+int(self.m_lines[1]))
 
-        def _add_lines(image_in, lines):
-            image_out = np.zeros(shape_out)
+        self.m_lines[1] = shape_out[1] - self.m_lines[1]  # right side of image
+        self.m_lines[3] = shape_out[0] - self.m_lines[3]  # top side of image
 
-            image_out[int(lines[2]):int(lines[3]),
-                      int(lines[0]):int(lines[1])] = image_in
+        start_time = time.time()
 
-            return image_out
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running AddLinesModule...', start_time)
 
-        self.m_lines[1] = shape_out[1] - self.m_lines[1] # right side of image
-        self.m_lines[3] = shape_out[0] - self.m_lines[3] # top side of image
+            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-        self.apply_function_to_images(_add_lines,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running AddLinesModule',
-                                      func_args=(self.m_lines, ))
+            image_out = np.zeros((frames[i+1]-frames[i], shape_out[0], shape_out[1]))
+
+            image_out[:,
+                      int(self.m_lines[2]):int(self.m_lines[3]),
+                      int(self.m_lines[0]):int(self.m_lines[1])] = image_in
+
+            self.m_image_out_port.append(image_out, data_dim=3)
+
+        sys.stdout.write('Running AddLinesModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('AddLinesModule', history)
@@ -317,17 +347,28 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        def _remove_lines(image_in, lines):
-            shape_in = image_in.shape
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
 
-            return image_in[int(lines[2]):shape_in[0]-int(lines[3]),
-                            int(lines[0]):shape_in[1]-int(lines[1])]
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
-        self.apply_function_to_images(_remove_lines,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running RemoveLinesModule',
-                                      func_args=(self.m_lines, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running RemoveLinesModule...', start_time)
+
+            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            image_out = image_in[:,
+                                 int(self.m_lines[2]):image_in.shape[1]-int(self.m_lines[3]),
+                                 int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
+
+            self.m_image_out_port.append(image_out, data_dim=3)
+
+        sys.stdout.write('Running RemoveLinesModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('RemoveLinesModule', history)

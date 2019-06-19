@@ -5,17 +5,20 @@ Functions for testing the pipeline and modules.
 import os
 import math
 import shutil
-import shlex
 import subprocess
+
+from typing import Union, List, Tuple
 
 import h5py
 import numpy as np
 
-from scipy.ndimage import shift
+from typeguard import typechecked
 from astropy.io import fits
+from scipy.ndimage import shift
 
 
-def create_config(filename):
+@typechecked
+def create_config(filename: str) -> None:
     """
     Create a configuration file.
 
@@ -53,9 +56,11 @@ def create_config(filename):
         file_obj.write('MEMORY: 39\n')
         file_obj.write('CPU: 1\n')
 
-def create_random(path,
-                  ndit=10,
-                  parang=np.arange(1., 11., 1.)):
+
+@typechecked
+def create_random(path: str,
+                  ndit: int = 10,
+                  parang: Union[np.ndarray, None] = np.arange(1., 11., 1.)) -> None:
     """
     Create a stack of images with Gaussian distributed pixel values.
 
@@ -65,7 +70,7 @@ def create_random(path,
         Working folder.
     ndit : int
         Number of images.
-    parang : numpy.ndarray
+    parang : numpy.ndarray, None
         Parallactic angles.
 
     Returns
@@ -89,14 +94,16 @@ def create_random(path,
         h5f.create_dataset('header_images/PARANG', data=parang)
     h5f.close()
 
-def create_fits(path,
-                filename,
-                image,
-                ndit,
-                exp_no=0,
-                parang=np.array([0., 0.]),
-                x0=0.,
-                y0=0.):
+
+@typechecked
+def create_fits(path: str,
+                filename: str,
+                image: np.ndarray,
+                ndit: int,
+                exp_no: int = 0,
+                parang: List[float] = [0., 0.],
+                x0: float = 0.,
+                y0: float = 0.):
     """
     Create a FITS file with images and header information.
 
@@ -138,17 +145,19 @@ def create_fits(path,
     hdu.data = image
     hdu.writeto(os.path.join(path, filename))
 
-def create_fake(path,
-                ndit,
-                nframes,
-                exp_no,
-                npix,
-                fwhm,
-                x0,
-                y0,
-                angles,
-                sep,
-                contrast):
+
+@typechecked
+def create_fake(path: str,
+                ndit: List[int],
+                nframes: List[int],
+                exp_no: List[int],
+                npix: Tuple[int, int],
+                fwhm: Union[float, None],
+                x0: List[float],
+                y0: List[float],
+                angles: List[List[float]],
+                sep: Union[float, None],
+                contrast: Union[float, None]) -> None:
     """
     Create ADI test data with a fake planet.
 
@@ -164,7 +173,7 @@ def create_fake(path,
         Exposure numbers.
     npix : tupe(int, int)
         Number of pixels in x and y direction.
-    fwhm : float
+    fwhm : float, None
         Full width at half maximum (pix) of the PSF.
     x0 : list(float, )
         Horizontal positions of the star.
@@ -172,9 +181,9 @@ def create_fake(path,
         Vertical positions of the star.
     angles : list(list(float, float), )
         Derotation angles (deg).
-    sep : float
+    sep : float, None
         Separation of the planet.
-    contrast : float
+    contrast : float, None
         Brightness contrast of the planet.
 
     Returns
@@ -213,8 +222,8 @@ def create_fake(path,
                 image[i, 0:npix[1], 0:npix[0]] += star
 
             if contrast is not None and sep is not None:
-                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
-                         (2.*sigma**2))
+                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
+                                                                  (2.*sigma**2))
                 x_shift = sep*math.cos(parang[count]*math.pi/180.)
                 y_shift = sep*math.sin(parang[count]*math.pi/180.)
                 planet = shift(planet, (x_shift, y_shift), order=5)
@@ -225,17 +234,19 @@ def create_fake(path,
         create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j],
                     angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
 
-def create_star_data(path,
-                     npix_x=100,
-                     npix_y=100,
-                     x0=[50., 50., 50., 50.],
-                     y0=[50., 50., 50., 50.],
-                     parang_start=[0., 5., 10., 15.],
-                     parang_end=[5., 10., 15., 20.],
-                     exp_no=[1, 2, 3, 4],
-                     ndit=10,
-                     nframes=10,
-                     noise=True):
+
+@typechecked
+def create_star_data(path: str,
+                     npix_x: int = 100,
+                     npix_y: int = 100,
+                     x0: List[float] = [50., 50., 50., 50.],
+                     y0: List[float] = [50., 50., 50., 50.],
+                     parang_start: List[float] = [0., 5., 10., 15.],
+                     parang_end: List[float] = [5., 10., 15., 20.],
+                     exp_no: List[int] = [1, 2, 3, 4],
+                     ndit: int = 10,
+                     nframes: int = 10,
+                     noise: bool = True) -> None:
     """
     Create data with a stellar PSF and Gaussian noise.
 
@@ -286,8 +297,8 @@ def create_star_data(path,
         image = np.zeros((nframes, npix_x, npix_y))
 
         for i in range(nframes):
-            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/ \
-                         (2.*sigma**2))
+            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
+                                                         (2.*sigma**2))
             if noise:
                 image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
 
@@ -303,10 +314,12 @@ def create_star_data(path,
         hdu.data = image
         hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
 
-def create_waffle_data(path,
-                       npix,
-                       x_spot,
-                       y_spot):
+
+@typechecked
+def create_waffle_data(path: str,
+                       npix: int,
+                       x_spot: List[float],
+                       y_spot: List[float]) -> None:
     """
     Create data with satellite spots and Gaussian noise.
 
@@ -340,8 +353,8 @@ def create_waffle_data(path,
     image = np.zeros((npix, npix))
 
     for j, _ in enumerate(x_spot):
-        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2)/ \
-               (2.*sigma**2))
+        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2) /
+                                               (2.*sigma**2))
         image += star
 
     hdu = fits.PrimaryHDU()
@@ -356,9 +369,11 @@ def create_waffle_data(path,
     hdu.data = image
     hdu.writeto(os.path.join(path, 'image01.fits'))
 
-def remove_test_data(path,
-                     folders=None,
-                     files=None):
+
+@typechecked
+def remove_test_data(path: str,
+                     folders: List[str] = None,
+                     files: List[str] = None) -> None:
     """
     Function to remove data created by the test cases.
 
@@ -388,7 +403,9 @@ def remove_test_data(path,
         for item in files:
             os.remove(path+item)
 
-def create_near_data(path):
+
+@typechecked
+def create_near_data(path: str) -> None:
     """
     Create a stack of images with Gaussian distributed pixel values.
 

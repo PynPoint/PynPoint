@@ -16,6 +16,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestLimits:
 
     def setup_class(self):
@@ -145,7 +146,7 @@ class TestLimits:
         urlretrieve(url, filename)
 
         module = MassLimitsModule(model_file=filename,
-                                  star_prop={'magnitude':10., 'distance':100., 'age':20.},
+                                  star_prop={'magnitude': 10., 'distance': 100., 'age': 20.},
                                   name_in='mass',
                                   contrast_in_tag='contrast_limits',
                                   mass_out_tag='mass_limits',

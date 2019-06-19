@@ -14,6 +14,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestPsfSubtraction:
 
     def setup_class(self):
@@ -480,17 +481,20 @@ class TestPsfSubtraction:
 
         data_single = self.pipeline.get_data('res_mean_single_mask')
         data_multi = self.pipeline.get_data('res_mean_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('res_median_single_mask')
         data_multi = self.pipeline.get_data('res_median_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('res_weighted_single_mask')
         data_multi = self.pipeline.get_data('res_weighted_multi_mask')
-        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12], rtol=1e-6, atol=0.)
+        assert np.allclose(data_single[data_single > 1e-12], data_multi[data_multi > 1e-12],
+                           rtol=1e-6, atol=0.)
         assert data_single.shape == data_multi.shape
 
         data_single = self.pipeline.get_data('basis_single_mask')
