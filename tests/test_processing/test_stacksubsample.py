@@ -15,6 +15,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestStackSubset:
 
     def setup_class(self):
@@ -179,7 +180,6 @@ class TestStackSubset:
                                     name_in='combine1',
                                     image_out_tag='combine1')
 
-
         self.pipeline.add_module(combine)
 
         with pytest.warns(UserWarning) as warning:
@@ -204,7 +204,6 @@ class TestStackSubset:
                                     index_init=True,
                                     name_in='combine2',
                                     image_out_tag='combine2')
-
 
         self.pipeline.add_module(combine)
         self.pipeline.run_module('combine2')

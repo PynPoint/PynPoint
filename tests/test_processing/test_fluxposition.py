@@ -20,6 +20,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestFluxPosition:
 
     def setup_class(self):

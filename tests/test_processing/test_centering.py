@@ -17,6 +17,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestCentering:
 
     def setup_class(self):
