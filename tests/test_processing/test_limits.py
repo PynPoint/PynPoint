@@ -162,11 +162,38 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_fpf_individual')
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 2.404504485062591, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.02219231590090082, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 2.5693583179370467, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.07886039733978416, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 
+    def test_contrast_curve_weighted(self):
+
+        module = ContrastCurveModule(name_in='contrast_weighted',
+                                     image_in_tag=('read', 'read_2'),
+                                     psf_in_tag='read',
+                                     contrast_out_tag='limits_weighted',
+                                     separation=(0.5, 0.6, 0.1),
+                                     angle=(0., 360., 180.),
+                                     threshold=('sigma', 5.),
+                                     psf_scaling=1.,
+                                     aperture=0.1,
+                                     pca_number=25,
+                                     cent_size=None,
+                                     edge_size=None,
+                                     residuals='weighted',
+                                     mode='individual',
+                                     extra_rot=0.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('contrast_weighted')
+
+        data = self.pipeline.get_data('limits_weighted')
+        assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 5.632367444891752, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.3277548819605067, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
+        assert data.shape == (1, 4)
 
     def test_mass_limits(self):
 

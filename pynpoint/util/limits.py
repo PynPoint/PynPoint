@@ -121,7 +121,7 @@ def contrast_limit(path_images: List[str],
                                        y_pos=yx_fake[0],
                                        size=aperture,
                                        ignore=False)
-
+        temp_t_noise += [t_noise]
         # Aperture properties
         im_center = center_subpixel(images)
 
@@ -133,21 +133,42 @@ def contrast_limit(path_images: List[str],
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
         temp_flux_in += [flux_in]
-        temp_t_noise += [t_noise]
+        
 
     if residuals == 'mean':
         flux_in = np.mean(temp_flux_in)
+        t_noise = np.mean(temp_t_noise)
     elif residuals == 'median':
         flux_in = np.median(temp_flux_in)
+        t_noise = np.median(temp_t_noise)
     elif residuals == 'weighted':
-        # implement weighted and clipped method
-        # how to weight flux_in, as there is no noise given?
-        # -> weighted mean using var from false_alarm
-        flux_in = np.average(temp_flux_in, weights=1/np.var(t_noise))
-    elif residuals == 'clipped':
-        flux_in = np.mean(temp_flux_in)
+        # -> weighted average of the flux using 1/t_noise as weights
+        # normalize the weights to one
+        weights = np.array(temp_t_noise)/np.sum(temp_t_noise)
+        # compute the weighted average
+        flux_in = np.average(a=temp_flux_in, weights=weights)
+        t_noise = np.average(a=temp_t_noise, weights=weights)
 
-    temp_im_res = []
+    elif residuals == 'clipped':
+        # clip flux using 3 time std range
+        clip_flux = 3 * np.std(temp_flux_in, ddof=1)
+        mean_flux = np.mean(temp_flux_in)
+        temp_flux_in = [flux \
+            if mean_flux - clip_flux < flux < mean_flux + clip_flux \
+            else np.nan \
+            for flux in temp_flux_in]
+        temp_t_noise = [flux \
+            if mean_flux - clip_flux < flux < mean_flux + clip_flux \
+            else np.nan \
+            for flux in temp_t_noise]
+        temp_flux_in = np.nanmean(temp_flux_in)
+        temp_t_noise = np.nanmean(temp_t_noise)
+    else:
+        raise AttributeError('residuals must be either "mean", "median", "weighted" or "clipped"'
+                             'but was {}'.format(residuals))
+
+    temp_im_res_derot = []
+    temp_im_res_rot = []
 
     for i, images in enumerate(path_images):
         images = np.load(images)
@@ -166,17 +187,22 @@ def contrast_limit(path_images: List[str],
                            psf_scaling=psf_scaling)
 
         # Run the PSF subtraction
-        _, im_res = pca_psf_subtraction(images=fake*mask,
-                                        angles=-1.*parang[i]+extra_rot,
-                                        pca_number=pca_number[i])
+        im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
+                                                       angles=-1.*parang[i]+extra_rot,
+                                                       pca_number=pca_number[i])
 
         # Stack the residuals
-        im_res = combine_residuals(method=residuals, res_rot=im_res)
-        temp_im_res += [im_res]
+        temp_im_res_derot += [im_res_derot]
+        temp_im_res_rot += [im_res_rot]
+
 
     # Stack the residuals
-    im_res = np.concatenate(temp_im_res)
-    im_res = combine_residuals(method=residuals, res_rot=im_res)
+    im_res_derot = np.concatenate(temp_im_res_derot)
+    im_res_rot = np.concatenate(temp_im_res_rot)
+
+    # Combine the residuals
+    im_res = combine_residuals(method=residuals, res_rot=im_res_derot,
+                               residuals=im_res_rot, angles=-1.*parang[i]+extra_rot)
 
     # Measure the flux of the fake planet
     flux_out, _, _, _ = false_alarm(image=im_res[0, ],

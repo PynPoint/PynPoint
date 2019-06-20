@@ -136,11 +136,13 @@ class ContrastCurveModule(ProcessingModule):
         self.m_image_in_ports = []
         if isinstance(image_in_tag, str):
             self.m_image_in_ports.append(self.add_input_port(image_in_tag))
+            n_tags = 1
         elif isinstance(image_in_tag, tuple):
+            n_tags = len(image_in_tag)
             for tag in image_in_tag:
                 self.m_image_in_ports.append(self.add_input_port(tag))
 
-        where_psf = np.argwhere(psf_in_tag == tag for tag in image_in_tag)
+        where_psf = np.argwhere([psf_in_tag == tag for tag in image_in_tag])
 
         if where_psf.size > 0:
             self.m_psf_in_port = self.m_image_in_ports[where_psf[0][0]]
@@ -155,7 +157,7 @@ class ContrastCurveModule(ProcessingModule):
         self.m_threshold = threshold
         self.m_aperture = aperture
         if isinstance(pca_number, int):
-            self.m_pca_number = tuple([pca_number] * len(image_in_tag))
+            self.m_pca_number = tuple([pca_number] * n_tags)
         elif isinstance(pca_number, tuple):
             assert len(pca_number) == len(image_in_tag), f'The number of provided PCA numbers must'\
                                                          f'be equal to the number of input tags'
@@ -173,9 +175,14 @@ class ContrastCurveModule(ProcessingModule):
 
             raise ValueError("The angular positions of the fake planets should lie between "
                              "0 deg and 360 deg.")
+
         if self.m_mode != 'combined' and self.m_mode != 'individual':
             raise AttributeError('mode must be either "individual" or "combined" but '
                                  'is {}'.format(self.m_mode))
+
+        if self.m_mode == 'combined':
+            assert len(self.m_pca_number) == 1, \
+                "When combining the input data, only one pca_number is permitted."
 
     def run(self) -> None:
         """
@@ -191,9 +198,14 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
+        self.m_contrast_out_port.del_all_data()
+        self.m_contrast_out_port.del_all_attributes()
+
         temp_images = []
         angles = []
 
+        sys.stdout.write('Grabbing Data...\r')
+        sys.stdout.flush()
         for input_port in self.m_image_in_ports:
             temp_images += [input_port.get_all()]
             angles += [input_port.get_attribute("PARANG")]
@@ -258,27 +270,36 @@ class ContrastCurveModule(ProcessingModule):
         temp_noise = []
         image_paths = []
 
+        sys.stdout.write('Computing Noise Levels...\r')
+        sys.stdout.flush()
         if self.m_mode == 'individual':
             for i, images in enumerate(temp_images):
-                _, im_res = pca_psf_subtraction(images=images*mask,
-                                                angles=-1.*angles[i]+self.m_extra_rot,
-                                                pca_number=self.m_pca_number[i])
+                im_res_rot, im_res_derot = pca_psf_subtraction(
+                    images=images*mask,
+                    angles=-1. * angles[i]+self.m_extra_rot,
+                    pca_number=self.m_pca_number[i])
 
-                noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
+                noise = combine_residuals(method=self.m_residuals,
+                                          res_rot=im_res_derot,
+                                          residuals=im_res_rot,
+                                          angles=-1.*angles[i]+self.m_extra_rot)
                 temp_noise += [noise]
 
                 # Create temporary files
                 image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
                 np.save(image_paths[-1], images)
+
         elif self.m_mode == 'combined':
             images = np.concatenate(temp_images)
             parang = np.concatenate(angles)
 
-            _, im_res = pca_psf_subtraction(images=images*mask,
-                                            angles=-1.*parang+self.m_extra_rot,
-                                            pca_number=self.m_pca_number[0])
+            im_res_rot, im_res_derot = pca_psf_subtraction(
+                images=images*mask,
+                angles=-1. * parang+self.m_extra_rot,
+                pca_number=self.m_pca_number[0])
 
-            noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
+            noise = combine_residuals(method=self.m_residuals, res_rot=im_res_derot,
+                                      residuals=im_res_rot, angles=-1.*parang+self.m_extra_rot)
             temp_noise += [noise]
             tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
             image_paths = [tmp_im_str]
@@ -287,6 +308,9 @@ class ContrastCurveModule(ProcessingModule):
             pass  # value error is raised in init
 
         pool = mp.Pool(cpu)
+
+        sys.stdout.write('Running ContrastCurveModule...\r')
+        sys.stdout.flush()
 
         for pos in positions:
             async_results.append(pool.apply_async(contrast_limit,
