@@ -239,16 +239,24 @@ class PcaTaskWriter(TaskWriter):
                 res_slice = to_slice(next_result.m_position)
 
                 if self.m_requirements[0]:
+                    self.m_mean_out_port._check_status_and_activate()
                     self.m_mean_out_port[res_slice] = next_result.m_data_array[0, :, :]
+                    self.m_mean_out_port.close_port()
 
                 if self.m_requirements[1]:
+                    self.m_median_out_port._check_status_and_activate()
                     self.m_median_out_port[res_slice] = next_result.m_data_array[1, :, :]
+                    self.m_median_out_port.close_port()
 
                 if self.m_requirements[2]:
+                    self.m_weighted_out_port._check_status_and_activate()
                     self.m_weighted_out_port[res_slice] = next_result.m_data_array[2, :, :]
+                    self.m_weighted_out_port.close_port()
 
                 if self.m_requirements[3]:
+                    self.m_clip_out_port._check_status_and_activate()
                     self.m_clip_out_port[res_slice] = next_result.m_data_array[3, :, :]
+                    self.m_clip_out_port.close_port()
 
             self.m_result_queue.task_done()
 
@@ -333,7 +341,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         super(PcaMultiprocessingCapsule, self).__init__(None, None, num_proc)
 
-    def create_writer(self, image_out_port):
+    def create_writer(self,
+                      image_out_port):
         """
         Method to create an instance of PcaTaskWriter.
 
@@ -356,7 +365,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                              self.m_data_mutex,
                              self.m_requirements)
 
-    def init_creator(self, image_in_port):
+    def init_creator(self,
+                     image_in_port):
         """
         Method to create an instance of PcaTaskCreator.
 
