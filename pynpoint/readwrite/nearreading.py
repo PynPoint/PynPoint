@@ -43,7 +43,7 @@ class NearReadingModule(ReadingModule):
                  chopa_out_tag: str = 'chopa',
                  chopb_out_tag: str = 'chopb',
                  do_chop_sub: bool = False,
-                 do_chopa_crop: bool = False,
+                 do_crop: bool = False,
                  crop_size: float = 5.,
                  crop_center: Union[tuple, None] = (432, 287)):
         """
@@ -62,13 +62,13 @@ class NearReadingModule(ReadingModule):
             ``chop_a_out_tag``.
         do_chop_sub : bool
             If True, the other chop position is subtracted before saving out chop A and chop B images.
-        do_chopa_crop: bool
-            If True, the chop A images are cropped around the location given by crop_center
+        do_crop: bool
+            If True, the chop A and chop B images are cropped around the location given by crop_center
             and with the image size given by crop_size before saving them out.
         crop_size : float
-            Cropped chop A image size (arcsec). The same size will be used for both image dimensions.
+            Cropped image size (arcsec). The same size will be used for both image dimensions.
         crop_center : tuple(int, int), None
-            Tuple (x0, y0) with the cropped chop A image center. As all chop A images are cropped around
+            Tuple (x0, y0) with the cropped image center. Since all chop A and B images are cropped around
             the same location, the crop_center location should be roughly the coronagraph position.
 
         Returns
@@ -83,7 +83,7 @@ class NearReadingModule(ReadingModule):
         self.m_chopb_out_port = self.add_output_port(chopb_out_tag)
 
         self.m_do_chop_sub = do_chop_sub
-        self.m_do_chopa_crop = do_chopa_crop
+        self.m_do_crop = do_crop
 
         self.m_crop_size = crop_size
         self.m_crop_center = crop_center
@@ -378,7 +378,7 @@ class NearReadingModule(ReadingModule):
         assert(files), f'No FITS files found in {self.m_input_location}.'
 
         # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
-        if self.m_do_chopa_crop:
+        if self.m_do_crop:
             self.m_crop_size = int(math.ceil(self.m_crop_size / self._m_config_port.get_attribute('PIXSCALE')))
             self.m_crop_center = (self.m_crop_center[1], self.m_crop_center[0])
 
@@ -396,11 +396,15 @@ class NearReadingModule(ReadingModule):
                 chopa = chopa - chopb
                 chopb = -chopa
 
-            if self.m_do_chopa_crop:
+            if self.m_do_crop:
                 chopa = crop_image(chopa,
                                    center=self.m_crop_center,
                                    size=self.m_crop_size,
                                    copy=False)
+                chopb = crop_image(chopb,
+                               center=self.m_crop_center,
+                               size=self.m_crop_size,
+                               copy=False)
 
             # append the images of chop A and B
             self.m_chopa_out_port.append(chopa, data_dim=3)
