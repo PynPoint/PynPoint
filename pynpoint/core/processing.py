@@ -13,7 +13,7 @@ import numpy as np
 
 from pynpoint.core.dataio import ConfigPort, InputPort, OutputPort
 from pynpoint.util.module import update_arguments, progress
-# from pynpoint.util.multistack import StackProcessingCapsule
+from pynpoint.util.multistack import StackProcessingCapsule
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
 
@@ -490,6 +490,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                data_dim=3,
                                keep_attributes=False)
 
+        image_in_port.close_port()
+        image_out_port.close_port()
+
         capsule = LineProcessingCapsule(image_in_port=image_in_port,
                                         image_out_port=image_out_port,
                                         num_proc=cpu,
@@ -624,12 +627,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                    keep_attributes=False)
 
             image_in_port.close_port()
-            image_in_port._m_data_storage.m_data_bank = None
-            image_in_port._m_data_storage.m_open = False
-
             image_out_port.close_port()
-            image_out_port._m_data_storage.m_data_bank = None
-            image_out_port._m_data_storage.m_open = False
 
             capsule = StackProcessingCapsule(image_in_port=image_in_port,
                                              image_out_port=image_out_port,
