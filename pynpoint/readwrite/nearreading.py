@@ -10,9 +10,10 @@ import subprocess
 import threading
 import warnings
 
-from typing import Tuple
+from typing import Union, Tuple
 
 import numpy as np
+import math
 
 from astropy.io import fits
 from typeguard import typechecked
@@ -20,6 +21,7 @@ from typeguard import typechecked
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.attributes import set_static_attr, set_nonstatic_attr, set_extra_attr
 from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.image import crop_image
 
 
 class NearReadingModule(ReadingModule):
@@ -32,14 +34,18 @@ class NearReadingModule(ReadingModule):
     contains the average of all images.
     """
 
-    __author__ = 'Jasper Jonker, Tomas Stolker'
+    __author__ = 'Jasper Jonker, Tomas Stolker, Anna Boehle'
 
     @typechecked
     def __init__(self,
                  name_in: str,
                  input_dir: str = None,
                  chopa_out_tag: str = 'chopa',
-                 chopb_out_tag: str = 'chopb'):
+                 chopb_out_tag: str = 'chopb',
+                 do_chop_sub: bool = False,
+                 do_chopa_crop: bool = False,
+                 crop_size: float = 5.,
+                 crop_center: Union[tuple, None] = (432, 287)):
         """
         Parameters
         ----------
@@ -54,6 +60,16 @@ class NearReadingModule(ReadingModule):
         chopb_out_tag : str
             Database entry where the chop B images will be stored. Should be different from
             ``chop_a_out_tag``.
+        do_chop_sub : bool
+            If True, the other chop position is subtracted before saving out chop A and chop B images.
+        do_chopa_crop: bool
+            If True, the chop A images are cropped around the location given by crop_center
+            and with the image size given by crop_size before saving them out.
+        crop_size : float
+            Cropped chop A image size (arcsec). The same size will be used for both image dimensions.
+        crop_center : tuple(int, int), None
+            Tuple (x0, y0) with the cropped chop A image center. As all chop A images are cropped around
+            the same location, the crop_center location should be roughly the coronagraph position.
 
         Returns
         -------
@@ -65,6 +81,12 @@ class NearReadingModule(ReadingModule):
 
         self.m_chopa_out_port = self.add_output_port(chopa_out_tag)
         self.m_chopb_out_port = self.add_output_port(chopb_out_tag)
+
+        self.m_do_chop_sub = do_chop_sub
+        self.m_do_chopa_crop = do_chopa_crop
+
+        self.m_crop_size = crop_size
+        self.m_crop_center = crop_center
 
     @typechecked
     def _uncompress_file(self,
@@ -355,6 +377,11 @@ class NearReadingModule(ReadingModule):
         # check if there are FITS files present in the input location
         assert(files), f'No FITS files found in {self.m_input_location}.'
 
+        # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
+        if self.m_do_chopa_crop:
+            self.m_crop_size = int(math.ceil(self.m_crop_size / self._m_config_port.get_attribute('PIXSCALE')))
+            self.m_crop_center = (self.m_crop_center[1], self.m_crop_center[0])
+
         start_time = time.time()
         for i, filename in enumerate(files):
             progress(i, len(files), 'Running NearReadingModule...', start_time)
@@ -364,6 +391,16 @@ class NearReadingModule(ReadingModule):
 
             # get the images of chop A and chop B
             chopa, chopb = self.read_images(filename, im_shape)
+
+            if self.m_do_chop_sub:
+                chopa = chopa - chopb
+                chopb = -chopa
+
+            if self.m_do_chopa_crop:
+                chopa = crop_image(chopa,
+                                   center=self.m_crop_center,
+                                   size=self.m_crop_size,
+                                   copy=False)
 
             # append the images of chop A and B
             self.m_chopa_out_port.append(chopa, data_dim=3)
