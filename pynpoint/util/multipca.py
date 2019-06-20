@@ -207,22 +207,7 @@ class PcaTaskWriter(TaskWriter):
             None
         """
 
-        if mean_out_port is not None:
-            data_out_port_in = mean_out_port
-
-        elif median_out_port is not None:
-            data_out_port_in = median_out_port
-
-        elif weighted_out_port is not None:
-            data_out_port_in = weighted_out_port
-
-        elif clip_out_port is not None:
-            data_out_port_in = clip_out_port
-
-        else:
-            data_out_port_in = None
-
-        super(PcaTaskWriter, self).__init__(result_queue_in, data_out_port_in, data_mutex_in)
+        super(PcaTaskWriter, self).__init__(result_queue_in, None, data_mutex_in)
 
         self.m_mean_out_port = mean_out_port
         self.m_median_out_port = median_out_port
@@ -251,21 +236,19 @@ class PcaTaskWriter(TaskWriter):
                 continue
 
             with self.m_data_mutex:
+                res_slice = to_slice(next_result.m_position)
+
                 if self.m_requirements[0]:
-                    self.m_mean_out_port[to_slice(next_result.m_position)] = \
-                        next_result.m_data_array[0, :, :]
+                    self.m_mean_out_port[res_slice] = next_result.m_data_array[0, :, :]
 
                 if self.m_requirements[1]:
-                    self.m_median_out_port[to_slice(next_result.m_position)] = \
-                        next_result.m_data_array[1, :, :]
+                    self.m_median_out_port[res_slice] = next_result.m_data_array[1, :, :]
 
                 if self.m_requirements[2]:
-                    self.m_weighted_out_port[to_slice(next_result.m_position)] = \
-                        next_result.m_data_array[2, :, :]
+                    self.m_weighted_out_port[res_slice] = next_result.m_data_array[2, :, :]
 
                 if self.m_requirements[3]:
-                    self.m_clip_out_port[to_slice(next_result.m_position)] = \
-                        next_result.m_data_array[3, :, :]
+                    self.m_clip_out_port[res_slice] = next_result.m_data_array[3, :, :]
 
             self.m_result_queue.task_done()
 

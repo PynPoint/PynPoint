@@ -71,6 +71,7 @@ class DataStorage:
 
         if self.m_open:
             self.m_data_bank.close()
+            self.m_data_bank = None
             self.m_open = False
 
 

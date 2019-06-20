@@ -146,8 +146,8 @@ class TestFluxPosition:
         assert data.shape == data_multi.shape
 
         # Outputs zeros sometimes for data_multi on Travis CI
-        # for i, item in enumerate(data_multi):
-        #     assert np.allclose(data[i], item, rtol=1e-6, atol=0.)
+        for i, item in enumerate(data_multi):
+            assert np.allclose(data[i], item, rtol=1e-6, atol=0.)
 
     def test_angle_interpolation(self):
 

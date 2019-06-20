@@ -174,7 +174,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
         """
+
         start_time = time.time()
+
         for i, pca_number in enumerate(self.m_components):
             progress(i, len(self.m_components), 'Creating residuals...', start_time)
 
