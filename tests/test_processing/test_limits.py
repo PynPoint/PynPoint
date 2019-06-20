@@ -162,8 +162,8 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_fpf_individual')
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 2.3845541366093315, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.0023017968862672285, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 2.404504485062591, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.02219231590090082, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 

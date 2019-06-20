@@ -38,24 +38,24 @@ def contrast_limit(path_images: List[str],
 
     Parameters
     ----------
-    path_images : str
+    path_images : list(str)
         System location of the stack of images (3D).
     path_psf : str
         System location of the PSF template for the fake planet (3D). Either a single image or a
         stack of images equal in size to science data.
-    noise : numpy.ndarray
+    noise : list(numpy.ndarray)
         Residuals of the PSF subtraction (3D) without injection of fake planets. Used to measure
         the noise level with a correction for small sample statistics.
     mask : numpy.ndarray
         Mask (2D).
-    parang : numpy.ndarray
+    parang : list(numpy.ndarray)
         Derotation angles (deg).
     psf_scaling : float
         Additional scaling factor of the planet flux (e.g., to correct for a neutral density
         filter). Should have a positive value.
     extra_rot : float
         Additional rotation angle of the images in clockwise direction (deg).
-    pca_number : int
+    pca_number : tuple(int)
         Number of principal components used for the PSF subtraction.
     threshold : tuple(str, float)
         Detection threshold for the contrast curve, either in terms of 'sigma' or the false
@@ -86,6 +86,7 @@ def contrast_limit(path_images: List[str],
     """
 
     temp_flux_in = []
+    temp_t_noise = []
     psf = np.load(path_psf)
     for i, images in enumerate(path_images):
         images = np.load(images)
@@ -104,9 +105,9 @@ def contrast_limit(path_images: List[str],
 
             # Calculate the sigma level for a given FPF
             sigma = student_t(t_input=threshold,
-                            radius=position[0],
-                            size=aperture,
-                            ignore=False)
+                              radius=position[0],
+                              size=aperture,
+                              ignore=False)
 
         else:
             raise ValueError("Threshold type not recognized.")
@@ -116,10 +117,10 @@ def contrast_limit(path_images: List[str],
 
         # Determine the noise level
         _, t_noise, _, _ = false_alarm(image=noise[i][0, ],
-                                    x_pos=yx_fake[1],
-                                    y_pos=yx_fake[0],
-                                    size=aperture,
-                                    ignore=False)
+                                       x_pos=yx_fake[1],
+                                       y_pos=yx_fake[0],
+                                       size=aperture,
+                                       ignore=False)
 
         # Aperture properties
         im_center = center_subpixel(images)
@@ -132,8 +133,19 @@ def contrast_limit(path_images: List[str],
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
         temp_flux_in += [flux_in]
+        temp_t_noise += [t_noise]
 
-    flux_in = np.mean(flux_in)
+    if residuals == 'mean':
+        flux_in = np.mean(temp_flux_in)
+    elif residuals == 'median':
+        flux_in = np.median(temp_flux_in)
+    elif residuals == 'weighted':
+        # implement weighted and clipped method
+        # how to weight flux_in, as there is no noise given?
+        # -> weighted mean using var from false_alarm
+        flux_in = np.average(temp_flux_in, weights=1/np.var(t_noise))
+    elif residuals == 'clipped':
+        flux_in = np.mean(temp_flux_in)
 
     temp_im_res = []
 
@@ -147,11 +159,11 @@ def contrast_limit(path_images: List[str],
 
         # Inject the fake planet
         fake = fake_planet(images=images,
-                        psf=psf,
-                        parang=parang[i],
-                        position=(position[0], position[1]),
-                        magnitude=mag,
-                        psf_scaling=psf_scaling)
+                           psf=psf,
+                           parang=parang[i],
+                           position=(position[0], position[1]),
+                           magnitude=mag,
+                           psf_scaling=psf_scaling)
 
         # Run the PSF subtraction
         _, im_res = pca_psf_subtraction(images=fake*mask,

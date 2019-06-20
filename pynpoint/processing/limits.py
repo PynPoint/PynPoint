@@ -9,7 +9,7 @@ import time
 import warnings
 import multiprocessing as mp
 
-from typing import Tuple, List, Union, Sequence
+from typing import Tuple, List, Union
 
 import numpy as np
 
@@ -99,7 +99,7 @@ class ContrastCurveModule(ProcessingModule):
             Method used for combining the residuals ("mean", "median", "weighted", or "clipped").
         mode : str
             Whether to individually compute the residuals for each tag or to concatenate them before
-            computing them ("individually" or "combined"). Using "individually" on a single input set
+            computing them ("individual" or "combined"). Using "individual" on a single input set
             has no effect.
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
@@ -132,7 +132,6 @@ class ContrastCurveModule(ProcessingModule):
         if 'ignore' in kwargs:
             warnings.warn('The \'ignore\' parameter has been deprecated. The parameter is no '
                           'longer required.', DeprecationWarning)
-
 
         self.m_image_in_ports = []
         if isinstance(image_in_tag, str):
@@ -177,6 +176,7 @@ class ContrastCurveModule(ProcessingModule):
         if self.m_mode != 'combined' and self.m_mode != 'individual':
             raise AttributeError('mode must be either "individual" or "combined" but '
                                  'is {}'.format(self.m_mode))
+
     def run(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
@@ -284,7 +284,7 @@ class ContrastCurveModule(ProcessingModule):
             image_paths = [tmp_im_str]
             np.save(image_paths[-1], images)
         else:
-            pass #value error is raised in init
+            pass  # value error is raised in init
 
         pool = mp.Pool(cpu)
 
@@ -368,7 +368,6 @@ class MassLimitsModule(ProcessingModule):
                  model_file: str,
                  star_prop: dict,
                  instr_filter: str = 'L\'') -> None:
-
         """
         Parameters
         ----------
