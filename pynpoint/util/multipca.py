@@ -4,9 +4,16 @@ a range of principal components for which the PCA basis is required as input.
 """
 
 import sys
+import multiprocessing
+
+from typing import Tuple, List
 
 import numpy as np
 
+from typeguard import typechecked
+from sklearn.decomposition.pca import PCA
+
+from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                     TaskInput, MultiprocessingCapsule, to_slice
 from pynpoint.util.psf import pca_psf_subtraction
@@ -19,13 +26,12 @@ class PcaTaskCreator(TaskCreator):
     number. Does not require an input port since the data is directly given to the task processors.
     """
 
+    @typechecked
     def __init__(self,
-                 tasks_queue_in,
-                 num_proc,
-                 pca_numbers):
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 num_proc: np.int64,
+                 pca_numbers: np.ndarray) -> None:
         """
-        Constructor of PcaTaskCreator.
-
         Parameters
         ----------
         tasks_queue_in : multiprocessing.queues.JoinableQueue
@@ -45,7 +51,8 @@ class PcaTaskCreator(TaskCreator):
 
         self.m_pca_numbers = pca_numbers
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of PcaTaskCreator.
 
@@ -76,18 +83,17 @@ class PcaTaskProcessor(TaskProcessor):
     * Clipped mean of the residuals -- requirements[3] = True
     """
 
+    @typechecked
     def __init__(self,
-                 tasks_queue_in,
-                 result_queue_in,
-                 star_reshape,
-                 angles,
-                 pca_model,
-                 im_shape,
-                 indices,
-                 requirements=(False, False, False, False)):
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 result_queue_in: multiprocessing.JoinableQueue,
+                 star_reshape: np.ndarray,
+                 angles: np.ndarray,
+                 pca_model: PCA,
+                 im_shape: Tuple[int, int, int],
+                 indices: np.ndarray,
+                 requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
-        Constructor of PcaTaskProcessor.
-
         Parameters
         ----------
         tasks_queue_in : multiprocessing.queues.JoinableQueue
@@ -122,7 +128,9 @@ class PcaTaskProcessor(TaskProcessor):
         self.m_indices = indices
         self.m_requirements = requirements
 
-    def run_job(self, tmp_task):
+    @typechecked
+    def run_job(self,
+                tmp_task: TaskInput) -> TaskResult:
         """
         Run method of PcaTaskProcessor.
 
@@ -173,14 +181,15 @@ class PcaTaskWriter(TaskWriter):
     results of the task processors (mean, median, weighted, and clipped).
     """
 
+    @typechecked
     def __init__(self,
-                 result_queue_in,
-                 mean_out_port,
-                 median_out_port,
-                 weighted_out_port,
-                 clip_out_port,
-                 data_mutex_in,
-                 requirements=(False, False, False, False)):
+                 result_queue_in: multiprocessing.JoinableQueue,
+                 mean_out_port: OutputPort,
+                 median_out_port: OutputPort,
+                 weighted_out_port: OutputPort,
+                 clip_out_port: OutputPort,
+                 data_mutex_in: multiprocessing.Lock,
+                 requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
         Constructor of PcaTaskWriter.
 
@@ -215,7 +224,8 @@ class PcaTaskWriter(TaskWriter):
         self.m_clip_out_port = clip_out_port
         self.m_requirements = requirements
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of PcaTaskWriter. Writes the residuals to the output ports.
 
@@ -266,18 +276,19 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
     Capsule for PCA multiprocessing with the poison pill pattern.
     """
 
+    @typechecked
     def __init__(self,
-                 mean_out_port,
-                 median_out_port,
-                 weighted_out_port,
-                 clip_out_port,
-                 num_proc,
-                 pca_numbers,
-                 pca_model,
-                 star_reshape,
-                 angles,
-                 im_shape,
-                 indices):
+                 mean_out_port: OutputPort,
+                 median_out_port: OutputPort,
+                 weighted_out_port: OutputPort,
+                 clip_out_port: OutputPort,
+                 num_proc: np.int64,
+                 pca_numbers: np.ndarray,
+                 pca_model: PCA,
+                 star_reshape: np.ndarray,
+                 angles: np.ndarray,
+                 im_shape: Tuple[int, int, int],
+                 indices: np.ndarray) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.
 
@@ -341,8 +352,9 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
         super(PcaMultiprocessingCapsule, self).__init__(None, None, num_proc)
 
+    @typechecked
     def create_writer(self,
-                      image_out_port):
+                      image_out_port: None) -> PcaTaskWriter:
         """
         Method to create an instance of PcaTaskWriter.
 
@@ -365,15 +377,16 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                              self.m_data_mutex,
                              self.m_requirements)
 
+    @typechecked
     def init_creator(self,
-                     image_in_port):
+                     image_in_port: None) -> PcaTaskCreator:
         """
         Method to create an instance of PcaTaskCreator.
 
         Parameters
         ----------
-        image_in_port : pynpoint.util.multiproc.TaskInput
-            Input task.
+        image_in_port : None
+            Input port, not used.
 
         Returns
         -------
@@ -385,7 +398,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                               self.m_num_proc,
                               self.m_pca_numbers)
 
-    def create_processors(self):
+    @typechecked
+    def create_processors(self) -> List[PcaTaskProcessor]:
         """
         Method to create a list of instances of PcaTaskProcessor.
 
