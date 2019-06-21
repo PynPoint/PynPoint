@@ -629,7 +629,8 @@ class MCMCsamplingModule(ProcessingModule):
                  psf_scaling: float = -1.,
                  pca_number: int = 20,
                  aperture: Union[float, Tuple[int, int, float]] = 0.1,
-                 mask: Tuple[float, float] = None,
+                 mask: Union[Tuple[float, float], Tuple[None, float],
+                             Tuple[float, None], Tuple[None, None]] = None,
                  extra_rot: float = 0.,
                  merit: str = 'gaussian',
                  residuals: str = 'median',
@@ -668,7 +669,7 @@ class MCMCsamplingModule(ProcessingModule):
         aperture : float, tuple(int, int, float)
             Either the aperture radius (arcsec) at the position of `param` or tuple with the
             position and aperture radius (arcsec) as (pos_x, pos_y, radius).
-        mask : tuple(float, float)
+        mask : tuple(float, float), None
             Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of the
             tuple can be set to None. Masked pixels are excluded from the PCA computation,
             resulting in a smaller runtime.
@@ -824,13 +825,15 @@ class MCMCsamplingModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
+        im_shape = self.m_image_in_port.get_shape()[-2:]
+
+        self.m_image_in_port.close_port()
+
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number of '
                              'frames in image_in_tag. The DerotateAndStackModule can be used to '
                              'average the PSF frames (without derotating) before applying the '
                              'MCMCsamplingModule.')
-
-        im_shape = self.m_image_in_port.get_shape()[-2:]
 
         if self.m_mask[0] is not None:
             self.m_mask = (self.m_mask[0]/pixscale, self.m_mask[1])
@@ -886,6 +889,7 @@ class MCMCsamplingModule(ProcessingModule):
         sys.stdout.write('Running MCMCsamplingModule... [DONE]\n')
         sys.stdout.flush()
 
+        self.m_chain_out_port._check_status_and_activate()
         self.m_chain_out_port.set_all(sampler.chain)
 
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
