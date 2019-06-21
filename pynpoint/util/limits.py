@@ -133,7 +133,7 @@ def contrast_limit(path_images: List[str],
         # Magnitude of the injected planet
         flux_in = snr_inject*t_noise
         temp_flux_in += [flux_in]
-        
+
 
     if residuals == 'mean':
         flux_in = np.mean(temp_flux_in)

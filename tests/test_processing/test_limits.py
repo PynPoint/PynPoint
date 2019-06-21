@@ -162,8 +162,8 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_fpf_individual')
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 2.5693583179370467, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.07886039733978416, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 2.569614503508568, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.09122703785074632, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 
@@ -178,7 +178,7 @@ class TestLimits:
                                      threshold=('sigma', 5.),
                                      psf_scaling=1.,
                                      aperture=0.1,
-                                     pca_number=25,
+                                     pca_number=(15, 20),
                                      cent_size=None,
                                      edge_size=None,
                                      residuals='weighted',
@@ -190,8 +190,37 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_weighted')
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 5.632367444891752, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.3277548819605067, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 5.988578432572469, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.1530154152352772, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
+        assert data.shape == (1, 4)
+
+    
+    def test_contrast_curve_clipped(self):
+
+        module = ContrastCurveModule(name_in='contrast_clipped',
+                                     image_in_tag=('read', 'read_2'),
+                                     psf_in_tag='read',
+                                     contrast_out_tag='limits_clipped',
+                                     separation=(0.5, 0.6, 0.1),
+                                     angle=(0., 360., 180.),
+                                     threshold=('sigma', 5.),
+                                     psf_scaling=1.,
+                                     aperture=0.1,
+                                     pca_number=(15, 20),
+                                     cent_size=None,
+                                     edge_size=None,
+                                     residuals='clipped',
+                                     mode='individual',
+                                     extra_rot=0.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('contrast_clipped')
+
+        data = self.pipeline.get_data('limits_clipped')
+        assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 5.761818720605104, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.33532868607941346, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 

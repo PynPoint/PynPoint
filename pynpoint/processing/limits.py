@@ -134,20 +134,21 @@ class ContrastCurveModule(ProcessingModule):
                           'longer required.', DeprecationWarning)
 
         self.m_image_in_ports = []
-        if isinstance(image_in_tag, str):
+        self.m_psf_in_port = None
+
+        if isinstance(image_in_tag, str):  # in case the image_in_tag is a string
             self.m_image_in_ports.append(self.add_input_port(image_in_tag))
+            if psf_in_tag == image_in_tag:  # in case the psf_in_tag == image_in_tag
+                self.m_psf_in_port = self.m_image_in_ports[0]
             n_tags = 1
-        elif isinstance(image_in_tag, tuple):
+        elif isinstance(image_in_tag, tuple):  # in case the image_in_tag is a tuple
             n_tags = len(image_in_tag)
-            for tag in image_in_tag:
+            for tag in image_in_tag: # add all tags as input ports
                 self.m_image_in_ports.append(self.add_input_port(tag))
-
-        where_psf = np.argwhere([psf_in_tag == tag for tag in image_in_tag])
-
-        if where_psf.size > 0:
-            self.m_psf_in_port = self.m_image_in_ports[where_psf[0][0]]
-        else:
-            self.m_psf_in_port = self.add_input_port(psf_in_tag)
+                if psf_in_tag == tag: # check if one tag is the psf_in_tag
+                    self.m_psf_in_port = self.m_image_in_ports[-1]
+        if self.m_psf_in_port is None: # the psf_in_tag is separate from the image_in_tag
+            self.m_psf_in_port = self.add_input_port(psf_in_tag) # add add a input to the psf_in_tag
 
         self.m_contrast_out_port = self.add_output_port(contrast_out_tag)
 
@@ -156,11 +157,12 @@ class ContrastCurveModule(ProcessingModule):
         self.m_psf_scaling = psf_scaling
         self.m_threshold = threshold
         self.m_aperture = aperture
+
         if isinstance(pca_number, int):
             self.m_pca_number = tuple([pca_number] * n_tags)
         elif isinstance(pca_number, tuple):
             assert len(pca_number) == len(image_in_tag), f'The number of provided PCA numbers must'\
-                                                         f'be equal to the number of input tags'
+                                                         f'be equal to the number of input tags.'
             self.m_pca_number = pca_number
 
         self.m_cent_size = cent_size
@@ -204,8 +206,6 @@ class ContrastCurveModule(ProcessingModule):
         temp_images = []
         angles = []
 
-        sys.stdout.write('Grabbing Data...\r')
-        sys.stdout.flush()
         for input_port in self.m_image_in_ports:
             temp_images += [input_port.get_all()]
             angles += [input_port.get_attribute("PARANG")]
@@ -270,14 +270,12 @@ class ContrastCurveModule(ProcessingModule):
         temp_noise = []
         image_paths = []
 
-        sys.stdout.write('Computing Noise Levels...\r')
-        sys.stdout.flush()
         if self.m_mode == 'individual':
             for i, images in enumerate(temp_images):
-                im_res_rot, im_res_derot = pca_psf_subtraction(
-                    images=images*mask,
-                    angles=-1. * angles[i]+self.m_extra_rot,
-                    pca_number=self.m_pca_number[i])
+                im_res_rot, im_res_derot = pca_psf_subtraction(images=images*mask,
+                                                               angles=-1. *\
+                                                                   angles[i]+self.m_extra_rot,
+                                                               pca_number=self.m_pca_number[i])
 
                 noise = combine_residuals(method=self.m_residuals,
                                           res_rot=im_res_derot,
@@ -287,7 +285,7 @@ class ContrastCurveModule(ProcessingModule):
 
                 # Create temporary files
                 image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
-                np.save(image_paths[-1], images)
+                np.save(image_paths[-1], images)           
 
         elif self.m_mode == 'combined':
             images = np.concatenate(temp_images)
