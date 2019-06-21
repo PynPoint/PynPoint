@@ -237,9 +237,6 @@ class AngleInterpolationModule(ProcessingModule):
 
         steps = self.m_data_in_port.get_attribute('NFRAMES')
 
-        print(self.m_data_in_port.tag)
-        print(parang_start,parang_end,steps)
-
         if 'NDIT' in self.m_data_in_port.get_all_non_static_attributes():
             ndit = self.m_data_in_port.get_attribute('NDIT')
 

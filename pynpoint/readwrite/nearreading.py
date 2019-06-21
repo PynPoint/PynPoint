@@ -4,6 +4,7 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 
 import os
 import sys
+import math
 import time
 import shlex
 import subprocess
@@ -13,7 +14,6 @@ import warnings
 from typing import Union, Tuple
 
 import numpy as np
-import math
 
 from astropy.io import fits
 from typeguard import typechecked
@@ -42,12 +42,9 @@ class NearReadingModule(ReadingModule):
                  input_dir: str = None,
                  chopa_out_tag: str = 'chopa',
                  chopb_out_tag: str = 'chopb',
-                 do_chop_sub: bool = False,
-                 do_crop: bool = False,
-                 do_cube_stack: bool = False,
-                 crop_size: float = 5.,
-                 crop_center: Union[tuple, None] = (432, 287),
-                 combine_method: str = 'mean'):
+                 subtract: bool = False,
+                 crop: Union[Tuple[int, int, float], Tuple[None, None, float]] = None,
+                 combine: str = None):
         """
         Parameters
         ----------
@@ -62,21 +59,17 @@ class NearReadingModule(ReadingModule):
         chopb_out_tag : str
             Database entry where the chop B images will be stored. Should be different from
             ``chop_a_out_tag``.
-        do_chop_sub : bool
-            If True, the other chop position is subtracted before saving out chop A and chop B images.
-        do_crop: bool
-            If True, the chop A and chop B images are cropped around the location given by crop_center
-            and with the image size given by crop_size before saving them out.
-        do_cube_stack: bool
-            If True, combine the frames from each cube into a single frame using the method
-            given by combine_method.
-        crop_size : float
-            Cropped image size (arcsec). The same size will be used for both image dimensions.
-        crop_center : tuple(int, int), None
-            Tuple (x0, y0) with the cropped image center. Since all chop A and B images are cropped around
-            the same location, the crop_center location should be roughly the coronagraph position.
-        combine_method : str
-            Method for combining images ('mean' or 'median').
+        subtract : bool
+            If True, the other chop position is subtracted before saving out the chop A and chop B
+            images.
+        crop: tuple(int, int, float), None
+            The pixel position (x, y) around which the chop A and chop B images are cropped and
+            the new image size (arcsec), together provided as (pos_x, pos_y, size). The same size
+            will be used for both image dimensions. It is recommended to crop the images around
+            the approximate coronagraph position. No cropping is applied if set to None.
+        combine: str, None
+            Method ('mean' or 'median') for combining (separately) the chop A and chop B frames
+            from each cube into a single frame. All frames are stored if set to None.
 
         Returns
         -------
@@ -89,13 +82,9 @@ class NearReadingModule(ReadingModule):
         self.m_chopa_out_port = self.add_output_port(chopa_out_tag)
         self.m_chopb_out_port = self.add_output_port(chopb_out_tag)
 
-        self.m_do_chop_sub = do_chop_sub
-        self.m_do_crop = do_crop
-        self.m_do_cube_stack = do_cube_stack
-
-        self.m_crop_size = crop_size
-        self.m_crop_center = crop_center
-        self.m_combine = combine_method
+        self.m_subtract = subtract
+        self.m_crop = crop
+        self.m_combine = combine
 
     @typechecked
     def _uncompress_file(self,
@@ -387,9 +376,9 @@ class NearReadingModule(ReadingModule):
         assert(files), f'No FITS files found in {self.m_input_location}.'
 
         # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
-        if self.m_do_crop:
-            self.m_crop_size = int(math.ceil(self.m_crop_size / self._m_config_port.get_attribute('PIXSCALE')))
-            self.m_crop_center = (self.m_crop_center[1], self.m_crop_center[0])
+        if self.m_crop is not None:
+            pixscale = self._m_config_port.get_attribute('PIXSCALE')
+            self.m_crop = (self.m_crop[1], self.m_crop[0], int(math.ceil(self.m_crop[2]/pixscale)))
 
         start_time = time.time()
         for i, filename in enumerate(files):
@@ -401,27 +390,31 @@ class NearReadingModule(ReadingModule):
             # get the images of chop A and chop B
             chopa, chopb = self.read_images(filename, im_shape)
 
-            if self.m_do_chop_sub:
+            if self.m_subtract:
                 chopa = chopa - chopb
-                chopb = -chopa
+                chopb = -1.*np.copy(chopa)
 
-            if self.m_do_crop:
+            if self.m_crop is not None:
                 chopa = crop_image(chopa,
-                                   center=self.m_crop_center,
-                                   size=self.m_crop_size,
+                                   center=self.m_crop[0:2],
+                                   size=self.m_crop[2],
                                    copy=False)
-                chopb = crop_image(chopb,
-                               center=self.m_crop_center,
-                               size=self.m_crop_size,
-                               copy=False)
 
-            if self.m_do_cube_stack:
+                chopb = crop_image(chopb,
+                                   center=self.m_crop[0:2],
+                                   size=self.m_crop[2],
+                                   copy=False)
+
+            if self.m_combine is not None:
+
                 if self.m_combine == 'mean':
                     chopa = chopa.mean(axis=0)
                     chopb = chopb.mean(axis=0)
+
                 elif self.m_combine == 'median':
                     chopa = chopa.median(axis=0)
                     chopb = chopb.median(axis=0)
+
                 header[self._m_config_port.get_attribute('NFRAMES')] = 1
 
             # append the images of chop A and B
