@@ -12,6 +12,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestTextReading:
 
     def setup_class(self):
