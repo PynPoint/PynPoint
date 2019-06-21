@@ -623,4 +623,3 @@ class TestOutputPort:
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'The dataset that is appended under the tag name ' \
                                              '\'empty_data\' is empty.'
-

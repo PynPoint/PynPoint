@@ -2,8 +2,15 @@
 Utilities for multiprocessing of lines in time with the poison pill pattern.
 """
 
+import multiprocessing
+
+from typing import Union, List, Callable
+
 import numpy as np
 
+from typeguard import typechecked
+
+from pynpoint.core.dataio import InputPort, OutputPort
 from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
                                     MultiprocessingCapsule, apply_function
 
@@ -14,12 +21,13 @@ class LineReader(TaskCreator):
     read all rows of a dataset and puts them into a task queue.
     """
 
+    @typechecked
     def __init__(self,
-                 data_port_in,
-                 tasks_queue_in,
-                 data_mutex_in,
-                 num_proc,
-                 data_length):
+                 data_port_in: InputPort,
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 data_mutex_in: multiprocessing.Lock,
+                 num_proc: np.int64,
+                 data_length: int) -> None:
         """
         Parameters
         ----------
@@ -45,7 +53,8 @@ class LineReader(TaskCreator):
 
         self.m_data_length = data_length
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Returns
         -------
@@ -80,11 +89,12 @@ class LineTaskProcessor(TaskProcessor):
     processor applies a function on a row of lines in time.
     """
 
+    @typechecked
     def __init__(self,
-                 tasks_queue_in,
-                 result_queue_in,
-                 function,
-                 function_args):
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 result_queue_in: multiprocessing.JoinableQueue,
+                 function: Callable,
+                 function_args: Union[tuple, None]) -> None:
         """
         Parameters
         ----------
@@ -108,8 +118,9 @@ class LineTaskProcessor(TaskProcessor):
         self.m_function = function
         self.m_function_args = function_args
 
+    @typechecked
     def run_job(self,
-                tmp_task):
+                tmp_task: TaskInput) -> TaskResult:
         """
         Parameters
         ----------
@@ -142,13 +153,14 @@ class LineProcessingCapsule(MultiprocessingCapsule):
     :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`.
     """
 
+    @typechecked
     def __init__(self,
-                 image_in_port,
-                 image_out_port,
-                 num_proc,
-                 function,
-                 function_args,
-                 data_length):
+                 image_in_port: InputPort,
+                 image_out_port: OutputPort,
+                 num_proc: np.int64,
+                 function: Callable,
+                 function_args: Union[tuple, None],
+                 data_length: int) -> None:
         """
         Parameters
         ----------
@@ -177,7 +189,8 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
 
-    def create_processors(self):
+    @typechecked
+    def create_processors(self) -> List[LineTaskProcessor]:
         """
         Returns
         -------
@@ -196,8 +209,9 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         return processors
 
+    @typechecked
     def init_creator(self,
-                     image_in_port):
+                     image_in_port: InputPort) -> LineReader:
         """
         Parameters
         ----------
