@@ -4,9 +4,14 @@ Abstract interfaces for multiprocessing applications with the poison pill patter
 
 import multiprocessing
 
+from typing import Union, Callable
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+
+from typeguard import typechecked
+
+from pynpoint.core.dataio import InputPort, OutputPort
 
 
 class TaskInput:
@@ -14,9 +19,10 @@ class TaskInput:
     Class for tasks that are processed by the :class:`~pynpoint.util.multiproc.TaskProcessor`.
     """
 
+    @typechecked
     def __init__(self,
-                 input_data,
-                 job_parameter):
+                 input_data: Union[np.ndarray, np.int64],
+                 job_parameter: tuple) -> None:
         """
         Parameters
         ----------
@@ -40,9 +46,10 @@ class TaskResult:
     Class for results that can be stored by the :class:`~pynpoint.util.multiproc.TaskWriter`.
     """
 
+    @typechecked
     def __init__(self,
-                 data_array,
-                 position):
+                 data_array: np.ndarray,
+                 position: tuple) -> None:
         """
         Parameters
         ----------
@@ -73,19 +80,20 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
     simultaneously access to the central database.
     """
 
+    @typechecked
     def __init__(self,
-                 data_port_in,
-                 tasks_queue_in,
-                 data_mutex_in,
-                 num_proc):
+                 data_port_in: Union[InputPort, None],
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 data_mutex_in: Union[multiprocessing.Lock, None],
+                 num_proc: np.int64) -> None:
         """
         Parameters
         ----------
-        data_port_in : pynpoint.core.dataio.InputPort
+        data_port_in : pynpoint.core.dataio.InputPort, None
             An input port which links to the data that has to be processed.
         tasks_queue_in : multiprocessing.queues.JoinableQueue
             The central task queue.
-        data_mutex_in : multiprocessing.synchronize.Lock
+        data_mutex_in : multiprocessing.synchronize.Lock, None
             A mutex shared with the writer to ensure that no read and write operations happen at
             the same time.
         num_proc : int
@@ -105,7 +113,8 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
         self.m_data_mutex = data_mutex_in
         self.m_num_proc = num_proc
 
-    def create_poison_pills(self):
+    @typechecked
+    def create_poison_pills(self) -> None:
         """
         Creates poison pills for the :class:`~pynpoint.util.multiproc.TaskProcessor` and
         :class:`~pynpoint.util.multiproc.TaskWriter`. A process will shut down if it receives a
@@ -126,7 +135,8 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
         self.m_task_queue.put(None)
 
     @abstractmethod
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Creates objects of the :class:`~pynpoint.util.multiproc.TaskInput` until all tasks are
         placed in the task queue.
@@ -148,9 +158,10 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
     shut down if the next task is a poison pill. The order in which process finish is not fixed.
     """
 
+    @typechecked
     def __init__(self,
-                 tasks_queue_in,
-                 result_queue_in):
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 result_queue_in: multiprocessing.JoinableQueue) -> None:
         """
         Parameters
         ----------
@@ -170,8 +181,9 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
         self.m_task_queue = tasks_queue_in
         self.m_result_queue = result_queue_in
 
+    @typechecked
     def check_poison_pill(self,
-                          next_task):
+                          next_task: Union[TaskInput, int, None]) -> bool:
         """
         Function to check if the next task is a poison pill.
 
@@ -206,7 +218,8 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
 
         return poison_pill
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method to start the :class:`~pynpoint.util.multiproc.TaskProcessor`. The run method
         will continue to process tasks from the input task queue until it receives a poison pill.
@@ -229,8 +242,9 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
             self.m_result_queue.put(result)
 
     @abstractmethod
+    @typechecked
     def run_job(self,
-                tmp_task):
+                tmp_task: TaskInput) -> None:
         """
         Abstract interface for the :func:`~pynpoint.util.multiproc.TaskProcessor.run_job` method
         which is called from the :func:`~pynpoint.util.multiproc.TaskProcessor.run` method for each
@@ -257,16 +271,17 @@ class TaskWriter(multiprocessing.Process):
     position in the complete output dataset.
     """
 
+    @typechecked
     def __init__(self,
-                 result_queue_in,
-                 data_out_port_in,
-                 data_mutex_in):
+                 result_queue_in: multiprocessing.JoinableQueue,
+                 data_out_port_in: Union[OutputPort, None],
+                 data_mutex_in: multiprocessing.Lock) -> None:
         """
         Parameters
         ----------
         result_queue_in : multiprocessing.queues.JoinableQueue
             The result queue.
-        data_out_port_in : pynpoint.core.dataio.OutputPort
+        data_out_port_in : pynpoint.core.dataio.OutputPort, None
             The output port where the results will be stored.
         data_mutex_in : multiprocessing.synchronize.Lock
             A mutex that is shared with the :class:`~pynpoint.util.multiproc.TaskWriter` which
@@ -284,8 +299,9 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_mutex = data_mutex_in
         self.m_data_out_port = data_out_port_in
 
+    @typechecked
     def check_poison_pill(self,
-                          next_result):
+                          next_result: Union[TaskResult, None]) -> int:
         """
         Function to check if the next result is a poison pill.
 
@@ -321,7 +337,8 @@ class TaskWriter(multiprocessing.Process):
 
         return poison_pill
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the :class:`~pynpoint.util.multiproc.TaskWriter`. It is called once when
         it has to start storing the results until it receives a poison pill.
@@ -355,16 +372,17 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
     Abstract interface for multiprocessing capsules based on the poison pill pattern.
     """
 
+    @typechecked
     def __init__(self,
-                 image_in_port,
-                 image_out_port,
-                 num_proc):
+                 image_in_port: Union[InputPort, None],
+                 image_out_port: Union[OutputPort, None],
+                 num_proc: np.int64) -> None:
         """
         Parameters
         ----------
-        image_in_port : pynpoint.core.dataio.InputPort
+        image_in_port : pynpoint.core.dataio.InputPort, None
             Port to the input data.
-        image_out_port : pynpoint.core.dataio.OutputPort
+        image_out_port : pynpoint.core.dataio.OutputPort, None
             Port to the place where the output data will be stored.
         num_proc : int
             Number of task processors.
@@ -393,7 +411,8 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
         self.m_writer = self.create_writer(image_out_port)
 
     @abstractmethod
-    def create_processors(self):
+    @typechecked
+    def create_processors(self) -> None:
         """
         Function that is called from the constructor to create a list of instances of
         :class:`~pynpoint.util.multiproc.TaskProcessor`.
@@ -407,16 +426,17 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
         return []
 
     @abstractmethod
+    @typechecked
     def init_creator(self,
-                     image_in_port):
+                     image_in_port: Union[InputPort, None]) -> None:
         """
         Function that is called from the constructor to create a
         :class:`~pynpoint.util.multiproc.TaskCreator`.
 
         Parameters
         ----------
-        image_in_port : pynpoint.core.dataio.InputPort
-            Input port for the creator.
+        image_in_port : pynpoint.core.dataio.InputPort, None
+            Input port for the task creator.
 
         Returns
         -------
@@ -424,15 +444,16 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
             None
         """
 
+    @typechecked
     def create_writer(self,
-                      image_out_port):
+                      image_out_port: Union[OutputPort, None]) -> TaskWriter:
         """
         Function that is called from the constructor to create the
         :class:`~pynpoint.util.multiproc.TaskWriter`.
 
         Parameters
         ----------
-        image_out_port : pynpoint.core.dataio.OutputPort
+        image_out_port : pynpoint.core.dataio.OutputPort, None
             Output port for the creator.
 
         Returns
@@ -445,7 +466,8 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
                           image_out_port,
                           self.m_data_mutex)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method that starts the :class:`~pynpoint.util.multiproc.TaskCreator`, the instances
         of :class:`~pynpoint.util.multiproc.TaskProcessor`, and the
@@ -478,9 +500,10 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
         self.m_creator.join()
 
 
-def apply_function(tmp_data,
-                   func,
-                   func_args):
+@typechecked
+def apply_function(tmp_data: np.ndarray,
+                   func: Callable,
+                   func_args: Union[tuple, None]) -> np.ndarray:
     """
     Apply a function with optional arguments to the input data.
 
@@ -507,7 +530,8 @@ def apply_function(tmp_data,
     return result
 
 
-def to_slice(tuple_slice):
+@typechecked
+def to_slice(tuple_slice: tuple) -> tuple:
     """
     Function to convert tuples into slices for a multiprocessing queue.
 

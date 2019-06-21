@@ -103,7 +103,7 @@ def create_fits(path: str,
                 exp_no: int = 0,
                 parang: List[float] = [0., 0.],
                 x0: float = 0.,
-                y0: float = 0.):
+                y0: float = 0.) -> None:
     """
     Create a FITS file with images and header information.
 

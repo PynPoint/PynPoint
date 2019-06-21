@@ -65,14 +65,14 @@ Centering
 
 * :class:`~pynpoint.processing.centering.StarAlignmentModule` (CPU): Align the images with a cross-correlation.
 * :class:`~pynpoint.processing.centering.FitCenterModule` (CPU): Fit the PSF with a 2D Gaussian or Moffat function.
-* :class:`~pynpoint.processing.centering.ShiftImagesModule` (CPU): Shift a stack of images.
+* :class:`~pynpoint.processing.centering.ShiftImagesModule`: Shift a stack of images.
 * :class:`~pynpoint.processing.centering.WaffleCenteringModule`: Use the waffle spots to center the images.
 
 Dark and Flat Correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule` (CPU): Dark frame subtraction.
-* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule` (CPU): Flat field correction.
+* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule`: Dark frame subtraction.
+* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule`: Flat field correction.
 
 Denoising
 ~~~~~~~~~
@@ -115,10 +115,10 @@ Frame Selection
 Image Resizing
 ~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.resizing.CropImagesModule` (CPU): Crop the images.
+* :class:`~pynpoint.processing.resizing.CropImagesModule`: Crop the images.
 * :class:`~pynpoint.processing.resizing.ScaleImagesModule` (CPU): Resample the images (spatially and/or in flux).
-* :class:`~pynpoint.processing.resizing.AddLinesModule` (CPU): Add pixel lines on the sides of the images.
-* :class:`~pynpoint.processing.resizing.RemoveLinesModule` (CPU): Remove pixel lines from the sides of the images.
+* :class:`~pynpoint.processing.resizing.AddLinesModule`: Add pixel lines on the sides of the images.
+* :class:`~pynpoint.processing.resizing.RemoveLinesModule`: Remove pixel lines from the sides of the images.
 
 PCA Background Subtraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
