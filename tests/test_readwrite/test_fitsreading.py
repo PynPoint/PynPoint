@@ -14,6 +14,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestFitsReadingModule:
 
     def setup_class(self):
@@ -255,8 +256,8 @@ class TestFitsReadingModule:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read9')
 
-        assert str(error.value) == f'The file fits/image00.fits does not exist. '\
-        'Please check that the path is correct.'
+        assert str(error.value) == 'The file fits/image00.fits does not exist. ' \
+                                   'Please check that the path is correct.'
 
     def test_fits_read_textfile_exists(self):
 
@@ -276,5 +277,5 @@ class TestFitsReadingModule:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read10')
 
-        assert str(error.value) == f'The file fits/image00.fits does not exist. '\
-        'Please check that the path is correct.'
+        assert str(error.value) == 'The file fits/image00.fits does not exist. ' \
+                                   'Please check that the path is correct.'
