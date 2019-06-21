@@ -343,7 +343,9 @@ class TaskWriter(multiprocessing.Process):
                 continue
 
             with self.m_data_mutex:
+                self.m_data_out_port._check_status_and_activate()
                 self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
+                self.m_data_out_port.close_port()
 
             self.m_result_queue.task_done()
 

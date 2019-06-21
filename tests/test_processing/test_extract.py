@@ -227,7 +227,7 @@ class TestExtract:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract4')
 
-        assert len(warning) == 40
+        assert len(warning) == 1
         assert warning[0].message.args[0] == 'Chosen image size is too large to crop the image ' \
                                              'around the brightest pixel. Using the center of ' \
                                              'the image instead.'
