@@ -44,8 +44,10 @@ class NearReadingModule(ReadingModule):
                  chopb_out_tag: str = 'chopb',
                  do_chop_sub: bool = False,
                  do_crop: bool = False,
+                 do_cube_stack: bool = False,
                  crop_size: float = 5.,
-                 crop_center: Union[tuple, None] = (432, 287)):
+                 crop_center: Union[tuple, None] = (432, 287),
+                 combine_method: str = 'mean'):
         """
         Parameters
         ----------
@@ -65,11 +67,16 @@ class NearReadingModule(ReadingModule):
         do_crop: bool
             If True, the chop A and chop B images are cropped around the location given by crop_center
             and with the image size given by crop_size before saving them out.
+        do_cube_stack: bool
+            If True, combine the frames from each cube into a single frame using the method
+            given by combine_method.
         crop_size : float
             Cropped image size (arcsec). The same size will be used for both image dimensions.
         crop_center : tuple(int, int), None
             Tuple (x0, y0) with the cropped image center. Since all chop A and B images are cropped around
             the same location, the crop_center location should be roughly the coronagraph position.
+        combine_method : str
+            Method for combining images ('mean' or 'median').
 
         Returns
         -------
@@ -84,9 +91,11 @@ class NearReadingModule(ReadingModule):
 
         self.m_do_chop_sub = do_chop_sub
         self.m_do_crop = do_crop
+        self.m_do_cube_stack = do_cube_stack
 
         self.m_crop_size = crop_size
         self.m_crop_center = crop_center
+        self.m_combine = combine_method
 
     @typechecked
     def _uncompress_file(self,
@@ -405,6 +414,15 @@ class NearReadingModule(ReadingModule):
                                center=self.m_crop_center,
                                size=self.m_crop_size,
                                copy=False)
+
+            if self.m_do_cube_stack:
+                if self.m_combine == 'mean':
+                    chopa = chopa.mean(axis=0)
+                    chopb = chopb.mean(axis=0)
+                elif self.m_combine == 'median':
+                    chopa = chopa.median(axis=0)
+                    chopb = chopb.median(axis=0)
+                header[self._m_config_port.get_attribute('NFRAMES')] = 1
 
             # append the images of chop A and B
             self.m_chopa_out_port.append(chopa, data_dim=3)
