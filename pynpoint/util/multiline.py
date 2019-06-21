@@ -62,8 +62,9 @@ class LineReader(TaskCreator):
 
             # lock mutex and read data
             with self.m_data_mutex:
-                # read rows from i to j
-                tmp_data = self.m_data_in_port[:, i:j, :]
+                self.m_data_in_port._check_status_and_activate()
+                tmp_data = self.m_data_in_port[:, i:j, :]  # read rows from i to j
+                self.m_data_in_port.close_port()
 
             param = (self.m_data_length, ((None, None, None), (i, j, None), (None, None, None)))
             self.m_task_queue.put(TaskInput(tmp_data, param))

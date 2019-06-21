@@ -20,6 +20,7 @@ junit-py37.xml
 .pytest_cache/
 *.nbi
 *.nbc
+pytest.ini
 
 # Sphinx
 docs/_build

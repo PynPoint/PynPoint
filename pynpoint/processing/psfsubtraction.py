@@ -139,6 +139,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         using multiprocessing.
         """
 
+        cpu = self._m_config_port.get_attribute('CPU')
+        angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+
         tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
 
         if self.m_res_mean_out_port is not None:
@@ -153,13 +156,33 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+        self.m_star_in_port.close_port()
+        self.m_reference_in_port.close_port()
+
+        if self.m_res_mean_out_port is not None:
+            self.m_res_mean_out_port.close_port()
+
+        if self.m_res_median_out_port is not None:
+            self.m_res_median_out_port.close_port()
+
+        if self.m_res_weighted_out_port is not None:
+            self.m_res_weighted_out_port.close_port()
+
+        if self.m_res_rot_mean_clip_out_port is not None:
+            self.m_res_rot_mean_clip_out_port.close_port()
+
+        if self.m_res_arr_out_ports is not None:
+            for pca_number in self.m_components:
+                self.m_res_arr_out_ports[pca_number].close_port()
+
+        if self.m_basis_out_port is not None:
+            self.m_basis_out_port.close_port()
 
         capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                             self.m_res_median_out_port,
                                             self.m_res_weighted_out_port,
                                             self.m_res_rot_mean_clip_out_port,
-                                            self._m_config_port.get_attribute('CPU'),
+                                            cpu,
                                             deepcopy(self.m_components),
                                             deepcopy(self.m_pca),
                                             deepcopy(star_reshape),
@@ -174,7 +197,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
         """
+
         start_time = time.time()
+
         for i, pca_number in enumerate(self.m_components):
             progress(i, len(self.m_components), 'Creating residuals...', start_time)
 
