@@ -122,8 +122,8 @@ class FakePlanetModule(ProcessingModule):
                              'the FakePlanetModule.')
 
         if psf_shape[-2:] != im_shape[-2:]:
-            raise ValueError('The images in \'{self.m_image_in_port.tag}\' should have the same '
-                             'dimensions as the images images in \'{self.m_psf_in_port.tag}\'.')
+            raise ValueError(f'The images in \'{self.m_image_in_port.tag}\' should have the same '
+                             f'dimensions as the images images in \'{self.m_psf_in_port.tag}\'.')
 
         frames = memory_frames(memory, im_shape[0])
 
