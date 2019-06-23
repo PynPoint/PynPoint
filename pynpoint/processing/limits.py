@@ -164,6 +164,7 @@ class ContrastCurveModule(ProcessingModule):
         correction for small sample statistics is applied for both cases. Note that if the sigma
         level is fixed, the false positive fraction changes with separation, following the
         Student's t-distribution (see Mawet et al. 2014 for details).
+
         Returns
         -------
         NoneType
