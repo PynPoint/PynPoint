@@ -260,7 +260,8 @@ class AngleInterpolationModule(ProcessingModule):
 
             if steps[i] == 1:
                 new_angles = np.append(new_angles,
-                                      [(parang_start[i] + parang_end[i])/2.])
+                                       [(parang_start[i] + parang_end[i])/2.])
+
             elif steps[i] != 1:
                 new_angles = np.append(new_angles,
                                        np.linspace(parang_start[i],

@@ -408,12 +408,12 @@ class NearReadingModule(ReadingModule):
             if self.m_combine is not None:
 
                 if self.m_combine == 'mean':
-                    chopa = chopa.mean(axis=0)
-                    chopb = chopb.mean(axis=0)
+                    chopa = np.mean(chopa, axis=0)
+                    chopb = np.mean(chopb, axis=0)
 
                 elif self.m_combine == 'median':
-                    chopa = chopa.median(axis=0)
-                    chopb = chopb.median(axis=0)
+                    chopa = np.median(chopa, axis=0)
+                    chopb = np.median(chopb, axis=0)
 
                 header[self._m_config_port.get_attribute('NFRAMES')] = 1
 

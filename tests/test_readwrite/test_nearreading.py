@@ -59,7 +59,7 @@ class TestNearInitModule(object):
             assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
             assert data.shape == (20, 10, 10)
 
-    def test_near_subtract_crop_combine(self):
+    def test_near_subtract_crop_mean(self):
 
         module = NearReadingModule(name_in='read1b',
                                    input_dir=self.test_dir+'near',
@@ -79,6 +79,25 @@ class TestNearInitModule(object):
         data = self.pipeline.get_data(self.positions[1])
         assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
         assert data.shape == (4, 7, 7)
+
+    def test_near_median(self):
+
+        module = NearReadingModule(name_in='read1c',
+                                   input_dir=self.test_dir+'near',
+                                   chopa_out_tag=self.positions[0],
+                                   chopb_out_tag=self.positions[1],
+                                   combine='median')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read1c')
+
+        data = self.pipeline.get_data(self.positions[0])
+        assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
+        assert data.shape == (4, 10, 10)
+
+        data = self.pipeline.get_data(self.positions[1])
+        assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
+        assert data.shape == (4, 10, 10)
 
     def test_static_not_found(self):
 

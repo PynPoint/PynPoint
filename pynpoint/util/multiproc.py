@@ -419,11 +419,9 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
         Returns
         -------
-        list
-            Empty list.
+        NoneType
+            None
         """
-
-        return []
 
     @abstractmethod
     @typechecked
