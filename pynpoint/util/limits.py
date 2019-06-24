@@ -161,8 +161,8 @@ def contrast_limit(path_images: List[str],
             if mean_flux - clip_flux < flux < mean_flux + clip_flux \
             else np.nan \
             for flux in temp_t_noise]
-        temp_flux_in = np.nanmean(temp_flux_in)
-        temp_t_noise = np.nanmean(temp_t_noise)
+        flux_in = np.nanmean(temp_flux_in)
+        t_noise = np.nanmean(temp_t_noise)
     else:
         raise AttributeError('residuals must be either "mean", "median", "weighted" or "clipped"'
                              'but was {}'.format(residuals))
@@ -196,7 +196,7 @@ def contrast_limit(path_images: List[str],
         temp_im_res_rot += [im_res_rot]
 
 
-    # Stack the residuals
+    # Concatenate the residuals
     im_res_derot = np.concatenate(temp_im_res_derot)
     im_res_rot = np.concatenate(temp_im_res_rot)
 
