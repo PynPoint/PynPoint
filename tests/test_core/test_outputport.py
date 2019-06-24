@@ -11,16 +11,17 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
-def setup_module():
-    create_random(os.path.dirname(__file__))
-
-def teardown_module():
-    os.remove(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
 class TestOutputPort:
 
     def setup(self):
         self.storage = DataStorage(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
+
+    def setup_class(self):
+        create_random(os.path.dirname(__file__))
+
+    def teardown_class(self):
+        os.remove(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
     def create_input_port(self, tag_name):
         inport = InputPort(tag_name, self.storage)
@@ -544,8 +545,8 @@ class TestOutputPort:
         # check that only one warning was raised
         assert len(warning) == 1
         # check that the message matches
-        assert warning[0].message.args[0] == 'Attribute \'not_existing\' does not exist and could ' \
-                                             'not be deleted.'
+        assert warning[0].message.args[0] == 'Attribute \'not_existing\' does not exist and ' \
+                                             'could not be deleted.'
 
         out_port.del_all_attributes()
         out_port.del_all_data()
