@@ -6,7 +6,7 @@ a range of principal components for which the PCA basis is required as input.
 import sys
 import multiprocessing
 
-from typing import Tuple, List
+from typing import Union, Tuple, List
 
 import numpy as np
 
@@ -184,10 +184,10 @@ class PcaTaskWriter(TaskWriter):
     @typechecked
     def __init__(self,
                  result_queue_in: multiprocessing.JoinableQueue,
-                 mean_out_port: OutputPort,
-                 median_out_port: OutputPort,
-                 weighted_out_port: OutputPort,
-                 clip_out_port: OutputPort,
+                 mean_out_port: Union[OutputPort, None],
+                 median_out_port: Union[OutputPort, None],
+                 weighted_out_port: Union[OutputPort, None],
+                 clip_out_port: Union[OutputPort, None],
                  data_mutex_in: multiprocessing.Lock,
                  requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
@@ -278,10 +278,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
     @typechecked
     def __init__(self,
-                 mean_out_port: OutputPort,
-                 median_out_port: OutputPort,
-                 weighted_out_port: OutputPort,
-                 clip_out_port: OutputPort,
+                 mean_out_port: Union[OutputPort, None],
+                 median_out_port: Union[OutputPort, None],
+                 weighted_out_port: Union[OutputPort, None],
+                 clip_out_port: Union[OutputPort, None],
                  num_proc: np.int64,
                  pca_numbers: np.ndarray,
                  pca_model: PCA,

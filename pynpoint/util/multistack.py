@@ -120,7 +120,7 @@ class StackTaskProcessor(TaskProcessor):
             Results queue.
         function : function
             Input function that is applied to the images.
-        function_args : tuple, None, optional
+        function_args : tuple, None
             Function arguments.
         nimages : int
             Total number of images.
@@ -192,7 +192,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
                  image_out_port: OutputPort,
                  num_proc: np.int64,
                  function: Callable,
-                 function_args: tuple,
+                 function_args: Union[tuple, None],
                  stack_size: int,
                  result_shape: tuple,
                  nimages: int) -> None:
