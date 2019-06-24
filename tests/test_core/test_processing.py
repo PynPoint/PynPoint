@@ -186,10 +186,7 @@ class TestProcessing:
         self.pipeline.add_module(module)
         self.pipeline.run_module('subtract_multi')
 
-        data = self.pipeline.get_data('im_sub_single')
-        assert np.allclose(np.mean(data), -7.5026790335996905e-25, rtol=limit, atol=0.)
-        assert data.shape == (10000, 100, 100)
-
+        data_single = self.pipeline.get_data('im_sub_single')
         data_multi = self.pipeline.get_data('im_sub_multi')
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape
+        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
+        assert data_single.shape == data_multi.shape
