@@ -383,24 +383,25 @@ class SimplexMinimizationModule(ProcessingModule):
             mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
-                _, im_res = pca_psf_subtraction(images=fake*mask,
-                                                angles=-1.*parang+self.m_extra_rot,
-                                                pca_number=self.m_pca_number,
-                                                pca_sklearn=None,
-                                                im_shape=None,
-                                                indices=None)
+                im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
+                                                               angles=-1.*parang+self.m_extra_rot,
+                                                               pca_number=self.m_pca_number,
+                                                               pca_sklearn=None,
+                                                               im_shape=None,
+                                                               indices=None)
 
             else:
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
 
-                _, im_res = pca_psf_subtraction(images=im_reshape,
-                                                angles=-1.*parang+self.m_extra_rot,
-                                                pca_number=self.m_pca_number,
-                                                pca_sklearn=sklearn_pca,
-                                                im_shape=im_shape,
-                                                indices=None)
+                im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
+                                                               angles=-1.*parang+self.m_extra_rot,
+                                                               pca_number=self.m_pca_number,
+                                                               pca_sklearn=sklearn_pca,
+                                                               im_shape=im_shape,
+                                                               indices=None)
 
-            res_stack = combine_residuals(method=self.m_residuals, res_rot=im_res)
+            res_stack = combine_residuals(method=self.m_residuals,
+                                          res_rot=im_res_derot, residuals=im_res_rot, angles=parang)
 
             self.m_res_out_port.append(res_stack, data_dim=3)
 
@@ -783,11 +784,12 @@ class MCMCsamplingModule(ProcessingModule):
     #                        magnitude=self.m_param[2],
     #                        psf_scaling=self.m_psf_scaling)
     #
-    #     _, res_arr = pca_psf_subtraction(images=fake,
-    #                                      angles=-1.*parang+self.m_extra_rot,
-    #                                      pca_number=self.m_pca_number)
+    #     im_res_rot, im_res_derot = pca_psf_subtraction(images=fake,
+    #                                                    angles=-1.*parang+self.m_extra_rot,
+    #                                                    pca_number=self.m_pca_number)
     #
-    #     res_stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
+    #     res_stack = combine_residuals(method=self.m_residuals,
+    #                                   res_rot=im_res_derot, residuals=im_res_rot, angles=parang)
     #
     #     # separation (pix) and position angle (deg)
     #     sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
