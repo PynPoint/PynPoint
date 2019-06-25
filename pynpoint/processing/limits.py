@@ -295,7 +295,9 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
+        self.m_image_in_port._check_status_and_activate()
         self.m_contrast_out_port._check_status_and_activate()
+
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
         sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
