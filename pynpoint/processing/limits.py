@@ -181,8 +181,12 @@ class ContrastCurveModule(ProcessingModule):
                              f'(without derotating) before applying the ContrastCurveModule.')
 
         cpu = self._m_config_port.get_attribute('CPU')
+        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
+
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        self.m_image_in_port.close_port()
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -221,8 +225,6 @@ class ContrastCurveModule(ProcessingModule):
 
         result = []
         async_results = []
-
-        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
 
         # Create temporary files
         tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
@@ -292,6 +294,7 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
+        self.m_contrast_out_port._check_status_and_activate()
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
         sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
