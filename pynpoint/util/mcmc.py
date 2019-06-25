@@ -127,8 +127,10 @@ def lnprob(param: np.ndarray,
                                                        pca_number=pca_number,
                                                        indices=indices)
 
-        res_stack = combine_residuals(
-            method=residuals, res_rot=im_res_derot, residuals=im_res_rot, angles=parang)
+        res_stack = combine_residuals(method=residuals,
+                                      res_rot=im_res_derot,
+                                      residuals=im_res_rot,
+                                      angles=parang)
 
         chi_square = merit_function(residuals=res_stack[0, ],
                                     merit=merit,
