@@ -145,39 +145,3 @@ class TestResizing:
         data_multi = self.pipeline.get_data('remove')
         assert np.allclose(data, data_multi, rtol=limit, atol=0.)
         assert data.shape == data_multi.shape
-
-    def test_remove_lines_long(self):
-
-        module = RepeatImagesModule(name_in='repeat',
-                                    image_in_tag='read',
-                                    image_out_tag='read_repeated',
-                                    repeat=50)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('repeat')
-
-        module = RemoveLinesModule(lines=(2, 5, 0, 9),
-                                   name_in='remove_slow',
-                                   image_in_tag='read_repeated',
-                                   image_out_tag='remove_slow')
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('remove_slow')
-
-        data = self.pipeline.get_data('remove_slow')
-        assert np.allclose(data[0, 50, 50], 0.028455980719223083, rtol=limit, atol=0.)
-        assert data.shape == (2000, 91, 93)
-
-        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
-            hdf_file['config'].attrs['CPU'] = 4
-
-        self.pipeline.run_module('remove_slow')
-        data_multi = self.pipeline.get_data('remove_slow')
-        bad_frames = np.argwhere(data - data_multi)
-
-        for i in np.unique(bad_frames[:, 0]):
-            fits.writeto(f'../../image1_{i}.fits', data[i, ], overwrite=True)
-            fits.writeto(f'../../image2_{i}.fits', data_multi[i, ], overwrite=True)
-
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
-        assert data.shape == data_multi.shape

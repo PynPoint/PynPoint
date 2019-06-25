@@ -412,6 +412,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         processors = []
 
         for _ in range(self.m_num_proc):
+
             processors.append(PcaTaskProcessor(self.m_tasks_queue,
                                                self.m_result_queue,
                                                self.m_star_reshape,

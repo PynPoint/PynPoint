@@ -7,61 +7,68 @@ import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
+from pynpoint.processing.background import LineSubtractionModule
 from pynpoint.processing.badpixel import BadPixelSigmaFilterModule
-from pynpoint.processing.darkflat import DarkCalibrationModule
-from pynpoint.processing.resizing import RemoveLinesModule, ScaleImagesModule
+from pynpoint.processing.basic import RepeatImagesModule
+from pynpoint.processing.extract import StarExtractionModule
+from pynpoint.processing.timedenoising import TimeNormalizationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter('always')
 
 limit = 1e-10
 
-class TestPypeline:
+
+class TestProcessing:
 
     def setup_class(self):
+
         self.test_dir = os.path.dirname(__file__) + '/'
 
         np.random.seed(1)
 
-        image_3d = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
-        image_2d = np.random.normal(loc=0, scale=2e-4, size=(1, 10, 10))
-        science = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
-        dark = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
+        images = np.random.normal(loc=0, scale=2e-4, size=(100, 10, 10))
+        large_data = np.random.normal(loc=0, scale=2e-4, size=(10000, 100, 100))
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
-            hdf_file.create_dataset('image_3d', data=image_3d)
-            hdf_file.create_dataset('image_2d', data=image_2d)
-            hdf_file.create_dataset('science', data=science)
-            hdf_file.create_dataset('dark', data=dark)
+            hdf_file.create_dataset('images', data=images)
+            hdf_file.create_dataset('large_data', data=large_data)
 
         create_star_data(path=self.test_dir+'images')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
+        self.pipeline.set_attribute('images', 'PIXSCALE', 0.1, static=True)
+        self.pipeline.set_attribute('large_data', 'PIXSCALE', 0.1, static=True)
+
     def teardown_class(self):
+
         remove_test_data(self.test_dir, folders=['images'])
 
     def test_output_port_name(self):
-        read = FitsReadingModule(name_in='read', input_dir=self.test_dir+'images',
-                                 image_tag='images')
-        read.add_output_port('test')
+
+        module = FitsReadingModule(name_in='read',
+                                   image_tag='images',
+                                   input_dir=self.test_dir+'images')
+
+        module.add_output_port('test')
 
         with pytest.warns(UserWarning) as warning:
-            read.add_output_port('test')
+            module.add_output_port('test')
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'Tag \'test\' of ReadingModule \'read\' is already ' \
                                              'used.'
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel',
-                                            image_in_tag='images',
-                                            image_out_tag='im_out')
+        module = BadPixelSigmaFilterModule(name_in='badpixel',
+                                           image_in_tag='images',
+                                           image_out_tag='im_out')
 
-        process.add_output_port('test')
+        module.add_output_port('test')
 
         with pytest.warns(UserWarning) as warning:
-            process.add_output_port('test')
+            module.add_output_port('test')
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'Tag \'test\' of ProcessingModule \'badpixel\' is ' \
@@ -69,134 +76,117 @@ class TestPypeline:
 
         self.pipeline.m_data_storage.close_connection()
 
-        process._m_data_base = self.test_dir+'database.hdf5'
-        process.add_output_port('new')
+        module._m_data_base = self.test_dir+'database.hdf5'
+        module.add_output_port('new')
 
-    # def test_apply_function_to_images_3d(self):
-    #     self.pipeline.set_attribute('config', 'MEMORY', 1, static=True)
-    #
-    #     remove = RemoveLinesModule(lines=(1, 0, 0, 0),
-    #                                name_in='remove1',
-    #                                image_in_tag='image_3d',
-    #                                image_out_tag='remove_3d')
-    #
-    #     self.pipeline.add_module(remove)
-    #     self.pipeline.run_module('remove1')
-    #
-    #     data = self.pipeline.get_data('image_3d')
-    #     assert np.allclose(np.mean(data), 1.0141852764605783e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 10, 10)
-    #
-    #     data = self.pipeline.get_data('remove_3d')
-    #     assert np.allclose(np.mean(data), 1.1477029889801025e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 10, 9)
+    def test_apply_function_to_images(self):
 
-    # def test_apply_function_to_images_2d(self):
-    #     remove = RemoveLinesModule(lines=(1, 0, 0, 0),
-    #                                name_in='remove2',
-    #                                image_in_tag='image_2d',
-    #                                image_out_tag='remove_2d')
-    #
-    #     self.pipeline.add_module(remove)
-    #     self.pipeline.run_module('remove2')
-    #
-    #     data = self.pipeline.get_data('image_2d')
-    #     assert np.allclose(np.mean(data), 1.2869483197883442e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (1, 10, 10)
-    #
-    #     data = self.pipeline.get_data('remove_2d')
-    #     assert np.allclose(np.mean(data), 1.3957075246029751e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (1, 10, 9)
+        self.pipeline.set_attribute('config', 'MEMORY', 20, static=True)
+        self.pipeline.set_attribute('config', 'CPU', 4, static=True)
 
-    # def test_apply_function_to_images_same_port(self):
-    #     dark = DarkCalibrationModule(name_in='dark1',
-    #                                  image_in_tag='science',
-    #                                  dark_in_tag='dark',
-    #                                  image_out_tag='science')
-    #
-    #     self.pipeline.add_module(dark)
-    #     self.pipeline.run_module('dark1')
-    #
-    #     data = self.pipeline.get_data('science')
-    #     assert np.allclose(np.mean(data), -3.190113568690675e-06, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 10, 10)
-    #
-    #     self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
-    #
-    #     dark = DarkCalibrationModule(name_in='dark2',
-    #                                  image_in_tag='science',
-    #                                  dark_in_tag='dark',
-    #                                  image_out_tag='science')
-    #
-    #     self.pipeline.add_module(dark)
-    #     self.pipeline.run_module('dark2')
-    #
-    #     data = self.pipeline.get_data('science')
-    #     assert np.allclose(np.mean(data), -1.026073475228737e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 10, 10)
-    #
-    #     remove = RemoveLinesModule(lines=(1, 0, 0, 0),
-    #                                name_in='remove3',
-    #                                image_in_tag='remove_3d',
-    #                                image_out_tag='remove_3d')
-    #
-    #     self.pipeline.add_module(remove)
-    #
-    #     with pytest.raises(ValueError) as error:
-    #         self.pipeline.run_module('remove3')
-    #
-    #     assert str(error.value) == 'Input and output port have the same tag while the input ' \
-    #                                'function is changing the image shape. This is only ' \
-    #                                'possible with MEMORY=None.'
+        module = LineSubtractionModule(name_in='subtract',
+                                       image_in_tag='images',
+                                       image_out_tag='im_subtract',
+                                       combine='mean',
+                                       mask=None)
 
-    # def test_apply_function_to_images_memory_none(self):
-    #     remove = RemoveLinesModule(lines=(1, 0, 0, 0),
-    #                                name_in='remove4',
-    #                                image_in_tag='image_3d',
-    #                                image_out_tag='remove_3d_none')
-    #
-    #     self.pipeline.add_module(remove)
-    #     self.pipeline.run_module('remove4')
-    #
-    #     data = self.pipeline.get_data('remove_3d_none')
-    #     assert np.allclose(np.mean(data), 1.1477029889801025e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 10, 9)
-    #
-    # def test_apply_function_to_images_3d_args(self):
-    #     self.pipeline.set_attribute('config', 'MEMORY', 1, static=True)
-    #     self.pipeline.set_attribute('image_3d', 'PIXSCALE', 0.1, static=True)
-    #
-    #     scale = ScaleImagesModule(scaling=(1.2, 1.2, 10.),
-    #                               pixscale=True,
-    #                               name_in='scale1',
-    #                               image_in_tag='image_3d',
-    #                               image_out_tag='scale_3d')
-    #
-    #     self.pipeline.add_module(scale)
-    #     self.pipeline.run_module('scale1')
-    #
-    #     data = self.pipeline.get_data('scale_3d')
-    #     assert np.allclose(np.mean(data), 7.042953308754017e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (4, 12, 12)
-    #
-    #     attribute = self.pipeline.get_attribute('scale_3d', 'PIXSCALE', static=True)
-    #     assert np.allclose(attribute, 0.08333333333333334, rtol=limit, atol=0.)
-    #
-    # def test_apply_function_to_images_2d_args(self):
-    #     self.pipeline.set_attribute('image_2d', 'PIXSCALE', 0.1, static=True)
-    #
-    #     scale = ScaleImagesModule(scaling=(1.2, 1.2, 10.),
-    #                               pixscale=True,
-    #                               name_in='scale2',
-    #                               image_in_tag='image_2d',
-    #                               image_out_tag='scale_2d')
-    #
-    #     self.pipeline.add_module(scale)
-    #     self.pipeline.run_module('scale2')
-    #
-    #     data = self.pipeline.get_data('scale_2d')
-    #     assert np.allclose(np.mean(data), 8.937141109641279e-05, rtol=limit, atol=0.)
-    #     assert data.shape == (1, 12, 12)
-    #
-    #     attribute = self.pipeline.get_attribute('scale_2d', 'PIXSCALE', static=True)
-    #     assert np.allclose(attribute, 0.08333333333333334, rtol=limit, atol=0.)
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('subtract')
+
+        data = self.pipeline.get_data('images')
+        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+        data = self.pipeline.get_data('im_subtract')
+        assert np.allclose(np.mean(data), 5.529431079676073e-22, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+    def test_apply_function_to_images_args_none(self):
+
+        module = TimeNormalizationModule(name_in='norm',
+                                         image_in_tag='images',
+                                         image_out_tag='im_norm')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('norm')
+
+        data = self.pipeline.get_data('im_norm')
+        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+    def test_apply_function_to_images_args_none_memory_none(self):
+
+        self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
+
+        module = TimeNormalizationModule(name_in='norm_none',
+                                         image_in_tag='images',
+                                         image_out_tag='im_norm')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('norm_none')
+
+        data = self.pipeline.get_data('im_norm')
+        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+    def test_apply_function_to_images_same_port(self):
+
+        module = LineSubtractionModule(name_in='subtract_same',
+                                       image_in_tag='im_subtract',
+                                       image_out_tag='im_subtract',
+                                       combine='mean',
+                                       mask=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('subtract_same')
+
+        data = self.pipeline.get_data('im_subtract')
+        assert np.allclose(np.mean(data), 7.318364664277155e-22, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+    def test_apply_function_to_images_memory_none(self):
+
+        module = StarExtractionModule(name_in='extract',
+                                      image_in_tag='im_subtract',
+                                      image_out_tag='extract',
+                                      index_out_tag=None,
+                                      image_size=0.5,
+                                      fwhm_star=0.1,
+                                      position=(None, None, 0.1))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('extract')
+
+        data = self.pipeline.get_data('extract')
+        assert np.allclose(np.mean(data), 1.5591859111937413e-07, rtol=limit, atol=0.)
+        assert data.shape == (100, 5, 5)
+
+    def test_multiproc_large_data(self):
+
+        self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
+        self.pipeline.set_attribute('config', 'CPU', 1, static=True)
+
+        module = LineSubtractionModule(name_in='subtract_single',
+                                       image_in_tag='large_data',
+                                       image_out_tag='im_sub_single',
+                                       combine='mean',
+                                       mask=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('subtract_single')
+
+        self.pipeline.set_attribute('config', 'CPU', 4, static=True)
+
+        module = LineSubtractionModule(name_in='subtract_multi',
+                                       image_in_tag='large_data',
+                                       image_out_tag='im_sub_multi',
+                                       combine='mean',
+                                       mask=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('subtract_multi')
+
+        data_single = self.pipeline.get_data('im_sub_single')
+        data_multi = self.pipeline.get_data('im_sub_multi')
+        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
+        assert data_single.shape == data_multi.shape
