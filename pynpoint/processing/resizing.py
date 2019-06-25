@@ -347,96 +347,30 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        def _remove_lines(image_in, lines):
-            shape_in = image_in.shape
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
 
-            return image_in[int(lines[2]):shape_in[0]-int(lines[3]),
-                            int(lines[0]):shape_in[1]-int(lines[1])]
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
-        self.apply_function_to_images(_remove_lines,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running RemoveLinesModule',
-                                      func_args=(self.m_lines, ))
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Running RemoveLinesModule...', start_time)
+
+            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            image_out = image_in[:,
+                                 int(self.m_lines[2]):image_in.shape[1]-int(self.m_lines[3]),
+                                 int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
+
+            self.m_image_out_port.append(image_out, data_dim=3)
+
+        sys.stdout.write('Running RemoveLinesModule... [DONE]\n')
+        sys.stdout.flush()
 
         history = f'number of lines = {self.m_lines}'
         self.m_image_out_port.add_history('RemoveLinesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
-
-
-# class RemoveLinesModule(ProcessingModule):
-#     """
-#     Module to decrease the dimensions of an image by removing lines of pixels.
-#     """
-#
-#     @typechecked
-#     def __init__(self,
-#                  name_in: str,
-#                  image_in_tag: str,
-#                  image_out_tag: str,
-#                  lines: Tuple[int, int, int, int]) -> None:
-#         """
-#         Parameters
-#         ----------
-#         name_in : str
-#             Unique name of the module instance.
-#         image_in_tag : str
-#             Tag of the database entry that is read as input.
-#         image_out_tag : str
-#             Tag of the database entry that is written as output, including the images with
-#             decreased size. Should be different from *image_in_tag*.
-#         lines : tuple(int, int, int, int)
-#             The number of lines that are removed in left, right, bottom, and top direction.
-#
-#         Returns
-#         -------
-#         NoneType
-#             None
-#         """
-#
-#         super(RemoveLinesModule, self).__init__(name_in)
-#
-#         self.m_image_in_port = self.add_input_port(image_in_tag)
-#         self.m_image_out_port = self.add_output_port(image_out_tag)
-#
-#         self.m_lines = lines
-#
-#     @typechecked
-#     def run(self) -> None:
-#         """
-#         Run method of the module. Removes the lines given by *lines* from each frame.
-#
-#         Returns
-#         -------
-#         NoneType
-#             None
-#         """
-#
-#         self.m_image_out_port.del_all_attributes()
-#         self.m_image_out_port.del_all_data()
-#
-#         memory = self._m_config_port.get_attribute('MEMORY')
-#         nimages = self.m_image_in_port.get_shape()[0]
-#         frames = memory_frames(memory, nimages)
-#
-#         start_time = time.time()
-#
-#         for i in range(len(frames[:-1])):
-#             progress(i, len(frames[:-1]), 'Running RemoveLinesModule...', start_time)
-#
-#             image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
-#
-#             image_out = image_in[:,
-#                                  int(self.m_lines[2]):image_in.shape[1]-int(self.m_lines[3]),
-#                                  int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
-#
-#             self.m_image_out_port.append(image_out, data_dim=3)
-#
-#         sys.stdout.write('Running RemoveLinesModule... [DONE]\n')
-#         sys.stdout.flush()
-#
-#         history = f'number of lines = {self.m_lines}'
-#         self.m_image_out_port.add_history('RemoveLinesModule', history)
-#         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-#         self.m_image_out_port.close_port()
