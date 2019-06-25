@@ -187,6 +187,7 @@ class ContrastCurveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         self.m_image_in_port.close_port()
+        self.m_psf_in_port.close_port()
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
