@@ -19,7 +19,6 @@ from pynpoint.processing.basic import SubtractImagesModule, \
                                       RepeatImagesModule
 
 from pynpoint.processing.centering import StarAlignmentModule, \
-                                          StarCenteringModule, \
                                           FitCenterModule, \
                                           ShiftImagesModule, \
                                           WaffleCenteringModule

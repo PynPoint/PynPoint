@@ -15,6 +15,7 @@ setup(
     version='0.8.1',
     description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
+    long_description_content_type='text/x-rst',
     author='Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara',
     author_email='tomas.stolker@phys.ethz.ch',
     url='http://pynpoint.ethz.ch',
