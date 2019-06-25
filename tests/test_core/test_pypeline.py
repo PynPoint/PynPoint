@@ -17,6 +17,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestPypeline:
 
     def setup_class(self):
@@ -45,7 +46,7 @@ class TestPypeline:
         with pytest.warns(UserWarning) as warning:
             Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        # assert len(warning) == 2
+        assert len(warning) == 1
         assert warning[0].message.args[0] == 'Configuration file not found. Creating ' \
                                              'PynPoint_config.ini with default values ' \
                                              'in the working place.'

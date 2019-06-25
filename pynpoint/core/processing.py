@@ -564,17 +564,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                 else:
                     result.append(func(images[i, ], *args))
 
-            result = np.asarray(result)
-
-            if image_out_port.tag == image_in_port.tag:
-
-                if images.shape[-2] != result.shape[-2] or images.shape[-1] != result.shape[-1]:
-
-                    raise ValueError('Input and output port have the same tag while the input '
-                                     'function is changing the image shape. This is only possible '
-                                     'with MEMORY=None.')
-
-            image_out_port.set_all(result, keep_attributes=True)
+            image_out_port.set_all(np.asarray(result), keep_attributes=True)
 
             sys.stdout.write(message+' [DONE]\n')
             sys.stdout.flush()
