@@ -226,6 +226,7 @@ class ContrastCurveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         self.m_image_in_port.close_port()
+        self.m_psf_in_port.close_port()
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -366,7 +367,9 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
+        self.m_image_in_port._check_status_and_activate()
         self.m_contrast_out_port._check_status_and_activate()
+
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
         sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
