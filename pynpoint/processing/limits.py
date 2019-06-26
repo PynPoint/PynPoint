@@ -203,10 +203,13 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.del_all_data()
         self.m_contrast_out_port.del_all_attributes()
+        self.m_contrast_out_port.close_port()
 
         temp_images = []
         angles = []
 
+        for image_in_port in self.m_image_in_ports:
+            image_in_port._check_status_and_activate()
         for input_port in self.m_image_in_ports:
             temp_images += [input_port.get_all()]
             angles += [input_port.get_attribute("PARANG")]
@@ -222,10 +225,9 @@ class ContrastCurveModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         working_place = self._m_config_port.get_attribute('WORKING_PLACE')
 
-        parang = self.m_image_in_port.get_attribute('PARANG')
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-
-        self.m_image_in_port.close_port()
+        pixscale = self.m_image_in_ports[0].get_attribute('PIXSCALE')
+        for image_in_port in self.m_image_in_ports:
+            image_in_port.close_port()
         self.m_psf_in_port.close_port()
 
         if self.m_cent_size is not None:
@@ -366,8 +368,8 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
-        self.m_image_in_port._check_status_and_activate()
         self.m_contrast_out_port._check_status_and_activate()
+        self.m_contrast_out_port.open_port()
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
