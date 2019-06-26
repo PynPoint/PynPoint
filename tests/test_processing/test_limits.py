@@ -219,8 +219,8 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_clipped')
         assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 5.761818720605104, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.33532868607941346, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 5.677071264779353, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.08384849598858492, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 

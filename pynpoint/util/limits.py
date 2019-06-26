@@ -153,14 +153,18 @@ def contrast_limit(path_images: List[str],
         # clip flux using 3 time std range
         clip_flux = 3 * np.std(temp_flux_in, ddof=1)
         mean_flux = np.mean(temp_flux_in)
+
+        clip_noise = 3 * np.std(temp_t_noise, ddof=1)
+        mean_noise = np.mean(temp_t_noise)
+
         temp_flux_in = [flux \
             if mean_flux - clip_flux < flux < mean_flux + clip_flux \
             else np.nan \
             for flux in temp_flux_in]
-        temp_t_noise = [flux \
-            if mean_flux - clip_flux < flux < mean_flux + clip_flux \
+        temp_t_noise = [noise \
+            if mean_noise - clip_noise < noise < mean_noise + clip_noise \
             else np.nan \
-            for flux in temp_t_noise]
+            for noise in temp_t_noise]
         flux_in = np.nanmean(temp_flux_in)
         t_noise = np.nanmean(temp_t_noise)
     else:

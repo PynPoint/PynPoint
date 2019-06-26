@@ -270,38 +270,37 @@ class ContrastCurveModule(ProcessingModule):
         temp_noise = []
         image_paths = []
 
+        def _compute_noise(images, angles, pca_number):
+            im_res_rot, im_res_derot = pca_psf_subtraction(images=images*mask,
+                                                           angles=-1.*angles+self.m_extra_rot,
+                                                           pca_number=pca_number)
+
+            noise = combine_residuals(method=self.m_residuals,
+                                      res_rot=im_res_derot,
+                                      residuals=im_res_rot,
+                                      angles=-1.*angles+self.m_extra_rot)
+            return noise
+
+
         if self.m_mode == 'individual':
             for i, images in enumerate(temp_images):
-                im_res_rot, im_res_derot = pca_psf_subtraction(images=images*mask,
-                                                               angles=-1. *\
-                                                                   angles[i]+self.m_extra_rot,
-                                                               pca_number=self.m_pca_number[i])
-
-                noise = combine_residuals(method=self.m_residuals,
-                                          res_rot=im_res_derot,
-                                          residuals=im_res_rot,
-                                          angles=-1.*angles[i]+self.m_extra_rot)
+                noise = _compute_noise(images, angles[i], self.m_pca_number[i])
                 temp_noise += [noise]
 
                 # Create temporary files
                 image_paths += [os.path.join(working_place, "tmp_images_{}.npy".format(i))]
-                np.save(image_paths[-1], images)           
+                np.save(image_paths[-1], images)
 
         elif self.m_mode == 'combined':
             images = np.concatenate(temp_images)
             parang = np.concatenate(angles)
 
-            im_res_rot, im_res_derot = pca_psf_subtraction(
-                images=images*mask,
-                angles=-1. * parang+self.m_extra_rot,
-                pca_number=self.m_pca_number[0])
-
-            noise = combine_residuals(method=self.m_residuals, res_rot=im_res_derot,
-                                      residuals=im_res_rot, angles=-1.*parang+self.m_extra_rot)
+            noise = _compute_noise(images, parang, self.m_pca_number[0])
             temp_noise += [noise]
-            tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
-            image_paths = [tmp_im_str]
+
+            image_paths += [os.path.join(working_place, "tmp_images.npy")]
             np.save(image_paths[-1], images)
+
         else:
             pass  # value error is raised in init
 
