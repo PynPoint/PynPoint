@@ -194,6 +194,7 @@ class ContrastCurveModule(ProcessingModule):
         correction for small sample statistics is applied for both cases. Note that if the sigma
         level is fixed, the false positive fraction changes with separation, following the
         Student's t-distribution (see Mawet et al. 2014 for details).
+
         Returns
         -------
         NoneType
@@ -219,7 +220,13 @@ class ContrastCurveModule(ProcessingModule):
                              f'(without derotating) before applying the ContrastCurveModule.')
 
         cpu = self._m_config_port.get_attribute('CPU')
-        pixscale = self.m_image_in_ports[0].get_attribute('PIXSCALE')
+        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
+
+        parang = self.m_image_in_port.get_attribute('PARANG')
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        self.m_image_in_port.close_port()
+        self.m_psf_in_port.close_port()
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -258,8 +265,6 @@ class ContrastCurveModule(ProcessingModule):
 
         result = []
         async_results = []
-
-        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
 
         # Create temporary files
         tmp_psf_str = os.path.join(working_place, 'tmp_psf.npy')
@@ -360,6 +365,9 @@ class ContrastCurveModule(ProcessingModule):
         res_fpf = result[:, 0, 3]
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+
+        self.m_image_in_port._check_status_and_activate()
+        self.m_contrast_out_port._check_status_and_activate()
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 

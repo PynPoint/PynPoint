@@ -122,8 +122,8 @@ class FakePlanetModule(ProcessingModule):
                              'the FakePlanetModule.')
 
         if psf_shape[-2:] != im_shape[-2:]:
-            raise ValueError('The images in \'{self.m_image_in_port.tag}\' should have the same '
-                             'dimensions as the images images in \'{self.m_psf_in_port.tag}\'.')
+            raise ValueError(f'The images in \'{self.m_image_in_port.tag}\' should have the same '
+                             f'dimensions as the images images in \'{self.m_psf_in_port.tag}\'.')
 
         frames = memory_frames(memory, im_shape[0])
 
@@ -383,24 +383,27 @@ class SimplexMinimizationModule(ProcessingModule):
             mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
-                _, im_res = pca_psf_subtraction(images=fake*mask,
-                                                angles=-1.*parang+self.m_extra_rot,
-                                                pca_number=self.m_pca_number,
-                                                pca_sklearn=None,
-                                                im_shape=None,
-                                                indices=None)
+                im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
+                                                               angles=-1.*parang+self.m_extra_rot,
+                                                               pca_number=self.m_pca_number,
+                                                               pca_sklearn=None,
+                                                               im_shape=None,
+                                                               indices=None)
 
             else:
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
 
-                _, im_res = pca_psf_subtraction(images=im_reshape,
-                                                angles=-1.*parang+self.m_extra_rot,
-                                                pca_number=self.m_pca_number,
-                                                pca_sklearn=sklearn_pca,
-                                                im_shape=im_shape,
-                                                indices=None)
+                im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
+                                                               angles=-1.*parang+self.m_extra_rot,
+                                                               pca_number=self.m_pca_number,
+                                                               pca_sklearn=sklearn_pca,
+                                                               im_shape=im_shape,
+                                                               indices=None)
 
-            res_stack = combine_residuals(method=self.m_residuals, res_rot=im_res)
+            res_stack = combine_residuals(method=self.m_residuals,
+                                          res_rot=im_res_derot,
+                                          residuals=im_res_rot,
+                                          angles=parang)
 
             self.m_res_out_port.append(res_stack, data_dim=3)
 
@@ -745,63 +748,6 @@ class MCMCsamplingModule(ProcessingModule):
         else:
             self.m_mask = mask
 
-    # @typechecked
-    # def gaussian_variance(self,
-    #                       images: np.ndarray,
-    #                       psf: np.ndarray,
-    #                       parang: np.ndarray,
-    #                       aperture: Tuple[int, int, float]) -> float:
-    #     """
-    #     Function to compute the (constant) variance for the likelihood function when the
-    #     merit parameter is set to 'gaussian'. The planet is first removed from the dataset
-    #     with the `param` values.
-    #
-    #     Parameters
-    #     ----------
-    #     images : numpy.ndarray
-    #         Masked input images.
-    #     psf : numpy.ndarray
-    #         PSF template.
-    #     parang : numpy.ndarray
-    #         Parallactic angles (deg).
-    #     aperture : tuple(int, int, float)
-    #         Properties of the circular aperture. The radius is recommended to be larger than or
-    #         equal to 0.5*lambda/D.
-    #
-    #     Returns
-    #     -------
-    #     float
-    #         Variance (counts).
-    #     """
-    #
-    #     pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-    #
-    #     fake = fake_planet(images=images,
-    #                        psf=psf,
-    #                        parang=parang,
-    #                        position=(self.m_param[0]/pixscale, self.m_param[1]),
-    #                        magnitude=self.m_param[2],
-    #                        psf_scaling=self.m_psf_scaling)
-    #
-    #     _, res_arr = pca_psf_subtraction(images=fake,
-    #                                      angles=-1.*parang+self.m_extra_rot,
-    #                                      pca_number=self.m_pca_number)
-    #
-    #     res_stack = combine_residuals(method=self.m_residuals, res_rot=res_arr)
-    #
-    #     # separation (pix) and position angle (deg)
-    #     sep_ang = cartesian_to_polar(center=center_subpixel(res_stack),
-    #                                  y_pos=aperture[0],
-    #                                  x_pos=aperture[1])
-    #
-    #     selected = select_annulus(image_in=res_stack[0, ],
-    #                               radius_in=sep_ang[0]-aperture[2],
-    #                               radius_out=sep_ang[0]+aperture[2],
-    #                               mask_position=aperture[0:2],
-    #                               mask_radius=aperture[2])
-    #
-    #     return np.var(selected)
-
     @typechecked
     def run(self) -> None:
         """
@@ -857,11 +803,6 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 0] = self.m_param[0] + np.random.normal(0, self.m_sigma[0], self.m_nwalkers)
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
-
-        # if self.m_merit == 'gaussian':
-        #     variance = self.gaussian_variance(images*mask, psf, parang, aperture)
-        # else:
-        #     variance = None
 
         sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                         dim=ndim,

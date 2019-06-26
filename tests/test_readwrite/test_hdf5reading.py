@@ -13,6 +13,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestHdf5ReadingModule:
 
     def setup_class(self):
@@ -32,14 +33,14 @@ class TestHdf5ReadingModule:
 
         data = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
 
-        with  h5py.File(self.test_dir+'data/PynPoint_database.hdf5', 'a') as hdf_file:
+        with h5py.File(self.test_dir+'data/PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file.create_dataset('extra', data=data)
             hdf_file.create_dataset('header_extra/PARANG', data=[1., 2., 3., 4.])
 
         read = Hdf5ReadingModule(name_in='read1',
                                  input_filename='PynPoint_database.hdf5',
                                  input_dir=self.test_dir+'data',
-                                 tag_dictionary={'images':'images'})
+                                 tag_dictionary={'images': 'images'})
 
         self.pipeline.add_module(read)
         self.pipeline.run_module('read1')
@@ -69,7 +70,7 @@ class TestHdf5ReadingModule:
         read = Hdf5ReadingModule(name_in='read3',
                                  input_filename='PynPoint_database.hdf5',
                                  input_dir=self.test_dir+'data',
-                                 tag_dictionary={'test':'test'})
+                                 tag_dictionary={'test': 'test'})
 
         self.pipeline.add_module(read)
 
