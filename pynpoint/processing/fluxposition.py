@@ -774,6 +774,7 @@ class MCMCsamplingModule(ProcessingModule):
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
         self.m_image_in_port.close_port()
+        self.m_psf_in_port.close_port()
 
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError('The number of frames in psf_in_tag does not match with the number of '
@@ -830,7 +831,9 @@ class MCMCsamplingModule(ProcessingModule):
         sys.stdout.write('Running MCMCsamplingModule... [DONE]\n')
         sys.stdout.flush()
 
+        self.m_image_in_port._check_status_and_activate()
         self.m_chain_out_port._check_status_and_activate()
+
         self.m_chain_out_port.set_all(sampler.chain)
 
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'

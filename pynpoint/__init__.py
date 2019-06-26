@@ -19,7 +19,6 @@ from pynpoint.processing.basic import SubtractImagesModule, \
                                       RepeatImagesModule
 
 from pynpoint.processing.centering import StarAlignmentModule, \
-                                          StarCenteringModule, \
                                           FitCenterModule, \
                                           ShiftImagesModule, \
                                           WaffleCenteringModule
@@ -97,7 +96,7 @@ warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __license__ = 'GPLv3'
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'
