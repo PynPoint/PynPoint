@@ -339,7 +339,7 @@ class MassLimitsModule(ProcessingModule):
             limits, and the upper and lower one sigma deviation as calculated for the azimuthal
             variance on the contrast limits.
         model_file: str
-            Absolute path to the file containing the model data. Must be in the same format as the
+            Path to the file containing the model data. Must be in the same format as the
             grids found on https://phoenix.ens-lyon.fr/Grids/. Any of the isochrones files from
             this website can be used.
         star_prop : dict
@@ -366,17 +366,25 @@ class MassLimitsModule(ProcessingModule):
         self.m_instr_filter = instr_filter
         self.m_model_file = model_file
 
-        if not os.path.isabs(self.m_model_file):
-            raise ValueError('The model_file should be a string with an absolute file path.')
+        if not os.path.exists(self.m_model_file):
+            raise ValueError('The path does not appear to be an existing file. Please check the'
+                             'path. If you are unsure about the path, pass the absolute path to the'
+                             'model file.')
 
         self.m_contrast_in_port = self.add_input_port(contrast_in_tag)
         self.m_mass_out_port = self.add_output_port(mass_out_tag)
 
+    @staticmethod
     @typechecked
-    def read_model(self) -> Tuple[List[float], List[np.ndarray], List[str]]:
+    def read_model(model_file_path: str) -> Tuple[List[float], List[np.ndarray], List[str]]:
         """
         Reads the data from the model file and structures it. Returns an array of available model
         ages and a list of model data for each age.
+
+        Parameters
+        -------
+        model_file: str
+            Path to the file containing the model data.
 
         Returns
         -------
@@ -390,7 +398,7 @@ class MassLimitsModule(ProcessingModule):
 
         # read in all the data, selecting out empty lines or '---' lines
         data = []
-        with open(self.m_model_file) as file:
+        with open(model_file_path) as file:
             for line in file:
                 if ('---' in line) or line == '\n':
                     continue
@@ -492,7 +500,7 @@ class MassLimitsModule(ProcessingModule):
         sys.stdout.write('Running MassLimitsModule...')
         sys.stdout.flush()
 
-        model_age, model_data, model_header = self.read_model()
+        model_age, model_data, model_header = self.read_model(self.m_model_file)
 
         assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
                                                     'list of available filters from the model.'
