@@ -206,7 +206,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-            residuals, res_rot = pca_psf_subtraction(images=star_reshape,
+            res_rot, res_var = pca_psf_subtraction(images=star_reshape,
                                                      angles=parang,
                                                      pca_number=pca_number,
                                                      pca_sklearn=self.m_pca,
@@ -235,7 +235,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if self.m_res_weighted_out_port is not None:
                 stack = combine_residuals(method='weighted',
                                           res_rot=res_rot,
-                                          residuals=residuals,
+                                          res_var=res_var,
                                           angles=parang)
 
                 self.m_res_weighted_out_port.append(stack, data_dim=3)
@@ -522,13 +522,14 @@ class ClassicalADIModule(ProcessingModule):
 
         im_res = self.m_res_inout_port.get_all()
 
-        res_rot = np.zeros(im_res.shape)
+        im_res_var = np.var(im_res, axis=0)
+
         for i, item in enumerate(parang):
-            res_rot[i, ] = rotate(im_res[i, ], item, reshape=False)
+            im_res[i, ] = rotate(im_res[i, ], item, reshape=False)
 
         stack = combine_residuals(self.m_residuals,
-                                  res_rot,
-                                  residuals=im_res,
+                                  im_res,
+                                  res_var=im_res_var,
                                   angles=parang)
 
         self.m_stack_out_port.set_all(stack)

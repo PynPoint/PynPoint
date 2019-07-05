@@ -140,7 +140,7 @@ def contrast_limit(path_images: str,
                        psf_scaling=psf_scaling)
 
     # Run the PSF subtraction
-    _, im_res = pca_psf_subtraction(images=fake*mask,
+    im_res, _  = pca_psf_subtraction(images=fake*mask,
                                     angles=-1.*parang+extra_rot,
                                     pca_number=pca_number)
 

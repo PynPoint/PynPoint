@@ -122,14 +122,14 @@ def lnprob(param: np.ndarray,
                            magnitude=mag,
                            psf_scaling=psf_scaling)
 
-        im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
+        im_res_derot, im_res_var = pca_psf_subtraction(images=fake*mask,
                                                        angles=-1.*parang+extra_rot,
                                                        pca_number=pca_number,
                                                        indices=indices)
 
         res_stack = combine_residuals(method=residuals,
                                       res_rot=im_res_derot,
-                                      residuals=im_res_rot,
+                                      res_var=im_res_var,
                                       angles=parang)
 
         chi_square = merit_function(residuals=res_stack[0, ],

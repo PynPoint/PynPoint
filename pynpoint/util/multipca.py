@@ -145,7 +145,7 @@ class PcaTaskProcessor(TaskProcessor):
             Output residuals.
         """
 
-        residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
+        res_rot, res_var = pca_psf_subtraction(images=self.m_star_reshape,
                                                  angles=self.m_angles,
                                                  pca_number=tmp_task.m_input_data,
                                                  pca_sklearn=self.m_pca_model,
@@ -163,7 +163,7 @@ class PcaTaskProcessor(TaskProcessor):
         if self.m_requirements[2]:
             res_output[2, ] = combine_residuals(method='weighted',
                                                 res_rot=res_rot,
-                                                residuals=residuals,
+                                                res_var=res_var,
                                                 angles=self.m_angles)
 
         if self.m_requirements[3]:

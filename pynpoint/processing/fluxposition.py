@@ -383,7 +383,7 @@ class SimplexMinimizationModule(ProcessingModule):
             mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
-                im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
+                im_res_derot, im_res_var = pca_psf_subtraction(images=fake*mask,
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=self.m_pca_number,
                                                                pca_sklearn=None,
@@ -393,7 +393,7 @@ class SimplexMinimizationModule(ProcessingModule):
             else:
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
 
-                im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
+                im_res_derot, im_res_var = pca_psf_subtraction(images=im_reshape,
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=self.m_pca_number,
                                                                pca_sklearn=sklearn_pca,
@@ -402,7 +402,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             res_stack = combine_residuals(method=self.m_residuals,
                                           res_rot=im_res_derot,
-                                          residuals=im_res_rot,
+                                          res_var=im_res_var,
                                           angles=parang)
 
             self.m_res_out_port.append(res_stack, data_dim=3)

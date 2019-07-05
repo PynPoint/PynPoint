@@ -86,9 +86,12 @@ def pca_psf_subtraction(images: np.ndarray,
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
 
-    # derotate the images
-    res_rot = np.zeros(residuals.shape)
-    for j, item in enumerate(angles):
-        res_rot[j, ] = rotate(residuals[j, ], item, reshape=False)
+    # get variance of residuals for weighted combination
+    res_var = np.var(residuals, axis=0)
 
-    return residuals, res_rot
+    # derotate the images
+    #res_rot = np.zeros(residuals.shape)
+    for j, item in enumerate(angles):
+        residuals[j, ] = rotate(residuals[j, ], item, reshape=False)
+
+    return residuals, res_var

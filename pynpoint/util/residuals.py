@@ -11,7 +11,7 @@ from scipy.ndimage import rotate
 @typechecked
 def combine_residuals(method: str,
                       res_rot: np.ndarray,
-                      residuals: np.ndarray = None,
+                      res_var: np.ndarray = None,
                       angles: np.ndarray = None) -> np.ndarray:
     """
     Function for combining the derotated residuals of the PSF subtraction.
@@ -41,28 +41,28 @@ def combine_residuals(method: str,
         stack = np.median(res_rot, axis=0)
 
     elif method == 'weighted':
-        tmp_res_var = np.var(residuals, axis=0)
+        #tmp_res_var = np.var(residuals, axis=0)
 
-        res_repeat = np.repeat(tmp_res_var[np.newaxis, :, :],
-                               repeats=residuals.shape[0],
+        res_repeat = np.repeat(res_var[np.newaxis, :, :],
+                               repeats=res_rot.shape[0],
                                axis=0)
 
-        res_var = np.zeros(res_repeat.shape)
+        res_var_rot = np.zeros(res_repeat.shape)
         for j, angle in enumerate(angles):
             # scipy.ndimage.rotate rotates in clockwise direction for positive angles
-            res_var[j, ] = rotate(input=res_repeat[j, ],
+            res_var_rot[j, ] = rotate(input=res_repeat[j, ],
                                   angle=angle,
                                   reshape=False)
 
         weight1 = np.divide(res_rot,
-                            res_var,
-                            out=np.zeros_like(res_var),
-                            where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+                            res_var_rot,
+                            out=np.zeros_like(res_var_rot),
+                            where=(np.abs(res_var_rot) > 1e-100) & (res_var_rot != np.nan))
 
         weight2 = np.divide(1.,
-                            res_var,
-                            out=np.zeros_like(res_var),
-                            where=(np.abs(res_var) > 1e-100) & (res_var != np.nan))
+                            res_var_rot,
+                            out=np.zeros_like(res_var_rot),
+                            where=(np.abs(res_var_rot) > 1e-100) & (res_var_rot != np.nan))
 
         sum1 = np.sum(weight1, axis=0)
         sum2 = np.sum(weight2, axis=0)
