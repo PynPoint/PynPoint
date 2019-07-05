@@ -10,7 +10,7 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 
 
-#@profile
+@profile
 def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
@@ -40,9 +40,9 @@ def pca_psf_subtraction(images: np.ndarray,
     Returns
     -------
     numpy.ndarray
-        Residuals of the PSF subtraction.
-    numpy.ndarray
         Derotated residuals of the PSF subtraction.
+    numpy.ndarray
+        Variance of the residuals before derotation for use in weighted combination.
     """
 
     if pca_sklearn is None:

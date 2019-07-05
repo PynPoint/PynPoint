@@ -22,8 +22,8 @@ def combine_residuals(method: str,
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
     res_rot : numpy.ndarray
         Derotated residuals of the PSF subtraction (3D).
-    residuals : numpy.ndarray, None
-        Non-derotated residuals of the PSF subtraction (3D). Only required for the noise-weighted
+    res_var : numpy.ndarray, None
+        Variance of non-derotated residuals of the PSF subtraction (2D). Only required for the noise-weighted
         residuals.
     angles : numpy.ndarray, None
         Derotation angles (deg). Only required for the noise-weighted residuals.

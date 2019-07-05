@@ -31,7 +31,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
     processes can be set with the CPU keyword in the configuration file.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = 'Markus Bonse, Tomas Stolker, Anna Boehle'
 
     @typechecked
     def __init__(self,
@@ -192,7 +192,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    #@profile
+    @profile
     def _run_single_processing(self, star_reshape, im_shape, indices):
         """
         Internal function to create the residuals, derotate the images, and write the output
@@ -271,7 +271,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
     @typechecked
-    #@profile
+    @profile
     def run(self) -> None:
         """
         Run method of the module. Subtracts the mean of the image stack from all images, reshapes
