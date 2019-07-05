@@ -192,7 +192,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    @profile
+    #@profile
     def _run_single_processing(self, star_reshape, im_shape, indices):
         """
         Internal function to create the residuals, derotate the images, and write the output
@@ -271,7 +271,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
     @typechecked
-    @profile
+    #@profile
     def run(self) -> None:
         """
         Run method of the module. Subtracts the mean of the image stack from all images, reshapes
@@ -305,15 +305,14 @@ class PcaPsfSubtractionModule(ProcessingModule):
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
         star_reshape = star_reshape[:, indices]
 
+        # create the PCA basis
+        sys.stdout.write('Constructing PSF model...')
+        sys.stdout.flush()
+
         if self.m_reference_in_port.tag == self.m_star_in_port.tag:
-            #ref_reshape = deepcopy(star_reshape)
 
             mean_star = np.mean(star_reshape, axis=0)
             mean_ref = mean_star
-
-            # create the PCA basis
-            sys.stdout.write('Constructing PSF model...')
-            sys.stdout.flush()
 
             self.m_pca.fit(star_reshape - mean_star)
 
@@ -332,10 +331,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
             # subtract mean from reference data
             mean_ref = np.mean(ref_reshape, axis=0)
             ref_reshape -= mean_ref
-
-            # create the PCA basis
-            sys.stdout.write('Constructing PSF model...')
-            sys.stdout.flush()
 
             self.m_pca.fit(ref_reshape)
 

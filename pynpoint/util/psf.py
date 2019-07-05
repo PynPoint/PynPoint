@@ -10,7 +10,7 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 
 
-@profile
+#@profile
 def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
@@ -66,15 +66,12 @@ def pca_psf_subtraction(images: np.ndarray,
         pca_sklearn.fit(im_reshape)
 
     else:
-        im_reshape = np.copy(images)
+        im_reshape = images
 
     # create pca representation
     zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
     pca_rep = np.matmul(pca_sklearn.components_[:pca_number], im_reshape.T)
     pca_rep = np.vstack((pca_rep, zeros)).T
-
-    # create psf model
-    psf_model = pca_sklearn.inverse_transform(pca_rep)
 
     # create original array size
     residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
@@ -83,7 +80,8 @@ def pca_psf_subtraction(images: np.ndarray,
     if indices is None:
         indices = np.arange(0, im_reshape.shape[1], 1)
 
-    residuals[:, indices] = im_reshape - psf_model
+    # create psf model and subtract
+    residuals[:, indices] = im_reshape - pca_sklearn.inverse_transform(pca_rep)
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
