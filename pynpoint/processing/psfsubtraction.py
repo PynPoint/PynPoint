@@ -133,7 +133,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-    def _run_multi_processing(self, star_reshape, im_shape, indices):
+    def _run_multi_processing(self, star_reshape, im_shape):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
@@ -187,13 +187,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                             deepcopy(self.m_pca),
                                             deepcopy(star_reshape),
                                             deepcopy(angles),
-                                            im_shape,
-                                            indices)
+                                            im_shape)
 
         capsule.run()
 
     #@profile
-    def _run_single_processing(self, star_reshape, im_shape, indices):
+    def _run_single_processing(self, star_reshape, im_shape):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -210,8 +209,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                      angles=parang,
                                                      pca_number=pca_number,
                                                      pca_sklearn=self.m_pca,
-                                                     im_shape=im_shape,
-                                                     indices=indices)
+                                                     im_shape=im_shape)
 
             hist = f'max PC number = {np.amax(self.m_components)}'
 
@@ -297,13 +295,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         star_data = self.m_star_in_port.get_all()
         im_shape = star_data.shape
 
-        # select the first image and get the unmasked image indices
-        im_star = star_data[0, ].reshape(-1)
-        indices = None  #indices = np.where(im_star != 0.)[0]
-
         # reshape the star data and select the unmasked pixels
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
-        #star_reshape = star_reshape[:, indices]
 
         # create the PCA basis
         sys.stdout.write('Constructing PSF model...')
@@ -326,7 +319,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             # reshape reference data and select the unmasked pixels
             ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-            #ref_reshape = ref_reshape[:, indices]
 
             # subtract mean from reference data
             mean_ref = np.mean(ref_reshape, axis=0)
@@ -355,19 +347,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             pc_size = self.m_pca.components_.shape[0]
 
             basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
-            #basis[:, indices] = self.m_pca.components_
             basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
 
             self.m_basis_out_port.set_all(basis)
 
         if cpu == 1 or self.m_res_arr_out_ports is not None:
-            self._run_single_processing(star_reshape, im_shape, indices)
+            self._run_single_processing(star_reshape, im_shape)
 
         else:
             sys.stdout.write('Creating residuals')
             sys.stdout.flush()
 
-            self._run_multi_processing(star_reshape, im_shape, indices)
+            self._run_multi_processing(star_reshape, im_shape)
 
             sys.stdout.write(' [DONE]\n')
             sys.stdout.flush()

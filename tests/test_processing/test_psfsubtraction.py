@@ -218,6 +218,7 @@ class TestPsfSubtraction:
         data = self.pipeline.get_data('basis_single')
         assert np.allclose(np.mean(data), -1.593245396350998e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
+        print(data.shape)
 
     def test_psf_subtraction_no_mean(self):
 

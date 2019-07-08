@@ -15,8 +15,7 @@ def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
                         pca_sklearn: PCA = None,
-                        im_shape: Tuple[int, int, int] = None,
-                        indices: np.ndarray = None) -> np.ndarray:
+                        im_shape: Tuple[int, int, int] = None) -> np.ndarray:
     """
     Function for PSF subtraction with PCA.
 
@@ -34,8 +33,6 @@ def pca_psf_subtraction(images: np.ndarray,
         PCA object with the basis if not set to None.
     im_shape : tuple(int, int, int), None
         Original shape of the stack with images. Required if `pca_sklearn` is not set to None.
-    indices : numpy.ndarray, None
-        Non-masked image indices. All pixels are used if set to None.
 
     Returns
     -------
@@ -50,14 +47,8 @@ def pca_psf_subtraction(images: np.ndarray,
 
         im_shape = images.shape
 
-        if indices is None:
-            # select the first image and get the unmasked image indices
-            im_star = images[0, ].reshape(-1)
-            indices = np.where(im_star != 0.)[0]
-
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
-        im_reshape = im_reshape[:, indices]
 
         # subtract mean image
         im_reshape -= np.mean(im_reshape, axis=0)
@@ -70,6 +61,9 @@ def pca_psf_subtraction(images: np.ndarray,
 
     # create pca representation
     zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
+    #print('pca basis:',pca_sklearn.components_[:pca_number].flags)
+    #print('data:',im_reshape.T.flags)
+    #print()
     pca_rep = np.matmul(pca_sklearn.components_[:pca_number], im_reshape.T)
     pca_rep = np.vstack((pca_rep, zeros)).T
 
@@ -77,11 +71,9 @@ def pca_psf_subtraction(images: np.ndarray,
     residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
     # subtract the psf model
-    if indices is None:
-        indices = np.arange(0, im_reshape.shape[1], 1)
 
     # create psf model and subtract
-    residuals[:, indices] = im_reshape - pca_sklearn.inverse_transform(pca_rep)
+    residuals = im_reshape - pca_sklearn.inverse_transform(pca_rep)
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
