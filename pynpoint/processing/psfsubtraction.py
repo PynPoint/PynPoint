@@ -192,7 +192,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    @profile
+    #@profile
     def _run_single_processing(self, star_reshape, im_shape, indices):
         """
         Internal function to create the residuals, derotate the images, and write the output
@@ -271,7 +271,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
     @typechecked
-    @profile
+    #@profile
     def run(self) -> None:
         """
         Run method of the module. Subtracts the mean of the image stack from all images, reshapes
@@ -299,7 +299,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # select the first image and get the unmasked image indices
         im_star = star_data[0, ].reshape(-1)
-        indices = None #np.where(im_star != 0.)[0]
+        indices = None  #indices = np.where(im_star != 0.)[0]
 
         # reshape the star data and select the unmasked pixels
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
