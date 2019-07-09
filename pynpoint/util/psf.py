@@ -10,7 +10,7 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 
 
-#@profile
+@profile
 def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
