@@ -346,8 +346,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
 
-            basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
-            basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
+            basis = self.m_pca.components_.reshape((pc_size, im_shape[1], im_shape[2]))
 
             self.m_basis_out_port.set_all(basis)
 
