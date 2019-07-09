@@ -191,7 +191,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    @profile
     def _run_single_processing(self, star_reshape, im_shape):
         """
         Internal function to create the residuals, derotate the images, and write the output
@@ -269,7 +268,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
     @typechecked
-    @profile
     def run(self) -> None:
         """
         Run method of the module. Subtracts the mean of the image stack from all images, reshapes
