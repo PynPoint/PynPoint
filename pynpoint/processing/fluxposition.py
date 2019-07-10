@@ -387,8 +387,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=self.m_pca_number,
                                                                pca_sklearn=None,
-                                                               im_shape=None,
-                                                               indices=None)
+                                                               im_shape=None)
 
             else:
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
@@ -397,8 +396,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=self.m_pca_number,
                                                                pca_sklearn=sklearn_pca,
-                                                               im_shape=im_shape,
-                                                               indices=None)
+                                                               im_shape=im_shape)
 
             res_stack = combine_residuals(method=self.m_residuals,
                                           res_rot=im_res_derot,
@@ -790,7 +788,6 @@ class MCMCsamplingModule(ProcessingModule):
 
         # create the mask and get the unmasked image indices
         mask = create_mask(im_shape[-2:], self.m_mask)
-        indices = np.where(mask.reshape(-1) != 0.)[0]
 
         if isinstance(self.m_aperture, float):
             yx_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
@@ -819,7 +816,6 @@ class MCMCsamplingModule(ProcessingModule):
                                                self.m_pca_number,
                                                self.m_extra_rot,
                                                aperture,
-                                               indices,
                                                self.m_merit,
                                                self.m_residuals]),
                                         threads=cpu)
