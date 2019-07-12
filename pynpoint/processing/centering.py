@@ -652,7 +652,6 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
-        # set the 'constant' flag to true
         constant = True
 
         # read the fit results from the self.m_fit_in_port if available
@@ -663,9 +662,8 @@ class ShiftImagesModule(ProcessingModule):
 
             # check if data in self.m_fit_in_port is constant for all images using the
             # constant flag
-            for i in range(self.m_fit_in_port.get_shape()[0]):
-                if not np.allclose(self.m_fit_in_port[0, ], self.m_fit_in_port[i, ]):
-                    constant = False
+            if not np.allclose(self.m_fit_in_port.get_all() - self.m_fit_in_port[0, ],0.0):
+                constant = False
 
             if constant:
                 # if the offset is constant then use the first element for all images
