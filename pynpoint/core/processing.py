@@ -507,6 +507,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                  image_in_port,
                                  image_out_port,
                                  message,
+                                 input_2d=True,
                                  func_args=None):
         """
         Function which applies a function to all images of an input port. Stacks of images are
@@ -626,7 +627,8 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                              function_args=func_args,
                                              stack_size=int(memory/cpu),
                                              result_shape=result_shape,
-                                             nimages=nimages)
+                                             nimages=nimages,
+                                             input_2d=input_2d)
 
             capsule.run()
 
