@@ -708,7 +708,6 @@ class ShiftImagesModule(ProcessingModule):
                                             self.m_image_in_port,
                                             self.m_image_out_port,
                                             'Running ShiftImagesModule',
-                                            input_2d=False,
                                             func_args=(self.m_shift,self.m_interpolation))
 
                 # append the shifted images to the selt.m_image_out_port database entry
