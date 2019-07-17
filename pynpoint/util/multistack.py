@@ -110,8 +110,7 @@ class StackTaskProcessor(TaskProcessor):
                  result_queue_in: multiprocessing.JoinableQueue,
                  function: Callable,
                  function_args: Union[tuple, None],
-                 nimages: int,
-                 input_2d: bool) -> None:
+                 nimages: int) -> None:
         """
         Parameters
         ----------
@@ -137,7 +136,6 @@ class StackTaskProcessor(TaskProcessor):
         self.m_function = function
         self.m_function_args = function_args
         self.m_nimages = nimages
-        self.m_input_2d = input_2d
 
     @typechecked
     def run_job(self,
@@ -164,26 +162,17 @@ class StackTaskProcessor(TaskProcessor):
         for item in result_shape:
             full_shape.append(item)
 
-        if self.m_input_2d:
-            result_arr = np.zeros(full_shape)
-            for i in range(result_nimages):
-                # job parameter contains (result_shape, tuple(stack_slice))
-                index = tmp_task.m_job_parameter[1][0][0] + i
+        result_arr = np.zeros(full_shape)
 
-                args = update_arguments(index, self.m_nimages, self.m_function_args)
-
-                result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, ],
-                                                func=self.m_function,
-                                                func_args=args)
-
-        else:
-            index = tmp_task.m_job_parameter[1][0][0]
+        for i in range(result_nimages):
+            # job parameter contains (result_shape, tuple(stack_slice))
+            index = tmp_task.m_job_parameter[1][0][0] + i
 
             args = update_arguments(index, self.m_nimages, self.m_function_args)
 
-            result_arr = apply_function(tmp_data=tmp_task.m_input_data,
-                                        func=self.m_function,
-                                        func_args=args)
+            result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, ],
+                                             func=self.m_function,
+                                             func_args=args)
 
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -206,8 +195,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
                  function_args: Union[tuple, None],
                  stack_size: int,
                  result_shape: tuple,
-                 nimages: int,
-                 input_2d: bool) -> None:
+                 nimages: int) -> None:
         """
         Parameters
         ----------
@@ -239,7 +227,6 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
         self.m_nimages = nimages
-        self.m_input_2d = input_2d
 
         super(StackProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
 
@@ -260,8 +247,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
                                                  result_queue_in=self.m_result_queue,
                                                  function=self.m_function,
                                                  function_args=self.m_function_args,
-                                                 nimages=self.m_nimages,
-                                                 input_2d=self.m_input_2d))
+                                                 nimages=self.m_nimages))
 
         return processors
 
