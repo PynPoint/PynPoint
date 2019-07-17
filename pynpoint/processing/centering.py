@@ -734,7 +734,7 @@ class WaffleCenteringModule(ProcessingModule):
                  image_in_tag: str,
                  center_in_tag: str,
                  image_out_tag: str,
-                 size: float = 2.,
+                 size: float = None,
                  center: Tuple[float, float] = None,
                  radius: float = 45.,
                  pattern: str = 'x',
@@ -752,7 +752,7 @@ class WaffleCenteringModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry with the centered images that are written as output. Should
             be different from *image_in_tag*.
-        size : float
+        size : float, None
             Image size (arcsec) for both dimensions. Original image size is used if set to None.
         center : tuple(float, float), None
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
