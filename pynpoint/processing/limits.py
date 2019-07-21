@@ -172,11 +172,6 @@ class ContrastCurveModule(ProcessingModule):
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
-        '''TEMPORARY FIX PHILIPP'''
-        if len(psf.shape) == 2:
-            psf = np.dstack([1]*psf)
-        '''FIX END'''
-
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
             raise ValueError(f'The number of frames in psf_in_tag {psf.shape} does not match with '
                              f'the number of frames in image_in_tag {images.shape}. The '
