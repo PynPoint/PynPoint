@@ -54,7 +54,9 @@ class PACO:
         # Parallactic angles
         if angles is not None:
             self.m_angles = angles
-
+        else:
+            print("Please add the parallactic angle data to the input image port.")
+            sys.exit(1)
         # Pixel scaling
         self.m_pxscale = px_scale
         self.m_scale = res_scale
@@ -454,8 +456,8 @@ class FastPACO(PACO):
 
         # Currently forcing integer grid, but meshgrid takes floats as arguments...
         x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))    
-
-        print("Running Fast PACO...")
+        if self.m_verbose:
+            print("Running Fast PACO...")
         # Loop over all pixels
         # i is the same as theta_k in the PACO paper
         for i,p0 in enumerate(phi0s):
@@ -486,9 +488,8 @@ class FastPACO(PACO):
             # Calculate a and b, matrices
             a[i] = self.al(hlst, Cinlst)
             b[i] = self.bl(hlst, Cinlst, patch, mlst)
-        print("Done")
-        print(a)
-        print(b)
+        if self.m_verbose:
+            print("Done")
         return a,b
 
     def computeStatistics(self, phi0s):
@@ -505,8 +506,8 @@ class FastPACO(PACO):
         model_name: str
             Name of the template for the off-axis PSF
         """
-    
-        print("Precomputing Statistics...")
+        if self.m_verbose:
+            print("Precomputing Statistics...")
         npx = len(phi0s)       
         dim = int(self.m_width/2)
 
@@ -515,7 +516,7 @@ class FastPACO(PACO):
         #if self.m_psf_area != len(mask[mask]):
         #    self.m_psf_area = len(mask[mask])
         # The off axis PSF at each point
-        h = np.zeros((self.m_psf.shape[0],self.m_psf.shape[1],self.m_psf_area)) 
+        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
 
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
@@ -558,14 +559,14 @@ class FastPACO(PACO):
         NOTES:
         This function currently seems slower than computing in serial...
         """
-    
-        print("Precomputing Statistics using %d Processes...",cpu)
+        if self.m_verbose:
+            print("Precomputing Statistics using %d Processes...",cpu)
         npx = len(phi0s)           # Number of pixels in an image      
         dim = int(self.m_width/2)
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
         # The off axis PSF at each point
-        h = np.zeros((self.m_psf.shape[0],self.m_psf.shape[1],self.m_psf_area)) 
+        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
 
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
@@ -579,7 +580,7 @@ class FastPACO(PACO):
                 
         # *** Parallel Processing ***
         #start = time.time()
-        arglist = [np.copy(np.array(self.getPatch(p0, k, mask))) for p0 in phi0s]
+        arglist = [np.copy(np.array(self.getPatch(p0, self.m_pwidth, mask))) for p0 in phi0s]
         p = Pool(processes = cpu)
         data = p.map(pixelCalc, arglist, chunksize = int(npx/cpu))
         p.close()
@@ -650,8 +651,8 @@ class FullPACO(PACO):
         # the inverse covariance matrix at each point
         Cinv = np.zeros((self.m_nFrames,self.m_psf_area,self.m_psf_area))
 
-
-        print("Running Full PACO...")
+        if self.m_verbose:
+            print("Running Full PACO...")
         
         # Set up coordinates so 0 is at the center of the image                     
         x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))
@@ -672,7 +673,8 @@ class FullPACO(PACO):
             # Calculate a and b, matrices
             a[i] = self.al(h, Cinv)
             b[i] = self.bl(h, Cinv, patch, m)
-        print("Done")
+        if self.m_verbose:
+            print("Done")
         return a,b
   
   

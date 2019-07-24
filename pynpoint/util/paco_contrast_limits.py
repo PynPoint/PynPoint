@@ -9,7 +9,6 @@ import numpy as np
 import math
 from photutils import aperture_photometry
 
-from paco.util.util import *
 from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.paco import PACO,FastPACO,FullPACO
@@ -17,17 +16,19 @@ from pynpoint.util.pacomath import *
 
 
 def paco_contrast_limit(path_images,
-                   path_psf,
-                   noise,
-                   parang,
-                   psf_scaling,
-                   res_scaling,
-                   extra_rot,
-                   threshold,
-                   aperture,
-                   snr_inject,
-                   position,
-                   queue):
+                        path_psf,
+                        noise,
+                        parang,
+                        psf_rad,
+                        psf_scaling,
+                        res_scaling,
+                        extra_rot,
+                        threshold,
+                        aperture,
+                        snr_inject,
+                        position,
+                        algorithm,
+                        queue):
 
     """
     Function for calculating the contrast limit at a specified position for a given sigma level or
@@ -98,7 +99,7 @@ def paco_contrast_limit(path_images,
     xy_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     # Determine the noise level
-    _, t_noise, _, _ = false_alarm(image=noise[0, ],
+    _, t_noise, _, _ = false_alarm(image=noise,
                                    x_pos=xy_fake[0],
                                    y_pos=xy_fake[1],
                                    size=aperture,
@@ -139,22 +140,22 @@ def paco_contrast_limit(path_images,
     #                                size=aperture,
     #                                ignore=False)
     # Setup PACO
-    if self.m_algorithm == "fastpaco":
-        fp = paco.processing.paco.FastPACO(image_stack = images,
-                                               angles = parang,
-                                               psf = psf,
-                                               psf_rad = psf_rad,
-                                               px_scale = pixscale,
-                                               res_scale = res_scaling,
-                                               verbose = self.m_verbose)
-    elif self.m_algorithm == "fullpaco":
-        fp = paco.processing.paco.FullPACO(image_stack = images,
-                                               angles = parang,
-                                               psf = psf,
-                                               psf_rad = psf_rad,
-                                               px_scale = pixscale,
-                                               res_scale = res_scaling,
-                                               verbose = self.m_verbose)
+    if algorithm == "fastpaco":
+            fp = FastPACO(image_stack = images,
+                          angles = parang,
+                          psf = psf,
+                          psf_rad = psf_rad,
+                          px_scale = pixscale,
+                          res_scale = res_scaling,
+                          verbose = False)
+    elif algorithm == "fullpaco":
+            fp = FullPACO(image_stack = images,
+                          angles = parang,
+                          psf = psf,
+                          psf_rad = psf_rad,
+                          px_scale = pixscale,
+                          res_scale = res_scaling,
+                          verbose = False)
 
     # Run PACO
     # SNR = b/sqrt(a)

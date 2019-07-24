@@ -68,7 +68,8 @@ from pynpoint.processing.timedenoising import CwtWaveletConfiguration, \
                                               DwtWaveletConfiguration, \
                                               WaveletTimeDenoisingModule, \
                                               TimeNormalizationModule
-from pynpoint.processing.pacoModule import PACOModule
+from pynpoint.processing.pacoModule import PACOModule,\
+					   PACOContrastModule
 
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 
