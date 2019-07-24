@@ -223,6 +223,11 @@ class PACOContrastModule(ProcessingModule):
         self.m_snr_inject = snr_inject
         self.m_extra_rot = extra_rot
 
+        # Scaling notes:
+        # self.m_scale        scales the resolution of the images for PACO
+        #                     to allow for subpixel template placement.
+        # self.m_psf_scaling  scales the brightness of the psf
+        # pixscale            Is the pixel size in arcsec
         self.m_algorithm = algorithm
         self.m_scale = scaling
         self.m_psf_rad = psf_rad
@@ -336,6 +341,7 @@ class PACOContrastModule(ProcessingModule):
         # Run PACO
         a,b  = fp.PACO(cpu = cpu)
         noise = b/a
+
         for i, pos in enumerate(positions):
             process = mp.Process(target=paco_contrast_limit,
                                  args=(tmp_im_str,
@@ -345,6 +351,7 @@ class PACOContrastModule(ProcessingModule):
                                        self.m_psf_rad/pixscale,
                                        self.m_psf_scaling,
                                        self.m_scale,
+                                       pixscale,
                                        self.m_extra_rot,
                                        self.m_threshold,
                                        self.m_aperture,

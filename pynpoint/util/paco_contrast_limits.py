@@ -22,6 +22,7 @@ def paco_contrast_limit(path_images,
                         psf_rad,
                         psf_scaling,
                         res_scaling,
+                        pixscale,
                         extra_rot,
                         threshold,
                         aperture,
@@ -158,9 +159,8 @@ def paco_contrast_limit(path_images,
                           verbose = False)
 
     # Run PACO
-    # SNR = b/sqrt(a)
-    # Flux estimate = b/a
-    a,b  = fp.PACO(cpu = cpu)
+    # Restrict to 1 processor since this module is called from a child process
+    a,b  = fp.PACO(cpu = 1)
     snr = b/np.sqrt(a)
     flux_residual = b/a
     
