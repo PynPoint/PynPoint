@@ -4,7 +4,10 @@ This file will implement ALGORITHM 1 from the PACO paper
 from .pacomath import *
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
-import sys
+from multiprocessing import Pool
+import sys,os
+import time
+
 
 class PACO:
     def __init__(self,
@@ -14,7 +17,7 @@ class PACO:
                  psf_rad = 4,
                  px_scale = 1,
                  res_scale = 1,
-                 patch_area = 49,
+                 verbose = False
 ):
         """
         PACO Parent Class Constructor
@@ -29,10 +32,16 @@ class PACO:
         psf_rad : float
             Radius of PSF in as. Default values give 4px radius.
         px_scale : float
-            as per pixel.  Default values give 4px radius.
-        patch_are : int
-            Number of pixels contained in a circular patch. Typical  values 13,49,113
+            arcsec per pixel.  Default values give 4px radius.
+        res_scale : float
+            Scaling for sub/super pixel resolution for PACO to run on
+        verbose : bool
+            Sets level of printed outputs
         """
+        
+        self.m_verbose = verbose
+
+        # Science image setup
         self.m_im_stack = np.array(image_stack)
         self.m_nFrames = 0
         self.m_width = 0
@@ -42,27 +51,46 @@ class PACO:
             self.m_width = self.m_im_stack.shape[2]
             self.m_height = self.m_im_stack.shape[1]
 
+        # Parallactic angles
         if angles is not None:
             self.m_angles = angles
+
+        # Pixel scaling
         self.m_pxscale = px_scale
         self.m_scale = res_scale
-        self.m_rescaled = False        
+        self.m_rescaled = False
+
+        # PSF setup
         self.m_psf_rad = int(psf_rad/px_scale)
         if psf is not None:
-            self.m_psf = psf
-            self.m_pwidth = self.m_psf.shape[0]
+            # How do we want to deal with stacks of psfs? Median? Just take the first one?
+            # Ideally if nPSFs = nImages, use each for each. Need to update!
+            if len(psf.shape)>2:
+                psf = psf[0]
+            self.m_psf = psf/np.sum(psf) # SHOULD THE PSF BE NORMALISED!?!?!?
             mask = createCircularMask(self.m_psf.shape,self.m_psf_rad)
-            self.m_psf_area = len(mask[mask])
+            self.m_psf_area = self.m_psf[mask].shape[0]
         else:
-            self.m_psf = psf
-            self.m_pwidth = 2*int(psf_rad*px_scale)
-            self.m_psf_area = patch_area
+            print("Please input a PSF template!")
+            sys.exit(1)
+        self.m_pwidth = 2*int(self.m_psf_rad) + 1
+
+        # Diagnostics
+        if self.m_verbose:
+            print("---------------------- ")
+            print("Summary of PACO setup: \n")
+            print("Image Cube shape = " + str(self.m_im_stack.shape))
+            print("PIXSCALE = " + str(self.m_pxscale).zfill(6))
+            print("PSF |  Area  |  Rad   |  Width | ")
+            print("    |   " + str(self.m_psf_area).zfill(2) + \
+                  "   |   " + str(self.m_psf_rad).zfill(2) + \
+                  "   |  " + str(self.m_psf.shape[0]).zfill(3) + "   | ")
+            print("Patch width: " + str(self.m_pwidth))
+            print("---------------------- \n")
         return
 
     def PACO(self,
-             cpu = 1,
-             model_params = None,
-             model_name = psfTemplateModel):
+             cpu = 1):
         """
         PACO
         This function wraps the actual PACO algorithm, setting up the pixel coordinates 
@@ -70,17 +98,27 @@ class PACO:
         true SNR map.
         Parameters
         ------------    
-        model_params : dict
-            Dictionary describing the analytic template model, or containing the PSF
-        model_name : method
-            A function to produce a 2D template, keyword psfTemplateModel or gaussian2dModel
         cpu : int>=1
             Number of processers to use        
         """
-        if self.m_psf is None:
-            self.modelFunction(self.m_pwidth,model_name, model_params)
+        if ((self.m_width * self.m_scale)%2 != 0):
+            # This ensures that we're dealing with an even number of pixels.
+            # Necessary so that we can evenly divide and rotate about the center. Shouldn't be necessary?
+            self.m_im_stack = self.m_im_stack[0:self.m_nFrames,0:self.m_width -1,0:self.m_height-1]
+            self.m_width -= 1
+            self.m_height -= 1
         if not self.m_rescaled:
             self.rescaleAll()
+        if self.m_verbose:
+            print("---------------------- ")
+            print("Using " + str(cpu) + " processor(s).")
+            print("Rescaled Image Cube shape: " + str(self.m_im_stack.shape))
+            print("Rescaled PSF")
+            print("PSF |  Area  |  Rad   |  Width | ")
+            print("    |   " + str(self.m_psf_area).zfill(2) + \
+                  "   |   " + str(self.m_psf_rad).zfill(2) + \
+                  "   |  " + str(self.m_pwidth).zfill(3) + "   | ")      
+            print("---------------------- \n")
         # Setup pixel coordinates
         x,y = np.meshgrid(np.arange(0,self.m_height),
                           np.arange(0,self.m_width))
@@ -149,15 +187,16 @@ class PACO:
             k2 = k+1
         else:
             k2 = k
-        
         nx, ny = np.shape(self.m_im_stack[0])[:2]
         if px[0]+k2 > nx or px[0]-k< 0 or px[1]+k2 > ny or px[1]-k < 0:
             #print("pixel out of range")
             return None
         if mask is not None:
-            patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2, int(px[1])-k:int(px[1])+k2][mask] for i in range(len(self.m_im_stack))])
+            patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
+                                                 int(px[1])-k:int(px[1])+k2][mask] for i in range(len(self.m_im_stack))])
         else:
-            patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2, int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
+            patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
+                                                 int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
         return patch
 
 
@@ -197,7 +236,8 @@ class PACO:
  
     def modelFunction(self, n, model, params):
         """
-        h_θ
+        This function is deprecated in favour of directly supplying
+        a PSF through the Pynpoint database.
 
         n : mean
         model : numpy statistical model (need to import numpy module for this)
@@ -245,7 +285,7 @@ class PACO:
     def fluxEstimate(self,
                      phi0s,
                      eps = 0.1,
-                     initial_est = 0.0):
+                     initial_est = [0.0]):
         """
         Unbiased estimate of the flux of a source located at p0
         The estimate of the flux is given by ahat * h, where h is the normalised PSF template
@@ -265,24 +305,19 @@ class PACO:
         model_name: method
             Name of the template for the off-axis PSF
         """
-        npx = self.m_width*self.m_height  # Number of pixels in an image
-        dim = self.m_width/2
-        try:
-            assert (dim).is_integer()
-        except AssertionError:
-            print("Image cannot be properly rotated.")
-            sys.exit(1)
-        dim = int(dim)
+        if self.m_verbose:
+            print("Estimating the flux")
+            print(phi0s)
+            print(initial_est)
         print("Computing unbiased flux estimate...")
         
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches                       
-        mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
-        if self.m_psf_area != len(mask[mask]):
-            self.m_psf_area = len(mask[mask])      
+        mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
+        psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)     
         h = np.zeros((self.m_nFrames,self.m_psf_area)) # The off axis PSF at each point
-        
+    
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
@@ -291,13 +326,13 @@ class PACO:
         x,y = np.meshgrid(np.arange(0,int(self.m_height)),
                           np.arange(0,int(self.m_width)))
         ests = []
-        for p0 in phi0s:
+        for i,p0 in enumerate(phi0s):
             angles_px = getRotatedPixels(x,y,p0,self.m_angles)
 
             # Fill patches and signal template
             for l,ang in enumerate(angles_px):
                 patch[l] = self.getPatch(ang, self.m_pwidth, mask) # Get the column of patches at this point
-                h[l] = self.m_psf[mask]
+                h[l] = self.m_psf[psf_mask]
 
             # the mean of a temporal column of patches at each pixel
             m     = np.zeros((self.m_nFrames,self.m_psf_area))
@@ -305,8 +340,8 @@ class PACO:
             Cinv  = np.zeros((self.m_nFrames,self.m_psf_area,self.m_psf_area))
             
             # Unbiased flux estimation
-            ahat = initial_est
-            aprev = 999999.0 # Arbitrary large value so that the loop will run   
+            ahat = initial_est[i]/2.0
+            aprev = 9999.0 # Arbitrary large value so that the loop will run   
             while (np.abs(ahat - aprev) > (ahat * eps)):
                 a = 0.0
                 b = 0.0
@@ -371,3 +406,273 @@ class PACO:
             y.append(y_center)
         return np.array(list(zip(x,y)))
 
+
+"""
+**************************************************
+*                                                *
+*                                                *
+*              Fast PACO/PACitO                  *
+*                                                *
+*                                                *
+**************************************************
+"""  
+class FastPACO(PACO):
+    """
+    Algorithm Functions
+    """      
+    def PACOCalc(self,
+                 phi0s,
+                 cpu = 1):
+        """
+        PACOCalc
+        
+        This function iterates of a list of test points (phi0) and a list
+        of angles between frames to produce 'a' and b', which can be used to
+        generate a signal to noise map where SNR = b/sqrt(a) at each pixel.
+        
+        phi0s : int arr
+            Array of pixel locations to estimate companion position
+        cpu : int >= 1
+            Number of cores to use for parallel processing
+        """      
+        npx = len(phi0s)  # Number of pixels in an image
+        dim = self.m_width/2
+        
+        a = np.zeros(npx) # Setup output arrays
+        b = np.zeros(npx)
+        if cpu == 1:
+            Cinv,m,h = self.computeStatistics(phi0s)
+        else:
+            Cinv,m,h = self.computeStatisticsParallel(phi0s,cpu = cpu)
+
+        # Create arrays needed for storage
+        # Store for each image pixel, for each temporal frame an image
+        # for patches: for each time, we need to store a column of patches
+        patch = np.zeros((self.m_nFrames,self.m_nFrames,self.m_psf_area)) # 2d selection of pixels around a given point
+        mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
+        psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+
+        # Currently forcing integer grid, but meshgrid takes floats as arguments...
+        x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))    
+
+        print("Running Fast PACO...")
+        # Loop over all pixels
+        # i is the same as theta_k in the PACO paper
+        for i,p0 in enumerate(phi0s):
+            # Get Angles
+            angles_px = getRotatedPixels(x,y,p0,self.m_angles)
+
+            # Ensure within image bounds
+            if(int(np.max(angles_px.flatten()))>=self.m_width or \
+               int(np.min(angles_px.flatten()))<0):
+                a[i] = np.nan
+                b[i] = np.nan
+                continue
+
+            # Extract relevant patches and statistics
+            Cinlst = []
+            mlst = []
+            hlst = []
+            for l,ang in enumerate(angles_px):
+                Cinlst.append(Cinv[int(ang[0])][int(ang[1])])
+                mlst.append(m[int(ang[0])][int(ang[1])])
+                hlst.append(h[int(ang[0])][int(ang[1])])
+                patch[l] = self.getPatch(ang, self.m_pwidth, mask)
+            Cinv_arr = np.array(Cinlst)
+            m_arr   = np.array(mlst)
+            hl   = np.array(hlst)
+
+            #print(Cinlst.shape,mlst.shape,hlst.shape,a.shape,patch.shape)
+            # Calculate a and b, matrices
+            a[i] = self.al(hlst, Cinlst)
+            b[i] = self.bl(hlst, Cinlst, patch, mlst)
+        print("Done")
+        print(a)
+        print(b)
+        return a,b
+
+    def computeStatistics(self, phi0s):
+        """    
+        This function computes the mean and inverse covariance matrix for
+        each patch in the image stack in Serial.
+        Parameters
+        ---------------
+        phi0s : int arr
+            Array of pixel locations to estimate companion position
+        params: dict
+            Dictionary of parameters about the psf, containing either the width
+            of a gaussian distribution, or a label 'psf_template'
+        model_name: str
+            Name of the template for the off-axis PSF
+        """
+    
+        print("Precomputing Statistics...")
+        npx = len(phi0s)       
+        dim = int(self.m_width/2)
+
+        mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
+        psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+        #if self.m_psf_area != len(mask[mask]):
+        #    self.m_psf_area = len(mask[mask])
+        # The off axis PSF at each point
+        h = np.zeros((self.m_psf.shape[0],self.m_psf.shape[1],self.m_psf_area)) 
+
+        # Store for each image pixel, for each temporal frame an image
+        # for patches: for each time, we need to store a column of patches
+        patch = np.zeros((self.m_nFrames,self.m_psf_area))
+
+        # the mean of a temporal column of patches centered at each pixel
+        m     = np.zeros((self.m_height,self.m_width,self.m_psf_area)) 
+        # the inverse covariance matrix at each point
+        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area)) 
+
+        # *** SERIAL ***
+        # Loop over all pixels
+        # i is the same as theta_k in the PACO paper
+        for p0 in phi0s:
+            apatch = self.getPatch(p0,self.m_pwidth,mask)
+            #if apatch is not None:
+            #    print(self.m_psf_area,self.m_psf_rad,apatch.shape,h.shape,m.shape,Cinv.shape)
+            m[p0[0]][p0[1]],Cinv[p0[0]][p0[1]] = pixelCalc(apatch)           
+            h[p0[0]][p0[1]] = self.m_psf[psf_mask]
+        return Cinv,m,h
+
+    def computeStatisticsParallel(self, phi0s, cpu):
+        """    
+        This function computes the mean and inverse covariance matrix for
+        each patch in the image stack in Serial.
+        Parameters
+        ---------------
+        phi0s : int arr
+            Array of pixel locations to estimate companion position
+        params: dict
+            Dictionary of parameters about the psf, containing either the width
+            of a gaussian distribution, or a label 'psf_template'
+        scale : float
+            Resolution scaling
+        model_name: str
+            Name of the template for the off-axis PSF
+        cpu : int
+            Number of processors to use
+            
+        NOTES:
+        This function currently seems slower than computing in serial...
+        """
+    
+        print("Precomputing Statistics using %d Processes...",cpu)
+        npx = len(phi0s)           # Number of pixels in an image      
+        dim = int(self.m_width/2)
+        mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
+        psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+        # The off axis PSF at each point
+        h = np.zeros((self.m_psf.shape[0],self.m_psf.shape[1],self.m_psf_area)) 
+
+        # Store for each image pixel, for each temporal frame an image
+        # for patches: for each time, we need to store a column of patches
+        patch = np.zeros((self.m_nFrames,self.m_psf_area))           
+        # the mean of a temporal column of patches at each pixel
+        m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
+        # the inverse covariance matrix at each point
+        Cinv  = np.zeros((self.m_height*self.m_width*self.m_psf_area*self.m_psf_area)) 
+        for p0 in phi0s:
+            h[p0[0]][p0[1]] = self.m_psf[psf_mask]
+                
+        # *** Parallel Processing ***
+        #start = time.time()
+        arglist = [np.copy(np.array(self.getPatch(p0, k, mask))) for p0 in phi0s]
+        p = Pool(processes = cpu)
+        data = p.map(pixelCalc, arglist, chunksize = int(npx/cpu))
+        p.close()
+        p.join()
+        ms,cs = [],[]
+        for d in data:
+            ms.append(d[0])
+            cs.append(d[1])
+        ms = np.array(ms)
+        cs = np.array(cs)  
+        m = ms.reshape((self.m_height,self.m_width,self.m_psf_area))
+        Cinv = cs.reshape((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area))
+        #end = time.time()
+        #print("Parallel elapsed",end-start)
+        return Cinv,m,h
+
+
+
+    
+"""
+**************************************************
+*                                                *
+*                                                *
+*                  Full PACO                     *
+*                                                *
+*                                                *
+**************************************************
+"""  
+
+class FullPACO(PACO):
+    """
+    Algorithm Functions
+    """     
+    def PACOCalc(self,
+                 phi0s,
+                 cpu = 1):
+        """
+        PACOCalc
+        
+        This function iterates of a list of test points (phi0) and a list
+        of angles between frames to produce 'a' and b', which can be used to
+        generate a signal to noise map where SNR = b/sqrt(a) at each pixel.
+        
+        phi0s : int arr
+            Array of pixel locations to estimate companion position
+        cpu : int >= 1
+            Number of cores to use for parallel processing. Not yet implemented.
+        """  
+        npx = len(phi0s)  # Number of pixels in an image
+        dim = self.m_width/2
+        
+        a = np.zeros(npx) # Setup output arrays
+        b = np.zeros(npx)
+        T = len(self.m_im_stack) # Number of temporal frames
+        mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+        if self.m_p_size != len(mask[mask]):
+            self.m_p_size = len(mask[mask])      
+        h = np.zeros((self.m_nFrames,self.m_psf_area)) # The off axis PSF at each point
+        
+        # Create arrays needed for storage
+        # Store for each image pixel, for each temporal frame an image
+        # for patches: for each time, we need to store a column of patches
+        # 2d selection of pixels around a given point
+        patch = np.zeros((self.m_nFrames,self.m_nFrames,self.m_psf_area))
+
+        # the mean of a temporal column of patches at each pixel
+        m = np.zeros((self.m_nFrames,self.m_psf_area))
+        # the inverse covariance matrix at each point
+        Cinv = np.zeros((self.m_nFrames,self.m_psf_area,self.m_psf_area))
+
+
+        print("Running Full PACO...")
+        
+        # Set up coordinates so 0 is at the center of the image                     
+        x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))
+        
+        # Loop over all pixels
+        # i is the same as theta_k in the PACO paper
+        for i,p0 in enumerate(phi0s):
+            # Get list of pixels for each rotation angle
+            angles_px = getRotatedPixels(x,y,p0,self.angles)
+            
+            # Iterate over each temporal frame/each angle
+            # Same as iterating over phi_l
+            for l,ang in enumerate(angles_px):
+                patch[l] = self.getPatch(ang, self.m_pwidth, mask) # Get the column of patches at this point
+                m[l],Cinv[l] = pixelCalc(patch[l])
+                h[l] = self.m_psf[mask]
+
+            # Calculate a and b, matrices
+            a[i] = self.al(h, Cinv)
+            b[i] = self.bl(h, Cinv, patch, m)
+        print("Done")
+        return a,b
+  
+  
