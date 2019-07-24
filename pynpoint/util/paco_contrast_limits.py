@@ -163,7 +163,7 @@ def paco_contrast_limit(path_images,
     a,b  = fp.PACO(cpu = 1)
     snr = b/np.sqrt(a)
     flux_residual = b/a
-    
+    del fp
     flux_out, _, _, _ = false_alarm(image=flux_residual,
                                     x_pos=xy_fake[0],
                                     y_pos=xy_fake[1],

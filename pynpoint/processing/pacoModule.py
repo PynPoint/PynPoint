@@ -110,13 +110,13 @@ class PACOModule(ProcessingModule):
         angles = self.m_image_in_port.get_attribute("PARANG")
         angles = angles - angles[0]
 
-        px_scale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         psf = self.m_psf_in_port.get_all()   
             
         # Setup PACO
         if self.m_algorithm == "fastpaco":
             fp = FastPACO(image_stack = images,
-                          angles = parang,
+                          angles = angles,
                           psf = psf,
                           psf_rad = self.m_psf_rad,
                           px_scale = pixscale,
@@ -124,7 +124,7 @@ class PACOModule(ProcessingModule):
                           verbose = self.m_verbose)
         elif self.m_algorithm == "fullpaco":
             fp = FullPACO(image_stack = images,
-                          angles = parang,
+                          angles = angles,
                           psf = psf,
                           psf_rad = self.m_psf_rad,
                           px_scale = pixscale,
@@ -133,11 +133,10 @@ class PACOModule(ProcessingModule):
         else:
             print("Please input either 'fastpaco' or 'fullpaco' for the algorithm")
 
-        
+            sys.stdout.write("Running PACOModule...\r")
+        sys.stdout.flush()
         # Run PACO
-        a,b  = fp.PACO(model_params = self.m_psf_params,
-                       model_name = self.m_model_function,
-                       cpu = cpu)
+        a,b  = fp.PACO(cpu = cpu)
 
         snr = b/np.sqrt(a)
         flux = b/a
@@ -163,6 +162,8 @@ class PACOModule(ProcessingModule):
         self.m_source_flux_out_port.close_port()
         self.m_source_posn_out_port.set_all(np.array(phi0s), data_dim=2)
         self.m_source_posn_out_port.close_port()
+        sys.stdout.write("\rRunning PACOModule... [DONE]\n")
+        sys.stdout.flush()
 
 
 class PACOContrastModule(ProcessingModule):
@@ -341,7 +342,9 @@ class PACOContrastModule(ProcessingModule):
         # Run PACO
         a,b  = fp.PACO(cpu = cpu)
         noise = b/a
+        del fp
 
+        print("Using",cpu,"cpus for multiprocessing")
         for i, pos in enumerate(positions):
             process = mp.Process(target=paco_contrast_limit,
                                  args=(tmp_im_str,

@@ -50,7 +50,9 @@ class PACO:
             self.m_nFrames = self.m_im_stack.shape[0]
             self.m_width = self.m_im_stack.shape[2]
             self.m_height = self.m_im_stack.shape[1]
-
+        else:
+            print("Must input image data!")
+            sys.exit(1)
         # Parallactic angles
         if angles is not None:
             self.m_angles = angles
@@ -75,7 +77,7 @@ class PACO:
         else:
             print("Please input a PSF template!")
             sys.exit(1)
-        self.m_pwidth = 2*int(self.m_psf_rad) + 1
+        self.m_pwidth = 2*int(self.m_psf_rad) + 3
 
         # Diagnostics
         if self.m_verbose:
@@ -91,6 +93,11 @@ class PACO:
             print("---------------------- \n")
         return
 
+    def __del__(self):
+        if self.m_verbose:
+            print("Killed PACO")
+        return
+    
     def PACO(self,
              cpu = 1):
         """
