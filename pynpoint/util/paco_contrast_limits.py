@@ -6,6 +6,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1" 
 os.environ["OMP_NUM_THREADS"] = "1" 
 import numpy as np
+import sys
 import math
 from photutils import aperture_photometry
 
@@ -164,6 +165,10 @@ def paco_contrast_limit(path_images,
     snr = b/np.sqrt(a)
     flux_residual = b/a
     del fp
+
+    testarray = np.array((100,100,50,50))
+    sys.exit(1)
+    print(testarray.shape,testarray.size,testarray.nbytes)
     flux_out, _, _, _ = false_alarm(image=flux_residual,
                                     x_pos=xy_fake[0],
                                     y_pos=xy_fake[1],
