@@ -520,8 +520,7 @@ class FastPACO(PACO):
 
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
-        #if self.m_psf_area != len(mask[mask]):
-        #    self.m_psf_area = len(mask[mask])
+
         # The off axis PSF at each point
         h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
 
@@ -572,12 +571,10 @@ class FastPACO(PACO):
         dim = int(self.m_width/2)
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+
         # The off axis PSF at each point
         h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
 
-        # Store for each image pixel, for each temporal frame an image
-        # for patches: for each time, we need to store a column of patches
-        patch = np.zeros((self.m_nFrames,self.m_psf_area))           
         # the mean of a temporal column of patches at each pixel
         m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
         # the inverse covariance matrix at each point
@@ -587,7 +584,7 @@ class FastPACO(PACO):
                 
         # *** Parallel Processing ***
         #start = time.time()
-        arglist = [np.copy(np.array(self.getPatch(p0, self.m_pwidth, mask))) for p0 in phi0s]
+        arglist = np.array([self.getPatch(p0, self.m_pwidth, mask) for p0 in phi0s])
         p = Pool(processes = cpu)
         data = p.map(pixelCalc, arglist, chunksize = int(npx/cpu))
         p.close()
