@@ -1,11 +1,15 @@
 """
 This file will implement ALGORITHM 1 from the PACO paper
 """
+import sys
+import os
+os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["NUMEXPR_NUM_THREADS"] = "1" 
+os.environ["OMP_NUM_THREADS"] = "1" 
 from .pacomath import *
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
 from multiprocessing import Pool
-import sys,os
 import time
 
 
@@ -78,7 +82,6 @@ class PACO:
             print("Please input a PSF template!")
             sys.exit(1)
         self.m_pwidth = 2*int(self.m_psf_rad) + 3
-
         # Diagnostics
         if self.m_verbose:
             print("---------------------- ")
@@ -531,7 +534,7 @@ class FastPACO(PACO):
         # the mean of a temporal column of patches centered at each pixel
         m     = np.zeros((self.m_height,self.m_width,self.m_psf_area)) 
         # the inverse covariance matrix at each point
-        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area)) 
+        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area), dtype = float) 
 
         # *** SERIAL ***
         # Loop over all pixels

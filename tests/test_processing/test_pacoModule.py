@@ -1,4 +1,8 @@
 import os
+os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["NUMEXPR_NUM_THREADS"] = "1" 
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -13,9 +17,10 @@ from pynpoint import Pypeline, \
                      ParangReadingModule
 
 working_dir = os.getcwd()
-input_dir = "/data/ipa/user/evertn/PACO/PACO/testData/vip_datasets/"
-output_dir = "/data/ipa/user/evertn/PACO/PACO/output/"
-
+#input_dir = "/data/ipa/user/evertn/PACO/PACO/testData/vip_datasets/"
+#output_dir = "/data/ipa/user/evertn/PACO/PACO/output/"
+input_dir = "/home/evert/Documents/PACO/testData/vip_datasets/"
+output_dir = "/home/evert/Documents/PACO/output/"
 fits_filename = "naco_betapic_cube.fits"
 psf_filename = "naco_betapic_psf.fits"
 par_filename ="naco_betapic_pa.dat"

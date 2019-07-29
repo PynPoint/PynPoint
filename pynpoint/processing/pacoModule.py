@@ -258,7 +258,6 @@ class PACOContrastModule(ProcessingModule):
         #                     'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
         #                     'be used to average the PSF frames (without derotating) before '
         #                     'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
-        #
         
         cpu = self._m_config_port.get_attribute("CPU")
         parang = self.m_image_in_port.get_attribute("PARANG")
@@ -301,12 +300,6 @@ class PACOContrastModule(ProcessingModule):
             for ang in pos_t:
                 positions.append((sep, ang))
 
-        # Create a queue object which will contain the results
-        queue = mp.Queue()
-
-        result = []
-        jobs = []
-
         working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
         # Create temporary files
@@ -343,7 +336,41 @@ class PACOContrastModule(ProcessingModule):
         a,b  = fp.PACO(cpu = cpu)
         noise = b/a
         del fp
+        del images
+        del psf
+        # Create a queue object which will contain the results
+        # arglist = []
+        # names = []
+        queue = mp.Queue(2*len(positions))
+        """
+        for i,pos in enumerate(positions):
+            arglist.append((tmp_im_str,
+                                       tmp_psf_str,
+                                       noise,
+                                       parang,
+                                       self.m_psf_rad/pixscale,
+                                       self.m_psf_scaling,
+                                       self.m_scale,
+                                       pixscale,
+                                       self.m_extra_rot,
+                                       self.m_threshold,
+                                       self.m_aperture,
+                                       self.m_snr_inject,
+                                       pos,
+                                       self.m_algorithm,
+                                       queue))
+            names.append((str(os.path.basename(__file__)) + '_radius=' +
+                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                                       str(np.round(pos[1], 1))))
 
+        result = []
+                
+        pool = mp.Pool(processes = cpu)
+        p_out = pool.imap(paco_contrast_limit,arglist)
+        pool.close()
+        pool.join()
+        """
+        jobs = []
         print("Using",cpu,"cpus for multiprocessing")
         for i, pos in enumerate(positions):
             process = mp.Process(target=paco_contrast_limit,
@@ -385,19 +412,20 @@ class PACOContrastModule(ProcessingModule):
                 for k in jobs[(i + 1 - (i+1)%cpu):]:
                     k.join()
 
-            progress(i, len(jobs), "Running ContrastCurveModule...")
+            progress(i, len(jobs), "Running PACOContrastCurveModule...")
 
         # Send termination sentinel to queue
         queue.put(None)
 
         while True:
             item = queue.get()
-
+            print(item)
+            sys.stdout.flush()
             if item is None:
                 break
             else:
                 result.append(item)
-
+        
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
