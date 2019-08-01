@@ -353,35 +353,7 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        if self.m_reference_in_port is not None:
-            ref_data = self.m_reference_in_port.get_all()
-
-            im_shape = images.shape
-            ref_shape = ref_data.shape
-
-            if ref_shape[1:] != im_shape[1:]:
-                raise ValueError('The image size of the science data and the reference data '
-                                 'should be identical.')
-
-            # reshape reference data and select the unmasked pixels
-            ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-
-            mean_ref = np.mean(ref_reshape, axis=0)
-            ref_reshape -= mean_ref
-
-            # create the PCA basis
-            sklearn_pca = PCA(n_components=self.m_pca_number, svd_solver='arpack')
-            sklearn_pca.fit(ref_reshape)
-
-            # add mean of reference array as 1st PC and orthogonalize it to the PCA basis
-            mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
-
-            q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
-                                                 sklearn_pca.components_[:-1, ])).T)
-
-            sklearn_pca.components_ = q_ortho.T
-
-        def _objective(arg, count, n_components):
+        def _objective(arg, count, n_components, sklearn_pca):
             sys.stdout.write('.')
             sys.stdout.flush()
 
@@ -404,7 +376,7 @@ class SimplexMinimizationModule(ProcessingModule):
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=n_components,
-                                                               pca_sklearn=None,
+                                                               pca_sklearn=sklearn_pca,
                                                                im_shape=None,
                                                                indices=None)
 
@@ -452,9 +424,40 @@ class SimplexMinimizationModule(ProcessingModule):
             sys.stdout.write('Running SimplexMinimizationModule')
             sys.stdout.flush()
 
+            if self.m_reference_in_port is None:
+                sklearn_pca = None
+
+            else:
+                ref_data = self.m_reference_in_port.get_all()
+
+                im_shape = images.shape
+                ref_shape = ref_data.shape
+
+                if ref_shape[1:] != im_shape[1:]:
+                    raise ValueError('The image size of the science data and the reference data '
+                                     'should be identical.')
+
+                # reshape reference data and select the unmasked pixels
+                ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
+
+                mean_ref = np.mean(ref_reshape, axis=0)
+                ref_reshape -= mean_ref
+
+                # create the PCA basis
+                sklearn_pca = PCA(n_components=n_components, svd_solver='arpack')
+                sklearn_pca.fit(ref_reshape)
+
+                # add mean of reference array as 1st PC and orthogonalize it to the PCA basis
+                mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
+
+                q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
+                                                     sklearn_pca.components_[:-1, ])).T)
+
+                sklearn_pca.components_ = q_ortho.T
+
             minimize(fun=_objective,
                      x0=[pos_init[0], pos_init[1], self.m_magnitude],
-                     args=(i, n_components),
+                     args=(i, n_components, sklearn_pca),
                      method='Nelder-Mead',
                      tol=None,
                      options={'xatol': self.m_tolerance, 'fatol': float('inf')})
