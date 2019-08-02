@@ -324,7 +324,30 @@ The angles are stored as attributes to the `science_last` dataset and will be co
    pipeline.add_module(module)
    pipeline.run_module('shift')
 
-15. Stack by 100 images:
+To read the first image from the `science_center` dataset:
+
+.. code-block:: python
+
+   image = pipeline.get_data('science_center', data_range=(0, 1))
+   print(image.shape)
+
+.. code-block:: console
+
+   (1, 111, 111)
+
+And to plot the image:
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+   plt.imshow(image[0, ], origin='lower')
+   plt.show()
+
+.. image:: _static/betapic_center.png
+   :width: 60%
+   :align: center
+
+15. Now we stack every 100 images to lower the computation time with the PSF subtraction:
 
 .. code-block:: python
 
@@ -367,7 +390,20 @@ The angles are stored as attributes to the `science_last` dataset and will be co
    pipeline.add_module(module)
    pipeline.run_module('pca')
 
-18. Measure the signal-to-noise ratio and false positive fraction at the position of the planet:
+This is what the median residuals look like after subtraction 10 principal components:
+
+.. code-block:: python
+
+   data = pipeline.get_data('pca_median')
+
+   plt.imshow(data[9, ], origin='lower')
+   plt.show()
+
+.. image:: _static/betapic_pca.png
+   :width: 60%
+   :align: center
+
+18. Measure the signal-to-noise ratio (S/N) and false positive fraction at the position of the planet:
 
 .. code-block:: python
 
@@ -380,6 +416,20 @@ The angles are stored as attributes to the `science_last` dataset and will be co
 
    pipeline.add_module(module)
    pipeline.run_module('fpf')
+
+And to plot the S/N ratio for the range of principal components:
+
+.. code-block:: python
+
+   data = pipeline.get_data('snr')
+   plt.plot(range(1, 51), data[:, 4])
+   plt.xlabel('Principal components', fontsize=12)
+   plt.ylabel('Signal-to-noise ratio', fontsize=12)
+   plt.show()
+
+.. image:: _static/betapic_snr.png
+   :width: 60%
+   :align: center
 
 19. Write the median residuals to a FITS file:
 
