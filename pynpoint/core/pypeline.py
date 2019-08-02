@@ -430,7 +430,8 @@ class Pypeline:
             warnings.warn(f'Module \'{name}\' not found.')
 
     def get_data(self,
-                 tag):
+                 tag,
+                 data_range=None):
         """
         Function for accessing data in the central database.
 
@@ -438,6 +439,9 @@ class Pypeline:
         ----------
         tag : str
             Database tag.
+        data_range : tuple(int, int), None
+            Slicing range which can be used to select a subset of images from a 3D dataset. All
+            data are selected if set to None.
 
         Returns
         -------
@@ -447,7 +451,11 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        data = np.asarray(self.m_data_storage.m_data_bank[tag])
+        if data_range is None:
+            data = np.asarray(self.m_data_storage.m_data_bank[tag])
+
+        else:
+            data = np.asarray(self.m_data_storage.m_data_bank[tag][data_range])
 
         self.m_data_storage.close_connection()
 
