@@ -2,14 +2,11 @@
 Functions for calculating detection limits.
 """
 import os
-os.environ["MKL_NUM_THREADS"] = "1" 
-os.environ["NUMEXPR_NUM_THREADS"] = "1" 
-os.environ["OMP_NUM_THREADS"] = "1" 
 import numpy as np
 import sys
 import math
 from photutils import aperture_photometry
-
+import gc
 from pynpoint.util.analysis import student_t, fake_planet, false_alarm, create_aperture
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.paco import PACO,FastPACO,FullPACO
@@ -143,8 +140,10 @@ def paco_contrast_limit(path_images,
     # Setup PACO
     sys.stdout.write("Setting up PACO...\n")
     sys.stdout.flush()
+    del images
+    gc.collect()
     if algorithm == "fastpaco":
-            fp = FastPACO(image_stack = images,
+            fp = FastPACO(image_file = path_images,
                           angles = parang,
                           psf = psf,
                           psf_rad = psf_rad,
@@ -152,7 +151,7 @@ def paco_contrast_limit(path_images,
                           res_scale = res_scaling,
                           verbose = False)
     elif algorithm == "fullpaco":
-            fp = FullPACO(image_stack = images,
+            fp = FullPACO(image_file = path_images,
                           angles = parang,
                           psf = psf,
                           psf_rad = psf_rad,
@@ -168,7 +167,6 @@ def paco_contrast_limit(path_images,
     sys.stdout.write("Complete!...\n")
     sys.stdout.flush()
     del fp
-    del images
     del psf
     flux_out, _, _, _ = false_alarm(image=flux_residual,
                                     x_pos=xy_fake[0],

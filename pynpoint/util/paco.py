@@ -16,6 +16,7 @@ import time
 class PACO:
     def __init__(self,
                  image_stack = None,
+                 image_file = None,
                  angles = None,
                  psf = None,
                  psf_rad = 4,
@@ -44,13 +45,16 @@ class PACO:
         """
         
         self.m_verbose = verbose
-
         # Science image setup
-        self.m_im_stack = np.array(image_stack)
+        self.m_im_stack = None
+        if image_stack is not None:
+            self.m_im_stack = np.array(image_stack)
+        if image_file is not None:
+            self.m_im_stack = np.load(image_file).astype(np.float16)
         self.m_nFrames = 0
         self.m_width = 0
         self.m_height = 0
-        if image_stack is not None:
+        if self.m_im_stack is not None:
             self.m_nFrames = self.m_im_stack.shape[0]
             self.m_width = self.m_im_stack.shape[2]
             self.m_height = self.m_im_stack.shape[1]
@@ -94,6 +98,8 @@ class PACO:
                   "   |  " + str(self.m_psf.shape[0]).zfill(3) + "   | ")
             print("Patch width: " + str(self.m_pwidth))
             print("---------------------- \n")
+            print(psf_rad,px_scale)
+            sys.stdout.flush()
         return
 
     def __del__(self):
@@ -529,12 +535,12 @@ class FastPACO(PACO):
 
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
-        patch = np.zeros((self.m_nFrames,self.m_psf_area))
+        #patch = np.zeros((self.m_nFrames,self.m_psf_area))
 
         # the mean of a temporal column of patches centered at each pixel
         m     = np.zeros((self.m_height,self.m_width,self.m_psf_area)) 
         # the inverse covariance matrix at each point
-        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area), dtype = float) 
+        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area), dtype = np.float16) 
 
         # *** SERIAL ***
         # Loop over all pixels
@@ -594,8 +600,10 @@ class FastPACO(PACO):
         p.join()
         ms,cs = [],[]
         for d in data:
-            ms.append(d[0])
-            cs.append(d[1])
+            #print(d)
+            #sys.stdout.flush()
+            ms.append(np.array(d[0]))
+            cs.append(np.array(d[1]))
         ms = np.array(ms)
         cs = np.array(cs)  
         m = ms.reshape((self.m_height,self.m_width,self.m_psf_area))

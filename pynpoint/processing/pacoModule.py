@@ -339,10 +339,9 @@ class PACOContrastModule(ProcessingModule):
         del images
         del psf
         # Create a queue object which will contain the results
-        # arglist = []
-        # names = []
-        queue = mp.Queue(2*len(positions))
         """
+        arglist = []
+        names = []
         for i,pos in enumerate(positions):
             arglist.append((tmp_im_str,
                                        tmp_psf_str,
@@ -370,6 +369,8 @@ class PACOContrastModule(ProcessingModule):
         pool.close()
         pool.join()
         """
+        queue = mp.Queue(2*len(positions))
+        result = []
         jobs = []
         print("Using",cpu,"cpus for multiprocessing")
         for i, pos in enumerate(positions):
@@ -378,7 +379,7 @@ class PACOContrastModule(ProcessingModule):
                                        tmp_psf_str,
                                        noise,
                                        parang,
-                                       self.m_psf_rad/pixscale,
+                                       self.m_psf_rad,
                                        self.m_psf_scaling,
                                        self.m_scale,
                                        pixscale,
@@ -401,14 +402,12 @@ class PACOContrastModule(ProcessingModule):
             if (i+1)%cpu == 0:
                 # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
                 # number of processes.
-
                 for k in jobs[i+1-cpu:(i+1)]:
                     k.join()
 
             elif (i+1) == len(jobs) and (i+1)%cpu != 0:
                 # Wait for the last processes to finish if number of processes is not a multiple
                 # of *cpu*
-
                 for k in jobs[(i + 1 - (i+1)%cpu):]:
                     k.join()
 
@@ -419,7 +418,6 @@ class PACOContrastModule(ProcessingModule):
 
         while True:
             item = queue.get()
-            print(item)
             sys.stdout.flush()
             if item is None:
                 break
