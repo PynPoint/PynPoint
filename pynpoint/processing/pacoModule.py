@@ -339,36 +339,6 @@ class PACOContrastModule(ProcessingModule):
         del images
         del psf
         # Create a queue object which will contain the results
-        """
-        arglist = []
-        names = []
-        for i,pos in enumerate(positions):
-            arglist.append((tmp_im_str,
-                                       tmp_psf_str,
-                                       noise,
-                                       parang,
-                                       self.m_psf_rad/pixscale,
-                                       self.m_psf_scaling,
-                                       self.m_scale,
-                                       pixscale,
-                                       self.m_extra_rot,
-                                       self.m_threshold,
-                                       self.m_aperture,
-                                       self.m_snr_inject,
-                                       pos,
-                                       self.m_algorithm,
-                                       queue))
-            names.append((str(os.path.basename(__file__)) + '_radius=' +
-                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
-                                       str(np.round(pos[1], 1))))
-
-        result = []
-                
-        pool = mp.Pool(processes = cpu)
-        p_out = pool.imap(paco_contrast_limit,arglist)
-        pool.close()
-        pool.join()
-        """
         queue = mp.Queue(2*len(positions))
         result = []
         jobs = []
@@ -428,7 +398,6 @@ class PACOContrastModule(ProcessingModule):
         os.remove(tmp_psf_str)
 
         result = np.asarray(result)
-        print(result.shape)
         # Sort the results first by separation and then by angle
         indices = np.lexsort((result[:, 1], result[:, 0]))
         result = result[indices]

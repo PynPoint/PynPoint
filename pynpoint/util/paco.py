@@ -540,7 +540,7 @@ class FastPACO(PACO):
         # the mean of a temporal column of patches centered at each pixel
         m     = np.zeros((self.m_height,self.m_width,self.m_psf_area)) 
         # the inverse covariance matrix at each point
-        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area), dtype = np.float16) 
+        Cinv  = np.zeros((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area)) 
 
         # *** SERIAL ***
         # Loop over all pixels
@@ -600,12 +600,14 @@ class FastPACO(PACO):
         p.join()
         ms,cs = [],[]
         for d in data:
-            #print(d)
-            #sys.stdout.flush()
-            ms.append(np.array(d[0]))
-            cs.append(np.array(d[1]))
-        ms = np.array(ms)
-        cs = np.array(cs)  
+            if d[0] is None or d[1] is None:
+                ms.append(np.full(self.m_psf_area,np.nan))
+                cs.append(np.full((self.m_psf_area,self.m_psf_area),np.nan))
+            else:
+                ms.append(d[0])
+                cs.append(d[1])
+        ms = np.asarray(ms)        
+        cs = np.asarray(cs)
         m = ms.reshape((self.m_height,self.m_width,self.m_psf_area))
         Cinv = cs.reshape((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area))
         #end = time.time()
