@@ -462,8 +462,8 @@ class SimplexMinimizationModule(ProcessingModule):
                      tol=None,
                      options={'xatol': self.m_tolerance, 'fatol': float('inf')})
 
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
+        sys.stdout.write(' [DONE]\n')
+        sys.stdout.flush()
 
         history = f'merit = {self.m_merit}'
 
