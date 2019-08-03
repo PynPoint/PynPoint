@@ -354,9 +354,6 @@ class SimplexMinimizationModule(ProcessingModule):
                                       'the \'poisson\' figure of merit.')
 
         def _objective(arg, count, n_components, sklearn_pca):
-            sys.stdout.write('.')
-            sys.stdout.flush()
-
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
@@ -413,6 +410,9 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
+            sys.stdout.write(f'\rRunning SimplexMinimizationModule... {n_components} PC - chi^2 = {chi_square:.8E}')
+            sys.stdout.flush()
+
             return chi_square
 
         pos_init = rotate_coordinates(center,
@@ -420,8 +420,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                       self.m_extra_rot)
 
         for i, n_components in enumerate(self.m_pca_number):
-
-            sys.stdout.write('Running SimplexMinimizationModule')
+            sys.stdout.write('\rRunning SimplexMinimizationModule... {n_components} PC ')
             sys.stdout.flush()
 
             if self.m_reference_in_port is None:
