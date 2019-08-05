@@ -342,6 +342,33 @@ class PACOContrastModule(ProcessingModule):
         result = []
         jobs = []
         print("Using",cpu,"cpus for multiprocessing")
+        # Create a queue object which will contain the results
+        arglist = []
+        names = []
+        for i,pos in enumerate(positions):
+            arglist.append((tmp_im_str,
+                                       tmp_psf_str,
+                                       noise,
+                                       parang,
+                                       self.m_psf_rad/pixscale,
+                                       self.m_psf_scaling,
+                                       self.m_scale,
+                                       pixscale,
+                                       self.m_extra_rot,
+                                       self.m_threshold,
+                                       self.m_aperture,
+                                       self.m_snr_inject,
+                                       pos,
+                                       self.m_algorithm,
+                                       queue))
+            names.append((str(os.path.basename(__file__)) + '_radius=' +
+                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                                       str(np.round(pos[1], 1))))
+        pool = mp.Pool(processes = cpu)
+        p_out = pool.imap(paco_contrast_limit,arglist)
+        pool.close()
+        pool.join()
+        """
         for i, pos in enumerate(positions):
             process = mp.Process(target=paco_contrast_limit,
                                  args=(tmp_im_str,
@@ -381,7 +408,8 @@ class PACOContrastModule(ProcessingModule):
                     k.join()
 
             progress(i, len(jobs), "Running PACOContrastCurveModule...")
-
+        """
+        
         # Send termination sentinel to queue
         queue.put(None)
 
