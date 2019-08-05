@@ -336,8 +336,7 @@ class PACOContrastModule(ProcessingModule):
         a,b  = fp.PACO(cpu = cpu)
         noise = b/a
         del fp
-        del images
-        del psf
+
         # Create a queue object which will contain the results
         queue = mp.Queue(2*len(positions))
         result = []

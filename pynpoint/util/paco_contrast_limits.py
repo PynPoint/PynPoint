@@ -138,8 +138,6 @@ def paco_contrast_limit(path_images,
     #                                size=aperture,
     #                                ignore=False)
     # Setup PACO
-    del images
-    gc.collect()
     if algorithm == "fastpaco":
             fp = FastPACO(image_file = path_images,
                           angles = parang,
@@ -162,8 +160,6 @@ def paco_contrast_limit(path_images,
     a,b  = fp.PACO(cpu = 1)
     snr = b/np.sqrt(a)
     flux_residual = b/a
-    del fp
-    del psf
     flux_out, _, _, _ = false_alarm(image=flux_residual,
                                     x_pos=xy_fake[0],
                                     y_pos=xy_fake[1],
