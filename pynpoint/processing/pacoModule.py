@@ -338,7 +338,6 @@ class PACOContrastModule(ProcessingModule):
         del fp
 
         # Create a queue object which will contain the results
-        queue = mp.Queue(2*len(positions))
         result = []
         jobs = []
         print("Using",cpu,"cpus for multiprocessing")
@@ -347,25 +346,24 @@ class PACOContrastModule(ProcessingModule):
         names = []
         for i,pos in enumerate(positions):
             arglist.append((tmp_im_str,
-                                       tmp_psf_str,
-                                       noise,
-                                       parang,
-                                       self.m_psf_rad/pixscale,
-                                       self.m_psf_scaling,
-                                       self.m_scale,
-                                       pixscale,
-                                       self.m_extra_rot,
-                                       self.m_threshold,
-                                       self.m_aperture,
-                                       self.m_snr_inject,
-                                       pos,
-                                       self.m_algorithm,
-                                       queue))
+                            tmp_psf_str,
+                            noise,
+                            parang,
+                            self.m_psf_rad,
+                            self.m_psf_scaling,
+                            self.m_scale,
+                            pixscale,
+                            self.m_extra_rot,
+                            self.m_threshold,
+                            self.m_aperture,
+                            self.m_snr_inject,
+                            pos,
+                            self.m_algorithm))
             names.append((str(os.path.basename(__file__)) + '_radius=' +
-                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
-                                       str(np.round(pos[1], 1))))
+                          str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                          str(np.round(pos[1], 1))))
         pool = mp.Pool(processes = cpu)
-        p_out = pool.imap(paco_contrast_limit,arglist)
+        p_out = pool.starmap(paco_contrast_limit,arglist,chunksize = int(len(arglist)/cpu))
         pool.close()
         pool.join()
         """
@@ -411,20 +409,20 @@ class PACOContrastModule(ProcessingModule):
         """
         
         # Send termination sentinel to queue
-        queue.put(None)
+        #queue.put(None)
 
-        while True:
-            item = queue.get()
-            sys.stdout.flush()
-            if item is None:
-                break
-            else:
-                result.append(item)
+        #while True:
+        #    item = queue.get()
+        #    print(item)
+        #    if item is None:
+        #        break
+        #    else:
+        #        result.append(item)
         
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        result = np.asarray(result)
+        result = np.asarray(p_out)
         # Sort the results first by separation and then by angle
         indices = np.lexsort((result[:, 1], result[:, 0]))
         result = result[indices]

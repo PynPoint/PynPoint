@@ -26,8 +26,7 @@ def paco_contrast_limit(path_images,
                         aperture,
                         snr_inject,
                         position,
-                        algorithm,
-                        queue):
+                        algorithm):
 
     """
     Function for calculating the contrast limit at a specified position for a given sigma level or
@@ -186,4 +185,4 @@ def paco_contrast_limit(path_images,
         contrast = np.nan
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
-    queue.put((position[0], position[1], contrast, fpf))
+    return (position[0], position[1], contrast, fpf)
