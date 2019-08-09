@@ -283,8 +283,8 @@ class SimplexMinimizationModule(ProcessingModule):
 
         else:
             for item in pca_number:
-                self.m_res_out_port.append(self.add_output_port(res_out_tag+f'{item:02d}'))
-                self.m_flux_pos_port.append(self.add_output_port(flux_position_tag+f'{item:02d}'))
+                self.m_res_out_port.append(self.add_output_port(res_out_tag+f'{item:03d}'))
+                self.m_flux_pos_port.append(self.add_output_port(flux_position_tag+f'{item:03d}'))
 
         self.m_position = position
         self.m_magnitude = magnitude

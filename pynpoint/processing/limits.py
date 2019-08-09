@@ -170,7 +170,8 @@ class ContrastCurveModule(ProcessingModule):
         NoneType
             None
         """
-        sys.stdout.write('\rRunning ContrastCurveModule... \r')
+
+        sys.stdout.write('Running ContrastCurveModule...\r')
 
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
