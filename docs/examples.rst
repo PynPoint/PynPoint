@@ -11,15 +11,15 @@ An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/pa
 VLT/NACO Mp dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we show a processing example of a pupil-stabilized data set of beta Pic from `Stolker et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the Mp band, which can be downloaded from the ESO archive under program ID |data|. A dithering pattern was applied to sample the sky background. Before starting the data reduction, it is useful to sort the various required science and calibration files into separate folders. Also, it is important to provide the correct NACO keywords in the configuration file (see :ref:`configuration`).
+Here we show a processing example of a pupil-stabilized data set of beta Pic as in `Stolker et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the Mp band, which can be downloaded from the ESO archive under program ID |data|. A dithering pattern was applied to sample the sky background. Before starting the data reduction, it is useful to sort the various required science and calibration files into separate folders. Also, it is important to provide the correct NACO keywords in the configuration file (see :ref:`configuration` section).
 
-Now we can start the data reduction by first importing the Pypeline and the required pipeline modules. These can be directly imported from the package, for example:
+Now we can start the data reduction by first importing the Pypeline and the required pipeline modules, for example:
 
 .. code-block:: python
 
    from pynpoint import Pypeline, FitsReadingModule
 
-Next, we create an instance of :class:`~pynpoint.core.pypeline.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the default input path, and ``output_place_in`` to a folder to store results that are exported from the database, for example as FITS file:
+Next, we create an instance of :class:`~pynpoint.core.pypeline.Pypeline` with the ``working_place_in`` pointing to a path where PynPoint has enough space to create its database, ``input_place_in`` pointing to the default input path, and ``output_place_in`` to a folder in which results that are exported from the database:
 
 .. code-block:: python
 
@@ -31,9 +31,9 @@ The FWHM of the PSF is defined for simplicity:
 
 .. code-block:: python
 
-   fwhm = 0.134 # [arcsec]
+   fwhm = 0.134  # [arcsec]
 
-Now we are ready to add all the pipeline modules that we need. Have a look at the documentation in the :ref:`pynpoint-package` section for a detailed description of the individual modules and their parameters. 
+Now we are ready to add and run all the pipeline modules that we need. Have a look at the documentation in the :ref:`pynpoint-package` section for a detailed description of the individual modules and their parameters. 
 
 1. We start by importing the raw science images with a DIT of 65 ms into the database:
 
@@ -92,7 +92,7 @@ There are 5 flat fields and 3 dark frames, both 514 x 512 pixels in size:
    (5, 514, 512)
    (3, 514, 512)
 
-3. Remove every NDIT+1 frame from the science data, which contains the average of the FITS cube (NACO specific):
+3. Remove every NDIT+1 frame (which contains the average of the FITS cube) from the science data (NACO specific):
 
 .. code-block:: python
 
@@ -297,7 +297,7 @@ The angles are stored as attributes to the `science_last` dataset and will be co
    pipeline.add_module(module)
    pipeline.run_module('align')
 
-14. Center the images with subpixel precision by applying a constant shift:
+14. Center the images with subpixel precision by fitting a 2D Gaussian and applying a constant shift:
 
 .. code-block:: python
 
@@ -347,7 +347,7 @@ And to plot the image:
    :width: 60%
    :align: center
 
-15. Now we stack every 100 images to lower the computation time with the PSF subtraction:
+15. Now we stack every 100 images to lower the computation time during the PSF subtraction:
 
 .. code-block:: python
 
@@ -382,8 +382,8 @@ And to plot the image:
 
    module = PcaPsfSubtractionModule(pca_numbers=range(1, 51),
                                     name_in='pca',
-                                    images_in_tag='science_',
-                                    reference_in_tag='science_',
+                                    images_in_tag='science_prep',
+                                    reference_in_tag='science_prep',
                                     res_median_tag='pca_median',
                                     extra_rot=0.)
 
