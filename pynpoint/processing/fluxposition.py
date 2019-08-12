@@ -238,11 +238,12 @@ class SimplexMinimizationModule(ProcessingModule):
             single value or a range/list of values. In the latter case, the `res_out_tag` and
             `flux_position_tag` contain a 3 digit number with the number of PCs.
         cent_size : float
-            Radius of the central mask (arcsec). No mask is used when set to None.
+            Radius of the central mask (arcsec). No mask is used when set to None. Masking is done
+            after the artificial planet is injected.
         edge_size : float
             Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
             None. The radius will be set to half the image size if the argument is larger than half
-            the image size.
+            the image size. Masking is done after the artificial planet is injected.
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
@@ -678,7 +679,7 @@ class MCMCsamplingModule(ProcessingModule):
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
         chain_out_tag : str
             Tag of the database entry with the Markov chain that is written as output. The shape
-            of the array is (nwalkers*nsteps, 3).
+            of the array is (nwalkers, nsteps, 3).
         param : tuple(float, float, float)
             The approximate separation (arcsec), angle (deg), and contrast (mag), for example
             obtained with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
@@ -703,7 +704,8 @@ class MCMCsamplingModule(ProcessingModule):
         mask : tuple(float, float), None
             Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of the
             tuple can be set to None. Masked pixels are excluded from the PCA computation,
-            resulting in a smaller runtime.
+            resulting in a smaller runtime. Masking is done after the artificial planet is
+            injected.
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
