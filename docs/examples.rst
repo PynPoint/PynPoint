@@ -11,7 +11,7 @@ An end-to-end example of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/pa
 VLT/NACO Mp dithering data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we show a processing example of a pupil-stabilized data set of beta Pic as in `Stolker et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the Mp band, which can be downloaded from the ESO archive under program ID |data|. A dithering pattern was applied to sample the sky background. Before starting the data reduction, it is useful to sort the various required science and calibration files into separate folders. Also, it is important to provide the correct NACO keywords in the configuration file (see :ref:`configuration` section).
+Here we show a processing example of a pupil-stabilized data set of beta Pic as in `Stolker et al. (2019) <http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_ (see also :ref:`running`). This archival data set was obtained with `VLT/NACO <https://www.eso.org/sci/facilities/paranal/instruments/naco.html>`_ in the Mp band, which can be downloaded from the ESO archive under program ID |data|. A dithering pattern was applied to sample the sky background. Before starting the data reduction, it is useful to sort the various required science and calibration files into separate folders. Also, it is important to provide the correct NACO keywords in the configuration file (see :ref:`configuration` section).
 
 Now we can start the data reduction by first importing the Pypeline and the required pipeline modules, for example:
 
