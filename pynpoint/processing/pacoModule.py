@@ -38,7 +38,7 @@ class PACOModule(ProcessingModule):
                  flux_calc: bool = True,
                  threshold: float = 5.0,
                  flux_prec: float = 0.05,
-                 verbose: bool = True
+                 verbose: bool = False
     ):
         """
         Constructor of PACOModule.
