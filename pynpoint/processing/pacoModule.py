@@ -18,7 +18,7 @@ from typeguard import typechecked
 
 from pynpoint.util.paco import PACO,FastPACO,FullPACO
 from pynpoint.util.pacomath import *
-from pynpoint.util.paco_contrast_limits import paco_contrast_limit
+from pynpoint.util.limits import paco_contrast_limit
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
@@ -338,10 +338,7 @@ class PACOContrastModule(ProcessingModule):
         del fp
 
         # Create a queue object which will contain the results
-        result = []
-        jobs = []
         print("Using",cpu,"cpus for multiprocessing")
-        # Create a queue object which will contain the results
         arglist = []
         names = []
         for i,pos in enumerate(positions):
@@ -363,66 +360,14 @@ class PACOContrastModule(ProcessingModule):
                           str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
                           str(np.round(pos[1], 1))))
         pool = mp.Pool(processes = cpu)
-        p_out = pool.starmap(paco_contrast_limit,arglist,chunksize = int(len(arglist)/cpu))
+        result = pool.starmap(paco_contrast_limit,arglist,chunksize = int(len(arglist)/cpu))
         pool.close()
         pool.join()
-        """
-        for i, pos in enumerate(positions):
-            process = mp.Process(target=paco_contrast_limit,
-                                 args=(tmp_im_str,
-                                       tmp_psf_str,
-                                       noise,
-                                       parang,
-                                       self.m_psf_rad,
-                                       self.m_psf_scaling,
-                                       self.m_scale,
-                                       pixscale,
-                                       self.m_extra_rot,
-                                       self.m_threshold,
-                                       self.m_aperture,
-                                       self.m_snr_inject,
-                                       pos,
-                                       self.m_algorithm,
-                                       queue),
-                                 name=(str(os.path.basename(__file__)) + '_radius=' +
-                                       str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
-                                       str(np.round(pos[1], 1))))
 
-            jobs.append(process)
-
-        for i, job in enumerate(jobs):
-            job.start()
-
-            if (i+1)%cpu == 0:
-                # Start *cpu* number of processes. Wait for them to finish and start again *cpu*
-                # number of processes.
-                for k in jobs[i+1-cpu:(i+1)]:
-                    k.join()
-
-            elif (i+1) == len(jobs) and (i+1)%cpu != 0:
-                # Wait for the last processes to finish if number of processes is not a multiple
-                # of *cpu*
-                for k in jobs[(i + 1 - (i+1)%cpu):]:
-                    k.join()
-
-            progress(i, len(jobs), "Running PACOContrastCurveModule...")
-        """
-        
-        # Send termination sentinel to queue
-        #queue.put(None)
-
-        #while True:
-        #    item = queue.get()
-        #    print(item)
-        #    if item is None:
-        #        break
-        #    else:
-        #        result.append(item)
-        
         os.remove(tmp_im_str)
         os.remove(tmp_psf_str)
 
-        result = np.asarray(p_out)
+        result = np.asarray(result)
         # Sort the results first by separation and then by angle
         indices = np.lexsort((result[:, 1], result[:, 0]))
         result = result[indices]
