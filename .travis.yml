@@ -18,7 +18,7 @@ install:
   - pip install pytest-cov
   - pip install coveralls
   - pip install sphinx
-  - pip install sphinx_rtd_theme
+  - pip install sphinx-rtd-theme
 
 script:
   - make docs

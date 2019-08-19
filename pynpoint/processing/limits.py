@@ -178,6 +178,8 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
+        sys.stdout.write('Running ContrastCurveModule...\r')
+
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -280,12 +282,14 @@ class ContrastCurveModule(ProcessingModule):
 
         pool.close()
 
+        start_time = time.time()
+
         # wait for all processes to finish
         while mp.active_children():
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(int(nfinished/len(positions)), 1, 'Running ContrastCurveModule...')
+            progress(nfinished, len(positions), 'Running ContrastCurveModule...', start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
