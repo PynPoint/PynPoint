@@ -14,6 +14,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestTextReading:
 
     def setup_class(self):
@@ -53,17 +54,6 @@ class TestTextReading:
         assert np.allclose(data[75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
         assert data.shape == (100, 100)
-
-    def test_text_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            TextWritingModule(file_name=0.,
-                              name_in='text_write',
-                              output_dir=None,
-                              data_tag='images',
-                              header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
 
     def test_text_writing_ndim(self):
 
@@ -124,17 +114,6 @@ class TestTextReading:
         assert np.allclose(np.mean(data), 5.5, rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_parang_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            ParangWritingModule(file_name=0.,
-                                name_in='parang_write2',
-                                output_dir=None,
-                                data_tag='images',
-                                header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
-
     def test_attribute_writing(self):
 
         attr_write = AttributeWritingModule(file_name='attribute.dat',
@@ -153,18 +132,6 @@ class TestTextReading:
         assert np.allclose(data[9], 10.0, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 5.5, rtol=limit, atol=0.)
         assert data.shape == (10, )
-
-    def test_attribute_writing_string(self):
-
-        with pytest.raises(ValueError) as error:
-            AttributeWritingModule(file_name=0.,
-                                   name_in='attr_write2',
-                                   output_dir=None,
-                                   data_tag='images',
-                                   attribute='PARANG',
-                                   header=None)
-
-        assert str(error.value) == 'Output \'file_name\' needs to be a string.'
 
     def test_attribute_not_present(self):
 

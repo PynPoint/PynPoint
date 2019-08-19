@@ -34,7 +34,7 @@ PynPoint can now be installed with pip::
 
     $ pip install pynpoint
 
-If you do not use a virtual environment then you may have to add the ``-- user`` argument::
+If you do not use a virtual environment then you may have to add the ``--user`` argument::
 
     $ pip install --user pynpoint
 

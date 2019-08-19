@@ -17,6 +17,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestPypeline:
 
     def setup_class(self):
@@ -45,7 +46,7 @@ class TestPypeline:
         with pytest.warns(UserWarning) as warning:
             Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        # assert len(warning) == 2
+        assert len(warning) == 1
         assert warning[0].message.args[0] == 'Configuration file not found. Creating ' \
                                              'PynPoint_config.ini with default values ' \
                                              'in the working place.'
@@ -168,7 +169,10 @@ class TestPypeline:
         assert warning[0].message.args[0] == 'Pipeline module names need to be unique. ' \
                                              'Overwriting module \'read2\'.'
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='im_arr1')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_arr1',
+                                            image_out_tag='im_out')
+
         assert pipeline.add_module(process) is None
 
         write = FitsWritingModule(name_in='write1', file_name='result.fits', data_tag='im_arr1')
@@ -213,7 +217,10 @@ class TestPypeline:
         write = FitsWritingModule(name_in='write', file_name='result.fits', data_tag='im_list')
         pipeline.add_module(write)
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel', image_in_tag='im_list')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_list',
+                                            image_out_tag='im_out')
+
         pipeline.add_module(process)
 
         with pytest.raises(AttributeError) as error:
@@ -257,7 +264,10 @@ class TestPypeline:
         read = FitsReadingModule(name_in='read')
         pipeline.add_module(read)
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel')
+        process = BadPixelSigmaFilterModule(name_in='badpixel',
+                                            image_in_tag='im_arr1',
+                                            image_out_tag='im_out')
+
         pipeline.add_module(process)
 
         assert pipeline.get_module_names() == ['read', 'badpixel']

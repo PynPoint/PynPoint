@@ -9,9 +9,12 @@ import time
 import warnings
 import multiprocessing as mp
 
+from typing import Tuple, List
+
 import numpy as np
 
 from scipy.interpolate import griddata
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
@@ -29,24 +32,28 @@ class ContrastCurveModule(ProcessingModule):
     parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
+    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber'
+
+    @typechecked
     def __init__(self,
-                 name_in='contrast',
-                 image_in_tag='im_arr',
-                 psf_in_tag='im_psf',
-                 contrast_out_tag='contrast_limits',
-                 separation=(0.1, 1., 0.01),
-                 angle=(0., 360., 60.),
-                 threshold=('sigma', 5.),
-                 psf_scaling=1.,
-                 aperture=0.05,
-                 pca_number=20,
-                 pca_number_init=None,
-                 cent_size=None,
-                 edge_size=None,
-                 extra_rot=0.,
-                 residuals='median',
-                 snr_inject=100.,
-                 **kwargs):
+                 name_in: str,
+                 image_in_tag: str,
+                 psf_in_tag: str,
+                 contrast_out_tag: str,
+                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
+                 angle: Tuple[float, float, float] = (0., 360., 60.),
+                 threshold: Tuple[str, float] = ('sigma', 5.),
+                 psf_scaling: float = 1.,
+                 aperture: float = 0.05,
+                 pca_number: int = 20,
+                 pca_number_init: int = None,
+                 cent_size: float = None,
+                 edge_size: float = None,
+                 extra_rot: float = 0.,
+                 residuals: str = 'median',
+                 snr_inject: float = 100.,
+                 **kwargs: float) -> None:
+
         """
         Parameters
         ----------
@@ -85,9 +92,9 @@ class ContrastCurveModule(ProcessingModule):
         pca_number_init : int
         	Number of principal components, where the iteration is started. Ordinary PCA is
         	performed when set to None. 
-        cent_size : float
+        cent_size : float, None
             Central mask radius (arcsec). No mask is used when set to None.
-        edge_size : float
+        edge_size : float, None
             Outer edge radius (arcsec) beyond which pixels are masked. No outer mask is used when
             set to None. If the value is larger than half the image size then it will be set to
             half the image size.
@@ -155,7 +162,8 @@ class ContrastCurveModule(ProcessingModule):
             raise ValueError('The angular positions of the fake planets should lie between '
                              '0 deg and 360 deg.')
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
         given separation and position angle. The amount of self-subtraction is then determined and
@@ -163,6 +171,7 @@ class ContrastCurveModule(ProcessingModule):
         correction for small sample statistics is applied for both cases. Note that if the sigma
         level is fixed, the false positive fraction changes with separation, following the
         Student's t-distribution (see Mawet et al. 2014 for details).
+
         Returns
         -------
         NoneType
@@ -179,8 +188,13 @@ class ContrastCurveModule(ProcessingModule):
                              f'(without derotating) before applying the ContrastCurveModule.')
 
         cpu = self._m_config_port.get_attribute('CPU')
+        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
+
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+
+        self.m_image_in_port.close_port()
+        self.m_psf_in_port.close_port()
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
@@ -220,8 +234,6 @@ class ContrastCurveModule(ProcessingModule):
         result = []
         async_results = []
 
-        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
-
         # Create temporary files
         tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
         tmp_psf_str = os.path.join(working_place, 'tmp_psf.npy')
@@ -229,7 +241,7 @@ class ContrastCurveModule(ProcessingModule):
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
-        mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+        mask = create_mask(images.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
 
         if self.m_pca_number_init is None:
@@ -273,14 +285,14 @@ class ContrastCurveModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished/len(positions), 1, 'Running ContrastCurveModule...')
+            progress(int(nfinished/len(positions)), 1, 'Running ContrastCurveModule...')
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
 
         # get the results for every async_result object
-        for index, async_result in enumerate(async_results):
-            result.append(async_result.get())
+        for item in async_results:
+            result.append(item.get())
 
         pool.terminate()
 
@@ -301,6 +313,9 @@ class ContrastCurveModule(ProcessingModule):
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
 
+        self.m_image_in_port._check_status_and_activate()
+        self.m_contrast_out_port._check_status_and_activate()
+
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
         sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
@@ -320,28 +335,18 @@ class MassLimitsModule(ProcessingModule):
 
     __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
 
+    @typechecked
     def __init__(self,
-                 model_file,
-                 star_prop,
-                 name_in='mass',
-                 contrast_in_tag='contrast_limits',
-                 mass_out_tag='mass_limits',
-                 instr_filter='L\''):
+                 name_in: str,
+                 contrast_in_tag: str,
+                 mass_out_tag: str,
+                 model_file: str,
+                 star_prop: dict,
+                 instr_filter: str = 'L\'') -> None:
 
         """
         Parameters
         ----------
-        model_file: str
-            Absolute path to the file containing the model data. Must be in the same format as the
-            grids found on https://phoenix.ens-lyon.fr/Grids/. Any of the isochrones files from
-            this website can be used.
-        star_prop : dict
-            Dictionary containing host star properties. Must have the following keys:
-
-                - ``magnitude`` - Apparent magnitude, in the same band as the `instr_filter`.
-                - ``distance`` - Distance in parsec.
-                - ``age`` - Age of the system in the Myr.
-
         name_in : str
             Unique name of the module instance.
         contrast_in_tag : str
@@ -351,6 +356,17 @@ class MassLimitsModule(ProcessingModule):
             Tag of the database entry with the output data containing the separation, the mass
             limits, and the upper and lower one sigma deviation as calculated for the azimuthal
             variance on the contrast limits.
+        model_file: str
+            Path to the file containing the model data. Must be in the same format as the
+            grids found on https://phoenix.ens-lyon.fr/Grids/. Any of the isochrones files from
+            this website can be used.
+        star_prop : dict
+            Dictionary containing host star properties. Must have the following keys:
+
+                - ``magnitude`` - Apparent magnitude, in the same band as the `instr_filter`.
+                - ``distance`` - Distance in parsec.
+                - ``age`` - Age of the system in the Myr.
+
         instr_filter: str
             Instrument filter in the same format as listed in the `model_file`.
 
@@ -362,22 +378,31 @@ class MassLimitsModule(ProcessingModule):
 
         super(MassLimitsModule, self).__init__(name_in)
 
-        self.m_star_age = star_prop['age']/1000. # [Myr]
+        self.m_star_age = star_prop['age']/1000.  # [Myr]
         self.m_star_abs = star_prop['magnitude'] - 5.*math.log10(star_prop['distance']/10.)
 
         self.m_instr_filter = instr_filter
         self.m_model_file = model_file
 
-        if not os.path.isabs(self.m_model_file):
-            raise ValueError('The model_file should be a string with an absolute file path.')
+        if not os.path.exists(self.m_model_file):
+            raise ValueError('The path does not appear to be an existing file. Please check the'
+                             'path. If you are unsure about the path, pass the absolute path to the'
+                             'model file.')
 
         self.m_contrast_in_port = self.add_input_port(contrast_in_tag)
         self.m_mass_out_port = self.add_output_port(mass_out_tag)
 
-    def read_model(self):
+    @staticmethod
+    @typechecked
+    def read_model(model_file_path: str) -> Tuple[List[float], List[np.ndarray], List[str]]:
         """
         Reads the data from the model file and structures it. Returns an array of available model
         ages and a list of model data for each age.
+
+        Parameters
+        -------
+        model_file: str
+            Path to the file containing the model data.
 
         Returns
         -------
@@ -391,7 +416,7 @@ class MassLimitsModule(ProcessingModule):
 
         # read in all the data, selecting out empty lines or '---' lines
         data = []
-        with open(self.m_model_file) as file:
+        with open(model_file_path) as file:
             for line in file:
                 if ('---' in line) or line == '\n':
                     continue
@@ -427,31 +452,32 @@ class MassLimitsModule(ProcessingModule):
         return ages, isochrones, header
 
     @staticmethod
-    def interpolate_model(age_eval,
-                          mag_eval,
-                          filter_index,
-                          model_age,
-                          model_data):
+    @typechecked
+    def interpolate_model(age_eval: np.ndarray,
+                          mag_eval: np.ndarray,
+                          filter_index: int,
+                          model_age: List[float],
+                          model_data: List[np.ndarray]) -> np.ndarray:
         """
         Interpolates the grid based model data.
 
         Parameters
         ----------
-        age_eval : numpy.array
+        age_eval : numpy.ndarray
             Age at which the system is evaluated. Must be of the same shape as `mag_eval`.
-        mag_eval : numpy.array
+        mag_eval : numpy.ndarray
             Absolute magnitude for which the system is evaluated. Must be of the same shape as
             `age_eval`.
         filter_index: int
             Column index where the filter is located.
         model_age: list(float, )
             List of ages which are given by the model.
-        model_data: list(numpy.array, )
+        model_data: list(numpy.ndarray, )
             List of arrays containing the model data.
 
         Returns
         -------
-        griddata : array(float)
+        griddata : numpy.ndarray
             Interpolated values for the given evaluation points (age_eval, mag_eval). Has the
             same shape as age_eval and mag_eval.
         """
@@ -473,7 +499,8 @@ class MassLimitsModule(ProcessingModule):
 
         return griddata(grid_points, grid_values, interp, method='cubic', rescale=True)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Calculates the mass limits from the contrast limits (as
         calculated with the :class:`~pynpoint.processing.limits.ContrastCurveModule`) and the
@@ -491,14 +518,15 @@ class MassLimitsModule(ProcessingModule):
         sys.stdout.write('Running MassLimitsModule...')
         sys.stdout.flush()
 
-        model_age, model_data, model_header = self.read_model()
+        model_age, model_data, model_header = self.read_model(self.m_model_file)
 
         assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
                                                     'list of available filters from the model.'
 
-        # find the correct filter
+        # find the column index of the filter
         # simple argwhere gives empty list?!
         filter_index = np.argwhere([self.m_instr_filter == j for j in model_header])[0]
+        filter_index = int(filter_index)
 
         contrast_data = self.m_contrast_in_port.get_all()
 

@@ -258,7 +258,6 @@ class TestBackground:
                                                subframe=None,
                                                pca_number=5,
                                                mask_star=0.1,
-                                               bad_pixel=None,
                                                crop=True,
                                                prepare=True,
                                                pca_background=True,

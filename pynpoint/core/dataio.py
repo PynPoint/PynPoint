@@ -71,6 +71,7 @@ class DataStorage:
 
         if self.m_open:
             self.m_data_bank.close()
+            self.m_data_bank = None
             self.m_open = False
 
 
@@ -719,21 +720,21 @@ class OutputPort(Port):
         _ndim_check(data_dim, first_data.ndim)
 
         if data_dim == first_data.ndim:
-            if first_data.ndim == 1: # case (1,1)
+            if first_data.ndim == 1:  # case (1,1)
                 data_shape = (None, )
 
-            elif first_data.ndim == 2: # case (2,2)
+            elif first_data.ndim == 2:  # case (2,2)
                 data_shape = (None, first_data.shape[1])
 
-            elif first_data.ndim == 3: # case (3,3)
+            elif first_data.ndim == 3:  # case (3,3)
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
 
         else:
-            if data_dim == 2: # case (2,1)
+            if data_dim == 2:  # case (2,1)
                 data_shape = (None, first_data.shape[0])
                 first_data = first_data[np.newaxis, :]
 
-            elif data_dim == 3: # case (3,2)
+            elif data_dim == 3:  # case (3,2)
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
 
@@ -868,7 +869,7 @@ class OutputPort(Port):
             # 1D case
 
             if data.size == 0:
-                warnings.warn(f'The dataset that is appended under the tag name \'{tag}\' ' \
+                warnings.warn(f'The dataset that is appended under the tag name \'{tag}\' '
                               f'is empty.')
 
             else:

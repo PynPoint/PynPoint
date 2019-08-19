@@ -4,8 +4,10 @@ import warnings
 import h5py
 import pytest
 import numpy as np
+from astropy.io import fits
 
 from pynpoint.core.pypeline import Pypeline
+from pynpoint.processing.basic import RepeatImagesModule
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.resizing import CropImagesModule, ScaleImagesModule, \
                                          AddLinesModule, RemoveLinesModule
@@ -14,6 +16,7 @@ from pynpoint.util.tests import create_config, create_star_data, remove_test_dat
 warnings.simplefilter('always')
 
 limit = 1e-10
+
 
 class TestResizing:
 

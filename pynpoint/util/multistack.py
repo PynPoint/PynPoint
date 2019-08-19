@@ -3,9 +3,15 @@ Utilities for multiprocessing of stacks of images.
 """
 
 import sys
+import multiprocessing
+
+from typing import Union, List, Callable
 
 import numpy as np
 
+from typeguard import typechecked
+
+from pynpoint.core.dataio import InputPort, OutputPort
 from pynpoint.util.module import update_arguments
 from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
                                     MultiprocessingCapsule, apply_function
@@ -17,13 +23,14 @@ class StackReader(TaskCreator):
     Reads continuously stacks of images of a dataset and puts them into a task queue.
     """
 
+    @typechecked
     def __init__(self,
-                 data_port_in,
-                 tasks_queue_in,
-                 data_mutex_in,
-                 num_proc,
-                 stack_size,
-                 result_shape):
+                 data_port_in: InputPort,
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 data_mutex_in: multiprocessing.Lock,
+                 num_proc: np.int64,
+                 stack_size: int,
+                 result_shape: tuple) -> None:
         """
         Parameters
         ----------
@@ -38,7 +45,7 @@ class StackReader(TaskCreator):
             Number of processors.
         stack_size: int
             Number of images per stack.
-        result_shape : tuple(int, int, int)
+        result_shape : tuple(int, )
             Shape of the array with the output results (usually a stack of images).
 
         Returns
@@ -52,7 +59,8 @@ class StackReader(TaskCreator):
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Returns
         -------
@@ -60,7 +68,10 @@ class StackReader(TaskCreator):
             None
         """
 
-        nimages = self.m_data_in_port.get_shape()[0]
+        with self.m_data_mutex:
+            self.m_data_in_port._check_status_and_activate()
+            nimages = self.m_data_in_port.get_shape()[0]
+            self.m_data_in_port.close_port()
 
         i = 0
         while i < nimages:
@@ -68,8 +79,9 @@ class StackReader(TaskCreator):
 
             # lock mutex and read data
             with self.m_data_mutex:
-                # read images from i to j
-                tmp_data = self.m_data_in_port[i:j, ]
+                self.m_data_in_port._check_status_and_activate()
+                tmp_data = self.m_data_in_port[i:j, ]  # read images from i to j
+                self.m_data_in_port.close_port()
 
             # first dimension (start, stop, step)
             stack_slice = [(i, j, None)]
@@ -92,12 +104,13 @@ class StackTaskProcessor(TaskProcessor):
     processor applies a function on a stack of images.
     """
 
+    @typechecked
     def __init__(self,
-                 tasks_queue_in,
-                 result_queue_in,
-                 function,
-                 function_args,
-                 nimages):
+                 tasks_queue_in: multiprocessing.JoinableQueue,
+                 result_queue_in: multiprocessing.JoinableQueue,
+                 function: Callable,
+                 function_args: Union[tuple, None],
+                 nimages: int) -> None:
         """
         Parameters
         ----------
@@ -107,7 +120,7 @@ class StackTaskProcessor(TaskProcessor):
             Results queue.
         function : function
             Input function that is applied to the images.
-        function_args : tuple, None, optional
+        function_args : tuple, None
             Function arguments.
         nimages : int
             Total number of images.
@@ -124,8 +137,9 @@ class StackTaskProcessor(TaskProcessor):
         self.m_function_args = function_args
         self.m_nimages = nimages
 
+    @typechecked
     def run_job(self,
-                tmp_task):
+                tmp_task: TaskInput) -> TaskResult:
         """
         Parameters
         ----------
@@ -172,15 +186,16 @@ class StackProcessingCapsule(MultiprocessingCapsule):
     is applied in parallel to each stack of images.
     """
 
+    @typechecked
     def __init__(self,
-                 image_in_port,
-                 image_out_port,
-                 num_proc,
-                 function,
-                 function_args,
-                 stack_size,
-                 result_shape,
-                 nimages):
+                 image_in_port: InputPort,
+                 image_out_port: OutputPort,
+                 num_proc: np.int64,
+                 function: Callable,
+                 function_args: Union[tuple, None],
+                 stack_size: int,
+                 result_shape: tuple,
+                 nimages: int) -> None:
         """
         Parameters
         ----------
@@ -196,7 +211,7 @@ class StackProcessingCapsule(MultiprocessingCapsule):
             Function arguments.
         stack_size: int
             Number of images per stack.
-        result_shape : tuple(int, int, int)
+        result_shape : tuple(int, )
             Shape of the array with output results (usually a stack of images).
         nimages : int
             Total number of images.
@@ -215,7 +230,8 @@ class StackProcessingCapsule(MultiprocessingCapsule):
 
         super(StackProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
 
-    def create_processors(self):
+    @typechecked
+    def create_processors(self) -> List[StackTaskProcessor]:
         """
         Returns
         -------
@@ -235,8 +251,9 @@ class StackProcessingCapsule(MultiprocessingCapsule):
 
         return processors
 
+    @typechecked
     def init_creator(self,
-                     image_in_port):
+                     image_in_port: InputPort) -> StackReader:
         """
         Parameters
         ----------

@@ -13,6 +13,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestHdf5WritingModule:
 
     def setup_class(self):
@@ -33,7 +34,7 @@ class TestHdf5WritingModule:
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write1',
                                   output_dir=None,
-                                  tag_dictionary={'images':'data1'},
+                                  tag_dictionary={'images': 'data1'},
                                   keep_attributes=True,
                                   overwrite=True)
 
@@ -45,7 +46,7 @@ class TestHdf5WritingModule:
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write2',
                                   output_dir=None,
-                                  tag_dictionary={'empty':'empty'},
+                                  tag_dictionary={'empty': 'empty'},
                                   keep_attributes=True,
                                   overwrite=False)
 
@@ -63,7 +64,7 @@ class TestHdf5WritingModule:
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write3',
                                   output_dir=None,
-                                  tag_dictionary={'images':'data2'},
+                                  tag_dictionary={'images': 'data2'},
                                   keep_attributes=True,
                                   overwrite=False)
 
@@ -87,7 +88,7 @@ class TestHdf5WritingModule:
         read = Hdf5ReadingModule(name_in='read',
                                  input_filename='test.hdf5',
                                  input_dir=self.test_dir,
-                                 tag_dictionary={'data1':'data1', 'data2':'data2'})
+                                 tag_dictionary={'data1': 'data1', 'data2': 'data2'})
 
         self.pipeline.add_module(read)
         self.pipeline.run_module('read')

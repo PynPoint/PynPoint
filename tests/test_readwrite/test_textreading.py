@@ -12,6 +12,7 @@ warnings.simplefilter('always')
 
 limit = 1e-10
 
+
 class TestTextReading:
 
     def setup_class(self):
@@ -105,17 +106,6 @@ class TestTextReading:
         self.pipeline.add_module(parang)
         self.pipeline.run_module('parang4')
 
-    def test_parang_reading_string(self):
-
-        with pytest.raises(ValueError) as error:
-            ParangReadingModule(file_name=0.,
-                                name_in='parang5',
-                                input_dir=None,
-                                data_tag='images',
-                                overwrite=False)
-
-        assert str(error.value) == 'Input \'file_name\' needs to be a string.'
-
     def test_parang_reading_2d(self):
 
         parang = ParangReadingModule(file_name='data_2d.dat',
@@ -148,18 +138,6 @@ class TestTextReading:
         assert data.dtype == 'int64'
         assert np.allclose(data, np.arange(1, 11, 1), rtol=limit, atol=0.)
         assert data.shape == (10, )
-
-    def test_attribute_reading_string(self):
-
-        with pytest.raises(ValueError) as error:
-            AttributeReadingModule(file_name=0.,
-                                   attribute='EXP_NO',
-                                   name_in='attribute2',
-                                   input_dir=None,
-                                   data_tag='images',
-                                   overwrite=False)
-
-        assert str(error.value) == 'Input \'file_name\' needs to be a string.'
 
     def test_attribute_reading_present(self):
 

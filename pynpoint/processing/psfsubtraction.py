@@ -8,11 +8,13 @@ import math
 import warnings
 
 from copy import deepcopy
+from typing import Union, List, Tuple
 
 import numpy as np
 
 from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress
@@ -29,49 +31,52 @@ class PcaPsfSubtractionModule(ProcessingModule):
     processes can be set with the CPU keyword in the configuration file.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 pca_numbers,
-                 name_in='psf_subtraction',
-                 images_in_tag='im_arr',
-                 reference_in_tag='ref_arr',
-                 res_mean_tag=None,
-                 res_median_tag=None,
-                 res_weighted_tag=None,
-                 res_rot_mean_clip_tag=None,
-                 res_arr_out_tag=None,
-                 basis_out_tag=None,
-                 extra_rot=0.,
-                 subtract_mean=True):
+                 name_in: str,
+                 images_in_tag: str,
+                 reference_in_tag: str,
+                 res_mean_tag: str = None,
+                 res_median_tag: str = None,
+                 res_weighted_tag: str = None,
+                 res_rot_mean_clip_tag: str = None,
+                 res_arr_out_tag: str = None,
+                 basis_out_tag: str = None,
+                 pca_numbers: Union[range, List[int], np.ndarray] = range(1, 21),
+                 extra_rot: float = 0.,
+                 subtract_mean: bool = True) -> None:
         """
         Parameters
         ----------
-        pca_numbers : list(int, ), tuple(int, ), or numpy.ndarray
-            Number of principal components used for the PSF model. Can be a single value or a tuple
-            with integers.
         name_in : str
             Unique name of the module instance.
         images_in_tag : str
             Tag of the database entry with the science images that are read as input
         reference_in_tag : str
             Tag of the database entry with the reference images that are read as input.
-        res_mean_tag : str
+        res_mean_tag : str, None
             Tag of the database entry with the mean collapsed residuals. Not calculated if set to
             None.
-        res_median_tag : str
+        res_median_tag : str, None
             Tag of the database entry with the median collapsed residuals. Not calculated if set
             to None.
-        res_weighted_tag : str
+        res_weighted_tag : str, None
             Tag of the database entry with the noise-weighted residuals (see Bottom et al. 2017).
             Not calculated if set to None.
-        res_rot_mean_clip_tag : str
+        res_rot_mean_clip_tag : str, None
             Tag of the database entry of the clipped mean residuals. Not calculated if set to
             None.
-        res_arr_out_tag : str
+        res_arr_out_tag : str, None
             Tag of the database entry with the image residuals from the PSF subtraction. If a list
             of PCs is provided in *pca_numbers* then multiple tags will be created in the central
             database. Not calculated if set to None. Not supported with multiprocessing.
-        basis_out_tag : str
+        basis_out_tag : str, None
             Tag of the database entry with the basis set. Not stored if set to None.
+        pca_numbers : range, list(int, ), numpy.ndarray
+            Number of principal components used for the PSF model. Can be a single value or a tuple
+            with integers.
         extra_rot : float
             Additional rotation angle of the images (deg).
         subtract_mean : bool
@@ -120,8 +125,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_res_arr_out_ports = {}
             for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag
-                                                                            +str(pca_number))
+                self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag +
+                                                                            str(pca_number))
 
         if basis_out_tag is None:
             self.m_basis_out_port = None
@@ -132,12 +137,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
-
-        Returns
-        -------
-        NoneType
-            None
         """
+
+        cpu = self._m_config_port.get_attribute('CPU')
+        angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
         tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
 
@@ -153,13 +156,33 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.set_all(tmp_output, keep_attributes=False)
 
-        angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+        self.m_star_in_port.close_port()
+        self.m_reference_in_port.close_port()
+
+        if self.m_res_mean_out_port is not None:
+            self.m_res_mean_out_port.close_port()
+
+        if self.m_res_median_out_port is not None:
+            self.m_res_median_out_port.close_port()
+
+        if self.m_res_weighted_out_port is not None:
+            self.m_res_weighted_out_port.close_port()
+
+        if self.m_res_rot_mean_clip_out_port is not None:
+            self.m_res_rot_mean_clip_out_port.close_port()
+
+        if self.m_res_arr_out_ports is not None:
+            for pca_number in self.m_components:
+                self.m_res_arr_out_ports[pca_number].close_port()
+
+        if self.m_basis_out_port is not None:
+            self.m_basis_out_port.close_port()
 
         capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
                                             self.m_res_median_out_port,
                                             self.m_res_weighted_out_port,
                                             self.m_res_rot_mean_clip_out_port,
-                                            self._m_config_port.get_attribute('CPU'),
+                                            cpu,
                                             deepcopy(self.m_components),
                                             deepcopy(self.m_pca),
                                             deepcopy(star_reshape),
@@ -173,13 +196,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
-
-        Returns
-        -------
-        NoneType
-            None
         """
+
         start_time = time.time()
+
         for i, pca_number in enumerate(self.m_components):
             progress(i, len(self.m_components), 'Creating residuals...', start_time)
 
@@ -249,7 +269,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 self.m_res_arr_out_ports[pca_number].del_all_data()
                 self.m_res_arr_out_ports[pca_number].del_all_attributes()
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Subtracts the mean of the image stack from all images, reshapes
         the stack of images into a 2D array, uses singular value decomposition to construct the
@@ -374,29 +395,21 @@ class ClassicalADIModule(ProcessingModule):
     self-subtraction.
     """
 
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
     def __init__(self,
-                 threshold,
-                 nreference=5,
-                 residuals='median',
-                 extra_rot=0.,
-                 name_in='cadi',
-                 image_in_tag='im_arr',
-                 res_out_tag='residuals',
-                 stack_out_tag='stacked'):
+                 name_in: str,
+                 image_in_tag: str,
+                 res_out_tag: str,
+                 stack_out_tag: str,
+                 threshold: Union[Tuple[float, float, float], None],
+                 nreference: int = None,
+                 residuals: str = 'median',
+                 extra_rot: float = 0.) -> None:
         """
         Parameters
         ----------
-        threshold : tuple(float, float, float)
-            Tuple with the separation for which the angle threshold is optimized (arcsec), FWHM of
-            the PSF (arcsec), and the threshold (FWHM) for the selection of the reference images.
-            No threshold is used if set to None.
-        nreference : int
-            Number of reference image, closest in line to the science image. All images are used if
-            *threshold* is None or *nreference* is None.
-        residuals : str
-            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
-        extra_rot : float
-            Additional rotation angle of the images (deg).
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -406,6 +419,17 @@ class ClassicalADIModule(ProcessingModule):
             as output.
         stack_out_tag : str
             Tag of the database entry with the stacked residuals that are written as output.
+        threshold : tuple(float, float, float), None
+            Tuple with the separation for which the angle threshold is optimized (arcsec), FWHM of
+            the PSF (arcsec), and the threshold (FWHM) for the selection of the reference images.
+            No threshold is used if set to None.
+        nreference : int, None
+            Number of reference images, closest in line to the science image. All images are used if
+            *threshold* is None or *nreference* is None.
+        residuals : str
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+        extra_rot : float
+            Additional rotation angle of the images (deg).
 
         Returns
         -------
@@ -428,7 +452,8 @@ class ClassicalADIModule(ProcessingModule):
 
         self.m_count = 0
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Selects for each image the reference images closest in line while
         taking into account a rotation threshold for a fixed separation, median-combines the
@@ -443,10 +468,7 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        def _subtract_psf(image,
-                          parang_thres,
-                          nref,
-                          reference):
+        def _subtract_psf(image, parang_thres, nref, reference):
 
             if parang_thres:
                 ang_diff = np.abs(parang[self.m_count]-parang)

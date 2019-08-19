@@ -4,19 +4,24 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 
 import os
 import sys
+import math
 import time
 import shlex
 import subprocess
 import threading
 import warnings
 
+from typing import Union, Tuple
+
 import numpy as np
 
 from astropy.io import fits
+from typeguard import typechecked
 
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.attributes import set_static_attr, set_nonstatic_attr, set_extra_attr
 from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.image import crop_image
 
 
 class NearReadingModule(ReadingModule):
@@ -29,13 +34,17 @@ class NearReadingModule(ReadingModule):
     contains the average of all images.
     """
 
-    __author__ = 'Jasper Jonker, Tomas Stolker'
+    __author__ = 'Jasper Jonker, Tomas Stolker, Anna Boehle'
 
+    @typechecked
     def __init__(self,
-                 name_in='near_reading',
-                 input_dir=None,
-                 chopa_out_tag='chopa',
-                 chopb_out_tag='chopb'):
+                 name_in: str,
+                 input_dir: str = None,
+                 chopa_out_tag: str = 'chopa',
+                 chopb_out_tag: str = 'chopb',
+                 subtract: bool = False,
+                 crop: Union[Tuple[int, int, float], Tuple[None, None, float]] = None,
+                 combine: str = None):
         """
         Parameters
         ----------
@@ -46,10 +55,21 @@ class NearReadingModule(ReadingModule):
             Pypeline is used if set to None.
         chopa_out_tag : str
             Database entry where the chop A images will be stored. Should be different from
-            `chop_b_out_tag`.
+            ``chop_b_out_tag``.
         chopb_out_tag : str
             Database entry where the chop B images will be stored. Should be different from
-            `chop_a_out_tag`.
+            ``chop_a_out_tag``.
+        subtract : bool
+            If True, the other chop position is subtracted before saving out the chop A and chop B
+            images.
+        crop: tuple(int, int, float), None
+            The pixel position (x, y) around which the chop A and chop B images are cropped and
+            the new image size (arcsec), together provided as (pos_x, pos_y, size). The same size
+            will be used for both image dimensions. It is recommended to crop the images around
+            the approximate coronagraph position. No cropping is applied if set to None.
+        combine: str, None
+            Method ('mean' or 'median') for combining (separately) the chop A and chop B frames
+            from each cube into a single frame. All frames are stored if set to None.
 
         Returns
         -------
@@ -62,8 +82,13 @@ class NearReadingModule(ReadingModule):
         self.m_chopa_out_port = self.add_output_port(chopa_out_tag)
         self.m_chopb_out_port = self.add_output_port(chopb_out_tag)
 
+        self.m_subtract = subtract
+        self.m_crop = crop
+        self.m_combine = combine
+
+    @typechecked
     def _uncompress_file(self,
-                         filename):
+                         filename: str) -> None:
         """
         Internal function to uncompress a .Z file.
 
@@ -88,7 +113,8 @@ class NearReadingModule(ReadingModule):
             command = 'gunzip -d ' + filename
             subprocess.check_call(shlex.split(command))
 
-    def uncompress(self):
+    @typechecked
+    def uncompress(self) -> None:
         """
         Method to check if the input directory contains compressed files ending with .fits.Z.
         If this is the case, the files will be uncompressed using multithreading. The number
@@ -137,8 +163,9 @@ class NearReadingModule(ReadingModule):
             sys.stdout.write('Uncompressing NEAR data... [DONE]\n')
             sys.stdout.flush()
 
+    @typechecked
     def check_header(self,
-                     header):
+                     header: fits.header.Header) -> None:
         """
         Method to check the header information and prompt a warning if a value is not as expected.
 
@@ -163,8 +190,9 @@ class NearReadingModule(ReadingModule):
         if str(header['ESO DET CHOP CYCSUM']) == 'T':
             warnings.warn('FITS file contains averaged images.')
 
+    @typechecked
     def read_header(self,
-                    filename):
+                    filename: str) -> Tuple[fits.header.Header, Tuple[int, int, int]]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
         contains only a general header. The subsequent HDUs contain a single image with a small
@@ -190,7 +218,7 @@ class NearReadingModule(ReadingModule):
         nimages = len(hdulist) - 2
 
         # check if the file contains an even number of images, as expected with two chop positions
-        if nimages%2 != 0:
+        if nimages % 2 != 0:
             warnings.warn(f'FITS file contains odd number of images: {filename}')
 
             # decreasing nimages to an even number such that nimages // 2 gives the correct size
@@ -204,7 +232,7 @@ class NearReadingModule(ReadingModule):
 
         # number of chop cycles should be equal to half the number of available images
         if ncycles != nimages // 2:
-            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the ' \
+            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the '
                           f'number of available HDU images ({nimages // 2}).')
 
         # header of the first image
@@ -237,9 +265,10 @@ class NearReadingModule(ReadingModule):
 
         return header, im_shape
 
+    @typechecked
     def read_images(self,
-                    filename,
-                    im_shape):
+                    filename: str,
+                    im_shape: Tuple[int, int, int]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
         contains only a general header. The subsequent HDUs contain a single image with a small
@@ -311,7 +340,8 @@ class NearReadingModule(ReadingModule):
 
         return chopa, chopb
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run the module. The FITS files are collected from the input directory and uncompressed if
         needed. The images are then sorted by the two chop positions (chop A and chop B). The
@@ -345,6 +375,11 @@ class NearReadingModule(ReadingModule):
         # check if there are FITS files present in the input location
         assert(files), f'No FITS files found in {self.m_input_location}.'
 
+        # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
+        if self.m_crop is not None:
+            pixscale = self._m_config_port.get_attribute('PIXSCALE')
+            self.m_crop = (self.m_crop[1], self.m_crop[0], int(math.ceil(self.m_crop[2]/pixscale)))
+
         start_time = time.time()
         for i, filename in enumerate(files):
             progress(i, len(files), 'Running NearReadingModule...', start_time)
@@ -354,6 +389,33 @@ class NearReadingModule(ReadingModule):
 
             # get the images of chop A and chop B
             chopa, chopb = self.read_images(filename, im_shape)
+
+            if self.m_subtract:
+                chopa = chopa - chopb
+                chopb = -1.*np.copy(chopa)
+
+            if self.m_crop is not None:
+                chopa = crop_image(chopa,
+                                   center=self.m_crop[0:2],
+                                   size=self.m_crop[2],
+                                   copy=False)
+
+                chopb = crop_image(chopb,
+                                   center=self.m_crop[0:2],
+                                   size=self.m_crop[2],
+                                   copy=False)
+
+            if self.m_combine is not None:
+
+                if self.m_combine == 'mean':
+                    chopa = np.mean(chopa, axis=0)
+                    chopb = np.mean(chopb, axis=0)
+
+                elif self.m_combine == 'median':
+                    chopa = np.median(chopa, axis=0)
+                    chopb = np.median(chopb, axis=0)
+
+                header[self._m_config_port.get_attribute('NFRAMES')] = 1
 
             # append the images of chop A and B
             self.m_chopa_out_port.append(chopa, data_dim=3)
