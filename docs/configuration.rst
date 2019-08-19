@@ -19,7 +19,9 @@ The file contains two different sections of configuration parameters. The ``head
 
 The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` and :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule`. A complete overview of the pipeline modules that support multiprocessing is available in the :ref:`overview` section.
 
-Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable::
+Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable:
+
+.. code-block:: console
 
    $ export OMP_NUM_THREADS=8
 
