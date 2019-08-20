@@ -263,7 +263,8 @@ class TestFrameSelection:
 
         module = FrameSimilarityModule(name_in='simi1',
                                        image_tag='read',
-                                       method='MSE')
+                                       method='MSE',
+                                       mask_radius=(0., 1.))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi1')
@@ -273,14 +274,15 @@ class TestFrameSelection:
         assert len(similarity) == self.pipeline.get_shape('read')[0]
         assert np.min(similarity) > 0
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 1.4345237709250252e-06, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 3.292787144877646e-08, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 1.7938335695664495e-06, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 4.103008589430469e-08, rtol=limit, atol=0.)
 
     def test_frame_similarity_pcc(self):
 
         module = FrameSimilarityModule(name_in='simi2',
                                        image_tag='read',
-                                       method='PCC')
+                                       method='PCC',
+                                       mask_radius=(0., 1.))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi2')
@@ -291,8 +293,8 @@ class TestFrameSelection:
         assert np.min(similarity) > 0
         assert np.max(similarity) < 1
         assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.854202044574045, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9966447074865488, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(similarity), 43.974652830856314, rtol=limit, atol=0.)
+        assert np.allclose(similarity[0], 0.9994193494590345, rtol=limit, atol=0.)
 
     def test_frame_similarity_ssim(self):
 
