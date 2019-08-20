@@ -8,19 +8,27 @@ PynPoint is compatible with Python 3.6 and 3.7. Earlier versions (up to v0.7.0) 
 Virtual Environment
 -------------------
 
-PynPoint is available in the |pypi| and on |github|. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv`, for example with the |pip|::
+PynPoint is available in the |pypi| and on |github|. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv`, for example with the |pip|:
+
+.. code-block:: console
 
     $ pip install virtualenv
 
-Then create a virtual environment for Python 3::
+Then create a virtual environment for Python 3:
+
+.. code-block:: console
 
     $ virtualenv -p python3 folder_name
 
-And activate the environment with::
+And activate the environment with:
+
+.. code-block:: console
 
     $ source folder_name/bin/activate
 
-A virtual environment can be deactivated with::
+A virtual environment can be deactivated with:
+
+.. code-block:: console
 
     $ deactivate
 
@@ -30,15 +38,21 @@ A virtual environment can be deactivated with::
 Installation from PyPI
 ----------------------
 
-PynPoint can now be installed with pip::
+PynPoint can now be installed with pip:
+
+.. code-block:: console
 
     $ pip install pynpoint
 
-If you do not use a virtual environment then you may have to add the ``-- user`` argument::
+If you do not use a virtual environment then you may have to add the ``--user`` argument:
+
+.. code-block:: console
 
     $ pip install --user pynpoint
 
-PynPoint is actively being developed. To update the installation to the latest version::
+PynPoint is actively being developed. To update the installation to the latest version:
+
+.. code-block:: console
 
    $ pip install --upgrade PynPoint
 
@@ -47,15 +61,21 @@ PynPoint is actively being developed. To update the installation to the latest v
 Installation from Github
 ------------------------
 
-The repository can also be cloned from Github, which contains the most recent implementations::
+The repository can also be cloned from Github, which contains the most recent implementations:
+
+.. code-block:: console
 
     $ git clone git@github.com:PynPoint/PynPoint.git
 
-In that case, the dependencies can be installed from the PynPoint folder::
+In that case, the dependencies can be installed from the PynPoint folder:
+
+.. code-block:: console
 
     $ pip install -r requirements.txt
 
-By adding the path of the repository to the ``PYTHONPATH`` environment variable enables PynPoint to be imported from any location::
+By adding the path of the repository to the ``PYTHONPATH`` environment variable enables PynPoint to be imported from any location:
+
+.. code-block:: console
 
     $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/pynpoint'" >> folder_name/bin/activate
 
@@ -67,13 +87,17 @@ Do you want to makes changes to the code? Then please fork the PynPoint reposito
 Testing Pynpoint
 ----------------
 
-The installation can be tested by starting Python in interactive mode and printing the PynPoint version::
+The installation can be tested by starting Python in interactive mode and printing the PynPoint version:
+
+.. code-block:: console
 
     >>> import pynpoint
     >>> pynpoint.__version__
 
 .. tip::
-   If the PynPoint package is not find by Python then possibly the path was not set correctly. The list of folders that are searched by Python for modules can be printed in interactive mode as::
+   If the PynPoint package is not find by Python then possibly the path was not set correctly. The list of folders that are searched by Python for modules can be printed in interactive mode as:
+
+      .. code-block:: console
 
       >>> import sys
       >>> sys.path

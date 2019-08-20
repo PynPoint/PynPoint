@@ -6,7 +6,7 @@ import sys
 import time
 import warnings
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 import numpy as np
 import emcee
@@ -182,7 +182,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  aperture: float = 0.1,
                  sigma: float = 0.0,
                  tolerance: float = 0.1,
-                 pca_number: int = 20,
+                 pca_number: Union[int, range, List[int]] = 10,
                  cent_size: float = None,
                  edge_size: float = None,
                  extra_rot: float = 0.,
@@ -233,14 +233,17 @@ class SimplexMinimizationModule(ProcessingModule):
             which is used for both the position and flux so tolerance=0.1 will give a precision of
             0.1 mag and 0.1 pix. The tolerance on the output (i.e., the chi-square value) is set to
             np.inf so the condition is always met.
-        pca_number : int
-            Number of principal components used for the PSF subtraction.
+        pca_number : int, range, list(int, )
+            Number of principal components (PCs) used for the PSF subtraction. Can be either a
+            single value or a range/list of values. In the latter case, the `res_out_tag` and
+            `flux_position_tag` contain a 3 digit number with the number of PCs.
         cent_size : float
-            Radius of the central mask (arcsec). No mask is used when set to None.
+            Radius of the central mask (arcsec). No mask is used when set to None. Masking is done
+            after the artificial planet is injected.
         edge_size : float
             Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
             None. The radius will be set to half the image size if the argument is larger than half
-            the image size.
+            the image size. Masking is done after the artificial planet is injected.
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
@@ -272,8 +275,17 @@ class SimplexMinimizationModule(ProcessingModule):
         else:
             self.m_reference_in_port = self.add_input_port(reference_in_tag)
 
-        self.m_res_out_port = self.add_output_port(res_out_tag)
-        self.m_flux_position_port = self.add_output_port(flux_position_tag)
+        self.m_res_out_port = []
+        self.m_flux_pos_port = []
+
+        if isinstance(pca_number, int):
+            self.m_res_out_port.append(self.add_output_port(res_out_tag))
+            self.m_flux_pos_port.append(self.add_output_port(flux_position_tag))
+
+        else:
+            for item in pca_number:
+                self.m_res_out_port.append(self.add_output_port(res_out_tag+f'{item:03d}'))
+                self.m_flux_pos_port.append(self.add_output_port(flux_position_tag+f'{item:03d}'))
 
         self.m_position = position
         self.m_magnitude = magnitude
@@ -282,11 +294,16 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_aperture = aperture
         self.m_sigma = sigma
         self.m_tolerance = tolerance
-        self.m_pca_number = pca_number
         self.m_cent_size = cent_size
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
+
+        if isinstance(pca_number, int):
+            self.m_pca_number = [pca_number]
+        else:
+            self.m_pca_number = pca_number
+
 
     @typechecked
     def run(self) -> None:
@@ -301,11 +318,13 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
-        self.m_res_out_port.del_all_data()
-        self.m_res_out_port.del_all_attributes()
+        for item in self.m_res_out_port:
+            item.del_all_data()
+            item.del_all_attributes()
 
-        self.m_flux_position_port.del_all_data()
-        self.m_flux_position_port.del_all_attributes()
+        for item in self.m_flux_pos_port:
+            item.del_all_data()
+            item.del_all_attributes()
 
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -335,38 +354,7 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        if self.m_reference_in_port is not None:
-            ref_data = self.m_reference_in_port.get_all()
-
-            im_shape = images.shape
-            ref_shape = ref_data.shape
-
-            if ref_shape[1:] != im_shape[1:]:
-                raise ValueError('The image size of the science data and the reference data '
-                                 'should be identical.')
-
-            # reshape reference data and select the unmasked pixels
-            ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-
-            mean_ref = np.mean(ref_reshape, axis=0)
-            ref_reshape -= mean_ref
-
-            # create the PCA basis
-            sklearn_pca = PCA(n_components=self.m_pca_number, svd_solver='arpack')
-            sklearn_pca.fit(ref_reshape)
-
-            # add mean of reference array as 1st PC and orthogonalize it to the PCA basis
-            mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
-
-            q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
-                                                 sklearn_pca.components_[:-1, ])).T)
-
-            sklearn_pca.components_ = q_ortho.T
-
-        def _objective(arg):
-            sys.stdout.write('.')
-            sys.stdout.flush()
-
+        def _objective(arg, count, n_components, sklearn_pca):
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
@@ -385,8 +373,8 @@ class SimplexMinimizationModule(ProcessingModule):
             if self.m_reference_in_port is None:
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
                                                                angles=-1.*parang+self.m_extra_rot,
-                                                               pca_number=self.m_pca_number,
-                                                               pca_sklearn=None,
+                                                               pca_number=n_components,
+                                                               pca_sklearn=sklearn_pca,
                                                                im_shape=None,
                                                                indices=None)
 
@@ -395,7 +383,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
                                                                angles=-1.*parang+self.m_extra_rot,
-                                                               pca_number=self.m_pca_number,
+                                                               pca_number=n_components,
                                                                pca_sklearn=sklearn_pca,
                                                                im_shape=im_shape,
                                                                indices=None)
@@ -405,7 +393,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                           residuals=im_res_rot,
                                           angles=parang)
 
-            self.m_res_out_port.append(res_stack, data_dim=3)
+            self.m_res_out_port[count].append(res_stack, data_dim=3)
 
             chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
@@ -421,33 +409,74 @@ class SimplexMinimizationModule(ProcessingModule):
                               mag,
                               chi_square])
 
-            self.m_flux_position_port.append(res, data_dim=2)
+            self.m_flux_pos_port[count].append(res, data_dim=2)
+
+            sys.stdout.write('\rRunning SimplexMinimizationModule... ')
+            sys.stdout.write(f'{n_components} PC - chi^2 = {chi_square:.8E}')
+            sys.stdout.flush()
 
             return chi_square
-
-        sys.stdout.write('Running SimplexMinimizationModule')
-        sys.stdout.flush()
 
         pos_init = rotate_coordinates(center,
                                       (self.m_position[1], self.m_position[0]),  # (y, x)
                                       self.m_extra_rot)
 
-        minimize(fun=_objective,
-                 x0=[pos_init[0], pos_init[1], self.m_magnitude],
-                 method='Nelder-Mead',
-                 tol=None,
-                 options={'xatol': self.m_tolerance, 'fatol': float('inf')})
+        for i, n_components in enumerate(self.m_pca_number):
+            sys.stdout.write(f'\rRunning SimplexMinimizationModule... {n_components} PC ')
+            sys.stdout.flush()
+
+            if self.m_reference_in_port is None:
+                sklearn_pca = None
+
+            else:
+                ref_data = self.m_reference_in_port.get_all()
+
+                im_shape = images.shape
+                ref_shape = ref_data.shape
+
+                if ref_shape[1:] != im_shape[1:]:
+                    raise ValueError('The image size of the science data and the reference data '
+                                     'should be identical.')
+
+                # reshape reference data and select the unmasked pixels
+                ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
+
+                mean_ref = np.mean(ref_reshape, axis=0)
+                ref_reshape -= mean_ref
+
+                # create the PCA basis
+                sklearn_pca = PCA(n_components=n_components, svd_solver='arpack')
+                sklearn_pca.fit(ref_reshape)
+
+                # add mean of reference array as 1st PC and orthogonalize it to the PCA basis
+                mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
+
+                q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
+                                                     sklearn_pca.components_[:-1, ])).T)
+
+                sklearn_pca.components_ = q_ortho.T
+
+            minimize(fun=_objective,
+                     x0=[pos_init[0], pos_init[1], self.m_magnitude],
+                     args=(i, n_components, sklearn_pca),
+                     method='Nelder-Mead',
+                     tol=None,
+                     options={'xatol': self.m_tolerance, 'fatol': float('inf')})
 
         sys.stdout.write(' [DONE]\n')
         sys.stdout.flush()
 
         history = f'merit = {self.m_merit}'
-        self.m_flux_position_port.copy_attributes(self.m_image_in_port)
-        self.m_flux_position_port.add_history('SimplexMinimizationModule', history)
 
-        self.m_res_out_port.copy_attributes(self.m_image_in_port)
-        self.m_res_out_port.add_history('SimplexMinimizationModule', history)
-        self.m_res_out_port.close_port()
+        for item in self.m_flux_pos_port:
+            item.copy_attributes(self.m_image_in_port)
+            item.add_history('SimplexMinimizationModule', history)
+
+        for item in self.m_res_out_port:
+            item.copy_attributes(self.m_image_in_port)
+            item.add_history('SimplexMinimizationModule', history)
+
+        self.m_res_out_port[0].close_port()
 
 
 class FalsePositiveModule(ProcessingModule):
@@ -650,7 +679,7 @@ class MCMCsamplingModule(ProcessingModule):
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
         chain_out_tag : str
             Tag of the database entry with the Markov chain that is written as output. The shape
-            of the array is (nwalkers*nsteps, 3).
+            of the array is (nwalkers, nsteps, 3).
         param : tuple(float, float, float)
             The approximate separation (arcsec), angle (deg), and contrast (mag), for example
             obtained with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
@@ -675,7 +704,8 @@ class MCMCsamplingModule(ProcessingModule):
         mask : tuple(float, float), None
             Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of the
             tuple can be set to None. Masked pixels are excluded from the PCA computation,
-            resulting in a smaller runtime.
+            resulting in a smaller runtime. Masking is done after the artificial planet is
+            injected.
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
