@@ -70,8 +70,8 @@ def progress(current: int,
             time_left = time_taken / fraction * (1. - fraction)
             sys.stdout.write(f'{message} {percentage:4.1f}% - ETA: {time_string(time_left)}\r')
 
-    if current+1 == total:
-        sys.stdout.write(' ' * (29+len(message)) + '\r')
+    if current+1 >= total:
+        sys.stdout.write(' ' * (29+len(message)) + '\r' + message + '\r')
 
     sys.stdout.flush()
 

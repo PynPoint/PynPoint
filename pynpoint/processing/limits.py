@@ -246,6 +246,19 @@ class ContrastCurveModule(ProcessingModule):
 
         pool = mp.Pool(cpu)
 
+        start_time = time.time()
+        nfinished = 0
+
+        # callback function accessing the nonlocal nfinished variable to keep track of the completed
+        # number of tasks
+        def plus_one(result):
+            # result gets passed into the callback even if we are not yet interested in it yet
+            # grab the non local counter which counts the number of computed postions
+            nonlocal nfinished
+            nfinished += 1
+            # print the progress
+            progress(nfinished, len(positions), 'Running ContrastCurveModule...', start_time)
+
         for pos in positions:
             async_results.append(pool.apply_async(contrast_limit,
                                                   args=(tmp_im_str,
@@ -260,21 +273,8 @@ class ContrastCurveModule(ProcessingModule):
                                                         self.m_aperture,
                                                         self.m_residuals,
                                                         self.m_snr_inject,
-                                                        pos)))
-
-        pool.close()
-
-        start_time = time.time()
-
-        # wait for all processes to finish
-        while mp.active_children():
-            # number of finished processes
-            nfinished = sum([i.ready() for i in async_results])
-
-            progress(nfinished, len(positions), 'Running ContrastCurveModule...', start_time)
-
-            # check if new processes have finished every 5 seconds
-            time.sleep(5)
+                                                        pos),
+                                                  callback=plus_one))
 
         # get the results for every async_result object
         for item in async_results:
