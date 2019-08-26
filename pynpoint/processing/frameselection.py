@@ -932,27 +932,29 @@ class FrameSimilarityModule(ProcessingModule):
         pool = mp.Pool(cpu)
         async_results = []
 
+        start_time = time.time()
+        nfinished = 0
+
+        # callback function accessing the nonlocal nfinished variable to keep track of the completed
+        # number of tasks
+        def plus_one(result):
+            # result gets passed into the callback even if we are not yet interested in it yet
+            # grab the non local counter which counts the number of computed postions
+            nonlocal nfinished
+            nfinished += 1
+            # print the progress
+            progress(nfinished, nimages, 'Running ContrastCurveModule...', start_time)
+
         for i in range(nimages):
             async_results.append(pool.apply_async(FrameSimilarityModule._similarity,
                                                   args=(images,
                                                         i,
                                                         self.m_method,
                                                         self.m_window_size,
-                                                        temporal_median)))
+                                                        temporal_median),
+                                                  callback=plus_one))
 
         pool.close()
-
-        start_time = time.time()
-
-        # wait for all processes to finish
-        while mp.active_children():
-            # number of finished processes
-            nfinished = sum([i.ready() for i in async_results])
-
-            progress(nfinished, nimages, 'Running FrameSimilarityModule', start_time)
-
-            # check if new processes have finished every 5 seconds
-            time.sleep(5)
 
         # get the results for every async_result object
         for async_result in async_results:
