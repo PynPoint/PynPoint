@@ -270,10 +270,6 @@ class WaveletAnalysisCapsule:
         """
 
         if self.m_padding != 'none':
-            # Python 2
-            # noise_length_4 = len(self._m_data) / 4
-
-            # Python 3?
             noise_length_4 = len(self._m_data) // 4
             noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
 
@@ -316,10 +312,6 @@ class WaveletAnalysisCapsule:
         if self.m_padding == 'none':
             return tmp_data
 
-        # Python 2
-        # return tmp_data[len(self._m_data) / 4: 3 * (len(self._m_data) / 4)]
-
-        # Python 3?
         return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
 
     # def __transform_period(self,
