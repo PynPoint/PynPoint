@@ -387,7 +387,7 @@ class FitCenterModule(ProcessingModule):
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
             gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
-                                           c_gauss*y_diff**2))
+                                             c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -652,7 +652,6 @@ class ShiftImagesModule(ProcessingModule):
         self.m_image_out_port.del_all_attributes()
         self.m_image_out_port.del_all_data()
 
-        # set the 'constant' flag to true
         constant = True
 
         # read the fit results from the self.m_fit_in_port if available
@@ -663,9 +662,8 @@ class ShiftImagesModule(ProcessingModule):
 
             # check if data in self.m_fit_in_port is constant for all images using the
             # constant flag
-            for i in range(self.m_fit_in_port.get_shape()[0]):
-                if not np.allclose(self.m_fit_in_port[0, ], self.m_fit_in_port[i, ]):
-                    constant = False
+            if not np.allclose(self.m_fit_in_port.get_all() - self.m_fit_in_port[0, ], 0.0):
+                constant = False
 
             if constant:
                 # if the offset is constant then use the first element for all images
@@ -687,30 +685,11 @@ class ShiftImagesModule(ProcessingModule):
         # apply a constant shift
         if constant:
 
-            # get memory from config tag
-            memory = self._m_config_port.get_attribute('MEMORY')
-
-            # get number of images
-            nimages = self.m_image_in_port.get_shape()[0]
-
-            # calculate the boundaries indices of each stack of frames
-            frames = memory_frames(memory, nimages)
-
-            # set a start_time for the progress information
-            start_time = time.time()
-
-            # iterate over all stacks of frames
-            for i, _ in enumerate(frames[:-1]):
-                # shift a stack of images using _image_shift
-                shifted_image = shift_image(self.m_image_in_port[frames[i]:frames[i+1], ],
-                                            self.m_shift,
-                                            self.m_interpolation)
-
-                # append the shifted images to the selt.m_image_out_port database entry
-                self.m_image_out_port.append(shifted_image, data_dim=3)
-
-                # write out the progress
-                progress(i, len(frames[:-1]), 'Running ShiftImagesModule...', start_time)
+            self.apply_function_to_images(shift_image,
+                                          self.m_image_in_port,
+                                          self.m_image_out_port,
+                                          'Running ShiftImagesModule',
+                                          func_args=(self.m_shift, self.m_interpolation))
 
             # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
@@ -734,7 +713,7 @@ class WaffleCenteringModule(ProcessingModule):
                  image_in_tag: str,
                  center_in_tag: str,
                  image_out_tag: str,
-                 size: float = 2.,
+                 size: float = None,
                  center: Tuple[float, float] = None,
                  radius: float = 45.,
                  pattern: str = 'x',
@@ -752,7 +731,7 @@ class WaffleCenteringModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry with the centered images that are written as output. Should
             be different from *image_in_tag*.
-        size : float
+        size : float, None
             Image size (arcsec) for both dimensions. Original image size is used if set to None.
         center : tuple(float, float), None
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
@@ -935,8 +914,8 @@ class WaffleCenteringModule(ProcessingModule):
 
         x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
                     (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
-            ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
-                (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
+                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
 
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
             (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))

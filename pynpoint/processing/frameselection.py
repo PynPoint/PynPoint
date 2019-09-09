@@ -179,14 +179,15 @@ class FrameSelectionModule(ProcessingModule):
     def __init__(self,
                  name_in: str,
                  image_in_tag: str,
-                 selected_out_tag: str,
-                 removed_out_tag: str,
+                 selected_out_tag: Union[str, None],
+                 removed_out_tag: Union[str, None],
                  index_out_tag: str = None,
                  method='median',
                  threshold: float = 4.,
-                 fwhm: float = 0.1,
+                 fwhm: Union[float, None] = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
-                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
+                 position: Union[Tuple[int, int, float], Tuple[None, None, float],
+                                 Tuple[int, int, None]] = None) -> None:
         """
         Parameters
         ----------
@@ -194,10 +195,10 @@ class FrameSelectionModule(ProcessingModule):
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
-        selected_out_tag : str
+        selected_out_tag : str, None
             Tag of the database entry with the selected images that are written as output. Should
             be different from *image_in_tag*. No data is written when set to None.
-        removed_out_tag : str
+        removed_out_tag : str, None
             Tag of the database entry with the removed images that are written as output. Should
             be different from *image_in_tag*. No data is written when set to None.
         index_out_tag : str, None
@@ -225,7 +226,7 @@ class FrameSelectionModule(ProcessingModule):
             Subframe that is selected to search for the star. The tuple contains the center (pix)
             and size (arcsec) (pos_x, pos_y, size). Setting *position* to None will use the full
             image to search for the star. If *position=(None, None, size)* then the center of the
-            image will be used.
+            image will be used. If *position=(pos_x, pos_y, None)* then a fixed position is used.
 
         Returns
         -------
@@ -302,9 +303,10 @@ class FrameSelectionModule(ProcessingModule):
         def _get_starpos(fwhm, position):
             starpos = np.zeros((nimages, 2), dtype=np.int64)
 
-            if fwhm is None:
-                starpos[:, 0] = position[0]
-                starpos[:, 1] = position[1]
+            if fwhm is None or (position is not None and position[2] is None):
+                # [y. x] position
+                starpos[:, 0] = position[1]
+                starpos[:, 1] = position[0]
 
             else:
                 if position is None:
@@ -320,6 +322,7 @@ class FrameSelectionModule(ProcessingModule):
                     width = int(math.ceil(position[2]/pixscale))
 
                 for i, _ in enumerate(starpos):
+                    # [y. x] position
                     starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
                                                 center=center,
                                                 width=width,
@@ -364,8 +367,8 @@ class FrameSelectionModule(ProcessingModule):
         starpos = _get_starpos(self.m_fwhm, self.m_position)
 
         phot = np.zeros(nimages)
-
         start_time = time.time()
+
         for i in range(nimages):
             progress(i, nimages, 'Running FrameSelectionModule...', start_time)
 
@@ -387,26 +390,28 @@ class FrameSelectionModule(ProcessingModule):
         indices = np.where(index_rm)[0]
         indices = np.asarray(indices, dtype=np.int)
 
-        if np.size(indices) > 0:
-            memory = self._m_config_port.get_attribute('MEMORY')
-            frames = memory_frames(memory, nimages)
+        if self.m_selected_out_port is not None or self.m_removed_out_port is not None:
 
-            if memory == 0 or memory >= nimages:
-                memory = nimages
+            if np.size(indices) > 0:
+                memory = self._m_config_port.get_attribute('MEMORY')
+                frames = memory_frames(memory, nimages)
 
-            for i, _ in enumerate(frames[:-1]):
-                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+                if memory == 0 or memory >= nimages:
+                    memory = nimages
 
-                index_del = np.where(np.logical_and(indices >= frames[i],
-                                                    indices < frames[i+1]))
+                for i, _ in enumerate(frames[:-1]):
+                    images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-                write_selected_data(images,
-                                    indices[index_del] % memory,
-                                    self.m_selected_out_port,
-                                    self.m_removed_out_port)
+                    index_del = np.where(np.logical_and(indices >= frames[i],
+                                                        indices < frames[i+1]))
 
-        else:
-            warnings.warn('No frames were removed.')
+                    write_selected_data(images,
+                                        indices[index_del] % memory,
+                                        self.m_selected_out_port,
+                                        self.m_removed_out_port)
+
+            else:
+                warnings.warn('No frames were removed.')
 
         history = 'frames removed = '+str(np.size(indices))
 
@@ -424,10 +429,12 @@ class FrameSelectionModule(ProcessingModule):
             # Copy attributes before write_selected_attributes is used
             self.m_removed_out_port.copy_attributes(self.m_image_in_port)
 
-        write_selected_attributes(indices,
-                                  self.m_image_in_port,
-                                  self.m_selected_out_port,
-                                  self.m_removed_out_port)
+        if self.m_selected_out_port is not None or self.m_removed_out_port is not None:
+
+            write_selected_attributes(indices,
+                                      self.m_image_in_port,
+                                      self.m_selected_out_port,
+                                      self.m_removed_out_port)
 
         if self.m_selected_out_port is not None:
             indices_select = np.ones(nimages, dtype=bool)
@@ -897,7 +904,6 @@ class FrameSimilarityModule(ProcessingModule):
 
         # get image number and image shapes
         nimages = self.m_image_in_port.get_shape()[0]
-        im_shape = self.m_image_in_port.get_shape()[1:]
 
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -908,22 +914,17 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images
-        mask = create_mask(im_shape, self.m_mask_radii)
         images = self.m_image_in_port.get_all()
 
         # close the port during the calculations
         self.m_image_out_port.close_port()
 
+        images = crop_image(images, None, int(self.m_mask_radii[1]))
+
         if self.m_temporal_median == 'constant':
             temporal_median = np.median(images, axis=0)
         else:
             temporal_median = False
-
-        if self.m_method == 'SSIM':
-            images = crop_image(images, None, int(self.m_mask_radii[1]))
-            temporal_median = crop_image(temporal_median, None, int(self.m_mask_radii[1]))
-        else:
-            images *= mask
 
         # compare images and store similarity
         similarities = np.zeros(nimages)

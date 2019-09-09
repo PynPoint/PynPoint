@@ -26,11 +26,15 @@ Setup
 
 To get started, use the instructions available in the :ref:`installation` section to install PynPoint.
 
-The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable::
+The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable:
+
+.. code-block:: console
 
     $ chmod +x near_files.sh
 
-And then execute it as::
+And then execute it as:
+
+.. code-block:: console
 
    $ ./near_files.sh
 
@@ -78,7 +82,9 @@ Running PynPoint
 
 Example code snippets for the different steps to reduce NEAR data with PynPoint are included below. These code snippets can be executed in Python interactive mode, as a Jupyter notebook.py file, or combined into a python script and executed from the command line.
 
-The first steps are to initialize the pipeline and read in the data contained in the given ``input_place_in`` directory. Data are automatically divided into the chop A and chop B data sets. Here we also use the :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule` to calculate the parallactic angle for each individual frame, which is necessary for derotating and combining the frames after PSF subtraction::
+The first steps are to initialize the pipeline and read in the data contained in the given ``input_place_in`` directory. Data are automatically divided into the chop A and chop B data sets. Here we also use the :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule` to calculate the parallactic angle for each individual frame, which is necessary for derotating and combining the frames after PSF subtraction:
+
+.. code-block:: python
 
    # Import the Pypeline and the modules that we will use in this example
 
@@ -127,7 +133,9 @@ The first steps are to initialize the pipeline and read in the data contained in
    # Note that you can also run all the added modules using this function:
    # pipeline.run()
    
-The next step is to reduce the chop A frames with alpha Cen A behind the corognagraph. Here we crop the chop A and chop B images around the coronagraph position, subtract chop B from chop A to remove the sky background, and center the subtracted chop A frames::
+The next step is to reduce the chop A frames with alpha Cen A behind the corognagraph. Here we crop the chop A and chop B images around the coronagraph position, subtract chop B from chop A to remove the sky background, and center the subtracted chop A frames:
+
+.. code-block:: python
 
    # Crop the chop A and chop B images around the approximate coronagraph position
 
@@ -192,7 +200,9 @@ The next step is to reduce the chop A frames with alpha Cen A behind the corogna
    pipeline.run_module('shift1')
 
 
-Next, we use the chop B frames where alpha Cen A if off of the coronagraph to extract a reference PSF. This reference PSF will later be used for calculating the detection limits::
+Next, we use the chop B frames where alpha Cen A if off of the coronagraph to extract a reference PSF. This reference PSF will later be used for calculating the detection limits:
+
+.. code-block:: python
 
    # Subtract chop A from chop B before extracting the non-coronagraphic PSF
 
@@ -276,7 +286,9 @@ Next, we use the chop B frames where alpha Cen A if off of the coronagraph to ex
    pipeline.run_module('shift_refpsf')
    pipeline.run_module('prep_refpsf')
 
-Finally, we use PCA to subtract the stellar PSF of alpha Cen A. For testing purposes, we first use the reference PSF created above to inject a fake planet into the chop A data. The median combination of the PSF-subtracted and derotated frames is saved in its own tag and then written out to a fits file::
+Finally, we use PCA to subtract the stellar PSF of alpha Cen A. For testing purposes, we first use the reference PSF created above to inject a fake planet into the chop A data. The median combination of the PSF-subtracted and derotated frames is saved in its own tag and then written out to a fits file:
+
+.. code-block:: python
 
    # Inject a fake planet at a separation of 1 arcsec and a contrast of 10 mag
 
@@ -333,7 +345,9 @@ Finally, we use PCA to subtract the stellar PSF of alpha Cen A. For testing purp
    pipeline.run_module('pca')
    pipeline.run_module('write_result_psfsub')
 
-PynPoint also includes a module to calculate the detection limits of the final image::
+PynPoint also includes a module to calculate the detection limits of the final image:
+
+.. code-block:: python
 
    # Calculate detection limits between 0.8 and 2.0 arcsec
    # The false positive fraction is fixed to 2.87e-6 (i.e. 5 sigma for Gaussian statistics)
@@ -377,11 +391,15 @@ PynPoint also includes a module to calculate the detection limits of the final i
 Results
 -------
 
-The images that were exported to a FITS file can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction::
+The images that were exported to a FITS file can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction:
+
+.. code-block:: python
 
    data = pipeline.get_data('chopa_pca')
 
-And to plot the residuals for 10 principal components (Python indexing starts at zero)::
+And to plot the residuals for 10 principal components (Python indexing starts at zero):
+
+.. code-block:: python
 
    import matplotlib.pyplot as plt
 
@@ -392,7 +410,9 @@ And to plot the residuals for 10 principal components (Python indexing starts at
    :width: 60%
    :align: center
 
-Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested::
+Or to plot the detection limits with the error bars showing the variance of the six azimuthal positions that were tested:
+
+.. code-block:: python
 
    data = pipeline.get_data('limits')
 
