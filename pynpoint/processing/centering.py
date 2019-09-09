@@ -387,7 +387,7 @@ class FitCenterModule(ProcessingModule):
             c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
 
             gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
-                                           c_gauss*y_diff**2))
+                                             c_gauss*y_diff**2))
 
             if self.m_radius:
                 gaussian = gaussian[rr_ap < self.m_radius]
@@ -662,7 +662,7 @@ class ShiftImagesModule(ProcessingModule):
 
             # check if data in self.m_fit_in_port is constant for all images using the
             # constant flag
-            if not np.allclose(self.m_fit_in_port.get_all() - self.m_fit_in_port[0, ],0.0):
+            if not np.allclose(self.m_fit_in_port.get_all() - self.m_fit_in_port[0, ], 0.0):
                 constant = False
 
             if constant:
@@ -689,7 +689,7 @@ class ShiftImagesModule(ProcessingModule):
                                           self.m_image_in_port,
                                           self.m_image_out_port,
                                           'Running ShiftImagesModule',
-                                          func_args=(self.m_shift,self.m_interpolation))
+                                          func_args=(self.m_shift, self.m_interpolation))
 
             # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
@@ -914,8 +914,8 @@ class WaffleCenteringModule(ProcessingModule):
 
         x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
                     (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
-            ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
-                (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
+                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
 
         y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
             (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
