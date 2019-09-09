@@ -304,6 +304,7 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
+        sys.stdout.write('\r                                                      ')
         sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
         sys.stdout.flush()
 
