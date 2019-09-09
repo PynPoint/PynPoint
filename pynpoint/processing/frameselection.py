@@ -904,7 +904,6 @@ class FrameSimilarityModule(ProcessingModule):
 
         # get image number and image shapes
         nimages = self.m_image_in_port.get_shape()[0]
-        im_shape = self.m_image_in_port.get_shape()[1:]
 
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -915,22 +914,17 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images
-        mask = create_mask(im_shape, self.m_mask_radii)
         images = self.m_image_in_port.get_all()
 
         # close the port during the calculations
         self.m_image_out_port.close_port()
 
+        images = crop_image(images, None, int(self.m_mask_radii[1]))
+
         if self.m_temporal_median == 'constant':
             temporal_median = np.median(images, axis=0)
         else:
             temporal_median = False
-
-        if self.m_method == 'SSIM':
-            images = crop_image(images, None, int(self.m_mask_radii[1]))
-            temporal_median = crop_image(temporal_median, None, int(self.m_mask_radii[1]))
-        else:
-            images *= mask
 
         # compare images and store similarity
         similarities = np.zeros(nimages)
