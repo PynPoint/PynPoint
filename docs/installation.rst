@@ -89,7 +89,7 @@ Testing Pynpoint
 
 The installation can be tested by starting Python in interactive mode and printing the PynPoint version:
 
-.. code-block:: console
+.. code-block:: python
 
     >>> import pynpoint
     >>> pynpoint.__version__
@@ -97,10 +97,10 @@ The installation can be tested by starting Python in interactive mode and printi
 .. tip::
    If the PynPoint package is not find by Python then possibly the path was not set correctly. The list of folders that are searched by Python for modules can be printed in interactive mode as:
 
-      .. code-block:: console
+      .. code-block:: python
 
-      >>> import sys
-      >>> sys.path
+         >>> import sys
+         >>> sys.path
 
    The result should contain the folder in which the Github repository was cloned or the folder in which Python modules are installed with pip.
 
