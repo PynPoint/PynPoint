@@ -227,6 +227,7 @@ class PACO:
             self.m_rescaled = True
             return
 
+        """
         try:
             assert (self.m_width*self.m_scale).is_integer()
         except AssertionError:
@@ -236,7 +237,8 @@ class PACO:
             assert (self.m_height*self.m_scale).is_integer()
         except AssertionError:
             print("Cannot rescale image, please change the scale or use the full image")
-            sys.exit(2)           
+            sys.exit(2)   
+        """
         self.rescaleImageSequence(self.m_scale)
 
         self.m_pxscale = self.m_pxscale/self.m_scale
