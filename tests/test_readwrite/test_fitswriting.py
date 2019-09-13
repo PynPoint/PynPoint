@@ -102,7 +102,7 @@ class TestFitsWritingModule:
         assert warning[0].message.args[0] == 'Filename already present. Use overwrite=True ' \
                                              'to overwrite an existing FITS file.'
 
-    def test_data_range(self):
+    def test_subset_size(self):
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write6',
@@ -115,6 +115,19 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('write6')
 
+    def test_subset_size_data_range(self):
+
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write7',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=(8, 18),
+                                   overwrite=True,
+                                   subset_size=10)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('write7')
+
     def test_attribute_length(self):
 
         text = 'long_text_long_text_long_text_long_text_long_text_long_text_long_text_long_text'
@@ -124,7 +137,7 @@ class TestFitsWritingModule:
         self.pipeline.set_attribute('images', 'longer_than_eight2', text, static=True)
 
         module = FitsWritingModule(file_name='test.fits',
-                                   name_in='write7',
+                                   name_in='write8',
                                    output_dir=None,
                                    data_tag='images',
                                    data_range=None,
@@ -134,7 +147,7 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
-            self.pipeline.run_module('write7')
+            self.pipeline.run_module('write8')
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'Key \'hierarch longer_than_eight2\' with value ' \
