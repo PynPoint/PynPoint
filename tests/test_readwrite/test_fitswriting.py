@@ -26,18 +26,18 @@ class TestFitsWritingModule:
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self):
-
-        remove_test_data(self.test_dir, folders=['fits'], files=['test.fits'])
+        files = ['test.fits', 'test000.fits', 'test001.fits', 'test002.fits', 'test003.fits']
+        remove_test_data(self.test_dir, folders=['fits'], files=files)
 
     def test_fits_reading(self):
 
-        read = FitsReadingModule(name_in='read',
-                                 input_dir=self.test_dir+'fits',
-                                 image_tag='images',
-                                 overwrite=True,
-                                 check=True)
+        module = FitsReadingModule(name_in='read',
+                                   input_dir=self.test_dir+'fits',
+                                   image_tag='images',
+                                   overwrite=True,
+                                   check=True)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('images')
@@ -47,14 +47,14 @@ class TestFitsWritingModule:
 
     def test_fits_writing(self):
 
-        write = FitsWritingModule(file_name='test.fits',
-                                  name_in='write1',
-                                  output_dir=None,
-                                  data_tag='images',
-                                  data_range=None,
-                                  overwrite=True)
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write1',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=None,
+                                   overwrite=True)
 
-        self.pipeline.add_module(write)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('write1')
 
     def test_filename_extension(self):
@@ -65,32 +65,35 @@ class TestFitsWritingModule:
                               output_dir=None,
                               data_tag='images',
                               data_range=None,
-                              overwrite=True)
+                              overwrite=True,
+                              subset_size=None)
 
         assert str(error.value) == 'Output \'file_name\' requires the FITS extension.'
 
     def test_data_range(self):
 
-        write = FitsWritingModule(file_name='test.fits',
-                                  name_in='write4',
-                                  output_dir=None,
-                                  data_tag='images',
-                                  data_range=(0, 10),
-                                  overwrite=True)
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write4',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=(0, 10),
+                                   overwrite=True,
+                                   subset_size=None)
 
-        self.pipeline.add_module(write)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('write4')
 
     def test_not_overwritten(self):
 
-        write = FitsWritingModule(file_name='test.fits',
-                                  name_in='write5',
-                                  output_dir=None,
-                                  data_tag='images',
-                                  data_range=None,
-                                  overwrite=False)
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write5',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=None,
+                                   overwrite=False,
+                                   subset_size=None)
 
-        self.pipeline.add_module(write)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('write5')
@@ -98,6 +101,19 @@ class TestFitsWritingModule:
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'Filename already present. Use overwrite=True ' \
                                              'to overwrite an existing FITS file.'
+
+    def test_data_range(self):
+
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write6',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=None,
+                                   overwrite=True,
+                                   subset_size=10)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('write6')
 
     def test_attribute_length(self):
 
@@ -107,17 +123,18 @@ class TestFitsWritingModule:
         self.pipeline.set_attribute('images', 'longer_than_eight1', 'value', static=True)
         self.pipeline.set_attribute('images', 'longer_than_eight2', text, static=True)
 
-        write = FitsWritingModule(file_name='test.fits',
-                                  name_in='write6',
-                                  output_dir=None,
-                                  data_tag='images',
-                                  data_range=None,
-                                  overwrite=True)
+        module = FitsWritingModule(file_name='test.fits',
+                                   name_in='write7',
+                                   output_dir=None,
+                                   data_tag='images',
+                                   data_range=None,
+                                   overwrite=True,
+                                   subset_size=None)
 
-        self.pipeline.add_module(write)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
-            self.pipeline.run_module('write6')
+            self.pipeline.run_module('write7')
 
         assert len(warning) == 1
         assert warning[0].message.args[0] == 'Key \'hierarch longer_than_eight2\' with value ' \
