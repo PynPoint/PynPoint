@@ -11,6 +11,8 @@ from typing import Tuple
 from astropy.io import fits
 from typeguard import typechecked
 
+import numpy as np
+
 from pynpoint.core.processing import WritingModule
 from pynpoint.util.module import memory_frames
 
@@ -129,11 +131,12 @@ class FitsWritingModule(WritingModule):
             else:
                 if self.m_range is None:
                     nimages = self.m_data_port.get_shape()[0]
+                    frames = memory_frames(self.m_subset_size, nimages)
 
                 else:
                     nimages = self.m_range[1] - self.m_range[0]
-
-                frames = memory_frames(self.m_subset_size, nimages)
+                    frames = memory_frames(self.m_subset_size, nimages)
+                    frames = np.asarray(frames) + self.m_range[0]
 
             for i, item in enumerate(frames[:-1]):
                 data_select = self.m_data_port[frames[i]:frames[i+1], ]
