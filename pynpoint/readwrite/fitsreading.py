@@ -29,6 +29,8 @@ class FitsReadingModule(ReadingModule):
     in the central database.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
