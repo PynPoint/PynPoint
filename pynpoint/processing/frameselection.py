@@ -16,9 +16,10 @@ from skimage.measure import compare_ssim, compare_mse
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel, create_mask, locate_star
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
+from pynpoint.util.star import star_positions
 
 
 class RemoveFramesModule(ProcessingModule):
@@ -44,11 +45,10 @@ class RemoveFramesModule(ProcessingModule):
             Tag of the database entry that is read as input.
         selected_out_tag : str
             Tag of the database entry with the remaining images after removing the specified
-            images. Should be different from *image_in_tag*. No data is written when set to
-            *None*.
+            images. Should be different from *image_in_tag*.
         removed_out_tag : str
             Tag of the database entry with the images that are removed. Should be different
-            from *image_in_tag*. No data is written when set to *None*.
+            from *image_in_tag*.
         frames : str, list, range, numpy.ndarray
             A tuple or array with the frame indices that have to be removed or a database tag
             pointing to a list of frame indices.
@@ -63,18 +63,12 @@ class RemoveFramesModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
-        if selected_out_tag is None:
-            self.m_selected_out_port = None
-        else:
-            self.m_selected_out_port = self.add_output_port(selected_out_tag)
-
-        if removed_out_tag is None:
-            self.m_removed_out_port = None
-        else:
-            self.m_removed_out_port = self.add_output_port(removed_out_tag)
+        self.m_selected_out_port = self.add_output_port(selected_out_tag)
+        self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
         if isinstance(frames, str):
             self.m_index_in_port = self.add_input_port(frames)
+
         else:
             self.m_index_in_port = None
 
@@ -83,31 +77,6 @@ class RemoveFramesModule(ProcessingModule):
 
             elif isinstance(frames, np.ndarray):
                 self.m_frames = frames
-
-    def _initialize(self):
-
-        if self.m_selected_out_port is not None:
-            if self.m_image_in_port.tag == self.m_selected_out_port.tag:
-                raise ValueError('Input and output ports should have a different tag.')
-
-        if self.m_removed_out_port is not None:
-            if self.m_image_in_port.tag == self.m_removed_out_port.tag:
-                raise ValueError('Input and output ports should have a different tag.')
-
-        if self.m_index_in_port is not None:
-            self.m_frames = self.m_index_in_port.get_all()
-
-        if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
-            raise ValueError(f'Some values in \'frames\' are larger than the total number of '
-                             f'available frames, {self.m_image_in_port.get_shape()[0]}')
-
-        if self.m_selected_out_port is not None:
-            self.m_selected_out_port.del_all_data()
-            self.m_selected_out_port.del_all_attributes()
-
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.del_all_data()
-            self.m_removed_out_port.del_all_attributes()
 
     @typechecked
     def run(self) -> None:
@@ -121,7 +90,18 @@ class RemoveFramesModule(ProcessingModule):
             None
         """
 
-        self._initialize()
+        self.m_selected_out_port.del_all_data()
+        self.m_selected_out_port.del_all_attributes()
+
+        self.m_removed_out_port.del_all_data()
+        self.m_removed_out_port.del_all_attributes()
+
+        if self.m_index_in_port is not None:
+            self.m_frames = self.m_index_in_port.get_all()
+
+        if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
+            raise ValueError(f'Some values in \'frames\' are larger than the total number of '
+                             f'available frames, {self.m_image_in_port.get_shape()[0]}')
 
         memory = self._m_config_port.get_attribute('MEMORY')
 
@@ -132,6 +112,7 @@ class RemoveFramesModule(ProcessingModule):
             memory = nimages
 
         start_time = time.time()
+
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Running RemoveFramesModule...', start_time)
 
@@ -148,7 +129,7 @@ class RemoveFramesModule(ProcessingModule):
         sys.stdout.write('Running RemoveFramesModule... [DONE]\n')
         sys.stdout.flush()
 
-        history = 'frames removed = '+str(np.size(self.m_frames))
+        history = f'frames removed = {np.size(self.m_frames)}'
 
         if self.m_selected_out_port is not None:
             # Copy attributes before write_selected_attributes is used
@@ -170,7 +151,7 @@ class RemoveFramesModule(ProcessingModule):
 
 class FrameSelectionModule(ProcessingModule):
     """
-    Pipeline module for frame selection.
+    Pipeline module for applying a frame selection.
     """
 
     __author__ = 'Tomas Stolker'
@@ -179,12 +160,12 @@ class FrameSelectionModule(ProcessingModule):
     def __init__(self,
                  name_in: str,
                  image_in_tag: str,
-                 selected_out_tag: Union[str, None],
-                 removed_out_tag: Union[str, None],
+                 selected_out_tag: str,
+                 removed_out_tag: str,
                  index_out_tag: str = None,
                  method='median',
                  threshold: float = 4.,
-                 fwhm: Union[float, None] = 0.1,
+                 fwhm: float = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
                  position: Union[Tuple[int, int, float], Tuple[None, None, float],
                                  Tuple[int, int, None]] = None) -> None:
@@ -195,38 +176,37 @@ class FrameSelectionModule(ProcessingModule):
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
-        selected_out_tag : str, None
+        selected_out_tag : str
             Tag of the database entry with the selected images that are written as output. Should
-            be different from *image_in_tag*. No data is written when set to None.
-        removed_out_tag : str, None
+            be different from `image_in_tag`.
+        removed_out_tag : str
             Tag of the database entry with the removed images that are written as output. Should
-            be different from *image_in_tag*. No data is written when set to None.
+            be different from `image_in_tag`.
         index_out_tag : str, None
             Tag of the database entry with the list of frames indices that are removed with the
-            frames selection. No data is written when set to *None*.
+            frames selection. No data is written when set to None.
         method : str
             Perform the sigma clipping with respect to the median or maximum aperture flux by
-            setting the *method* to 'median' or 'max'.
+            setting the `method` to 'median' or 'max'.
         threshold : float
-            Threshold in units of sigma for the frame selection. All images that are a *threshold*
-            number of sigmas away from the median photometry will be removed.
-        fwhm : float, None
-            The full width at half maximum (FWHM) of the Gaussian kernel (arcsec) that is used to
-            smooth the images before the brightest pixel is located. Should be similar in size to
-            the FWHM of the stellar PSF. A fixed position, specified by *position*, is used when
-            *fwhm* is set to None.
-        aperture : tuple(str, float, float)
+            Threshold in units of sigma for the frame selection. All images that are a `threshold`
+            number of sigmas away from the median/maximum photometry will be removed.
+        fwhm : float
+            The FWHM (arcsec) of the Gaussian kernel that is used to smooth the images before the
+            brightest pixel is located. Recommended to be similar in size to the FWHM of the
+            stellar PSF.
+        aperture : tuple(str, float), tuple(str, float, float)
             Tuple with the aperture properties for measuring the photometry around the location of
             the brightest pixel. The first element contains the aperture type ('circular',
             'annulus', or 'ratio'). For a circular aperture, the second element contains the
             aperture radius (arcsec). For the other two types, the second and third element are the
-            inner and outer radii (arcsec) of the aperture. The position of the aperture has to be
-            specified with *position* when *fwhm* is set to None.
+            inner and outer radii (arcsec) of the aperture.
         position : tuple(int, int, float), None
             Subframe that is selected to search for the star. The tuple contains the center (pix)
-            and size (arcsec) (pos_x, pos_y, size). Setting *position* to None will use the full
-            image to search for the star. If *position=(None, None, size)* then the center of the
-            image will be used. If *position=(pos_x, pos_y, None)* then a fixed position is used.
+            and size (arcsec) (pos_x, pos_y, size). Setting `position` to None will use the full
+            image to search for the star. If `position=(None, None, size)` then the center of the
+            image will be used. If `position=(pos_x, pos_y, None)` then a fixed position is used
+            for the aperture.
 
         Returns
         -------
@@ -238,20 +218,13 @@ class FrameSelectionModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
+        self.m_selected_out_port = self.add_output_port(selected_out_tag)
+        self.m_removed_out_port = self.add_output_port(removed_out_tag)
+
         if index_out_tag is None:
             self.m_index_out_port = None
         else:
             self.m_index_out_port = self.add_output_port(index_out_tag)
-
-        if selected_out_tag is None:
-            self.m_selected_out_port = None
-        else:
-            self.m_selected_out_port = self.add_output_port(selected_out_tag)
-
-        if removed_out_tag is None:
-            self.m_removed_out_port = None
-        else:
-            self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
         self.m_method = method
         self.m_fwhm = fwhm
@@ -259,23 +232,57 @@ class FrameSelectionModule(ProcessingModule):
         self.m_threshold = threshold
         self.m_position = position
 
-    def _initialize(self):
-        if self.m_selected_out_port is not None and self.m_removed_out_port is not None:
-            if self.m_image_in_port.tag == self.m_selected_out_port.tag or \
-                    self.m_image_in_port.tag == self.m_removed_out_port.tag:
-                raise ValueError('Input and output ports should have a different tag.')
+    @staticmethod
+    @typechecked
+    def photometry(image,
+                   position,
+                   aperture):
+        """
+        Parameters
+        ----------
+        image : np.ndarray
+            Input image (2D).
+        position : np.ndarray
+            Center position (y, x) of the aperture.
+        aperture : tuple(str, float, float)
+            Tuple with the aperture properties for measuring the photometry around the location of
+            the brightest pixel. The first element contains the aperture type ('circular',
+            'annulus', or 'ratio'). For a circular aperture, the second element is empty and the
+            third element contains the aperture radius (pix). For the other two types, the
+            second and third element are the inner and outer radii (pix) of the aperture.
 
-        if self.m_index_out_port is not None:
-            self.m_index_out_port.del_all_data()
-            self.m_index_out_port.del_all_attributes()
+        Returns
+        -------
+        np.float64
+            Photometry value.
+        """
 
-        if self.m_selected_out_port is not None:
-            self.m_selected_out_port.del_all_data()
-            self.m_selected_out_port.del_all_attributes()
+        check_pos_in = any(np.floor(position[:]-aperture[2]) < 0.)
+        check_pos_out = any(np.ceil(position[:]+aperture[2]) > image.shape[0])
 
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.del_all_data()
-            self.m_removed_out_port.del_all_attributes()
+        if check_pos_in or check_pos_out:
+            phot = np.nan
+
+        else:
+            im_crop = crop_image(image, tuple(position), 2*int(math.ceil(aperture[2])))
+
+            npix = im_crop.shape[0]
+
+            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+            xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+            rr_grid = np.sqrt(xx_grid**2 + yy_grid**2)
+
+            if aperture[0] == 'circular':
+                phot = np.sum(im_crop[rr_grid < aperture[2]])
+
+            elif aperture[0] == 'annulus':
+                phot = np.sum(im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])])
+
+            elif aperture[0] == 'ratio':
+                phot = np.sum(im_crop[rr_grid < aperture[1]]) / \
+                       np.sum(im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])])
+
+        return phot
 
     @typechecked
     def run(self) -> None:
@@ -291,80 +298,37 @@ class FrameSelectionModule(ProcessingModule):
             None
         """
 
-        def _get_aperture(aperture):
-            if aperture[0] == 'circular':
-                aperture = (0., aperture[1]/pixscale)
+        self.m_selected_out_port.del_all_data()
+        self.m_selected_out_port.del_all_attributes()
 
-            elif aperture[0] == 'annulus' or aperture[0] == 'ratio':
-                aperture = (aperture[1]/pixscale, aperture[2]/pixscale)
+        self.m_removed_out_port.del_all_data()
+        self.m_removed_out_port.del_all_attributes()
 
-            return aperture
-
-        def _get_starpos(fwhm, position):
-            starpos = np.zeros((nimages, 2), dtype=np.int64)
-
-            if fwhm is None or (position is not None and position[2] is None):
-                # [y. x] position
-                starpos[:, 0] = position[1]
-                starpos[:, 1] = position[0]
-
-            else:
-                if position is None:
-                    center = None
-                    width = None
-
-                else:
-                    if position[0] is None and position[1] is None:
-                        center = None
-                    else:
-                        center = position[0:2]
-
-                    width = int(math.ceil(position[2]/pixscale))
-
-                for i, _ in enumerate(starpos):
-                    # [y. x] position
-                    starpos[i, :] = locate_star(image=self.m_image_in_port[i, ],
-                                                center=center,
-                                                width=width,
-                                                fwhm=int(math.ceil(fwhm/pixscale)))
-
-            return starpos
-
-        def _photometry(images, starpos, aperture):
-            check_pos_in = any(np.floor(starpos[:]-aperture[1]) < 0.)
-            check_pos_out = any(np.ceil(starpos[:]+aperture[1]) > images.shape[0])
-
-            if check_pos_in or check_pos_out:
-                phot = np.nan
-
-            else:
-                im_crop = crop_image(images, tuple(starpos), 2*int(math.ceil(aperture[1])))
-
-                npix = im_crop.shape[0]
-
-                x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-                xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-                rr_grid = np.sqrt(xx_grid*xx_grid+yy_grid*yy_grid)
-
-                if self.m_aperture[0] == 'circular':
-                    phot = np.sum(im_crop[rr_grid < aperture[1]])
-
-                elif self.m_aperture[0] == 'annulus':
-                    phot = np.sum(im_crop[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
-
-                elif self.m_aperture[0] == 'ratio':
-                    phot = np.sum(im_crop[rr_grid < aperture[0]]) / \
-                        np.sum(im_crop[(rr_grid > aperture[0]) & (rr_grid < aperture[1])])
-
-            return phot
-
-        self._initialize()
+        if self.m_index_out_port is not None:
+            self.m_index_out_port.del_all_data()
+            self.m_index_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         nimages = self.m_image_in_port.get_shape()[0]
 
-        aperture = _get_aperture(self.m_aperture)
-        starpos = _get_starpos(self.m_fwhm, self.m_position)
+        self.m_fwhm = int(math.ceil(self.m_fwhm/pixscale))
+
+        if self.m_position is not None and self.m_position[2] is not None:
+            self.m_position = (self.m_position[0],
+                               self.m_position[0],
+                               int(math.ceil(self.m_position[2]/pixscale)))
+
+        if len(self.m_aperture) == 2:
+            self.m_aperture = (self.m_aperture[0],
+                               None,
+                               self.m_aperture[1]/pixscale)
+
+        elif len(self.m_aperture) == 3:
+            self.m_aperture = (self.m_aperture[0],
+                               self.m_aperture[1]/pixscale,
+                               self.m_aperture[2]/pixscale)
+
+        starpos = star_positions(self.m_image_in_port, self.m_fwhm, self.m_position)
 
         phot = np.zeros(nimages)
         start_time = time.time()
@@ -372,48 +336,42 @@ class FrameSelectionModule(ProcessingModule):
         for i in range(nimages):
             progress(i, nimages, 'Running FrameSelectionModule...', start_time)
 
-            images = self.m_image_in_port[i]
-            phot[i] = _photometry(images, starpos[i, :], aperture)
+            phot[i] = self.photometry(self.m_image_in_port[i, ], starpos[i, :], self.m_aperture)
 
         if self.m_method == 'median':
             phot_ref = np.nanmedian(phot)
+
         elif self.m_method == 'max':
             phot_ref = np.nanmax(phot)
 
         phot_std = np.nanstd(phot)
 
-        index_rm = np.logical_or((phot > phot_ref+self.m_threshold*phot_std),
-                                 (phot < phot_ref-self.m_threshold*phot_std))
+        index_rm = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
+                                 (phot < phot_ref - self.m_threshold*phot_std))
 
         index_rm[np.isnan(phot)] = True
+        indices = np.asarray(np.where(index_rm)[0], dtype=np.int)
 
-        indices = np.where(index_rm)[0]
-        indices = np.asarray(indices, dtype=np.int)
+        if np.size(indices) > 0:
+            memory = self._m_config_port.get_attribute('MEMORY')
+            frames = memory_frames(memory, nimages)
 
-        if self.m_selected_out_port is not None or self.m_removed_out_port is not None:
+            if memory == 0 or memory >= nimages:
+                memory = nimages
 
-            if np.size(indices) > 0:
-                memory = self._m_config_port.get_attribute('MEMORY')
-                frames = memory_frames(memory, nimages)
+            for i, _ in enumerate(frames[:-1]):
+                index_del = np.where(np.logical_and(indices >= frames[i],
+                                                    indices < frames[i+1]))
 
-                if memory == 0 or memory >= nimages:
-                    memory = nimages
+                write_selected_data(images=self.m_image_in_port[frames[i]:frames[i+1], ],
+                                    indices=indices[index_del] % memory,
+                                    port_selected=self.m_selected_out_port,
+                                    port_removed=self.m_removed_out_port)
 
-                for i, _ in enumerate(frames[:-1]):
-                    images = self.m_image_in_port[frames[i]:frames[i+1], ]
+        else:
+            warnings.warn('No frames were removed.')
 
-                    index_del = np.where(np.logical_and(indices >= frames[i],
-                                                        indices < frames[i+1]))
-
-                    write_selected_data(images,
-                                        indices[index_del] % memory,
-                                        self.m_selected_out_port,
-                                        self.m_removed_out_port)
-
-            else:
-                warnings.warn('No frames were removed.')
-
-        history = 'frames removed = '+str(np.size(indices))
+        history = f'frames removed = {np.size(indices)}'
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(np.transpose(indices))
@@ -421,38 +379,32 @@ class FrameSelectionModule(ProcessingModule):
             self.m_index_out_port.add_attribute('STAR_POSITION', starpos, static=False)
             self.m_index_out_port.add_history('FrameSelectionModule', history)
 
-        if self.m_selected_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
+        # Copy attributes before write_selected_attributes is used
+        self.m_selected_out_port.copy_attributes(self.m_image_in_port)
 
-        if self.m_removed_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
+        # Copy attributes before write_selected_attributes is used
+        self.m_removed_out_port.copy_attributes(self.m_image_in_port)
 
-        if self.m_selected_out_port is not None or self.m_removed_out_port is not None:
+        write_selected_attributes(indices,
+                                  self.m_image_in_port,
+                                  self.m_selected_out_port,
+                                  self.m_removed_out_port)
 
-            write_selected_attributes(indices,
-                                      self.m_image_in_port,
-                                      self.m_selected_out_port,
-                                      self.m_removed_out_port)
+        indices_select = np.ones(nimages, dtype=bool)
+        indices_select[indices] = False
+        indices_select = np.where(indices_select)
 
-        if self.m_selected_out_port is not None:
-            indices_select = np.ones(nimages, dtype=bool)
-            indices_select[indices] = False
-            indices_select = np.where(indices_select)
+        self.m_selected_out_port.add_attribute('STAR_POSITION',
+                                               starpos[indices_select],
+                                               static=False)
 
-            self.m_selected_out_port.add_attribute('STAR_POSITION',
-                                                   starpos[indices_select],
-                                                   static=False)
+        self.m_selected_out_port.add_history('FrameSelectionModule', history)
 
-            self.m_selected_out_port.add_history('FrameSelectionModule', history)
+        self.m_removed_out_port.add_attribute('STAR_POSITION',
+                                              starpos[indices],
+                                              static=False)
 
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.add_attribute('STAR_POSITION',
-                                                  starpos[indices],
-                                                  static=False)
-
-            self.m_removed_out_port.add_history('FrameSelectionModule', history)
+        self.m_removed_out_port.add_history('FrameSelectionModule', history)
 
         sys.stdout.write('Running FrameSelectionModule... [DONE]\n')
         sys.stdout.flush()
@@ -482,7 +434,7 @@ class RemoveLastFrameModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            `image_in_tag`.
 
         Returns
         -------
@@ -505,9 +457,6 @@ class RemoveLastFrameModule(ProcessingModule):
         NoneType
             None
         """
-
-        if self.m_image_out_port.tag == self.m_image_in_port.tag:
-            raise ValueError('Input and output port should have a different tag.')
 
         self.m_image_out_port.del_all_data()
         self.m_image_out_port.del_all_attributes()
@@ -532,8 +481,7 @@ class RemoveLastFrameModule(ProcessingModule):
             nframes_new.append(nframes[i]-1)
             index_new.extend(index[frame_start:frame_end])
 
-            images = self.m_image_in_port[frame_start:frame_end, ]
-            self.m_image_out_port.append(images)
+            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
 
         nframes_new = np.asarray(nframes_new, dtype=np.int)
         index_new = np.asarray(index_new, dtype=np.int)
@@ -649,8 +597,7 @@ class RemoveStartFramesModule(ProcessingModule):
             if star is not None:
                 star_new.extend(star[frame_start:frame_end])
 
-            images = self.m_image_in_port[frame_start:frame_end, ]
-            self.m_image_out_port.append(images)
+            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
 
         sys.stdout.write('Running RemoveStartFramesModule... [DONE]\n')
         sys.stdout.flush()

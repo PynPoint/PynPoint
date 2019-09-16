@@ -12,7 +12,8 @@ import numpy as np
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, center_pixel, locate_star, rotate_coordinates
+from pynpoint.util.image import crop_image, center_pixel, rotate_coordinates
+from pynpoint.util.star import locate_star
 
 
 class StarExtractionModule(ProcessingModule):
