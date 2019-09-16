@@ -234,9 +234,10 @@ class FrameSelectionModule(ProcessingModule):
 
     @staticmethod
     @typechecked
-    def photometry(image,
-                   position,
-                   aperture):
+    def photometry(image: np.ndarray,
+                   position: np.ndarray,
+                   aperture: Union[Tuple[str, float, float],
+                                   Tuple[str, None, float]]) -> np.float64:
         """
         Parameters
         ----------
