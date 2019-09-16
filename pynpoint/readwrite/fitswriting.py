@@ -25,6 +25,8 @@ class FitsWritingModule(WritingModule):
     this module will overwrite an existing FITS file with the same filename.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
