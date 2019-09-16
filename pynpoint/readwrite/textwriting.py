@@ -19,6 +19,8 @@ class TextWritingModule(WritingModule):
     the use of the Pypeline default output directory as well as a specified location.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -98,6 +100,8 @@ class ParangWritingModule(WritingModule):
     Module for writing a list of parallactic angles to a text file.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -170,6 +174,8 @@ class AttributeWritingModule(WritingModule):
     """
     Module for writing a 1D or 2D array of non-static attributes to a text file.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,

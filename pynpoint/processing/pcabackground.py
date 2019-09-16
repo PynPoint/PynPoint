@@ -19,8 +19,8 @@ from pynpoint.core.processing import ProcessingModule
 from pynpoint.processing.resizing import CropImagesModule
 from pynpoint.processing.stacksubset import CombineTagsModule
 from pynpoint.processing.psfpreparation import SortParangModule
-from pynpoint.util.image import locate_star
 from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.star import locate_star
 
 
 class PCABackgroundPreparationModule(ProcessingModule):

@@ -27,6 +27,8 @@ class Hdf5ReadingModule(ReadingModule):
     may lead to inconsistencies in the central database.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
