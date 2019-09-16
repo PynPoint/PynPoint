@@ -18,6 +18,8 @@ class Hdf5WritingModule(WritingModule):
     the static and non-static attributes.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,

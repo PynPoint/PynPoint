@@ -19,6 +19,8 @@ class ParangReadingModule(ReadingModule):
     Module for reading a list of parallactic angles from a text file.
     """
 
+    __author__ = 'Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -103,6 +105,8 @@ class AttributeReadingModule(ReadingModule):
     Module for reading a list of values from a text file and appending them as a non-static
     attributes to a dataset.
     """
+
+    __author__ = 'Tomas Stolker'
 
     @typechecked
     def __init__(self,

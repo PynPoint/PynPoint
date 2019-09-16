@@ -26,6 +26,8 @@ class FitsWritingModule(WritingModule):
     of a :class:`~pynpoint.core.pypeline.Pypeline` or a specified location to store the FITS data.
     """
 
+    __author__ = 'Markus Bonse, Tomas Stolker'
+
     @typechecked
     def __init__(self,
                  name_in: str,
