@@ -91,6 +91,7 @@ class PcaTaskProcessor(TaskProcessor):
                  angles: np.ndarray,
                  pca_model: PCA,
                  im_shape: Tuple[int, int, int],
+                 indices: np.ndarray,
                  requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
         Parameters
@@ -107,6 +108,8 @@ class PcaTaskProcessor(TaskProcessor):
             PCA object with the basis.
         im_shape : tuple(int, int, int)
             Original shape of the stack of images.
+        indices : numpy.ndarray
+            Non-masked image indices.
         requirements : tuple(bool, bool, bool, bool)
             Required output residuals.
 
@@ -122,6 +125,7 @@ class PcaTaskProcessor(TaskProcessor):
         self.m_pca_model = pca_model
         self.m_angles = angles
         self.m_im_shape = im_shape
+        self.m_indices = indices
         self.m_requirements = requirements
 
     @typechecked
@@ -145,7 +149,8 @@ class PcaTaskProcessor(TaskProcessor):
                                                  angles=self.m_angles,
                                                  pca_number=tmp_task.m_input_data,
                                                  pca_sklearn=self.m_pca_model,
-                                                 im_shape=self.m_im_shape)
+                                                 im_shape=self.m_im_shape,
+                                                 indices=self.m_indices)
 
         res_output = np.zeros((4, res_rot.shape[1], res_rot.shape[2]))
 
@@ -282,7 +287,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_model: PCA,
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
-                 im_shape: Tuple[int, int, int]) -> None:
+                 im_shape: Tuple[int, int, int],
+                 indices: np.ndarray) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.
 
@@ -308,6 +314,8 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             Derotation angles (deg).
         im_shape : tuple(int, int, int)
             Original shape of the input images.
+        indices : numpy.ndarray
+            Non-masked pixel indices.
 
         Returns
         -------
@@ -324,6 +332,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_star_reshape = star_reshape
         self.m_angles = angles
         self.m_im_shape = im_shape
+        self.m_indices = indices
 
         self.m_requirements = [False, False, False, False]
 
@@ -410,6 +419,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                                                self.m_angles,
                                                self.m_pca_model,
                                                self.m_im_shape,
+                                               self.m_indices,
                                                self.m_requirements))
 
         return processors

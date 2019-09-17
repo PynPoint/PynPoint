@@ -27,6 +27,7 @@ def lnprob(param: np.ndarray,
            pca_number: int,
            extra_rot: float,
            aperture: Tuple[int, int, float],
+           indices: np.ndarray,
            merit: str,
            residuals: str) -> float:
     """
@@ -62,6 +63,8 @@ def lnprob(param: np.ndarray,
         Additional rotation angle of the images (deg).
     aperture : tuple(int, int, float)
         Position (y, x) of the aperture center (pix) and aperture radius (pix).
+    indices : numpy.ndarray
+        Non-masked image indices.
     merit : str
         Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
         Pixels are assumed to be independent measurements which are expected to be equal to
@@ -121,7 +124,8 @@ def lnprob(param: np.ndarray,
 
         im_res_derot, im_res_var = pca_psf_subtraction(images=fake*mask,
                                                        angles=-1.*parang+extra_rot,
-                                                       pca_number=pca_number)
+                                                       pca_number=pca_number,
+                                                       indices=indices)
 
         res_stack = combine_residuals(method=residuals,
                                       res_rot=im_res_derot,

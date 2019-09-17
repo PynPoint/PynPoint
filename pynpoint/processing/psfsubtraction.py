@@ -133,7 +133,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-    def _run_multi_processing(self, star_reshape, im_shape):
+    def _run_multi_processing(self, star_reshape, im_shape, indices):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
@@ -187,11 +187,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                             deepcopy(self.m_pca),
                                             deepcopy(star_reshape),
                                             deepcopy(angles),
-                                            im_shape)
+                                            im_shape,
+                                            indices)
 
         capsule.run()
 
-    def _run_single_processing(self, star_reshape, im_shape):
+    def _run_single_processing(self, star_reshape, im_shape, indices):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -208,7 +209,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                                      angles=parang,
                                                      pca_number=pca_number,
                                                      pca_sklearn=self.m_pca,
-                                                     im_shape=im_shape)
+                                                     im_shape=im_shape,
+                                                     indices=indices)
 
             hist = f'max PC number = {np.amax(self.m_components)}'
 
@@ -293,8 +295,17 @@ class PcaPsfSubtractionModule(ProcessingModule):
         star_data = self.m_star_in_port.get_all()
         im_shape = star_data.shape
 
-        # reshape the star data and select the unmasked pixels
+        # select the first image and get the unmasked image indices
+        im_star = star_data[0, ].reshape(-1)
+        indices = np.where(im_star != 0.)[0]
+
+        # reshape the star data
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
+
+        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
+        if 100.*len(indices)/len(im_star) < 10.:
+            star_reshape = star_reshape[:, indices]
+
 
         # create the PCA basis
         sys.stdout.write('Constructing PSF model...')
@@ -317,6 +328,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             # reshape reference data and select the unmasked pixels
             ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
+            if 100. * len(indices) / len(im_star) < 10.:
+                ref_reshape = ref_reshape[:, indices]
 
             # subtract mean from reference data
             mean_ref = np.mean(ref_reshape, axis=0)
@@ -344,18 +357,23 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
 
-            basis = self.m_pca.components_.reshape((pc_size, im_shape[1], im_shape[2]))
+            if 100. * len(indices) / len(im_star) < 10.:
+                basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
+                basis[:, indices] = self.m_pca.components_
+                basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
+            else:
+                basis = self.m_pca.components_.reshape((pc_size, im_shape[1], im_shape[2]))
 
             self.m_basis_out_port.set_all(basis)
 
         if cpu == 1 or self.m_res_arr_out_ports is not None:
-            self._run_single_processing(star_reshape, im_shape)
+            self._run_single_processing(star_reshape, im_shape, indices)
 
         else:
             sys.stdout.write('Creating residuals')
             sys.stdout.flush()
 
-            self._run_multi_processing(star_reshape, im_shape)
+            self._run_multi_processing(star_reshape, im_shape, indices)
 
             sys.stdout.write(' [DONE]\n')
             sys.stdout.flush()

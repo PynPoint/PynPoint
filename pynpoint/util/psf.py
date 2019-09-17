@@ -14,7 +14,8 @@ def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
                         pca_sklearn: PCA = None,
-                        im_shape: Tuple[int, int, int] = None) -> np.ndarray:
+                        im_shape: Tuple[int, int, int] = None,
+                        indices: np.ndarray = None) -> np.ndarray:
     """
     Function for PSF subtraction with PCA.
 
@@ -32,6 +33,8 @@ def pca_psf_subtraction(images: np.ndarray,
         PCA object with the basis if not set to None.
     im_shape : tuple(int, int, int), None
         Original shape of the stack with images. Required if `pca_sklearn` is not set to None.
+    indices : numpy.ndarray, None
+        Non-masked image indices. All pixels are used if set to None.
 
     Returns
     -------
@@ -46,8 +49,19 @@ def pca_psf_subtraction(images: np.ndarray,
 
         im_shape = images.shape
 
+        # get first image and reshape to check for masked pixels
+        im_star = images[0,].reshape(-1)
+
+        if indices is None:
+            # get the unmasked image indices
+            indices = np.where(im_star != 0.)[0]
+
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
+
+        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
+        if 100. * len(indices) / len(im_star) < 10.:
+            im_reshape = im_reshape[:, indices]
 
         # subtract mean image
         im_reshape -= np.mean(im_reshape, axis=0)
