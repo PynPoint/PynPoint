@@ -304,8 +304,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
         if 100.*len(indices)/len(im_star) < 10.:
+            remove_masked = True
             star_reshape = star_reshape[:, indices]
-
+        else:
+            remove_masked = False
 
         # create the PCA basis
         sys.stdout.write('Constructing PSF model...')
@@ -328,7 +330,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             # reshape reference data and select the unmasked pixels
             ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-            if 100. * len(indices) / len(im_star) < 10.:
+            if remove_masked:
                 ref_reshape = ref_reshape[:, indices]
 
             # subtract mean from reference data
@@ -357,12 +359,13 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
 
-            if 100. * len(indices) / len(im_star) < 10.:
+            if remove_masked:
                 basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
-                basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
             else:
-                basis = self.m_pca.components_.reshape((pc_size, im_shape[1], im_shape[2]))
+                basis = self.m_pca.components_
+
+            basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
 
             self.m_basis_out_port.set_all(basis)
 
