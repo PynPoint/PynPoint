@@ -303,7 +303,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
 
         # select the unmasked pixels if >20% of pixels are masked (<80% of pixels unmasked)
-        if len(indices)/len(im_star) < 0.8:
+        if len(indices)/len(im_star) < 0.1:
             remove_masked = True
             star_reshape = star_reshape[:, indices]
 
