@@ -50,7 +50,7 @@ def pca_psf_subtraction(images: np.ndarray,
         im_shape = images.shape
 
         # get first image and reshape to check for masked pixels
-        im_star = images[0,].reshape(-1)
+        im_star = images[0, ].reshape(-1)
 
         if indices is None:
             # get the unmasked image indices
@@ -59,8 +59,8 @@ def pca_psf_subtraction(images: np.ndarray,
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
 
-        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
-        if 100. * len(indices) / len(im_star) < 10.:
+        # select the unmasked pixels if >20% of pixels are masked (<80% of pixels unmasked)
+        if len(indices) / len(im_star) < 0.8:
             im_reshape = im_reshape[:, indices]
 
         # subtract mean image
@@ -74,9 +74,6 @@ def pca_psf_subtraction(images: np.ndarray,
 
     # create pca representation
     zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
-    #print('pca basis:',pca_sklearn.components_[:pca_number].flags)
-    #print('data:',im_reshape.T.flags)
-    #print()
     pca_rep = np.matmul(pca_sklearn.components_[:pca_number], im_reshape.T)
     pca_rep = np.vstack((pca_rep, zeros)).T
 
@@ -84,8 +81,6 @@ def pca_psf_subtraction(images: np.ndarray,
     residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
     # subtract the psf model
-
-    # create psf model and subtract
     residuals = im_reshape - pca_sklearn.inverse_transform(pca_rep)
 
     # reshape to the original image size
@@ -95,7 +90,6 @@ def pca_psf_subtraction(images: np.ndarray,
     res_var = np.var(residuals, axis=0)
 
     # derotate the images
-    #res_rot = np.zeros(residuals.shape)
     for j, item in enumerate(angles):
         residuals[j, ] = rotate(residuals[j, ], item, reshape=False)
 

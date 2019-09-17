@@ -206,11 +206,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
             parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
             res_rot, res_var = pca_psf_subtraction(images=star_reshape,
-                                                     angles=parang,
-                                                     pca_number=pca_number,
-                                                     pca_sklearn=self.m_pca,
-                                                     im_shape=im_shape,
-                                                     indices=indices)
+                                                   angles=parang,
+                                                   pca_number=pca_number,
+                                                   pca_sklearn=self.m_pca,
+                                                   im_shape=im_shape,
+                                                   indices=indices)
 
             hist = f'max PC number = {np.amax(self.m_components)}'
 
@@ -302,10 +302,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # reshape the star data
         star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
 
-        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
-        if 100.*len(indices)/len(im_star) < 10.:
+        # select the unmasked pixels if >20% of pixels are masked (<80% of pixels unmasked)
+        if len(indices)/len(im_star) < 0.8:
             remove_masked = True
             star_reshape = star_reshape[:, indices]
+
         else:
             remove_masked = False
 
@@ -362,6 +363,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if remove_masked:
                 basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
+
             else:
                 basis = self.m_pca.components_
 
