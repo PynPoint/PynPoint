@@ -16,7 +16,7 @@ from scipy.interpolate import griddata
 from typeguard import typechecked
 
 
-from pynpoint.util.paco import PACO,FastPACO,FullPACO
+from pynpoint.util.paco import PACO,FastPACO,FullPACO,thresholdDetection
 from pynpoint.util.pacomath import *
 from pynpoint.util.limits import paco_contrast_limit
 
@@ -142,7 +142,7 @@ class PACOModule(ProcessingModule):
         flux = b/a
         # Iterative, unbiased flux estimation
         if self.m_flux_calc:
-            phi0s = fp.thresholdDetection(snr,self.m_threshold)
+            phi0s = thresholdDetection(snr,self.m_threshold,self.m_psf_rad)
             init = np.array([flux[int(phi0[0]),int(phi0[1])] for phi0 in phi0s])
             ests =  np.array(fp.fluxEstimate(phi0s,self.m_eps,init))
         
