@@ -79,7 +79,7 @@ class PACO:
             # Ideally if nPSFs = nImages, use each for each. Need to update!
             if len(psf.shape)>2:
                 psf = psf[0]
-            self.m_psf = psf/np.sum(psf) # SHOULD THE PSF BE NORMALISED!?!?!?
+            self.m_psf = psf/np.nanmax(psf) #/np.sum(psf) # SHOULD THE PSF BE NORMALISED!?!?!?
             mask = createCircularMask(self.m_psf.shape,self.m_psf_rad)
             self.m_psf_area = self.m_psf[mask].shape[0]
         else:
@@ -245,10 +245,9 @@ class PACO:
         self.m_psf_rad = int(self.m_psf_rad*self.m_scale)
         if self.m_psf is not None:
             self.m_psf = resizeImage(self.m_psf,self.m_scale)
-        self.m_pwidth = self.m_psf.shape[0]
-        
-        temp_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
-        self.m_psf_area = len(temp_mask[temp_mask])
+        mask = createCircularMask(self.m_psf.shape,self.m_psf_rad)
+        self.m_psf_area = self.m_psf[mask].shape[0]
+        self.m_pwidth = 2*int(self.m_psf_rad) + 3
         self.m_rescaled = True
     """
     Math Functions
