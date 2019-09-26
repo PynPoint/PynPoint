@@ -304,7 +304,6 @@ class SimplexMinimizationModule(ProcessingModule):
         else:
             self.m_pca_number = pca_number
 
-
     @typechecked
     def run(self) -> None:
         """
@@ -679,7 +678,8 @@ class MCMCsamplingModule(ProcessingModule):
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
         chain_out_tag : str
             Tag of the database entry with the Markov chain that is written as output. The shape
-            of the array is (nwalkers, nsteps, 3).
+            of the array is (nwalkers, nsteps, 3). The mean acceptance fraction and the integrated
+            autocorrelation time are stored as attributes to this dataset.
         param : tuple(float, float, float)
             The approximate separation (arcsec), angle (deg), and contrast (mag), for example
             obtained with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
@@ -871,7 +871,9 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.add_history('MCMCsamplingModule', history)
         self.m_chain_out_port.close_port()
 
-        print(f'Mean acceptance fraction: {np.mean(sampler.acceptance_fraction):.3f}')
+        mean_accept = np.mean(sampler.acceptance_fraction)
+        print(f'Mean acceptance fraction: {mean_accept:.3f}')
+        self.m_chain_out_port.add_attribute('ACCEPTANCE', mean_accept, static=True)
 
         try:
             autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
@@ -886,7 +888,12 @@ class MCMCsamplingModule(ProcessingModule):
             print('Integrated autocorrelation time =', autocorr)
 
         except emcee.autocorr.AutocorrError:
+            autocorr = [np.nan, np.nan, np.nan]
             print('The chain is too short to reliably estimate the autocorrelation time. [WARNING]')
+
+        self.m_chain_out_port.add_attribute('AUTOCORR_0', autocorr[0], static=True)
+        self.m_chain_out_port.add_attribute('AUTOCORR_1', autocorr[1], static=True)
+        self.m_chain_out_port.add_attribute('AUTOCORR_2', autocorr[2], static=True)
 
 
 class AperturePhotometryModule(ProcessingModule):
