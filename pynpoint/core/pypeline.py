@@ -16,7 +16,7 @@ import pynpoint
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
-from pynpoint.util.module import module_info
+from pynpoint.util.module import module_info, input_info, output_info
 
 
 class Pypeline:
@@ -399,10 +399,20 @@ class Pypeline:
                                  f'under a tag which is not created by a previous module or '
                                  f'does not exist in the database.')
 
-        for key in self._m_modules:
-            module_info(self._m_modules[key])
+        for name in self._m_modules:
+            module_info(self._m_modules[name])
 
-            self._m_modules[key].run()
+            if hasattr(self._m_modules[name], '_m_input_ports'):
+                input_info(self._m_modules[name])
+
+            self._m_modules[name].run()
+
+            if hasattr(self._m_modules[name], '_m_output_ports'):
+                output_shape = {}
+                for item in self._m_modules[name]._m_output_ports:
+                    output_shape[item] = self.get_shape(item)
+
+                output_info(self._m_modules[name], output_shape)
 
     def run_module(self,
                    name):
@@ -428,7 +438,18 @@ class Pypeline:
                                      f'under a tag which does not exist in the database.')
 
             module_info(self._m_modules[name])
+
+            if hasattr(self._m_modules[name], '_m_input_ports'):
+                input_info(self._m_modules[name])
+
             self._m_modules[name].run()
+
+            if hasattr(self._m_modules[name], '_m_output_ports'):
+                output_shape = {}
+                for item in self._m_modules[name]._m_output_ports:
+                    output_shape[item] = self.get_shape(item)
+
+                output_info(self._m_modules[name], output_shape)
 
         else:
             warnings.warn(f'Module \'{name}\' not found.')
@@ -618,7 +639,10 @@ class Pypeline:
 
         self.m_data_storage.open_connection()
 
-        data_shape = self.m_data_storage.m_data_bank[tag].shape
+        if tag in self.m_data_storage.m_data_bank:
+            data_shape = self.m_data_storage.m_data_bank[tag].shape
+        else:
+            data_shape = None
 
         self.m_data_storage.close_connection()
 
