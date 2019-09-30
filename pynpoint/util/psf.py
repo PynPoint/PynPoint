@@ -59,9 +59,11 @@ def pca_psf_subtraction(images: np.ndarray,
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
 
-        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
-        if 100. * len(indices) / len(im_star) < 10.:
+        # select the unmasked pixels if >20% of pixels are masked (<80% of pixels unmasked)
+        if 100. * len(indices) / len(im_star) < 80.:
             im_reshape = im_reshape[:, indices]
+        else:
+            indices = None
 
         # subtract mean image
         im_reshape -= np.mean(im_reshape, axis=0)
@@ -83,12 +85,13 @@ def pca_psf_subtraction(images: np.ndarray,
     # create original array size
     residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
-    # subtract the psf model
-
     # create psf model and subtract
-    residuals = im_reshape - pca_sklearn.inverse_transform(pca_rep)
+    if indices is None:
+        indices = np.arange(0, im_reshape.shape[1], 1)
+    residuals[:,indices] = im_reshape - pca_sklearn.inverse_transform(pca_rep)
 
     # reshape to the original image size
+
     residuals = residuals.reshape(im_shape)
 
     # get variance of residuals for weighted combination

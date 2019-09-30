@@ -307,7 +307,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             # select indices, if given as input
             if indices is not None:
                 # select only the unmasked pixels if <10% of pixels are unmasked
-                if 100.*len(indices)/(arr_shape[1] * arr_shape[2]) < 10.:
+                if 100.*len(indices)/(arr_shape[1] * arr_shape[2]) < 80.:
                     arr_reshape = arr_reshape[:, indices]
 
             return arr_reshape
@@ -373,7 +373,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
 
-            if 100.*len(indices)/(im_shape[1] * im_shape[2]) < 10.:
+            if 100.*len(indices)/(im_shape[1] * im_shape[2]) < 80.:
                 basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
             else:
