@@ -129,7 +129,7 @@ class FakePlanetModule(ProcessingModule):
 
         start_time = time.time()
         for j, _ in enumerate(frames[:-1]):
-            progress(j, len(frames[:-1]), 'Running FakePlanetModule...', start_time)
+            progress(j, len(frames[:-1]), 'Injecting artificial planets...', start_time)
 
             images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
@@ -148,9 +148,6 @@ class FakePlanetModule(ProcessingModule):
                                   interpolation='spline')
 
             self.m_image_out_port.append(im_fake, data_dim=3)
-
-        sys.stdout.write('Running FakePlanetModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'(sep, angle, mag) = ({self.m_position[0]*pixscale:.2f}, ' \
                   f'{self.m_position[1]:.2f}, {self.m_magnitude:.2f})'
@@ -410,7 +407,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            sys.stdout.write('\rRunning SimplexMinimizationModule... ')
+            sys.stdout.write('\rSimplex minimization... ')
             sys.stdout.write(f'{n_components} PC - chi^2 = {chi_square:.8E}')
             sys.stdout.flush()
 
@@ -421,7 +418,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                       self.m_extra_rot)
 
         for i, n_components in enumerate(self.m_pca_number):
-            sys.stdout.write(f'\rRunning SimplexMinimizationModule... {n_components} PC ')
+            sys.stdout.write(f'\rSimplex minimization... {n_components} PC ')
             sys.stdout.flush()
 
             if self.m_reference_in_port is None:
@@ -594,7 +591,7 @@ class FalsePositiveModule(ProcessingModule):
 
         start_time = time.time()
         for j in range(nimages):
-            progress(j, nimages, 'Running FalsePositiveModule...', start_time)
+            progress(j, nimages, 'Calculating S/N and FPF...', start_time)
 
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
@@ -628,9 +625,6 @@ class FalsePositiveModule(ProcessingModule):
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
-
-        sys.stdout.write('Running FalsePositiveModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'aperture [arcsec] = {self.m_aperture*pixscale:.2f}'
         self.m_snr_out_port.copy_attributes(self.m_image_in_port)
@@ -856,10 +850,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, 'Running MCMCsamplingModule...', start_time)
-
-        sys.stdout.write('Running MCMCsamplingModule... [DONE]\n')
-        sys.stdout.flush()
+            progress(i, self.m_nsteps, 'Sampling the posteriors with MCMC...', start_time)
 
         self.m_image_in_port._check_status_and_activate()
         self.m_chain_out_port._check_status_and_activate()
@@ -885,7 +876,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                       axis=0,
                                                       fast=False)
 
-            print('Integrated autocorrelation time =', autocorr)
+            print(f'Integrated autocorrelation time ={autocorr}')
 
         except emcee.autocorr.AutocorrError:
             autocorr = [np.nan, np.nan, np.nan]
@@ -973,7 +964,7 @@ class AperturePhotometryModule(ProcessingModule):
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
-                                      'Running AperturePhotometryModule',
+                                      'Aperture photometry',
                                       func_args=(aperture, ))
 
         history = f'radius [arcsec] = {self.m_radius*pixscale:.3f}'

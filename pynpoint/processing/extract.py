@@ -153,7 +153,7 @@ class StarExtractionModule(ProcessingModule):
         self.apply_function_to_images(_crop_around_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Running StarExtractionModule',
+                                      'Extracting stellar position',
                                       func_args=(self.m_position,
                                                  self.m_image_size,
                                                  self.m_fwhm_star))
@@ -280,7 +280,7 @@ class ExtractBinaryModule(ProcessingModule):
         self.apply_function_to_images(_crop_rotating_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Running ExtractBinaryModule',
+                                      'Extracting binary position',
                                       func_args=(positions,
                                                  self.m_image_size,
                                                  self.m_filter_size))
