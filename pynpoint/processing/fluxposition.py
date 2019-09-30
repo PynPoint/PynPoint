@@ -7,6 +7,7 @@ import time
 import warnings
 
 from typing import Union, Tuple, List
+from multiprocessing import Pool
 
 import numpy as np
 import emcee
@@ -672,7 +673,7 @@ class MCMCsamplingModule(ProcessingModule):
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
         chain_out_tag : str
             Tag of the database entry with the Markov chain that is written as output. The shape
-            of the array is (nwalkers, nsteps, 3). The mean acceptance fraction and the integrated
+            of the array is (nsteps, nwalkers, 3). The mean acceptance fraction and the integrated
             autocorrelation time are stored as attributes to this dataset.
         param : tuple(float, float, float)
             The approximate separation (arcsec), angle (deg), and contrast (mag), for example
@@ -714,8 +715,6 @@ class MCMCsamplingModule(ProcessingModule):
 
         Keyword arguments
         -----------------
-        scale : float
-            The proposal scale parameter (Goodman & Weare 2010). The default is set to 2.
         sigma : tuple(float, float, float)
             The standard deviations that randomly initializes the start positions of the walkers in
             a small ball around the a priori preferred position. The tuple should contain a value
@@ -734,11 +733,6 @@ class MCMCsamplingModule(ProcessingModule):
         if 'variance' in kwargs:
             warnings.warn('The \'variance\' parameter has been deprecated. Please use the '
                           '\'merit\' parameter instead.', DeprecationWarning)
-
-        if 'scale' in kwargs:
-            self.m_scale = kwargs['scale']
-        else:
-            self.m_scale = 2.
 
         if 'sigma' in kwargs:
             self.m_sigma = kwargs['sigma']
@@ -829,33 +823,32 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
-                                        dim=ndim,
-                                        lnpostfn=lnprob,
-                                        a=self.m_scale,
-                                        args=([self.m_bounds,
-                                               images,
-                                               psf,
-                                               mask,
-                                               parang,
-                                               self.m_psf_scaling,
-                                               pixscale,
-                                               self.m_pca_number,
-                                               self.m_extra_rot,
-                                               aperture,
-                                               indices,
-                                               self.m_merit,
-                                               self.m_residuals]),
-                                        threads=cpu)
+        print('Sampling the posteriors with MCMC...')
 
-        start_time = time.time()
-        for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, 'Sampling the posteriors with MCMC...', start_time)
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
+                                            ndim=ndim,
+                                            log_prob_fn=lnprob,
+                                            args=([self.m_bounds,
+                                                   images,
+                                                   psf,
+                                                   mask,
+                                                   parang,
+                                                   self.m_psf_scaling,
+                                                   pixscale,
+                                                   self.m_pca_number,
+                                                   self.m_extra_rot,
+                                                   aperture,
+                                                   indices,
+                                                   self.m_merit,
+                                                   self.m_residuals]))
+
+            sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
         self.m_image_in_port._check_status_and_activate()
         self.m_chain_out_port._check_status_and_activate()
 
-        self.m_chain_out_port.set_all(sampler.chain)
+        self.m_chain_out_port.set_all(sampler.get_chain())
 
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
         self.m_chain_out_port.copy_attributes(self.m_image_in_port)
@@ -867,15 +860,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.add_attribute('ACCEPTANCE', mean_accept, static=True)
 
         try:
-            autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
-                                                      low=10,
-                                                      high=None,
-                                                      step=1,
-                                                      c=10,
-                                                      full_output=False,
-                                                      axis=0,
-                                                      fast=False)
-
+            autocorr = emcee.autocorr.integrated_time(sampler.get_chain(flat=True))
             print(f'Integrated autocorrelation time ={autocorr}')
 
         except emcee.autocorr.AutocorrError:
