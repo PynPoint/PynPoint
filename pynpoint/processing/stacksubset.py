@@ -2,7 +2,6 @@
 Pipeline modules for stacking and subsampling of images.
 """
 
-import sys
 import time
 import math
 import cmath
@@ -102,8 +101,9 @@ class StackAndSubsetModule(ProcessingModule):
                 im_new = np.zeros((nimages_new, im_shape[1], im_shape[2]))
 
                 start_time = time.time()
+
                 for i in range(nimages_new):
-                    progress(i, nimages_new, 'Running StackAndSubsetModule...', start_time)
+                    progress(i, nimages_new, 'Stacking subsets of images...', start_time)
 
                     if parang is not None:
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
@@ -171,9 +171,6 @@ class StackAndSubsetModule(ProcessingModule):
         im_shape, im_new, parang_new = _stack(nimages, im_shape, parang)
         nimages, im_new, parang_new = _subset(im_shape, im_new, parang_new)
 
-        sys.stdout.write('Running StackAndSubsetModule... [DONE]\n')
-        sys.stdout.flush()
-
         if self.m_random or self.m_stacking:
             self.m_image_out_port.set_all(im_new, keep_attributes=True)
             self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -187,104 +184,6 @@ class StackAndSubsetModule(ProcessingModule):
 
             history = f'stacking = {self.m_stacking}, random = {self.m_random}'
             self.m_image_out_port.add_history('StackAndSubsetModule', history)
-
-        self.m_image_out_port.close_port()
-
-
-class MeanCubeModule(ProcessingModule):
-    """
-    Pipeline module for calculating the mean of each individual cube associated with a database
-    tag.
-    """
-
-    @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str) -> None:
-        """
-        Parameters
-        ----------
-        name_in : str
-            Unique name of the module instance.
-        image_in_tag : str
-            Tag of the database entry that is read as input.
-        image_out_tag : str
-            Tag of the database entry with the mean collapsed images that are written as output.
-            Should be different from *image_in_tag*.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        super(MeanCubeModule, self).__init__(name_in=name_in)
-
-        warnings.warn('The MeanCubeModule will be be deprecated in a future release. Please use '
-                      'the StackCubesModule instead.', DeprecationWarning)
-
-        self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_image_out_port = self.add_output_port(image_out_tag)
-
-    @typechecked
-    def run(self) -> None:
-        """
-        Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
-        calculates the mean of each cube, and saves the data and attributes.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError('Input and output port should have a different tag.')
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
-        non_static = self.m_image_in_port.get_all_non_static_attributes()
-        nframes = self.m_image_in_port.get_attribute('NFRAMES')
-
-        if 'PARANG' in non_static:
-            parang = self.m_image_in_port.get_attribute('PARANG')
-        else:
-            parang = None
-
-        current = 0
-        parang_new = []
-
-        start_time = time.time()
-        for i, frames in enumerate(nframes):
-            progress(i, len(nframes), 'Running MeanCubeModule...', start_time)
-
-            mean_frame = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
-            self.m_image_out_port.append(mean_frame, data_dim=3)
-
-            if parang is not None:
-                parang_new.append(np.mean(parang[current:current+frames]))
-
-            current += frames
-
-        sys.stdout.write('Running MeanCubeModule... [DONE]\n')
-        sys.stdout.flush()
-
-        nimages = np.size(nframes)
-
-        self.m_image_out_port.copy_attributes(self.m_image_in_port)
-
-        if 'INDEX' in non_static:
-            index = np.arange(0, nimages, 1, dtype=np.int)
-            self.m_image_out_port.add_attribute('INDEX', index, static=False)
-
-        if 'NFRAMES' in non_static:
-            nframes = np.ones(nimages, dtype=np.int)
-            self.m_image_out_port.add_attribute('NFRAMES', nframes, static=False)
-
-        if 'PARANG' in non_static:
-            self.m_image_out_port.add_attribute('PARANG', parang_new, static=False)
 
         self.m_image_out_port.close_port()
 
@@ -358,7 +257,7 @@ class StackCubesModule(ProcessingModule):
 
         start_time = time.time()
         for i, frames in enumerate(nframes):
-            progress(i, len(nframes), 'Running StackCubesModule', start_time)
+            progress(i, len(nframes), 'Stacking images per FITS cube...', start_time)
 
             if self.m_combine == 'mean':
                 im_stack = np.mean(self.m_image_in_port[current:current+frames, ], axis=0)
@@ -371,9 +270,6 @@ class StackCubesModule(ProcessingModule):
                 parang_new.append(np.mean(parang[current:current+frames]))
 
             current += frames
-
-        sys.stdout.write('Running StackCubesModule... [DONE]\n')
-        sys.stdout.flush()
 
         nimages = np.size(nframes)
 
@@ -488,7 +384,7 @@ class DerotateAndStackModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Running DerotateAndStackModule...', start_time)
+            progress(i, len(frames[:-1]), 'Derotating and/or stacking images...', start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -504,9 +400,6 @@ class DerotateAndStackModule(ProcessingModule):
 
             elif self.m_stack == 'mean':
                 im_tot += np.sum(images, axis=0)
-
-        sys.stdout.write('Running DerotateAndStackModule... [DONE]\n')
-        sys.stdout.flush()
 
         if self.m_stack == 'mean':
             im_stack = im_tot/float(nimages)
@@ -602,7 +495,7 @@ class CombineTagsModule(ProcessingModule):
         count = 0
         start_time = time.time()
         for i, item in enumerate(self.m_image_in_tags):
-            progress(i, len(self.m_image_in_tags), 'Running CombineTagsModule...', start_time)
+            progress(i, len(self.m_image_in_tags), 'Combining datasets...', start_time)
 
             nimages = image_in_port[i].get_shape()[0]
             frames = memory_frames(memory, nimages)
@@ -667,9 +560,6 @@ class CombineTagsModule(ProcessingModule):
                                 self.m_image_out_port.append_attribute_data(key, j)
 
             count += nimages
-
-        sys.stdout.write('Running CombineTagsModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'number of input tags = {np.size(self.m_image_in_tags)}'
         self.m_image_out_port.add_history('CombineTagsModule', history)

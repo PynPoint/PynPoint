@@ -75,7 +75,7 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write('Running Hdf5WritingModule...')
+        sys.stdout.write('Writing HDF5 file...')
         sys.stdout.flush()
 
         if self.m_overwrite:
