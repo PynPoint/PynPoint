@@ -429,8 +429,6 @@ class ClassicalADIModule(ProcessingModule):
         super(ClassicalADIModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_res_inout_port = self.add_input_port(res_out_tag)
-
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_stack_out_port = self.add_output_port(stack_out_tag)
 
@@ -503,7 +501,8 @@ class ClassicalADIModule(ProcessingModule):
                                       'Classical ADI',
                                       func_args=(parang_thres, self.m_nreference, reference))
 
-        im_res = self.m_res_inout_port.get_all()
+        self.m_res_in_port = self.add_input_port(self.m_res_out_port._m_tag)
+        im_res = self.m_res_in_port.get_all()
 
         res_rot = np.zeros(im_res.shape)
         for i, item in enumerate(parang):

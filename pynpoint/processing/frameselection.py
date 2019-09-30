@@ -337,14 +337,14 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_method == 'median':
             phot_ref = np.nanmedian(phot)
-            print(f'Median = {phot_ref:.2f}')
+            print(f'\nMedian = {phot_ref:.2f}')
 
         elif self.m_method == 'max':
             phot_ref = np.nanmax(phot)
-            print(f'Maximum = {phot_ref:.2f}')
+            print(f'\nMaximum = {phot_ref:.2f}')
 
         phot_std = np.nanstd(phot)
-        print(f'Standard deviation = {phot_ref:.2f}')
+        print(f'Standard deviation = {phot_std:.2f}')
 
         index_rm = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
                                  (phot < phot_ref - self.m_threshold*phot_std))
@@ -713,7 +713,7 @@ class ImageStatisticsModule(ProcessingModule):
         self.apply_function_to_images(_image_stat,
                                       self.m_image_in_port,
                                       self.m_stat_out_port,
-                                      'Computing image statistics',
+                                      'Calculating image statistics',
                                       func_args=(indices, ))
 
         history = f'number of images = {nimages}'
@@ -889,7 +889,7 @@ class FrameSimilarityModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, nimages, 'Computing image similarity', start_time)
+            progress(nfinished, nimages, 'Calculating image similarity', start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
