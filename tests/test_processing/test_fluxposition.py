@@ -350,12 +350,3 @@ class TestFluxPosition:
 
         attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
         assert np.allclose(attr, 0.3, rtol=0., atol=0.2)
-
-        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_0', static=True)
-        assert np.isnan(attr)
-
-        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_1', static=True)
-        assert np.isnan(attr)
-
-        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_2', static=True)
-        assert np.isnan(attr)
