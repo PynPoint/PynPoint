@@ -246,7 +246,7 @@ class AngleInterpolationModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(parang_start):
-            progress(i, len(parang_start), 'Interpolating the parallactic angles...', start_time)
+            progress(i, len(parang_start), 'Interpolating parallactic angles...', start_time)
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
                 parang_start[i] += 360.
@@ -555,8 +555,12 @@ class AngleCalculationModule(ProcessingModule):
         new_angles = np.array([])
         pupil_pos_arr = np.array([])
 
+        start_time = time.time()
+
         # Calculate parallactic angles for each cube
         for i, tmp_steps in enumerate(steps):
+            progress(i, len(steps), 'Calculating parallactic angles...', start_time)
+
             t = Time(obs_dates[i].decode('utf-8'),
                      location=EarthLocation(lat=tel_lat, lon=tel_lon))
 

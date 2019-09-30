@@ -223,18 +223,8 @@ class Pypeline:
         config_file = os.path.join(self._m_working_place, 'PynPoint_config.ini')
         print(f'Configuration: {config_file}\n')
 
-        cpu_count = multiprocessing.cpu_count()
-
-        if 'OMP_NUM_THREADS' in os.environ:
-            thread_count = os.environ['OMP_NUM_THREADS']
-        else:
-            thread_count = 'not set'
-
         attributes = get_attributes()
-        attributes['CPU']['value'] = cpu_count
-
-        print(f'Number of CPUs: {cpu_count}')
-        print(f'Number of threads: {thread_count}')
+        attributes['CPU']['value'] = multiprocessing.cpu_count()
 
         if not os.path.isfile(config_file):
             warnings.warn('Configuration file not found. Creating PynPoint_config.ini with '
@@ -245,6 +235,16 @@ class Pypeline:
         attributes = _read_config(config_file, attributes)
 
         _write_config(attributes)
+
+        n_cpu = attributes['CPU']['value']
+
+        if 'OMP_NUM_THREADS' in os.environ:
+            n_thread = os.environ['OMP_NUM_THREADS']
+        else:
+            n_thread = 'not set'
+
+        print(f'Number of CPUs: {n_cpu}')
+        print(f'Number of threads: {n_thread}')
 
     def add_module(self,
                    module):
