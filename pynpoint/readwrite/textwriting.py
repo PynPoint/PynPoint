@@ -70,7 +70,7 @@ class TextWritingModule(WritingModule):
         if self.m_header is None:
             self.m_header = ''
 
-        sys.stdout.write('Running TextWritingModule...')
+        sys.stdout.write('Writing text file...')
         sys.stdout.flush()
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
@@ -149,7 +149,7 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write('Running ParangWritingModule...')
+        sys.stdout.write('Writing parallactic angles...')
         sys.stdout.flush()
 
         if self.m_header is None:
@@ -231,7 +231,7 @@ class AttributeWritingModule(WritingModule):
         if self.m_header is None:
             self.m_header = ''
 
-        sys.stdout.write('Running AttributeWritingModule...')
+        sys.stdout.write('Writing attribute data...')
         sys.stdout.flush()
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)

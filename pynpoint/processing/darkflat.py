@@ -2,7 +2,6 @@
 Pipeline modules for dark frame and flat field calibrations.
 """
 
-import sys
 import time
 import warnings
 
@@ -119,14 +118,11 @@ class DarkCalibrationModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Running DarkCalibrationModule...', start_time)
+            progress(i, len(frames[:-1]), 'Subtracting the dark current...', start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             self.m_image_out_port.append(images - master, data_dim=3)
-
-        sys.stdout.write('Running DarkCalibrationModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'dark_in_tag = {self.m_dark_in_port.tag}'
         self.m_image_out_port.add_history('DarkCalibrationModule', history)
@@ -205,14 +201,11 @@ class FlatCalibrationModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Running FlatCalibrationModule...', start_time)
+            progress(i, len(frames[:-1]), 'Flat fielding the images...', start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
             self.m_image_out_port.append(images/master, data_dim=3)
-
-        sys.stdout.write('Running FlatCalibrationModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'flat_in_tag = {self.m_flat_in_port.tag}'
         self.m_image_out_port.add_history('FlatCalibrationModule', history)
