@@ -188,9 +188,9 @@ def module_info(pipeline_module) -> None:
 
             for i, item in enumerate(input_ports):
                 if i < len(input_ports) - 1:
-                    print(f' {item}, ', end='')
+                    print(f' {item},', end='')
                 else:
-                    print(item)
+                    print(f' {item}')
 
     if hasattr(pipeline_module, '_m_output_ports'):
         output_ports = list(pipeline_module._m_output_ports.keys())
@@ -203,8 +203,8 @@ def module_info(pipeline_module) -> None:
 
             for i, item in enumerate(output_ports):
                 if i < len(output_ports) - 1:
-                    print(f' {item}, ', end='')
+                    print(f' {item},', end='')
                 else:
-                    print(item)
+                    print(f' {item}')
 
     print()
