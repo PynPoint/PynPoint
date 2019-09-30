@@ -3,7 +3,6 @@ Interfaces for pipeline modules.
 """
 
 import os
-import sys
 import time
 import warnings
 
@@ -530,7 +529,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         image_out_port : pynpoint.core.dataio.OutputPort
             Output port which is linked to the results.
         message : str
-            Progress message that is printed.
+            Progress message.
         func_args : tuple
             Additional arguments that are required by the input function.
 
@@ -566,9 +565,6 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             image_out_port.set_all(np.asarray(result), keep_attributes=True)
 
-            sys.stdout.write(message+' [DONE]\n')
-            sys.stdout.flush()
-
         elif cpu == 1:
             # process images one-by-one with a single process if CPU is set to 1
             image_out_port.del_all_attributes()
@@ -591,12 +587,8 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                 elif result.ndim == 2:
                     image_out_port.append(result, data_dim=3)
 
-            sys.stdout.write(message+' [DONE]\n')
-            sys.stdout.flush()
-
         else:
-            sys.stdout.write(message)
-            sys.stdout.flush()
+            print(message, end='')
 
             # process images in parallel in stacks of MEMORY/CPU images
             image_out_port.del_all_attributes()
@@ -630,8 +622,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             capsule.run()
 
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
+            print(' [DONE]')
 
     def get_all_input_tags(self):
         """
@@ -661,6 +652,6 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
     def run(self):
         """
         Abstract interface for the run method of a
-        :class:`pynpoint.core.processing.ProcessingModule` which inheres the actual
+        :class:`~pynpoint.core.processing.ProcessingModule` which inheres the actual
         algorithm behind the module.
         """

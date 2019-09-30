@@ -313,7 +313,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Running TimeNormalizationModule')
+                                      'Time normalization')
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('TimeNormalizationModule', 'normalization = median')

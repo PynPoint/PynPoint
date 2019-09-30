@@ -2,7 +2,6 @@
 Pipeline modules to prepare the data for the PSF subtraction.
 """
 
-import sys
 import time
 import warnings
 
@@ -134,7 +133,7 @@ class PSFpreparationModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
 
             # Print progress to command line
-            progress(i, len(frames[:-1]), 'Running PSFpreparationModule...', start_time)
+            progress(i, len(frames[:-1]), 'Preparing images for PSF subtraction...', start_time)
 
             # Get the images and ensure they have the correct 3D shape with the following
             # three dimensions: (batch_size, height, width)
@@ -182,9 +181,6 @@ class PSFpreparationModule(ProcessingModule):
             self.m_image_out_port.add_attribute(name='edge_size',
                                                 value=self.m_edge_size * pixscale,
                                                 static=True)
-
-        sys.stdout.write('Running PSFpreparationModule... [DONE]\n')
-        sys.stdout.flush()
 
 
 class AngleInterpolationModule(ProcessingModule):
@@ -250,7 +246,7 @@ class AngleInterpolationModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(parang_start):
-            progress(i, len(parang_start), 'Running AngleInterpolationModule...', start_time)
+            progress(i, len(parang_start), 'Interpolating the parallactic angles...', start_time)
 
             if parang_start[i] < -170. and parang_end[i] > 170.:
                 parang_start[i] += 360.
@@ -267,9 +263,6 @@ class AngleInterpolationModule(ProcessingModule):
                                        np.linspace(parang_start[i],
                                                    parang_end[i],
                                                    num=steps[i]))
-
-        sys.stdout.write('Running AngleInterpolationModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_data_out_port.add_attribute('PARANG',
                                            new_angles,
@@ -354,7 +347,7 @@ class SortParangModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Running SortParangModule...', start_time)
+            progress(i, len(frames[:-1]), 'Sorting images in time...', start_time)
 
             index_new[frames[i]:frames[i+1]] = index[index_sort[frames[i]:frames[i+1]]]
 
@@ -367,9 +360,6 @@ class SortParangModule(ProcessingModule):
             # h5py indexing elements must be in increasing order
             for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
                 self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
-
-        sys.stdout.write('Running SortParangModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('SortParangModule', 'sorted by INDEX')
@@ -619,9 +609,6 @@ class AngleCalculationModule(ProcessingModule):
 
         self.m_data_out_port.add_attribute('PARANG', new_angles_corr, static=False)
 
-        sys.stdout.write('Running AngleCalculationModule... [DONE]\n')
-        sys.stdout.flush()
-
 
 class SDIpreparationModule(ProcessingModule):
     """
@@ -694,7 +681,7 @@ class SDIpreparationModule(ProcessingModule):
 
         start_time = time.time()
         for i in range(nimages):
-            progress(i, nimages, 'Running SDIpreparationModule...', start_time)
+            progress(i, nimages, 'Preparing images for SDI...', start_time)
 
             image = self.m_image_in_port[i, ]
 
@@ -717,9 +704,6 @@ class SDIpreparationModule(ProcessingModule):
                 im_crop = shift_image(im_crop, (-0.5, -0.5), interpolation='spline')
 
             self.m_image_out_port.append(im_crop, data_dim=3)
-
-        sys.stdout.write('Running SDIpreparationModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'(line, continuum) = ({self.m_line_wvl}, {self.m_cnt_wvl})'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)

@@ -68,7 +68,7 @@ class ParangReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write('Running ParangReadingModule...')
+        sys.stdout.write('Reading parallactic angles...')
         sys.stdout.flush()
 
         parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
@@ -159,7 +159,7 @@ class AttributeReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write('Running AttributeReadingModule...')
+        sys.stdout.write('Reading attribute data...')
         sys.stdout.flush()
 
         attributes = get_attributes()

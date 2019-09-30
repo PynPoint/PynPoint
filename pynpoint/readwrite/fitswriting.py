@@ -91,7 +91,7 @@ class FitsWritingModule(WritingModule):
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        sys.stdout.write('Running FitsWritingModule...')
+        sys.stdout.write('Writing FITS file...')
         sys.stdout.flush()
 
         if os.path.isfile(out_name) and not self.m_overwrite:

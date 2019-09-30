@@ -3,7 +3,6 @@ Module which capsules the methods of the Pypeline.
 """
 
 import os
-import sys
 import warnings
 import configparser
 import collections
@@ -17,6 +16,7 @@ import pynpoint
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
+from pynpoint.util.module import module_info
 
 
 class Pypeline:
@@ -57,20 +57,22 @@ class Pypeline:
             None
         """
 
-        sys.stdout.write('Initiating PynPoint v'+pynpoint.__version__+'...')
-        sys.stdout.flush()
+        pynpoint_version = 'PynPoint v' + pynpoint.__version__
+
+        print(len(pynpoint_version) * '=')
+        print(pynpoint_version)
+        print(len(pynpoint_version) * '=' + '\n')
 
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
 
         self._m_modules = collections.OrderedDict()
+
         self.m_data_storage = DataStorage(os.path.join(working_place_in, 'PynPoint_database.hdf5'))
+        print(f'Database: {self.m_data_storage._m_location}')
 
         self._config_init()
-
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
 
     def __setattr__(self,
                     key,
@@ -218,10 +220,21 @@ class Pypeline:
 
             hdf.close()
 
-        config_file = self._m_working_place+'/PynPoint_config.ini'
+        config_file = os.path.join(self._m_working_place, 'PynPoint_config.ini')
+        print(f'Configuration: {config_file}\n')
+
+        cpu_count = multiprocessing.cpu_count()
+
+        if 'OMP_NUM_THREADS' in os.environ:
+            thread_count = os.environ['OMP_NUM_THREADS']
+        else:
+            thread_count = 'not set'
 
         attributes = get_attributes()
-        attributes['CPU']['value'] = multiprocessing.cpu_count()
+        attributes['CPU']['value'] = cpu_count
+
+        print(f'Number of CPUs: {cpu_count}')
+        print(f'Number of threads: {thread_count}')
 
         if not os.path.isfile(config_file):
             warnings.warn('Configuration file not found. Creating PynPoint_config.ini with '
@@ -379,9 +392,6 @@ class Pypeline:
             None
         """
 
-        sys.stdout.write('Validating Pypeline...')
-        sys.stdout.flush()
-
         validation = self.validate_pipeline()
 
         if not validation[0]:
@@ -389,10 +399,9 @@ class Pypeline:
                                  f'under a tag which is not created by a previous module or '
                                  f'does not exist in the database.')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
-
         for key in self._m_modules:
+            module_info(self._m_modules[key])
+
             self._m_modules[key].run()
 
     def run_module(self,
@@ -412,18 +421,13 @@ class Pypeline:
         """
 
         if name in self._m_modules:
-            sys.stdout.write(f'Validating module \'{name}\'...')
-            sys.stdout.flush()
-
             validation = self.validate_pipeline_module(name)
 
             if not validation[0]:
                 raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
                                      f'under a tag which does not exist in the database.')
 
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
-
+            module_info(self._m_modules[name])
             self._m_modules[name].run()
 
         else:
