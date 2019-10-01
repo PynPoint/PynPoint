@@ -298,8 +298,8 @@ class TestFluxPosition:
 
     def test_mcmc_sampling(self):
 
-        # with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
-        #     hdf_file['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         self.pipeline.set_attribute('adi', 'PARANG', np.arange(0., 200., 10.), static=False)
 
