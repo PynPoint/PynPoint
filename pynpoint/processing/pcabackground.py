@@ -711,9 +711,6 @@ class DitheringBackgroundModule(ProcessingModule):
             elif self.m_combine == 'pca':
                 tags.append(self.m_image_in_tag+'_dither_pca_res'+str(count+1))
 
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print('')
-
         n_dither, star_pos = self._initialize()
         tags = []
 
