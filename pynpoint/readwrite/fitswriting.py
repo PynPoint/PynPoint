@@ -3,7 +3,6 @@ Module for exporting a dataset from the HDF5 database to a FITS file.
 """
 
 import os
-import sys
 import warnings
 
 from typing import Tuple
@@ -91,8 +90,7 @@ class FitsWritingModule(WritingModule):
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        sys.stdout.write('Writing FITS file...')
-        sys.stdout.flush()
+        print('Writing FITS file...', end='')
 
         if os.path.isfile(out_name) and not self.m_overwrite:
             warnings.warn('Filename already present. Use overwrite=True to overwrite an existing '
@@ -150,7 +148,6 @@ class FitsWritingModule(WritingModule):
                     filename = f'{out_name[:-5]}{i:03d}.fits'
                     fits.writeto(filename, data_select, header, overwrite=self.m_overwrite)
 
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
+            print(' [DONE]')
 
         self.m_data_port.close_port()

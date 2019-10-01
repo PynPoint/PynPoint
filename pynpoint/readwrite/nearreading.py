@@ -3,7 +3,6 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 """
 
 import os
-import sys
 import math
 import time
 import shlex

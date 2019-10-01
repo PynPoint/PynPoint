@@ -403,7 +403,8 @@ class Pypeline:
             module_info(self._m_modules[name])
 
             if hasattr(self._m_modules[name], '_m_input_ports'):
-                input_info(self._m_modules[name])
+                if len(self._m_modules[name]._m_input_ports) > 0:
+                    input_info(self._m_modules[name])
 
             self._m_modules[name].run()
 
@@ -440,7 +441,8 @@ class Pypeline:
             module_info(self._m_modules[name])
 
             if hasattr(self._m_modules[name], '_m_input_ports'):
-                input_info(self._m_modules[name])
+                if len(self._m_modules[name]._m_input_ports) > 0:
+                    input_info(self._m_modules[name])
 
             self._m_modules[name].run()
 
