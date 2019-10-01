@@ -337,11 +337,11 @@ class FrameSelectionModule(ProcessingModule):
 
         if self.m_method == 'median':
             phot_ref = np.nanmedian(phot)
-            print(f'\nMedian = {phot_ref:.2f}')
+            print(f'Median = {phot_ref:.2f}')
 
         elif self.m_method == 'max':
             phot_ref = np.nanmax(phot)
-            print(f'\nMaximum = {phot_ref:.2f}')
+            print(f'Maximum = {phot_ref:.2f}')
 
         phot_std = np.nanstd(phot)
         print(f'Standard deviation = {phot_std:.2f}')
