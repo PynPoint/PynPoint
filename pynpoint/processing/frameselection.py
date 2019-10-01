@@ -362,7 +362,7 @@ class FrameSelectionModule(ProcessingModule):
             start_time = time.time()
 
             for i, _ in enumerate(frames[:-1]):
-                progress(i, frames[:-1], 'Writing selected data...', start_time)
+                progress(i, len(frames[:-1]), 'Writing selected data...', start_time)
 
                 index_del = np.where(np.logical_and(indices >= frames[i],
                                                     indices < frames[i+1]))
