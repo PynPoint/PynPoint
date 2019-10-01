@@ -3,7 +3,6 @@ Module for writing a list of tags from the database to a separate HDF5 file.
 """
 
 import os
-import sys
 
 import h5py
 from typeguard import typechecked
@@ -75,8 +74,7 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write('Writing HDF5 file...')
-        sys.stdout.flush()
+        print('Writing HDF5 file...', end='')
 
         if self.m_overwrite:
             out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
@@ -113,5 +111,4 @@ class Hdf5WritingModule(WritingModule):
 
         out_file.close()
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')

@@ -3,7 +3,6 @@ Module for reading FITS files.
 """
 
 import os
-import sys
 import time
 
 from typing import Union, Tuple, List

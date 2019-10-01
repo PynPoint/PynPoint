@@ -4,7 +4,6 @@ Module for reading HDF5 files that were created with the
 """
 
 import os
-import sys
 import time
 import warnings
 

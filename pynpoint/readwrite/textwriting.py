@@ -3,7 +3,6 @@ Modules for writing data as text file.
 """
 
 import os
-import sys
 
 import numpy as np
 
@@ -70,8 +69,7 @@ class TextWritingModule(WritingModule):
         if self.m_header is None:
             self.m_header = ''
 
-        sys.stdout.write('Writing text file...')
-        sys.stdout.flush()
+        print('Writing text file...', end='')
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
@@ -89,8 +87,7 @@ class TextWritingModule(WritingModule):
         elif data.dtype == 'float32' or data.dtype == 'float64':
             np.savetxt(out_name, data, header=self.m_header, comments='# ')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         self.m_data_port.close_port()
 
@@ -149,8 +146,7 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write('Writing parallactic angles...')
-        sys.stdout.flush()
+        print('Writing parallactic angles...', end='')
 
         if self.m_header is None:
             self.m_header = ''
@@ -164,8 +160,7 @@ class ParangWritingModule(WritingModule):
 
         np.savetxt(out_name, parang, header=self.m_header, comments='# ')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         self.m_data_port.close_port()
 
@@ -231,8 +226,7 @@ class AttributeWritingModule(WritingModule):
         if self.m_header is None:
             self.m_header = ''
 
-        sys.stdout.write('Writing attribute data...')
-        sys.stdout.flush()
+        print('Writing attribute data...', end='')
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
@@ -244,7 +238,6 @@ class AttributeWritingModule(WritingModule):
 
         np.savetxt(out_name, values, header=self.m_header, comments='# ')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         self.m_data_port.close_port()
