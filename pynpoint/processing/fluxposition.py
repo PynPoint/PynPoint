@@ -825,10 +825,11 @@ class MCMCsamplingModule(ProcessingModule):
 
         print('Sampling the posteriors with MCMC...')
 
-        with Pool() as pool:
+        with Pool(processes=cpu) as pool:
             sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
                                             ndim=ndim,
                                             log_prob_fn=lnprob,
+                                            pool=pool,
                                             args=([self.m_bounds,
                                                    images,
                                                    psf,

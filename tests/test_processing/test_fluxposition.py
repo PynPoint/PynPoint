@@ -298,6 +298,9 @@ class TestFluxPosition:
 
     def test_mcmc_sampling(self):
 
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
+
         self.pipeline.set_attribute('adi', 'PARANG', np.arange(0., 200., 10.), static=False)
 
         module = DerotateAndStackModule(name_in='stack',
@@ -331,7 +334,13 @@ class TestFluxPosition:
                                     sigma=(1e-3, 1e-1, 1e-2))
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('mcmc')
+
+        with pytest.warns(RuntimeWarning) as warning:
+            self.pipeline.run_module('mcmc')
+
+        assert warning[0].message.args[0] == 'Initial state is not linearly independent and ' \
+                                             'it will not allow a full exploration of ' \
+                                             'parameter space'
 
         data = self.pipeline.get_data('mcmc')
         data = data[50:, :, :].reshape((-1, 3))

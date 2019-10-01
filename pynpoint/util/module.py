@@ -241,6 +241,6 @@ def output_info(pipeline_module, output_shape) -> None:
 
         for i, item in enumerate(output_ports):
             if i < len(output_ports) - 1:
-                print(f' {item} {output_shape[output_ports[0]]},', end='')
+                print(f' {item} {output_shape[output_ports[i]]},', end='')
             else:
-                print(f' {item} {output_shape[output_ports[0]]}')
+                print(f' {item} {output_shape[output_ports[i]]}')
