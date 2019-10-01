@@ -823,7 +823,7 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        print('Sampling the posteriors with MCMC...')
+        print('Sampling the posterior distributions with MCMC...')
 
         with Pool(processes=cpu) as pool:
             sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
