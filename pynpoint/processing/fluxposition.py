@@ -854,14 +854,13 @@ class MCMCsamplingModule(ProcessingModule):
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
         self.m_chain_out_port.copy_attributes(self.m_image_in_port)
         self.m_chain_out_port.add_history('MCMCsamplingModule', history)
-        self.m_chain_out_port.close_port()
 
         mean_accept = np.mean(sampler.acceptance_fraction)
         print(f'Mean acceptance fraction: {mean_accept:.3f}')
         self.m_chain_out_port.add_attribute('ACCEPTANCE', mean_accept, static=True)
 
         try:
-            autocorr = emcee.autocorr.integrated_time(sampler.get_chain(flat=True))
+            autocorr = emcee.autocorr.integrated_time(sampler.get_chain())
             print(f'Integrated autocorrelation time ={autocorr}')
 
         except emcee.autocorr.AutocorrError:
@@ -872,6 +871,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.add_attribute('AUTOCORR_1', autocorr[1], static=True)
         self.m_chain_out_port.add_attribute('AUTOCORR_2', autocorr[2], static=True)
 
+        self.m_chain_out_port.close_port()
 
 class AperturePhotometryModule(ProcessingModule):
     """
