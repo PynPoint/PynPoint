@@ -16,14 +16,18 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
+  - pip install python-coveralls
   # - pip install coveralls
   - pip install sphinx
   - pip install sphinx-rtd-theme
-  - pip install python-coveralls
 
 script:
-  - make docs
-  - make test
+  # - make docs
+  # - make test
+
+  - pytest --cov coveralls pynpoint
+  
+  # coveralls/tests.py --doctest-modules --pep8 coveralls -v --cov-report term-missing
 
 after_success:
   - coveralls
