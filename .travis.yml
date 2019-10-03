@@ -8,7 +8,6 @@ python:
 
 env:
   - NUMBA_DISABLE_JIT=1
-  # - COVERALLS_PARALLEL=true
 
 before_install:
   - sudo apt-get install ncompress
@@ -16,8 +15,7 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
-  - pip install python-coveralls
-  # - pip install coveralls
+  - pip install coveralls
   - pip install sphinx
   - pip install sphinx-rtd-theme
 
@@ -28,6 +26,6 @@ script:
 after_success:
   - coveralls
 
-# notifications:
-#   - webhooks: https://coveralls.io/webhook
-#   - email: false
+notifications:
+  - webhooks: https://coveralls.io/webhook
+  - email: false
