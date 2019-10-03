@@ -8,7 +8,7 @@ python:
 
 env:
   - NUMBA_DISABLE_JIT=1
-  # - COVERALLS_PARALLEL=true
+  - COVERALLS_PARALLEL=true
 
 before_install:
   - sudo apt-get install ncompress
