@@ -22,12 +22,8 @@ install:
   - pip install sphinx-rtd-theme
 
 script:
-  # - make docs
-  # - make test
-
-  - pytest --cov coveralls pynpoint
-  
-  # coveralls/tests.py --doctest-modules --pep8 coveralls -v --cov-report term-missing
+  - make docs
+  - make test
 
 after_success:
   - coveralls
