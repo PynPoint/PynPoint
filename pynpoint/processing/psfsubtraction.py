@@ -299,28 +299,22 @@ class PcaPsfSubtractionModule(ProcessingModule):
         im_star = star_data[0, ].reshape(-1)
         indices = np.where(im_star != 0.)[0]
 
-        def reshape_and_select_data(arr, indices=None):
+        # if % of unmasked pixels is large (>75%), then do not take a subarray
+        if 1.*len(indices)/(im_shape[1] * im_shape[2]) > 0.75:
+            indices = None
+
+        def _reshape_and_select_data(arr, indices):
             # reshape array
             arr_shape = arr.shape
             arr_reshape = arr.reshape(arr_shape[0], arr_shape[1] * arr_shape[2])
 
-            # select indices, if given as input
             if indices is not None:
-                # select only the unmasked pixels if <10% of pixels are unmasked
-                if 100.*len(indices)/(arr_shape[1] * arr_shape[2]) < 80.:
-                    arr_reshape = arr_reshape[:, indices]
+                arr_reshape = arr_reshape[:, indices]
 
             return arr_reshape
 
         # reshape the star data
-        star_reshape = reshape_and_select_data(star_data, indices)
-
-        # select the unmasked pixels if >90% of pixels are masked (<10% of pixels unmasked)
-        # if 100.*len(indices)/len(im_star) < 10.:
-        #     remove_masked = True
-        #     star_reshape = star_reshape[:, indices]
-        # else:
-        #     remove_masked = False
+        star_reshape = _reshape_and_select_data(star_data, indices)
 
         # create the PCA basis
         sys.stdout.write('Constructing PSF model...')
@@ -342,10 +336,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                  'should be identical.')
 
             # reshape reference data and select the unmasked pixels
-            ref_reshape = reshape_and_select_data(ref_data, indices)
-            # ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-            # if remove_masked:
-            #     ref_reshape = ref_reshape[:, indices]
+            ref_reshape = _reshape_and_select_data(ref_data, indices)
 
             # subtract mean from reference data
             mean_ref = np.mean(ref_reshape, axis=0)
@@ -373,7 +364,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
 
-            if 100.*len(indices)/(im_shape[1] * im_shape[2]) < 80.:
+            if indices is not None:
                 basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
             else:

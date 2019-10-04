@@ -91,7 +91,7 @@ class PcaTaskProcessor(TaskProcessor):
                  angles: np.ndarray,
                  pca_model: PCA,
                  im_shape: Tuple[int, int, int],
-                 indices: np.ndarray,
+                 indices: Union[np.ndarray, None],
                  requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
         Parameters
@@ -288,7 +288,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
                  im_shape: Tuple[int, int, int],
-                 indices: np.ndarray) -> None:
+                 indices: Union[np.ndarray, None]) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.
 

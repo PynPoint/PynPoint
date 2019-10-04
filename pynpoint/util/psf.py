@@ -2,7 +2,7 @@
 Functions for PSF subtraction.
 """
 
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -15,7 +15,7 @@ def pca_psf_subtraction(images: np.ndarray,
                         pca_number: int,
                         pca_sklearn: PCA = None,
                         im_shape: Tuple[int, int, int] = None,
-                        indices: np.ndarray = None) -> np.ndarray:
+                        indices: Union[np.ndarray, None] = None) -> np.ndarray:
     """
     Function for PSF subtraction with PCA.
 
@@ -59,11 +59,11 @@ def pca_psf_subtraction(images: np.ndarray,
         # reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
 
-        # select the unmasked pixels if >20% of pixels are masked (<80% of pixels unmasked)
-        if 100. * len(indices) / len(im_star) < 80.:
-            im_reshape = im_reshape[:, indices]
-        else:
+        # if % of unmasked pixels is large (>75%), then do not take a subarray
+        if 1. * len(indices) / (im_shape[1] * im_shape[2]) > 0.75:
             indices = None
+        else:
+            im_reshape = im_reshape[:, indices]
 
         # subtract mean image
         im_reshape -= np.mean(im_reshape, axis=0)
@@ -76,9 +76,6 @@ def pca_psf_subtraction(images: np.ndarray,
 
     # create pca representation
     zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
-    #print('pca basis:',pca_sklearn.components_[:pca_number].flags)
-    #print('data:',im_reshape.T.flags)
-    #print()
     pca_rep = np.matmul(pca_sklearn.components_[:pca_number], im_reshape.T)
     pca_rep = np.vstack((pca_rep, zeros)).T
 
@@ -91,14 +88,12 @@ def pca_psf_subtraction(images: np.ndarray,
     residuals[:,indices] = im_reshape - pca_sklearn.inverse_transform(pca_rep)
 
     # reshape to the original image size
-
     residuals = residuals.reshape(im_shape)
 
     # get variance of residuals for weighted combination
     res_var = np.var(residuals, axis=0)
 
     # derotate the images
-    #res_rot = np.zeros(residuals.shape)
     for j, item in enumerate(angles):
         residuals[j, ] = rotate(residuals[j, ], item, reshape=False)
 
