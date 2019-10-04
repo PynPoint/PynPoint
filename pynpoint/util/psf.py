@@ -50,7 +50,7 @@ def pca_psf_subtraction(images: np.ndarray,
         im_shape = images.shape
 
         # get first image and reshape to check for masked pixels
-        im_star = images[0,].reshape(-1)
+        im_star = images[0, ].reshape(-1)
 
         if indices is None:
             # get the unmasked image indices

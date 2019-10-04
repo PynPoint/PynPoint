@@ -347,3 +347,15 @@ class TestFluxPosition:
         assert np.allclose(np.median(data[:, 0]), 0.15, rtol=0., atol=0.1)
         assert np.allclose(np.median(data[:, 1]), 0., rtol=0., atol=1.0)
         assert np.allclose(np.median(data[:, 2]), 0.0, rtol=0., atol=1.)
+
+        attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
+        assert np.allclose(attr, 0.3, rtol=0., atol=0.2)
+
+        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_0', static=True)
+        assert np.isnan(attr)
+
+        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_1', static=True)
+        assert np.isnan(attr)
+
+        attr = self.pipeline.get_attribute('mcmc', 'AUTOCORR_2', static=True)
+        assert np.isnan(attr)

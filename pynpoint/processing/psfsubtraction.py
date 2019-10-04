@@ -206,11 +206,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
             parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
             res_rot, res_var = pca_psf_subtraction(images=star_reshape,
-                                                     angles=parang,
-                                                     pca_number=pca_number,
-                                                     pca_sklearn=self.m_pca,
-                                                     im_shape=im_shape,
-                                                     indices=indices)
+                                                   angles=parang,
+                                                   pca_number=pca_number,
+                                                   pca_sklearn=self.m_pca,
+                                                   im_shape=im_shape,
+                                                   indices=indices)
 
             hist = f'max PC number = {np.amax(self.m_components)}'
 
@@ -367,6 +367,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if indices is not None:
                 basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
+
             else:
                 basis = self.m_pca.components_
 
