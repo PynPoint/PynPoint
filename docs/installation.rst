@@ -73,6 +73,12 @@ In that case, the dependencies can be installed from the PynPoint folder:
 
     $ pip install -r requirements.txt
 
+And to update the dependencies to the latest versions with which PynPoint is compatible:
+
+.. code-block:: console
+
+    $ pip install --upgrade -r requirements.txt 
+
 By adding the path of the repository to the ``PYTHONPATH`` environment variable enables PynPoint to be imported from any location:
 
 .. code-block:: console
