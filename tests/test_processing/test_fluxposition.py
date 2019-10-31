@@ -334,13 +334,7 @@ class TestFluxPosition:
                                     sigma=(1e-3, 1e-1, 1e-2))
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(RuntimeWarning) as warning:
-            self.pipeline.run_module('mcmc')
-
-        assert warning[0].message.args[0] == 'Initial state is not linearly independent and ' \
-                                             'it will not allow a full exploration of ' \
-                                             'parameter space'
+        self.pipeline.run_module('mcmc')
 
         data = self.pipeline.get_data('mcmc')
         data = data[50:, :, :].reshape((-1, 3))
