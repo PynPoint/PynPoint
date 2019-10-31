@@ -826,9 +826,9 @@ class MCMCsamplingModule(ProcessingModule):
         print('Sampling the posterior distributions with MCMC...')
 
         with Pool(processes=cpu) as pool:
-            sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
-                                            ndim=ndim,
-                                            log_prob_fn=lnprob,
+            sampler = emcee.EnsembleSampler(self.m_nwalkers,
+                                            ndim,
+                                            lnprob,
                                             pool=pool,
                                             args=([self.m_bounds,
                                                    images,
