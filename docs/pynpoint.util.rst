@@ -116,6 +116,14 @@ pynpoint.util.residuals module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.util.star module
+-------------------------
+
+.. automodule:: pynpoint.util.star
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.util.tests module
 --------------------------
 

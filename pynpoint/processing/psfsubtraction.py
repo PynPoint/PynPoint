@@ -2,7 +2,6 @@
 Pipeline modules for PSF subtraction.
 """
 
-import sys
 import time
 import math
 import warnings
@@ -244,9 +243,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 stack = combine_residuals(method='clipped', res_rot=res_rot)
                 self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
 
-        sys.stdout.write('Creating residuals... [DONE]\n')
-        sys.stdout.flush()
-
     def _clear_output_ports(self):
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.del_all_data()
@@ -328,9 +324,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         ref_reshape -= mean_ref
 
         # create the PCA basis
-        sys.stdout.write('Constructing PSF model...')
-        sys.stdout.flush()
-
+        print('Constructing PSF model...', end='')
         self.m_pca.fit(ref_reshape)
 
         # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
@@ -342,8 +336,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             self.m_pca.components_ = q_ortho.T
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         if self.m_basis_out_port is not None:
             pc_size = self.m_pca.components_.shape[0]
@@ -358,13 +351,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self._run_single_processing(star_reshape, im_shape, indices)
 
         else:
-            sys.stdout.write('Creating residuals')
-            sys.stdout.flush()
-
+            print('Creating residuals', end='')
             self._run_multi_processing(star_reshape, im_shape, indices)
-
-            sys.stdout.write(' [DONE]\n')
-            sys.stdout.flush()
+            print(' [DONE]')
 
         history = f'max PC number = {np.amax(self.m_components)}'
 
@@ -440,8 +429,6 @@ class ClassicalADIModule(ProcessingModule):
         super(ClassicalADIModule, self).__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
-        self.m_res_inout_port = self.add_input_port(res_out_tag)
-
         self.m_res_out_port = self.add_output_port(res_out_tag)
         self.m_stack_out_port = self.add_output_port(stack_out_tag)
 
@@ -511,10 +498,11 @@ class ClassicalADIModule(ProcessingModule):
         self.apply_function_to_images(_subtract_psf,
                                       self.m_image_in_port,
                                       self.m_res_out_port,
-                                      'Running ClassicalADIModule',
+                                      'Classical ADI',
                                       func_args=(parang_thres, self.m_nreference, reference))
 
-        im_res = self.m_res_inout_port.get_all()
+        self.m_res_in_port = self.add_input_port(self.m_res_out_port._m_tag)
+        im_res = self.m_res_in_port.get_all()
 
         res_rot = np.zeros(im_res.shape)
         for i, item in enumerate(parang):

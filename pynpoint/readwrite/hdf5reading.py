@@ -4,7 +4,6 @@ Module for reading HDF5 files that were created with the
 """
 
 import os
-import sys
 import time
 import warnings
 
@@ -145,8 +144,5 @@ class Hdf5ReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, tmp_file in enumerate(files):
-            progress(i, len(files), 'Running Hdf5ReadingModule...', start_time)
+            progress(i, len(files), 'Reading HDF5 file...', start_time)
             self.read_single_hdf5(tmp_file)
-
-        sys.stdout.write('Running Hdf5ReadingModule... [DONE]\n')
-        sys.stdout.flush()

@@ -3,7 +3,6 @@ Modules for reading data from a text file.
 """
 
 import os
-import sys
 import warnings
 
 import numpy as np
@@ -68,8 +67,7 @@ class ParangReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write('Running ParangReadingModule...')
-        sys.stdout.flush()
+        print('Reading parallactic angles...', end='')
 
         parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
 
@@ -94,8 +92,7 @@ class ParangReadingModule(ReadingModule):
             warnings.warn(f'The PARANG attribute is already present and contains the same values '
                           f'as are present in {self.m_file_name}.')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         self.m_data_port.close_port()
 
@@ -159,8 +156,7 @@ class AttributeReadingModule(ReadingModule):
             None
         """
 
-        sys.stdout.write('Running AttributeReadingModule...')
-        sys.stdout.flush()
+        print('Reading attribute data...', end='')
 
         attributes = get_attributes()
 
@@ -191,7 +187,6 @@ class AttributeReadingModule(ReadingModule):
             warnings.warn(f'The \'{self.m_attribute}\' attribute is already present and '
                           f'contains the same values as are present in {self.m_file_name}.')
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         self.m_data_port.close_port()

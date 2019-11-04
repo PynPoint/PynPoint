@@ -2,7 +2,6 @@
 Pipeline modules for PCA-based background subtraction.
 """
 
-import sys
 import time
 import math
 import warnings
@@ -188,7 +187,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         start_time = time.time()
         for i, item in enumerate(nframes):
-            progress(i, len(nframes), 'Running PCABackgroundPreparationModule...', start_time)
+            progress(i, len(nframes), 'Preparing PCA background subtraction...', start_time)
 
             im_tmp = self.m_image_in_port[count:count+item, ]
 
@@ -254,9 +253,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         star_index, star_parang, star_nframes, background_index, background_parang, \
             background_nframes = self._separate(bg_frames, bg_indices, parang, cube_mean)
-
-        sys.stdout.write('Running PCABackgroundPreparationModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'frames = {sum(star_nframes)}, {len(background_nframes)}'
 
@@ -491,15 +487,13 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                                      width=self.m_subframe,
                                      fwhm=self.m_gaussian)
 
-        sys.stdout.write('Creating PCA basis set...')
-        sys.stdout.flush()
+        print('Creating PCA basis set...', end='')
 
         basis_pca = _create_basis(self.m_background_in_port.get_all(),
                                   bg_mean,
                                   self.m_pca_number)
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
@@ -523,9 +517,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             if self.m_mask_out_port is not None:
                 self.m_mask_out_port.append(mask)
-
-        sys.stdout.write('Calculating background model... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'PC number = {self.m_pca_number}'
         self.m_residuals_out_port.copy_attributes(self.m_star_in_port)
@@ -719,9 +710,6 @@ class DitheringBackgroundModule(ProcessingModule):
 
             elif self.m_combine == 'pca':
                 tags.append(self.m_image_in_tag+'_dither_pca_res'+str(count+1))
-
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print(f'Processing dither position {count+1} out of {n_dither}... [DONE]')
 
         n_dither, star_pos = self._initialize()
         tags = []

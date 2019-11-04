@@ -7,6 +7,7 @@ import time
 import warnings
 
 from typing import Union, Tuple, List
+from multiprocessing import Pool
 
 import numpy as np
 import emcee
@@ -129,7 +130,7 @@ class FakePlanetModule(ProcessingModule):
 
         start_time = time.time()
         for j, _ in enumerate(frames[:-1]):
-            progress(j, len(frames[:-1]), 'Running FakePlanetModule...', start_time)
+            progress(j, len(frames[:-1]), 'Injecting artificial planets...', start_time)
 
             images = self.m_image_in_port[frames[j]:frames[j+1]]
             angles = parang[frames[j]:frames[j+1]]
@@ -148,9 +149,6 @@ class FakePlanetModule(ProcessingModule):
                                   interpolation='spline')
 
             self.m_image_out_port.append(im_fake, data_dim=3)
-
-        sys.stdout.write('Running FakePlanetModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'(sep, angle, mag) = ({self.m_position[0]*pixscale:.2f}, ' \
                   f'{self.m_position[1]:.2f}, {self.m_magnitude:.2f})'
@@ -410,7 +408,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            sys.stdout.write('\rRunning SimplexMinimizationModule... ')
+            sys.stdout.write('\rSimplex minimization... ')
             sys.stdout.write(f'{n_components} PC - chi^2 = {chi_square:.8E}')
             sys.stdout.flush()
 
@@ -421,7 +419,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                       self.m_extra_rot)
 
         for i, n_components in enumerate(self.m_pca_number):
-            sys.stdout.write(f'\rRunning SimplexMinimizationModule... {n_components} PC ')
+            sys.stdout.write(f'\rSimplex minimization... {n_components} PC ')
             sys.stdout.flush()
 
             if self.m_reference_in_port is None:
@@ -594,7 +592,7 @@ class FalsePositiveModule(ProcessingModule):
 
         start_time = time.time()
         for j in range(nimages):
-            progress(j, nimages, 'Running FalsePositiveModule...', start_time)
+            progress(j, nimages, 'Calculating S/N and FPF...', start_time)
 
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
@@ -628,9 +626,6 @@ class FalsePositiveModule(ProcessingModule):
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
-
-        sys.stdout.write('Running FalsePositiveModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'aperture [arcsec] = {self.m_aperture*pixscale:.2f}'
         self.m_snr_out_port.copy_attributes(self.m_image_in_port)
@@ -678,7 +673,7 @@ class MCMCsamplingModule(ProcessingModule):
             either a single image (2D) or a cube (3D) with the dimensions equal to *image_in_tag*.
         chain_out_tag : str
             Tag of the database entry with the Markov chain that is written as output. The shape
-            of the array is (nwalkers, nsteps, 3). The mean acceptance fraction and the integrated
+            of the array is (nsteps, nwalkers, 3). The mean acceptance fraction and the integrated
             autocorrelation time are stored as attributes to this dataset.
         param : tuple(float, float, float)
             The approximate separation (arcsec), angle (deg), and contrast (mag), for example
@@ -720,8 +715,6 @@ class MCMCsamplingModule(ProcessingModule):
 
         Keyword arguments
         -----------------
-        scale : float
-            The proposal scale parameter (Goodman & Weare 2010). The default is set to 2.
         sigma : tuple(float, float, float)
             The standard deviations that randomly initializes the start positions of the walkers in
             a small ball around the a priori preferred position. The tuple should contain a value
@@ -740,11 +733,6 @@ class MCMCsamplingModule(ProcessingModule):
         if 'variance' in kwargs:
             warnings.warn('The \'variance\' parameter has been deprecated. Please use the '
                           '\'merit\' parameter instead.', DeprecationWarning)
-
-        if 'scale' in kwargs:
-            self.m_scale = kwargs['scale']
-        else:
-            self.m_scale = 2.
 
         if 'sigma' in kwargs:
             self.m_sigma = kwargs['sigma']
@@ -835,57 +823,45 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
-        sampler = emcee.EnsembleSampler(nwalkers=self.m_nwalkers,
-                                        dim=ndim,
-                                        lnpostfn=lnprob,
-                                        a=self.m_scale,
-                                        args=([self.m_bounds,
-                                               images,
-                                               psf,
-                                               mask,
-                                               parang,
-                                               self.m_psf_scaling,
-                                               pixscale,
-                                               self.m_pca_number,
-                                               self.m_extra_rot,
-                                               aperture,
-                                               indices,
-                                               self.m_merit,
-                                               self.m_residuals]),
-                                        threads=cpu)
+        print('Sampling the posterior distributions with MCMC...')
 
-        start_time = time.time()
-        for i, _ in enumerate(sampler.sample(p0=initial, iterations=self.m_nsteps)):
-            progress(i, self.m_nsteps, 'Running MCMCsamplingModule...', start_time)
+        with Pool(processes=cpu) as pool:
+            sampler = emcee.EnsembleSampler(self.m_nwalkers,
+                                            ndim,
+                                            lnprob,
+                                            pool=pool,
+                                            args=([self.m_bounds,
+                                                   images,
+                                                   psf,
+                                                   mask,
+                                                   parang,
+                                                   self.m_psf_scaling,
+                                                   pixscale,
+                                                   self.m_pca_number,
+                                                   self.m_extra_rot,
+                                                   aperture,
+                                                   indices,
+                                                   self.m_merit,
+                                                   self.m_residuals]))
 
-        sys.stdout.write('Running MCMCsamplingModule... [DONE]\n')
-        sys.stdout.flush()
+            sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
         self.m_image_in_port._check_status_and_activate()
         self.m_chain_out_port._check_status_and_activate()
 
-        self.m_chain_out_port.set_all(sampler.chain)
+        self.m_chain_out_port.set_all(sampler.get_chain())
 
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
         self.m_chain_out_port.copy_attributes(self.m_image_in_port)
         self.m_chain_out_port.add_history('MCMCsamplingModule', history)
-        self.m_chain_out_port.close_port()
 
         mean_accept = np.mean(sampler.acceptance_fraction)
         print(f'Mean acceptance fraction: {mean_accept:.3f}')
         self.m_chain_out_port.add_attribute('ACCEPTANCE', mean_accept, static=True)
 
         try:
-            autocorr = emcee.autocorr.integrated_time(sampler.flatchain,
-                                                      low=10,
-                                                      high=None,
-                                                      step=1,
-                                                      c=10,
-                                                      full_output=False,
-                                                      axis=0,
-                                                      fast=False)
-
-            print('Integrated autocorrelation time =', autocorr)
+            autocorr = emcee.autocorr.integrated_time(sampler.get_chain())
+            print(f'Integrated autocorrelation time ={autocorr}')
 
         except emcee.autocorr.AutocorrError:
             autocorr = [np.nan, np.nan, np.nan]
@@ -895,6 +871,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_chain_out_port.add_attribute('AUTOCORR_1', autocorr[1], static=True)
         self.m_chain_out_port.add_attribute('AUTOCORR_2', autocorr[2], static=True)
 
+        self.m_chain_out_port.close_port()
 
 class AperturePhotometryModule(ProcessingModule):
     """
@@ -973,7 +950,7 @@ class AperturePhotometryModule(ProcessingModule):
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
-                                      'Running AperturePhotometryModule',
+                                      'Aperture photometry',
                                       func_args=(aperture, ))
 
         history = f'radius [arcsec] = {self.m_radius*pixscale:.3f}'

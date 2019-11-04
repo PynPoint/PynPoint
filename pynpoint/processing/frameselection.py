@@ -2,7 +2,6 @@
 Pipeline modules for frame selection.
 """
 
-import sys
 import time
 import math
 import warnings
@@ -114,7 +113,7 @@ class RemoveFramesModule(ProcessingModule):
         start_time = time.time()
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Running RemoveFramesModule...', start_time)
+            progress(i, len(frames[:-1]), 'Removing images...', start_time)
 
             images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -125,9 +124,6 @@ class RemoveFramesModule(ProcessingModule):
                                 self.m_frames[index_del] % memory,
                                 self.m_selected_out_port,
                                 self.m_removed_out_port)
-
-        sys.stdout.write('Running RemoveFramesModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'frames removed = {np.size(self.m_frames)}'
 
@@ -163,7 +159,7 @@ class FrameSelectionModule(ProcessingModule):
                  selected_out_tag: str,
                  removed_out_tag: str,
                  index_out_tag: str = None,
-                 method='median',
+                 method: str = 'median',
                  threshold: float = 4.,
                  fwhm: float = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
@@ -335,17 +331,20 @@ class FrameSelectionModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(nimages):
-            progress(i, nimages, 'Running FrameSelectionModule...', start_time)
+            progress(i, nimages, 'Aperture photometry...', start_time)
 
             phot[i] = self.photometry(self.m_image_in_port[i, ], starpos[i, :], self.m_aperture)
 
         if self.m_method == 'median':
             phot_ref = np.nanmedian(phot)
+            print(f'Median = {phot_ref:.2f}')
 
         elif self.m_method == 'max':
             phot_ref = np.nanmax(phot)
+            print(f'Maximum = {phot_ref:.2f}')
 
         phot_std = np.nanstd(phot)
+        print(f'Standard deviation = {phot_std:.2f}')
 
         index_rm = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
                                  (phot < phot_ref - self.m_threshold*phot_std))
@@ -360,7 +359,11 @@ class FrameSelectionModule(ProcessingModule):
             if memory == 0 or memory >= nimages:
                 memory = nimages
 
+            start_time = time.time()
+
             for i, _ in enumerate(frames[:-1]):
+                progress(i, len(frames[:-1]), 'Writing selected data...', start_time)
+
                 index_del = np.where(np.logical_and(indices >= frames[i],
                                                     indices < frames[i+1]))
 
@@ -406,9 +409,6 @@ class FrameSelectionModule(ProcessingModule):
                                               static=False)
 
         self.m_removed_out_port.add_history('FrameSelectionModule', history)
-
-        sys.stdout.write('Running FrameSelectionModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_image_in_port.close_port()
 
@@ -471,7 +471,7 @@ class RemoveLastFrameModule(ProcessingModule):
 
         start_time = time.time()
         for i, item in enumerate(ndit):
-            progress(i, len(ndit), 'Running RemoveLastFrameModule...', start_time)
+            progress(i, len(ndit), 'Removing the last image of each FITS cube...', start_time)
 
             if nframes[i] != item+1:
                 warnings.warn(f'Number of frames ({nframes[i]}) is not equal to NDIT+1.')
@@ -486,9 +486,6 @@ class RemoveLastFrameModule(ProcessingModule):
 
         nframes_new = np.asarray(nframes_new, dtype=np.int)
         index_new = np.asarray(index_new, dtype=np.int)
-
-        sys.stdout.write('Running RemoveLastFrameModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
@@ -581,7 +578,7 @@ class RemoveStartFramesModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(nframes):
-            progress(i, len(nframes), 'Running RemoveStartFramesModule...', start_time)
+            progress(i, len(nframes), 'Removing images at the begin of each cube...', start_time)
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
             frame_end = np.sum(nframes[0:i+1])
@@ -599,9 +596,6 @@ class RemoveStartFramesModule(ProcessingModule):
                 star_new.extend(star[frame_start:frame_end])
 
             self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
-
-        sys.stdout.write('Running RemoveStartFramesModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
@@ -721,7 +715,7 @@ class ImageStatisticsModule(ProcessingModule):
         self.apply_function_to_images(_image_stat,
                                       self.m_image_in_port,
                                       self.m_stat_out_port,
-                                      'Running ImageStatisticsModule',
+                                      'Calculating image statistics',
                                       func_args=(indices, ))
 
         history = f'number of images = {nimages}'
@@ -897,7 +891,7 @@ class FrameSimilarityModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, nimages, 'Running FrameSimilarityModule', start_time)
+            progress(nfinished, nimages, 'Calculating image similarity', start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
@@ -1058,7 +1052,7 @@ class SelectByAttributeModule(ProcessingModule):
                                     self.m_removed_out_port,
                                     self.m_selected_out_port)
 
-                progress(i, len(frames[:-1]), 'Running SelectByAttributeModule...', start_time)
+                progress(i, len(frames[:-1]), 'Selecting images by attribute...', start_time)
 
         else:
             warnings.warn('No frames were removed.')
@@ -1076,6 +1070,3 @@ class SelectByAttributeModule(ProcessingModule):
                                   self.m_image_in_port,
                                   self.m_removed_out_port,
                                   self.m_selected_out_port)
-
-        sys.stdout.write('Running SelectByAttributeModule... [DONE]\n')
-        sys.stdout.flush()

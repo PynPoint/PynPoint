@@ -71,7 +71,8 @@ def progress(current: int,
             sys.stdout.write(f'{message} {percentage:4.1f}% - ETA: {time_string(time_left)}\r')
 
     if current+1 == total:
-        sys.stdout.write(' ' * (29+len(message)) + '\r')
+        sys.stdout.write((29 + len(message)) * ' ' + '\r')
+        sys.stdout.write(message+' [DONE]\n')
 
     sys.stdout.flush()
 
@@ -150,3 +151,96 @@ def update_arguments(index: int,
         args_out = tuple(args_out)
 
     return args_out
+
+
+@typechecked
+def module_info(pipeline_module) -> None:
+    """
+    Function to print the module name.
+
+    Parameters
+    ----------
+    pipeline_module : PypelineModule
+        Pipeline module.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    module_name = type(pipeline_module).__name__
+    str_length = len(module_name)
+
+    print('\n' + str_length * '-')
+    print(module_name)
+    print(str_length * '-' + '\n')
+    print(f'Module name: {pipeline_module._m_name}')
+
+
+@typechecked
+def input_info(pipeline_module) -> None:
+    """
+    Function to print information about the input data.
+
+    Parameters
+    ----------
+    pipeline_module : PypelineModule
+        Pipeline module.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    input_ports = list(pipeline_module._m_input_ports.keys())
+
+    if len(input_ports) == 1:
+        input_shape = pipeline_module._m_input_ports[input_ports[0]].get_shape()
+        print(f'Input port: {input_ports[0]} {input_shape}')
+
+    else:
+        print('Input ports:', end='')
+
+        for i, item in enumerate(input_ports):
+            input_shape = pipeline_module._m_input_ports[input_ports[i]].get_shape()
+
+            if i < len(input_ports) - 1:
+                print(f' {item} {input_shape},', end='')
+            else:
+                print(f' {item} {input_shape}')
+
+
+@typechecked
+def output_info(pipeline_module, output_shape) -> None:
+    """
+    Function to print information about the output data.
+
+    Parameters
+    ----------
+    pipeline_module : PypelineModule
+        Pipeline module.
+    output_shape : dict
+        Dictionary with the output dataset names and shapes.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    output_ports = list(pipeline_module._m_output_ports.keys())
+
+    if len(output_ports) == 1:
+        if output_ports[0][:11] != 'fits_header':
+            print(f'Output port: {output_ports[0]} {output_shape[output_ports[0]]}')
+
+    else:
+        print('Output ports:', end='')
+
+        for i, item in enumerate(output_ports):
+            if i < len(output_ports) - 1:
+                print(f' {item} {output_shape[output_ports[i]]},', end='')
+            else:
+                print(f' {item} {output_shape[output_ports[i]]}')

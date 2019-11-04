@@ -3,7 +3,6 @@ Module for reading FITS files obtained with VLT/VISIR for the NEAR experiment.
 """
 
 import os
-import sys
 import math
 import time
 import shlex
@@ -159,9 +158,6 @@ class NearReadingModule(ReadingModule):
                 # join the threads
                 for item in threads:
                     item.join()
-
-            sys.stdout.write('Uncompressing NEAR data... [DONE]\n')
-            sys.stdout.flush()
 
     @typechecked
     def check_header(self,
@@ -382,7 +378,7 @@ class NearReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, filename in enumerate(files):
-            progress(i, len(files), 'Running NearReadingModule...', start_time)
+            progress(i, len(files), 'Preprocessing NEAR data...', start_time)
 
             # get the primary header data and the image shape
             header, im_shape = self.read_header(filename)
@@ -451,9 +447,6 @@ class NearReadingModule(ReadingModule):
 
                 # flush the output port
                 port.flush()
-
-        sys.stdout.write('Running NearReadingModule... [DONE]\n')
-        sys.stdout.flush()
 
         # add history information
         self.m_chopa_out_port.add_history('NearReadingModule', 'Chop A')

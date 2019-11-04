@@ -3,6 +3,7 @@ Functions for stellar extraction.
 """
 
 import math
+import time
 
 from typing import Union, Tuple
 
@@ -13,6 +14,7 @@ from typeguard import typechecked
 
 from pynpoint.core.dataio import InputPort
 from pynpoint.util.image import crop_image, center_pixel
+from pynpoint.util.module import progress
 
 
 @typechecked
@@ -110,7 +112,11 @@ def star_positions(input_port: InputPort,
             if position[0] is not None and position[1] is not None:
                 center = position[0:2]
 
+        start_time = time.time()
+
         for i in range(nimages):
+            progress(i, nimages, 'Locating stellar position...', start_time)
+
             # [y. x] position
             starpos[i, :] = locate_star(input_port[i, ], center, width, fwhm)
 

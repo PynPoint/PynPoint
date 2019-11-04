@@ -65,7 +65,6 @@ from pynpoint.processing.resizing import CropImagesModule, \
                                          RemoveLinesModule
 
 from pynpoint.processing.stacksubset import StackAndSubsetModule, \
-                                            MeanCubeModule, \
                                             StackCubesModule, \
                                             DerotateAndStackModule, \
                                             CombineTagsModule

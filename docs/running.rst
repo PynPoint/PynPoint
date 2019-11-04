@@ -55,7 +55,7 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
 
    pipeline.add_module(module)
 
-   module = PcaPsfSubtractionModule(pca_numbers=(20, ),
+   module = PcaPsfSubtractionModule(pca_numbers=[20, ],
                                     name_in='pca',
                                     images_in_tag='prep',
                                     reference_in_tag='prep',
@@ -71,7 +71,7 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
    size = pixscale*residuals.shape[-1]/2.
 
    plt.imshow(residuals[0, ], origin='lower', extent=[size, -size, -size, size])
-   plt.title('beta Pic b - NACO M' - median residuals')
+   plt.title('beta Pic b - NACO M\' - median residuals')
    plt.xlabel('R.A. offset [arcsec]', fontsize=12)
    plt.ylabel('Dec. offset [arcsec]', fontsize=12)
    plt.colorbar()

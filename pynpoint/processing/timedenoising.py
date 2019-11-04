@@ -88,7 +88,7 @@ class DwtWaveletConfiguration:
 
         # check if wavelet is supported
         if wavelet not in supported:
-            raise ValueError('DWT supports only ' + str(supported) + ' as input wavelet.')
+            raise ValueError(f'DWT supports only {supported} as input wavelet.')
 
         self.m_wavelet = wavelet
 
@@ -177,7 +177,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 Parameters
                 ----------
-                signal_in :
+                signal_in : numpy.ndarray
                     1D input signal.
 
                 Returns
@@ -219,7 +219,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
                 Parameters
                 ----------
-                signal_in :
+                signal_in : numpy.ndarray
                     1D input signal.
 
                 Returns
@@ -313,7 +313,7 @@ class TimeNormalizationModule(ProcessingModule):
         self.apply_function_to_images(_normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Running TimeNormalizationModule')
+                                      'Time normalization')
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('TimeNormalizationModule', 'normalization = median')

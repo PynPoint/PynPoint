@@ -3,7 +3,6 @@ Module for reading FITS files.
 """
 
 import os
-import sys
 import time
 
 from typing import Union, Tuple, List
@@ -191,12 +190,13 @@ class FitsReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, fits_file in enumerate(files):
-            progress(i, len(files), 'Running FitsReadingModule...', start_time)
+            progress(i, len(files), 'Reading FITS files...', start_time)
 
             header, shape = self.read_single_file(fits_file, overwrite_tags)
 
             if len(shape) == 2:
                 nimages = 1
+
             elif len(shape) == 3:
                 nimages = shape[0]
 
@@ -220,8 +220,5 @@ class FitsReadingModule(ReadingModule):
             first_index += nimages
 
             self.m_image_out_port.flush()
-
-        sys.stdout.write('Running FitsReadingModule... [DONE]\n')
-        sys.stdout.flush()
 
         self.m_image_out_port.close_port()

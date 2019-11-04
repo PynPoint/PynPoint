@@ -6,9 +6,8 @@ import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
-from pynpoint.processing.stacksubset import StackAndSubsetModule, MeanCubeModule, \
-                                            DerotateAndStackModule, CombineTagsModule, \
-                                            StackCubesModule
+from pynpoint.processing.stacksubset import StackAndSubsetModule, StackCubesModule, \
+                                            DerotateAndStackModule, CombineTagsModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
 warnings.simplefilter('always')
@@ -88,34 +87,6 @@ class TestStackSubset:
         parang = [1.5, 15.5, 19.5, 23.5, 25.5, 29.5, 31.5, 35.5, 37.5, 39.5]
         assert np.allclose(data, parang, rtol=limit, atol=0.)
         assert data.shape == (10, )
-
-    def test_mean_cube(self):
-
-        with pytest.warns(DeprecationWarning) as warning:
-            mean = MeanCubeModule(name_in='mean',
-                                  image_in_tag='images',
-                                  image_out_tag='mean')
-
-        assert len(warning) == 1
-        assert warning[0].message.args[0] == 'The MeanCubeModule will be be deprecated in a ' \
-                                             'future release. Please use the StackCubesModule ' \
-                                             'instead.'
-
-        self.pipeline.add_module(mean)
-        self.pipeline.run_module('mean')
-
-        data = self.pipeline.get_data('mean')
-        assert np.allclose(data[0, 50, 50], 0.09805840100024205, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738069, rtol=limit, atol=0.)
-        assert data.shape == (4, 100, 100)
-
-        attribute = self.pipeline.get_attribute('mean', 'INDEX', static=False)
-        assert np.allclose(np.mean(attribute), 1.5, rtol=limit, atol=0.)
-        assert attribute.shape == (4, )
-
-        attribute = self.pipeline.get_attribute('mean', 'NFRAMES', static=False)
-        assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
-        assert attribute.shape == (4, )
 
     def test_stack_cube(self):
 

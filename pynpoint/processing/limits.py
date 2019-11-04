@@ -2,8 +2,8 @@
 Pipeline modules for estimating detection limits.
 """
 
-import sys
 import os
+import sys
 import math
 import time
 import warnings
@@ -178,8 +178,6 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
-        sys.stdout.write('Running ContrastCurveModule...\r')
-
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -289,10 +287,15 @@ class ContrastCurveModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, len(positions), 'Running ContrastCurveModule...', start_time)
+            progress(nfinished, len(positions), 'Calculating detection limits...', start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
+
+        if nfinished != len(positions):
+            sys.stdout.write('\r                                                      ')
+            sys.stdout.write('\rCalculating detection limits... [DONE]\n')
+            sys.stdout.flush()
 
         # get the results for every async_result object
         for item in async_results:
@@ -321,10 +324,6 @@ class ContrastCurveModule(ProcessingModule):
         self.m_contrast_out_port._check_status_and_activate()
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
-
-        sys.stdout.write('\r                                                      ')
-        sys.stdout.write('\rRunning ContrastCurveModule... [DONE]\n')
-        sys.stdout.flush()
 
         history = f'{self.m_threshold[0]} = {self.m_threshold[1]}'
         self.m_contrast_out_port.add_history('ContrastCurveModule', history)
@@ -520,9 +519,6 @@ class MassLimitsModule(ProcessingModule):
             None
         """
 
-        sys.stdout.write('Running MassLimitsModule...')
-        sys.stdout.flush()
-
         model_age, model_data, model_header = self.read_model(self.m_model_file)
 
         assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
@@ -541,6 +537,8 @@ class MassLimitsModule(ProcessingModule):
 
         age_eval = self.m_star_age*np.ones_like(contrast)
         mag_eval = self.m_star_abs+contrast
+
+        print('Interpolating isochrones...', end='')
 
         mass = self.interpolate_model(age_eval=age_eval,
                                       mag_eval=mag_eval,
@@ -563,8 +561,7 @@ class MassLimitsModule(ProcessingModule):
         mass_limits = np.column_stack((separation, mass, mass_upper, mass_lower))
         self.m_mass_out_port.set_all(mass_limits, data_dim=2)
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+        print(' [DONE]')
 
         history = f'filter = {self.m_instr_filter}'
         self.m_mass_out_port.add_history('MassLimitsModule', history)
