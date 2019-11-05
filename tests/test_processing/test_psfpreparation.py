@@ -126,8 +126,6 @@ class TestPsfPreparation:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('angle4')
 
-        assert len(warning) == 3
-
         assert warning[0].message.args[0] == 'AngleCalculationModule has not been tested for ' \
                                              'SPHERE/IFS data.'
 
