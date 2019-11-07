@@ -52,6 +52,14 @@ pynpoint.processing.extract module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.processing.filter module
+---------------------------------
+
+.. automodule:: pynpoint.processing.filter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.processing.fluxposition module
 ---------------------------------------
 

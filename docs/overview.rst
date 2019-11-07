@@ -92,6 +92,11 @@ Extract Star
 * :class:`~pynpoint.processing.extract.StarExtractionModule` (CPU): Locate and crop the position of the star.
 * :class:`~pynpoint.processing.extract.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
 
+Filters
+~~~~~~~
+
+* :class:`~pynpoint.processing.filter.GaussianFilterModule`: Apply a Gaussian filter to the images.
+
 Flux and Position
 ~~~~~~~~~~~~~~~~~
 
