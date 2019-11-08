@@ -29,6 +29,8 @@ from pynpoint.processing.darkflat import DarkCalibrationModule, \
 from pynpoint.processing.extract import StarExtractionModule, \
                                         ExtractBinaryModule
 
+from pynpoint.processing.filter import GaussianFilterModule
+
 from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              SimplexMinimizationModule, \
                                              FalsePositiveModule, \
