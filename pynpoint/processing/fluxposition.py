@@ -981,8 +981,8 @@ class SystematicErrorModule(ProcessingModule):
                  aperture: float = 0.1,
                  tolerance: float = 0.01,
                  pca_number: int = 10,
-                 cent_size: float = None,
-                 edge_size: float = None,
+                 mask: Union[Tuple[float, float], Tuple[None, float],
+                             Tuple[float, None], Tuple[None, None]] = None,
                  extra_rot: float = 0.,
                  residuals: str = 'median') -> None:
         """
@@ -991,9 +991,10 @@ class SystematicErrorModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with the science images that are read as input.
+            Tag of the database entry with the science images for which the systematic error is
+            estimated.
         psf_in_tag : str
-            Tag of the database entry with the reference PSF that is used as fake planet. Can be
+            Tag of the database entry with the PSF template that is used as fake planet. Can be
             either a single image or a stack of images equal in size to ``image_in_tag``.
         offset_out_tag : str
             Tag of the database entry at which the differences are stored between the injected and
@@ -1027,13 +1028,9 @@ class SystematicErrorModule(ProcessingModule):
             np.inf so the condition is always met.
         pca_number : int
             Number of principal components (PCs) used for the PSF subtraction.
-        cent_size : float
-            Radius of the central mask (arcsec). No mask is used when set to None. Masking is done
-            after the artificial planet is injected.
-        edge_size : float
-            Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
-            None. The radius will be set to half the image size if the argument is larger than half
-            the image size. Masking is done after the artificial planet is injected.
+        mask : tuple(float, float), None
+            Inner and outer mask radius (arcsec) which is applied before the PSF subtraction. Both
+            elements of the tuple can be set to None.
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
@@ -1060,8 +1057,7 @@ class SystematicErrorModule(ProcessingModule):
         self.m_merit = merit
         self.m_aperture = aperture
         self.m_tolerance = tolerance
-        self.m_cent_size = cent_size
-        self.m_edge_size = edge_size
+        self.m_mask = mask
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
         self.m_pca_number = pca_number
@@ -1131,8 +1127,8 @@ class SystematicErrorModule(ProcessingModule):
                                                sigma=0.,
                                                tolerance=self.m_tolerance,
                                                pca_number=self.m_pca_number,
-                                               cent_size=self.m_cent_size,
-                                               edge_size=self.m_edge_size,
+                                               cent_size=self.m_mask[0],
+                                               edge_size=self.m_mask[1],
                                                extra_rot=self.m_extra_rot,
                                                residuals='median')
 

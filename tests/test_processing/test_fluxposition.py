@@ -358,8 +358,7 @@ class TestFluxPosition:
                                        aperture=0.1,
                                        tolerance=0.1,
                                        pca_number=10,
-                                       cent_size=None,
-                                       edge_size=None,
+                                       mask=(None, None),
                                        extra_rot=0.,
                                        residuals='median')
 
