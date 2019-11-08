@@ -351,7 +351,7 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        def _objective(arg, count, n_components, sklearn_pca):
+        def _objective(arg, count, n_components, sklearn_pca, noise):
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
@@ -395,7 +395,8 @@ class SimplexMinimizationModule(ProcessingModule):
             chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
                                         aperture=aperture,
-                                        sigma=self.m_sigma)
+                                        sigma=self.m_sigma,
+                                        noise=noise)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -467,7 +468,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
             minimize(fun=_objective,
                      x0=[pos_init[0], pos_init[1], self.m_magnitude],
-                     args=(i, n_components, sklearn_pca),
+                     args=(i, n_components, sklearn_pca, noise),
                      method='Nelder-Mead',
                      tol=None,
                      options={'xatol': self.m_tolerance, 'fatol': float('inf')})
@@ -866,7 +867,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                    aperture,
                                                    indices,
                                                    self.m_merit,
-                                                   self.m_residuals]))
+                                                   self.m_residuals,
+                                                   noise]))
 
             sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 

@@ -252,8 +252,8 @@ def fake_planet(images: np.ndarray,
 def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
-                   sigma: float) -> float:
-
+                   sigma: float,
+                   noise: Union[float, None]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -268,6 +268,8 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
+    noise : float, None
+        Variance of the noise which is required when `merit` is set to 'gaussian'.
 
     Returns
     -------
@@ -303,21 +305,7 @@ def merit_function(residuals: np.ndarray,
 
     elif merit == 'gaussian':
 
-        # separation (pix) and position angle (deg)
-        sep_ang = cartesian_to_polar(center=center_subpixel(residuals),
-                                     y_pos=aperture[0],
-                                     x_pos=aperture[1])
-
-        if sigma > 0.:
-            residuals = gaussian_filter(input=residuals, sigma=sigma)
-
-        selected = select_annulus(image_in=residuals,
-                                  radius_in=sep_ang[0]-aperture[2],
-                                  radius_out=sep_ang[0]+aperture[2],
-                                  mask_position=aperture[0:2],
-                                  mask_radius=aperture[2])
-
-        chi_square = np.sum(residuals[indices]**2)/np.var(selected)
+        chi_square = np.sum(residuals[indices]**2)/noise
 
     else:
 
