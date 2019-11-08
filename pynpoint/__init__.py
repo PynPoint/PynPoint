@@ -35,7 +35,8 @@ from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              SimplexMinimizationModule, \
                                              FalsePositiveModule, \
                                              MCMCsamplingModule, \
-                                             AperturePhotometryModule
+                                             AperturePhotometryModule, \
+                                             SystematicErrorModule
 
 from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \

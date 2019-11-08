@@ -873,6 +873,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         self.m_chain_out_port.close_port()
 
+
 class AperturePhotometryModule(ProcessingModule):
     """
     Pipeline module for calculating the counts within a circular area.
@@ -957,3 +958,206 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history('AperturePhotometryModule', history)
         self.m_phot_out_port.close_port()
+
+
+class SystematicErrorModule(ProcessingModule):
+    """
+    Pipeline module for estimating the systematic error of the flux and position measurement.
+    """
+
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 psf_in_tag: str,
+                 offset_out_tag: str,
+                 position: Tuple[float, float],
+                 magnitude: float,
+                 n_angles: int = 360,
+                 psf_scaling: float = 1.,
+                 merit: str = 'gaussian',
+                 aperture: float = 0.1,
+                 tolerance: float = 0.01,
+                 pca_number: int = 10,
+                 cent_size: float = None,
+                 edge_size: float = None,
+                 extra_rot: float = 0.,
+                 residuals: str = 'median') -> None:
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry with the science images that are read as input.
+        psf_in_tag : str
+            Tag of the database entry with the reference PSF that is used as fake planet. Can be
+            either a single image or a stack of images equal in size to ``image_in_tag``.
+        offset_out_tag : str
+            Tag of the database entry at which the differences are stored between the injected and
+            and retrieved values of the separation (arcsec), position angle (deg), and contrast
+            (mag).
+        position : tuple(float, float)
+            Separation (arcsec) and position angle (deg) that are used to remove the planet signal.
+            The separation is also used to estimate the systematic error.
+        magnitude : float
+            Magnitude that is used to remove the planet signal and estimate the systematic error.
+        n_angles : int
+            Number of position angles (linearly sampled) that are used to estimate the systematic
+            errors.
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should be a positive value.
+        merit : str
+            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
+            Pixels are assumed to be independent measurements which are expected to be equal to
+            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
+            variance is estimated from the pixel values within an annulus at the separation of
+            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
+            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
+        aperture : float
+            Aperture radius (arcsec) that is used for measuring the figure of merit.
+        tolerance : float
+            Absolute error on the input parameters, position (pix) and contrast (mag), that is used
+            as acceptance level for convergence. Note that only a single value can be specified
+            which is used for both the position and flux so tolerance=0.1 will give a precision of
+            0.1 mag and 0.1 pix. The tolerance on the output (i.e., the chi-square value) is set to
+            np.inf so the condition is always met.
+        pca_number : int
+            Number of principal components (PCs) used for the PSF subtraction.
+        cent_size : float
+            Radius of the central mask (arcsec). No mask is used when set to None. Masking is done
+            after the artificial planet is injected.
+        edge_size : float
+            Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
+            None. The radius will be set to half the image size if the argument is larger than half
+            the image size. Masking is done after the artificial planet is injected.
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        residuals : str
+            Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(SystematicErrorModule, self).__init__(name_in)
+
+        self.m_image_in_tag = image_in_tag
+        self.m_psf_in_tag = psf_in_tag
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        self.m_offset_out_port = self.add_output_port(offset_out_tag)
+
+        self.m_position = position
+        self.m_magnitude = magnitude
+        self.m_n_angles = n_angles
+        self.m_psf_scaling = psf_scaling
+        self.m_merit = merit
+        self.m_aperture = aperture
+        self.m_tolerance = tolerance
+        self.m_cent_size = cent_size
+        self.m_edge_size = edge_size
+        self.m_extra_rot = extra_rot
+        self.m_residuals = residuals
+        self.m_pca_number = pca_number
+
+    @typechecked
+    def run(self) -> None:
+        """
+        Run method of the module. Removes the planet signal, then artificial planets are injected
+        (one at a time) at equally separated position angles and their position and contrast is
+        determined with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
+        The differences between the injected and retrieved separation, position angle, and contrast
+        are then stored as output.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        self.m_offset_out_port.del_all_data()
+        self.m_offset_out_port.del_all_attributes()
+
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        image = self.m_image_in_port[0, ]
+
+        module = FakePlanetModule(name_in=f'{self._m_name}_fake',
+                                  image_in_tag=self.m_image_in_tag,
+                                  psf_in_tag=self.m_psf_in_tag,
+                                  image_out_tag=f'{self._m_name}_empty',
+                                  position=self.m_position,
+                                  magnitude=self.m_magnitude,
+                                  psf_scaling=-self.m_psf_scaling)
+
+        module.connect_database(self._m_data_base)
+        module.run()
+
+        sep = float(self.m_position[0])
+        angles = np.linspace(0., 360., self.m_n_angles, endpoint=False)
+
+        for i, ang in enumerate(angles):
+            print(f'Processing position angle: {i} deg...')
+
+            module = FakePlanetModule(position=(sep, ang),
+                                      magnitude=self.m_magnitude,
+                                      psf_scaling=self.m_psf_scaling,
+                                      name_in=f'{self._m_name}_fake_{i}',
+                                      image_in_tag=f'{self._m_name}_empty',
+                                      psf_in_tag=self.m_psf_in_tag,
+                                      image_out_tag=f'{self._m_name}_fake')
+
+            module.connect_database(self._m_data_base)
+            module.run()
+
+            position = polar_to_cartesian(image, sep/pixscale, ang)
+            position = (int(round(position[1])), int(round(position[0])))
+
+            module = SimplexMinimizationModule(position=position,
+                                               magnitude=self.m_magnitude,
+                                               psf_scaling=-self.m_psf_scaling,
+                                               name_in=f'{self._m_name}_fake_{i}',
+                                               image_in_tag=f'{self._m_name}_fake',
+                                               psf_in_tag=self.m_psf_in_tag,
+                                               res_out_tag=f'{self._m_name}_simplex',
+                                               flux_position_tag=f'{self._m_name}_fluxpos',
+                                               merit=self.m_merit,
+                                               aperture=self.m_aperture,
+                                               sigma=0.,
+                                               tolerance=self.m_tolerance,
+                                               pca_number=self.m_pca_number,
+                                               cent_size=self.m_cent_size,
+                                               edge_size=self.m_edge_size,
+                                               extra_rot=self.m_extra_rot,
+                                               residuals='median')
+
+            module.connect_database(self._m_data_base)
+            module.run()
+
+            fluxpos_out_port = self.add_input_port(f'{self._m_name}_fluxpos')
+
+            data = [self.m_position[0] - fluxpos_out_port[-1, 2],
+                    ang - fluxpos_out_port[-1, 3],
+                    self.m_magnitude - fluxpos_out_port[-1, 4]]
+
+            if data[1] > 180.:
+                data[1] -= 360.
+            elif data[1] < -180.:
+                data[1] += 360.
+
+            print(f'Offset: {data[0]*1e3:.2f} mas, {data[1]:.2f} deg, {data[2]:.2f} mag')
+
+            self.m_offset_out_port.append(data, data_dim=2)
+
+        history = f'sep = {self.m_position[0]:.3f}, ' \
+                  f'pa = {self.m_position[1]:.1f}, ' \
+                  f'mag = {self.m_magnitude:.1f}'
+
+        self.m_offset_out_port.copy_attributes(self.m_image_in_port)
+        self.m_offset_out_port.add_history('SystematicErrorModule', history)
+        self.m_offset_out_port.close_port()
