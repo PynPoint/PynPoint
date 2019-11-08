@@ -158,7 +158,6 @@ class TestPsfPreparation:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('angle5')
 
-        assert len(warning) == 1
         assert warning[0].message.args[0] == 'There is a mismatch between the NDIT and NFRAMES ' \
                                              'values. The parallactic angles are calculated ' \
                                              'with a linear interpolation by using NFRAMES ' \
