@@ -341,7 +341,7 @@ class TestFluxPosition:
         assert np.allclose(np.median(data[:, 2]), 0.0, rtol=0., atol=1.)
 
         attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
-        assert np.allclose(attr, 0.3, rtol=0., atol=0.2)
+        assert np.allclose(attr, 0.3, rtol=0., atol=0.3)
 
     def test_systematic_error(self):
 
@@ -365,6 +365,6 @@ class TestFluxPosition:
         self.pipeline.run_module('error')
 
         data = self.pipeline.get_data('offset')
-        assert np.allclose(data[0, 0], -0.004192746397732816, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.004504673197196644, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 0], -0.004066263849143104, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -0.0077784357245382725, rtol=limit, atol=0.)
         assert data.shape == (2, 3)
