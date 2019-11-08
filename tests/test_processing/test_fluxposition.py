@@ -9,7 +9,6 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.fluxposition import FakePlanetModule, AperturePhotometryModule, \
                                              FalsePositiveModule, SimplexMinimizationModule, \
                                              MCMCsamplingModule, SystematicErrorModule
-
 from pynpoint.processing.stacksubset import DerotateAndStackModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule

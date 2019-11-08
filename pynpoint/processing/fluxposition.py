@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.analysis import fake_planet, merit_function, false_alarm
+from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, gaussian_noise
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel, rotate_coordinates
 from pynpoint.util.mcmc import lnprob
@@ -453,6 +453,18 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 sklearn_pca.components_ = q_ortho.T
 
+            if self.m_merit in ('poisson', 'hessian'):
+                noise = None
+
+            elif self.m_merit == 'gaussian':
+                noise = gaussian_noise(images=images,
+                                       parang=parang,
+                                       cent_size=self.m_cent_size,
+                                       edge_size=self.m_edge_size,
+                                       pca_number=n_components,
+                                       residuals=self.m_residuals,
+                                       aperture=aperture)
+
             minimize(fun=_objective,
                      x0=[pos_init[0], pos_init[1], self.m_magnitude],
                      args=(i, n_components, sklearn_pca),
@@ -816,6 +828,18 @@ class MCMCsamplingModule(ProcessingModule):
 
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
+
+        if self.m_merit == 'poisson':
+            noise = None
+
+        elif self.m_merit == 'gaussian':
+            noise = gaussian_noise(images=images,
+                                   parang=parang,
+                                   cent_size=self.m_mask[0],
+                                   edge_size=self.m_mask[1],
+                                   pca_number=self.m_pca_number,
+                                   residuals=self.m_residuals,
+                                   aperture=aperture)
 
         initial = np.zeros((self.m_nwalkers, ndim))
 

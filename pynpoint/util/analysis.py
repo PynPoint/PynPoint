@@ -4,7 +4,7 @@ Functions for point source analysis.
 
 import math
 
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -15,7 +15,9 @@ from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
-                                cartesian_to_polar
+                                cartesian_to_polar, create_mask
+from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
@@ -324,3 +326,53 @@ def merit_function(residuals: np.ndarray,
                          '\'poisson\'.')
 
     return chi_square
+
+
+@typechecked
+def gaussian_noise(images: np.ndarray,
+                   parang: np.ndarray,
+                   cent_size: Union[float, None],
+                   edge_size: Union[float, None],
+                   pca_number: int,
+                   residuals: str,
+                   aperture: Tuple[int, int, float]) -> float:
+    """
+    Function to calculate the variance of the noise. After the PSF subtraction, images are rotated
+    in opposite direction of the regular derotation, therefore dispersing any companion or disk
+    signal. The noise is measured within an annulus.
+
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Input images (3D).
+    parang : numpy.ndarray
+        Parallactic angles.
+    cent_size : float, None
+        Radius of the central mask (pix). No mask is used when set to None.
+    edge_size : float, None
+        Outer radius (pix) beyond which pixels are masked. No outer mask is used when set to
+        None.
+    pca_number : int
+        Number of principal components (PCs) used for the PSF subtraction.
+    residuals : str
+        Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+    aperture : tuple(int, int, float)
+        Aperture position (y, x) and radius (pix).
+
+    Returns
+    -------
+    float
+        Variance of the pixel values.
+    """
+
+    mask = create_mask(images.shape[-2:], (cent_size, edge_size))
+
+    _, im_res_derot = pca_psf_subtraction(images*mask, parang, pca_number)
+
+    res_noise = combine_residuals(residuals, im_res_derot)
+
+    sep_ang = cartesian_to_polar(center_subpixel(res_noise), aperture[0], aperture[1])
+
+    selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+
+    return np.var(selected)
