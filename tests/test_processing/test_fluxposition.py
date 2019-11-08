@@ -2,14 +2,13 @@ import os
 import warnings
 
 import h5py
-import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.fluxposition import FakePlanetModule, AperturePhotometryModule, \
                                              FalsePositiveModule, SimplexMinimizationModule, \
-                                             MCMCsamplingModule
+                                             MCMCsamplingModule, SystematicErrorModule
 
 from pynpoint.processing.stacksubset import DerotateAndStackModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
@@ -344,3 +343,29 @@ class TestFluxPosition:
 
         attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
         assert np.allclose(attr, 0.3, rtol=0., atol=0.2)
+
+    def test_systematic_error(self):
+
+        module = SystematicErrorModule(name_in='error',
+                                       image_in_tag='fake',
+                                       psf_in_tag='read',
+                                       offset_out_tag='offset',
+                                       position=(0.5, 90.),
+                                       magnitude=6.,
+                                       n_angles=2,
+                                       psf_scaling=1.,
+                                       merit='gaussian',
+                                       aperture=0.1,
+                                       tolerance=0.1,
+                                       pca_number=10,
+                                       mask=(None, None),
+                                       extra_rot=0.,
+                                       residuals='median')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('error')
+
+        data = self.pipeline.get_data('offset')
+        assert np.allclose(data[0, 0], -0.004192746397732816, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.004504673197196644, rtol=limit, atol=0.)
+        assert data.shape == (2, 3)

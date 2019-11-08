@@ -105,6 +105,7 @@ Flux and Position
 * :class:`~pynpoint.processing.fluxposition.FalsePositiveModule`: Compute the signal-to-noise ratio and false positive fraction.
 * :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule` (CPU): Estimate the flux and position of a planet with MCMC sampling.
 * :class:`~pynpoint.processing.fluxposition.AperturePhotometryModule` (CPU): Compute the integrated flux at a position.
+* :class:`~pynpoint.processing.fluxposition.SystematicErrorModule`: Compute the systematic errors on the flux and position.
 
 Frame Selection
 ~~~~~~~~~~~~~~~
