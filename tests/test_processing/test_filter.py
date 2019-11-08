@@ -19,15 +19,7 @@ class TestFilter:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'data',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
-
+        create_star_data(self.test_dir+'data')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
