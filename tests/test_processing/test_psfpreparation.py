@@ -100,17 +100,19 @@ class TestPsfPreparation:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('angle3')
 
-        assert warning[0].message.args[0] == 'For SPHERE data it is recommended to use the ' \
-                                             'header keyword \'ESO INS4 DROT2 RA\' to specify ' \
-                                             'the object\'s right ascension. The input will be ' \
-                                             'parsed accordingly. Using the regular \'RA\' '\
-                                             'keyword will lead to wrong parallactic angles.' \
+        warning_0 = 'For SPHERE data it is recommended to use the header keyword \'ESO INS4 ' \
+                    'DROT2 RA\' to specify the object\'s right ascension. The input will be ' \
+                    'parsed accordingly. Using the regular \'RA\' keyword will lead to wrong ' \
+                    'parallactic angles.'
 
-        assert warning[1].message.args[0] == 'For SPHERE data it is recommended to use the ' \
-                                             'header keyword \'ESO INS4 DROT2 DEC\' to specify ' \
-                                             'the object\'s declination. The input will be ' \
-                                             'parsed accordingly. Using the regular \'DEC\' '\
-                                             'keyword will lead to wrong parallactic angles.' \
+        warning_1 = 'For SPHERE data it is recommended to use the header keyword \'ESO INS4 ' \
+                    'DROT2 DEC\' to specify the object\'s declination. The input will be parsed ' \
+                    'accordingly. Using the regular \'DEC\' keyword will lead to wrong ' \
+                    'parallactic angles.'
+
+        if len(warning) == 2:
+            assert warning[0].message.args[0] == warning_0
+            assert warning[1].message.args[0] == warning_1
 
         data = self.pipeline.get_data('header_read/PARANG')
         assert np.allclose(data[0], 170.39102715170227, rtol=limit, atol=0.)
@@ -126,20 +128,22 @@ class TestPsfPreparation:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('angle4')
 
-        assert warning[0].message.args[0] == 'AngleCalculationModule has not been tested for ' \
-                                             'SPHERE/IFS data.'
+        warning_0 = 'AngleCalculationModule has not been tested for SPHERE/IFS data.'
 
-        assert warning[1].message.args[0] == 'For SPHERE data it is recommended to use the ' \
-                                             'header keyword \'ESO INS4 DROT2 RA\' to specify ' \
-                                             'the object\'s right ascension. The input will be ' \
-                                             'parsed accordingly. Using the regular \'RA\' '\
-                                             'keyword will lead to wrong parallactic angles.' \
+        warning_1 = 'For SPHERE data it is recommended to use the header keyword \'ESO INS4 ' \
+                    'DROT2 RA\' to specify the object\'s right ascension. The input will be ' \
+                    'parsed accordingly. Using the regular \'RA\' keyword will lead to wrong ' \
+                    'parallactic angles.'
 
-        assert warning[2].message.args[0] == 'For SPHERE data it is recommended to use the ' \
-                                             'header keyword \'ESO INS4 DROT2 DEC\' to specify ' \
-                                             'the object\'s declination. The input will be ' \
-                                             'parsed accordingly. Using the regular \'DEC\' '\
-                                             'keyword will lead to wrong parallactic angles.' \
+        warning_2 = 'For SPHERE data it is recommended to use the header keyword \'ESO INS4 ' \
+                    'DROT2 DEC\' to specify the object\'s declination. The input will be parsed ' \
+                    'accordingly. Using the regular \'DEC\' keyword will lead to wrong ' \
+                    'parallactic angles.'
+
+        if len(warning) == 3:
+            assert warning[0].message.args[0] == warning_0
+            assert warning[1].message.args[0] == warning_1
+            assert warning[2].message.args[0] == warning_2
 
         data = self.pipeline.get_data('header_read/PARANG')
         assert np.allclose(data[0], -89.12897284829768, rtol=limit, atol=0.)
@@ -158,11 +162,13 @@ class TestPsfPreparation:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('angle5')
 
-        assert warning[0].message.args[0] == 'There is a mismatch between the NDIT and NFRAMES ' \
-                                             'values. The parallactic angles are calculated ' \
-                                             'with a linear interpolation by using NFRAMES ' \
-                                             'steps. A frame selection should be applied ' \
-                                             'after the parallactic angles are calculated.'
+        warning_0 = 'There is a mismatch between the NDIT and NFRAMES values. The parallactic ' \
+                    'angles are calculated with a linear interpolation by using NFRAMES steps. ' \
+                    'A frame selection should be applied after the parallactic angles are ' \
+                    'calculated.'
+
+        if len(warning) == 1:
+            assert warning[0].message.args[0] == warning_0
 
         data = self.pipeline.get_data('header_read/PARANG')
         assert np.allclose(data[0], 0., rtol=limit, atol=0.)
