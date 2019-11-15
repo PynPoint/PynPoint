@@ -38,13 +38,17 @@ PynPoint creates an HDF5 database called ``PynPoin_database.hdf5`` in the ``work
 
 Input data is read into the central database with a :class:`~pynpoint.core.processing.ReadingModule`. By default, PynPoint will read data from the ``input_place_in`` but setting a manual folder is possible to read data to separate database tags (e.g., dark frames, flat fields, and science data). Here we show an example of how to read FITS files and a list of parallactic angles.
 
-First, we need to create an instance of :class:`~pynpoint.core.pypeline.Pypeline`::
+First, we need to create an instance of :class:`~pynpoint.core.pypeline.Pypeline`:
+
+.. code-block:: python
 
     pipeline = Pypeline(working_place_in="/path/to/working_place",
                         input_place_in="/path/to/input_place",
                         output_place_in="/path/to/output_place")
 
-Next, we read the science data from the the default input location::
+Next, we read the science data from the the default input location:
+
+.. code-block:: python
 
     module = FitsReadingModule(name_in="read_science",
                                input_dir=None,
@@ -52,7 +56,9 @@ Next, we read the science data from the the default input location::
 
     pipeline.add_module(module)
 
-And we read the flat fields from a separate location::
+And we read the flat fields from a separate location:
+
+.. code-block:: python
 
     module = FitsReadingModule(name_in="read_flat",
                                input_dir="/path/to/flat",
@@ -60,7 +66,9 @@ And we read the flat fields from a separate location::
 
     pipeline.add_module(module)
 
-The parallactic angles are read from a text file in the default input folder and attached as attribute to the science data::
+The parallactic angles are read from a text file in the default input folder and attached as attribute to the science data:
+
+.. code-block:: python
 
     module = ParangReadingModule(file_name="parang.dat",
                                  name_in="parang",
@@ -69,11 +77,15 @@ The parallactic angles are read from a text file in the default input folder and
 
     pipeline.add_module(module)
 
-Finally, we run all pipeline modules::
+Finally, we run all pipeline modules:
+
+.. code-block:: python
 
     pipeline.run()
 
-Alternatively, it is also possible to run the modules individually by their ``name_in`` value::
+Alternatively, it is also possible to run the modules individually by their ``name_in`` value:
+
+.. code-block:: python
 
     pipeline.run_module("read_science")
     pipeline.run_module("read_flat")

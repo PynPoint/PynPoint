@@ -3,17 +3,20 @@ Functions for Pypeline modules.
 """
 
 import sys
-import math
+import time
 
-import cv2
+from typing import Union
+
 import numpy as np
 
-from pynpoint.util.image import crop_image, center_pixel
+from typeguard import typechecked
 
 
-def progress(current,
-             total,
-             message):
+@typechecked
+def progress(current: int,
+             total: int,
+             message: str,
+             start_time: float = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -25,6 +28,8 @@ def progress(current,
         Total index number.
     message : str
         Message that is printed.
+    start_time : float, None, optional
+        Start time in seconds. Not used if set to None.
 
     Returns
     -------
@@ -32,14 +37,49 @@ def progress(current,
         None
     """
 
-    fraction = float(current)/float(total)
-    percentage = round(fraction*100., 1)
+    def time_string(delta_time):
+        """
+        Converts to input time in seconds to a string which displays as hh:mm:ss.
 
-    sys.stdout.write("%s %s%s \r" % (message, percentage, "%"))
+        Parameters
+        ----------
+        delta_time : float
+            Input time in seconds.
+
+        Returns
+        -------
+        str:
+            String with the formatted time.
+        """
+
+        hours = int(delta_time / 3600.)
+        minutes = int((delta_time % 3600.) / 60.)
+        seconds = int(delta_time % 60.)
+
+        return f'{hours:>02}:{minutes:>02}:{seconds:>02}'
+
+    fraction = float(current) / float(total)
+    percentage = 100.*fraction
+
+    if start_time is None:
+        sys.stdout.write(f'\r{message} {percentage:4.1f}% \r')
+
+    else:
+        if fraction > 0. and current+1 != total:
+            time_taken = time.time() - start_time
+            time_left = time_taken / fraction * (1. - fraction)
+            sys.stdout.write(f'{message} {percentage:4.1f}% - ETA: {time_string(time_left)}\r')
+
+    if current+1 == total:
+        sys.stdout.write((29 + len(message)) * ' ' + '\r')
+        sys.stdout.write(message+' [DONE]\n')
+
     sys.stdout.flush()
 
-def memory_frames(memory,
-                  nimages):
+
+@typechecked
+def memory_frames(memory: Union[int, np.int64],
+                  nimages: int) -> np.ndarray:
     """
     Function to subdivide the input images is in quantities of MEMORY.
 
@@ -59,85 +99,148 @@ def memory_frames(memory,
         frames = np.asarray([0, nimages])
 
     else:
-        frames = np.linspace(0,
-                             nimages-nimages%memory,
-                             int(float(nimages)/float(memory))+1,
+        frames = np.linspace(start=0,
+                             stop=nimages - nimages % memory,
+                             num=int(float(nimages)/float(memory))+1,
                              endpoint=True,
                              dtype=np.int)
 
-        if nimages%memory > 0:
+        if nimages % memory > 0:
             frames = np.append(frames, nimages)
 
     return frames
 
-def locate_star(image,
-                center,
-                width,
-                fwhm):
+
+@typechecked
+def update_arguments(index: int,
+                     nimages: int,
+                     args_in: Union[tuple, None]) -> Union[tuple, None]:
     """
-    Function to locate the star by finding the brightest pixel.
+    Function to update the arguments of an input function. Specifically, arguments which contain an
+    array with the first dimension equal in size to the total number of images will be substituted
+    by the array element of the image index.
 
     Parameters
     ----------
-    image : numpy.ndarray
-        Input image (2D).
-    center : tuple(int, int)
-        Pixel center (y, x) of the subframe. The full image is used if set to None.
-    width : int
-        The width (pix) of the subframe. The full image is used if set to None.
-    fwhm : int
-        Full width at half maximum of the Gaussian kernel.
+    index : int
+        Image index in the stack.
+    nimages : int
+        Total number of images in the stack.
+    args_in : tuple, None
+        Function arguments that have to be updated.
 
     Returns
     -------
-    tuple(int, int)
-        Position (y, x) of the brightest pixel.
+    tuple, None
+        Updated function arguments.
     """
 
-    if width is not None:
-        if center is None:
-            center = center_pixel(image)
+    if args_in is None:
+        args_out = None
 
-        image = crop_image(image, center, width)
+    else:
+        args_out = []
 
-    sigma = fwhm/math.sqrt(8.*math.log(2.))
-    kernel = (fwhm*2+1, fwhm*2+1)
-    smooth = cv2.GaussianBlur(image, kernel, sigma)
+        for item in args_in:
+            if isinstance(item, np.ndarray) and item.shape[0] == nimages:
+                args_out.append(item[index])
 
-    # argmax[0] is the y position and argmax[1] is the y position
-    argmax = np.asarray(np.unravel_index(smooth.argmax(), smooth.shape))
+            else:
+                args_out.append(item)
 
-    if center is not None and width is not None:
-        argmax[0] += center[0] - (image.shape[0]-1) // 2 # y
-        argmax[1] += center[1] - (image.shape[1]-1) // 2 # x
+        args_out = tuple(args_out)
 
-    return argmax
+    return args_out
 
-def rotate_coordinates(center,
-                       position,
-                       angle):
+
+@typechecked
+def module_info(pipeline_module) -> None:
     """
-    Function to rotate coordinates around the image center.
+    Function to print the module name.
 
     Parameters
     ----------
-    center : tuple(float, float)
-        Image center (y, x).
-    position : tuple(float, float)
-        Position (y, x) in the image.
-    angle : float
-        Angle (deg) to rotate in counterclockwise direction.
+    pipeline_module : PypelineModule
+        Pipeline module.
 
     Returns
     -------
-    tuple(float, float)
-        New position (y, x).
+    NoneType
+        None
     """
 
-    pos_x = (position[1]-center[1])*math.cos(np.radians(angle)) - \
-            (position[0]-center[0])*math.sin(np.radians(angle))
+    module_name = type(pipeline_module).__name__
+    str_length = len(module_name)
 
-    pos_y = (position[1]-center[1])*math.sin(np.radians(angle)) + \
-            (position[0]-center[0])*math.cos(np.radians(angle))
+    print('\n' + str_length * '-')
+    print(module_name)
+    print(str_length * '-' + '\n')
+    print(f'Module name: {pipeline_module._m_name}')
 
-    return (center[0]+pos_y, center[1]+pos_x)
+
+@typechecked
+def input_info(pipeline_module) -> None:
+    """
+    Function to print information about the input data.
+
+    Parameters
+    ----------
+    pipeline_module : PypelineModule
+        Pipeline module.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    input_ports = list(pipeline_module._m_input_ports.keys())
+
+    if len(input_ports) == 1:
+        input_shape = pipeline_module._m_input_ports[input_ports[0]].get_shape()
+        print(f'Input port: {input_ports[0]} {input_shape}')
+
+    else:
+        print('Input ports:', end='')
+
+        for i, item in enumerate(input_ports):
+            input_shape = pipeline_module._m_input_ports[input_ports[i]].get_shape()
+
+            if i < len(input_ports) - 1:
+                print(f' {item} {input_shape},', end='')
+            else:
+                print(f' {item} {input_shape}')
+
+
+@typechecked
+def output_info(pipeline_module, output_shape) -> None:
+    """
+    Function to print information about the output data.
+
+    Parameters
+    ----------
+    pipeline_module : PypelineModule
+        Pipeline module.
+    output_shape : dict
+        Dictionary with the output dataset names and shapes.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    output_ports = list(pipeline_module._m_output_ports.keys())
+
+    if len(output_ports) == 1:
+        if output_ports[0][:11] != 'fits_header':
+            print(f'Output port: {output_ports[0]} {output_shape[output_ports[0]]}')
+
+    else:
+        print('Output ports:', end='')
+
+        for i, item in enumerate(output_ports):
+            if i < len(output_ports) - 1:
+                print(f' {item} {output_shape[output_ports[i]]},', end='')
+            else:
+                print(f' {item} {output_shape[output_ports[i]]}')

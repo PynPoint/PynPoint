@@ -2,10 +2,12 @@
 Pipeline modules for subtraction of the background emission.
 """
 
-import sys
+import time
 import warnings
 
 import numpy as np
+
+from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
@@ -18,25 +20,26 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
-    def __init__(self,
-                 shift,
-                 name_in="simple_background",
-                 image_in_tag="im_arr",
-                 image_out_tag="bg_sub_arr"):
-        """
-        Constructor of SimpleBackgroundSubtractionModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 shift: int) -> None:
+        """
         Parameters
         ----------
-        shift : int
-            Frame index offset for the background subtraction. Typically equal to the number of
-            frames per dither location.
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
+        shift : int
+            Frame index offset for the background subtraction. Typically equal to the number of
+            frames per dither location.
 
         Returns
         -------
@@ -51,7 +54,8 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
 
         self.m_shift = shift
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Simple background subtraction with a constant index offset.
 
@@ -70,8 +74,10 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         else:
             self.m_image_out_port.set_all(subtract, data_dim=3)
 
+        start_time = time.time()
+
         for i in range(1, nframes):
-            progress(i, nframes, "Running SimpleBackgroundSubtractionModule...")
+            progress(i, nframes, 'Subtracting background...', start_time)
 
             subtract = self.m_image_in_port[i] - self.m_image_in_port[(i + self.m_shift) % nframes]
 
@@ -80,12 +86,9 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
             else:
                 self.m_image_out_port.append(subtract)
 
-        sys.stdout.write("Running SimpleBackgroundSubtractionModule... [DONE]\n")
-        sys.stdout.flush()
-
-        history = "shift = "+str(self.m_shift)
+        history = f'shift = {self.m_shift}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("SimpleBackgroundSubtractionModule", history)
+        self.m_image_out_port.add_history('SimpleBackgroundSubtractionModule', history)
         self.m_image_out_port.close_port()
 
 
@@ -95,22 +98,16 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
-    def __init__(self,
-                 shift=None,
-                 cubes=1,
-                 name_in="mean_background",
-                 image_in_tag="im_arr",
-                 image_out_tag="bg_sub_arr"):
-        """
-        Constructor of MeanBackgroundSubtractionModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
-        shift : int
-            Image index offset for the background subtraction. Typically equal to the number of
-            frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
-            select the background frames automatically. The *cubes* parameters should be set when
-            *shift* is set to None.
-        cubes : int
-            Number of consecutive cubes per dithering position.
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 shift: int = None,
+                 cubes: int = 1) -> None:
+        """
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
@@ -118,6 +115,13 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
+        shift : int, None
+            Image index offset for the background subtraction. Typically equal to the number of
+            frames per dither location. If set to None, the ``NFRAMES`` attribute will be used to
+            select the background frames automatically. The *cubes* parameters should be set when
+            *shift* is set to None.
+        cubes : int
+            Number of consecutive cubes per dithering position.
 
         Returns
         -------
@@ -133,7 +137,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         self.m_shift = shift
         self.m_cubes = cubes
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Mean background subtraction which uses either a constant index
         offset or the ``NFRAMES`` attributes. The mean background is calculated from the cubes
@@ -147,16 +152,16 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         # Use NFRAMES values if shift=None
         if self.m_shift is None:
-            self.m_shift = self.m_image_in_port.get_attribute("NFRAMES")
+            self.m_shift = self.m_image_in_port.get_attribute('NFRAMES')
 
         nframes = self.m_image_in_port.get_shape()[0]
 
         if not isinstance(self.m_shift, np.ndarray) and nframes < self.m_shift*2.0:
-            raise ValueError("The input stack is too small for a mean background subtraction. The "
-                             "position of the star should shift at least once.")
+            raise ValueError('The input stack is too small for a mean background subtraction. The '
+                             'position of the star should shift at least once.')
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError("The tag of the input port should be different from the output port.")
+            raise ValueError('The tag of the input port should be different from the output port.')
 
         # Number of substacks
         if isinstance(self.m_shift, np.ndarray):
@@ -170,7 +175,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             next_end = np.sum(self.m_shift[0:2*self.m_cubes])
 
             if 2*self.m_cubes > np.size(self.m_shift):
-                raise ValueError("Not enough frames available for the background subtraction.")
+                raise ValueError('Not enough frames available for the background subtraction.')
 
             bg_data = self.m_image_in_port[next_start:next_end, ]
             bg_mean = np.mean(bg_data, axis=0)
@@ -195,9 +200,10 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             self.m_image_out_port.append(tmp_data)
 
         # Processing of the rest of the data
+        start_time = time.time()
         if isinstance(self.m_shift, np.ndarray):
             for i in range(self.m_cubes, nstacks, self.m_cubes):
-                progress(i, nstacks, "Running MeanBackgroundSubtractionModule...")
+                progress(i, nstacks, 'Subtracting background...', start_time)
 
                 prev_start = np.sum(self.m_shift[0:i-self.m_cubes])
                 prev_end = np.sum(self.m_shift[0:i])
@@ -224,7 +230,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             top = int(np.ceil(nframes/self.m_shift)) - 2
 
             for i in range(1, top, 1):
-                progress(i, top, "Running MeanBackgroundSubtractionModule...")
+                progress(i, top, 'Subtracting background...', start_time)
 
                 # calc the mean (next)
                 tmp_data = self.m_image_in_port[(i+1)*self.m_shift:(i+2)*self.m_shift, ]
@@ -246,7 +252,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             tmp_mean = np.mean(tmp_data, axis=0)
 
             # calc the mean (next)
-            # "nframes" is important if the last step is to huge
+            # 'nframes' is important if the last step is to huge
             tmp_data = self.m_image_in_port[(top+1)*self.m_shift:nframes, ]
             tmp_mean = (tmp_mean + np.mean(tmp_data, axis=0)) / 2.0
 
@@ -266,16 +272,13 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             self.m_image_out_port.append(tmp_data)
             # -----------------------------------------------------------
 
-        sys.stdout.write("Running MeanBackgroundSubtractionModule... [DONE]\n")
-        sys.stdout.flush()
-
         if isinstance(self.m_shift, np.ndarray):
-            history = "shift = NFRAMES, cubes = "+str(self.m_cubes)
+            history = f'shift = NFRAMES'
         else:
-            history = "shift = "+str(self.m_shift)+", cubes = "+str(self.m_cubes)
+            history = f'shift = {self.m_shift}'
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("MeanBackgroundSubtractionModule", history)
+        self.m_image_out_port.add_history('MeanBackgroundSubtractionModule', history)
         self.m_image_out_port.close_port()
 
 
@@ -286,15 +289,16 @@ class LineSubtractionModule(ProcessingModule):
     used if no background data is available or to remove a detector bias.
     """
 
-    def __init__(self,
-                 name_in="line_background",
-                 image_in_tag="im_arr",
-                 image_out_tag="bg_sub_arr",
-                 combine="median",
-                 mask=None):
-        """
-        Constructor of LineSubtractionModule.
+    __author__ = 'Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 image_out_tag: str,
+                 combine: str = 'median',
+                 mask=None) -> None:
+        """
         Parameters
         ----------
         name_in : str
@@ -304,9 +308,9 @@ class LineSubtractionModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output.
         combine : str
-            The method by which the column and row pixel values are combined ("median" or "mean").
+            The method by which the column and row pixel values are combined ('median' or 'mean').
             Using a mean-combination is computationally faster than a median-combination.
-        mask : float
+        mask : float, None
             The radius of the mask within which pixel values are ignored. No mask is used if set
             to None.
 
@@ -324,7 +328,8 @@ class LineSubtractionModule(ProcessingModule):
         self.m_combine = combine
         self.m_mask = mask
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Selects the pixel values in the column and row at each pixel
         position, computes the mean or median value while excluding pixels within the radius of
@@ -336,21 +341,21 @@ class LineSubtractionModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
         def _subtract_line(image_in, mask):
             image_tmp = np.copy(image_in)
             image_tmp[mask == 0.] = np.nan
 
-            if self.m_combine == "mean":
+            if self.m_combine == 'mean':
                 row_mean = np.nanmean(image_tmp, axis=1)
                 col_mean = np.nanmean(image_tmp, axis=0)
 
                 x_grid, y_grid = np.meshgrid(col_mean, row_mean)
                 subtract = (x_grid+y_grid)/2.
 
-            elif self.m_combine == "median":
+            elif self.m_combine == 'median':
                 subtract = np.zeros(im_shape)
 
                 col_median = np.nanmedian(image_tmp, axis=0)
@@ -361,7 +366,7 @@ class LineSubtractionModule(ProcessingModule):
 
                 row_median = np.nanmedian(image_tmp, axis=1)
                 row_2d = np.tile(row_median, (im_shape[0], 1))
-                row_2d = np.rot90(row_2d) # 90 deg rotation in clockwise direction
+                row_2d = np.rot90(row_2d)  # 90 deg rotation in clockwise direction
 
                 subtract = col_2d + row_2d
 
@@ -377,32 +382,33 @@ class LineSubtractionModule(ProcessingModule):
         self.apply_function_to_images(_subtract_line,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      "Running LineSubtractionModule...",
+                                      'Background subtraction',
                                       func_args=(mask, ))
 
-        history = "combine = "+str(self.m_combine)
+        history = f'combine = {self.m_combine}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history("LineSubtractionModule", history)
+        self.m_image_out_port.add_history('LineSubtractionModule', history)
         self.m_image_out_port.close_port()
 
 
 class NoddingBackgroundModule(ProcessingModule):
     """
     Pipeline module for background subtraction of data obtained with nodding (e.g., NACO AGPM
-    data). Before using this module, the sky images should be stacked with the MeanCubeModule
+    data). Before using this module, the sky images should be stacked with the StackCubesModule
     such that each image in the stack of sky images corresponds to the mean combination of a
     single FITS data cube.
     """
 
-    def __init__(self,
-                 name_in="sky_subtraction",
-                 science_in_tag="im_arr",
-                 sky_in_tag="sky_arr",
-                 image_out_tag="im_arr",
-                 mode="both"):
-        """
-        Constructor of NoddingBackgroundModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 science_in_tag: str,
+                 sky_in_tag: str,
+                 image_out_tag: str,
+                 mode: str = 'both') -> None:
+        """
         Parameters
         ----------
         name_in : str
@@ -418,7 +424,7 @@ class NoddingBackgroundModule(ProcessingModule):
         mode : str
             Sky images that are subtracted, relative to the science images. Either the next,
             previous, or average of the next and previous cubes of sky frames can be used by
-            choosing "next", "previous", or "both", respectively.
+            choosing 'next', 'previous', or 'both', respectively.
 
         Returns
         -------
@@ -434,10 +440,10 @@ class NoddingBackgroundModule(ProcessingModule):
 
         self.m_time_stamps = []
 
-        if mode in ["next", "previous", "both"]:
+        if mode in ['next', 'previous', 'both']:
             self.m_mode = mode
         else:
-            raise ValueError("Mode needs to be 'next', 'previous', or 'both'.")
+            raise ValueError('Mode needs to be \'next\', \'previous\', or \'both\'.')
 
     def _create_time_stamp_list(self):
         """
@@ -450,12 +456,9 @@ class NoddingBackgroundModule(ProcessingModule):
             Class for creating a time stamp.
             """
 
-            def __init__(self,
-                         time,
-                         im_type,
-                         index):
+            def __init__(self, time_in, im_type, index):
 
-                self.m_time = time
+                self.m_time = time_in
                 self.m_im_type = im_type
                 self.m_index = index
 
@@ -465,24 +468,24 @@ class NoddingBackgroundModule(ProcessingModule):
                              self.m_im_type,
                              self.m_index))
 
-        exp_no_sky = self.m_sky_in_port.get_attribute("EXP_NO")
-        exp_no_science = self.m_science_in_port.get_attribute("EXP_NO")
+        exp_no_sky = self.m_sky_in_port.get_attribute('EXP_NO')
+        exp_no_science = self.m_science_in_port.get_attribute('EXP_NO')
 
-        nframes_sky = self.m_sky_in_port.get_attribute("NFRAMES")
-        nframes_science = self.m_science_in_port.get_attribute("NFRAMES")
+        nframes_sky = self.m_sky_in_port.get_attribute('NFRAMES')
+        nframes_science = self.m_science_in_port.get_attribute('NFRAMES')
 
         if np.all(nframes_sky != 1):
-            warnings.warn("The NFRAMES values of the sky images are not all equal to unity. "
-                          "The MeanCubeModule should be applied on the sky images before the "
-                          "NoddingBackgroundModule is used.")
+            warnings.warn('The NFRAMES values of the sky images are not all equal to unity. '
+                          'The StackCubesModule should be applied on the sky images before the '
+                          'NoddingBackgroundModule is used.')
 
         for i, item in enumerate(exp_no_sky):
-            self.m_time_stamps.append(TimeStamp(item, "SKY", i))
+            self.m_time_stamps.append(TimeStamp(item, 'SKY', i))
 
         current = 0
         for i, item in enumerate(exp_no_science):
             frames = slice(current, current+nframes_science[i])
-            self.m_time_stamps.append(TimeStamp(item, "SCIENCE", frames))
+            self.m_time_stamps.append(TimeStamp(item, 'SCIENCE', frames))
             current += nframes_science[i]
 
         self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
@@ -495,12 +498,12 @@ class NoddingBackgroundModule(ProcessingModule):
         sky frames.
         """
 
-        if not any(x.m_im_type == "SKY" for x in self.m_time_stamps):
-            raise ValueError("List of time stamps does not contain any SKY images.")
+        if not any(x.m_im_type == 'SKY' for x in self.m_time_stamps):
+            raise ValueError('List of time stamps does not contain any SKY images.')
 
         def search_for_next_sky():
             for i in range(index_of_science_data, len(self.m_time_stamps)):
-                if self.m_time_stamps[i].m_im_type == "SKY":
+                if self.m_time_stamps[i].m_im_type == 'SKY':
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
 
             # no next sky found, look for previous sky
@@ -508,25 +511,26 @@ class NoddingBackgroundModule(ProcessingModule):
 
         def search_for_previous_sky():
             for i in reversed(list(range(0, index_of_science_data))):
-                if self.m_time_stamps[i].m_im_type == "SKY":
+                if self.m_time_stamps[i].m_im_type == 'SKY':
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
 
             # no previous sky found, look for next sky
             return search_for_next_sky()
 
-        if self.m_mode == "next":
+        if self.m_mode == 'next':
             return search_for_next_sky()
 
-        if self.m_mode == "previous":
+        if self.m_mode == 'previous':
             return search_for_previous_sky()
 
-        if self.m_mode == "both":
+        if self.m_mode == 'both':
             previous_sky = search_for_previous_sky()
             next_sky = search_for_next_sky()
 
             return (previous_sky+next_sky)/2.
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Create list of time stamps, get sky and science images, and
         subtract the sky images from the science images.
@@ -542,10 +546,11 @@ class NoddingBackgroundModule(ProcessingModule):
 
         self._create_time_stamp_list()
 
+        start_time = time.time()
         for i, time_entry in enumerate(self.m_time_stamps):
-            progress(i, len(self.m_time_stamps), "Running NoddingBackgroundModule...")
+            progress(i, len(self.m_time_stamps), 'Subtracting background...', start_time)
 
-            if time_entry.m_im_type == "SKY":
+            if time_entry.m_im_type == 'SKY':
                 continue
 
             sky = self.calc_sky_frame(i)
@@ -553,10 +558,7 @@ class NoddingBackgroundModule(ProcessingModule):
 
             self.m_image_out_port.append(science - sky[None, ], data_dim=3)
 
-        sys.stdout.write("Running NoddingBackgroundModule... [DONE]\n")
-        sys.stdout.flush()
-
-        history = "mode = "+self.m_mode
+        history = f'mode = {self.m_mode}'
         self.m_image_out_port.copy_attributes(self.m_science_in_port)
-        self.m_image_out_port.add_history("NoddingBackgroundModule", history)
+        self.m_image_out_port.add_history('NoddingBackgroundModule', history)
         self.m_image_out_port.close_port()
