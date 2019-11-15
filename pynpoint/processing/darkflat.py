@@ -2,15 +2,22 @@
 Pipeline modules for dark frame and flat field calibrations.
 """
 
+import time
 import warnings
+
+from typing import Tuple
 
 import numpy as np
 
+from typeguard import typechecked
+
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.module import progress, memory_frames
 
 
-def _master_frame(data,
-                  image_in_port):
+@typechecked
+def _master_frame(data: np.ndarray,
+                  im_shape: Tuple[int, int, int]) -> np.ndarray:
     """
     Internal function which creates a master dark/flat by calculating the mean (3D data) and
     cropping the frames to the shape of the science images if needed.
@@ -18,9 +25,9 @@ def _master_frame(data,
     Parameters
     ----------
     data : numpy.ndarray
-        Input array (2D or 3D) with dark or flat frames.
-    image_in_port : numpy.ndarray
-        Input port with the science images.
+        Input array (2D) with mean of the dark or flat frames.
+    im_shape : tuple(int, int, int)
+        Shape of the science images (3D).
 
     Returns
     -------
@@ -28,16 +35,10 @@ def _master_frame(data,
         Master dark/flat frame.
     """
 
-    if data.ndim == 3:
-        data = np.mean(data, axis=0)
-    elif data.ndim != 2:
-        raise ValueError("Dimension of input %s not supported. Only 2D and 3D arrays can be "
-                         "used." % image_in_port.tag)
-
-    shape_in = (image_in_port.get_shape()[1], image_in_port.get_shape()[2])
+    shape_in = (im_shape[1], im_shape[2])
 
     if data.shape[0] < shape_in[0] or data.shape[1] < shape_in[1]:
-        raise ValueError("Shape of the calibration images is smaller than the science images.")
+        raise ValueError('Shape of the calibration images is smaller than the science images.')
 
     if data.shape != shape_in:
         cal_shape = data.shape
@@ -47,8 +48,8 @@ def _master_frame(data,
 
         data = data[x_off:x_off+shape_in[0], y_off:y_off+shape_in[1]]
 
-        warnings.warn("The calibration images were cropped around their center to match the shape "
-                      "of the science images.")
+        warnings.warn('The calibration images were cropped around their center to match the shape '
+                      'of the science images.')
 
     return data
 
@@ -58,14 +59,15 @@ class DarkCalibrationModule(ProcessingModule):
     Pipeline module to subtract a master dark from the science data.
     """
 
-    def __init__(self,
-                 name_in="dark_calibration",
-                 image_in_tag="im_arr",
-                 dark_in_tag="dark_arr",
-                 image_out_tag="dark_cal_arr"):
-        """
-        Constructor of DarkCalibrationModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 dark_in_tag: str,
+                 image_out_tag: str) -> None:
+        """
         Parameters
         ----------
         name_in : str
@@ -89,7 +91,8 @@ class DarkCalibrationModule(ProcessingModule):
         self.m_dark_in_port = self.add_input_port(dark_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master dark with the same shape as the science
         data and subtracts the dark frame from the science data.
@@ -100,20 +103,29 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        def _dark_calibration(image_in, dark_in):
-            return image_in - dark_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         dark = self.m_dark_in_port.get_all()
-        master = _master_frame(dark, self.m_image_in_port)
 
-        self.apply_function_to_images(_dark_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      "Running DarkCalibrationModule...",
-                                      func_args=(master, ))
+        master = _master_frame(data=np.mean(dark, axis=0),
+                               im_shape=self.m_image_in_port.get_shape())
 
-        history = "dark_in_tag = "+self.m_dark_in_port.tag
-        self.m_image_out_port.add_history("DarkCalibrationModule", history)
+        start_time = time.time()
+
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Subtracting the dark current...', start_time)
+
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images - master, data_dim=3)
+
+        history = f'dark_in_tag = {self.m_dark_in_port.tag}'
+        self.m_image_out_port.add_history('DarkCalibrationModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -123,14 +135,15 @@ class FlatCalibrationModule(ProcessingModule):
     Pipeline module to apply a flat field correction to the science data.
     """
 
-    def __init__(self,
-                 name_in="flat_calibration",
-                 image_in_tag="dark_cal_arr",
-                 flat_in_tag="flat_arr",
-                 image_out_tag="flat_cal_arr"):
-        """
-        Constructor of FlatCalibrationModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 flat_in_tag: str,
+                 image_out_tag: str) -> None:
+        """
         Parameters
         ----------
         name_in : str
@@ -154,7 +167,8 @@ class FlatCalibrationModule(ProcessingModule):
         self.m_flat_in_port = self.add_input_port(flat_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Creates a master flat with the same shape as the science
         image and divides the science images by the flat field.
@@ -165,30 +179,35 @@ class FlatCalibrationModule(ProcessingModule):
             None
         """
 
-        def _flat_calibration(image_in, flat_in):
-            return image_in / flat_in
+        self.m_image_out_port.del_all_attributes()
+        self.m_image_out_port.del_all_data()
+
+        memory = self._m_config_port.get_attribute('MEMORY')
+        nimages = self.m_image_in_port.get_shape()[0]
+        frames = memory_frames(memory, nimages)
 
         flat = self.m_flat_in_port.get_all()
-        master = _master_frame(flat, self.m_image_in_port)
+
+        master = _master_frame(data=np.mean(flat, axis=0),
+                               im_shape=self.m_image_in_port.get_shape())
 
         # shift all values to greater or equal to +1.0
         flat_min = np.amin(master)
         master -= flat_min - 1.
 
-        # normalization
+        # normalization, median value is 1 afterwards
         master /= np.median(master)
 
-        if not np.allclose(np.median(master), 1., rtol=1e-6, atol=0.):
-            raise ValueError("Median of the master flat should be equal to unity (value=%s)."
-                             % np.median(master))
+        start_time = time.time()
 
-        self.apply_function_to_images(_flat_calibration,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      "Running FlatCalibrationModule...",
-                                      func_args=(master, ))
+        for i in range(len(frames[:-1])):
+            progress(i, len(frames[:-1]), 'Flat fielding the images...', start_time)
 
-        history = "flat_in_tag = "+self.m_flat_in_port.tag
-        self.m_image_out_port.add_history("FlatCalibrationModule", history)
+            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            self.m_image_out_port.append(images/master, data_dim=3)
+
+        history = f'flat_in_tag = {self.m_flat_in_port.tag}'
+        self.m_image_out_port.add_history('FlatCalibrationModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

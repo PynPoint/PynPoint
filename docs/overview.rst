@@ -17,6 +17,7 @@ Reading Modules
 * :class:`~pynpoint.readwrite.hdf5reading.Hdf5ReadingModule`: Import datasets and attributes from an HDF5 file (as created by PynPoint).
 * :class:`~pynpoint.readwrite.textreading.ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
 * :class:`~pynpoint.readwrite.textreading.AttributeReadingModule`: Import a list of values as dataset attribute.
+* :class:`~pynpoint.readwrite.nearreading.NearReadingModule` (CPU): Import VLT/VISIR data for the NEAR experiment.
 
 .. _writemodule:
 
@@ -39,7 +40,7 @@ Background Subtraction
 
 * :class:`~pynpoint.processing.background.SimpleBackgroundSubtractionModule`: Simple background subtraction for dithering datasets.
 * :class:`~pynpoint.processing.background.MeanBackgroundSubtractionModule`: Mean background subtraction for dithering datasets.
-* :class:`~pynpoint.processing.background.LineSubtractionModule` (multiproc): Subtraction of striped detector artifacts.
+* :class:`~pynpoint.processing.background.LineSubtractionModule` (CPU): Subtraction of striped detector artifacts.
 * :class:`~pynpoint.processing.background.NoddingBackgroundModule`: Background subtraction for nodding datasets.
 
 Bad Pixel Cleaning
@@ -57,21 +58,21 @@ Basic Processing
 * :class:`~pynpoint.processing.basic.SubtractImagesModule`: Subtract two stacks of images.
 * :class:`~pynpoint.processing.basic.AddImagesModule`: Add two stacks of images
 * :class:`~pynpoint.processing.basic.RotateImagesModule`: Rotate a stack of images.
+* :class:`~pynpoint.processing.basic.RepeatImagesModule`: Repeat a stack of images.
 
 Centering
 ~~~~~~~~~
 
-* :class:`~pynpoint.processing.centering.StarExtractionModule` (CPU): Locate the position of the star.
 * :class:`~pynpoint.processing.centering.StarAlignmentModule` (CPU): Align the images with a cross-correlation.
-* :class:`~pynpoint.processing.centering.StarCenteringModule` (CPU): Center the images by fitting a 2D Gaussian or Moffat function.
-* :class:`~pynpoint.processing.centering.ShiftImagesModule` (CPU): Shift a stack of images.
+* :class:`~pynpoint.processing.centering.FitCenterModule` (CPU): Fit the PSF with a 2D Gaussian or Moffat function.
+* :class:`~pynpoint.processing.centering.ShiftImagesModule`: Shift a stack of images.
 * :class:`~pynpoint.processing.centering.WaffleCenteringModule`: Use the waffle spots to center the images.
 
 Dark and Flat Correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule` (CPU): Dark frame subtraction.
-* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule` (CPU): Flat field correction.
+* :class:`~pynpoint.processing.darkflat.DarkCalibrationModule`: Dark frame subtraction.
+* :class:`~pynpoint.processing.darkflat.FlatCalibrationModule`: Flat field correction.
 
 Denoising
 ~~~~~~~~~
@@ -83,6 +84,13 @@ Detection Limits
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
+* :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
+
+Extract Star
+~~~~~~~~~~~~
+
+* :class:`~pynpoint.processing.extract.StarExtractionModule` (CPU): Locate and crop the position of the star.
+* :class:`~pynpoint.processing.extract.ExtractBinaryModule` (CPU): Extract a PSF which rotates across a stack of images.
 
 Flux and Position
 ~~~~~~~~~~~~~~~~~
@@ -100,15 +108,17 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.FrameSelectionModule`: Frame selection to remove low-quality image.
 * :class:`~pynpoint.processing.frameselection.RemoveLastFrameModule`: Remove the last image of a VLT/NACO dataset.
 * :class:`~pynpoint.processing.frameselection.RemoveStartFramesModule`: Remove images at the beginning of each original data cube.
-* :class:`~pynpoint.processing.frameselection.ImageStatisticsModule`: Compute statistics of the pixel values for each image.
+* :class:`~pynpoint.processing.frameselection.ImageStatisticsModule` (CPU): Compute statistics of the pixel values for each image.
+* :class:`~pynpoint.processing.frameselection.FrameSimilarityModule` (CPU): Compute different similarity measures of a set of images.
+* :class:`~pynpoint.processing.frameselection.SelectByAttributeModule`: Select images by the ascending/descending attribute values.
 
 Image Resizing
 ~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.resizing.CropImagesModule` (CPU): Crop the images.
+* :class:`~pynpoint.processing.resizing.CropImagesModule`: Crop the images.
 * :class:`~pynpoint.processing.resizing.ScaleImagesModule` (CPU): Resample the images (spatially and/or in flux).
-* :class:`~pynpoint.processing.resizing.AddLinesModule` (CPU): Add pixel lines on the sides of the images.
-* :class:`~pynpoint.processing.resizing.RemoveLinesModule` (CPU): Remove pixel lines from the sides of the images.
+* :class:`~pynpoint.processing.resizing.AddLinesModule`: Add pixel lines on the sides of the images.
+* :class:`~pynpoint.processing.resizing.RemoveLinesModule`: Remove pixel lines from the sides of the images.
 
 PCA Background Subtraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

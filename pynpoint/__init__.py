@@ -15,16 +15,19 @@ from pynpoint.processing.badpixel import BadPixelSigmaFilterModule, \
 
 from pynpoint.processing.basic import SubtractImagesModule, \
                                       AddImagesModule, \
-                                      RotateImagesModule
+                                      RotateImagesModule, \
+                                      RepeatImagesModule
 
-from pynpoint.processing.centering import StarExtractionModule, \
-                                          StarAlignmentModule, \
-                                          StarCenteringModule, \
+from pynpoint.processing.centering import StarAlignmentModule, \
+                                          FitCenterModule, \
                                           ShiftImagesModule, \
                                           WaffleCenteringModule
 
 from pynpoint.processing.darkflat import DarkCalibrationModule, \
                                          FlatCalibrationModule
+
+from pynpoint.processing.extract import StarExtractionModule, \
+                                        ExtractBinaryModule
 
 from pynpoint.processing.fluxposition import FakePlanetModule, \
                                              SimplexMinimizationModule, \
@@ -36,9 +39,14 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                FrameSelectionModule, \
                                                RemoveLastFrameModule, \
                                                RemoveStartFramesModule, \
-                                               ImageStatisticsModule
+                                               ImageStatisticsModule, \
+                                               FrameSimilarityModule, \
+                                               SelectByAttributeModule
 
-from pynpoint.processing.limits import ContrastCurveModule
+from pynpoint.processing.limits import ContrastCurveModule, \
+				       PCAContrastCurveModule,\
+				       PACOContrastCurveModule,\
+                                       MassLimitsModule
 
 from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \
                                               PCABackgroundSubtractionModule, \
@@ -59,7 +67,6 @@ from pynpoint.processing.resizing import CropImagesModule, \
                                          RemoveLinesModule
 
 from pynpoint.processing.stacksubset import StackAndSubsetModule, \
-                                            MeanCubeModule, \
                                             StackCubesModule, \
                                             DerotateAndStackModule, \
                                             CombineTagsModule
@@ -68,8 +75,7 @@ from pynpoint.processing.timedenoising import CwtWaveletConfiguration, \
                                               DwtWaveletConfiguration, \
                                               WaveletTimeDenoisingModule, \
                                               TimeNormalizationModule
-from pynpoint.processing.pacoModule import PACOModule,\
-					   PACOContrastModule
+from pynpoint.processing.pacoModule import PACOModule
 
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 
@@ -86,11 +92,13 @@ from pynpoint.readwrite.textwriting import AttributeWritingModule, \
 from pynpoint.readwrite.textreading import ParangReadingModule, \
                                            AttributeReadingModule
 
+from pynpoint.readwrite.nearreading import NearReadingModule
+
 warnings.simplefilter('always', DeprecationWarning)
 
 __author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 __license__ = 'GPLv3'
-__version__ = '0.7.0'
+__version__ = '0.8.1'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'

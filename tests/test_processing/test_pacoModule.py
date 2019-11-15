@@ -13,12 +13,12 @@ from pynpoint import Pypeline, \
                      FitsWritingModule, \
                      AngleCalculationModule, \
                      PACOModule, \
-                     PACOContrastModule, \
+                     ContrastCurveModule, \
                      ParangReadingModule
 
 working_dir = os.getcwd()
-input_dir = "/data/ipa/user/evertn/PACO/PACO/testData/vip_datasets/"
-output_dir = "/data/ipa/user/evertn/PACO/PACO/output/"
+input_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/testData/vip_datasets/"
+output_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/output/"
 #input_dir = "/home/evert/Documents/PACO/testData/vip_datasets/"
 #output_dir = "/home/evert/Documents/PACO/output/"
 fits_filename = "naco_betapic_cube.fits"
@@ -53,7 +53,7 @@ module = ParangReadingModule(name_in = "parang_reading",
 pipeline.add_module(module)
 
 # For computing a contrast curve for a data set
-module = PACOContrastModule(name_in = "paco_contrast",
+module = ContrastCurveModule(name_in = "paco_contrast",
                             image_in_tag = "science",
                             psf_in_tag = "psf",
                             contrast_out_tag = "contrast_out",

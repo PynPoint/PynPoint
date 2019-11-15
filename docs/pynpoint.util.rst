@@ -12,6 +12,14 @@ pynpoint.util.analysis module
     :undoc-members:
     :show-inheritance:
 
+pynpoint.util.attributes module
+-------------------------------
+
+.. automodule:: pynpoint.util.attributes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pynpoint.util.continuous module
 -------------------------------
 
@@ -104,6 +112,14 @@ pynpoint.util.residuals module
 ------------------------------
 
 .. automodule:: pynpoint.util.residuals
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pynpoint.util.star module
+-------------------------
+
+.. automodule:: pynpoint.util.star
     :members:
     :undoc-members:
     :show-inheritance:

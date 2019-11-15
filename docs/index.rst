@@ -3,23 +3,23 @@
 PynPoint
 ========
 
-PynPoint is a Python package for processing and analysis of high-contrast imaging data of faint companions and circumstellar disks. The package has been developed at the |ipa| of ETH Zurich in a collaboration between the |spf| and the |cosmo|.
+PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets and circumstellar disks. The Python package has been developed at the |ipa| of ETH Zurich in a collaboration between the |planets| and the |cosmo|.
 
 .. figure:: _static/eso.jpg
    :width: 100%
-   :target: http://www.eso.org/public/news/eso1310
+   :target: http://www.eso.org/public/news/eso1310/
 
 .. |ipa| raw:: html
 
-	<a href="http://www.ipa.phys.ethz.ch" target="_blank">Institute of Particle Physics and Astrophysics</a>
+	<a href="http://www.ipa.phys.ethz.ch/" target="_blank">Institute of Particle Physics and Astrophysics</a>
 
-.. |spf| raw:: html
+.. |planets| raw:: html
 
-   <a href="http://www.schmid-group.ethz.ch/" target="_blank">Star and Planet Formation Group</a>
+   <a href="https://quanz-group.ethz.ch/" target="_blank">Exoplanets and Habitability Group</a>
 
 .. |cosmo| raw:: html
 
-   <a href="http://www.cosmology.ethz.ch" target="_blank">Cosmology Research Group</a>
+   <a href="http://www.cosmology.ethz.ch/" target="_blank">Cosmology Research Group</a>
 
 .. toctree::
    :maxdepth: 2
@@ -34,6 +34,7 @@ PynPoint is a Python package for processing and analysis of high-contrast imagin
 
    overview
    architecture
+   configuration
    tutorial
    examples
    modules

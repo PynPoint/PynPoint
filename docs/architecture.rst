@@ -38,51 +38,6 @@ Each pipeline module has input and/or output tags which point to specific datase
 
 Accessing the data storage occurs through instances of :class:`~pynpoint.core.dataio.Port` which allow pipeline modules to read data from and write data to central database.
 
-.. _configuration:
-
-Central Configuration
----------------------
-
-A central configuration file has to be stored in the ``working_place_in`` with the name ``PynPoint_config.ini``. The file will be created with default values in case it does not exist when the pipeline is initiated. The values of the configuration file are stored in a separate group of the central database, each time the pipeline is initiated.
-
-The file contains two different sections of configuration parameters. The ``header`` section is used to link attributes in PynPoint with header values in the FITS files that will be imported into the database. For example, some of the pipeline modules require values for the dithering position. These attributes are stored as ``DITHER_X`` and ``DITHER_Y`` in the central database and are for example provided by the ``ESO SEQ CUMOFFSETX`` and ``ESO SEQ CUMOFFSETY`` values in the FITS header. Setting ``DITHER_X: ESO SEQ CUMOFFSETX`` in the ``header`` section of the configuration file makes sure that the relevant FITS header values are imported when :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` is executed. Therefore, FITS files have to be imported again if values in the ``header`` section are changes. Values can be set to ``None`` since ``header`` values are only required for some of the pipeline modules.
-
-The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule`, :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule`, and :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule`.
-
-Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable::
-
-   $ export OMP_NUM_THREADS=8
-
-In this case a maximum of 8 threads is used. So, if a modules provide both multiprocessing and multithreading support, then the total number of used cores is equal to the product of the values chosen for ``CPU`` in the configuration file and ``OMP_NUM_THREADS`` from the command line.
-
-An complete example of the configuration file looks like::
-
-   [header]
-
-   INSTRUMENT: INSTRUME
-   NFRAMES: NAXIS3
-   EXP_NO: ESO DET EXP NO
-   NDIT: ESO DET NDIT
-   PARANG_START: ESO ADA POSANG
-   PARANG_END: ESO ADA POSANG END
-   DITHER_X: ESO SEQ CUMOFFSETX
-   DITHER_Y: ESO SEQ CUMOFFSETY
-   DIT: ESO DET DIT
-   PUPIL: ESO ADA PUPILPOS
-   DATE: DATE-OBS
-   LATITUDE: ESO TEL GEOLAT
-   LONGITUDE: ESO TEL GEOLON
-   RA: RA
-   DEC: DEC
-
-   [settings]
-
-   PIXSCALE: 0.027
-   MEMORY: 1000
-   CPU: 8
-
-.. _modules:
-
 Pipeline Modules
 ----------------
 
@@ -101,7 +56,9 @@ In order to create a valid data reduction cascade, one should check that the req
 Pypeline
 --------
 
-The :class:`~pynpoint.core.pypeline` module is the central component which manages the order and execution of the different pipeline modules. Each :class:`~pynpoint.core.pypeline.Pypeline` instance has an ``working_place_in`` path which is where the central database and configuration file are stored, an ``input_place_in`` path which is the default data location for reading modules, and an ``output_place_in`` path which is the default output path where the data will be saved by the writing modules: ::
+The :class:`~pynpoint.core.pypeline` module is the central component which manages the order and execution of the different pipeline modules. Each :class:`~pynpoint.core.pypeline.Pypeline` instance has an ``working_place_in`` path which is where the central database and configuration file are stored, an ``input_place_in`` path which is the default data location for reading modules, and an ``output_place_in`` path which is the default output path where the data will be saved by the writing modules:
+
+.. code-block:: python
 
     from pynpoint import Pypeline, FitsReadingModule
 
@@ -109,27 +66,39 @@ The :class:`~pynpoint.core.pypeline` module is the central component which manag
                         input_place_in="/path/to/input_place",
                         output_place_in="/path/to/output_place")
 
-A pipeline module is created from any of the classes listed in the :ref:`overview` section, for example::
+A pipeline module is created from any of the classes listed in the :ref:`overview` section, for example:
+
+.. code-block:: python
 
     module = FitsReadingModule(name_in="read", image_tag="input")
 
-The module is appended to the pipeline queue as: ::
+The module is appended to the pipeline queue as:
+
+.. code-block:: python
 
     pipeline.add_module(module)
 
-And can be removed from the queue with the following method: ::
+And can be removed from the queue with the following method:
+
+.. code-block:: python
 
     pipeline.remove_module("read")
 
-The names and order of the pipeline modules can be listed with: ::
+The names and order of the pipeline modules can be listed with:
+
+.. code-block:: python
 
     pipeline.get_module_names()
 
-Running all modules attached to the pipeline is achieved with: ::
+Running all modules attached to the pipeline is achieved with:
+
+.. code-block:: python
 
     pipeline.run()
 
-Or a single module is executed as: ::
+Or a single module is executed as:
+
+.. code-block:: python
 
     pipeline.run_module("read")
 

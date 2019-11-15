@@ -3,9 +3,9 @@ Module for writing a list of tags from the database to a separate HDF5 file.
 """
 
 import os
-import sys
 
 import h5py
+from typeguard import typechecked
 
 from pynpoint.core.processing import WritingModule
 
@@ -17,26 +17,27 @@ class Hdf5WritingModule(WritingModule):
     the static and non-static attributes.
     """
 
-    def __init__(self,
-                 file_name,
-                 name_in="hdf5_writing",
-                 output_dir=None,
-                 tag_dictionary=None,
-                 keep_attributes=True,
-                 overwrite=False):
-        """
-        Constructor of Hdf5WritingModule.
+    __author__ = 'Markus Bonse, Tomas Stolker'
 
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 file_name: str,
+                 output_dir: str = None,
+                 tag_dictionary: dict = None,
+                 keep_attributes: bool = True,
+                 overwrite: bool = False) -> None:
+        """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         file_name : str
             Name of the file which will be created by the module.
-        output_dir : str
+        output_dir : str, None
             Location where the HDF5 file will be stored. The Pypeline default output location is
             used when no location is given.
-        tag_dictionary : dict
+        tag_dictionary : dict, None
             Directory containing all tags / keys of the datasets which will be exported from the
             PynPoint internal database. The datasets will be exported as
             {*input_tag*:*output_tag*, }.
@@ -61,7 +62,8 @@ class Hdf5WritingModule(WritingModule):
         self.m_keep_attributes = keep_attributes
         self.m_overwrite = overwrite
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
         Run method of the module. Exports all datasets defined in the *tag_dictionary* to an
         external HDF5 file.
@@ -72,8 +74,7 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        sys.stdout.write("Running Hdf5WritingModule...")
-        sys.stdout.flush()
+        print('Writing HDF5 file...', end='')
 
         if self.m_overwrite:
             out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
@@ -103,12 +104,11 @@ class Hdf5WritingModule(WritingModule):
                 if non_static_attr_keys is not None:
                     for key in non_static_attr_keys:
                         tmp_data_attr = tmp_port.get_attribute(key)
-                        attr_tag = "header_" + out_tag + "/" + key
+                        attr_tag = 'header_' + out_tag + '/' + key
                         out_file.create_dataset(attr_tag, data=tmp_data_attr)
 
             tmp_port.close_port()
 
         out_file.close()
 
-        sys.stdout.write(" [DONE]\n")
-        sys.stdout.flush()
+        print(' [DONE]')

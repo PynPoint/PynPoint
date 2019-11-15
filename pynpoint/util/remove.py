@@ -2,13 +2,20 @@
 Functions to write selected data and attributes to the central database.
 """
 
+from typing import Union
+
 import numpy as np
 
+from typeguard import typechecked
 
-def write_selected_data(images,
-                        indices,
-                        port_selected,
-                        port_removed):
+from pynpoint.core.dataio import InputPort, OutputPort
+
+
+@typechecked
+def write_selected_data(images: np.ndarray,
+                        indices: np.ndarray,
+                        port_selected: Union[OutputPort, None],
+                        port_removed: Union[OutputPort, None]) -> None:
     """
     Function to write a selected number of images from a data set.
 
@@ -18,9 +25,9 @@ def write_selected_data(images,
         Stack of images.
     indices : numpy.ndarray
         Indices that are removed.
-    port_selected : pynpoint.core.dataio.OutputPort
+    port_selected : pynpoint.core.dataio.OutputPort, None
         Port to store the selected images.
-    port_removed : pynpoint.core.dataio.OutputPort
+    port_removed : pynpoint.core.dataio.OutputPort, None
         Port to store the removed images.
 
     Returns
@@ -42,10 +49,12 @@ def write_selected_data(images,
     if port_selected is not None and images is not None:
         port_selected.append(images)
 
-def write_selected_attributes(indices,
-                              port_input,
-                              port_selected,
-                              port_removed):
+
+@typechecked
+def write_selected_attributes(indices: np.ndarray,
+                              port_input: InputPort,
+                              port_selected: Union[OutputPort, None],
+                              port_removed: Union[OutputPort, None]) -> None:
     """
     Function to write the attributes of a selected number of images.
 
@@ -55,9 +64,9 @@ def write_selected_attributes(indices,
         Indices that are removed.
     port_input : pynpoint.core.dataio.InputPort
         Port to the input data.
-    port_selected : pynpoint.core.dataio.OutputPort
-        Port to store the attributes of the selected images.
-    port_removed : pynpoint.core.dataio.OutputPort
+    port_selected : pynpoint.core.dataio.OutputPort, None
+        Port to store the attributes of the selected images. Not written if set to None.
+    port_removed : pynpoint.core.dataio.OutputPort, None
         Port to store the attributes of the removed images. Not written if set to None.
 
     Returns
@@ -91,8 +100,8 @@ def write_selected_attributes(indices,
 
                 port_removed.add_attribute(item, removed, static=False)
 
-    if "NFRAMES" in non_static:
-        nframes = port_input.get_attribute("NFRAMES")
+    if 'NFRAMES' in non_static:
+        nframes = port_input.get_attribute('NFRAMES')
 
         nframes_sel = np.zeros(nframes.shape, dtype=np.int)
         nframes_del = np.zeros(nframes.shape, dtype=np.int)
@@ -101,7 +110,7 @@ def write_selected_attributes(indices,
             total = np.sum(nframes[0:i])
 
             if np.size(indices) > 0:
-                index_del = np.where(np.logical_and(indices >= total, \
+                index_del = np.where(np.logical_and(indices >= total,
                                      indices < total+frames))[0]
 
                 nframes_sel[i] = frames-np.size(index_del)
@@ -112,7 +121,7 @@ def write_selected_attributes(indices,
                 nframes_del[i] = 0
 
         if port_selected is not None:
-            port_selected.add_attribute("NFRAMES", nframes_sel, static=False)
+            port_selected.add_attribute('NFRAMES', nframes_sel, static=False)
 
         if port_removed is not None:
-            port_removed.add_attribute("NFRAMES", nframes_del, static=False)
+            port_removed.add_attribute('NFRAMES', nframes_del, static=False)
