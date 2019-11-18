@@ -206,7 +206,8 @@ class TestFluxPosition:
                                      ignore=True,
                                      name_in='false',
                                      image_in_tag='res_mean',
-                                     snr_out_tag='snr_fpf')
+                                     snr_out_tag='snr_fpf',
+                                     optimize=False)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('false')

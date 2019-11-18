@@ -494,14 +494,15 @@ class FalsePositiveModule(ProcessingModule):
                  aperture: float = 0.1,
                  ignore: bool = False,
                  optimize: bool = False,
-                 **kwargs: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]]) -> None:
+                 **kwargs) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with the images that are read as input.
+            Tag of the database entry with the images that are read as input. The SNR/FPF is
+            calculated for each image in the dataset.
         snr_out_tag : str
             Tag of the database entry that is written as output. The output format is: (x position
             (pix), y position (pix), separation (arcsec), position angle (deg), SNR, FPF). The
@@ -517,17 +518,17 @@ class FalsePositiveModule(ProcessingModule):
         ignore : bool
             Ignore the two neighboring apertures that may contain self-subtraction from the planet.
         optimize : bool
-            Optimize the SNR. The aperture position is written in the history. The size of the
+            Optimize the SNR. The aperture position is stored in the `snr_out_tag`. The size of the
             aperture is kept fixed.
 
         Keyword arguments
         -----------------
         tolerance : float
-            The fractional tolerance on the position for the optimization to end. Default is set
-            to 1e-3.
-        bounds : tuple(tuple(float, float), tuple(float, float))
-            Boundaries (pix) for the horizontal and vertical offset with respect to the `position`.
-            The default is set to (-3, 3) for both directions.
+            The absolute tolerance on the position for the optimization to end. Default is set
+            to 0.01 (pix).
+        offset : float, None
+            Offset (pix) by which the aperture may deviate from ``position`` when
+            ``optimize=True`` (default: None).
 
         Returns
         -------
@@ -538,12 +539,16 @@ class FalsePositiveModule(ProcessingModule):
         if 'tolerance' in kwargs:
             self.m_tolerance = kwargs['tolerance']
         else:
-            self.m_tolerance = 1e-3
+            self.m_tolerance = 1e-2
+
+        if 'offset' in kwargs:
+            self.m_offset = kwargs['offset']
+        else:
+            self.m_offset = None
 
         if 'bounds' in kwargs:
-            self.m_bounds = kwargs['bounds']
-        else:
-            self.m_bounds = ((-3., 3.), (-3., 3.))
+            warnings.warn('The \'bounds\' keyword argument has been deprecated. Please use '
+                          '\'offset\' instead (e.g. offset=3.0).', DeprecationWarning)
 
         super(FalsePositiveModule, self).__init__(name_in)
 
@@ -571,11 +576,28 @@ class FalsePositiveModule(ProcessingModule):
         def _snr_optimize(arg):
             pos_x, pos_y = arg
 
-            _, _, snr, _ = false_alarm(image=image,
-                                       x_pos=pos_x,
-                                       y_pos=pos_y,
-                                       size=self.m_aperture,
-                                       ignore=self.m_ignore)
+            if self.m_offset is not None:
+                if pos_x < self.m_position[0] - self.m_offset:
+                    snr = 0.
+
+                elif pos_x > self.m_position[0] + self.m_offset:
+                    snr = 0.
+
+                elif pos_y < self.m_position[1] - self.m_offset:
+                    snr = 0.
+
+                elif pos_y > self.m_position[1] + self.m_offset:
+                    snr = 0.
+
+                else:
+                    snr = None
+
+            if self.m_offset is None or snr is None:
+                _, _, snr, _ = false_alarm(image=image,
+                                           x_pos=pos_x,
+                                           y_pos=pos_y,
+                                           size=self.m_aperture,
+                                           ignore=self.m_ignore)
 
             return -snr
 
@@ -587,10 +609,8 @@ class FalsePositiveModule(ProcessingModule):
 
         nimages = self.m_image_in_port.get_shape()[0]
 
-        bounds = ((self.m_position[0]+self.m_bounds[0][0], self.m_position[0]+self.m_bounds[0][1]),
-                  (self.m_position[1]+self.m_bounds[1][0], self.m_position[1]+self.m_bounds[1][1]))
-
         start_time = time.time()
+
         for j in range(nimages):
             progress(j, nimages, 'Calculating S/N and FPF...', start_time)
 
@@ -600,10 +620,9 @@ class FalsePositiveModule(ProcessingModule):
             if self.m_optimize:
                 result = minimize(fun=_snr_optimize,
                                   x0=[self.m_position[0], self.m_position[1]],
-                                  method='SLSQP',
-                                  bounds=bounds,
+                                  method='Nelder-Mead',
                                   tol=None,
-                                  options={'ftol': self.m_tolerance})
+                                  options={'xatol': self.m_tolerance, 'fatol': float('inf')})
 
                 _, _, snr, fpf = false_alarm(image=image,
                                              x_pos=result.x[0],
