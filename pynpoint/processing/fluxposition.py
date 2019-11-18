@@ -577,16 +577,12 @@ class FalsePositiveModule(ProcessingModule):
             pos_x, pos_y = arg
 
             if self.m_offset is not None:
-                if pos_x < self.m_position[0] - self.m_offset:
+                if pos_x < self.m_position[0] - self.m_offset or \
+                        pos_x > self.m_position[0] + self.m_offset:
                     snr = 0.
 
-                elif pos_x > self.m_position[0] + self.m_offset:
-                    snr = 0.
-
-                elif pos_y < self.m_position[1] - self.m_offset:
-                    snr = 0.
-
-                elif pos_y > self.m_position[1] + self.m_offset:
+                elif pos_y < self.m_position[1] - self.m_offset or \
+                        pos_y > self.m_position[1] + self.m_offset:
                     snr = 0.
 
                 else:
