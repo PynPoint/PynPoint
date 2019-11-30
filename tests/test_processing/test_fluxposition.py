@@ -375,7 +375,7 @@ class TestFluxPosition:
                                        offset_out_tag='offset',
                                        position=(0.5, 90.),
                                        magnitude=6.,
-                                       n_angles=2,
+                                       angles=(0., 180., 2),
                                        psf_scaling=1.,
                                        merit='gaussian',
                                        aperture=0.1,

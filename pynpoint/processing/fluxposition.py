@@ -185,7 +185,8 @@ class SimplexMinimizationModule(ProcessingModule):
                  edge_size: float = None,
                  extra_rot: float = 0.,
                  residuals: str = 'median',
-                 reference_in_tag: str = None) -> None:
+                 reference_in_tag: str = None,
+                 offset: float = None) -> None:
         """
         Parameters
         ----------
@@ -252,6 +253,9 @@ class SimplexMinimizationModule(ProcessingModule):
             None. Note that the mean is not subtracted from the data of ``image_in_tag`` and
             ``reference_in_tag`` in case the ``reference_in_tag`` is used, to allow for flux and
             position measurements in the context of RDI.
+        offset : float, None
+            Offset (pix) by which the aperture may deviate from ``position``. No constraint on the
+            position is applied if set to None.
 
         Returns
         -------
@@ -296,6 +300,7 @@ class SimplexMinimizationModule(ProcessingModule):
         self.m_edge_size = edge_size
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
+        self.m_offset = offset
 
         if isinstance(pca_number, int):
             self.m_pca_number = [pca_number]
@@ -355,6 +360,15 @@ class SimplexMinimizationModule(ProcessingModule):
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
+
+            if self.m_offset is not None:
+                if pos_x < self.m_position[0] - self.m_offset or \
+                        pos_x > self.m_position[0] + self.m_offset:
+                    return np.inf
+
+                elif pos_y < self.m_position[1] - self.m_offset or \
+                        pos_y > self.m_position[1] + self.m_offset:
+                    return np.inf
 
             sep_ang = cartesian_to_polar(center, pos_y, pos_x)
 
@@ -1016,7 +1030,7 @@ class SystematicErrorModule(ProcessingModule):
                  offset_out_tag: str,
                  position: Tuple[float, float],
                  magnitude: float,
-                 n_angles: int = 360,
+                 angles: Tuple[float, float, int] = (0., 359., 360),
                  psf_scaling: float = 1.,
                  merit: str = 'gaussian',
                  aperture: float = 0.1,
@@ -1046,9 +1060,9 @@ class SystematicErrorModule(ProcessingModule):
             The separation is also used to estimate the systematic error.
         magnitude : float
             Magnitude that is used to remove the planet signal and estimate the systematic error.
-        n_angles : int
-            Number of position angles (linearly sampled) that are used to estimate the systematic
-            errors.
+        angles : tuple(float, float, int)
+            The start, end, and number of the position angles (linearly sampled) that are used to
+            estimate the systematic errors (default: 0., 359., 360). The endpoint is also included.
         psf_scaling : float
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should be a positive value.
@@ -1093,7 +1107,7 @@ class SystematicErrorModule(ProcessingModule):
 
         self.m_position = position
         self.m_magnitude = magnitude
-        self.m_n_angles = n_angles
+        self.m_angles = angles
         self.m_psf_scaling = psf_scaling
         self.m_merit = merit
         self.m_aperture = aperture
@@ -1136,7 +1150,7 @@ class SystematicErrorModule(ProcessingModule):
         module.run()
 
         sep = float(self.m_position[0])
-        angles = np.linspace(0., 360., self.m_n_angles, endpoint=False)
+        angles = np.linspace(self.m_angles[0], self.m_angles[1], self.m_angles[2], endpoint=True)
 
         for i, ang in enumerate(angles):
             print(f'Processing position angle: {i} deg...')
