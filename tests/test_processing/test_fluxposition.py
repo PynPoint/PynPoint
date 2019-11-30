@@ -203,20 +203,44 @@ class TestFluxPosition:
         module = FalsePositiveModule(position=(31., 49.),
                                      aperture=0.1,
                                      ignore=True,
-                                     name_in='false',
+                                     name_in='false1',
                                      image_in_tag='res_mean',
-                                     snr_out_tag='snr_fpf')
+                                     snr_out_tag='snr_fpf1',
+                                     optimize=False)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('false')
+        self.pipeline.run_module('false1')
 
-        data = self.pipeline.get_data('snr_fpf')
+        data = self.pipeline.get_data('snr_fpf1')
         assert np.allclose(data[0, 0], 31.0, rtol=limit, atol=0.)
         assert np.allclose(data[0, 1], 49.0, rtol=limit, atol=0.)
         assert np.allclose(data[0, 2], 0.513710034941892, rtol=limit, atol=0.)
         assert np.allclose(data[0, 3], 93.01278750418334, rtol=limit, atol=0.)
         assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
         assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
+
+    def test_false_positive_optimize(self):
+
+        module = FalsePositiveModule(position=(31., 49.),
+                                     aperture=0.1,
+                                     ignore=True,
+                                     name_in='false2',
+                                     image_in_tag='res_mean',
+                                     snr_out_tag='snr_fpf2',
+                                     optimize=True,
+                                     offset=0.1,
+                                     tolerance=0.01)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('false2')
+
+        data = self.pipeline.get_data('snr_fpf2')
+        assert np.allclose(data[0, 0], 30.90615234375, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 1], 49.0861328125, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 2], 0.5161240306986961, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 3], 92.74019185433872, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 4], 7.831022605121996, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 5], 2.3375921055608217e-06, rtol=limit, atol=0.)
 
     def test_simplex_minimization_hessian(self):
 
