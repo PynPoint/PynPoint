@@ -23,15 +23,17 @@ from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
-class PCAContrastCurveModule(ProcessingModule):
+
+class ContrastCurveModule(ProcessingModule):
     """
     Pipeline module to calculate contrast limits for a given sigma level or false positive
     fraction, with a correction for small sample statistics. Positions are processed in
     parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
-    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber'
+    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber, Evert Nasedkin'
 
+    
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -49,7 +51,136 @@ class PCAContrastCurveModule(ProcessingModule):
                  extra_rot: float = 0.,
                  residuals: str = 'median',
                  snr_inject: float = 100.,
+                 psf_rad: float = 4,
+                 scaling: float = 1.0,
+                 algorithm: str = "fastpaco",
+                 verbose: bool =  False,
                  **kwargs: float) -> None:
+        super(ContrastCurveModule, self).__init__(name_in)
+        self.mod_name = name_in
+        if "paco" in name_in.lower():
+            self.PACOinit(image_in_tag = image_in_tag,
+                          psf_in_tag = psf_in_tag,
+                          contrast_out_tag = contrast_out_tag,
+                          separation = separation,
+                          angle = angle,
+                          threshold = threshold,
+                          psf_scaling = psf_scaling,
+                          aperture = aperture,
+                          extra_rot = extra_rot,
+                          residuals = residuals,
+                          snr_inject = snr_inject,
+                          psf_rad = psf_rad,
+                          scaling = scaling,
+                          algorithm = algorithm,
+                          verbose = verbose)
+        else:
+            self.PCAinit(image_in_tag = image_in_tag,
+                         psf_in_tag = psf_in_tag,
+                         contrast_out_tag = contrast_out_tag,
+                         separation = separation,
+                         angle = angle,
+                         threshold = threshold,
+                         psf_scaling = psf_scaling,
+                         aperture = aperture,
+                         pca_number = pca_number,
+                         cent_size = cent_size,
+                         edge_size = edge_size,
+                         extra_rot = extra_rot,
+                         residuals = residuals,
+                         snr_inject = snr_inject,
+                         **kwargs)
+    @typechecked             
+    def run() -> None:
+        if "paco" in self.mod_name.lower():
+            self.PACOrun()
+        else:
+            self.PCARun()
+        return
+    
+    @typechecked
+    def PACOinit(self,
+                 image_in_tag: str = "science",
+                 psf_in_tag: str = "psf",
+                 contrast_out_tag: str = "contrast_out",
+                 angle: Tuple[float, float, float] = (0., 360., 60.),
+                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
+                 threshold: Tuple[str, float] = ('sigma', 5.),
+                 aperture: float = 0.05,
+                 snr_inject: float = 100.,
+                 extra_rot: float = 0.,
+                 psf_scaling: float = 1.0,
+                 psf_rad: float = 4,
+                 scaling: float = 1.0,
+                 algorithm: str = "fastpaco",
+                 verbose: bool =  False
+    ):
+        """
+        Constructor of PACOContrastModule.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that contains the stack with images.
+        psf_in_tag : str
+            Tag of the database entry that contains the reference PSF that is used as fake planet.
+            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
+            *image_in_tag*.
+        algorithm : str
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run
+
+
+        """
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        if psf_in_tag == image_in_tag:
+            self.m_psf_in_port = self.m_image_in_port
+        else:
+            self.m_psf_in_port = self.add_input_port(psf_in_tag)
+
+        self.m_contrast_out_port = self.add_output_port(contrast_out_tag)         
+
+        self.m_angle = angle
+        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
+           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:         
+            raise ValueError('The angular positions of the fake planets should lie between '
+                             '0 deg and 360 deg.')
+            
+        self.m_separation = separation
+        self.m_aperture = aperture
+        self.m_threshold = threshold
+        self.m_snr_inject = snr_inject
+        self.m_extra_rot = extra_rot
+
+        # Scaling notes:
+        # self.m_scale        scales the resolution of the images for PACO
+        #                     to allow for subpixel template placement.
+        # self.m_psf_scaling  scales the brightness of the psf
+        # pixscale            Is the pixel size in arcsec
+        self.m_algorithm = algorithm
+        self.m_scale = scaling
+        self.m_psf_rad = psf_rad
+        self.m_psf_scaling = psf_scaling
+        self.m_verbose = verbose
+
+    @typechecked
+    def PCAinit(self,
+                image_in_tag: str,
+                psf_in_tag: str,
+                contrast_out_tag: str,
+                separation: Tuple[float, float, float] = (0.1, 1., 0.01),
+                angle: Tuple[float, float, float] = (0., 360., 60.),
+                threshold: Tuple[str, float] = ('sigma', 5.),
+                psf_scaling: float = 1.,
+                aperture: float = 0.05,
+                pca_number: int = 20,
+                cent_size: float = None,
+                edge_size: float = None,
+                extra_rot: float = 0.,
+                residuals: str = 'median',
+                snr_inject: float = 100.,
+                **kwargs: float) -> None:
         """
         Parameters
         ----------
@@ -104,9 +235,6 @@ class PCAContrastCurveModule(ProcessingModule):
         NoneType
             None
         """
-
-        super(PCAContrastCurveModule, self).__init__(name_in)
-
         if 'sigma' in kwargs:
             warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
                           '\'threshold\' parameter instead.', DeprecationWarning)
@@ -153,9 +281,8 @@ class PCAContrastCurveModule(ProcessingModule):
 
             raise ValueError('The angular positions of the fake planets should lie between '
                              '0 deg and 360 deg.')
-
     @typechecked
-    def run(self) -> None:
+    def PCArun(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
         given separation and position angle. The amount of self-subtraction is then determined and
@@ -311,78 +438,8 @@ class PCAContrastCurveModule(ProcessingModule):
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
 
-
-class PACOContrastCurveModule(ProcessingModule):
-    @typechecked
-    def __init__(self,
-                 name_in: str = "paco_contrast",
-                 image_in_tag: str = "science",
-                 psf_in_tag: str = "psf",
-                 contrast_out_tag: str = "contrast_out",
-                 angle: Tuple[float, float, float] = (0., 360., 60.),
-                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
-                 threshold: Tuple[str, float] = ('sigma', 5.),
-                 aperture: float = 0.05,
-                 snr_inject: float = 100.,
-                 extra_rot: float = 0.,
-                 psf_scaling: float = 1.0,
-                 psf_rad: float = 4,
-                 scaling: float = 1.0,
-                 algorithm: str = "fastpaco",
-                 verbose: bool =  False
-    ):
-        """
-        Constructor of PACOContrastModule.
-
-        Parameters
-        ----------
-        name_in : str
-            Unique name of the module instance.
-        image_in_tag : str
-            Tag of the database entry that contains the stack with images.
-        psf_in_tag : str
-            Tag of the database entry that contains the reference PSF that is used as fake planet.
-            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
-            *image_in_tag*.
-        algorithm : str
-            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run
-
-
-        """
-        super(PACOContrastCurveModule,self).__init__(name_in)
-        
-        self.m_image_in_port = self.add_input_port(image_in_tag)
-        if psf_in_tag == image_in_tag:
-            self.m_psf_in_port = self.m_image_in_port
-        else:
-            self.m_psf_in_port = self.add_input_port(psf_in_tag)
-
-        self.m_contrast_out_port = self.add_output_port(contrast_out_tag)         
-
-        self.m_angle = angle
-        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
-           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:         
-            raise ValueError('The angular positions of the fake planets should lie between '
-                             '0 deg and 360 deg.')
-            
-        self.m_separation = separation
-        self.m_aperture = aperture
-        self.m_threshold = threshold
-        self.m_snr_inject = snr_inject
-        self.m_extra_rot = extra_rot
-
-        # Scaling notes:
-        # self.m_scale        scales the resolution of the images for PACO
-        #                     to allow for subpixel template placement.
-        # self.m_psf_scaling  scales the brightness of the psf
-        # pixscale            Is the pixel size in arcsec
-        self.m_algorithm = algorithm
-        self.m_scale = scaling
-        self.m_psf_rad = psf_rad
-        self.m_psf_scaling = psf_scaling
-        self.m_verbose = verbose
     @typechecked    
-    def run(self) -> None:
+    def PACOrun(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
         given separation and position angle. The amount of self-subtraction is then determined and
@@ -531,73 +588,6 @@ class PACOContrastCurveModule(ProcessingModule):
         self.m_contrast_out_port.add_history("PACOContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()	
-
-class ContrastCurveModule(PCAContrastCurveModule,PACOContrastCurveModule):
-    @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 psf_in_tag: str,
-                 contrast_out_tag: str,
-                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
-                 angle: Tuple[float, float, float] = (0., 360., 60.),
-                 threshold: Tuple[str, float] = ('sigma', 5.),
-                 psf_scaling: float = 1.,
-                 aperture: float = 0.05,
-                 pca_number: int = 20,
-                 cent_size: float = None,
-                 edge_size: float = None,
-                 extra_rot: float = 0.,
-                 residuals: str = 'median',
-                 snr_inject: float = 100.,
-                 psf_rad: float = 4,
-                 scaling: float = 1.0,
-                 algorithm: str = "fastpaco",
-                 verbose: bool =  False,
-                 **kwargs: float) -> None:
-        super(ContrastCurveModule, self).__init__(name_in)
-        self.module = None
-        if "paco" in name_in.lower():
-            name_in += "wrapped"
-            self.module = PACOContrastCurveModule(name_in = name_in,
-                                                  image_in_tag = image_in_tag,
-                                                  psf_in_tag = psf_in_tag,
-                                                  contrast_out_tag = contrast_out_tag,
-                                                  separation = separation,
-                                                  angle = angle,
-                                                  threshold = threshold,
-                                                  psf_scaling = psf_scaling,
-                                                  aperture = aperture,
-                                                  extra_rot = extra_rot,
-                                                  residuals = residuals,
-                                                  snr_inject = snr_inject,
-                                                  psf_rad = psf_rad,
-                                                  scaling = scaling,
-                                                  algorithm = algorithm,
-                                                  verbose = verbose)
-        else:
-            name_in += "wrapped"
-            self.module = PCAContrastCurveModule(name_in = name_in,
-                                                 image_in_tag = image_in_tag,
-                                                 psf_in_tag = psf_in_tag,
-                                                 contrast_out_tag = contrast_out_tag,
-                                                 separation = separation,
-                                                 angle = angle,
-                                                 threshold = threshold,
-                                                 psf_scaling = psf_scaling,
-                                                 aperture = aperture,
-                                                 pca_number = pca_number,
-                                                 cent_size = cent_size,
-                                                 edge_size = edge_size,
-                                                 extra_rot = extra_rot,
-                                                 residuals = residuals,
-                                                 snr_inject = snr_inject,
-                                                **kwargs)
-    @typechecked             
-    def run() -> None:
-        self.module.run()
-        
-
 
 class MassLimitsModule(ProcessingModule):
     """
