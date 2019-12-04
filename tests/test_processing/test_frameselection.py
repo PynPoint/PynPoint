@@ -8,7 +8,7 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectionModule, \
                                                RemoveLastFrameModule, RemoveStartFramesModule, \
                                                ImageStatisticsModule, FrameSimilarityModule, \
-                                               SelectByAttributeModule
+                                               SelectByAttributeModule, ResidualSelectionModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
 warnings.simplefilter('always')
@@ -347,3 +347,25 @@ class TestFrameSelection:
 
         # check that the selected attributes are in the correct tags
         assert np.min(similarity) > np.max(sim_removed)
+
+    def test_residual_selection(self):
+
+        module = ResidualSelectionModule(name_in='residual_select',
+                                         image_in_tag='start',
+                                         selected_out_tag='res_selected',
+                                         removed_out_tag='res_removed',
+                                         percentage=80.,
+                                         annulus_radii=(0.1, 0.2))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('residual_select')
+
+        data = self.pipeline.get_data('res_selected')
+        assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010004746870075097, rtol=limit, atol=0.)
+        assert data.shape == (25, 100, 100)
+
+        data = self.pipeline.get_data('res_removed')
+        assert np.allclose(data[0, 50, 50], 0.09789641723291155, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.0001003469702900269, rtol=limit, atol=0.)
+        assert data.shape == (7, 100, 100)

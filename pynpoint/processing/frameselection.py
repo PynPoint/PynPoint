@@ -11,11 +11,12 @@ from typing import Union, Tuple
 
 import numpy as np
 
-from skimage.measure import compare_ssim, compare_mse
 from typeguard import typechecked
+from skimage.measure import compare_ssim, compare_mse
+from photutils import aperture_photometry, CircularAnnulus
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel, center_subpixel
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 from pynpoint.util.star import star_positions
@@ -1070,3 +1071,139 @@ class SelectByAttributeModule(ProcessingModule):
                                   self.m_image_in_port,
                                   self.m_removed_out_port,
                                   self.m_selected_out_port)
+
+
+class ResidualSelectionModule(ProcessingModule):
+    """
+    Pipeline module for applying a frame selection after the PSF subtraction.
+    """
+
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 image_in_tag: str,
+                 selected_out_tag: str,
+                 removed_out_tag: str,
+                 percentage: float = 10.,
+                 annulus_radii: Tuple[float, float] = (0.1, 0.2)) -> None:
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        image_in_tag : str
+            Tag of the database entry that is read as input.
+        selected_out_tag : str
+            Tag of the database entry with the selected images that are written as output. Should
+            be different from `image_in_tag`.
+        removed_out_tag : str
+            Tag of the database entry with the removed images that are written as output. Should
+            be different from `image_in_tag`.
+        percentage : float
+            The percentage of frames selected.
+        annulus_radii : tuple(float, float)
+            Inner and outer radius (arcsec) of the annulus.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        super(ResidualSelectionModule, self).__init__(name_in)
+
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+
+        self.m_selected_out_port = self.add_output_port(selected_out_tag)
+        self.m_removed_out_port = self.add_output_port(removed_out_tag)
+
+        self.m_percentage = percentage
+        self.m_annulus_radii = annulus_radii
+
+    @typechecked
+    def run(self) -> None:
+        """
+        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
+        pixel in each image, measures the integrated flux around the brightest pixel, calculates
+        the median and standard deviation of the photometry, and applies sigma clipping to remove
+        low quality images.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        self.m_selected_out_port.del_all_data()
+        self.m_selected_out_port.del_all_attributes()
+
+        self.m_removed_out_port.del_all_data()
+        self.m_removed_out_port.del_all_attributes()
+
+        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        nimages = self.m_image_in_port.get_shape()[0]
+
+        radii_pix = (self.m_annulus_radii[0]/pixscale, self.m_annulus_radii[1]/pixscale)
+        center_position = center_subpixel(self.m_image_in_port[0, ])
+
+        # Position in CircularAperture is defined as (x, y)
+        aperture = CircularAnnulus((center_position[1], center_position[0]), radii_pix[0], radii_pix[1])
+
+        start_time = time.time()
+
+        phot_annulus = np.zeros(nimages)
+        for i in range(nimages):
+            progress(i, nimages, 'Aperture photometry...', start_time)
+
+            # https://photutils.readthedocs.io/en/stable/overview.html
+            # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
+            # corresponds to the center of the lowest, leftmost array element. This means that
+            # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
+            # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
+
+            phot_annulus[i] = aperture_photometry(np.abs(self.m_image_in_port[i, ]),
+                                                  aperture,
+                                                  method='exact')['aperture_sum']
+
+        n_select = int(nimages*self.m_percentage/100.)
+
+        index_select = np.argsort(phot_annulus)[:n_select]
+        index_remove = np.argsort(phot_annulus)[n_select:]
+
+        if np.size(index_select) > 0:
+            memory = self._m_config_port.get_attribute('MEMORY')
+            frames = memory_frames(memory, nimages)
+
+            if memory == 0 or memory >= nimages:
+                memory = nimages
+
+            start_time = time.time()
+
+            for i, _ in enumerate(frames[:-1]):
+                progress(i, len(frames[:-1]), 'Writing selected data...', start_time)
+
+                index_del = np.where(np.logical_and(index_remove >= frames[i],
+                                                    index_remove < frames[i+1]))
+
+                write_selected_data(images=self.m_image_in_port[frames[i]:frames[i+1], ],
+                                    indices=index_remove[index_del] % memory,
+                                    port_selected=self.m_selected_out_port,
+                                    port_removed=self.m_removed_out_port)
+
+        else:
+            warnings.warn('No frames were removed.')
+
+        history = f'frames removed = {np.size(index_remove)}'
+
+        # Copy attributes before write_selected_attributes is used
+        self.m_selected_out_port.copy_attributes(self.m_image_in_port)
+
+        # Copy attributes before write_selected_attributes is used
+        self.m_removed_out_port.copy_attributes(self.m_image_in_port)
+
+        self.m_selected_out_port.add_history('FrameSelectionModule', history)
+        self.m_removed_out_port.add_history('FrameSelectionModule', history)
+
+        self.m_image_in_port.close_port()
