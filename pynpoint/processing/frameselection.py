@@ -13,10 +13,9 @@ import numpy as np
 
 from typeguard import typechecked
 from skimage.measure import compare_ssim, compare_mse
-from photutils import aperture_photometry, CircularAnnulus
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, pixel_distance, center_pixel, center_subpixel
+from pynpoint.util.image import crop_image, pixel_distance, center_pixel
 from pynpoint.util.module import progress, memory_frames
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
 from pynpoint.util.star import star_positions
@@ -1096,13 +1095,11 @@ class ResidualSelectionModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         selected_out_tag : str
-            Tag of the database entry with the selected images that are written as output. Should
-            be different from `image_in_tag`.
+            Tag of the database entry with the selected images that are written as output.
         removed_out_tag : str
-            Tag of the database entry with the removed images that are written as output. Should
-            be different from `image_in_tag`.
+            Tag of the database entry with the removed images that are written as output.
         percentage : float
-            The percentage of frames selected.
+            The percentage of best frames that is selected.
         annulus_radii : tuple(float, float)
             Inner and outer radius (arcsec) of the annulus.
 
@@ -1125,10 +1122,10 @@ class ResidualSelectionModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
-        pixel in each image, measures the integrated flux around the brightest pixel, calculates
-        the median and standard deviation of the photometry, and applies sigma clipping to remove
-        low quality images.
+        Run method of the module. Applies a frame selection on the derotated residuals from the
+        PSF subtraction. The pixels within an annulus (e.g. at the separation of an expected
+        planet) are selected and the standard deviation is calculated. The chosen percentage
+        of images with the lowest standard deviation are stored as output.
 
         Returns
         -------
@@ -1144,28 +1141,20 @@ class ResidualSelectionModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         nimages = self.m_image_in_port.get_shape()[0]
+        npix = self.m_image_in_port.get_shape()[-1]
 
-        radii_pix = (self.m_annulus_radii[0]/pixscale, self.m_annulus_radii[1]/pixscale)
-        center_position = center_subpixel(self.m_image_in_port[0, ])
+        rr_grid = pixel_distance((npix, npix), position=None)
 
-        # Position in CircularAperture is defined as (x, y)
-        aperture = CircularAnnulus((center_position[1], center_position[0]), radii_pix[0], radii_pix[1])
+        pixel_select = np.where((rr_grid > self.m_annulus_radii[0]/pixscale) & \
+                                (rr_grid < self.m_annulus_radii[1]/pixscale))
 
         start_time = time.time()
-
         phot_annulus = np.zeros(nimages)
+
         for i in range(nimages):
             progress(i, nimages, 'Aperture photometry...', start_time)
 
-            # https://photutils.readthedocs.io/en/stable/overview.html
-            # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
-            # corresponds to the center of the lowest, leftmost array element. This means that
-            # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
-            # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
-
-            phot_annulus[i] = aperture_photometry(np.abs(self.m_image_in_port[i, ]),
-                                                  aperture,
-                                                  method='exact')['aperture_sum']
+            phot_annulus[i] = np.sum(np.abs(self.m_image_in_port[i][pixel_select]))
 
         n_select = int(nimages*self.m_percentage/100.)
 
@@ -1203,7 +1192,7 @@ class ResidualSelectionModule(ProcessingModule):
         # Copy attributes before write_selected_attributes is used
         self.m_removed_out_port.copy_attributes(self.m_image_in_port)
 
-        self.m_selected_out_port.add_history('FrameSelectionModule', history)
-        self.m_removed_out_port.add_history('FrameSelectionModule', history)
+        self.m_selected_out_port.add_history('ResidualsSelectionModule', history)
+        self.m_removed_out_port.add_history('ResidualsSelectionModule', history)
 
         self.m_image_in_port.close_port()

@@ -30,7 +30,7 @@ def pca_psf_subtraction(images: np.ndarray,
     pca_number : int
         Number of principal components used for the PSF model.
     pca_sklearn : sklearn.decomposition.pca.PCA, None
-        PCA object with the basis if not set to None.
+        PCA decomposition of the input data.
     im_shape : tuple(int, int, int), None
         Original shape of the stack with images. Required if `pca_sklearn` is not set to None.
     indices : numpy.ndarray, None

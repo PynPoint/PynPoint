@@ -362,10 +362,10 @@ class TestFrameSelection:
 
         data = self.pipeline.get_data('res_selected')
         assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010004746870075097, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011309037313302, rtol=limit, atol=0.)
         assert data.shape == (25, 100, 100)
 
         data = self.pipeline.get_data('res_removed')
-        assert np.allclose(data[0, 50, 50], 0.09789641723291155, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0001003469702900269, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 50, 50], 0.09806695334723013, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011260717437674, rtol=limit, atol=0.)
         assert data.shape == (7, 100, 100)

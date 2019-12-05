@@ -68,9 +68,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             Tag of the database entry of the clipped mean residuals. Not calculated if set to
             None.
         res_arr_out_tag : str, None
-            Tag of the database entry with the image residuals from the PSF subtraction. If a list
-            of PCs is provided in *pca_numbers* then multiple tags will be created in the central
-            database. Not calculated if set to None. Not supported with multiprocessing.
+            Tag of the database entry with the derotated image residuals from the PSF subtraction.
+            The tag name of `res_arr_out_tag` is appended with the number of principal components
+            that was used. Not calculated if set to None. Not supported with multiprocessing.
         basis_out_tag : str, None
             Tag of the database entry with the basis set. Not stored if set to None.
         pca_numbers : range, list(int, ), numpy.ndarray
