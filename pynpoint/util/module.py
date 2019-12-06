@@ -6,6 +6,7 @@ import sys
 import time
 import math
 import cmath
+import warnings
 
 from typing import Union
 
@@ -185,6 +186,8 @@ def stack_angles(memory: Union[int, np.int64],
     numpy.ndarray
         Array with the indices where a stack of images is subdivided.
     """
+
+    warnings.warn('Testing of util.module.stack_angles has been limited, please use carefully.')
 
     nimages = parang.size
 

@@ -776,7 +776,7 @@ class FrameSimilarityModule(ProcessingModule):
 
         if method not in ('MSE', 'PCC', 'SSIM'):
             raise ValueError(f'The chosen method \'{method}\' is not available. Please ensure '
-                             f'that you have selected one of \'MSE\', \'PCC\', \'SSIM\'.')
+                             f'that you have selected one of \'MSE\', \'PCC\', or \'SSIM\'.')
 
         if temporal_median not in ('full', 'constant'):
             raise ValueError(f'The chosen temporal_median \'{temporal_median}\' is not '
@@ -837,6 +837,10 @@ class FrameSimilarityModule(ProcessingModule):
         """
         Run method of the module. Computes the similarity between frames based on the Mean Squared
         Error (MSE), the Pearson Correlation Coefficient (PCC), or the Structural Similarity (SSIM).
+        The correlation values are stored as non-static attribute (``MSE``, ``PCC``, or ``SSIM``)
+        to the input data. After running this module, the
+        :class:`~pynpoint.processing.frameselection.SelectByAttributeModule` can be used to select
+        the images with the highest correlation.
 
         Returns
         -------
@@ -993,6 +997,9 @@ class SelectByAttributeModule(ProcessingModule):
         """
         Run method of the module. Selects images according to a specified attribute tag and
         ordering, e.g. the highest 150 ``INDEX`` frames, or the lowest 50 ``PCC`` frames.
+        The order of the selected images is determined by the `descending` or `ascending`
+        attribute values. To sort the images again by their original order, the 
+        :class:`~pynpoint.processing.psfpreparation.SortParangModule` can be used.
 
         Returns
         -------
