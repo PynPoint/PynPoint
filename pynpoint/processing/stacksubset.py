@@ -3,7 +3,6 @@ Pipeline modules for stacking and subsampling of images.
 """
 
 import time
-import math
 import warnings
 
 from typing import List
@@ -49,7 +48,7 @@ class StackAndSubsetModule(ProcessingModule):
             Method for combining images ('mean' or 'median'). The angles are always mean-combined.
         max_rotation : float, None
             Maximum allowed field rotation throughout each subset of stacked images when
-            ``stacking``is not None. No restriction on the field rotation is applied if set to
+            `stacking` is not None. No restriction on the field rotation is applied if set to
             None.
 
         Returns
