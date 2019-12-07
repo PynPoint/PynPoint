@@ -63,4 +63,4 @@ PynPoint is distributed under the GNU General Public License v3. See the LICENSE
 Acknowledgements
 ----------------
 
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
+The PynPoint logo was designed by `Atlas Interactive <https://atlas-interactive.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
