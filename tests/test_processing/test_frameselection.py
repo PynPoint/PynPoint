@@ -318,12 +318,11 @@ class TestFrameSelection:
 
     def test_select_by_attribute(self):
 
-        total_length = self.pipeline.get_shape('read')[0]
-        self.pipeline.set_attribute('read', 'INDEX', range(total_length), static=False)
-        attribute_tag = 'SSIM'
+        self.pipeline.set_attribute('read', 'INDEX', range(44), static=False)
+
         module = SelectByAttributeModule(name_in='frame_removal_1',
                                          image_in_tag='read',
-                                         attribute_tag=attribute_tag,
+                                         attribute_tag='SSIM',
                                          number_frames=6,
                                          order='descending',
                                          selected_out_tag='select_sim',
@@ -333,20 +332,14 @@ class TestFrameSelection:
         self.pipeline.run_module('frame_removal_1')
 
         index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
-        similarity = self.pipeline.get_attribute('select_sim', attribute_tag, static=False)
-        sim_removed = self.pipeline.get_attribute('remove_sim', attribute_tag, static=False)
+        sim_selected = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
+        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
 
-        # check attribute length
-        assert self.pipeline.get_shape('select_sim')[0] == 6
-        assert len(similarity) == 6
-        assert len(similarity) == len(index)
-        assert len(similarity) + len(sim_removed) == total_length
+        assert len(sim_selected) == 6
+        assert len(sim_selected) == len(index)
+        assert len(sim_selected) + len(sim_removed) == 44
 
-        # check sorted
-        assert all(similarity[i] >= similarity[i+1] for i in range(len(similarity)-1))
-
-        # check that the selected attributes are in the correct tags
-        assert np.min(similarity) > np.max(sim_removed)
+        assert np.min(sim_selected) > np.max(sim_removed)
 
     def test_residual_selection(self):
 
