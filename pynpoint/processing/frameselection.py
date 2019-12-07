@@ -1004,7 +1004,7 @@ class SelectByAttributeModule(ProcessingModule):
         Run method of the module. Selects images according to a specified attribute tag and
         ordering, e.g. the highest 150 ``INDEX`` frames, or the lowest 50 ``PCC`` frames.
         The order of the selected images is determined by the `descending` or `ascending`
-        attribute values. To sort the images again by their original order, the 
+        attribute values. To sort the images again by their original order, the
         :class:`~pynpoint.processing.psfpreparation.SortParangModule` can be used.
 
         Returns
@@ -1158,7 +1158,7 @@ class ResidualSelectionModule(ProcessingModule):
 
         rr_grid = pixel_distance((npix, npix), position=None)
 
-        pixel_select = np.where((rr_grid > self.m_annulus_radii[0]/pixscale) & \
+        pixel_select = np.where((rr_grid > self.m_annulus_radii[0]/pixscale) &
                                 (rr_grid < self.m_annulus_radii[1]/pixscale))
 
         start_time = time.time()

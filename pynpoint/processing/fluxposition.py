@@ -901,10 +901,34 @@ class MCMCsamplingModule(ProcessingModule):
 
             sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
+        samples = sampler.get_chain()
+
         self.m_image_in_port._check_status_and_activate()
         self.m_chain_out_port._check_status_and_activate()
 
-        self.m_chain_out_port.set_all(sampler.get_chain())
+        self.m_chain_out_port.set_all(samples)
+        print(f'Number of samples stored: {samples.shape[0]*samples.shape[1]}')
+
+        burnin = int(0.2*samples.shape[0])
+        samples = samples[burnin:, :, :].reshape((-1, ndim))
+
+        sep_percen = np.percentile(samples[:, 0], [16., 50., 84.])
+        ang_percen = np.percentile(samples[:, 1], [16., 50., 84.])
+        mag_percen = np.percentile(samples[:, 2], [16., 50., 84.])
+
+        print('Median and uncertainties (20% removed as burnin):')
+
+        print(f'Separation [mas] = {1e3*sep_percen[1]:.2f} '
+              f'(-{1e3*sep_percen[1]-1e3*sep_percen[0]:.2f} '
+              f'+{1e3*sep_percen[2]-1e3*sep_percen[1]:.2f})')
+
+        print(f'Position angle [deg] = {ang_percen[1]:.2f} '
+              f'(-{ang_percen[1]-ang_percen[0]:.2f} '
+              f'+{ang_percen[2]-ang_percen[1]:.2f})')
+
+        print(f'Contrast [mag] = {mag_percen[1]:.2f} '
+              f'(-{mag_percen[1]-mag_percen[0]:.2f} '
+              f'+{mag_percen[2]-mag_percen[1]:.2f})')
 
         history = f'walkers = {self.m_nwalkers}, steps = {self.m_nsteps}'
         self.m_chain_out_port.copy_attributes(self.m_image_in_port)
@@ -1210,6 +1234,27 @@ class SystematicErrorModule(ProcessingModule):
             print(f'Offset: {data[0]*1e3:.2f} mas, {data[1]:.2f} deg, {data[2]:.2f} mag')
 
             self.m_offset_out_port.append(data, data_dim=2)
+
+        offset_in_port = self.add_input_port(self.m_offset_out_port.tag)
+        offsets = offset_in_port.get_all()
+
+        sep_percen = np.percentile(offsets[:, 0], [16., 50., 84.])
+        ang_percen = np.percentile(offsets[:, 1], [16., 50., 84.])
+        mag_percen = np.percentile(offsets[:, 2], [16., 50., 84.])
+
+        print('Median and uncertainties:')
+
+        print(f'Separation [mas] = {1e3*sep_percen[1]:.2f} '
+              f'(-{1e3*sep_percen[1]-1e3*sep_percen[0]:.2f} '
+              f'+{1e3*sep_percen[2]-1e3*sep_percen[1]:.2f})')
+
+        print(f'Position angle [deg] = {ang_percen[1]:.2f} '
+              f'(-{ang_percen[1]-ang_percen[0]:.2f} '
+              f'+{ang_percen[2]-ang_percen[1]:.2f})')
+
+        print(f'Contrast [mag] = {mag_percen[1]:.2f} '
+              f'(-{mag_percen[1]-mag_percen[0]:.2f} '
+              f'+{mag_percen[2]-mag_percen[1]:.2f})')
 
         history = f'sep = {self.m_position[0]:.3f}, ' \
                   f'pa = {self.m_position[1]:.1f}, ' \
