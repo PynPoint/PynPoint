@@ -111,7 +111,7 @@ def write_selected_attributes(indices: np.ndarray,
 
             if np.size(indices) > 0:
                 index_del = np.where(np.logical_and(indices >= total,
-                                     indices < total+frames))[0]
+                                                    indices < total+frames))[0]
 
                 nframes_sel[i] = frames-np.size(index_del)
                 nframes_del[i] = np.size(index_del)

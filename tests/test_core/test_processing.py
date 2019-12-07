@@ -79,7 +79,7 @@ class TestProcessing:
         module._m_data_base = self.test_dir+'database.hdf5'
         module.add_output_port('new')
 
-    def test_apply_function_to_images(self):
+    def test_apply_function(self):
 
         self.pipeline.set_attribute('config', 'MEMORY', 20, static=True)
         self.pipeline.set_attribute('config', 'CPU', 4, static=True)
@@ -101,7 +101,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), 5.529431079676073e-22, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_to_images_args_none(self):
+    def test_apply_function_args_none(self):
 
         module = TimeNormalizationModule(name_in='norm',
                                          image_in_tag='images',
@@ -114,7 +114,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_to_images_args_none_memory_none(self):
+    def test_apply_function_args_none_memory_none(self):
 
         self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
 
@@ -129,7 +129,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_to_images_same_port(self):
+    def test_apply_function_same_port(self):
 
         module = LineSubtractionModule(name_in='subtract_same',
                                        image_in_tag='im_subtract',
@@ -142,6 +142,25 @@ class TestProcessing:
 
         data = self.pipeline.get_data('im_subtract')
         assert np.allclose(np.mean(data), 7.318364664277155e-22, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+    def test_apply_function_args_none_memory_none_same_port(self):
+
+        self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
+
+        data = self.pipeline.get_data('images')
+        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
+        assert data.shape == (100, 10, 10)
+
+        module = TimeNormalizationModule(name_in='norm_none_same',
+                                         image_in_tag='images',
+                                         image_out_tag='images')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('norm_none_same')
+
+        data = self.pipeline.get_data('images')
+        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
     def test_apply_function_to_images_memory_none(self):

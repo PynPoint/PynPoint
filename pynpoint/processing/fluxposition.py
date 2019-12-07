@@ -254,8 +254,8 @@ class SimplexMinimizationModule(ProcessingModule):
             ``reference_in_tag`` in case the ``reference_in_tag`` is used, to allow for flux and
             position measurements in the context of RDI.
         offset : float, None
-            Offset (pix) by which the aperture may deviate from ``position``. No constraint on the
-            position is applied if set to None.
+            Offset (pix) by which the injected negative PSF may deviate from ``position``. No
+            constraint on the position is applied if set to None.
 
         Returns
         -------
@@ -1039,7 +1039,8 @@ class SystematicErrorModule(ProcessingModule):
                  mask: Union[Tuple[float, float], Tuple[None, float],
                              Tuple[float, None], Tuple[None, None]] = None,
                  extra_rot: float = 0.,
-                 residuals: str = 'median') -> None:
+                 residuals: str = 'median',
+                 offset: float = None) -> None:
         """
         Parameters
         ----------
@@ -1090,6 +1091,9 @@ class SystematicErrorModule(ProcessingModule):
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
             Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+        offset : float, None
+            Offset (pix) by which the negative PSF may deviate from the positive injected PSF. No
+            constraint on the position is applied if set to None.
 
         Returns
         -------
@@ -1116,6 +1120,7 @@ class SystematicErrorModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
         self.m_pca_number = pca_number
+        self.m_offset = offset
 
     @typechecked
     def run(self) -> None:
@@ -1153,7 +1158,7 @@ class SystematicErrorModule(ProcessingModule):
         angles = np.linspace(self.m_angles[0], self.m_angles[1], self.m_angles[2], endpoint=True)
 
         for i, ang in enumerate(angles):
-            print(f'Processing position angle: {i} deg...')
+            print(f'Processing position angle: {ang} deg...')
 
             module = FakePlanetModule(position=(sep, ang),
                                       magnitude=self.m_magnitude,
@@ -1185,7 +1190,8 @@ class SystematicErrorModule(ProcessingModule):
                                                cent_size=self.m_mask[0],
                                                edge_size=self.m_mask[1],
                                                extra_rot=self.m_extra_rot,
-                                               residuals='median')
+                                               residuals='median',
+                                               offset=self.m_offset)
 
             module.connect_database(self._m_data_base)
             module.run()

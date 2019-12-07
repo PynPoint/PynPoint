@@ -135,10 +135,17 @@ class TestPypeline:
             dset.attrs['PIXSCALE'] = 0.01
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
-        data = pipeline.get_data('images')
 
+        data = pipeline.get_data('images')
         assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
+        assert data.shape == (10, 100, 100)
+
+        data = pipeline.get_data('images', data_range=(0, 5))
+        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 7.576979467771179e-07, rtol=limit, atol=0.)
+        assert data.shape == (5, 100, 100)
+
         assert pipeline.get_attribute('images', 'PIXSCALE') == 0.01
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
@@ -332,3 +339,9 @@ class TestPypeline:
         assert len(warning) == 2
         assert warning[0].message.args[0] == 'Dataset \'images\' not found in the database.'
         assert warning[1].message.args[0] == 'Attributes of \'images\' not found in the database.'
+
+    def test_omp_num_threads(self):
+        os.environ['OMP_NUM_THREADS'] = '2'
+
+        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+        pipeline.run()

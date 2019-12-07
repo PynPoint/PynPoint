@@ -138,7 +138,7 @@ class FitsWritingModule(WritingModule):
                     frames = memory_frames(self.m_subset_size, nimages)
                     frames = np.asarray(frames) + self.m_range[0]
 
-            for i, item in enumerate(frames[:-1]):
+            for i, _ in enumerate(frames[:-1]):
                 data_select = self.m_data_port[frames[i]:frames[i+1], ]
 
                 if len(frames) == 2:

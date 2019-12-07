@@ -544,7 +544,10 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         nimages = image_in_port.get_shape()[0]
 
-        if memory == 0 or image_out_port.tag == image_in_port.tag:
+        if memory == 0:
+            memory = nimages
+
+        if image_out_port.tag == image_in_port.tag:
             # load all images in the memory at once if the input and output tag are the
             # same or if the MEMORY attribute is set to None in the configuration file
             images = image_in_port.get_all()

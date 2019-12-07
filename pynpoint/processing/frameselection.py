@@ -2,6 +2,7 @@
 Pipeline modules for frame selection.
 """
 
+import sys
 import time
 import math
 import warnings
@@ -12,7 +13,7 @@ from typing import Union, Tuple
 import numpy as np
 
 from typeguard import typechecked
-from skimage.measure import compare_ssim, compare_mse
+from skimage.metrics import structural_similarity, mean_squared_error
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import crop_image, pixel_distance, center_pixel
@@ -230,10 +231,10 @@ class FrameSelectionModule(ProcessingModule):
 
     @staticmethod
     @typechecked
-    def photometry(image: np.ndarray,
-                   position: np.ndarray,
-                   aperture: Union[Tuple[str, float, float],
-                                   Tuple[str, None, float]]) -> np.float64:
+    def aperture_phot(image: np.ndarray,
+                      position: np.ndarray,
+                      aperture: Union[Tuple[str, float, float],
+                                      Tuple[str, None, float]]) -> np.float64:
         """
         Parameters
         ----------
@@ -333,7 +334,7 @@ class FrameSelectionModule(ProcessingModule):
         for i in range(nimages):
             progress(i, nimages, 'Aperture photometry...', start_time)
 
-            phot[i] = self.photometry(self.m_image_in_port[i, ], starpos[i, :], self.m_aperture)
+            phot[i] = self.aperture_phot(self.m_image_in_port[i, ], starpos[i, :], self.m_aperture)
 
         if self.m_method == 'median':
             phot_ref = np.nanmedian(phot)
@@ -812,7 +813,7 @@ class FrameSimilarityModule(ProcessingModule):
             image_m = temporal_median
 
         if mode == 'MSE':
-            return reference_index, compare_mse(image_x_i, image_m)
+            return reference_index, mean_squared_error(image_x_i, image_m)
 
         if mode == 'PCC':
             # calculate the covariance matrix of the flattend images
@@ -830,7 +831,7 @@ class FrameSimilarityModule(ProcessingModule):
                 winsize = int(window_size) + 1
             else:
                 winsize = int(window_size)
-            return reference_index, compare_ssim(image_x_i, image_m, win_size=winsize)
+            return reference_index, structural_similarity(image_x_i, image_m, win_size=winsize)
 
     @typechecked
     def run(self) -> None:
@@ -895,10 +896,15 @@ class FrameSimilarityModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, nimages, 'Calculating image similarity', start_time)
+            progress(nfinished, nimages, 'Calculating image similarity...', start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
+
+        if nfinished != nimages:
+            sys.stdout.write('\r                                                      ')
+            sys.stdout.write('\rCalculating image similarity... [DONE]\n')
+            sys.stdout.flush()
 
         # get the results for every async_result object
         for async_result in async_results:

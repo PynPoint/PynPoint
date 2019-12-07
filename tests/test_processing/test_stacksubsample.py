@@ -106,7 +106,12 @@ class TestStackSubset:
                                       max_rotation=1.)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('stack2')
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module('stack2')
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'Testing of util.module.stack_angles has been ' \
+                                             'limited, please use carefully.'
 
         data = self.pipeline.get_data('stack2')
         assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
