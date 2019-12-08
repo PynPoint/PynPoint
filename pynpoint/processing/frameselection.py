@@ -101,7 +101,7 @@ class RemoveFramesModule(ProcessingModule):
 
         if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
             raise ValueError(f'Some values in \'frames\' are larger than the total number of '
-                             f'available frames, {self.m_image_in_port.get_shape()[0]}')
+                             f'available frames, {self.m_image_in_port.get_shape()[0]}.')
 
         write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
                             indices=self.m_frames,
@@ -109,22 +109,12 @@ class RemoveFramesModule(ProcessingModule):
                             selected_out_port=self.m_selected_out_port,
                             removed_out_port=self.m_removed_out_port)
 
-        history = f'frames removed = {np.size(self.m_frames)}'
-
-        if self.m_selected_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
-            self.m_selected_out_port.add_history('RemoveFramesModule', history)
-
-        if self.m_removed_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
-            self.m_removed_out_port.add_history('RemoveFramesModule', history)
-
         write_selected_attributes(indices=self.m_frames,
                                   image_in_port=self.m_image_in_port,
                                   selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port)
+                                  removed_out_port=self.m_removed_out_port,
+                                  module_type='RemoveFramesModule',
+                                  history=f'frames removed = {np.size(self.m_frames)}')
 
         self.m_image_in_port.close_port()
 
@@ -330,50 +320,40 @@ class FrameSelectionModule(ProcessingModule):
         phot_std = np.nanstd(phot)
         print(f'Standard deviation = {phot_std:.2f}')
 
-        indices = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
-                                (phot < phot_ref - self.m_threshold*phot_std))
+        index_del = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
+                                  (phot < phot_ref - self.m_threshold*phot_std))
 
-        indices[np.isnan(phot)] = True
-        indices_del = np.asarray(np.where(indices)[0], dtype=np.int)
+        index_del[np.isnan(phot)] = True
+        index_del = np.where(index_del)[0]
+
+        index_sel = np.ones(nimages, dtype=bool)
+        index_sel[index_del] = False
 
         write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
-                            indices=indices_del,
+                            indices=index_del,
                             image_in_port=self.m_image_in_port,
                             selected_out_port=self.m_selected_out_port,
                             removed_out_port=self.m_removed_out_port)
 
-        history = f'frames removed = {np.size(indices_del)}'
+        history = f'frames removed = {np.size(index_del)}'
 
         if self.m_index_out_port is not None:
-            self.m_index_out_port.set_all(np.transpose(indices_del))
+            self.m_index_out_port.set_all(index_del, data_dim=1)
             self.m_index_out_port.copy_attributes(self.m_image_in_port)
             self.m_index_out_port.add_attribute('STAR_POSITION', starpos, static=False)
             self.m_index_out_port.add_history('FrameSelectionModule', history)
 
-        # Copy attributes before write_selected_attributes is used
-        self.m_selected_out_port.copy_attributes(self.m_image_in_port)
-
-        # Copy attributes before write_selected_attributes is used
-        self.m_removed_out_port.copy_attributes(self.m_image_in_port)
-
-        write_selected_attributes(indices=indices_del,
+        write_selected_attributes(indices=index_del,
                                   image_in_port=self.m_image_in_port,
                                   selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port)
+                                  removed_out_port=self.m_removed_out_port,
+                                  module_type='FrameSelectionModule',
+                                  history=history)
 
-        indices_sel = np.ones(nimages, dtype=bool)
-        indices_sel[indices] = False
-
-        self.m_selected_out_port.add_attribute('STAR_POSITION',
-                                               starpos[indices_sel],
-                                               static=False)
-
+        self.m_selected_out_port.add_attribute('STAR_POSITION', starpos[index_sel], static=False)
         self.m_selected_out_port.add_history('FrameSelectionModule', history)
 
-        self.m_removed_out_port.add_attribute('STAR_POSITION',
-                                              starpos[indices],
-                                              static=False)
-
+        self.m_removed_out_port.add_attribute('STAR_POSITION', starpos[index_del], static=False)
         self.m_removed_out_port.add_history('FrameSelectionModule', history)
 
         self.m_image_in_port.close_port()
@@ -1006,26 +986,19 @@ class SelectByAttributeModule(ProcessingModule):
                             selected_out_port=self.m_selected_out_port,
                             removed_out_port=self.m_removed_out_port)
 
-        if self.m_selected_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_selected_out_port.copy_attributes(self.m_image_in_port)
-
-        if self.m_removed_out_port is not None:
-            # Copy attributes before write_selected_attributes is used
-            self.m_removed_out_port.copy_attributes(self.m_image_in_port)
-
-        # write the selected and removed data to the respective output ports
         write_selected_attributes(indices=index_del,
                                   image_in_port=self.m_image_in_port,
                                   selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port)
+                                  removed_out_port=self.m_removed_out_port,
+                                  module_type='SelectByAttributeModule',
+                                  history=f'selected tag = {self.m_attribute_tag}')
 
         self.m_image_in_port.close_port()
 
 
 class ResidualSelectionModule(ProcessingModule):
     """
-    Pipeline module for applying a frame selection after the PSF subtraction.
+    Pipeline module for applying a frame selection on the residuals of the PSF subtraction.
     """
 
     __author__ = 'Tomas Stolker'
@@ -1052,7 +1025,7 @@ class ResidualSelectionModule(ProcessingModule):
         percentage : float
             The percentage of best frames that is selected.
         annulus_radii : tuple(float, float)
-            Inner and outer radius (arcsec) of the annulus.
+            Inner and outer radius of the annulus (arcsec).
 
         Returns
         -------
@@ -1107,8 +1080,11 @@ class ResidualSelectionModule(ProcessingModule):
 
             phot_annulus[i] = np.sum(np.abs(self.m_image_in_port[i][pixel_select]))
 
-        n_select = int(nimages*self.m_percentage/100.)
+        print(f'Minimum, maximum = {np.amin(phot_annulus):.2f}, {np.amax(phot_annulus):.2f}')
+        print(f'Mean, median = {np.nanmean(phot_annulus):.2f}, {np.nanmedian(phot_annulus):.2f}')
+        print(f'Standard deviation = {np.nanstd(phot_annulus):.2f}')
 
+        n_select = int(nimages*self.m_percentage/100.)
         index_del = np.argsort(phot_annulus)[n_select:]
 
         write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
@@ -1117,21 +1093,11 @@ class ResidualSelectionModule(ProcessingModule):
                             selected_out_port=self.m_selected_out_port,
                             removed_out_port=self.m_removed_out_port)
 
-        history = f'frames removed = {index_del.size}'
-
-        # Copy attributes before write_selected_attributes is used
-        self.m_selected_out_port.copy_attributes(self.m_image_in_port)
-
-        # Copy attributes before write_selected_attributes is used
-        self.m_removed_out_port.copy_attributes(self.m_image_in_port)
-
-        self.m_selected_out_port.add_history('ResidualsSelectionModule', history)
-        self.m_removed_out_port.add_history('ResidualsSelectionModule', history)
-
-        # write the selected and removed data to the respective output ports
         write_selected_attributes(indices=index_del,
                                   image_in_port=self.m_image_in_port,
                                   selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port)
+                                  removed_out_port=self.m_removed_out_port,
+                                  module_type='ResidualSelectionModule',
+                                  history=f'frames removed = {index_del.size}')
 
         self.m_image_in_port.close_port()

@@ -161,7 +161,7 @@ class StarExtractionModule(ProcessingModule):
         history = f'fwhm_star [pix] = {self.m_fwhm_star}'
 
         if self.m_index_out_port is not None:
-            self.m_index_out_port.set_all(np.transpose(np.asarray(index)))
+            self.m_index_out_port.set_all(index, data_dim=1)
             self.m_index_out_port.copy_attributes(self.m_image_in_port)
             self.m_index_out_port.add_history('StarExtractionModule', history)
 
