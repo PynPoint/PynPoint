@@ -117,6 +117,7 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.ImageStatisticsModule` (CPU): Compute statistics of the pixel values for each image.
 * :class:`~pynpoint.processing.frameselection.FrameSimilarityModule` (CPU): Compute different similarity measures of a set of images.
 * :class:`~pynpoint.processing.frameselection.SelectByAttributeModule`: Select images by the ascending/descending attribute values.
+* :class:`~pynpoint.processing.frameselection.ResidualSelectionModule`: Frame selection on the residuals of the PSF subtraction.
 
 Image Resizing
 ~~~~~~~~~~~~~~
