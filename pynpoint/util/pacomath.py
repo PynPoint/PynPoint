@@ -170,7 +170,7 @@ def pixelCalc(patch):
         Array of circular (flattened) patches centered on the same physical pixel vertically throughout the image stack
     """
     if patch is None:
-        return np.asarray([None,None])
+        return None,None
     T = patch.shape[0]
     size = patch.shape[1]
 

@@ -44,8 +44,6 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                SelectByAttributeModule
 
 from pynpoint.processing.limits import ContrastCurveModule, \
-				       PCAContrastCurveModule,\
-				       PACOContrastCurveModule,\
                                        MassLimitsModule
 
 from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \

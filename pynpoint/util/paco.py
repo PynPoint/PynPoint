@@ -131,7 +131,7 @@ class PACO:
             print("---------------------- ")
             print("Using " + str(cpu) + " processor(s).")
             print("Rescaled Image Cube shape: " + str(self.m_im_stack.shape))
-            print("Rescaled PSF")
+            print("Rescaled PSF:")
             print("PSF |  Area  |  Rad   |  Width | ")
             print("    |   " + str(self.m_psf_area).zfill(2) + \
                   "   |   " + str(self.m_psf_rad).zfill(2) + \
@@ -208,6 +208,7 @@ class PACO:
         nx, ny = np.shape(self.m_im_stack[0])[:2]
         if px[0]+k2 > nx or px[0]-k< 0 or px[1]+k2 > ny or px[1]-k < 0:
             #print("pixel out of range")
+            #return np.full((self.m_im_stack.shape[0],self.m_psf_area),np.nan)
             return None
         if mask is not None:
             patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
@@ -224,6 +225,8 @@ class PACO:
         
     def rescaleAll(self):
         if(self.m_scale == 1):
+            if self.m_verbose:
+                print("Scale is 1, no scaling applied.")
             self.m_rescaled = True
             return
 
@@ -459,18 +462,28 @@ class FastPACO(PACO):
         
         a = np.zeros(npx) # Setup output arrays
         b = np.zeros(npx)
+        # The off axis PSF at each point
+        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
+
+        # the mean of a temporal column of patches at each pixel
+        m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
+        # the inverse covariance matrix at each point
+        Cinv  = np.zeros((self.m_height*self.m_width*self.m_psf_area*self.m_psf_area))
         if cpu == 1:
             Cinv,m,h = self.computeStatistics(phi0s)
         else:
-            Cinv,m,h = self.computeStatisticsParallel(phi0s,cpu = cpu)
+            self.computeStatisticsParallel(phi0s,Cinv,m,h,cpu = cpu)
+            print(m)
+
 
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
+        print(self.m_nFrames)
         patch = np.zeros((self.m_nFrames,self.m_nFrames,self.m_psf_area)) # 2d selection of pixels around a given point
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
-
+        
         # Currently forcing integer grid, but meshgrid takes floats as arguments...
         x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))    
         if self.m_verbose:
@@ -554,7 +567,7 @@ class FastPACO(PACO):
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
         return Cinv,m,h
 
-    def computeStatisticsParallel(self, phi0s, cpu):
+    def computeStatisticsParallel(self, phi0s, Cinv, m, h, cpu):
         """    
         This function computes the mean and inverse covariance matrix for
         each patch in the image stack in Serial.
@@ -575,20 +588,13 @@ class FastPACO(PACO):
         NOTES:
         This function currently seems slower than computing in serial...
         """
+        print(Cinv.shape,m.shape,h.shape)
         if self.m_verbose:
             print("Precomputing Statistics using %d Processes...",cpu)
         npx = len(phi0s)           # Number of pixels in an image      
         dim = int(self.m_width/2)
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
-
-        # The off axis PSF at each point
-        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
-
-        # the mean of a temporal column of patches at each pixel
-        m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
-        # the inverse covariance matrix at each point
-        Cinv  = np.zeros((self.m_height*self.m_width*self.m_psf_area*self.m_psf_area)) 
         for p0 in phi0s:
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
                 
@@ -607,8 +613,8 @@ class FastPACO(PACO):
             else:
                 ms.append(d[0])
                 cs.append(d[1])
-        ms = np.asarray(ms)        
-        cs = np.asarray(cs)
+        ms = np.array(ms)        
+        cs = np.array(cs)
         m = ms.reshape((self.m_height,self.m_width,self.m_psf_area))
         Cinv = cs.reshape((self.m_height,self.m_width,self.m_psf_area,self.m_psf_area))
         #end = time.time()

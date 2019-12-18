@@ -1,4 +1,4 @@
-import os
+import os,sys
 os.environ["MKL_NUM_THREADS"] = "1" 
 os.environ["NUMEXPR_NUM_THREADS"] = "1" 
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -33,8 +33,8 @@ par_filename ="naco_betapic_pa.dat"
 
 #angles = np.genfromtxt(input_dir + par_filename)
 pipeline = Pypeline(working_place_in = working_dir,
-                   input_place_in = input_dir,
-                   output_place_in = output_dir)
+                    input_place_in = input_dir,
+                    output_place_in = output_dir)
 
 module = FitsReadingModule(name_in = "read1",
                            image_tag = "science",
@@ -66,6 +66,7 @@ module = ContrastCurveModule(name_in = "paco_contrast",
                             psf_rad = 0.108,
                             scaling = 1.0,
                             algorithm = 'fastpaco',
-                            verbose = False)
+			    psf_scaling = 1.0,
+                            verbose = True)
 pipeline.add_module(module)
 pipeline.run()

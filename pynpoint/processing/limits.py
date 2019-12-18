@@ -18,11 +18,12 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
-from pynpoint.util.limits import contrast_limit
+from pynpoint.util.limits import contrast_limit,paco_contrast_limit
 from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-
+from pynpoint.util.paco import PACO,FastPACO,FullPACO
+from pynpoint.util.pacomath import *
 
 class ContrastCurveModule(ProcessingModule):
     """
@@ -56,9 +57,73 @@ class ContrastCurveModule(ProcessingModule):
                  algorithm: str = "fastpaco",
                  verbose: bool =  False,
                  **kwargs: float) -> None:
+        """
+        Constructor of ContrastCurveModule. This module computes the contrast curve using
+        either PCA or the PACO algorithm.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance. If 'paco' is included anywhere within the name, the
+            module will run using the PACO algorithm, else it will default to PCA. 
+        image_in_tag : str
+            Tag of the database entry that contains the stack with images.
+        psf_in_tag : str
+            Tag of the database entry that contains the reference PSF that is used as fake planet.
+            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
+            *image_in_tag*.
+        contrast_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged contrast
+            limits, the azimuthal variance of the contrast limits, and the threshold of the false
+            positive fraction associated with sigma.
+        separation : tuple(float, float, float)
+            Range of separations (arcsec) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size). Apertures that fall within the mask radius or
+            beyond the image size are removed.
+        angle : tuple(float, float, float)
+            Range of position angles (deg) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size), measured counterclockwise with respect to the
+            vertical image axis, i.e. East of North.
+        threshold : tuple(str, float)
+            Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.)
+            or ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will
+            change with separation. Also, sigma only corresponds to the standard deviation of a
+            normal distribution at large separations (i.e., large number of samples).
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should have a positive value.
+        aperture : float
+            Aperture radius (arcsec).
+        pca_number : int
+            Number of principal components used for the PSF subtraction. PCA version only.
+        cent_size : float, None
+            Central mask radius (arcsec). No mask is used when set to None. PCA version only.
+        edge_size : float, None
+            Outer edge radius (arcsec) beyond which pixels are masked. No outer mask is used when
+            set to None. If the value is larger than half the image size then it will be set to
+            half the image size. PCA version only.
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        residuals : str
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped'). 
+            PCA version only.
+        snr_inject : float
+            Signal-to-noise ratio of the injected planet signal that is used to measure the amount
+            of self-subtraction.
+        scaling: float
+            Resolution scaling factor for PACO, determining sub-pixel sampling resolution. PACO only.
+        algorithm : str
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run. PACO only.
+        verbose: bool
+            Determines level of output to terminal. PACO only.
+        """
         super(ContrastCurveModule, self).__init__(name_in)
+
         self.mod_name = name_in
         if "paco" in name_in.lower():
+            sys.stdout.write("\rInitializing PACOContrastCurveModule\n")
+            sys.stdout.flush()
             self.PACOinit(image_in_tag = image_in_tag,
                           psf_in_tag = psf_in_tag,
                           contrast_out_tag = contrast_out_tag,
@@ -68,7 +133,6 @@ class ContrastCurveModule(ProcessingModule):
                           psf_scaling = psf_scaling,
                           aperture = aperture,
                           extra_rot = extra_rot,
-                          residuals = residuals,
                           snr_inject = snr_inject,
                           psf_rad = psf_rad,
                           scaling = scaling,
@@ -91,12 +155,12 @@ class ContrastCurveModule(ProcessingModule):
                          snr_inject = snr_inject,
                          **kwargs)
     @typechecked             
-    def run() -> None:
+    def run(self) -> None:
         if "paco" in self.mod_name.lower():
             self.PACOrun()
         else:
             self.PCARun()
-        return
+
     
     @typechecked
     def PACOinit(self,
@@ -114,24 +178,56 @@ class ContrastCurveModule(ProcessingModule):
                  scaling: float = 1.0,
                  algorithm: str = "fastpaco",
                  verbose: bool =  False
-    ):
+    ) -> None:
         """
-        Constructor of PACOContrastModule.
+        Constructor of former PACOContrastCurveModule. This module computes the contrast curve using
+        the PACO algorithm.
 
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name of the module instance. If 'paco' is included anywhere within the name, the
+            module will run using the PACO algorithm, else it will default to PCA. 
         image_in_tag : str
             Tag of the database entry that contains the stack with images.
         psf_in_tag : str
             Tag of the database entry that contains the reference PSF that is used as fake planet.
             Can be either a single image (2D) or a cube (3D) with the dimensions equal to
             *image_in_tag*.
+        contrast_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged contrast
+            limits, the azimuthal variance of the contrast limits, and the threshold of the false
+            positive fraction associated with sigma.
+        separation : tuple(float, float, float)
+            Range of separations (arcsec) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size). Apertures that fall within the mask radius or
+            beyond the image size are removed.
+        angle : tuple(float, float, float)
+            Range of position angles (deg) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size), measured counterclockwise with respect to the
+            vertical image axis, i.e. East of North.
+        threshold : tuple(str, float)
+            Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.)
+            or ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will
+            change with separation. Also, sigma only corresponds to the standard deviation of a
+            normal distribution at large separations (i.e., large number of samples).
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should have a positive value.
+        aperture : float
+            Aperture radius (arcsec).
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        snr_inject : float
+            Signal-to-noise ratio of the injected planet signal that is used to measure the amount
+            of self-subtraction.
+        scaling: float
+            Resolution scaling factor for PACO, determining sub-pixel sampling resolution. PACO only.
         algorithm : str
-            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run
-
-
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run. PACO only.
+        verbose: bool
+            Determines level of output to terminal. PACO only.
         """
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if psf_in_tag == image_in_tag:
