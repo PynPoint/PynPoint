@@ -462,24 +462,14 @@ class FastPACO(PACO):
         
         a = np.zeros(npx) # Setup output arrays
         b = np.zeros(npx)
-        # The off axis PSF at each point
-        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
-
-        # the mean of a temporal column of patches at each pixel
-        m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
-        # the inverse covariance matrix at each point
-        Cinv  = np.zeros((self.m_height*self.m_width*self.m_psf_area*self.m_psf_area))
         if cpu == 1:
             Cinv,m,h = self.computeStatistics(phi0s)
         else:
-            self.computeStatisticsParallel(phi0s,Cinv,m,h,cpu = cpu)
-            print(m)
-
+            Cinv,m,h = self.computeStatisticsParallel(phi0s,cpu = cpu)
 
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
-        print(self.m_nFrames)
         patch = np.zeros((self.m_nFrames,self.m_nFrames,self.m_psf_area)) # 2d selection of pixels around a given point
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
@@ -506,9 +496,9 @@ class FastPACO(PACO):
             mlst = []
             hlst = []
             for l,ang in enumerate(angles_px):
-                Cinlst.append(Cinv[int(ang[0])][int(ang[1])])
-                mlst.append(m[int(ang[0])][int(ang[1])])
-                hlst.append(h[int(ang[0])][int(ang[1])])
+                Cinlst.append(Cinv[int(ang[0]),int(ang[1])])
+                mlst.append(m[int(ang[0]),int(ang[1])])
+                hlst.append(h[int(ang[0]),int(ang[1])])
                 patch[l] = self.getPatch(ang, self.m_pwidth, mask)
             Cinv_arr = np.array(Cinlst)
             m_arr   = np.array(mlst)
@@ -567,7 +557,7 @@ class FastPACO(PACO):
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
         return Cinv,m,h
 
-    def computeStatisticsParallel(self, phi0s, Cinv, m, h, cpu):
+    def computeStatisticsParallel(self, phi0s,cpu):
         """    
         This function computes the mean and inverse covariance matrix for
         each patch in the image stack in Serial.
@@ -575,7 +565,7 @@ class FastPACO(PACO):
         ---------------
         phi0s : int arr
             Array of pixel locations to estimate companion position
-        params: dict
+        params: dict 
             Dictionary of parameters about the psf, containing either the width
             of a gaussian distribution, or a label 'psf_template'
         scale : float
@@ -588,13 +578,20 @@ class FastPACO(PACO):
         NOTES:
         This function currently seems slower than computing in serial...
         """
-        print(Cinv.shape,m.shape,h.shape)
         if self.m_verbose:
-            print("Precomputing Statistics using %d Processes...",cpu)
+            print("Precomputing Statistics using %d Processes..."%cpu)
         npx = len(phi0s)           # Number of pixels in an image      
         dim = int(self.m_width/2)
         mask =  createCircularMask((self.m_pwidth,self.m_pwidth),radius = self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape,radius = self.m_psf_rad)
+        
+        # The off axis PSF at each point
+        h = np.zeros((self.m_width,self.m_height,self.m_psf_area)) 
+
+        # the mean of a temporal column of patches at each pixel
+        m     = np.zeros((self.m_height*self.m_width*self.m_psf_area)) 
+        # the inverse covariance matrix at each point
+        Cinv  = np.zeros((self.m_height*self.m_width*self.m_psf_area*self.m_psf_area))
         for p0 in phi0s:
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
                 
