@@ -168,7 +168,7 @@ def contrast_limit(path_images: str,
         contrast = np.nan
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
-    queue.put((position[0], position[1], contrast, fpf))
+    return  position[0], position[1], contrast, fpf
 
 
 def paco_contrast_limit(path_images,
