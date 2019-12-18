@@ -104,7 +104,7 @@ class PACO:
 
     def __del__(self):
         if self.m_verbose:
-            print("Killed PACO")
+            print("Finished processing with PACO!")
         return
     
     def PACO(self,

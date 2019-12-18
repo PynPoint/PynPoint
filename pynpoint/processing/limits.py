@@ -122,7 +122,7 @@ class ContrastCurveModule(ProcessingModule):
 
         self.mod_name = name_in
         if "paco" in name_in.lower():
-            sys.stdout.write("\rInitializing PACOContrastCurveModule\n")
+            sys.stdout.write("\n\n\r*** WARNING ***\nPlease note that the PACO contrast curve analysis is still being tested. Continue at your own risk!\n\n")
             sys.stdout.flush()
             self.PACOinit(image_in_tag = image_in_tag,
                           psf_in_tag = psf_in_tag,
