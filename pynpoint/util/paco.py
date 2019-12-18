@@ -508,7 +508,7 @@ class FastPACO(PACO):
             # Calculate a and b, matrices
             a[i] = self.al(hlst, Cinlst)
             b[i] = self.bl(hlst, Cinlst, patch, mlst)
-        if self.m_verbose:
+        if self.m_verbose: 
             print("Done")
         return a,b
 

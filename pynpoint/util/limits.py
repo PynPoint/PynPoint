@@ -262,10 +262,10 @@ def paco_contrast_limit(path_images,
 
     # Aperture properties
     im_center = center_subpixel(images)
-    ap_dict = {'type':'circular', 'pos_x':im_center[1], 'pos_y':im_center[0], 'radius':aperture}
 
     # Measure the flux of the star
-    phot_table = aperture_photometry(psf_scaling*psf[0, ], create_aperture(ap_dict), method='exact')
+    ap_phot = CircularAperture((im_center[1], im_center[0]), aperture)
+    phot_table = aperture_photometry(psf_scaling*psf[0, ], ap_phot, method='exact')
     star = phot_table['aperture_sum'][0]
 
     # Magnitude of the injected planet
