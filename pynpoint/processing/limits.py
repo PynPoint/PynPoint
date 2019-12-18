@@ -18,11 +18,12 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
-from pynpoint.util.limits import contrast_limit
+from pynpoint.util.limits import contrast_limit,paco_contrast_limit
 from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-
+from pynpoint.util.paco import PACO,FastPACO,FullPACO
+from pynpoint.util.pacomath import *
 
 class ContrastCurveModule(ProcessingModule):
     """
@@ -31,8 +32,9 @@ class ContrastCurveModule(ProcessingModule):
     parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
-    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber'
+    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber, Evert Nasedkin'
 
+    
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -50,7 +52,231 @@ class ContrastCurveModule(ProcessingModule):
                  extra_rot: float = 0.,
                  residuals: str = 'median',
                  snr_inject: float = 100.,
+                 psf_rad: float = 4,
+                 scaling: float = 1.0,
+                 algorithm: str = "fastpaco",
+                 verbose: bool =  False,
                  **kwargs: float) -> None:
+        """
+        Constructor of ContrastCurveModule. This module computes the contrast curve using
+        either PCA or the PACO algorithm.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance. If 'paco' is included anywhere within the name, the
+            module will run using the PACO algorithm, else it will default to PCA. 
+        image_in_tag : str
+            Tag of the database entry that contains the stack with images.
+        psf_in_tag : str
+            Tag of the database entry that contains the reference PSF that is used as fake planet.
+            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
+            *image_in_tag*.
+        contrast_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged contrast
+            limits, the azimuthal variance of the contrast limits, and the threshold of the false
+            positive fraction associated with sigma.
+        separation : tuple(float, float, float)
+            Range of separations (arcsec) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size). Apertures that fall within the mask radius or
+            beyond the image size are removed.
+        angle : tuple(float, float, float)
+            Range of position angles (deg) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size), measured counterclockwise with respect to the
+            vertical image axis, i.e. East of North.
+        threshold : tuple(str, float)
+            Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.)
+            or ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will
+            change with separation. Also, sigma only corresponds to the standard deviation of a
+            normal distribution at large separations (i.e., large number of samples).
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should have a positive value.
+        aperture : float
+            Aperture radius (arcsec).
+        pca_number : int
+            Number of principal components used for the PSF subtraction. PCA version only.
+        cent_size : float, None
+            Central mask radius (arcsec). No mask is used when set to None. PCA version only.
+        edge_size : float, None
+            Outer edge radius (arcsec) beyond which pixels are masked. No outer mask is used when
+            set to None. If the value is larger than half the image size then it will be set to
+            half the image size. PCA version only.
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        residuals : str
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped'). 
+            PCA version only.
+        snr_inject : float
+            Signal-to-noise ratio of the injected planet signal that is used to measure the amount
+            of self-subtraction.
+        scaling: float
+            Resolution scaling factor for PACO, determining sub-pixel sampling resolution. PACO only.
+        algorithm : str
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run. PACO only.
+        verbose: bool
+            Determines level of output to terminal. PACO only.
+        """
+        super(ContrastCurveModule, self).__init__(name_in)
+
+        self.mod_name = name_in
+        if "paco" in name_in.lower():
+            sys.stdout.write("\n\n\r*** WARNING ***\nPlease note that the PACO contrast curve analysis is still being tested. Continue at your own risk!\n\n")
+            sys.stdout.flush()
+            self.PACOinit(image_in_tag = image_in_tag,
+                          psf_in_tag = psf_in_tag,
+                          contrast_out_tag = contrast_out_tag,
+                          separation = separation,
+                          angle = angle,
+                          threshold = threshold,
+                          psf_scaling = psf_scaling,
+                          aperture = aperture,
+                          extra_rot = extra_rot,
+                          snr_inject = snr_inject,
+                          psf_rad = psf_rad,
+                          scaling = scaling,
+                          algorithm = algorithm,
+                          verbose = verbose)
+        else:
+            self.PCAinit(image_in_tag = image_in_tag,
+                         psf_in_tag = psf_in_tag,
+                         contrast_out_tag = contrast_out_tag,
+                         separation = separation,
+                         angle = angle,
+                         threshold = threshold,
+                         psf_scaling = psf_scaling,
+                         aperture = aperture,
+                         pca_number = pca_number,
+                         cent_size = cent_size,
+                         edge_size = edge_size,
+                         extra_rot = extra_rot,
+                         residuals = residuals,
+                         snr_inject = snr_inject,
+                         **kwargs)
+    @typechecked             
+    def run(self) -> None:
+        if "paco" in self.mod_name.lower():
+            self.PACOrun()
+        else:
+            self.PCARun()
+
+    
+    @typechecked
+    def PACOinit(self,
+                 image_in_tag: str = "science",
+                 psf_in_tag: str = "psf",
+                 contrast_out_tag: str = "contrast_out",
+                 angle: Tuple[float, float, float] = (0., 360., 60.),
+                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
+                 threshold: Tuple[str, float] = ('sigma', 5.),
+                 aperture: float = 0.05,
+                 snr_inject: float = 100.,
+                 extra_rot: float = 0.,
+                 psf_scaling: float = 1.0,
+                 psf_rad: float = 4,
+                 scaling: float = 1.0,
+                 algorithm: str = "fastpaco",
+                 verbose: bool =  False
+    ) -> None:
+        """
+        Constructor of former PACOContrastCurveModule. This module computes the contrast curve using
+        the PACO algorithm.
+
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance. If 'paco' is included anywhere within the name, the
+            module will run using the PACO algorithm, else it will default to PCA. 
+        image_in_tag : str
+            Tag of the database entry that contains the stack with images.
+        psf_in_tag : str
+            Tag of the database entry that contains the reference PSF that is used as fake planet.
+            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
+            *image_in_tag*.
+        contrast_out_tag : str
+            Tag of the database entry that contains the separation, azimuthally averaged contrast
+            limits, the azimuthal variance of the contrast limits, and the threshold of the false
+            positive fraction associated with sigma.
+        separation : tuple(float, float, float)
+            Range of separations (arcsec) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size). Apertures that fall within the mask radius or
+            beyond the image size are removed.
+        angle : tuple(float, float, float)
+            Range of position angles (deg) where the contrast is calculated. Should be specified as
+            (lower limit, upper limit, step size), measured counterclockwise with respect to the
+            vertical image axis, i.e. East of North.
+        threshold : tuple(str, float)
+            Detection threshold for the contrast curve, either in terms of 'sigma' or the false
+            positive fraction (FPF). The value is a tuple, for example provided as ('sigma', 5.)
+            or ('fpf', 1e-6). Note that when sigma is fixed, the false positive fraction will
+            change with separation. Also, sigma only corresponds to the standard deviation of a
+            normal distribution at large separations (i.e., large number of samples).
+        psf_scaling : float
+            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
+            filter). Should have a positive value.
+        aperture : float
+            Aperture radius (arcsec).
+        extra_rot : float
+            Additional rotation angle of the images in clockwise direction (deg).
+        snr_inject : float
+            Signal-to-noise ratio of the injected planet signal that is used to measure the amount
+            of self-subtraction.
+        scaling: float
+            Resolution scaling factor for PACO, determining sub-pixel sampling resolution. PACO only.
+        algorithm : str
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run. PACO only.
+        verbose: bool
+            Determines level of output to terminal. PACO only.
+        """
+        self.m_image_in_port = self.add_input_port(image_in_tag)
+        if psf_in_tag == image_in_tag:
+            self.m_psf_in_port = self.m_image_in_port
+        else:
+            self.m_psf_in_port = self.add_input_port(psf_in_tag)
+
+        self.m_contrast_out_port = self.add_output_port(contrast_out_tag)         
+
+        self.m_angle = angle
+        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
+           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:         
+            raise ValueError('The angular positions of the fake planets should lie between '
+                             '0 deg and 360 deg.')
+            
+        self.m_separation = separation
+        self.m_aperture = aperture
+        self.m_threshold = threshold
+        self.m_snr_inject = snr_inject
+        self.m_extra_rot = extra_rot
+
+        # Scaling notes:
+        # self.m_scale        scales the resolution of the images for PACO
+        #                     to allow for subpixel template placement.
+        # self.m_psf_scaling  scales the brightness of the psf
+        # pixscale            Is the pixel size in arcsec
+        self.m_algorithm = algorithm
+        self.m_scale = scaling
+        self.m_psf_rad = psf_rad
+        self.m_psf_scaling = psf_scaling
+        self.m_verbose = verbose
+
+    @typechecked
+    def PCAinit(self,
+                image_in_tag: str,
+                psf_in_tag: str,
+                contrast_out_tag: str,
+                separation: Tuple[float, float, float] = (0.1, 1., 0.01),
+                angle: Tuple[float, float, float] = (0., 360., 60.),
+                threshold: Tuple[str, float] = ('sigma', 5.),
+                psf_scaling: float = 1.,
+                aperture: float = 0.05,
+                pca_number: int = 20,
+                cent_size: float = None,
+                edge_size: float = None,
+                extra_rot: float = 0.,
+                residuals: str = 'median',
+                snr_inject: float = 100.,
+                **kwargs: float) -> None:
         """
         Parameters
         ----------
@@ -105,9 +331,6 @@ class ContrastCurveModule(ProcessingModule):
         NoneType
             None
         """
-
-        super(ContrastCurveModule, self).__init__(name_in)
-
         if 'sigma' in kwargs:
             warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
                           '\'threshold\' parameter instead.', DeprecationWarning)
@@ -154,9 +377,8 @@ class ContrastCurveModule(ProcessingModule):
 
             raise ValueError('The angular positions of the fake planets should lie between '
                              '0 deg and 360 deg.')
-
     @typechecked
-    def run(self) -> None:
+    def PCArun(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
         given separation and position angle. The amount of self-subtraction is then determined and
@@ -312,6 +534,156 @@ class ContrastCurveModule(ProcessingModule):
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
 
+    @typechecked    
+    def PACOrun(self) -> None:
+        """
+        Run method of the module. An artificial planet is injected (based on the noise level) at a
+        given separation and position angle. The amount of self-subtraction is then determined and
+        the contrast limit is calculated for a given sigma level or false positive fraction. A
+        correction for small sample statistics is applied for both cases. Note that if the sigma
+        level is fixed, the false positive fraction changes with separation, following the
+        Student's t-distribution (see Mawet et al. 2014 for details).
+	"""
+        images = self.m_image_in_port.get_all()
+        psf = self.m_psf_in_port.get_all()
+
+        #if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
+        #    raise ValueError('The number of frames in psf_in_tag {0} does not match with the '
+        #                     'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
+        #                     'be used to average the PSF frames (without derotating) before '
+        #                     'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
+        
+        cpu = self._m_config_port.get_attribute("CPU")
+        parang = self.m_image_in_port.get_attribute("PARANG")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+
+        #if self.m_cent_size is not None:
+        #    self.m_cent_size /= pixscale
+
+        #if self.m_edge_size is not None:
+        #    self.m_edge_size /= pixscale
+
+        self.m_aperture /= pixscale
+
+        pos_r = np.arange(self.m_separation[0]/pixscale,
+                          self.m_separation[1]/pixscale,
+                          self.m_separation[2]/pixscale)
+
+        pos_t = np.arange(self.m_angle[0]+self.m_extra_rot,
+                          self.m_angle[1]+self.m_extra_rot,
+                          self.m_angle[2])
+
+        #if self.m_cent_size is None:
+        index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
+        #else:
+        #   index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size)
+
+        pos_r = np.delete(pos_r, index_del)
+
+        #if self.m_edge_size is None or self.m_edge_size > images.shape[1]/2.:
+        index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
+        #else:
+        #    index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size)
+        pos_r = np.delete(pos_r, index_del)
+
+        sys.stdout.write("Running PACOContrastCurveModule...\r")
+        sys.stdout.flush()
+
+        positions = []
+        for sep in pos_r:
+            for ang in pos_t:
+                positions.append((sep, ang))
+
+        working_place = self._m_config_port.get_attribute("WORKING_PLACE")
+
+        # Create temporary files
+        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
+        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
+
+        np.save(tmp_im_str, images)
+        np.save(tmp_psf_str, psf)
+
+        #mask = create_mask(images.shape[-2:], [self.m_cent_size, self.m_edge_size])
+
+        #_, im_res = pca_psf_subtraction(images=images*mask,
+        #                                angles=-1.*parang+self.m_extra_rot,
+        #                                pca_number=self.m_pca_number)
+
+        if self.m_algorithm == "fastpaco":
+            fp = FastPACO(image_stack = images,
+                          angles = parang,
+                          psf = psf,
+                          psf_rad = self.m_psf_rad,
+                          px_scale = pixscale,
+                          res_scale = self.m_scale,
+                          verbose = self.m_verbose)
+        elif self.m_algorithm == "fullpaco":
+            fp = FullPACO(image_stack = images,
+                          angles = parang,
+                          psf = psf,
+                          psf_rad = self.m_psf_rad,
+                          px_scale = pixscale,
+                          res_scale = self.m_scale,
+                          verbose = self.m_verbose)
+
+        # Run PACO
+        a,b  = fp.PACO(cpu = cpu)
+        noise = b/a
+        del fp
+
+        # Create a queue object which will contain the results
+        print("Using",cpu,"cpus for multiprocessing")
+        arglist = []
+        names = []
+        for i,pos in enumerate(positions):
+            arglist.append((tmp_im_str,
+                            tmp_psf_str,
+                            noise,
+                            parang,
+                            self.m_psf_rad,
+                            self.m_psf_scaling,
+                            self.m_scale,
+                            pixscale,
+                            self.m_extra_rot,
+                            self.m_threshold,
+                            self.m_aperture,
+                            self.m_snr_inject,
+                            pos,
+                            self.m_algorithm))
+            names.append((str(os.path.basename(__file__)) + '_radius=' +
+                          str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
+                          str(np.round(pos[1], 1))))
+        pool = mp.Pool(processes = cpu)
+        result = pool.starmap(paco_contrast_limit,arglist,chunksize = int(len(arglist)/cpu))
+        pool.close()
+        pool.join()
+
+        os.remove(tmp_im_str)
+        os.remove(tmp_psf_str)
+
+        result = np.asarray(result)
+        # Sort the results first by separation and then by angle
+        indices = np.lexsort((result[:, 1], result[:, 0]))
+        result = result[indices]
+
+        result = result.reshape((pos_r.size, pos_t.size, 4))
+
+        mag_mean = np.nanmean(result, axis=1)[:, 2]
+        mag_var = np.nanvar(result, axis=1)[:, 2]
+        res_fpf = result[:, 0, 3]
+
+        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+
+        self.m_contrast_out_port.set_all(limits, data_dim=2)
+
+        sys.stdout.write("\rRunning PACOContrastCurveModule... [DONE]\n")
+        sys.stdout.flush()
+
+        history = str(self.m_threshold[0])+" = "+str(self.m_threshold[1])
+
+        self.m_contrast_out_port.add_history("PACOContrastCurveModule", history)
+        self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
+        self.m_contrast_out_port.close_port()	
 
 class MassLimitsModule(ProcessingModule):
     """
@@ -320,7 +692,7 @@ class MassLimitsModule(ProcessingModule):
     """
 
     __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
-
+	
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -331,10 +703,6 @@ class MassLimitsModule(ProcessingModule):
                  instr_filter: str = 'L\'') -> None:
 
         """
-        Parameters
-        ----------
-        name_in : str
-            Unique name of the module instance.
         contrast_in_tag : str
             Tag of the database entry that contains the contrast curve data, as computed with the
             :class:`~pynpoint.processing.limits.ContrastCurveModule`.
@@ -500,7 +868,6 @@ class MassLimitsModule(ProcessingModule):
         NoneType
             None
         """
-
         model_age, model_data, model_header = self.read_model(self.m_model_file)
 
         assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
@@ -549,3 +916,4 @@ class MassLimitsModule(ProcessingModule):
         self.m_mass_out_port.add_history('MassLimitsModule', history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
+
