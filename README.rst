@@ -56,7 +56,7 @@ Contributions in the form of bug fixes, new or improved functionalities, and add
 License
 -------
 
-Copyright 2014-2019 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
+Copyright 2014-2020 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
 
 PynPoint is distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.
 

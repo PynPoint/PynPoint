@@ -280,7 +280,7 @@ def merit_function(residuals: np.ndarray,
     rr_grid = pixel_distance(im_shape=residuals.shape,
                              position=(aperture[0], aperture[1]))
 
-    indices = np.where(rr_grid < aperture[2])
+    indices = np.where(rr_grid <= aperture[2])
 
     if merit == 'hessian':
 
