@@ -366,7 +366,7 @@ class SimplexMinimizationModule(ProcessingModule):
                         pos_x > self.m_position[0] + self.m_offset:
                     return np.inf
 
-                elif pos_y < self.m_position[1] - self.m_offset or \
+                if pos_y < self.m_position[1] - self.m_offset or \
                         pos_y > self.m_position[1] + self.m_offset:
                     return np.inf
 
