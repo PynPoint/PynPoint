@@ -610,14 +610,13 @@ class Pypeline:
         self.m_data_storage.open_connection()
 
         tags = list(self.m_data_storage.m_data_bank.keys())
-
         select = []
-        for item in tags:
 
+        for item in tags:
             if item in ('config', 'fits_header') or item[0:7] == 'header_':
                 continue
-            else:
-                select.append(item)
+
+            select.append(item)
 
         self.m_data_storage.close_connection()
 

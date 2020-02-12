@@ -204,7 +204,7 @@ class WaveletAnalysisCapsule:
             Reconstruction factor.
         """
 
-        dj = self._m_frequency_resolution
+        freq_res = self._m_frequency_resolution
         wavelet = self.m_wavelet
         order = self.m_order
 
@@ -215,7 +215,7 @@ class WaveletAnalysisCapsule:
 
         c_delta = self._m_c_final_reconstruction
 
-        reconstruction_factor = dj/(c_delta * zero_function)
+        reconstruction_factor = freq_res/(c_delta * zero_function)
 
         return reconstruction_factor.real
 

@@ -4,6 +4,9 @@ Functions for Pypeline modules.
 
 import sys
 import time
+import math
+import cmath
+import warnings
 
 from typing import Union
 
@@ -93,6 +96,7 @@ def memory_frames(memory: Union[int, np.int64],
     Returns
     -------
     numpy.ndarray
+        Array with the indices where a stack of images is subdivided.
     """
 
     if memory == 0 or memory >= nimages:
@@ -109,6 +113,115 @@ def memory_frames(memory: Union[int, np.int64],
             frames = np.append(frames, nimages)
 
     return frames
+
+
+@typechecked
+def angle_average(angles: np.ndarray) -> float:
+    """
+    Function to calculate the average value of a list of angles.
+
+    Parameters
+    ----------
+    angles : numpy.ndarray
+        Parallactic angles (deg).
+
+    Returns
+    -------
+    float
+        Average angle (deg).
+    """
+
+    cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
+    cmath_phase = cmath.phase(cmath_rect/len(angles))
+
+    return math.degrees(cmath_phase)
+
+
+@typechecked
+def angle_difference(angle_1: float,
+                     angle_2: float) -> float:
+    """
+    Function to calculate the difference between two  angles.
+
+    Parameters
+    ----------
+    angle_1 : float
+        First angle (deg).
+    angle_2 : float
+        Second angle (deg).
+
+    Returns
+    -------
+    float
+        Angle difference (deg).
+    """
+
+    angle_diff = (angle_1-angle_2) % 360.
+
+    if angle_diff >= 180.:
+        angle_diff -= 360.
+
+    return angle_diff
+
+
+@typechecked
+def stack_angles(memory: Union[int, np.int64],
+                 parang: np.ndarray,
+                 max_rotation: float) -> np.ndarray:
+    """
+    Function to subdivide the input images is in quantities of MEMORY with a restriction on the
+    maximum field rotation across a subset of images.
+
+    Parameters
+    ----------
+    memory : int
+        Number of images that is simultaneously loaded into the memory.
+    parang : numpy.ndarray
+        Parallactic angles (deg).
+    max_rotation : float
+        Maximum field rotation (deg).
+
+    Returns
+    -------
+    numpy.ndarray
+        Array with the indices where a stack of images is subdivided.
+    """
+
+    warnings.warn('Testing of util.module.stack_angles has been limited, please use carefully.')
+
+    nimages = parang.size
+
+    if memory == 0 or memory >= nimages:
+        frames = [0, nimages]
+
+    else:
+        frames = [0, ]
+        parang_start = parang[0]
+        im_count = 0
+
+        for i in range(1, parang.size):
+            abs_start_diff = abs(angle_difference(parang_start, parang[i-1]))
+            abs_current_diff = abs(angle_difference(parang[i], parang[i-1]))
+
+            if abs_start_diff > max_rotation or abs_current_diff > max_rotation:
+                frames.append(i)
+                parang_start = parang[i]
+                im_count = 0
+
+            else:
+                im_count += 1
+
+                if im_count == memory:
+                    frames.append(i)
+
+                    if i < parang.size-1:
+                        parang_start = parang[i+1]
+                        im_count = 0
+
+        if frames[-1] != nimages:
+            frames.append(nimages)
+
+    return np.asarray(frames)
 
 
 @typechecked

@@ -44,7 +44,8 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                RemoveStartFramesModule, \
                                                ImageStatisticsModule, \
                                                FrameSimilarityModule, \
-                                               SelectByAttributeModule
+                                               SelectByAttributeModule, \
+                                               ResidualSelectionModule
 
 from pynpoint.processing.limits import ContrastCurveModule, \
                                        MassLimitsModule

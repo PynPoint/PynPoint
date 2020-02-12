@@ -11,7 +11,7 @@ from typing import Union, Tuple, List
 import numpy as np
 
 from typeguard import typechecked
-from sklearn.decomposition.pca import PCA
+from sklearn.decomposition import PCA
 
 from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
@@ -242,7 +242,7 @@ class PcaTaskWriter(TaskWriter):
             if poison_pill_case == 1:
                 break
 
-            elif poison_pill_case == 2:
+            if poison_pill_case == 2:
                 continue
 
             with self.m_data_mutex:

@@ -8,7 +8,7 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectionModule, \
                                                RemoveLastFrameModule, RemoveStartFramesModule, \
                                                ImageStatisticsModule, FrameSimilarityModule, \
-                                               SelectByAttributeModule
+                                               SelectByAttributeModule, ResidualSelectionModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
 warnings.simplefilter('always')
@@ -318,12 +318,11 @@ class TestFrameSelection:
 
     def test_select_by_attribute(self):
 
-        total_length = self.pipeline.get_shape('read')[0]
-        self.pipeline.set_attribute('read', 'INDEX', range(total_length), static=False)
-        attribute_tag = 'SSIM'
+        self.pipeline.set_attribute('read', 'INDEX', range(44), static=False)
+
         module = SelectByAttributeModule(name_in='frame_removal_1',
                                          image_in_tag='read',
-                                         attribute_tag=attribute_tag,
+                                         attribute_tag='SSIM',
                                          number_frames=6,
                                          order='descending',
                                          selected_out_tag='select_sim',
@@ -333,17 +332,33 @@ class TestFrameSelection:
         self.pipeline.run_module('frame_removal_1')
 
         index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
-        similarity = self.pipeline.get_attribute('select_sim', attribute_tag, static=False)
-        sim_removed = self.pipeline.get_attribute('remove_sim', attribute_tag, static=False)
+        sim_selected = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
+        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
 
-        # check attribute length
-        assert self.pipeline.get_shape('select_sim')[0] == 6
-        assert len(similarity) == 6
-        assert len(similarity) == len(index)
-        assert len(similarity) + len(sim_removed) == total_length
+        assert len(sim_selected) == 6
+        assert len(sim_selected) == len(index)
+        assert len(sim_selected) + len(sim_removed) == 44
 
-        # check sorted
-        assert all(similarity[i] >= similarity[i+1] for i in range(len(similarity)-1))
+        assert np.min(sim_selected) > np.max(sim_removed)
 
-        # check that the selected attributes are in the correct tags
-        assert np.min(similarity) > np.max(sim_removed)
+    def test_residual_selection(self):
+
+        module = ResidualSelectionModule(name_in='residual_select',
+                                         image_in_tag='start',
+                                         selected_out_tag='res_selected',
+                                         removed_out_tag='res_removed',
+                                         percentage=80.,
+                                         annulus_radii=(0.1, 0.2))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('residual_select')
+
+        data = self.pipeline.get_data('res_selected')
+        assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011309037313302, rtol=limit, atol=0.)
+        assert data.shape == (25, 100, 100)
+
+        data = self.pipeline.get_data('res_removed')
+        assert np.allclose(data[0, 50, 50], 0.09806695334723013, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011260717437674, rtol=limit, atol=0.)
+        assert data.shape == (7, 100, 100)
