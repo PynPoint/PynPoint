@@ -21,7 +21,7 @@ PynPoint
 .. image:: https://www.codefactor.io/repository/github/pynpoint/pynpoint/badge
     :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
 
-.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+.. image:: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
     :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
 
 .. image:: http://img.shields.io/badge/arXiv-1811.03336-orange.svg?style=flat
