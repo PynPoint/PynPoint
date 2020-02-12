@@ -25,7 +25,7 @@ def pca_psf_subtraction(images: np.ndarray,
         Stack of images. Also used as reference images if `pca_sklearn` is set to None. Should be
         in the original 3D shape if `pca_sklearn` is set to None or in the 2D reshaped format if
         `pca_sklearn` is not set to None.
-    parang : numpy.ndarray
+    angles : numpy.ndarray
         Derotation angles (deg).
     pca_number : int
         Number of principal components used for the PSF model.
@@ -86,6 +86,11 @@ def pca_psf_subtraction(images: np.ndarray,
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
+
+    # check if the number of parang is equal to the number of images
+    if residuals.shape[0] != angles.shape[0]:
+        raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
+                         f'number of parallactic angles ({angles.shape[0]}).')
 
     # derotate the images
     res_rot = np.zeros(residuals.shape)

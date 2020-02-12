@@ -3,6 +3,7 @@ Interfaces for pipeline modules.
 """
 
 import os
+import math
 import time
 import warnings
 
@@ -619,7 +620,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                                              num_proc=cpu,
                                              function=func,
                                              function_args=func_args,
-                                             stack_size=int(memory/cpu),
+                                             stack_size=math.ceil(memory/cpu),
                                              result_shape=result_shape,
                                              nimages=nimages)
 
