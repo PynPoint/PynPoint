@@ -79,12 +79,12 @@ class ParangReadingModule(ReadingModule):
 
         print(' [DONE]')
 
-        print(f'Number of angles: {parang.size}')
-        print(f'Rotation range: {parang[0]:.2f} - {parang[-1]:.2f} deg')
-
         if parang.ndim != 1:
             raise ValueError(f'The input file {self.m_file_name} should contain a 1D data set with '
                              f'the parallactic angles.')
+
+        print(f'Number of angles: {parang.size}')
+        print(f'Rotation range: {parang[0]:.2f} - {parang[-1]:.2f} deg')
 
         status = self.m_data_port.check_non_static_attribute('PARANG', parang)
 
@@ -273,12 +273,12 @@ class WavelengthReadingModule(ReadingModule):
 
         print(' [DONE]')
 
-        print(f'Number of wavelengths: {wavelength.size}')
-        print(f'Wavelength range: {wavelength[0]:.2f} - {wavelength[-1]:.2f}')
-
         if wavelength.ndim != 1:
             raise ValueError(f'The input file {self.m_file_name} should contain a 1D data set with '
                              f'the wavelengths.')
+
+        print(f'Number of wavelengths: {wavelength.size}')
+        print(f'Wavelength range: {wavelength[0]:.2f} - {wavelength[-1]:.2f}')
 
         status = self.m_data_port.check_non_static_attribute('WAVELENGTH', wavelength)
 
