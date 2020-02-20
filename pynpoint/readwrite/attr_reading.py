@@ -14,98 +14,6 @@ from pynpoint.core.attributes import get_attributes
 from pynpoint.core.processing import ReadingModule
 
 
-class ParangReadingModule(ReadingModule):
-    """
-    Module for reading a list of parallactic angles from a FITS or ASCII file.
-    """
-
-    __author__ = 'Tomas Stolker'
-
-    @typechecked
-    def __init__(self,
-                 name_in: str,
-                 data_tag: str,
-                 file_name: str,
-                 input_dir: str = None,
-                 overwrite: bool = False) -> None:
-        """
-        Parameters
-        ----------
-        name_in : str
-            Unique name of the module instance.
-        data_tag : str
-            Tag of the database entry to which the PARANG attribute is written.
-        file_name : str
-            Name of the input file with the parallactic angles (deg). Should be equal in size
-            to the number of images in ``data_tag``. In case the ``file_name`` is ending with
-            ``.fits``, then a FITS file is read. Otherwise, a single column of values is expected
-            in an ASCII file.
-        input_dir : str, None
-            Input directory where the input file is located. If not specified the Pypeline default
-            directory is used.
-        overwrite : bool
-            Overwrite if the PARANG attribute already exists.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-        super(ParangReadingModule, self).__init__(name_in, input_dir)
-
-        self.m_data_port = self.add_output_port(data_tag)
-
-        self.m_file_name = file_name
-        self.m_overwrite = overwrite
-
-    @typechecked
-    def run(self) -> None:
-        """
-        Run method of the module. Reads the parallactic angles from a FITS or ASCII file and
-        writes the values as non-static attribute (PARANG) to the database tag.
-
-        Returns
-        -------
-        NoneType
-            None
-        """
-
-        print('Reading parallactic angles...', end='')
-
-        if self.m_file_name.endswith('fits'):
-            parang = fits.getdata(os.path.join(self.m_input_location, self.m_file_name))
-        else:
-            parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
-
-        print(' [DONE]')
-
-        if parang.ndim != 1:
-            raise ValueError(f'The input file {self.m_file_name} should contain a 1D data set with '
-                             f'the parallactic angles.')
-
-        print(f'Number of angles: {parang.size}')
-        print(f'Rotation range: {parang[0]:.2f} - {parang[-1]:.2f} deg')
-
-        status = self.m_data_port.check_non_static_attribute('PARANG', parang)
-
-        if status == 1:
-            self.m_data_port.add_attribute('PARANG', parang, static=False)
-
-        elif status == -1 and self.m_overwrite:
-            self.m_data_port.add_attribute('PARANG', parang, static=False)
-
-        elif status == -1 and not self.m_overwrite:
-            warnings.warn(f'The PARANG attribute is already present. Set the \'overwrite\' '
-                          f'parameter to True in order to overwrite the values with '
-                          f'{self.m_file_name}.')
-
-        elif status == 0:
-            warnings.warn(f'The PARANG attribute is already present and contains the same values '
-                          f'as are present in {self.m_file_name}.')
-
-        self.m_data_port.close_port()
-
-
 class AttributeReadingModule(ReadingModule):
     """
     Module for reading a list of values from a FITS or ASCII file and appending them as a non-static
@@ -204,6 +112,99 @@ class AttributeReadingModule(ReadingModule):
                           f'contains the same values as are present in {self.m_file_name}.')
 
         print(' [DONE]')
+
+        self.m_data_port.close_port()
+
+
+
+class ParangReadingModule(ReadingModule):
+    """
+    Module for reading a list of parallactic angles from a FITS or ASCII file.
+    """
+
+    __author__ = 'Tomas Stolker'
+
+    @typechecked
+    def __init__(self,
+                 name_in: str,
+                 data_tag: str,
+                 file_name: str,
+                 input_dir: str = None,
+                 overwrite: bool = False) -> None:
+        """
+        Parameters
+        ----------
+        name_in : str
+            Unique name of the module instance.
+        data_tag : str
+            Tag of the database entry to which the PARANG attribute is written.
+        file_name : str
+            Name of the input file with the parallactic angles (deg). Should be equal in size
+            to the number of images in ``data_tag``. In case the ``file_name`` is ending with
+            ``.fits``, then a FITS file is read. Otherwise, a single column of values is expected
+            in an ASCII file.
+        input_dir : str, None
+            Input directory where the input file is located. If not specified the Pypeline default
+            directory is used.
+        overwrite : bool
+            Overwrite if the PARANG attribute already exists.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+        super(ParangReadingModule, self).__init__(name_in, input_dir)
+
+        self.m_data_port = self.add_output_port(data_tag)
+
+        self.m_file_name = file_name
+        self.m_overwrite = overwrite
+
+    @typechecked
+    def run(self) -> None:
+        """
+        Run method of the module. Reads the parallactic angles from a FITS or ASCII file and
+        writes the values as non-static attribute (PARANG) to the database tag.
+
+        Returns
+        -------
+        NoneType
+            None
+        """
+
+        print('Reading parallactic angles...', end='')
+
+        if self.m_file_name.endswith('fits'):
+            parang = fits.getdata(os.path.join(self.m_input_location, self.m_file_name))
+        else:
+            parang = np.loadtxt(os.path.join(self.m_input_location, self.m_file_name))
+
+        print(' [DONE]')
+
+        if parang.ndim != 1:
+            raise ValueError(f'The input file {self.m_file_name} should contain a 1D data set with '
+                             f'the parallactic angles.')
+
+        print(f'Number of angles: {parang.size}')
+        print(f'Rotation range: {parang[0]:.2f} - {parang[-1]:.2f} deg')
+
+        status = self.m_data_port.check_non_static_attribute('PARANG', parang)
+
+        if status == 1:
+            self.m_data_port.add_attribute('PARANG', parang, static=False)
+
+        elif status == -1 and self.m_overwrite:
+            self.m_data_port.add_attribute('PARANG', parang, static=False)
+
+        elif status == -1 and not self.m_overwrite:
+            warnings.warn(f'The PARANG attribute is already present. Set the \'overwrite\' '
+                          f'parameter to True in order to overwrite the values with '
+                          f'{self.m_file_name}.')
+
+        elif status == 0:
+            warnings.warn(f'The PARANG attribute is already present and contains the same values '
+                          f'as are present in {self.m_file_name}.')
 
         self.m_data_port.close_port()
 

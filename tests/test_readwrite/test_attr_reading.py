@@ -5,7 +5,8 @@ import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
-from pynpoint.readwrite.attr_reading import ParangReadingModule, AttributeReadingModule
+from pynpoint.readwrite.attr_reading import ParangReadingModule, AttributeReadingModule, \
+                                            WavelengthReadingModule
 from pynpoint.util.tests import create_config, create_random, remove_test_data
 
 warnings.simplefilter('always')
@@ -25,6 +26,7 @@ class TestTextReading:
         np.savetxt(self.test_dir+'parang.dat', np.arange(1., 11., 1.))
         np.savetxt(self.test_dir+'new.dat', np.arange(10., 21., 1.))
         np.savetxt(self.test_dir+'attribute.dat', np.arange(1, 11, 1), fmt='%i')
+        np.savetxt(self.test_dir+'wavelength.dat', np.arange(1, 11, 1))
 
         data2d = np.random.normal(loc=0, scale=2e-4, size=(10, 10))
         np.savetxt(self.test_dir+'data_2d.dat', data2d)
@@ -34,7 +36,8 @@ class TestTextReading:
     def teardown_class(self):
 
         remove_test_data(self.test_dir, files=['parang.dat', 'new.dat',
-                                               'attribute.dat', 'data_2d.dat'])
+                                               'attribute.dat', 'data_2d.dat',
+                                               'wavelength.dat'])
 
     def test_input_data(self):
 
@@ -45,13 +48,13 @@ class TestTextReading:
 
     def test_parang_reading(self):
 
-        parang = ParangReadingModule(file_name='parang.dat',
+        module = ParangReadingModule(file_name='parang.dat',
                                      name_in='parang1',
                                      input_dir=None,
                                      data_tag='images',
                                      overwrite=False)
 
-        self.pipeline.add_module(parang)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('parang1')
 
         data = self.pipeline.get_data('header_images/PARANG')
@@ -61,13 +64,13 @@ class TestTextReading:
 
     def test_parang_reading_same(self):
 
-        parang = ParangReadingModule(file_name='parang.dat',
+        module = ParangReadingModule(file_name='parang.dat',
                                      name_in='parang2',
                                      input_dir=None,
                                      data_tag='images',
                                      overwrite=True)
 
-        self.pipeline.add_module(parang)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('parang2')
@@ -79,13 +82,13 @@ class TestTextReading:
 
     def test_parang_reading_present(self):
 
-        parang = ParangReadingModule(file_name='new.dat',
+        module = ParangReadingModule(file_name='new.dat',
                                      name_in='parang3',
                                      input_dir=None,
                                      data_tag='images',
                                      overwrite=False)
 
-        self.pipeline.add_module(parang)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('parang3')
@@ -97,24 +100,24 @@ class TestTextReading:
 
     def test_parang_reading_overwrite(self):
 
-        parang = ParangReadingModule(file_name='new.dat',
+        module = ParangReadingModule(file_name='new.dat',
                                      name_in='parang4',
                                      input_dir=None,
                                      data_tag='images',
                                      overwrite=True)
 
-        self.pipeline.add_module(parang)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('parang4')
 
     def test_parang_reading_2d(self):
 
-        parang = ParangReadingModule(file_name='data_2d.dat',
+        module = ParangReadingModule(file_name='data_2d.dat',
                                      name_in='parang6',
                                      input_dir=None,
                                      data_tag='images',
                                      overwrite=False)
 
-        self.pipeline.add_module(parang)
+        self.pipeline.add_module(module)
 
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('parang6')
@@ -124,14 +127,14 @@ class TestTextReading:
 
     def test_attribute_reading(self):
 
-        attribute = AttributeReadingModule(file_name='attribute.dat',
-                                           attribute='EXP_NO',
-                                           name_in='attribute1',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=False)
+        module = AttributeReadingModule(file_name='attribute.dat',
+                                        attribute='EXP_NO',
+                                        name_in='attribute1',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=False)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('attribute1')
 
         data = self.pipeline.get_data('header_images/EXP_NO')
@@ -141,14 +144,14 @@ class TestTextReading:
 
     def test_attribute_reading_present(self):
 
-        attribute = AttributeReadingModule(file_name='parang.dat',
-                                           attribute='PARANG',
-                                           name_in='attribute3',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=False)
+        module = AttributeReadingModule(file_name='parang.dat',
+                                        attribute='PARANG',
+                                        name_in='attribute3',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=False)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('attribute3')
@@ -159,14 +162,14 @@ class TestTextReading:
 
     def test_attribute_reading_invalid(self):
 
-        attribute = AttributeReadingModule(file_name='attribute.dat',
-                                           attribute='test',
-                                           name_in='attribute4',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=False)
+        module = AttributeReadingModule(file_name='attribute.dat',
+                                        attribute='test',
+                                        name_in='attribute4',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=False)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
 
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('attribute4')
@@ -175,14 +178,14 @@ class TestTextReading:
 
     def test_attribute_reading_2d(self):
 
-        attribute = AttributeReadingModule(file_name='data_2d.dat',
-                                           attribute='DITHER_X',
-                                           name_in='attribute5',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=False)
+        module = AttributeReadingModule(file_name='data_2d.dat',
+                                        attribute='DITHER_X',
+                                        name_in='attribute5',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=False)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
 
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('attribute5')
@@ -192,14 +195,14 @@ class TestTextReading:
 
     def test_attribute_reading_same(self):
 
-        attribute = AttributeReadingModule(file_name='attribute.dat',
-                                           attribute='EXP_NO',
-                                           name_in='attribute6',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=True)
+        module = AttributeReadingModule(file_name='attribute.dat',
+                                        attribute='EXP_NO',
+                                        name_in='attribute6',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=True)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('attribute6')
@@ -211,15 +214,94 @@ class TestTextReading:
 
     def test_attribute_reading_overwrite(self):
 
-        attribute = AttributeReadingModule(file_name='parang.dat',
-                                           attribute='PARANG',
-                                           name_in='attribute7',
-                                           input_dir=None,
-                                           data_tag='images',
-                                           overwrite=True)
+        module = AttributeReadingModule(file_name='parang.dat',
+                                        attribute='PARANG',
+                                        name_in='attribute7',
+                                        input_dir=None,
+                                        data_tag='images',
+                                        overwrite=True)
 
-        self.pipeline.add_module(attribute)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('attribute7')
 
         attribute = self.pipeline.get_attribute('images', 'PARANG', static=False)
         assert np.allclose(attribute, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+
+    def test_wavelength_reading(self):
+
+        module = WavelengthReadingModule(file_name='wavelength.dat',
+                                         name_in='wavelength1',
+                                         input_dir=None,
+                                         data_tag='images',
+                                         overwrite=False)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('wavelength1')
+
+        data = self.pipeline.get_data('header_images/WAVELENGTH')
+        assert data.dtype == 'float64'
+        assert np.allclose(data, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+        assert data.shape == (10, )
+
+    def test_wavelength_reading_same(self):
+
+        module = WavelengthReadingModule(file_name='wavelength.dat',
+                                         name_in='wavelength2',
+                                         input_dir=None,
+                                         data_tag='images',
+                                         overwrite=True)
+
+        self.pipeline.add_module(module)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module('wavelength2')
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The WAVELENGTH attribute is already present and ' \
+                                             'contains the same values as are present in ' \
+                                             'wavelength.dat.'
+
+    def test_wavelength_reading_present(self):
+
+        module = WavelengthReadingModule(file_name='new.dat',
+                                         name_in='wavelength3',
+                                         input_dir=None,
+                                         data_tag='images',
+                                         overwrite=False)
+
+        self.pipeline.add_module(module)
+
+        with pytest.warns(UserWarning) as warning:
+            self.pipeline.run_module('wavelength3')
+
+        assert len(warning) == 1
+        assert warning[0].message.args[0] == 'The WAVELENGTH attribute is already present. Set ' \
+                                             'the \'overwrite\' parameter to True in order to ' \
+                                             'overwrite the values with new.dat.'
+
+    def test_wavelength_reading_overwrite(self):
+
+        module = WavelengthReadingModule(file_name='new.dat',
+                                         name_in='wavelength4',
+                                         input_dir=None,
+                                         data_tag='images',
+                                         overwrite=True)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('wavelength4')
+
+    def test_wavelength_reading_2d(self):
+
+        module = WavelengthReadingModule(file_name='data_2d.dat',
+                                         name_in='wavelength6',
+                                         input_dir=None,
+                                         data_tag='images',
+                                         overwrite=False)
+
+        self.pipeline.add_module(module)
+
+        with pytest.raises(ValueError) as error:
+            self.pipeline.run_module('wavelength6')
+
+        assert str(error.value) == 'The input file data_2d.dat should contain a 1D data set with ' \
+                                   'the wavelengths.'
