@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
-from pynpoint.readwrite.textreading import ParangReadingModule, AttributeReadingModule
+from pynpoint.readwrite.attr_reading import ParangReadingModule, AttributeReadingModule
 from pynpoint.util.tests import create_config, create_random, remove_test_data
 
 warnings.simplefilter('always')

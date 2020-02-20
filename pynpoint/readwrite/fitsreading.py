@@ -37,7 +37,8 @@ class FitsReadingModule(ReadingModule):
                  image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
-                 filenames: Union[str, List[str]] = None) -> None:
+                 filenames: Union[str, List[str]] = None,
+                 ifs_data: bool = False) -> None:
         """
         Parameters
         ----------
@@ -75,6 +76,7 @@ class FitsReadingModule(ReadingModule):
         self.m_overwrite = overwrite
         self.m_check = check
         self.m_filenames = filenames
+        self.m_ifs_data = ifs_data
 
     @typechecked
     def read_single_file(self,
@@ -106,20 +108,35 @@ class FitsReadingModule(ReadingModule):
         hdulist = fits.open(fits_file)
         images = hdulist[0].data.byteswap().newbyteorder()
 
+        if images.ndim == 4 and not self.m_ifs_data:
+            raise ValueError('The input data is 4D but ifs_data is set to False. Reading in 4D '
+                             'data is only possible by setting the argument to True.')
+
+        if images.ndim < 3 and self.m_ifs_data:
+            raise ValueError('It is only possible to read 3D or 4D data when ifs_data is set to '
+                             'True.')
+
         if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
             overwrite_tags.append(self.m_image_out_port.tag)
 
-            self.m_image_out_port.set_all(images, data_dim=3)
+            if self.m_ifs_data:
+                self.m_image_out_port.set_all(images, data_dim=4)
+            else:
+                self.m_image_out_port.set_all(images, data_dim=3)
+
             self.m_image_out_port.del_all_attributes()
 
         else:
-            self.m_image_out_port.append(images, data_dim=3)
+            if self.m_ifs_data:
+                self.m_image_out_port.append(images, data_dim=4)
+            else:
+                self.m_image_out_port.append(images, data_dim=3)
 
         header = hdulist[0].header
 
         fits_header = []
         for key in header:
-            fits_header.append(str(key)+' = '+str(header[key]))
+            fits_header.append(f'{key} = {header[key]}')
 
         hdulist.close()
 
@@ -198,7 +215,13 @@ class FitsReadingModule(ReadingModule):
                 nimages = 1
 
             elif len(shape) == 3:
-                nimages = shape[0]
+                if self.m_ifs_data:
+                    nimages = 1
+                else:
+                    nimages = shape[0]
+
+            elif len(shape) == 4:
+                nimages = shape[1]
 
             set_static_attr(fits_file=fits_file,
                             header=header,

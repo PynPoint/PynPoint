@@ -56,7 +56,7 @@ class TestPypeline:
             for _ in f_obj:
                 count += 1
 
-        assert count == 24
+        assert count == 25
 
     def test_create_none_config(self):
         file_obj = open(self.test_dir+'PynPoint_config.ini', 'w')

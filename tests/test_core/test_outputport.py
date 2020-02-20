@@ -122,14 +122,14 @@ class TestOutputPort:
 
         out_port = self.create_output_port('new_data')
 
-        data = [[[[2, 2], ], ], ]
+        data = [[[[[2, 2], ], ], ], ]
 
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=2)
 
-        assert str(error.value) == 'Output port can only save numpy arrays from 1D to 3D. Use ' \
+        assert str(error.value) == 'Output port can only save numpy arrays from 1D to 4D. Use ' \
                                    'Port attributes to save as int, float, or string.'
-
+   
         # ---- Test data dim of data_dim for new data entry is < 1 or > 3
 
         out_port = self.create_output_port('new_data')
@@ -139,7 +139,7 @@ class TestOutputPort:
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=0)
 
-        assert str(error.value) == 'The data dimensions should be 1D, 2D, or 3D.'
+        assert str(error.value) == 'The data dimensions should be 1D, 2D, 3D, or 4D.'
 
         # ---- Test data_dim for new data entry is smaller than actual data
 

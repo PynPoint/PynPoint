@@ -3,9 +3,11 @@ Module which capsules the methods of the Pypeline.
 """
 
 import os
+import json
 import warnings
 import configparser
 import collections
+import urllib.request
 import multiprocessing
 
 import h5py
@@ -62,6 +64,17 @@ class Pypeline:
         print(len(pynpoint_version) * '=')
         print(pynpoint_version)
         print(len(pynpoint_version) * '=' + '\n')
+
+        try:
+            contents = urllib.request.urlopen('https://pypi.org/pypi/pynpoint/json').read()
+            data = json.loads(contents)
+            latest_version = data['info']['version']
+
+        except urllib.error.URLError:
+            latest_version = None
+
+        if latest_version is not None and pynpoint.__version__ != latest_version:
+            print(f'A new version ({latest_version}) is available!\n')
 
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
