@@ -14,7 +14,7 @@ warnings.simplefilter('always')
 limit = 1e-10
 
 
-class TestTextReading:
+class TestAttributeWriting:
 
     def setup_class(self):
 

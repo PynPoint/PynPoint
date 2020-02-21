@@ -32,7 +32,7 @@ class AttributeWritingModule(WritingModule):
         name_in : str
             Unique name of the module instance.
         data_tag : str
-            Tag of the database entry from which the PARANG attribute is read.
+            Tag of the database entry from which the ``PARANG`` attribute is read.
         attribute : str
             Name of the non-static attribute as given in the central database (e.g., 'INDEX' or
             'STAR_POSITION').
@@ -109,7 +109,7 @@ class ParangWritingModule(WritingModule):
         name_in : str
             Unique name of the module instance.
         data_tag : str
-            Tag of the database entry from which the PARANG attribute is read.
+            Tag of the database entry from which the ``PARANG`` attribute is read.
         file_name : str
             Name of the output file.
         output_dir : str, None
@@ -134,7 +134,7 @@ class ParangWritingModule(WritingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Writes the parallactic angles from the PARANG attribute of
+        Run method of the module. Writes the parallactic angles from the ``PARANG`` attribute of
         the specified database tag to a a text file.
 
         Returns

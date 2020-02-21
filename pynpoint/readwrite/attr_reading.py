@@ -137,7 +137,7 @@ class ParangReadingModule(ReadingModule):
         name_in : str
             Unique name of the module instance.
         data_tag : str
-            Tag of the database entry to which the PARANG attribute is written.
+            Tag of the database entry to which the ``PARANG`` attribute is written.
         file_name : str
             Name of the input file with the parallactic angles (deg). Should be equal in size
             to the number of images in ``data_tag``. In case the ``file_name`` is ending with
@@ -147,7 +147,7 @@ class ParangReadingModule(ReadingModule):
             Input directory where the input file is located. If not specified the Pypeline default
             directory is used.
         overwrite : bool
-            Overwrite if the PARANG attribute already exists.
+            Overwrite if the ``PARANG`` attribute already exists.
 
         Returns
         -------
@@ -165,7 +165,7 @@ class ParangReadingModule(ReadingModule):
     def run(self) -> None:
         """
         Run method of the module. Reads the parallactic angles from a FITS or ASCII file and
-        writes the values as non-static attribute (PARANG) to the database tag.
+        writes the values as non-static attribute (``PARANG``) to the database tag.
 
         Returns
         -------
@@ -229,7 +229,7 @@ class WavelengthReadingModule(ReadingModule):
         name_in : str
             Unique name of the module instance.
         data_tag : str
-            Tag of the database entry to which the WAVELENGTH attribute is written.
+            Tag of the database entry to which the ``WAVELENGTH`` attribute is written.
         file_name : str
             Name of the input file with the wavelengths (a.u.). Should be equal in size
             to the number of images in ``data_tag``. In case the ``file_name`` is ending with
@@ -239,7 +239,7 @@ class WavelengthReadingModule(ReadingModule):
             Input directory where the input file is located. If not specified the Pypeline default
             directory is used.
         overwrite : bool
-            Overwrite if the WAVELENGTH attribute already exists.
+            Overwrite if the ``WAVELENGTH`` attribute already exists.
 
         Returns
         -------
@@ -257,7 +257,7 @@ class WavelengthReadingModule(ReadingModule):
     def run(self) -> None:
         """
         Run method of the module. Reads the parallactic angles from a FITS or ASCII file and writes
-        the values as non-static attribute (WAVELENGTH) to the database tag.
+        the values as non-static attribute (``WAVELENGTH``) to the database tag.
 
         Returns
         -------
