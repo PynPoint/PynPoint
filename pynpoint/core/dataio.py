@@ -689,7 +689,7 @@ class OutputPort(Port):
         tag : str
             Database tag.
         data_dim : int
-            Number of dimensions. The dimensions of *first_data* is used if set to None.
+            Number of dimensions. The dimensions of ``first_data`` is used if set to None.
 
         Returns
         -------
@@ -698,12 +698,12 @@ class OutputPort(Port):
         """
 
         def _ndim_check(data_dim, first_dim):
-            if first_dim > 3 or first_dim < 1:
-                raise ValueError('Output port can only save numpy arrays from 1D to 3D. Use Port '
+            if first_dim > 4 or first_dim < 1:
+                raise ValueError('Output port can only save numpy arrays from 1D to 4D. Use Port '
                                  'attributes to save as int, float, or string.')
 
-            if data_dim > 3 or data_dim < 1:
-                raise ValueError('The data dimensions should be 1D, 2D, or 3D.')
+            if data_dim > 4 or data_dim < 1:
+                raise ValueError('The data dimensions should be 1D, 2D, 3D, or 4D.')
 
             if data_dim < first_dim:
                 raise ValueError('The dimensions of the data should be equal to or larger than the '
@@ -720,23 +720,30 @@ class OutputPort(Port):
         _ndim_check(data_dim, first_data.ndim)
 
         if data_dim == first_data.ndim:
-            if first_data.ndim == 1:  # case (1,1)
+            if first_data.ndim == 1:  # 1D
                 data_shape = (None, )
 
-            elif first_data.ndim == 2:  # case (2,2)
+            elif first_data.ndim == 2:  # 2D
                 data_shape = (None, first_data.shape[1])
 
-            elif first_data.ndim == 3:  # case (3,3)
+            elif first_data.ndim == 3:  # 3D
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
 
+            elif first_data.ndim == 4:  # 4D
+                data_shape = (first_data.shape[0], None, first_data.shape[2], first_data.shape[3])
+
         else:
-            if data_dim == 2:  # case (2,1)
+            if data_dim == 2:  # 1D -> 2D
                 data_shape = (None, first_data.shape[0])
                 first_data = first_data[np.newaxis, :]
 
-            elif data_dim == 3:  # case (3,2)
+            elif data_dim == 3:  # 2D -> 3D
                 data_shape = (None, first_data.shape[0], first_data.shape[1])
                 first_data = first_data[np.newaxis, :, :]
+
+            elif data_dim == 4:  # 3D -> 4D
+                data_shape = (first_data.shape[0], None, first_data.shape[1], first_data.shape[2])
+                first_data = first_data[:, np.newaxis, :, :]
 
         if first_data.size == 0:
             warnings.warn(f'The new dataset that is stored under the tag name \'{tag}\' is empty.')
@@ -847,6 +854,8 @@ class OutputPort(Port):
                 data = data[np.newaxis, :]
             elif data_dim == 3:
                 data = data[np.newaxis, :, :]
+            elif data_dim == 4:
+                data = data[:, np.newaxis, :, :]
 
         def _type_check():
             check_result = False
@@ -855,11 +864,20 @@ class OutputPort(Port):
 
                 if tmp_dim == 1:
                     check_result = True
+
                 elif tmp_dim == 2:
                     check_result = tmp_shape[1] == data.shape[1]
+
                 elif tmp_dim == 3:
+                    # check if the spatial shape is the same
                     check_result = (tmp_shape[1] == data.shape[1]) and \
                                    (tmp_shape[2] == data.shape[2])
+
+                elif tmp_dim == 4:
+                    # check if the spectral and spatial shape is the same
+                    check_result = (tmp_shape[0] == data.shape[0]) and \
+                                   (tmp_shape[2] == data.shape[2]) and \
+                                   (tmp_shape[3] == data.shape[3])
 
             return check_result
 
@@ -876,8 +894,15 @@ class OutputPort(Port):
                 if isinstance(data[0], str):
                     data = np.array(data, dtype='|S')
 
-            self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
-            self._m_data_storage.m_data_bank[tag][tmp_shape[0]::] = data
+            if data.ndim == 4:
+                # IFS data: (n_wavelength, n_dit, y_pos, x_pos)
+                self._m_data_storage.m_data_bank[tag].resize(tmp_shape[1] + data.shape[1], axis=1)
+                self._m_data_storage.m_data_bank[tag][:, tmp_shape[1]:, :, :] = data
+
+            else:
+                # Other data: n_dit is the first dimension
+                self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
+                self._m_data_storage.m_data_bank[tag][tmp_shape[0]:, ] = data
 
             return None
 

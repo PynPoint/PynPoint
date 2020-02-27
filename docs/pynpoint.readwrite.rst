@@ -4,6 +4,22 @@ pynpoint.readwrite package
 Submodules
 ----------
 
+pynpoint.readwrite.attr\_reading module
+---------------------------------------
+
+.. automodule:: pynpoint.readwrite.attr_reading
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.readwrite.attr\_writing module
+---------------------------------------
+
+.. automodule:: pynpoint.readwrite.attr_writing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.readwrite.fitsreading module
 -------------------------------------
 
@@ -40,14 +56,6 @@ pynpoint.readwrite.nearreading module
 -------------------------------------
 
 .. automodule:: pynpoint.readwrite.nearreading
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pynpoint.readwrite.textreading module
--------------------------------------
-
-.. automodule:: pynpoint.readwrite.textreading
    :members:
    :undoc-members:
    :show-inheritance:

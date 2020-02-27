@@ -15,8 +15,9 @@ Reading Modules
 
 * :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule`: Import FITS files and relevant header information into the database.
 * :class:`~pynpoint.readwrite.hdf5reading.Hdf5ReadingModule`: Import datasets and attributes from an HDF5 file (as created by PynPoint).
-* :class:`~pynpoint.readwrite.textreading.ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
-* :class:`~pynpoint.readwrite.textreading.AttributeReadingModule`: Import a list of values as dataset attribute.
+* :class:`~pynpoint.readwrite.attr_reading.AttributeReadingModule`: Import a list of values as dataset attribute.
+* :class:`~pynpoint.readwrite.attr_reading.ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
+* :class:`~pynpoint.readwrite.attr_reading.WavelengthReadingModule`: Import a list of calibrated wavelengths as dataset attribute.
 * :class:`~pynpoint.readwrite.nearreading.NearReadingModule` (CPU): Import VLT/VISIR data for the NEAR experiment.
 
 .. _writemodule:
@@ -27,8 +28,8 @@ Writing Modules
 * :class:`~pynpoint.readwrite.fitswriting.FitsWritingModule`: Export a dataset from the database to a FITS file.
 * :class:`~pynpoint.readwrite.hdf5writing.Hdf5WritingModule`: Export part of the database to a new HDF5 file.
 * :class:`~pynpoint.readwrite.textwriting.TextWritingModule`: Export a dataset to an ASCII file.
-* :class:`~pynpoint.readwrite.textwriting.ParangWritingModule`: Export the parallactic angles of a dataset to an ASCII file.
-* :class:`~pynpoint.readwrite.textwriting.AttributeWritingModule`: Export a list of attribute values to an ASCII file.
+* :class:`~pynpoint.readwrite.attr_writing.AttributeWritingModule`: Export a list of attribute values to an ASCII file.
+* :class:`~pynpoint.readwrite.attr_writing.ParangWritingModule`: Export the parallactic angles of a dataset to an ASCII file.
 
 .. _procmodule:
 
