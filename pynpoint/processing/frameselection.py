@@ -135,7 +135,7 @@ class FrameSelectionModule(ProcessingModule):
                  index_out_tag: str = None,
                  method: str = 'median',
                  threshold: float = 4.,
-                 fwhm: float = 0.1,
+                 fwhm: Union[float, None] = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
                  position: Union[Tuple[int, int, float], Tuple[None, None, float],
                                  Tuple[int, int, None]] = None) -> None:
@@ -161,10 +161,10 @@ class FrameSelectionModule(ProcessingModule):
         threshold : float
             Threshold in units of sigma for the frame selection. All images that are a `threshold`
             number of sigmas away from the median/maximum photometry will be removed.
-        fwhm : float
+        fwhm : float, None
             The FWHM (arcsec) of the Gaussian kernel that is used to smooth the images before the
             brightest pixel is located. Recommended to be similar in size to the FWHM of the
-            stellar PSF.
+            stellar PSF. No smoothing is applied if set to None.
         aperture : tuple(str, float), tuple(str, float, float)
             Tuple with the aperture properties for measuring the photometry around the location of
             the brightest pixel. The first element contains the aperture type ('circular',
@@ -282,7 +282,8 @@ class FrameSelectionModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         nimages = self.m_image_in_port.get_shape()[0]
 
-        self.m_fwhm = int(math.ceil(self.m_fwhm/pixscale))
+        if self.m_fwhm is not None:
+            self.m_fwhm = int(math.ceil(self.m_fwhm/pixscale))
 
         if self.m_position is not None and self.m_position[2] is not None:
             self.m_position = (self.m_position[0],

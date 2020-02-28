@@ -68,7 +68,7 @@ def locate_star(image: np.ndarray,
 
 @typechecked
 def star_positions(input_port: InputPort,
-                   fwhm: float,
+                   fwhm: Union[int, None],
                    position: Union[Tuple[int, int, float], Tuple[None, None, float],
                                    Tuple[int, int, None]] = None) -> np.ndarray:
     """
@@ -78,9 +78,9 @@ def star_positions(input_port: InputPort,
     ----------
     input_port : pynpoint.core.dataio.InputPort
         Input port where the images are stored.
-    fwhm : int
+    fwhm : int, None
         The FWHM (pix) of the Gaussian kernel that is used to smooth the images before the
-        brightest pixel is located.
+        brightest pixel is located. No smoothing is applied if set to None.
     position : tuple(int, int, int), None
         Subframe that is selected to search for the star. The tuple contains the center (pix)
         and size (pix) (pos_x, pos_y, size). Setting `position` to None will use the full
