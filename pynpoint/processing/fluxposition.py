@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, gaussian_noise
+from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, pixel_variance
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel, rotate_coordinates
 from pynpoint.util.mcmc import lnprob
@@ -468,21 +468,23 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 sklearn_pca.components_ = q_ortho.T
 
-            if self.m_merit in ('poisson', 'hessian'):
-                noise = None
+            if self.m_merit == 'poisson':
+                var_noise = None
 
-            elif self.m_merit == 'gaussian':
-                noise = gaussian_noise(images=images,
-                                       parang=parang,
-                                       cent_size=self.m_cent_size,
-                                       edge_size=self.m_edge_size,
-                                       pca_number=n_components,
-                                       residuals=self.m_residuals,
-                                       aperture=aperture)
+            elif self.m_merit in ['gaussian', 'hessian']:
+                var_noise = pixel_variance(var_type=self.m_merit,
+                                           images=images,
+                                           parang=parang,
+                                           cent_size=self.m_cent_size,
+                                           edge_size=self.m_edge_size,
+                                           pca_number=n_components,
+                                           residuals=self.m_residuals,
+                                           aperture=aperture,
+                                           sigma=self.m_sigma)
 
             minimize(fun=_objective,
                      x0=[pos_init[0], pos_init[1], self.m_magnitude],
-                     args=(i, n_components, sklearn_pca, noise),
+                     args=(i, n_components, sklearn_pca, var_noise),
                      method='Nelder-Mead',
                      tol=None,
                      options={'xatol': self.m_tolerance, 'fatol': float('inf')})
@@ -622,7 +624,7 @@ class FalsePositiveModule(ProcessingModule):
                                            size=self.m_aperture,
                                            ignore=self.m_ignore)
 
-            return -snr
+            return -1.*snr
 
         self.m_snr_out_port.del_all_data()
         self.m_snr_out_port.del_all_attributes()
@@ -867,15 +869,20 @@ class MCMCsamplingModule(ProcessingModule):
             var_noise = None
 
         elif self.m_merit in ['gaussian', 'hessian']:
-            var_noise = gaussian_noise(images=images,
+            var_noise = pixel_variance(var_type=self.m_merit,
+                                       images=images,
                                        parang=parang,
                                        cent_size=self.m_mask[0],
                                        edge_size=self.m_mask[1],
                                        pca_number=self.m_pca_number,
                                        residuals=self.m_residuals,
-                                       aperture=aperture)
+                                       aperture=aperture,
+                                       sigma=0.)
 
-            print(f'Gaussian noise (counts) = {np.sqrt(var_noise):.2e}')
+            if self.m_merit == 'gaussian':
+                print(f'Gaussian standard deviation (counts) = {np.sqrt(var_noise):.2e}')
+            if self.m_merit == 'hessian':
+                print(f'Hessian standard deviation = {np.sqrt(var_noise):.2e}')
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
