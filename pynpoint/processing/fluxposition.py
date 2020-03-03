@@ -862,7 +862,7 @@ class MCMCsamplingModule(ProcessingModule):
         if self.m_merit == 'poisson':
             noise = None
 
-        elif self.m_merit == 'gaussian':
+        elif self.m_merit in ['gaussian', 'hessian']:
             noise = gaussian_noise(images=images,
                                    parang=parang,
                                    cent_size=self.m_mask[0],

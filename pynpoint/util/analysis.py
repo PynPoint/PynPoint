@@ -294,7 +294,27 @@ def merit_function(residuals: np.ndarray,
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
-        chi_square = np.sum(np.abs(hes_det[indices]))
+        # chi_square = np.sum(np.abs(hes_det[indices]))
+        chi_square = np.sum(hes_det[indices]**2)
+
+        if noise is not None:
+            hes_random = np.zeros(100)
+
+            for i in range(100):
+                im_ran = residuals+np.random.normal(loc=0., scale=1., size=residuals.shape)*noise
+
+                hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=im_ran,
+                                                                    sigma=sigma,
+                                                                    mode='constant',
+                                                                    cval=0.,
+                                                                    order='rc')
+
+                hes_tmp = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+                hes_random[i] = np.sum(np.abs(hes_tmp[indices]))
+
+            noise = np.std(hes_det)
+
+            chi_square /= noise**2
 
     elif merit == 'poisson':
 
