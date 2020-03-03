@@ -859,17 +859,23 @@ class MCMCsamplingModule(ProcessingModule):
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
+        print(f'Aperture position [x, y] = [{aperture[1]}, {aperture[0]}]')
+        print(f'Aperture radius (pix) = {aperture[2]:.2f}')
+        print(f'Figure of merit = {self.m_merit}')
+
         if self.m_merit == 'poisson':
-            noise = None
+            var_noise = None
 
         elif self.m_merit in ['gaussian', 'hessian']:
-            noise = gaussian_noise(images=images,
-                                   parang=parang,
-                                   cent_size=self.m_mask[0],
-                                   edge_size=self.m_mask[1],
-                                   pca_number=self.m_pca_number,
-                                   residuals=self.m_residuals,
-                                   aperture=aperture)
+            var_noise = gaussian_noise(images=images,
+                                       parang=parang,
+                                       cent_size=self.m_mask[0],
+                                       edge_size=self.m_mask[1],
+                                       pca_number=self.m_pca_number,
+                                       residuals=self.m_residuals,
+                                       aperture=aperture)
+
+            print(f'Gaussian noise (counts) = {np.sqrt(var_noise):.2e}')
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -897,7 +903,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                    indices,
                                                    self.m_merit,
                                                    self.m_residuals,
-                                                   noise]))
+                                                   var_noise]))
 
             sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
