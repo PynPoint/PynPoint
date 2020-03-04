@@ -846,9 +846,9 @@ class MCMCsamplingModule(ProcessingModule):
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
-        print(f'Aperture position [x, y] = [{aperture[1]}, {aperture[0]}]')
-        print(f'Aperture radius (pix) = {aperture[2]:.2f}')
-        print(f'Figure of merit = {self.m_merit}')
+        print(f'Aperture position [x, y]: [{aperture[1]}, {aperture[0]}]')
+        print(f'Aperture radius (pix): {aperture[2]:.2f}')
+        print(f'Figure of merit: {self.m_merit}')
 
         if self.m_merit == 'poisson':
             var_noise = None
@@ -865,9 +865,9 @@ class MCMCsamplingModule(ProcessingModule):
                                        sigma=0.)
 
             if self.m_merit == 'gaussian':
-                print(f'Gaussian standard deviation (counts) = {np.sqrt(var_noise):.2e}')
+                print(f'Gaussian standard deviation (counts): {np.sqrt(var_noise):.2e}')
             if self.m_merit == 'hessian':
-                print(f'Hessian standard deviation = {np.sqrt(var_noise):.2e}')
+                print(f'Hessian standard deviation: {np.sqrt(var_noise):.2e}')
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
