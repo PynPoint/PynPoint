@@ -63,9 +63,6 @@ class GaussianFilterModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         memory = self._m_config_port.get_attribute('MEMORY')
         pixscale = self._m_config_port.get_attribute('PIXSCALE')
 

@@ -571,9 +571,6 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         elif cpu == 1:
             # process images one-by-one with a single process if CPU is set to 1
-            image_out_port.del_all_attributes()
-            image_out_port.del_all_data()
-
             start_time = time.time()
 
             for i in range(nimages):
@@ -592,11 +589,8 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                     image_out_port.append(result, data_dim=3)
 
         else:
-            print(message, end='')
-
             # process images in parallel in stacks of MEMORY/CPU images
-            image_out_port.del_all_attributes()
-            image_out_port.del_all_data()
+            print(message, end='')
 
             result = apply_function(tmp_data=image_in_port[0, :, :],
                                     func=func,

@@ -90,12 +90,6 @@ class RemoveFramesModule(ProcessingModule):
             None
         """
 
-        self.m_selected_out_port.del_all_data()
-        self.m_selected_out_port.del_all_attributes()
-
-        self.m_removed_out_port.del_all_data()
-        self.m_removed_out_port.del_all_attributes()
-
         if self.m_index_in_port is not None:
             self.m_frames = self.m_index_in_port.get_all()
 
@@ -269,16 +263,6 @@ class FrameSelectionModule(ProcessingModule):
             None
         """
 
-        self.m_selected_out_port.del_all_data()
-        self.m_selected_out_port.del_all_attributes()
-
-        self.m_removed_out_port.del_all_data()
-        self.m_removed_out_port.del_all_attributes()
-
-        if self.m_index_out_port is not None:
-            self.m_index_out_port.del_all_data()
-            self.m_index_out_port.del_all_attributes()
-
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         nimages = self.m_image_in_port.get_shape()[0]
 
@@ -405,9 +389,6 @@ class RemoveLastFrameModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         ndit = self.m_image_in_port.get_attribute('NDIT')
         nframes = self.m_image_in_port.get_attribute('NFRAMES')
         index = self.m_image_in_port.get_attribute('INDEX')
@@ -494,9 +475,6 @@ class RemoveStartFramesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
             raise ValueError('Input and output port should have a different tag.')
@@ -956,14 +934,6 @@ class SelectByAttributeModule(ProcessingModule):
             None
         """
 
-        if self.m_selected_out_port is not None:
-            self.m_selected_out_port.del_all_data()
-            self.m_selected_out_port.del_all_attributes()
-
-        if self.m_removed_out_port is not None:
-            self.m_removed_out_port.del_all_data()
-            self.m_removed_out_port.del_all_attributes()
-
         nimages = self.m_image_in_port.get_shape()[0]
         attribute = self.m_image_in_port.get_attribute(f'{self.m_attribute_tag}')
 
@@ -1057,12 +1027,6 @@ class ResidualSelectionModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_selected_out_port.del_all_data()
-        self.m_selected_out_port.del_all_attributes()
-
-        self.m_removed_out_port.del_all_data()
-        self.m_removed_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         nimages = self.m_image_in_port.get_shape()[0]

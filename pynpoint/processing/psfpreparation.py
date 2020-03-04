@@ -98,13 +98,6 @@ class PSFpreparationModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
-        if self.m_mask_out_port is not None:
-            self.m_mask_out_port.del_all_data()
-            self.m_mask_out_port.del_all_attributes()
-
         # Get PIXSCALE and MEMORY attributes
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         memory = self._m_config_port.get_attribute('MEMORY')
@@ -313,9 +306,6 @@ class SortParangModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
@@ -674,9 +664,6 @@ class SDIpreparationModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         wvl_factor = self.m_line_wvl/self.m_cnt_wvl
         width_factor = self.m_line_width/self.m_cnt_width
