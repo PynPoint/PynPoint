@@ -64,9 +64,6 @@ class SubtractImagesModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
             raise ValueError('The shape of the two input tags has to be the same.')
 
@@ -141,9 +138,6 @@ class AddImagesModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
             raise ValueError('The shape of the two input tags has to be the same.')
 
@@ -213,9 +207,6 @@ class RotateImagesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
@@ -290,9 +281,6 @@ class RepeatImagesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         nimages = self.m_image_in_port.get_shape()[0]
         memory = self._m_config_port.get_attribute('MEMORY')

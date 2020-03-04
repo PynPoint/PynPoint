@@ -242,9 +242,6 @@ class StackCubesModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         non_static = self.m_image_in_port.get_all_non_static_attributes()
         nframes = self.m_image_in_port.get_attribute('NFRAMES')
 
@@ -367,9 +364,6 @@ class DerotateAndStackModule(ProcessingModule):
 
             return nimages, frames, im_tot
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
 
@@ -477,9 +471,6 @@ class CombineTagsModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         memory = self._m_config_port.get_attribute('MEMORY')
 

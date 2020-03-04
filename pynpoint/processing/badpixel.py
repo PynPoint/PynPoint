@@ -305,10 +305,6 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
             self.m_map_out_port = None
 
-        if self.m_map_out_port is not None:
-            self.m_map_out_port.del_all_data()
-            self.m_map_out_port.del_all_attributes()
-
         self.apply_function_to_images(_bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,

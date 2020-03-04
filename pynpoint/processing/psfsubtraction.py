@@ -243,28 +243,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 stack = combine_residuals(method='clipped', res_rot=res_rot)
                 self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
 
-    def _clear_output_ports(self):
-        if self.m_res_mean_out_port is not None:
-            self.m_res_mean_out_port.del_all_data()
-            self.m_res_mean_out_port.del_all_attributes()
-
-        if self.m_res_median_out_port is not None:
-            self.m_res_median_out_port.del_all_data()
-            self.m_res_median_out_port.del_all_attributes()
-
-        if self.m_res_weighted_out_port is not None:
-            self.m_res_weighted_out_port.del_all_data()
-            self.m_res_weighted_out_port.del_all_attributes()
-
-        if self.m_res_rot_mean_clip_out_port is not None:
-            self.m_res_rot_mean_clip_out_port.del_all_data()
-            self.m_res_rot_mean_clip_out_port.del_all_attributes()
-
-        if self.m_res_arr_out_ports is not None:
-            for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number].del_all_data()
-                self.m_res_arr_out_ports[pca_number].del_all_attributes()
-
     @typechecked
     def run(self) -> None:
         """
@@ -284,8 +262,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if cpu > 1 and self.m_res_arr_out_ports is not None:
             warnings.warn(f'Multiprocessing not possible if \'res_arr_out_tag\' is not set '
                           f'to None.')
-
-        self._clear_output_ports()
 
         # get all data
         star_data = self.m_star_in_port.get_all()
