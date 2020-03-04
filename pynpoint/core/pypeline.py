@@ -318,7 +318,7 @@ class Pypeline:
             removed = True
 
         else:
-            warnings.warn(f'Module name \'{name}\' not found in the Pypeline dictionary.')
+            warnings.warn(f'Pipeline module name \'{name}\' not found in the Pypeline dictionary.')
             removed = False
 
         return removed
@@ -396,8 +396,8 @@ class Pypeline:
 
     def run(self):
         """
-        Walks through all saved processing steps and calls their run methods. The order in which
-        the steps are called depends on the order they have been added to the Pypeline.
+        Function for running all pipeline modules that are added to the
+        :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Returns
         -------
@@ -405,33 +405,24 @@ class Pypeline:
             None
         """
 
+        # Validate the pipeline
         validation = self.validate_pipeline()
 
         if not validation[0]:
+            # Check if the input data is available
             raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
                                  f'under a tag which is not created by a previous module or '
-                                 f'does not exist in the database.')
+                                 f'the data does not exist in the database.')
 
+        # loop over all pipeline modules
         for name in self._m_modules:
-            module_info(self._m_modules[name])
-
-            if hasattr(self._m_modules[name], '_m_input_ports'):
-                if len(self._m_modules[name]._m_input_ports) > 0:
-                    input_info(self._m_modules[name])
-
-            self._m_modules[name].run()
-
-            if hasattr(self._m_modules[name], '_m_output_ports'):
-                output_shape = {}
-                for item in self._m_modules[name]._m_output_ports:
-                    output_shape[item] = self.get_shape(item)
-
-                output_info(self._m_modules[name], output_shape)
+            # Run the pipeline module
+            self.run_module(name)
 
     def run_module(self,
                    name):
         """
-        Runs a single processing module.
+        Function for running a pipeline module.
 
         Parameters
         ----------
@@ -445,29 +436,56 @@ class Pypeline:
         """
 
         if name in self._m_modules:
+            # Validate the pipeline module
             validation = self.validate_pipeline_module(name)
 
             if not validation[0]:
                 raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
                                      f'under a tag which does not exist in the database.')
 
+            # Print information about the pipeline module
             module_info(self._m_modules[name])
 
+            # Check if the module has any input ports
             if hasattr(self._m_modules[name], '_m_input_ports'):
+                # Check if the list of input ports is not empty
                 if len(self._m_modules[name]._m_input_ports) > 0:
+                    # Print information about the input ports
                     input_info(self._m_modules[name])
 
+            # Check if the module has any output ports
+            if hasattr(self._m_modules[name], '_m_output_ports'):
+                for item in self._m_modules[name]._m_output_ports:
+                    # Check if the module is a ProcessingModule
+                    if isinstance(self._m_modules[name], ProcessingModule):
+                        # Check if the database tag is already used
+                        if item in self.m_data_storage.m_data_bank:
+                            # Check if the output port is not used as input port
+                            if hasattr(self._m_modules[name], '_m_input_ports') and \
+                                    item not in self._m_modules[name]._m_input_ports:
+
+                                print(f'Deleting data and attributes: {item}')
+
+                                # Delete existing data and attributes
+                                self._m_modules[name]._m_output_ports[item].del_all_data()
+                                self._m_modules[name]._m_output_ports[item].del_all_attributes()
+
+            # Run the pipeline module
             self._m_modules[name].run()
 
+            # Check if the module has any output ports
             if hasattr(self._m_modules[name], '_m_output_ports'):
                 output_shape = {}
+
                 for item in self._m_modules[name]._m_output_ports:
+                    # Get the shape of the output port
                     output_shape[item] = self.get_shape(item)
 
+                # Print information about the output ports
                 output_info(self._m_modules[name], output_shape)
 
         else:
-            warnings.warn(f'Module \'{name}\' not found.')
+            warnings.warn(f'Pipeline module \'{name}\' not found.')
 
     def get_data(self,
                  tag,

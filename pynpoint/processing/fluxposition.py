@@ -104,9 +104,6 @@ class FakePlanetModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         memory = self._m_config_port.get_attribute('MEMORY')
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -319,14 +316,6 @@ class SimplexMinimizationModule(ProcessingModule):
         NoneType
             None
         """
-
-        for item in self.m_res_out_port:
-            item.del_all_data()
-            item.del_all_attributes()
-
-        for item in self.m_flux_pos_port:
-            item.del_all_data()
-            item.del_all_attributes()
 
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -625,9 +614,6 @@ class FalsePositiveModule(ProcessingModule):
                                            ignore=self.m_ignore)
 
             return -1.*snr
-
-        self.m_snr_out_port.del_all_data()
-        self.m_snr_out_port.del_all_attributes()
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
@@ -1174,9 +1160,6 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
-        self.m_offset_out_port.del_all_data()
-        self.m_offset_out_port.del_all_attributes()
-
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         image = self.m_image_in_port[0, ]
 
@@ -1189,6 +1172,8 @@ class SystematicErrorModule(ProcessingModule):
                                   psf_scaling=-self.m_psf_scaling)
 
         module.connect_database(self._m_data_base)
+        module._m_output_ports[f'{self._m_name}_empty'].del_all_data()
+        module._m_output_ports[f'{self._m_name}_empty'].del_all_attributes()
         module.run()
 
         sep = float(self.m_position[0])
@@ -1206,6 +1191,8 @@ class SystematicErrorModule(ProcessingModule):
                                       image_out_tag=f'{self._m_name}_fake')
 
             module.connect_database(self._m_data_base)
+            module._m_output_ports[f'{self._m_name}_fake'].del_all_data()
+            module._m_output_ports[f'{self._m_name}_fake'].del_all_attributes()
             module.run()
 
             position = polar_to_cartesian(image, sep/pixscale, ang)
@@ -1231,6 +1218,10 @@ class SystematicErrorModule(ProcessingModule):
                                                offset=self.m_offset)
 
             module.connect_database(self._m_data_base)
+            module._m_output_ports[f'{self._m_name}_simplex'].del_all_data()
+            module._m_output_ports[f'{self._m_name}_simplex'].del_all_attributes()
+            module._m_output_ports[f'{self._m_name}_fluxpos'].del_all_data()
+            module._m_output_ports[f'{self._m_name}_fluxpos'].del_all_attributes()
             module.run()
 
             fluxpos_out_port = self.add_input_port(f'{self._m_name}_fluxpos')

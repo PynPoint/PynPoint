@@ -76,9 +76,6 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         # Get memory and number of images to split the frames into chunks
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
@@ -255,9 +252,6 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
@@ -338,9 +332,6 @@ class RemoveLinesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]

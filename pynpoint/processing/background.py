@@ -541,9 +541,6 @@ class NoddingBackgroundModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         self._create_time_stamp_list()
 
         start_time = time.time()

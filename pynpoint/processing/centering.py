@@ -301,10 +301,6 @@ class FitCenterModule(ProcessingModule):
             None
         """
 
-        if self.m_mask_out_port:
-            self.m_mask_out_port.del_all_data()
-            self.m_mask_out_port.del_all_attributes()
-
         memory = self._m_config_port.get_attribute('MEMORY')
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -647,10 +643,6 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
-        # delete all data stored in self.m_image_out_port
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         constant = True
 
         # read the fit results from the self.m_fit_in_port if available
@@ -789,9 +781,6 @@ class WaffleCenteringModule(ProcessingModule):
                 center = (np.floor(center[0]), np.floor(center[1]))
 
             return center_frame, center
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()

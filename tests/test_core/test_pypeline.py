@@ -246,8 +246,8 @@ class TestPypeline:
             pipeline.run()
 
         assert str(error.value) == 'Pipeline module \'write\' is looking for data under a tag ' \
-                                   'which is not created by a previous module or does not exist ' \
-                                   'in the database.'
+                                   'which is not created by a previous module or the data does ' \
+                                   'not exist in the database.'
 
         assert pipeline.validate_pipeline_module('test') is None
         assert pipeline._validate('module', 'tag') == (False, None)
@@ -261,7 +261,7 @@ class TestPypeline:
             pipeline.run_module('test')
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'Module \'test\' not found.'
+        assert warning[0].message.args[0] == 'Pipeline module \'test\' not found.'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
@@ -287,8 +287,8 @@ class TestPypeline:
             pipeline.remove_module('test')
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'Module name \'test\' not found in the Pypeline ' \
-                                             'dictionary.'
+        assert warning[0].message.args[0] == 'Pipeline module name \'test\' not found in the ' \
+                                             'Pypeline dictionary.'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
