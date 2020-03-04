@@ -157,8 +157,8 @@ class FakePlanetModule(ProcessingModule):
 
 class SimplexMinimizationModule(ProcessingModule):
     """
-    Pipeline module to measure the flux and position of a planet by injecting negative fake planets
-    and minimizing a figure of merit.
+    Pipeline module to retrieve the contrast and position of a planet by injecting negative
+    artificial planets and using a downhill simplex method.
     """
 
     __author__ = 'Tomas Stolker'
@@ -212,11 +212,11 @@ class SimplexMinimizationModule(ProcessingModule):
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should be negative in order to inject negative fake planets.
         merit : str
-            Figure of merit for the minimization. Can be 'hessian', to minimize the sum of the
-            absolute values of the determinant of the Hessian matrix, or 'poisson', to minimize the
-            sum of the absolute pixel values, assuming a Poisson distribution for the noise
-            (Wertz et al. 2017), or 'gaussian', to minimize the ratio of the squared pixel values
-            and the variance of the pixels within an annulus but excluding the aperture area.
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         aperture : float
             Aperture radius (arcsec) at the position specified at *position*.
         sigma : float
@@ -308,8 +308,8 @@ class SimplexMinimizationModule(ProcessingModule):
     def run(self) -> None:
         """
         Run method of the module. The position and contrast of a planet is measured by injecting
-        negative copies of the PSF template and applying a simplex method (Nelder-Mead) for
-        minimization of a figure of merit at the planet location.
+        negative copies of the PSF template and applying a downhill simplex method (Nelder-Mead)
+        for minimization of a figure of merit at the planet location.
 
         Returns
         -------
@@ -345,7 +345,7 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        def _objective(arg, count, n_components, sklearn_pca, noise):
+        def _objective(arg, count, n_components, sklearn_pca, var_noise):
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
@@ -399,7 +399,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                         merit=self.m_merit,
                                         aperture=aperture,
                                         sigma=self.m_sigma,
-                                        noise=noise)
+                                        var_noise=var_noise)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -734,12 +734,11 @@ class MCMCsamplingModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
-            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
-            Pixels are assumed to be independent measurements which are expected to be equal to
-            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
-            variance is estimated from the pixel values within an annulus at the separation of
-            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
-            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         residuals : str
             Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -1091,12 +1090,11 @@ class SystematicErrorModule(ProcessingModule):
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should be a positive value.
         merit : str
-            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
-            Pixels are assumed to be independent measurements which are expected to be equal to
-            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
-            variance is estimated from the pixel values within an annulus at the separation of
-            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
-            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         aperture : float
             Aperture radius (arcsec) that is used for measuring the figure of merit.
         tolerance : float

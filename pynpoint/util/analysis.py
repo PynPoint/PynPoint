@@ -253,7 +253,7 @@ def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
                    sigma: float,
-                   noise: Union[float, None]) -> float:
+                   var_noise: Union[float, None]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -268,13 +268,13 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
-    noise : float, None
-        Variance of the noise which is required when `merit` is set to 'gaussian'.
+    var_noise : float, None
+        Variance of the noise which is required when `merit` is set to 'gaussian' or 'hessian'.
 
     Returns
     -------
     float
-        Chi-square ('poisson' and 'gaussian') or sum of the absolute values ('hessian').
+        Chi-square value.
     """
 
     rr_grid = pixel_distance(im_shape=residuals.shape,
@@ -292,25 +292,7 @@ def merit_function(residuals: np.ndarray,
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
-        # chi_square = np.sum(np.abs(hes_det[indices]))
-        chi_square = np.sum(hes_det[indices]**2)/noise
-
-        # if noise is not None:
-        #     hes_sample = np.zeros(100)
-        #
-        #     for i in range(100):
-        #         im_ran = residuals+np.random.normal(loc=0., scale=1., size=residuals.shape)*noise
-        #
-        #         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=im_ran,
-        #                                                             sigma=sigma,
-        #                                                             mode='constant',
-        #                                                             cval=0.,
-        #                                                             order='rc')
-        #
-        #         hes_tmp = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
-        #         hes_sample[i] = np.sum(np.abs(hes_tmp[indices]))
-        #
-        #     chi_square /= np.var(hes_sample)
+        chi_square = np.sum(hes_det[indices]**2)/var_noise
 
     elif merit == 'poisson':
 
@@ -321,7 +303,7 @@ def merit_function(residuals: np.ndarray,
 
     elif merit == 'gaussian':
 
-        chi_square = np.sum(residuals[indices]**2)/noise
+        chi_square = np.sum(residuals[indices]**2)/var_noise
 
     else:
 
