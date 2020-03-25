@@ -366,4 +366,4 @@ def gaussian_noise(images: np.ndarray,
 
     selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
 
-    return np.var(selected)
+    return float(np.var(selected))
