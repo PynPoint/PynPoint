@@ -168,7 +168,7 @@ def student_t(t_input: Tuple[str, float],
         False positive fraction (FPF).
     """
 
-    num_ap = int(math.pi*radius/size)
+    num_ap = int(math.pi * radius / size)
 
     if ignore:
         num_ap -= 2
@@ -178,10 +178,13 @@ def student_t(t_input: Tuple[str, float],
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
 
     if t_input[0] == 'sigma':
-        t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
+        t_result = t.sf(t_input[1], num_ap-2, loc=0., scale=1.)
 
     elif t_input[0] == 'fpf':
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
+
+    else:
+        raise ValueError('First element of t_input needs to be "sigma" or "fpf"!')
 
     return t_result
 
