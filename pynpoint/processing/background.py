@@ -356,8 +356,6 @@ class LineSubtractionModule(ProcessingModule):
                 subtract = (x_grid+y_grid)/2.
 
             elif self.m_combine == 'median':
-                subtract = np.zeros(im_shape)
-
                 col_median = np.nanmedian(image_tmp, axis=0)
                 col_2d = np.tile(col_median, (im_shape[1], 1))
 
