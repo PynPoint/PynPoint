@@ -116,7 +116,6 @@ class AttributeReadingModule(ReadingModule):
         self.m_data_port.close_port()
 
 
-
 class ParangReadingModule(ReadingModule):
     """
     Module for reading a list of parallactic angles from a FITS or ASCII file.
