@@ -193,7 +193,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
             # Background frames
             if bg_frames[i]:
-                background = cube_mean[i, ]
+
                 self.m_background_out_port.append(im_tmp)
 
                 background_nframes = np.append(background_nframes, nframes[i])
@@ -684,7 +684,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 if self.m_cubes is None and self.m_center is not None:
                     print(f'DITHER_X, DITHER_Y = {tuple(star_pos)}')
 
-        def _admin_end(count, n_dither):
+        def _admin_end(count):
             if self.m_combine == 'mean':
                 tags.append(f'{self.m_image_in_tag}_dither_mean{count+1}')
 
@@ -767,7 +767,7 @@ class DitheringBackgroundModule(ProcessingModule):
                 module._m_output_ports[mask_out_tag].del_all_attributes()
                 module.run()
 
-            _admin_end(i, n_dither)
+            _admin_end(i)
 
         if self.m_combine is not None and self.m_image_out_tag is not None:
             module = CombineTagsModule(name_in='combine',
