@@ -85,9 +85,9 @@ class NearReadingModule(ReadingModule):
         self.m_crop = crop
         self.m_combine = combine
 
+    @staticmethod
     @typechecked
-    def _uncompress_file(self,
-                         filename: str) -> None:
+    def _uncompress_file(filename: str) -> None:
         """
         Internal function to uncompress a .Z file.
 
@@ -159,9 +159,9 @@ class NearReadingModule(ReadingModule):
                 for item in threads:
                     item.join()
 
+    @staticmethod
     @typechecked
-    def check_header(self,
-                     header: fits.header.Header) -> None:
+    def check_header(header: fits.header.Header) -> None:
         """
         Method to check the header information and prompt a warning if a value is not as expected.
 
@@ -261,9 +261,9 @@ class NearReadingModule(ReadingModule):
 
         return header, im_shape
 
+    @staticmethod
     @typechecked
-    def read_images(self,
-                    filename: str,
+    def read_images(filename: str,
                     im_shape: Tuple[int, int, int]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
