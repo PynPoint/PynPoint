@@ -10,6 +10,8 @@ from typing import Union, Tuple, List
 from astropy.io import fits
 from typeguard import typechecked
 
+import numpy as np
+
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.attributes import set_static_attr, set_nonstatic_attr, set_extra_attr
 from pynpoint.util.module import progress
@@ -141,7 +143,7 @@ class FitsReadingModule(ReadingModule):
         hdulist.close()
 
         header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
-        header_out_port.set_all(fits_header)
+        header_out_port.set_all(np.ndarray(fits_header))
 
         return header, images.shape
 
@@ -198,7 +200,7 @@ class FitsReadingModule(ReadingModule):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(os.path.join(self.m_input_location, filename))
 
-            assert(files), 'No FITS files found in %s.' % self.m_input_location
+            assert files, 'No FITS files found in %s.' % self.m_input_location
 
         files.sort()
 
@@ -222,6 +224,9 @@ class FitsReadingModule(ReadingModule):
 
             elif len(shape) == 4:
                 nimages = shape[1]
+
+            else:
+                raise ValueError('Data read from FITS file has an invalid shape.')
 
             set_static_attr(fits_file=fits_file,
                             header=header,
