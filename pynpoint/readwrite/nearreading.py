@@ -242,7 +242,7 @@ class NearReadingModule(ReadingModule):
 
         # write the primary header information to the fits_header group
         header_out_port = self.add_output_port('fits_header/' + filename)
-        header_out_port.set_all(fits_header)
+        header_out_port.set_all(np.array(fits_header))
 
         # shape of the image stacks for chop A/B (hence nimages/2)
         im_shape = (nimages // 2, header_image['NAXIS2'], header_image['NAXIS1'])
@@ -369,7 +369,7 @@ class NearReadingModule(ReadingModule):
         files.sort()
 
         # check if there are FITS files present in the input location
-        assert(files), f'No FITS files found in {self.m_input_location}.'
+        assert files, f'No FITS files found in {self.m_input_location}.'
 
         # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
         if self.m_crop is not None:
@@ -388,7 +388,7 @@ class NearReadingModule(ReadingModule):
 
             if self.m_subtract:
                 chopa = chopa - chopb
-                chopb = -1.*np.copy(chopa)
+                chopb = -1. * np.copy(chopa)
 
             if self.m_crop is not None:
                 chopa = crop_image(chopa,
