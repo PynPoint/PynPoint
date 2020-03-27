@@ -21,7 +21,7 @@ limit = 1e-10
 
 class TestProcessing:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -42,11 +42,11 @@ class TestProcessing:
         self.pipeline.set_attribute('images', 'PIXSCALE', 0.1, static=True)
         self.pipeline.set_attribute('large_data', 'PIXSCALE', 0.1, static=True)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['images'])
 
-    def test_output_port_name(self):
+    def test_output_port_name(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='images',
@@ -79,7 +79,7 @@ class TestProcessing:
         module._m_data_base = self.test_dir+'database.hdf5'
         module.add_output_port('new')
 
-    def test_apply_function(self):
+    def test_apply_function(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 20, static=True)
         self.pipeline.set_attribute('config', 'CPU', 4, static=True)
@@ -101,7 +101,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), 5.529431079676073e-22, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_args_none(self):
+    def test_apply_function_args_none(self) -> None:
 
         module = TimeNormalizationModule(name_in='norm',
                                          image_in_tag='images',
@@ -114,7 +114,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_args_none_memory_none(self):
+    def test_apply_function_args_none_memory_none(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
 
@@ -129,7 +129,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_same_port(self):
+    def test_apply_function_same_port(self) -> None:
 
         module = LineSubtractionModule(name_in='subtract_same',
                                        image_in_tag='im_subtract',
@@ -144,7 +144,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), 7.318364664277155e-22, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_args_none_memory_none_same_port(self):
+    def test_apply_function_args_none_memory_none_same_port(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
 
@@ -163,7 +163,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 10, 10)
 
-    def test_apply_function_to_images_memory_none(self):
+    def test_apply_function_to_images_memory_none(self) -> None:
 
         module = StarExtractionModule(name_in='extract',
                                       image_in_tag='im_subtract',
@@ -180,7 +180,7 @@ class TestProcessing:
         assert np.allclose(np.mean(data), 1.5591859111937413e-07, rtol=limit, atol=0.)
         assert data.shape == (100, 5, 5)
 
-    def test_multiproc_large_data(self):
+    def test_multiproc_large_data(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
         self.pipeline.set_attribute('config', 'CPU', 1, static=True)
