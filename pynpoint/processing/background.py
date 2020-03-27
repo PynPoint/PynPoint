@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 
 from typeguard import typechecked
+from typing import Any, Optional, Union
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
@@ -105,7 +106,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 shift: int = None,
+                 shift: Optional[int] = None,
                  cubes: int = 1) -> None:
         """
         name_in : str
@@ -297,7 +298,7 @@ class LineSubtractionModule(ProcessingModule):
                  image_in_tag: str,
                  image_out_tag: str,
                  combine: str = 'median',
-                 mask=None) -> None:
+                 mask: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -344,7 +345,9 @@ class LineSubtractionModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
-        def _subtract_line(image_in, mask):
+        def _subtract_line(image_in: np.ndarray,
+                           mask: np.ndarray) -> np.ndarray:
+
             image_tmp = np.copy(image_in)
             image_tmp[mask == 0.] = np.nan
 
@@ -443,7 +446,7 @@ class NoddingBackgroundModule(ProcessingModule):
         else:
             raise ValueError('Mode needs to be \'next\', \'previous\', or \'both\'.')
 
-    def _create_time_stamp_list(self):
+    def _create_time_stamp_list(self) -> None:
         """
         Internal method for assigning a time stamp, based on the exposure number ID, to each cube
         of sky and science images.
@@ -454,13 +457,16 @@ class NoddingBackgroundModule(ProcessingModule):
             Class for creating a time stamp.
             """
 
-            def __init__(self, time_in, im_type, index):
+            def __init__(self,
+                         time_in: Any,
+                         im_type: str,
+                         index: Union[int, slice]) -> None:
 
                 self.m_time = time_in
                 self.m_im_type = im_type
                 self.m_index = index
 
-            def __repr__(self):
+            def __repr__(self) -> str:
 
                 return repr((self.m_time,
                              self.m_im_type,
@@ -489,7 +495,7 @@ class NoddingBackgroundModule(ProcessingModule):
         self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
 
     def calc_sky_frame(self,
-                       index_of_science_data):
+                       index_of_science_data: int) -> np.ndarray:
         """
         Method for finding the required sky frame (next, previous, or the mean of next and
         previous) by comparing the time stamp of the science frame with preceding and following
@@ -499,7 +505,7 @@ class NoddingBackgroundModule(ProcessingModule):
         if not any(x.m_im_type == 'SKY' for x in self.m_time_stamps):
             raise ValueError('List of time stamps does not contain any SKY images.')
 
-        def search_for_next_sky():
+        def search_for_next_sky() -> np.ndarray:
             for i in range(index_of_science_data, len(self.m_time_stamps)):
                 if self.m_time_stamps[i].m_im_type == 'SKY':
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
@@ -507,7 +513,7 @@ class NoddingBackgroundModule(ProcessingModule):
             # no next sky found, look for previous sky
             return search_for_previous_sky()
 
-        def search_for_previous_sky():
+        def search_for_previous_sky() -> np.ndarray:
             for i in reversed(list(range(0, index_of_science_data))):
                 if self.m_time_stamps[i].m_im_type == 'SKY':
                     return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]

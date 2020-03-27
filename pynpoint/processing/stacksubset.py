@@ -5,7 +5,7 @@ Pipeline modules for stacking and subsampling of images.
 import time
 import warnings
 
-from typing import List
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -26,10 +26,10 @@ class StackAndSubsetModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 random: int = None,
-                 stacking: int = None,
+                 random: Optional[int] = None,
+                 stacking: Optional[int] = None,
                  combine: str = 'mean',
-                 max_rotation: float = None) -> None:
+                 max_rotation: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -82,7 +82,10 @@ class StackAndSubsetModule(ProcessingModule):
             None
         """
 
-        def _stack_subsets(nimages, im_shape, parang):
+        def _stack_subsets(nimages: int,
+                           im_shape: Tuple[int, ...],
+                           parang: np.ndarray) -> Tuple[Tuple[int, ...], np.ndarray, np.ndarray]:
+
             im_new = None
             parang_new = None
 
@@ -125,7 +128,10 @@ class StackAndSubsetModule(ProcessingModule):
 
             return im_shape, im_new, parang_new
 
-        def _random_subset(im_shape, im_new, parang_new):
+        def _random_subset(im_shape: Tuple[int, ...],
+                           im_new: np.ndarray,
+                           parang_new: np.ndarray) -> Tuple[int, np.ndarray, np.ndarray]:
+
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)
                 choice = list(np.sort(choice))
@@ -299,7 +305,7 @@ class DerotateAndStackModule(ProcessingModule):
                  image_in_tag: str,
                  image_out_tag: str,
                  derotate: bool = True,
-                 stack: str = None,
+                 stack: Optional[str] = None,
                  extra_rot: float = 0.) -> None:
         """
         Parameters
@@ -346,7 +352,9 @@ class DerotateAndStackModule(ProcessingModule):
             None
         """
 
-        def _initialize(ndim, npix):
+        def _initialize(ndim: int,
+                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
+
             if ndim == 2:
                 nimages = 1
             elif ndim == 3:

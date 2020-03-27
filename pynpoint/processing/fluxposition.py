@@ -6,7 +6,7 @@ import sys
 import time
 import warnings
 
-from typing import Union, Tuple, List
+from typing import Any, List, Optional, Tuple, Union
 from multiprocessing import Pool
 
 import numpy as np
@@ -16,6 +16,7 @@ from typeguard import typechecked
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
 from photutils import aperture_photometry, CircularAperture
+from photutils.aperture import Aperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, gaussian_noise
@@ -178,12 +179,12 @@ class SimplexMinimizationModule(ProcessingModule):
                  sigma: float = 0.0,
                  tolerance: float = 0.1,
                  pca_number: Union[int, range, List[int]] = 10,
-                 cent_size: float = None,
-                 edge_size: float = None,
+                 cent_size: Optional[float] = None,
+                 edge_size: Optional[float] = None,
                  extra_rot: float = 0.,
                  residuals: str = 'median',
-                 reference_in_tag: str = None,
-                 offset: float = None) -> None:
+                 reference_in_tag: Optional[str] = None,
+                 offset: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -345,7 +346,12 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
-        def _objective(arg, count, n_components, sklearn_pca, noise):
+        def _objective(arg: np.ndarray,
+                       count: int,
+                       n_components: int,
+                       sklearn_pca: PCA,
+                       noise: Optional[float]) -> float:
+
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
@@ -470,7 +476,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                        aperture=aperture)
 
             minimize(fun=_objective,
-                     x0=[pos_init[0], pos_init[1], self.m_magnitude],
+                     x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
                      args=(i, n_components, sklearn_pca, noise),
                      method='Nelder-Mead',
                      tol=None,
@@ -510,7 +516,7 @@ class FalsePositiveModule(ProcessingModule):
                  aperture: float = 0.1,
                  ignore: bool = False,
                  optimize: bool = False,
-                 **kwargs) -> None:
+                 **kwargs: Any) -> None:
         """
         Parameters
         ----------
@@ -589,7 +595,7 @@ class FalsePositiveModule(ProcessingModule):
             None
         """
 
-        def _snr_optimize(arg):
+        def _snr_optimize(arg: Tuple[float, float]) -> float:
             pos_x, pos_y = arg
 
             if self.m_offset is not None:
@@ -683,8 +689,8 @@ class MCMCsamplingModule(ProcessingModule):
                  psf_scaling: float = -1.,
                  pca_number: int = 20,
                  aperture: Union[float, Tuple[int, int, float]] = 0.1,
-                 mask: Union[Tuple[float, float], Tuple[None, float],
-                             Tuple[float, None], Tuple[None, None]] = None,
+                 mask: Optional[Union[Tuple[float, float], Tuple[None, float],
+                                      Tuple[float, None], Tuple[None, None]]] = None,
                  extra_rot: float = 0.,
                  merit: str = 'gaussian',
                  residuals: str = 'median',
@@ -995,7 +1001,8 @@ class AperturePhotometryModule(ProcessingModule):
             None
         """
 
-        def _photometry(image, aperture):
+        def _photometry(image: np.ndarray,
+                        aperture: Union[Aperture, List[Aperture]]) -> float:
             # https://photutils.readthedocs.io/en/stable/overview.html
             # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
             # corresponds to the center of the lowest, leftmost array element. This means that
@@ -1046,11 +1053,11 @@ class SystematicErrorModule(ProcessingModule):
                  aperture: float = 0.1,
                  tolerance: float = 0.01,
                  pca_number: int = 10,
-                 mask: Union[Tuple[float, float], Tuple[None, float],
-                             Tuple[float, None], Tuple[None, None]] = None,
+                 mask: Optional[Union[Tuple[float, float], Tuple[None, float],
+                                      Tuple[float, None], Tuple[None, None]]] = None,
                  extra_rot: float = 0.,
                  residuals: str = 'median',
-                 offset: float = None) -> None:
+                 offset: Optional[float] = None) -> None:
         """
         Parameters
         ----------

@@ -5,7 +5,7 @@ Pipeline modules for the detection and interpolation of bad pixels.
 import copy
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -17,7 +17,13 @@ from pynpoint.core.processing import ProcessingModule
 
 
 @jit(cache=True)
-def _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N):
+def _calc_fast_convolution(F_roof_tmp: np.complex128,
+                           W: np.ndarray,
+                           tmp_s: tuple,
+                           N_size: float,
+                           tmp_G: np.ndarray,
+                           N: Tuple[int, ...]) -> np.ndarray:
+
     new = np.zeros(N, dtype=np.complex64)
 
     if ((tmp_s[0] == 0) and (tmp_s[1] == 0)) or \
@@ -179,12 +185,12 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
     @staticmethod
     @jit(cache=True)
-    def _sigma_filter(dev_image,
-                      var_image,
-                      mean_image,
-                      source_image,
-                      out_image,
-                      bad_pixel_map):
+    def _sigma_filter(dev_image: np.ndarray,
+                      var_image: np.ndarray,
+                      mean_image: np.ndarray,
+                      source_image: np.ndarray,
+                      out_image: np.ndarray,
+                      bad_pixel_map: np.ndarray) -> None:
 
         for i in range(source_image.shape[0]):
             for j in range(source_image.shape[1]):
@@ -201,7 +207,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 map_out_tag: str = None,
+                 map_out_tag: Optional[str] = None,
                  box: int = 9,
                  sigma: float = 5.,
                  iterate: int = 1) -> None:
@@ -257,7 +263,10 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        def _bad_pixel_sigma_filter(image_in, box, sigma, iterate):
+        def _bad_pixel_sigma_filter(image_in: np.ndarray,
+                                    box: int,
+                                    sigma: float,
+                                    iterate: int) -> np.ndarray:
 
             # algorithm adapted from http://idlastro.gsfc.nasa.gov/ftp/pro/image/sigma_filter.pro
 
@@ -334,8 +343,8 @@ class BadPixelMapModule(ProcessingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 dark_in_tag: Union[str, None],
-                 flat_in_tag: Union[str, None],
+                 dark_in_tag: Optional[str],
+                 flat_in_tag: Optional[str],
                  bp_map_out_tag: str,
                  dark_threshold: float = 0.2,
                  flat_threshold: float = 0.2) -> None:
@@ -506,7 +515,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError('The shape of the bad pixel map does not match the shape of the '
                              'images.')
 
-        def _image_interpolation(image_in):
+        def _image_interpolation(image_in: np.ndarray) -> np.ndarray:
             return _bad_pixel_interpolation(image_in,
                                             bad_pixel_map,
                                             self.m_iterations)
@@ -576,7 +585,9 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        def _time_filter(timeline, sigma):
+        def _time_filter(timeline: np.ndarray,
+                         sigma: Tuple[float, float]) -> np.ndarray:
+
             median = np.median(timeline)
             std = np.std(timeline)
 
@@ -635,8 +646,6 @@ class ReplaceBadPixelsModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
-        sigma : tuple(float, float)
-            Lower and upper sigma threshold as (lower, upper).
         size : int
             Number of pixel lines around the bad pixel that are used to calculate the median or mean
             replacement value. For example, a 5x5 window is used if ``size=2``.
@@ -674,7 +683,8 @@ class ReplaceBadPixelsModule(ProcessingModule):
         bpmap = self.m_map_in_port.get_all()[0, ]
         index = np.argwhere(bpmap == 0)
 
-        def _replace_pixels(image, index):
+        def _replace_pixels(image: np.ndarray,
+                            index: np.ndarray) -> np.ndarray:
 
             im_mask = np.copy(image)
 

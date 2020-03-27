@@ -6,7 +6,7 @@ import time
 import math
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -34,12 +34,12 @@ class StarAlignmentModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 ref_image_in_tag: str = None,
+                 ref_image_in_tag: Optional[str] = None,
                  interpolation: str = 'spline',
                  accuracy: float = 10.,
-                 resize: float = None,
+                 resize: Optional[float] = None,
                  num_references: int = 10,
-                 subframe: float = None) -> None:
+                 subframe: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -102,7 +102,7 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        def _align_image(image_in):
+        def _align_image(image_in: np.ndarray) -> np.ndarray:
             offset = np.array([0., 0.])
 
             for i in range(self.m_num_references):
@@ -198,12 +198,12 @@ class FitCenterModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  fit_out_tag: str,
-                 mask_out_tag: str = None,
+                 mask_out_tag: Optional[str] = None,
                  method: str = 'full',
                  radius: float = 0.1,
                  sign: str = 'positive',
                  model: str = 'gaussian',
-                 filter_size: float = None,
+                 filter_size: Optional[float] = None,
                  **kwargs: tuple) -> None:
         """
         Parameters
@@ -469,7 +469,7 @@ class FitCenterModule(ProcessingModule):
 
             return moffat
 
-        def _fit_2d_function(image):
+        def _fit_2d_function(image: np.ndarray) -> np.ndarray:
 
             if self.m_filter_size:
                 image = gaussian_filter(image, self.m_filter_size)
@@ -704,8 +704,8 @@ class WaffleCenteringModule(ProcessingModule):
                  image_in_tag: str,
                  center_in_tag: str,
                  image_out_tag: str,
-                 size: float = None,
-                 center: Tuple[float, float] = None,
+                 size: Optional[float] = None,
+                 center: Optional[Tuple[float, float]] = None,
                  radius: float = 45.,
                  pattern: str = 'x',
                  sigma: float = 0.06,
@@ -769,7 +769,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        def _get_center(center):
+        def _get_center(center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
             center_frame = self.m_center_in_port[0, ]
 
             if center_shape[0] > 1:

@@ -7,7 +7,7 @@ import math
 import warnings
 
 from copy import deepcopy
-from typing import Union, List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -37,12 +37,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  name_in: str,
                  images_in_tag: str,
                  reference_in_tag: str,
-                 res_mean_tag: str = None,
-                 res_median_tag: str = None,
-                 res_weighted_tag: str = None,
-                 res_rot_mean_clip_tag: str = None,
-                 res_arr_out_tag: str = None,
-                 basis_out_tag: str = None,
+                 res_mean_tag: Optional[str] = None,
+                 res_median_tag: Optional[str] = None,
+                 res_weighted_tag: Optional[str] = None,
+                 res_rot_mean_clip_tag: Optional[str] = None,
+                 res_arr_out_tag: Optional[str] = None,
+                 basis_out_tag: Optional[str] = None,
                  pca_numbers: Union[range, List[int], np.ndarray] = range(1, 21),
                  extra_rot: float = 0.,
                  subtract_mean: bool = True) -> None:
@@ -132,7 +132,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-    def _run_multi_processing(self, star_reshape, im_shape, indices):
+    def _run_multi_processing(self,
+                              star_reshape: np.ndarray,
+                              im_shape: Tuple[int, int, int],
+                              indices: np.ndarray) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
@@ -191,7 +194,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    def _run_single_processing(self, star_reshape, im_shape, indices):
+    def _run_single_processing(self,
+                               star_reshape: np.ndarray,
+                               im_shape: Tuple[int, int, int],
+                               indices: np.ndarray) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -369,7 +375,7 @@ class ClassicalADIModule(ProcessingModule):
                  res_out_tag: str,
                  stack_out_tag: str,
                  threshold: Union[Tuple[float, float, float], None],
-                 nreference: int = None,
+                 nreference: Optional[int] = None,
                  residuals: str = 'median',
                  extra_rot: float = 0.) -> None:
         """
@@ -431,7 +437,10 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        def _subtract_psf(image, parang_thres, nref, reference):
+        def _subtract_psf(image: np.ndarray,
+                          parang_thres: float,
+                          nref: int,
+                          reference: np.ndarray) -> np.ndarray:
 
             if parang_thres:
                 ang_diff = np.abs(parang[self.m_count]-parang)

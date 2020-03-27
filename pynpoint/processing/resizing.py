@@ -179,7 +179,10 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        def _image_scaling(image_in, scaling_y, scaling_x, scaling_flux):
+        def _image_scaling(image_in: np.ndarray,
+                           scaling_y: float,
+                           scaling_x: float,
+                           scaling_flux: float) -> np.ndarray:
 
             return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
 

@@ -5,7 +5,7 @@ Pipeline modules for locating and extracting the position of a star.
 import math
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -29,10 +29,11 @@ class StarExtractionModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 index_out_tag: str = None,
+                 index_out_tag: Optional[str] = None,
                  image_size: float = 2.,
                  fwhm_star: float = 0.2,
-                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
+                 position: Optional[Union[Tuple[int, int, float],
+                                          Tuple[None, None, float]]] = None) -> None:
         """
         Parameters
         ----------
@@ -109,7 +110,10 @@ class StarExtractionModule(ProcessingModule):
         star = []
         index = []
 
-        def _crop_around_star(image, position, im_size, fwhm):
+        def _crop_around_star(image: np.ndarray,
+                              position: Tuple[float, float],
+                              im_size: int,
+                              fwhm: int) -> np.ndarray:
 
             if position is None:
                 center = None
@@ -191,7 +195,7 @@ class ExtractBinaryModule(ProcessingModule):
                  pos_binary: Tuple[float, float],
                  image_size: float = 2.,
                  search_size: float = 0.1,
-                 filter_size: float = None) -> None:
+                 filter_size: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -266,7 +270,10 @@ class ExtractBinaryModule(ProcessingModule):
         if self.m_filter_size is not None:
             self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
 
-        def _crop_rotating_star(image, position, im_size, filter_size):
+        def _crop_rotating_star(image: np.ndarray,
+                                position: Tuple[float, float],
+                                im_size: int,
+                                filter_size: int) -> np.ndarray:
 
             starpos = locate_star(image=image,
                                   center=tuple(position),
