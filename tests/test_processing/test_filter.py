@@ -15,7 +15,7 @@ limit = 1e-10
 
 class TestFilter:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -24,11 +24,11 @@ class TestFilter:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['data'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='data',
@@ -45,7 +45,7 @@ class TestFilter:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_gaussian_filter(self):
+    def test_gaussian_filter(self) -> None:
 
         module = GaussianFilterModule(name_in='filter',
                                       image_in_tag='data',

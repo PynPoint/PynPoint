@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestDarkFlat:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -37,11 +37,11 @@ class TestDarkFlat:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir)
 
-    def test_input_data(self):
+    def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('dark')
         assert np.allclose(data[0, 10, 10], 3.528694163309295e-05, rtol=limit, atol=0.)
@@ -53,7 +53,7 @@ class TestDarkFlat:
         assert np.allclose(np.mean(data), -4.056978234798532e-07, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_dark_calibration(self):
+    def test_dark_calibration(self) -> None:
 
         module = DarkCalibrationModule(name_in='dark',
                                        image_in_tag='images',
@@ -68,7 +68,7 @@ class TestDarkFlat:
         assert np.allclose(np.mean(data), 3.137393482985464e-07, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_flat_calibration(self):
+    def test_flat_calibration(self) -> None:
 
         module = FlatCalibrationModule(name_in='flat',
                                        image_in_tag='dark_cal',
@@ -83,7 +83,7 @@ class TestDarkFlat:
         assert np.allclose(np.mean(data), 3.136868889624257e-07, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_flat_crop(self):
+    def test_flat_crop(self) -> None:
 
         module = FlatCalibrationModule(name_in='flat_crop',
                                        image_in_tag='crop',
@@ -104,7 +104,7 @@ class TestDarkFlat:
         assert np.allclose(np.mean(data), 1.7280213934907495e-06, rtol=limit, atol=0.)
         assert data.shape == (10, 60, 60)
 
-    def test_flat_too_small(self):
+    def test_flat_too_small(self) -> None:
 
         module = FlatCalibrationModule(name_in='flat_small',
                                        image_in_tag='flat',
