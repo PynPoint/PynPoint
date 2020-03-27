@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestHdf5WritingModule:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -25,11 +25,11 @@ class TestHdf5WritingModule:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, files=['test.hdf5'])
 
-    def test_hdf5_writing(self):
+    def test_hdf5_writing(self) -> None:
 
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write1',
@@ -41,7 +41,7 @@ class TestHdf5WritingModule:
         self.pipeline.add_module(write)
         self.pipeline.run_module('write1')
 
-    def test_no_data_tag(self):
+    def test_no_data_tag(self) -> None:
 
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write2',
@@ -59,7 +59,7 @@ class TestHdf5WritingModule:
         assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
                                              'InputPort.'
 
-    def test_overwrite_false(self):
+    def test_overwrite_false(self) -> None:
 
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write3',
@@ -71,7 +71,7 @@ class TestHdf5WritingModule:
         self.pipeline.add_module(write)
         self.pipeline.run_module('write3')
 
-    def test_dictionary_none(self):
+    def test_dictionary_none(self) -> None:
 
         write = Hdf5WritingModule(file_name='test.hdf5',
                                   name_in='write4',
@@ -83,7 +83,7 @@ class TestHdf5WritingModule:
         self.pipeline.add_module(write)
         self.pipeline.run_module('write4')
 
-    def test_hdf5_reading(self):
+    def test_hdf5_reading(self) -> None:
 
         read = Hdf5ReadingModule(name_in='read',
                                  input_filename='test.hdf5',
