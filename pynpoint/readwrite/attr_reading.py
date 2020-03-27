@@ -7,6 +7,8 @@ import warnings
 
 import numpy as np
 
+from typing import Optional
+
 from typeguard import typechecked
 from astropy.io import fits
 
@@ -28,7 +30,7 @@ class AttributeReadingModule(ReadingModule):
                  data_tag: str,
                  file_name: str,
                  attribute: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  overwrite: bool = False) -> None:
         """
         Parameters
@@ -128,7 +130,7 @@ class ParangReadingModule(ReadingModule):
                  name_in: str,
                  data_tag: str,
                  file_name: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  overwrite: bool = False) -> None:
         """
         Parameters
@@ -220,7 +222,7 @@ class WavelengthReadingModule(ReadingModule):
                  name_in: str,
                  data_tag: str,
                  file_name: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  overwrite: bool = False) -> None:
         """
         Parameters

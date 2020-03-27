@@ -5,7 +5,7 @@ Module for reading FITS files.
 import os
 import time
 
-from typing import Union, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 from astropy.io import fits
 from typeguard import typechecked
@@ -33,11 +33,11 @@ class FitsReadingModule(ReadingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
-                 filenames: Union[str, List[str]] = None,
+                 filenames: Optional[Union[str, List[str]]] = None,
                  ifs_data: bool = False) -> None:
         """
         Parameters
@@ -141,7 +141,7 @@ class FitsReadingModule(ReadingModule):
         hdulist.close()
 
         header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
-        header_out_port.set_all(np.ndarray(fits_header))
+        header_out_port.set_all(fits_header)
 
         return header, images.shape
 

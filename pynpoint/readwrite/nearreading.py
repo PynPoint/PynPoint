@@ -10,7 +10,7 @@ import subprocess
 import threading
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Union, Tuple
 
 import numpy as np
 
@@ -38,12 +38,12 @@ class NearReadingModule(ReadingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  chopa_out_tag: str = 'chopa',
                  chopb_out_tag: str = 'chopb',
                  subtract: bool = False,
-                 crop: Union[Tuple[int, int, float], Tuple[None, None, float]] = None,
-                 combine: str = None):
+                 crop: Optional[Union[Tuple[int, int, float], Tuple[None, None, float]]] = None,
+                 combine: Optional[str] = None):
         """
         Parameters
         ----------
