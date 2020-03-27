@@ -10,6 +10,9 @@ import collections
 import urllib.request
 import multiprocessing
 
+from typing import List, Optional, Tuple, Union
+from urllib.error import URLError
+
 import h5py
 import numpy as np
 
@@ -31,9 +34,9 @@ class Pypeline:
     """
 
     def __init__(self,
-                 working_place_in=None,
-                 input_place_in=None,
-                 output_place_in=None):
+                 working_place_in: Optional[str] = None,
+                 input_place_in: Optional[str] = None,
+                 output_place_in: Optional[str] = None) -> None:
         """
         Constructor of Pypeline.
 
@@ -70,7 +73,7 @@ class Pypeline:
             data = json.loads(contents)
             latest_version = data['info']['version']
 
-        except urllib.error.URLError:
+        except URLError:
             latest_version = None
 
         if latest_version is not None and pynpoint.__version__ != latest_version:
@@ -88,8 +91,8 @@ class Pypeline:
         self._config_init()
 
     def __setattr__(self,
-                    key,
-                    value):
+                    key: str,
+                    value: str) -> None:
         """
         This method is called every time a member / attribute of the Pypeline is changed. It checks
         whether a chosen working / input / output directory exists.
@@ -114,8 +117,8 @@ class Pypeline:
         super(Pypeline, self).__setattr__(key, value)
 
     @staticmethod
-    def _validate(module,
-                  tags):
+    def _validate(module: Union[ReadingModule, WritingModule, ProcessingModule],
+                  tags: List[str]) -> Tuple[bool, Optional[str]]:
         """
         Internal function which is used for the validation of the pipeline. Validates a
         single module.
@@ -154,7 +157,7 @@ class Pypeline:
 
         return True, None
 
-    def _config_init(self):
+    def _config_init(self) -> None:
         """
         Internal function which initializes the configuration file. It reads PynPoint_config.ini
         in the working folder and creates this file with the default (ESO/NACO) settings in case
@@ -166,7 +169,7 @@ class Pypeline:
             None
         """
 
-        def _create_config(filename, attributes):
+        def _create_config(filename: str, attributes: dict) -> None:
             file_obj = open(filename, 'w')
             file_obj.write('[header]\n\n')
 
@@ -182,7 +185,7 @@ class Pypeline:
 
             file_obj.close()
 
-        def _read_config(config_file, attributes):
+        def _read_config(config_file: str, attributes: dict) -> dict:
             config = configparser.ConfigParser()
             with open(config_file) as cf_open:
                 config.read_file(cf_open)
@@ -217,7 +220,7 @@ class Pypeline:
 
             return attributes
 
-        def _write_config(attributes):
+        def _write_config(attributes: dict) -> None:
             hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
 
             if 'config' in hdf:
@@ -260,7 +263,7 @@ class Pypeline:
         print(f'Number of threads: {n_thread}')
 
     def add_module(self,
-                   module):
+                   module: Union[ReadingModule, WritingModule, ProcessingModule]) -> None:
         """
         Adds a Pypeline module to the internal Pypeline dictionary. The module is appended at the
         end of this ordered dictionary. If the input module is a reading or writing module without
@@ -298,7 +301,7 @@ class Pypeline:
         self._m_modules[module.name] = module
 
     def remove_module(self,
-                      name):
+                      name: str) -> bool:
         """
         Removes a Pypeline module from the internal dictionary.
 
@@ -323,7 +326,7 @@ class Pypeline:
 
         return removed
 
-    def get_module_names(self):
+    def get_module_names(self) -> List[str]:
         """
         Function which returns a list of all module names.
 
@@ -335,7 +338,7 @@ class Pypeline:
 
         return list(self._m_modules.keys())
 
-    def validate_pipeline(self):
+    def validate_pipeline(self) -> Tuple[bool, str]:
         """
         Function which checks if all input ports of the Pypeline are pointing to previous output
         ports.
@@ -364,7 +367,7 @@ class Pypeline:
         return validation
 
     def validate_pipeline_module(self,
-                                 name):
+                                 name: str) -> Tuple[bool, str]:
         """
         Checks if the data exists for the module with label *name*.
 
@@ -394,7 +397,7 @@ class Pypeline:
 
         return validate
 
-    def run(self):
+    def run(self) -> None:
         """
         Function for running all pipeline modules that are added to the
         :class:`~pynpoint.core.pypeline.Pypeline`.
@@ -420,7 +423,7 @@ class Pypeline:
             self.run_module(name)
 
     def run_module(self,
-                   name):
+                   name: str) -> None:
         """
         Function for running a pipeline module.
 
@@ -488,8 +491,8 @@ class Pypeline:
             warnings.warn(f'Pipeline module \'{name}\' not found.')
 
     def get_data(self,
-                 tag,
-                 data_range=None):
+                 tag: str,
+                 data_range: Optional[Tuple[int, int]] = None) -> np.ndarray:
         """
         Function for accessing data in the central database.
 
@@ -520,7 +523,7 @@ class Pypeline:
         return data
 
     def delete_data(self,
-                    tag):
+                    tag: str) -> None:
         """
         Function for deleting a dataset and related attributes from the central database. Disk
         space does not seem to free up when using this function.
@@ -551,9 +554,9 @@ class Pypeline:
         self.m_data_storage.close_connection()
 
     def get_attribute(self,
-                      data_tag,
-                      attr_name,
-                      static=True):
+                      data_tag: str,
+                      attr_name: str,
+                      static: bool = True) -> np.ndarray:
         """
         Function for accessing attributes in the central database.
 
@@ -586,10 +589,10 @@ class Pypeline:
         return attr
 
     def set_attribute(self,
-                      data_tag,
-                      attr_name,
-                      attr_value,
-                      static=True):
+                      data_tag: str,
+                      attr_name: str,
+                      attr_value: Union[float, int, str, tuple, np.ndarray],
+                      static: bool = True) -> None:
         """
         Function for writing attributes to the central database. Existing values will be
         overwritten.
@@ -628,13 +631,13 @@ class Pypeline:
 
         self.m_data_storage.close_connection()
 
-    def get_tags(self):
+    def get_tags(self) -> np.ndarray:
         """
         Function for listing the database tags, ignoring header and config tags.
 
         Returns
         -------
-        numpy.asarray
+        numpy.ndarray
             Database tags.
         """
 
@@ -654,7 +657,7 @@ class Pypeline:
         return np.asarray(select)
 
     def get_shape(self,
-                  tag):
+                  tag: str) -> Tuple[int, ...]:
         """
         Function for getting the shape of a database entry.
 

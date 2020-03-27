@@ -2,8 +2,10 @@
 Module to obtain information about the implemented attributes.
 """
 
+from typing import Dict, Union
 
-def get_attributes():
+
+def get_attributes() -> Dict[str, Dict[str, Union[str, float, int, None]]]:
     """
     Function to get a dictionary with all attributes.
 
