@@ -10,8 +10,6 @@ from typing import Union, Tuple, List
 from astropy.io import fits
 from typeguard import typechecked
 
-import numpy as np
-
 from pynpoint.core.processing import ReadingModule
 from pynpoint.util.attributes import set_static_attr, set_nonstatic_attr, set_extra_attr
 from pynpoint.util.module import progress
