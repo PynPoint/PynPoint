@@ -4,7 +4,7 @@ Functions for MCMC sampling.
 
 import math
 
-from typing import Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def lnprob(param: np.ndarray,
            indices: np.ndarray,
            merit: str,
            residuals: str,
-           noise: Union[float, None]) -> float:
+           noise: Optional[float]) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -84,7 +84,7 @@ def lnprob(param: np.ndarray,
         Log posterior probability.
     """
 
-    def _lnprior():
+    def _lnprior() -> float:
         """
         Internal function for the log prior function.
 
@@ -106,7 +106,7 @@ def lnprob(param: np.ndarray,
 
         return ln_prior
 
-    def _lnlike():
+    def _lnlike() -> float:
         """
         Internal function for the log likelihood function.
 

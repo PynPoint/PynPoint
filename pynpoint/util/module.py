@@ -8,18 +8,21 @@ import math
 import cmath
 import warnings
 
-from typing import Union
+from typing import Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 
 from typeguard import typechecked
+
+if TYPE_CHECKING:
+    from pynpoint.core.processing import PypelineModule
 
 
 @typechecked
 def progress(current: int,
              total: int,
              message: str,
-             start_time: float = None) -> None:
+             start_time: Optional[float] = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -40,7 +43,7 @@ def progress(current: int,
         None
     """
 
-    def time_string(delta_time):
+    def time_string(delta_time: float) -> str:
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
 
@@ -227,7 +230,7 @@ def stack_angles(memory: Union[int, np.int64],
 @typechecked
 def update_arguments(index: int,
                      nimages: int,
-                     args_in: Union[tuple, None]) -> Union[tuple, None]:
+                     args_in: Optional[tuple]) -> Optional[tuple]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -266,8 +269,7 @@ def update_arguments(index: int,
     return args_out
 
 
-@typechecked
-def module_info(pipeline_module) -> None:
+def module_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print the module name.
 
@@ -291,8 +293,8 @@ def module_info(pipeline_module) -> None:
     print(f'Module name: {pipeline_module._m_name}')
 
 
-@typechecked
-def input_info(pipeline_module) -> None:
+# @typechecked
+def input_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print information about the input data.
 
@@ -325,8 +327,9 @@ def input_info(pipeline_module) -> None:
                 print(f' {item} {input_shape}')
 
 
-@typechecked
-def output_info(pipeline_module, output_shape) -> None:
+# @typechecked
+def output_info(pipeline_module: 'PypelineModule',
+                output_shape: Dict[str, Tuple[int, ...]]) -> None:
     """
     Function to print information about the output data.
 

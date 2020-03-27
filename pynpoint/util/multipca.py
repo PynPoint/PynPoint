@@ -6,7 +6,7 @@ a range of principal components for which the PCA basis is required as input.
 import sys
 import multiprocessing
 
-from typing import Union, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class PcaTaskCreator(TaskCreator):
     @typechecked
     def __init__(self,
                  tasks_queue_in: multiprocessing.JoinableQueue,
-                 num_proc: np.int64,
+                 num_proc: int,
                  pca_numbers: np.ndarray) -> None:
         """
         Parameters
@@ -184,10 +184,10 @@ class PcaTaskWriter(TaskWriter):
     @typechecked
     def __init__(self,
                  result_queue_in: multiprocessing.JoinableQueue,
-                 mean_out_port: Union[OutputPort, None],
-                 median_out_port: Union[OutputPort, None],
-                 weighted_out_port: Union[OutputPort, None],
-                 clip_out_port: Union[OutputPort, None],
+                 mean_out_port: Optional[OutputPort],
+                 median_out_port: Optional[OutputPort],
+                 weighted_out_port: Optional[OutputPort],
+                 clip_out_port: Optional[OutputPort],
                  data_mutex_in: multiprocessing.Lock,
                  requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
@@ -278,11 +278,11 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
     @typechecked
     def __init__(self,
-                 mean_out_port: Union[OutputPort, None],
-                 median_out_port: Union[OutputPort, None],
-                 weighted_out_port: Union[OutputPort, None],
-                 clip_out_port: Union[OutputPort, None],
-                 num_proc: np.int64,
+                 mean_out_port: Optional[OutputPort],
+                 median_out_port: Optional[OutputPort],
+                 weighted_out_port: Optional[OutputPort],
+                 clip_out_port: Optional[OutputPort],
+                 num_proc: int,
                  pca_numbers: np.ndarray,
                  pca_model: PCA,
                  star_reshape: np.ndarray,

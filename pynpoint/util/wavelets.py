@@ -15,9 +15,9 @@ from pynpoint.util.continuous import autoscales, cwt, icwt
 
 
 @jit(cache=True)
-def _fast_zeros(soft,
-                spectrum,
-                uthresh):
+def _fast_zeros(soft: bool,
+                spectrum: np.ndarray,
+                uthresh: float) -> np.ndarray:
     """
     Fast numba method to modify values in the wavelet space by using a hard or soft threshold
     function.
@@ -148,8 +148,8 @@ class WaveletAnalysisCapsule:
 
     # --- functions for reconstruction value
     @staticmethod
-    def _morlet_function(omega0,
-                         x_in):
+    def _morlet_function(omega0: float,
+                         x_in: float) -> np.complex128:
         """
         Returns
         -------
@@ -160,8 +160,8 @@ class WaveletAnalysisCapsule:
         return np.pi**(-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-x_in**2/2.0)
 
     @staticmethod
-    def _dog_function(order,
-                      x_in):
+    def _dog_function(order: int,
+                      x_in: float) -> float:
         """
         Returns
         -------
@@ -174,7 +174,7 @@ class WaveletAnalysisCapsule:
 
         return ((-1)**(order+1)) / np.sqrt(gamma(order + 0.5)) * herm
 
-    def __pad_signal(self):
+    def __pad_signal(self) -> None:
         """
         Returns
         -------
@@ -194,7 +194,7 @@ class WaveletAnalysisCapsule:
             new_data = np.append(self._m_data, right_half_signal[::-1])
             self._m_data = np.append(left_half_signal[::-1], new_data)
 
-    def __compute_reconstruction_factor(self):
+    def __compute_reconstruction_factor(self) -> float:
         """
         Computes the reconstruction factor.
 

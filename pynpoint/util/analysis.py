@@ -4,7 +4,7 @@ Functions for point source analysis.
 
 import math
 
-from typing import Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -256,7 +256,7 @@ def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
                    sigma: float,
-                   noise: Union[float, None]) -> float:
+                   noise: Optional[float]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -322,8 +322,8 @@ def merit_function(residuals: np.ndarray,
 @typechecked
 def gaussian_noise(images: np.ndarray,
                    parang: np.ndarray,
-                   cent_size: Union[float, None],
-                   edge_size: Union[float, None],
+                   cent_size: Optional[float],
+                   edge_size: Optional[float],
                    pca_number: int,
                    residuals: str,
                    aperture: Tuple[int, int, float]) -> float:

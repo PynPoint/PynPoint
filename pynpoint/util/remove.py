@@ -4,7 +4,7 @@ Functions to write selected data and attributes to the database.
 
 import time
 
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -18,8 +18,8 @@ from pynpoint.util.module import progress, memory_frames
 def write_selected_data(memory: Union[int, np.int64],
                         indices: np.ndarray,
                         image_in_port: InputPort,
-                        selected_out_port: Union[OutputPort, None],
-                        removed_out_port: Union[OutputPort, None]) -> None:
+                        selected_out_port: Optional[OutputPort],
+                        removed_out_port: Optional[OutputPort]) -> None:
     """
     Function to write the selected and removed data.
 
@@ -71,8 +71,8 @@ def write_selected_data(memory: Union[int, np.int64],
 @typechecked
 def write_selected_attributes(indices: np.ndarray,
                               image_in_port: InputPort,
-                              selected_out_port: Union[OutputPort, None],
-                              removed_out_port: Union[OutputPort, None],
+                              selected_out_port: Optional[OutputPort],
+                              removed_out_port: Optional[OutputPort],
                               module_type: str,
                               history: str) -> None:
     """
