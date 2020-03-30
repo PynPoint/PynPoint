@@ -715,11 +715,12 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_window_size = window_size
 
     @staticmethod
+    @typechecked
     def _similarity(images: np.ndarray,
                     reference_index: int,
                     mode: str,
                     window_size: int,
-                    temporal_median: bool = False) -> Tuple[int, float]:
+                    temporal_median: Union[bool, np.ndarray] = False) -> Tuple[int, float]:
         """
         Internal function to compute the MSE as defined by Ruane et al. 2019.
         """
