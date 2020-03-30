@@ -147,7 +147,7 @@ class PcaTaskProcessor(TaskProcessor):
 
         residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
                                                  angles=self.m_angles,
-                                                 pca_number=tmp_task.m_input_data,
+                                                 pca_number=int(tmp_task.m_input_data),
                                                  pca_sklearn=self.m_pca_model,
                                                  im_shape=self.m_im_shape,
                                                  indices=self.m_indices)
