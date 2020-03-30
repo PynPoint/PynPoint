@@ -263,6 +263,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _bad_pixel_sigma_filter(image_in: np.ndarray,
                                     box: int,
                                     sigma: float,
@@ -515,6 +516,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError('The shape of the bad pixel map does not match the shape of the '
                              'images.')
 
+        @typechecked
         def _image_interpolation(image_in: np.ndarray) -> np.ndarray:
             return _bad_pixel_interpolation(image_in,
                                             bad_pixel_map,
@@ -585,6 +587,7 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _time_filter(timeline: np.ndarray,
                          sigma: Tuple[float, float]) -> np.ndarray:
 
@@ -683,6 +686,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
         bpmap = self.m_map_in_port.get_all()[0, ]
         index = np.argwhere(bpmap == 0)
 
+        @typechecked
         def _replace_pixels(image: np.ndarray,
                             index: np.ndarray) -> np.ndarray:
 

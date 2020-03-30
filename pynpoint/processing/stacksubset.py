@@ -5,7 +5,7 @@ Pipeline modules for stacking and subsampling of images.
 import time
 import warnings
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -82,6 +82,7 @@ class StackAndSubsetModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _stack_subsets(nimages: int,
                            im_shape: Tuple[int, ...],
                            parang: np.ndarray) -> Tuple[Tuple[int, ...], np.ndarray, np.ndarray]:
@@ -128,6 +129,7 @@ class StackAndSubsetModule(ProcessingModule):
 
             return im_shape, im_new, parang_new
 
+        @typechecked
         def _random_subset(im_shape: Tuple[int, ...],
                            im_new: np.ndarray,
                            parang_new: np.ndarray) -> Tuple[int, np.ndarray, np.ndarray]:
@@ -352,6 +354,7 @@ class DerotateAndStackModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _initialize(ndim: int,
                         npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
 
@@ -361,7 +364,7 @@ class DerotateAndStackModule(ProcessingModule):
                 nimages = self.m_image_in_port.get_shape()[0]
 
             if self.m_stack == 'median':
-                frames = [0, nimages]
+                frames = np.array([0, nimages])
             else:
                 frames = memory_frames(memory, nimages)
 

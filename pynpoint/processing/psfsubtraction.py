@@ -132,6 +132,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
+    @typechecked
     def _run_multi_processing(self,
                               star_reshape: np.ndarray,
                               im_shape: Tuple[int, int, int],
@@ -194,6 +195,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
+    @typechecked
     def _run_single_processing(self,
                                star_reshape: np.ndarray,
                                im_shape: Tuple[int, int, int],
@@ -212,7 +214,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             residuals, res_rot = pca_psf_subtraction(images=star_reshape,
                                                      angles=parang,
-                                                     pca_number=pca_number,
+                                                     pca_number=int(pca_number),
                                                      pca_sklearn=self.m_pca,
                                                      im_shape=im_shape,
                                                      indices=indices)
@@ -437,10 +439,11 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _subtract_psf(image: np.ndarray,
-                          parang_thres: float,
-                          nref: int,
-                          reference: np.ndarray) -> np.ndarray:
+                          parang_thres: Optional[float],
+                          nref: Optional[int],
+                          reference: Optional[np.ndarray] = None) -> np.ndarray:
 
             if parang_thres:
                 ang_diff = np.abs(parang[self.m_count]-parang)

@@ -307,6 +307,7 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _normalization(image_in: np.ndarray) -> np.ndarray:
             return image_in - np.median(image_in)
 

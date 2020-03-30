@@ -618,6 +618,7 @@ class ImageStatisticsModule(ProcessingModule):
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
+        @typechecked
         def _image_stat(image_in: np.ndarray,
                         indices: Optional[np.ndarray]) -> np.ndarray:
 
@@ -723,6 +724,7 @@ class FrameSimilarityModule(ProcessingModule):
         Internal function to compute the MSE as defined by Ruane et al. 2019.
         """
 
+        @typechecked
         def _temporal_median(reference_index: int,
                              images: np.ndarray) -> np.ndarray:
             """

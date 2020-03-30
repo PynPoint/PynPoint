@@ -110,8 +110,10 @@ class StarExtractionModule(ProcessingModule):
         star = []
         index = []
 
+        @typechecked
         def _crop_around_star(image: np.ndarray,
-                              position: Tuple[float, float],
+                              position: Optional[Union[Tuple[int, int, float],
+                                                       Tuple[None, None, float]]],
                               im_size: int,
                               fwhm: int) -> np.ndarray:
 
@@ -270,10 +272,11 @@ class ExtractBinaryModule(ProcessingModule):
         if self.m_filter_size is not None:
             self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
 
+        @typechecked
         def _crop_rotating_star(image: np.ndarray,
-                                position: Tuple[float, float],
+                                position: Union[Tuple[float, float], np.ndarray],
                                 im_size: int,
-                                filter_size: int) -> np.ndarray:
+                                filter_size: Optional[int]) -> np.ndarray:
 
             starpos = locate_star(image=image,
                                   center=tuple(position),

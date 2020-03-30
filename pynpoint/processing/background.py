@@ -345,6 +345,7 @@ class LineSubtractionModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
+        @typechecked
         def _subtract_line(image_in: np.ndarray,
                            mask: np.ndarray) -> np.ndarray:
 
@@ -446,6 +447,7 @@ class NoddingBackgroundModule(ProcessingModule):
         else:
             raise ValueError('Mode needs to be \'next\', \'previous\', or \'both\'.')
 
+    @typechecked
     def _create_time_stamp_list(self) -> None:
         """
         Internal method for assigning a time stamp, based on the exposure number ID, to each cube
@@ -457,6 +459,7 @@ class NoddingBackgroundModule(ProcessingModule):
             Class for creating a time stamp.
             """
 
+            @typechecked
             def __init__(self,
                          time_in: Any,
                          im_type: str,
@@ -466,6 +469,7 @@ class NoddingBackgroundModule(ProcessingModule):
                 self.m_im_type = im_type
                 self.m_index = index
 
+            @typechecked
             def __repr__(self) -> str:
 
                 return repr((self.m_time,
@@ -494,6 +498,7 @@ class NoddingBackgroundModule(ProcessingModule):
 
         self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
 
+    @typechecked
     def calc_sky_frame(self,
                        index_of_science_data: int) -> np.ndarray:
         """
@@ -505,6 +510,7 @@ class NoddingBackgroundModule(ProcessingModule):
         if not any(x.m_im_type == 'SKY' for x in self.m_time_stamps):
             raise ValueError('List of time stamps does not contain any SKY images.')
 
+        @typechecked
         def search_for_next_sky() -> np.ndarray:
             for i in range(index_of_science_data, len(self.m_time_stamps)):
                 if self.m_time_stamps[i].m_im_type == 'SKY':
@@ -513,6 +519,7 @@ class NoddingBackgroundModule(ProcessingModule):
             # no next sky found, look for previous sky
             return search_for_previous_sky()
 
+        @typechecked
         def search_for_previous_sky() -> np.ndarray:
             for i in reversed(list(range(0, index_of_science_data))):
                 if self.m_time_stamps[i].m_im_type == 'SKY':

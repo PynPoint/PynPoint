@@ -447,6 +447,7 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
 
+    @typechecked
     def _attribute_check(self,
                          ndit: np.ndarray,
                          steps: np.ndarray) -> None:

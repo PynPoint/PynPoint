@@ -346,10 +346,11 @@ class SimplexMinimizationModule(ProcessingModule):
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
                                       'the \'poisson\' figure of merit.')
 
+        @typechecked
         def _objective(arg: np.ndarray,
                        count: int,
                        n_components: int,
-                       sklearn_pca: PCA,
+                       sklearn_pca: Optional[PCA],
                        noise: Optional[float]) -> float:
 
             pos_y = arg[0]
@@ -595,7 +596,9 @@ class FalsePositiveModule(ProcessingModule):
             None
         """
 
-        def _snr_optimize(arg: Tuple[float, float]) -> float:
+        @typechecked
+        def _snr_optimize(arg: np.ndarray) -> float:
+
             pos_x, pos_y = arg
 
             if self.m_offset is not None:
@@ -634,7 +637,7 @@ class FalsePositiveModule(ProcessingModule):
 
             if self.m_optimize:
                 result = minimize(fun=_snr_optimize,
-                                  x0=[self.m_position[0], self.m_position[1]],
+                                  x0=np.array([self.m_position[0], self.m_position[1]]),
                                   method='Nelder-Mead',
                                   tol=None,
                                   options={'xatol': self.m_tolerance, 'fatol': float('inf')})
@@ -1001,15 +1004,16 @@ class AperturePhotometryModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _photometry(image: np.ndarray,
-                        aperture: Union[Aperture, List[Aperture]]) -> float:
+                        aperture: Union[Aperture, List[Aperture]]) -> np.ndarray:
             # https://photutils.readthedocs.io/en/stable/overview.html
             # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
             # corresponds to the center of the lowest, leftmost array element. This means that
             # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
             # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
 
-            return aperture_photometry(image, aperture, method='exact')['aperture_sum']
+            return np.array(aperture_photometry(image, aperture, method='exact')['aperture_sum'])
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_radius /= pixscale

@@ -102,6 +102,7 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _align_image(image_in: np.ndarray) -> np.ndarray:
             offset = np.array([0., 0.])
 
@@ -469,6 +470,7 @@ class FitCenterModule(ProcessingModule):
 
             return moffat
 
+        @typechecked
         def _fit_2d_function(image: np.ndarray) -> np.ndarray:
 
             if self.m_filter_size:
@@ -769,6 +771,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
+        @typechecked
         def _get_center(center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
             center_frame = self.m_center_in_port[0, ]
 
@@ -778,7 +781,7 @@ class WaffleCenteringModule(ProcessingModule):
             if center is None:
                 center = center_pixel(center_frame)
             else:
-                center = (np.floor(center[0]), np.floor(center[1]))
+                center = (int(np.floor(center[0])), int(np.floor(center[1])))
 
             return center_frame, center
 
