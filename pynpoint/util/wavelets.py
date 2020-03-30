@@ -14,6 +14,7 @@ from pynpoint.util.continuous import autoscales, cwt, icwt
 # from pynpoint.util.continuous import fourier_from_scales
 
 
+# This function cannot by @typechecked because of a compatibility issue with numba
 @jit(cache=True)
 def _fast_zeros(soft: bool,
                 spectrum: np.ndarray,
@@ -148,6 +149,7 @@ class WaveletAnalysisCapsule:
 
     # --- functions for reconstruction value
     @staticmethod
+    @typechecked
     def _morlet_function(omega0: float,
                          x_in: float) -> np.complex128:
         """
@@ -160,6 +162,7 @@ class WaveletAnalysisCapsule:
         return np.pi**(-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-x_in**2/2.0)
 
     @staticmethod
+    @typechecked
     def _dog_function(order: int,
                       x_in: float) -> float:
         """
@@ -174,6 +177,7 @@ class WaveletAnalysisCapsule:
 
         return ((-1)**(order+1)) / np.sqrt(gamma(order + 0.5)) * herm
 
+    @typechecked
     def __pad_signal(self) -> None:
         """
         Returns
@@ -194,6 +198,7 @@ class WaveletAnalysisCapsule:
             new_data = np.append(self._m_data, right_half_signal[::-1])
             self._m_data = np.append(left_half_signal[::-1], new_data)
 
+    @typechecked
     def __compute_reconstruction_factor(self) -> float:
         """
         Computes the reconstruction factor.

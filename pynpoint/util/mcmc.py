@@ -84,6 +84,7 @@ def lnprob(param: np.ndarray,
         Log posterior probability.
     """
 
+    @typechecked
     def _lnprior() -> float:
         """
         Internal function for the log prior function.
@@ -106,6 +107,7 @@ def lnprob(param: np.ndarray,
 
         return ln_prior
 
+    @typechecked
     def _lnlike() -> float:
         """
         Internal function for the log likelihood function.

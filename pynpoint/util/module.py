@@ -14,6 +14,16 @@ import numpy as np
 
 from typeguard import typechecked
 
+# The following is needed to avoid circular dependencies:
+# The PypelineModule uses methods from module.py, but  methods in this file also use PypelineModule
+# for their type hints. If we were to simply import the PypelineModule class here, this circular
+# dependency would lead to an ImportError at runtime. By using the TYPE_CHECKING flag, we can avoid
+# this: because TYPE_CHECKING is always False at runtime, there are no ImportErrors, while the
+# PypelineModule is still available for static type checkers (i.e., not for the typeguard library).
+# In Python 3.7, this problem can be circumvented more elegantly by using:
+#   >>> from __future__ import annotations
+# This changes the behavior of type hints such that they are no longer evaluated at definition time,
+# see also PEP 563. In Python 4.0, this is supposed to become the new default behavior.
 if TYPE_CHECKING:
     from pynpoint.core.processing import PypelineModule
 
@@ -43,6 +53,7 @@ def progress(current: int,
         None
     """
 
+    @typechecked
     def time_string(delta_time: float) -> str:
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
@@ -269,6 +280,8 @@ def update_arguments(index: int,
     return args_out
 
 
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
 def module_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print the module name.
@@ -293,7 +306,8 @@ def module_info(pipeline_module: 'PypelineModule') -> None:
     print(f'Module name: {pipeline_module._m_name}')
 
 
-# @typechecked
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
 def input_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print information about the input data.
@@ -327,7 +341,8 @@ def input_info(pipeline_module: 'PypelineModule') -> None:
                 print(f' {item} {input_shape}')
 
 
-# @typechecked
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
 def output_info(pipeline_module: 'PypelineModule',
                 output_shape: Dict[str, Tuple[int, ...]]) -> None:
     """

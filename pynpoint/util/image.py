@@ -476,7 +476,7 @@ def select_annulus(image_in: np.ndarray,
 
 @typechecked
 def rotate_coordinates(center: Tuple[float, float],
-                       position: Tuple[float, float],
+                       position: Union[Tuple[float, float], np.ndarray],
                        angle: float) -> Tuple[float, float]:
     """
     Function to rotate coordinates around the image center.
@@ -486,7 +486,7 @@ def rotate_coordinates(center: Tuple[float, float],
     center : tuple(float, float)
         Image center (y, x).
     position : tuple(float, float)
-        Position (y, x) in the image.
+        Position (y, x) in the image, or a 2D numpy array of positions.
     angle : float
         Angle (deg) to rotate in counterclockwise direction.
 
