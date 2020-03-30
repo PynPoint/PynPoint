@@ -431,7 +431,7 @@ class TestOutputPort:
         # some static attributes
         out_port.add_attribute('attr1', 33)
         out_port.add_attribute('attr2', 'string')
-        out_port.add_attribute('attr3', [1, 2, 3])
+        out_port.add_attribute('attr3', 3.141)
 
         # non static attributes
         out_port.add_attribute('attr_non_static', [3, 4, 5, 6], static=False)
@@ -451,7 +451,7 @@ class TestOutputPort:
 
         assert copy_control.get_attribute('attr1') == 33
         assert copy_control.get_attribute('attr2') == 'string'
-        assert np.array_equal(copy_control.get_attribute('attr3'), [1, 2, 3])
+        assert np.array_equal(copy_control.get_attribute('attr3'), 3.141)
         assert np.array_equal(copy_control.get_attribute('attr_non_static'), [3, 4, 5, 6])
 
         copy_port.del_all_attributes()
