@@ -16,6 +16,7 @@ from typeguard import typechecked
 from pynpoint.core.processing import ProcessingModule
 
 
+# This function cannot by @typechecked because of a compatibility issue with numba
 @jit(cache=True)
 def _calc_fast_convolution(F_roof_tmp: np.complex128,
                            W: np.ndarray,
@@ -183,6 +184,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
     __author__ = 'Markus Bonse, Tomas Stolker'
 
+    # This function cannot by @typechecked because of a compatibility issue with numba
     @staticmethod
     @jit(cache=True)
     def _sigma_filter(dev_image: np.ndarray,
