@@ -76,9 +76,6 @@ class TestProcessing:
 
         self.pipeline.m_data_storage.close_connection()
 
-        module._m_data_base = self.test_dir+'database.hdf5'
-        module.add_output_port('new')
-
     def test_apply_function(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 20, static=True)
