@@ -208,10 +208,11 @@ class TestPypeline:
     def test_add_wrong_module(self) -> None:
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        with pytest.raises(AssertionError) as error:
+        with pytest.raises(TypeError) as error:
             pipeline.add_module(None)
 
-        assert str(error.value) == 'The added module is not a valid Pypeline module.'
+        assert str(error.value) == 'type of argument "module" must be ' \
+                                   'pynpoint.core.processing.PypelineModule; got NoneType instead'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
@@ -250,7 +251,11 @@ class TestPypeline:
                                    'not exist in the database.'
 
         assert pipeline.validate_pipeline_module('test') is None
-        assert pipeline._validate('module', 'tag') == (False, None)
+
+        with pytest.raises(TypeError) as error:
+            pipeline._validate('module', 'tag')
+        assert str(error.value) == 'type of argument "module" must be one of (ReadingModule, ' \
+                                   'WritingModule, ProcessingModule); got str instead'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 

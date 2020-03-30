@@ -120,6 +120,7 @@ class Pypeline:
         super(Pypeline, self).__setattr__(key, value)
 
     @staticmethod
+    @typechecked
     def _validate(module: Union[ReadingModule, WritingModule, ProcessingModule],
                   tags: List[str]) -> Tuple[bool, Optional[str]]:
         """
@@ -274,6 +275,7 @@ class Pypeline:
         print(f'Number of CPUs: {n_cpu}')
         print(f'Number of threads: {n_thread}')
 
+    @typechecked
     def add_module(self,
                    module: PypelineModule) -> None:
         """
@@ -292,9 +294,6 @@ class Pypeline:
         NoneType
             None
         """
-
-        assert isinstance(module, PypelineModule), 'The added module is not a valid ' \
-                                                   'Pypeline module.'
 
         if isinstance(module, WritingModule):
             if module.m_output_location is None:
