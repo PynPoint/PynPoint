@@ -318,7 +318,7 @@ class TestFrameSelection:
 
     def test_select_by_attribute(self) -> None:
 
-        self.pipeline.set_attribute('read', 'INDEX', range(44), static=False)
+        self.pipeline.set_attribute('read', 'INDEX', np.arange(44), static=False)
 
         module = SelectByAttributeModule(name_in='frame_removal_1',
                                          image_in_tag='read',
