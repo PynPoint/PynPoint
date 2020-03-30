@@ -9,7 +9,6 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.background import LineSubtractionModule
 from pynpoint.processing.badpixel import BadPixelSigmaFilterModule
-from pynpoint.processing.basic import RepeatImagesModule
 from pynpoint.processing.extract import StarExtractionModule
 from pynpoint.processing.timedenoising import TimeNormalizationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
