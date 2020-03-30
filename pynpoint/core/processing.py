@@ -2,21 +2,21 @@
 Interfaces for pipeline modules.
 """
 
-import os
 import math
+import os
 import time
 import warnings
-
 from abc import ABCMeta, abstractmethod
 from typing import Callable, List, Optional
 
 import numpy as np
+from typeguard import typechecked
 
 from pynpoint.core.dataio import ConfigPort, DataStorage, InputPort, OutputPort
-from pynpoint.util.module import update_arguments, progress
-from pynpoint.util.multistack import StackProcessingCapsule
+from pynpoint.util.module import progress, update_arguments
 from pynpoint.util.multiline import LineProcessingCapsule
 from pynpoint.util.multiproc import apply_function
+from pynpoint.util.multistack import StackProcessingCapsule
 
 
 class PypelineModule(metaclass=ABCMeta):
@@ -31,6 +31,7 @@ class PypelineModule(metaclass=ABCMeta):
     *connect_database* and *run* methods.
     """
 
+    @typechecked
     def __init__(self,
                  name_in: str) -> None:
         """
@@ -54,6 +55,7 @@ class PypelineModule(metaclass=ABCMeta):
         self._m_config_port = ConfigPort('config')
 
     @property
+    @typechecked
     def name(self) -> str:
         """
         Returns the name of the PypelineModule. This property makes sure that the internal module
@@ -68,6 +70,7 @@ class PypelineModule(metaclass=ABCMeta):
         return self._m_name
 
     @abstractmethod
+    @typechecked
     def connect_database(self,
                          data_base_in: DataStorage) -> None:
         """
@@ -81,6 +84,7 @@ class PypelineModule(metaclass=ABCMeta):
         """
 
     @abstractmethod
+    @typechecked
     def run(self) -> None:
         """
         Abstract interface for the run method of a PypelineModule which inheres the actual
@@ -97,6 +101,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
     (self._m_out_ports) but no input ports.
     """
 
+    @typechecked
     def __init__(self,
                  name_in: str,
                  input_dir: Optional[str] = None) -> None:
@@ -127,6 +132,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         self.m_input_location = input_dir
         self._m_output_ports = {}
 
+    @typechecked
     def add_output_port(self,
                         tag: str,
                         activation: bool = True) -> OutputPort:
@@ -166,6 +172,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
 
         return port
 
+    @typechecked
     def connect_database(self,
                          data_base_in: DataStorage) -> None:
         """
@@ -191,6 +198,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
 
         self._m_data_base = data_base_in
 
+    @typechecked
     def get_all_output_tags(self) -> List[str]:
         """
         Returns a list of all output tags to the ReadingModule.
@@ -204,6 +212,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         return list(self._m_output_ports.keys())
 
     @abstractmethod
+    @typechecked
     def run(self) -> None:
         """
         Abstract interface for the run method of a ReadingModule which inheres the actual
@@ -221,6 +230,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
     WritingModules have a dictionary of input ports (self._m_input_ports) but no output ports.
     """
 
+    @typechecked
     def __init__(self,
                  name_in: str,
                  output_dir: Optional[str] = None) -> None:
@@ -252,6 +262,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
         self.m_output_location = output_dir
         self._m_input_ports = {}
 
+    @typechecked
     def add_input_port(self,
                        tag: str) -> InputPort:
         """
@@ -284,6 +295,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
 
         return port
 
+    @typechecked
     def connect_database(self,
                          data_base_in: DataStorage) -> None:
         """
@@ -309,6 +321,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
 
         self._m_data_base = data_base_in
 
+    @typechecked
     def get_all_input_tags(self) -> List[str]:
         """
         Returns a list of all input tags to the WritingModule.
@@ -322,6 +335,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
         return list(self._m_input_ports.keys())
 
     @abstractmethod
+    @typechecked
     def run(self) -> None:
         """
         Abstract interface for the run method of a WritingModule which inheres the actual
@@ -337,6 +351,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
     of input ports (self._m_input_ports).
     """
 
+    @typechecked
     def __init__(self,
                  name_in: str) -> None:
         """
@@ -355,6 +370,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         self._m_input_ports = {}
         self._m_output_ports = {}
 
+    @typechecked
     def add_input_port(self,
                        tag: str) -> InputPort:
         """
@@ -387,6 +403,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         return port
 
+    @typechecked
     def add_output_port(self,
                         tag: str,
                         activation: bool = True) -> OutputPort:
@@ -426,6 +443,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         return port
 
+    @typechecked
     def connect_database(self,
                          data_base_in: DataStorage) -> None:
         """
@@ -454,6 +472,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         self._m_data_base = data_base_in
 
+    @typechecked
     def apply_function_in_time(self,
                                func: Callable,
                                image_in_port: InputPort,
@@ -503,8 +522,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         capsule.run()
 
+    @typechecked
     def apply_function_to_images(self,
-                                 func: Callable,
+                                 func: Callable[..., np.ndarray],
                                  image_in_port: InputPort,
                                  image_out_port: OutputPort,
                                  message: str,
@@ -519,13 +539,14 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         Parameters
         ----------
         func : function
-            The function which is applied to all images. Its definitions should be similar to::
+            The function which is applied to all images. Its definitions should be similar to:
 
                 def function(image_in,
                              parameter1,
                              parameter2,
                              parameter3)
 
+            The function must return a numpy array.
         image_in_port : pynpoint.core.dataio.InputPort
             Input port which is linked to the input data.
         image_out_port : pynpoint.core.dataio.OutputPort
@@ -623,6 +644,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
             print(' [DONE]')
 
+    @typechecked
     def get_all_input_tags(self) -> List[str]:
         """
         Returns a list of all input tags to the ProcessingModule.
@@ -635,6 +657,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         return list(self._m_input_ports.keys())
 
+    @typechecked
     def get_all_output_tags(self) -> List[str]:
         """
         Returns a list of all output tags to the ProcessingModule.
@@ -648,6 +671,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         return list(self._m_output_ports.keys())
 
     @abstractmethod
+    @typechecked
     def run(self) -> None:
         """
         Abstract interface for the run method of a

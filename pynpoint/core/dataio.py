@@ -4,12 +4,14 @@ Modules for accessing data and attributes in the central database.
 
 import os
 import warnings
-
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import h5py
 import numpy as np
+from typeguard import typechecked
+
+from pynpoint.util.types import NonStaticAttribute, StaticAttribute
 
 
 class DataStorage:
@@ -19,6 +21,7 @@ class DataStorage:
     is open (self.m_open == True).
     """
 
+    @typechecked
     def __init__(self,
                  location_in: str) -> None:
         """
@@ -45,6 +48,7 @@ class DataStorage:
         self.m_data_bank = None
         self.m_open = False
 
+    @typechecked
     def open_connection(self) -> None:
         """
         Opens the connection to the HDF5 file by opening an old file or creating a new one.
@@ -59,6 +63,7 @@ class DataStorage:
             self.m_data_bank = h5py.File(self._m_location, mode='a')
             self.m_open = True
 
+    @typechecked
     def close_connection(self) -> None:
         """
         Closes the connection to the HDF5 file. All entries of the data bank will be stored on the
@@ -86,6 +91,7 @@ class Port(metaclass=ABCMeta):
     """
 
     @abstractmethod
+    @typechecked
     def __init__(self,
                  tag: str,
                  data_storage_in: Optional[DataStorage] = None) -> None:
@@ -116,6 +122,7 @@ class Port(metaclass=ABCMeta):
         self._m_data_base_active = False
 
     @property
+    @typechecked
     def tag(self) -> str:
         """
         Getter for the internal tag (no setter).
@@ -128,6 +135,7 @@ class Port(metaclass=ABCMeta):
 
         return self._m_tag
 
+    @typechecked
     def open_port(self) -> None:
         """
         Opens the connection to the :class:`~pynpoint.core.dataio.DataStorage` and activates its
@@ -143,6 +151,7 @@ class Port(metaclass=ABCMeta):
             self._m_data_storage.open_connection()
             self._m_data_base_active = True
 
+    @typechecked
     def close_port(self) -> None:
         """
         Closes the connection to the :class:`~pynpoint.core.dataio.DataStorage` and forces it to
@@ -159,6 +168,7 @@ class Port(metaclass=ABCMeta):
             self._m_data_storage.close_connection()
             self._m_data_base_active = False
 
+    @typechecked
     def set_database_connection(self,
                                 data_base_in: DataStorage) -> None:
         """
@@ -185,6 +195,7 @@ class ConfigPort(Port):
     use a ConfigPort instance to access a single attribute of the dataset using get_attribute().
     """
 
+    @typechecked
     def __init__(self,
                  tag: str,
                  data_storage_in: Optional[DataStorage] = None) -> None:
@@ -220,6 +231,7 @@ class ConfigPort(Port):
         if tag != 'config':
             raise ValueError('The tag name of the central configuration should be \'config\'.')
 
+    @typechecked
     def _check_status_and_activate(self) -> bool:
         """
         Internal function which checks if the ConfigPort is ready to use and open it.
@@ -242,6 +254,7 @@ class ConfigPort(Port):
 
         return status
 
+    @typechecked
     def _check_if_data_exists(self) -> bool:
         """
         Internal function which checks if data exists for the 'config' tag.
@@ -254,6 +267,7 @@ class ConfigPort(Port):
 
         return 'config' in self._m_data_storage.m_data_bank
 
+    @typechecked
     def _check_error_cases(self) -> bool:
         """'
         Internal function which checks the error cases.
@@ -271,8 +285,9 @@ class ConfigPort(Port):
 
         return status
 
+    @typechecked
     def get_attribute(self,
-                      name: str) -> Union[str, float, int, None]:
+                      name: str) -> Optional[StaticAttribute]:
         """
         Returns a static attribute which is connected to the dataset of the ConfigPort.
 
@@ -333,6 +348,7 @@ class InputPort(Port):
           dataset (e.g. the parallactic angles or dithering positions).
     """
 
+    @typechecked
     def __init__(self,
                  tag: str,
                  data_storage_in: Optional[DataStorage] = None) -> None:
@@ -367,6 +383,7 @@ class InputPort(Port):
             raise ValueError('The tag name \'fits_header\' is reserved for storage of the FITS '
                              'headers.')
 
+    @typechecked
     def _check_status_and_activate(self) -> bool:
         """
         Internal function which checks if the InputPort is ready to use and open it.
@@ -389,6 +406,7 @@ class InputPort(Port):
 
         return status
 
+    @typechecked
     def _check_if_data_exists(self) -> bool:
         """
         Internal function which checks if data exists for the Port specific tag.
@@ -401,6 +419,7 @@ class InputPort(Port):
 
         return self._m_tag in self._m_data_storage.m_data_bank
 
+    @typechecked
     def _check_error_cases(self) -> bool:
 
         if not self._check_status_and_activate():
@@ -415,8 +434,9 @@ class InputPort(Port):
 
         return status
 
+    @typechecked
     def __getitem__(self,
-                    item: tuple) -> Optional[np.ndarray]:
+                    item: Union[slice, int, tuple]) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
         """
         Internal function which handles the data access using slicing. See class documentation for a
         example (:class:`~pynpoint.core.dataio.InputPort`). None if the data does not exist.
@@ -428,7 +448,7 @@ class InputPort(Port):
 
         Returns
         -------
-        numpy.ndarray
+        StaticAttribute, NonStaticAttribute, None
             The selected data. Returns None if no data exists under the tag of thePort.
         """
 
@@ -440,7 +460,8 @@ class InputPort(Port):
 
         return data
 
-    def get_shape(self) -> Tuple[int, ...]:
+    @typechecked
+    def get_shape(self) -> Optional[Tuple[int, ...]]:
         """
         Returns the shape of the dataset the port is linked to. This can be useful if you need the
         shape without loading the whole data.
@@ -460,7 +481,8 @@ class InputPort(Port):
 
         return data_shape
 
-    def get_ndim(self) -> int:
+    @typechecked
+    def get_ndim(self) -> Optional[int]:
         """
         Returns the number of dimensions of the dataset the port is linked to.
 
@@ -479,7 +501,8 @@ class InputPort(Port):
 
         return ndim
 
-    def get_all(self) -> np.ndarray:
+    @typechecked
+    def get_all(self) -> Optional[np.ndarray]:
         """
         Returns the whole dataset stored in the data bank under the tag of the Port. Be careful
         using this function for loading large datasets. The data type is inferred from the data
@@ -500,8 +523,9 @@ class InputPort(Port):
 
         return data
 
+    @typechecked
     def get_attribute(self,
-                      name: str) -> Union[str, float, int, np.ndarray, None]:
+                      name: str) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
         """
         Returns an attribute which is connected to the dataset of the port. The function can return
         static and non-static attributes (static attributes have priority). More information about
@@ -515,7 +539,7 @@ class InputPort(Port):
 
         Returns
         -------
-        str, float, int, or numpy.ndarray
+        StaticAttribute, NonStaticAttribute, None
             The attribute value. Returns None if the attribute does not exist.
         """
 
@@ -542,13 +566,14 @@ class InputPort(Port):
 
         return attr_val
 
-    def get_all_static_attributes(self) -> Dict[str, Any]:
+    @typechecked
+    def get_all_static_attributes(self) -> Optional[Dict[str, StaticAttribute]]:
         """
         Get all static attributes of the dataset which are linked to the Port tag.
 
         Returns
         -------
-        dict
+        dict, None
             Dictionary of all attributes, as `{attr_name:attr_value}`.
         """
 
@@ -560,7 +585,8 @@ class InputPort(Port):
 
         return attr_dict
 
-    def get_all_non_static_attributes(self) -> List[str]:
+    @typechecked
+    def get_all_non_static_attributes(self) -> Optional[List[str]]:
         """
         Returns a list of all non-static attribute keys.  More information about
         static and non-static attributes can be found in the class documentation of
@@ -568,7 +594,7 @@ class InputPort(Port):
 
         Returns
         -------
-        list(str, )
+        list(str, ), None
             List of all existing non-static attribute keys.
         """
 
@@ -622,6 +648,7 @@ class OutputPort(Port):
     Furthermore it is possible to deactivate a OutputPort to stop him saving data.
     """
 
+    @typechecked
     def __init__(self,
                  tag: str,
                  data_storage_in: Optional[DataStorage] = None,
@@ -659,6 +686,7 @@ class OutputPort(Port):
             raise ValueError('The tag name \'fits_header\' is reserved for storage of the FITS '
                              'headers.')
 
+    @typechecked
     def _check_status_and_activate(self) -> bool:
         """
         Internal function which checks if the OutputPort is ready to use and open it.
@@ -684,8 +712,9 @@ class OutputPort(Port):
 
         return status
 
+    @typechecked
     def _initialize_database(self,
-                             first_data: np.ndarray,
+                             first_data: Union[np.ndarray, list],
                              tag: str,
                              data_dim: Optional[int] = None) -> None:
         """
@@ -706,7 +735,10 @@ class OutputPort(Port):
             None
         """
 
-        def _ndim_check(data_dim: int, first_dim: int) -> None:
+        @typechecked
+        def _ndim_check(data_dim: int,
+                        first_dim: int) -> None:
+
             if first_dim > 4 or first_dim < 1:
                 raise ValueError('Output port can only save numpy arrays from 1D to 4D. Use Port '
                                  'attributes to save as int, float, or string.')
@@ -765,6 +797,7 @@ class OutputPort(Port):
                                                         data=first_data,
                                                         maxshape=data_shape)
 
+    @typechecked
     def _set_all_key(self,
                      tag: str,
                      data: np.ndarray,
@@ -813,9 +846,10 @@ class OutputPort(Port):
             for key, value in tmp_attributes.items():
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
 
+    @typechecked
     def _append_key(self,
                     tag: str,
-                    data: np.ndarray,
+                    data: Union[np.ndarray, list],
                     data_dim: Optional[int] = None,
                     force: bool = False) -> None:
         """
@@ -866,6 +900,7 @@ class OutputPort(Port):
             elif data_dim == 4:
                 data = data[:, np.newaxis, :, :]
 
+        @typechecked
         def _type_check() -> bool:
             check_result = False
 
@@ -926,9 +961,10 @@ class OutputPort(Port):
         raise ValueError(f'The port tag \'{self._m_tag}\' is already used with a different data '
                          f'type. The \'force\' parameter can be used to replace the tag.')
 
+    @typechecked
     def __setitem__(self,
-                    key: slice,
-                    value: Any) -> None:
+                    key: Union[slice, int, tuple],
+                    value: Union[np.ndarray, int]) -> None:
         """
         Internal function needed to change data using slicing. See class documentation for an
         example (:class:`~pynpoint.core.dataio.OutputPort`).
@@ -949,6 +985,7 @@ class OutputPort(Port):
         if self._check_status_and_activate():
             self._m_data_storage.m_data_bank[self._m_tag][key] = value
 
+    @typechecked
     def del_all_data(self) -> None:
         """
         Delete all data belonging to the database tag.
@@ -959,8 +996,9 @@ class OutputPort(Port):
             if self._m_tag in self._m_data_storage.m_data_bank:
                 del self._m_data_storage.m_data_bank[self._m_tag]
 
+    @typechecked
     def set_all(self,
-                data: np.ndarray,
+                data: Union[np.ndarray, list],
                 data_dim: Optional[int] = None,
                 keep_attributes: bool = False) -> None:
         """
@@ -1020,8 +1058,9 @@ class OutputPort(Port):
                               data_dim=data_dim,
                               keep_attributes=keep_attributes)
 
+    @typechecked
     def append(self,
-               data: np.ndarray,
+               data: Union[np.ndarray, list],
                data_dim: Optional[int] = None,
                force: bool = False) -> None:
         """
@@ -1064,6 +1103,7 @@ class OutputPort(Port):
                              data_dim=data_dim,
                              force=force)
 
+    @typechecked
     def activate(self) -> None:
         """
         Activates the port. A non activated port will not save data.
@@ -1076,6 +1116,7 @@ class OutputPort(Port):
 
         self.m_activate = True
 
+    @typechecked
     def deactivate(self) -> None:
         """
         Deactivates the port. A non activated port will not save data.
@@ -1088,9 +1129,10 @@ class OutputPort(Port):
 
         self.m_activate = False
 
+    @typechecked
     def add_attribute(self,
                       name: str,
-                      value: Union[str, float, int, np.ndarray],
+                      value: Union[StaticAttribute, NonStaticAttribute],
                       static: bool = True) -> None:
         """
         Adds an attribute to the dataset of the Port with the attribute name = `name` and the
@@ -1113,7 +1155,7 @@ class OutputPort(Port):
         ----------
         name : str
             Name of the attribute.
-        value : str, float, or int
+        value : StaticAttribute, NonStaticAttribute
             Value of the attribute.
         static : bool
             Indicate if the attribute is static (True) or non-static (False).
@@ -1137,17 +1179,18 @@ class OutputPort(Port):
                     self._set_all_key(tag=('header_' + self._m_tag + '/' + name),
                                       data=np.asarray(value))
 
+    @typechecked
     def append_attribute_data(self,
                               name: str,
-                              value: Union[str, float, int]) -> None:
+                              value: Union[StaticAttribute, NonStaticAttribute]) -> None:
         """
-        Function which appends a single data value to non-static attributes.
+        Function which appends data (either a single value or an array) to non-static attributes.
 
         Parameters
         ----------
         name : str
             Name of the attribute.
-        value : str, float, or int
+        value : StaticAttribute, NonStaticAttribute
             Value which will be appended to the attribute dataset.
 
         Returns
@@ -1161,6 +1204,7 @@ class OutputPort(Port):
             self._append_key(tag=('header_' + self._m_tag + '/' + name),
                              data=np.asarray([value, ]))
 
+    @typechecked
     def copy_attributes(self,
                         input_port: InputPort) -> None:
         """
@@ -1203,6 +1247,7 @@ class OutputPort(Port):
 
             self._m_data_storage.m_data_bank.flush()
 
+    @typechecked
     def del_attribute(self,
                       name: str) -> None:
         """
@@ -1233,6 +1278,7 @@ class OutputPort(Port):
             else:
                 warnings.warn(f'Attribute \'{name}\' does not exist and could not be deleted.')
 
+    @typechecked
     def del_all_attributes(self) -> None:
         """
         Deletes all static and non-static attributes of the dataset.
@@ -1253,9 +1299,10 @@ class OutputPort(Port):
             if 'header_' + self._m_tag + '/' in self._m_data_storage.m_data_bank:
                 del self._m_data_storage.m_data_bank[('header_' + self._m_tag + '/')]
 
+    @typechecked
     def check_static_attribute(self,
                                name: str,
-                               comparison_value: Union[str, float, int]) -> Optional[int]:
+                               comparison_value: StaticAttribute) -> Optional[int]:
         """
         Checks if a static attribute exists and if it is equal to a comparison value.
 
@@ -1263,12 +1310,12 @@ class OutputPort(Port):
         ----------
         name : str
             Name of the static attribute.
-        comparison_value : str, float, or int
+        comparison_value : StaticAttribute
             Comparison value.
 
         Returns
         -------
-        int
+        int, None
             Status: 1 if the static attribute does not exist, 0 if the static attribute exists
             and is equal, and -1 if the static attribute exists but is not equal.
         """
@@ -1284,9 +1331,10 @@ class OutputPort(Port):
 
         return 1
 
+    @typechecked
     def check_non_static_attribute(self,
                                    name: str,
-                                   comparison_value: np.ndarray) -> Optional[int]:
+                                   comparison_value: NonStaticAttribute) -> Optional[int]:
         """
         Checks if a non-static attribute exists and if it is equal to a comparison value.
 
@@ -1294,12 +1342,12 @@ class OutputPort(Port):
         ----------
         name : str
             Name of the non-static attribute.
-        comparison_value : numpy.ndarray
+        comparison_value : NonStaticAttribute
             Comparison values
 
         Returns
         -------
-        int
+        int, None
             Status: 1 if the non-static attribute does not exist, 0 if the non-static attribute
             exists and is equal, and -1 if the non-static attribute exists but is not equal.
         """
@@ -1321,6 +1369,7 @@ class OutputPort(Port):
 
         return 1
 
+    @typechecked
     def add_history(self,
                     module: str,
                     history: str) -> None:
@@ -1342,6 +1391,7 @@ class OutputPort(Port):
 
         self.add_attribute('History: ' + module, history)
 
+    @typechecked
     def flush(self) -> None:
         """
         Forces the :class:`~pynpoint.core.dataio.DataStorage` to save all data from the memory to
