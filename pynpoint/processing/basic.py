@@ -198,6 +198,7 @@ class RotateImagesModule(ProcessingModule):
 
         self.m_angle = angle
 
+    @typechecked
     def run(self) -> None:
         """
         Run method of the module. Rotates all images by a constant angle.

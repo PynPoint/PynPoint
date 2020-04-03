@@ -18,7 +18,7 @@ limit = 1e-10
 
 class TestExtract:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -44,11 +44,11 @@ class TestExtract:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(path=self.test_dir, folders=['star', 'binary'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='star',
@@ -78,7 +78,7 @@ class TestExtract:
         assert np.allclose(np.mean(data), 0.00019636787665654158, rtol=limit, atol=0.)
         assert data.shape == (80, 101, 101)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
         module = AngleInterpolationModule(name_in='angle',
                                           data_tag='binary')
@@ -99,7 +99,7 @@ class TestExtract:
         assert np.allclose(np.mean(data), -50.0, rtol=limit, atol=0.)
         assert data.shape == (80, )
 
-    def test_extract_position_none(self):
+    def test_extract_position_none(self) -> None:
 
         module = StarExtractionModule(name_in='extract1',
                                       image_in_tag='star',
@@ -127,7 +127,7 @@ class TestExtract:
         attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 10
 
-    def test_extract_center_none(self):
+    def test_extract_center_none(self) -> None:
 
         module = StarExtractionModule(name_in='extract2',
                                       image_in_tag='star',
@@ -155,7 +155,7 @@ class TestExtract:
         attr = self.pipeline.get_attribute('extract2', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 10
 
-    def test_extract_position(self):
+    def test_extract_position(self) -> None:
 
         module = StarExtractionModule(name_in='extract7',
                                       image_in_tag='star',
@@ -177,7 +177,7 @@ class TestExtract:
         attr = self.pipeline.get_attribute('extract7', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 10
 
-    def test_extract_too_large(self):
+    def test_extract_too_large(self) -> None:
 
         module = StarExtractionModule(name_in='extract3',
                                       image_in_tag='star',
@@ -209,7 +209,7 @@ class TestExtract:
         attr = self.pipeline.get_attribute('extract3', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 25
 
-    def test_star_extract_cpu(self):
+    def test_star_extract_cpu(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
@@ -232,7 +232,7 @@ class TestExtract:
                                              'around the brightest pixel. Using the center of ' \
                                              'the image instead.'
 
-    def test_extract_binary(self):
+    def test_extract_binary(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
@@ -255,7 +255,7 @@ class TestExtract:
         assert np.allclose(np.mean(data), 0.0027700881940171283, rtol=limit, atol=0.)
         assert data.shape == (80, 19, 19)
 
-    def test_extract_binary_filter(self):
+    def test_extract_binary_filter(self) -> None:
 
         module = ExtractBinaryModule(pos_center=(50., 50.),
                                      pos_binary=(50., 70.),

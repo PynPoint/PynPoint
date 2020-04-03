@@ -17,7 +17,7 @@ limit = 1e-10
 
 class TestStackSubset:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -28,11 +28,11 @@ class TestStackSubset:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['data', 'extra'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='images',
@@ -60,7 +60,7 @@ class TestStackSubset:
         extra = self.pipeline.get_data('extra')
         assert np.allclose(data, extra, rtol=limit, atol=0.)
 
-    def test_stack_and_subset(self):
+    def test_stack_and_subset(self) -> None:
 
         self.pipeline.set_attribute('images', 'PARANG', np.arange(1., 41., 1.), static=False)
 
@@ -89,7 +89,7 @@ class TestStackSubset:
         assert np.allclose(data, parang, rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_stack_max_rotation(self):
+    def test_stack_max_rotation(self) -> None:
 
         angles = np.arange(1., 41., 1.)
         angles[1:6] = 3.
@@ -127,7 +127,7 @@ class TestStackSubset:
 
         self.pipeline.set_attribute('images', 'PARANG', np.arange(1., 41., 1.), static=False)
 
-    def test_stack_cube(self):
+    def test_stack_cube(self) -> None:
 
         module = StackCubesModule(name_in='stackcube',
                                   image_in_tag='images',
@@ -150,7 +150,7 @@ class TestStackSubset:
         assert np.allclose(np.mean(attribute), 1, rtol=limit, atol=0.)
         assert attribute.shape == (4, )
 
-    def test_derotate_and_stack(self):
+    def test_derotate_and_stack(self) -> None:
 
         module = DerotateAndStackModule(name_in='derotate1',
                                         image_in_tag='images',
@@ -182,7 +182,7 @@ class TestStackSubset:
         assert np.allclose(np.mean(data), 0.00010033064394962, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_combine_tags(self):
+    def test_combine_tags(self) -> None:
 
         module = CombineTagsModule(image_in_tags=['images', 'extra'],
                                    check_attr=True,

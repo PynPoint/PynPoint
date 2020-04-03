@@ -3,6 +3,9 @@
 
 # See: Practical Guide to Wavelet Analysis - C. Torrence and G. P. Compo.
 
+# Changes made by the PynPoint developers:
+# - added type hints and type checks
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,12 +19,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 import numpy as np
 
 from scipy.special import gamma
+from typeguard import typechecked
 
 
-def normalization(s, dt):
+@typechecked
+def normalization(s: Union[np.ndarray, np.generic],
+                  dt: int) -> Union[np.ndarray, np.generic]:
     """"
     Parameters
     ----------
@@ -39,7 +47,11 @@ def normalization(s, dt):
     return np.sqrt((2 * np.pi * s) / dt)
 
 
-def morletft(s, w, w0, dt):
+@typechecked
+def morletft(s: np.ndarray,
+             w: np.ndarray,
+             w0: int,
+             dt: int) -> np.ndarray:
     """"
     Fourier transformed morlet function.
 
@@ -71,7 +83,11 @@ def morletft(s, w, w0, dt):
     return wavelet
 
 
-def dogft(s, w, order, dt):
+@typechecked
+def dogft(s: np.ndarray,
+          w: np.ndarray,
+          order: int,
+          dt: int) -> np.ndarray:
     """
     Fourier transformed DOG function.
 
@@ -103,7 +119,9 @@ def dogft(s, w, order, dt):
     return wavelet
 
 
-def angularfreq(N, dt):
+@typechecked
+def angularfreq(N: int,
+                dt: int) -> np.ndarray:
     """
     Compute angular frequencies.
 
@@ -134,7 +152,12 @@ def angularfreq(N, dt):
     return w
 
 
-def autoscales(N, dt, dj, wf, p):
+@typechecked
+def autoscales(N: int,
+               dt: int,
+               dj: float,
+               wf: str,
+               p: int) -> np.ndarray:
     """
     Compute scales as fractional power of two.
 
@@ -230,7 +253,12 @@ def autoscales(N, dt, dj, wf, p):
 #         raise ValueError('wavelet function not available')
 
 
-def cwt(x, dt, scales, wf="dog", p=2):
+@typechecked
+def cwt(x: np.ndarray,
+        dt: int,
+        scales: np.ndarray,
+        wf: str = "dog",
+        p: int = 2) -> np.ndarray:
     """
     Continuous Wavelet Transform.
 
@@ -283,7 +311,9 @@ def cwt(x, dt, scales, wf="dog", p=2):
     return X_ARR
 
 
-def icwt(X, scales):
+@typechecked
+def icwt(X: np.ndarray,
+         scales: np.ndarray) -> np.ndarray:
     """
     Inverse Continuous Wavelet Transform. The reconstruction factor is not applied.
 

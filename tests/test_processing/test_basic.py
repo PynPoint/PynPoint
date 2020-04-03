@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestBasic:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -51,11 +51,11 @@ class TestBasic:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['data1', 'data2', 'data3'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='data1',
@@ -100,7 +100,7 @@ class TestBasic:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_subtract_images(self):
+    def test_subtract_images(self) -> None:
 
         module = SubtractImagesModule(name_in='subtract',
                                       image_in_tags=('data1', 'data2'),
@@ -115,7 +115,7 @@ class TestBasic:
         assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_add_images(self):
+    def test_add_images(self) -> None:
 
         module = AddImagesModule(name_in='add',
                                  image_in_tags=('data1', 'data2'),
@@ -130,7 +130,7 @@ class TestBasic:
         assert np.allclose(np.mean(data), 0.00020058989563476133, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_rotate_images(self):
+    def test_rotate_images(self) -> None:
 
         module = RotateImagesModule(name_in='rotate',
                                     image_in_tag='data1',
@@ -145,7 +145,7 @@ class TestBasic:
         assert np.allclose(np.mean(data), 0.00010030089755226848, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_repeat_images(self):
+    def test_repeat_images(self) -> None:
 
         module = RepeatImagesModule(name_in='repeat',
                                     image_in_tag='data1',

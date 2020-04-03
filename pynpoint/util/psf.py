@@ -2,20 +2,22 @@
 Functions for PSF subtraction.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
 from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
+from typeguard import typechecked
 
 
+@typechecked
 def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
-                        pca_sklearn: PCA = None,
-                        im_shape: Tuple[int, int, int] = None,
-                        indices: np.ndarray = None) -> np.ndarray:
+                        pca_sklearn: Optional[PCA] = None,
+                        im_shape: Optional[Tuple[int, int, int]] = None,
+                        indices: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
     """
     Function for PSF subtraction with PCA.
 

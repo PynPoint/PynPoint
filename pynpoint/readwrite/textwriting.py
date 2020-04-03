@@ -4,6 +4,8 @@ Modules for writing data as text file.
 
 import os
 
+from typing import Optional
+
 import numpy as np
 
 from typeguard import typechecked
@@ -25,8 +27,8 @@ class TextWritingModule(WritingModule):
                  name_in: str,
                  data_tag: str,
                  file_name: str,
-                 output_dir: str = None,
-                 header: str = None) -> None:
+                 output_dir: Optional[str] = None,
+                 header: Optional[str] = None) -> None:
         """
         Parameters
         ----------

@@ -18,7 +18,7 @@ limit = 1e-10
 
 class TestPsfSubtraction:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -50,11 +50,11 @@ class TestPsfSubtraction:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['science', 'reference'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='science',
@@ -80,7 +80,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
         module = AngleInterpolationModule(name_in='angle',
                                           data_tag='science')
@@ -94,7 +94,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 50.0, rtol=limit, atol=0.)
         assert data.shape == (80, )
 
-    def test_psf_preparation(self):
+    def test_psf_preparation(self) -> None:
 
         module = PSFpreparationModule(name_in='prep1',
                                       image_in_tag='science',
@@ -134,7 +134,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 1.227592050148539e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_classical_adi(self):
+    def test_classical_adi(self) -> None:
 
         module = ClassicalADIModule(threshold=None,
                                     nreference=None,
@@ -156,7 +156,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_classical_adi_threshold(self):
+    def test_classical_adi_threshold(self) -> None:
 
         module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
                                     nreference=5,
@@ -178,7 +178,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 1.413437242880268e-07, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_psf_subtraction_pca_single(self):
+    def test_psf_subtraction_pca_single(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_single',
@@ -220,7 +220,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -1.593245396350998e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_no_mean(self):
+    def test_psf_subtraction_no_mean(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_no_mean',
@@ -246,7 +246,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 7.4728664805632875e-06, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref(self):
+    def test_psf_subtraction_ref(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_ref',
@@ -272,7 +272,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -1.6780507257603104e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_no_mean(self):
+    def test_psf_subtraction_ref_no_mean(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_ref_no_mean',
@@ -298,7 +298,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 2.3755682312090375e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_single_mask(self):
+    def test_psf_subtraction_pca_single_mask(self) -> None:
 
         pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in='pca_single_mask',
@@ -340,7 +340,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 5.584100479595007e-06, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_no_mean_mask(self):
+    def test_psf_subtraction_no_mean_mask(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_no_mean_mask',
@@ -366,7 +366,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.sum(np.abs(data)), 1025.2018448288406, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_mask(self):
+    def test_psf_subtraction_ref_mask(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_ref_mask',
@@ -392,7 +392,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -2.3165670099810983e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_no_mean_mask(self):
+    def test_psf_subtraction_ref_no_mean_mask(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                          name_in='pca_ref_no_mean_mask',
@@ -418,7 +418,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.sum(np.abs(data)), 1026.3329224435665, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_multi(self):
+    def test_psf_subtraction_pca_multi(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
@@ -459,7 +459,7 @@ class TestPsfSubtraction:
         assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
-    def test_psf_subtraction_pca_multi_mask(self):
+    def test_psf_subtraction_pca_multi_mask(self) -> None:
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
@@ -503,7 +503,7 @@ class TestPsfSubtraction:
         assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
-    def test_psf_subtraction_len_parang(self):
+    def test_psf_subtraction_len_parang(self) -> None:
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 1

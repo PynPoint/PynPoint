@@ -19,7 +19,7 @@ limit = 1e-10
 
 class TestCentering:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -66,12 +66,12 @@ class TestCentering:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(path=self.test_dir,
                          folders=['dither', 'star_odd', 'star_even', 'waffle_odd', 'waffle_even'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='dither',
@@ -153,7 +153,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 9.99999999999951e-05, rtol=1e-4, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_star_extract(self):
+    def test_star_extract(self) -> None:
 
         module = StarExtractionModule(name_in='extract1',
                                       image_in_tag='dither',
@@ -181,7 +181,7 @@ class TestCentering:
         attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
         assert attr[10, 0] == attr[10, 1] == 75
 
-    def test_star_align(self):
+    def test_star_align(self) -> None:
 
         module = StarAlignmentModule(name_in='align1',
                                      image_in_tag='extract1',
@@ -200,7 +200,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.00016446205542266847, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_star_align_subframe(self):
+    def test_star_align_subframe(self) -> None:
 
         module = StarAlignmentModule(name_in='align2',
                                      image_in_tag='extract1',
@@ -219,7 +219,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-    def test_star_align_ref(self):
+    def test_star_align_ref(self) -> None:
 
         module = StarAlignmentModule(name_in='align3',
                                      image_in_tag='extract1',
@@ -238,7 +238,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-    def test_star_align_number_ref(self):
+    def test_star_align_number_ref(self) -> None:
 
         module = StarAlignmentModule(name_in='align4',
                                      image_in_tag='extract1',
@@ -264,7 +264,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
         assert data.shape == (40, 39, 39)
 
-    def test_shift_images_spline(self):
+    def test_shift_images_spline(self) -> None:
 
         module = ShiftImagesModule(shift_xy=(6., 4.),
                                    interpolation='spline',
@@ -280,7 +280,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_shift_images_fft(self):
+    def test_shift_images_fft(self) -> None:
 
         module = ShiftImagesModule(shift_xy=(6., 4.),
                                    interpolation='fft',
@@ -296,7 +296,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.00016446205542266847, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_waffle_center_odd(self):
+    def test_waffle_center_odd(self) -> None:
 
         module = WaffleCenteringModule(size=2.,
                                        center=(50, 50),
@@ -322,7 +322,7 @@ class TestCentering:
         attribute = self.pipeline.get_attribute('center_odd', 'History: WaffleCenteringModule')
         assert attribute == '[x, y] = [50.0, 50.0]'
 
-    def test_waffle_center_even(self):
+    def test_waffle_center_even(self) -> None:
 
         module = WaffleCenteringModule(size=2.,
                                        center=(50, 50),
@@ -351,7 +351,7 @@ class TestCentering:
         attribute = self.pipeline.get_attribute('center_even', 'History: WaffleCenteringModule')
         assert attribute == '[x, y] = [49.5, 49.5]'
 
-    def test_fit_center_full(self):
+    def test_fit_center_full(self) -> None:
 
         module = FitCenterModule(name_in='fit1',
                                  image_in_tag='shift',
@@ -381,7 +381,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.00010827527282995305, rtol=limit, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_fit_center_mean(self):
+    def test_fit_center_mean(self) -> None:
 
         module = FitCenterModule(name_in='fit2',
                                  image_in_tag='shift',
@@ -405,7 +405,7 @@ class TestCentering:
         assert np.allclose(np.mean(data[:, 12]), -0.0011275279023032867, rtol=1e-3, atol=0.)
         assert data.shape == (40, 16)
 
-    def test_shift_images_tag(self):
+    def test_shift_images_tag(self) -> None:
 
         module = ShiftImagesModule(shift_xy='fit_full',
                                    interpolation='spline',
@@ -421,7 +421,7 @@ class TestCentering:
         assert np.allclose(np.mean(data), 0.0001643062943690491, rtol=1e-6, atol=0.)
         assert data.shape == (40, 78, 78)
 
-    def test_shift_images_tag_mean(self):
+    def test_shift_images_tag_mean(self) -> None:
 
         module = ShiftImagesModule(shift_xy='fit_mean',
                                    interpolation='spline',

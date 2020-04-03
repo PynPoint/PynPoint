@@ -5,7 +5,7 @@ Module for reading FITS files.
 import os
 import time
 
-from typing import Union, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 from astropy.io import fits
 from typeguard import typechecked
@@ -33,11 +33,11 @@ class FitsReadingModule(ReadingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  image_tag: str = 'im_arr',
                  overwrite: bool = True,
                  check: bool = True,
-                 filenames: Union[str, List[str]] = None,
+                 filenames: Optional[Union[str, List[str]]] = None,
                  ifs_data: bool = False) -> None:
         """
         Parameters
@@ -198,7 +198,7 @@ class FitsReadingModule(ReadingModule):
                 if filename.endswith('.fits') and not filename.startswith('._'):
                     files.append(os.path.join(self.m_input_location, filename))
 
-            assert(files), 'No FITS files found in %s.' % self.m_input_location
+            assert files, 'No FITS files found in %s.' % self.m_input_location
 
         files.sort()
 
@@ -222,6 +222,9 @@ class FitsReadingModule(ReadingModule):
 
             elif len(shape) == 4:
                 nimages = shape[1]
+
+            else:
+                raise ValueError('Data read from FITS file has an invalid shape.')
 
             set_static_attr(fits_file=fits_file,
                             header=header,

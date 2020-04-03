@@ -17,7 +17,7 @@ limit = 1e-10
 
 class TestFitsReadingModule:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -26,11 +26,11 @@ class TestFitsReadingModule:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['fits'], files=['filenames.dat'])
 
-    def test_fits_reading(self):
+    def test_fits_reading(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    input_dir=self.test_dir+'fits',
@@ -46,7 +46,7 @@ class TestFitsReadingModule:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_fits_reading_overwrite(self):
+    def test_fits_reading_overwrite(self) -> None:
 
         module = FitsReadingModule(name_in='read2',
                                    input_dir=self.test_dir+'fits',
@@ -62,7 +62,7 @@ class TestFitsReadingModule:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_static_not_found(self):
+    def test_static_not_found(self) -> None:
 
         self.pipeline.set_attribute('config', 'DIT', 'Test', static=True)
 
@@ -84,7 +84,7 @@ class TestFitsReadingModule:
 
         self.pipeline.set_attribute('config', 'DIT', 'ESO DET DIT', static=True)
 
-    def test_static_changing(self):
+    def test_static_changing(self) -> None:
 
         with fits.open(self.test_dir+'fits/image01.fits') as hdu:
             header = hdu[0].header
@@ -128,7 +128,7 @@ class TestFitsReadingModule:
                                              f'image04.fits does not belong to the data set ' \
                                              f'\'input\'. Attribute value is updated.'
 
-    def test_header_attribute(self):
+    def test_header_attribute(self) -> None:
 
         with fits.open(self.test_dir+'fits/image01.fits') as hdu:
             header = hdu[0].header
@@ -161,7 +161,7 @@ class TestFitsReadingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('read5')
 
-    def test_non_static_not_found(self):
+    def test_non_static_not_found(self) -> None:
 
         self.pipeline.set_attribute('config', 'DIT', 'None', static=True)
 
@@ -188,7 +188,7 @@ class TestFitsReadingModule:
             assert item.message.args[0] == 'Non-static attribute EXP_NO (=ESO DET EXP NO) not ' \
                                            'found in the FITS header.'
 
-    def test_fits_read_files(self):
+    def test_fits_read_files(self) -> None:
 
         module = FitsReadingModule(name_in='read7',
                                    input_dir=None,
@@ -213,7 +213,7 @@ class TestFitsReadingModule:
         assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_fits_read_textfile(self):
+    def test_fits_read_textfile(self) -> None:
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
             file_obj.write(self.test_dir+'fits/image01.fits\n')
@@ -241,7 +241,7 @@ class TestFitsReadingModule:
         assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_fits_read_files_exists(self):
+    def test_fits_read_files_exists(self) -> None:
 
         module = FitsReadingModule(name_in='read9',
                                    input_dir=None,
@@ -259,7 +259,7 @@ class TestFitsReadingModule:
         assert str(error.value) == 'The file fits/image00.fits does not exist. ' \
                                    'Please check that the path is correct.'
 
-    def test_fits_read_textfile_exists(self):
+    def test_fits_read_textfile_exists(self) -> None:
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
             file_obj.write('fits/image00.fits\n')

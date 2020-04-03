@@ -147,7 +147,7 @@ class FlatCalibrationModule(ProcessingModule):
             Unique name of the module instance.
         image_in_tag : str
             Tag of the science database that is read as input.
-        dark_in_tag : str
+        flat_in_tag : str
             Tag of the flat field database that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
