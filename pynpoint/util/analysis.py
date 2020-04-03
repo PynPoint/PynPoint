@@ -49,9 +49,9 @@ def false_alarm(image: np.ndarray,
         The planet position (pix) along the vertical axis. The pixel coordinates of the bottom-left
         corner of the image are (-0.5, -0.5).
     size : float
-        The radius of the references apertures (in pixels). Usually, this values is chosen close to
+        The radius of the reference apertures (in pixels). Usually, this value is chosen close to
         one half of the typical FWHM of the PSF (0.514 lambda over D for a perfect Airy pattern; in
-        practice, however, the FWHM is often smaller than this).
+        practice, however, the FWHM is often larger than this).
     ignore : bool
         Whether or not to ignore the immediate neighboring apertures for the noise estimate. This is
         desirable in case there are "self-subtraction wings" left and right of the planet which
