@@ -157,11 +157,12 @@ def student_t(t_input: Tuple[str, float],
     t_input : tuple(str, float)
         Tuple with the input type ('sigma' or 'fpf') and the input value.
     radius : float
-        Aperture radius (pix).
+        Aperture radius (in pixels).
     size : float
-        Separation of the aperture center (pix).
+        Separation of the aperture center from the center of the frame (in pixels).
     ignore : bool
-        Ignore neighboring apertures of the point source to exclude the self-subtraction lobes.
+        Whether or not to ignore the immediate neighboring apertures of the point source to exclude
+        potential self-subtraction lobes.
 
     Returns
     -------
