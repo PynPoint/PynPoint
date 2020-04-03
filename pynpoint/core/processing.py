@@ -539,7 +539,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         Parameters
         ----------
         func : function
-            The function which is applied to all images. Its definitions should be similar to:
+            The function which is applied to all images. Its definitions should be similar to::
 
                 def function(image_in,
                              parameter1,
