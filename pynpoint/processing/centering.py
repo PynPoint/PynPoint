@@ -336,7 +336,7 @@ class FitCenterModule(ProcessingModule):
         rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
         @typechecked
-        def gaussian_2d(grid: np.ndarray,
+        def gaussian_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
                         x_center: float,
                         y_center: float,
                         fwhm_x: float,
@@ -349,8 +349,10 @@ class FitCenterModule(ProcessingModule):
 
             Parameters
             ----------
-            grid : numpy.ndarray
-                Two 2D arrays with the mesh grid points in x and y direction.
+            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
+                A tuple of two 2D arrays with the mesh grid points in x and y
+                direction, or an equivalent 3D numpy array with 2 elements
+                along the first axis.
             x_center : float
                 Offset of the model center along the x axis (pix).
             y_center : float
@@ -395,7 +397,7 @@ class FitCenterModule(ProcessingModule):
             return gaussian
 
         @typechecked
-        def moffat_2d(grid: np.ndarray,
+        def moffat_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
                       x_center: float,
                       y_center: float,
                       fwhm_x: float,
@@ -407,10 +409,15 @@ class FitCenterModule(ProcessingModule):
             """
             Function to create a 2D elliptical Moffat model.
 
+            The parametrization used here is equivalent to the one in AsPyLib:
+            http://www.aspylib.com/doc/aspylib_fitting.html#elliptical-moffat-psf
+
             Parameters
             ----------
-            grid : numpy.ndarray
-                Two 2D arrays with the mesh grid points in x and y direction.
+            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
+                A tuple of two 2D arrays with the mesh grid points in x and y
+                direction, or an equivalent 3D numpy array with 2 elements
+                along the first axis.
             x_center : float
                 Offset of the model center along the x axis (pix).
             y_center : float
