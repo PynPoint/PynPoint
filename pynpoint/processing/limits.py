@@ -119,6 +119,7 @@ class ContrastCurveModule(ProcessingModule):
         verbose: bool
             Determines level of output to terminal. PACO only.
         """
+
         super(ContrastCurveModule, self).__init__(name_in)
 
         self.mod_name = name_in
@@ -229,6 +230,7 @@ class ContrastCurveModule(ProcessingModule):
         verbose: bool
             Determines level of output to terminal. PACO only.
         """
+
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if psf_in_tag == image_in_tag:
             self.m_psf_in_port = self.m_image_in_port
@@ -330,6 +332,7 @@ class ContrastCurveModule(ProcessingModule):
         NoneType
             None
         """
+
         if 'sigma' in kwargs:
             warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
                           '\'threshold\' parameter instead.', DeprecationWarning)
@@ -544,6 +547,7 @@ class ContrastCurveModule(ProcessingModule):
         level is fixed, the false positive fraction changes with separation, following the
         Student's t-distribution (see Mawet et al. 2014 for details).
 	"""
+
         images = self.m_image_in_port.get_all()
         psf = self.m_psf_in_port.get_all()
 
@@ -868,6 +872,7 @@ class MassLimitsModule(ProcessingModule):
         NoneType
             None
         """
+
         model_age, model_data, model_header = self.read_model(self.m_model_file)
 
         assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \

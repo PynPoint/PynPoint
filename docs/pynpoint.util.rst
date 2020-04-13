@@ -92,10 +92,25 @@ pynpoint.util.multistack module
    :undoc-members:
    :show-inheritance:
 
+<<<<<<< HEAD
 pynpoint.util.postproc module
 -----------------------------
 
 .. automodule:: pynpoint.util.postproc
+=======
+pynpoint.util.paco module
+-------------------------
+
+.. automodule:: pynpoint.util.paco
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.util.pacomath module
+-----------------------------
+
+.. automodule:: pynpoint.util.pacomath
+>>>>>>> 67f9923... Fixing docstrings and doc files
    :members:
    :undoc-members:
    :show-inheritance:
