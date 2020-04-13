@@ -28,6 +28,7 @@ class PACO:
     while b/a is the flux map. For the correct flux the iterative procedure should
     be used.
     """
+
     def __init__(self,
                  image_stack=None,
                  image_file=None,
@@ -39,6 +40,7 @@ class PACO:
                  verbose=False):
         """
         PACO Parent Class Constructor
+
         Parameters
         -----------------------------
         image_stack : arr
@@ -118,6 +120,7 @@ class PACO:
         """
         Destructor. Does nothing right now.
         """
+
         if self.m_verbose:
             print("Finished processing with PACO!")
             
@@ -128,6 +131,7 @@ class PACO:
         """
         This function is algorithm dependant, and sets up the actual calculation process.
         """
+
         pass
     
     def PACO(self,
@@ -137,11 +141,13 @@ class PACO:
         This function wraps the actual PACO algorithm, setting up the pixel coordinates
         that will be iterated over. The output will probably be changes to output the
         true SNR map.
+
         Parameters
         ------------
         cpu : int>=1
             Number of processers to use
         """
+
         if (self.m_width * self.m_scale)%2 != 0:
             # This ensures that we're dealing with an even number of pixels.
             # Necessary so that we can evenly divide and rotate about the center.
@@ -182,12 +188,14 @@ class PACO:
         """
         Set number of pixels in a patch
         """
+
         self.m_psf_area = npx
         self.m_psf_rad = np.sqrt(npx)/np.pi
     def getPatchSize(self):
         """
         Access to number of pixels
         """
+
         return self.m_psf_area
 
     # Set the image stack to be processed
@@ -195,6 +203,7 @@ class PACO:
         """
         Provide a 3D image array to process
         """
+
         self.m_im_stack = np.array(imgs)
         self.m_nFrames = self.m_im_stack.shape[0]
         self.m_width = self.m_im_stack.shape[2]
@@ -203,11 +212,13 @@ class PACO:
         """
         Access to the data
         """
+        
         return self.m_im_stack
     def rescaleImageSequence(self, scale):
         """
         Rescale each image in the stack by the scaling factor
         """
+
         new_stack = []
         for i, img in enumerate(self.m_im_stack):
             new_stack.append(resizeImage(img, scale))
@@ -220,6 +231,7 @@ class PACO:
         """
         Read in the PSF template
         """
+
         self.m_psf = psf
         self.m_pwidth = self.m_psf.shape[0]
         mask = createCircularMask(self.m_psf.shape, self.m_psf_rad)
@@ -228,6 +240,7 @@ class PACO:
         """
         Access the PSF
         """
+
         return self.m_psf
 
     # Set parallactic angles
@@ -235,12 +248,13 @@ class PACO:
         """
         Set the rotation angle for each frame
         """
+
         self.m_angles = angles
 
-    # Select a masked patch of pixels surrounding a given pixel
     def getPatch(self, px, width, mask=None):
         """
         Gets patch at given pixel px with size k for the current img sequence
+
         Parameters
         --------------
         px : (int,int)
@@ -250,7 +264,9 @@ class PACO:
         mask : arr
             Circular mask to select a round patch of pixels, which is then
             flattened into a 1D array.
+
         """
+
         k = int(width/2)
         if width%2 != 0:
             k2 = k+1
@@ -273,6 +289,7 @@ class PACO:
         """
         Set subpixel scaling factor
         """
+
         self.m_scale = scale
         self.m_rescaled = False
 
@@ -281,6 +298,7 @@ class PACO:
         Rescale each image in the stack by the the scaling factor
         A scaling factor of 2 will turn a 100x100 image into 200x200
         """
+ 
         if self.m_scale == 1:
             if self.m_verbose:
                 print("Scale is 1, no scaling applied.")
@@ -308,19 +326,25 @@ class PACO:
         self.m_psf_area = self.m_psf[mask].shape[0]
         self.m_pwidth = 2*int(self.m_psf_rad) + 3
         self.m_rescaled = True
+
     """
     Math Functions
     """
-
     def modelFunction(self, n, model, params):
         """
         This function is deprecated in favour of directly supplying
         a PSF through the Pynpoint database.
-
-        n : mean
-        model : numpy statistical model (need to import numpy module for this)
-        **kwargs: additional arguments for model
+        
+        Parameters
+        -------------
+        n : float
+            If using the psfTemplateModel function, the mean
+        model : dnc
+            numpy statistical model (need to import numpy module for this)
+        **kwargs: dict
+            additional arguments for model
         """
+
         if self.m_psf:
             return self.m_psf
         if model is None:
@@ -344,6 +368,7 @@ class PACO:
 
         The sum of a_l is the inverse of the variance of the background at the given pixel
         """
+
         a = np.sum(np.array([np.dot(hfl[i], np.dot(Cfl_inv[i], hfl[i]).T) \
                              for i in range(len(hfl))]), axis=0)
         return a
@@ -354,6 +379,7 @@ class PACO:
 
         The sum of b_l is the flux estimate at the given pixel.
         """
+
         b = np.sum(np.array([np.dot(np.dot(Cfl_inv[i], hfl[i]).T, (r_fl[i][i]-m_fl[i]))\
                              for i in range(len(hfl))]), axis=0)
         return b
@@ -369,6 +395,7 @@ class PACO:
         Unbiased estimate of the flux of a source located at p0
         The estimate of the flux is given by ahat * h, where h is the normalised PSF template
         Not sure how the cost function from Flasseur factors in, or why this is so unstable
+
         Parameters
         ------------
         p0 : arr
@@ -384,6 +411,7 @@ class PACO:
         model_name: method
             Name of the template for the off-axis PSF
         """
+
         if self.m_verbose:
             print("Estimating the flux")
             print(phi0s)
@@ -437,6 +465,7 @@ class PACO:
     def iterStep(self, est, patch, model):
         """
         Compute the iterative estimates for the mean and inverse covariance
+
         Parameters
         ----------
         est : float
@@ -446,6 +475,7 @@ class PACO:
         model : arr
             Template for PSF
         """
+
         if patch is None:
             return None, None
         T = patch.shape[0]
@@ -462,6 +492,7 @@ class PACO:
     def thresholdDetection(self, snr_map, threshold):
         """
         Returns a list of the pixel coordinates of center of signals above a given threshold
+
         Parameters:
         ------------
         snr_map : arr
@@ -469,6 +500,7 @@ class PACO:
         threshold: float
             Threshold for detection in sigma
         """
+
         data_max = filters.maximum_filter(snr_map, size=self.m_psf_rad)
         maxima = (snr_map == data_max)
         #data_min = filters.minimum_filter(snr_map,self.m_psf_rad)
@@ -498,6 +530,7 @@ class FastPACO(PACO):
     """
     Algorithm Functions
     """
+
     def PACOCalc(self,
                  phi0s,
                  cpu=1):
@@ -513,6 +546,7 @@ class FastPACO(PACO):
         cpu : int >= 1
             Number of cores to use for parallel processing
         """
+
         npx = len(phi0s)  # Number of pixels in an image
         dim = self.m_width/2
 
@@ -573,16 +607,14 @@ class FastPACO(PACO):
         """
         This function computes the mean and inverse covariance matrix for
         each patch in the image stack in Serial.
+
         Parameters
         ---------------
-        phi0s : int arr
+        phi0s : arr
             Array of pixel locations to estimate companion position
-        params: dict
-            Dictionary of parameters about the psf, containing either the width
-            of a gaussian distribution, or a label 'psf_template'
-        model_name: str
-            Name of the template for the off-axis PSF
+
         """
+
         if self.m_verbose:
             print("Precomputing Statistics...")
 
@@ -616,6 +648,8 @@ class FastPACO(PACO):
         """
         This function computes the mean and inverse covariance matrix for
         each patch in the image stack in Serial.
+        NOTES: This function currently seems slower than computing in serial...
+
         Parameters
         ---------------
         phi0s : int arr
@@ -630,9 +664,8 @@ class FastPACO(PACO):
         cpu : int
             Number of processors to use
 
-        NOTES:
-        This function currently seems slower than computing in serial...
         """
+
         if self.m_verbose:
             print("Precomputing Statistics using %d Processes..."%cpu)
         npx = len(phi0s) # Number of pixels in an image
@@ -685,6 +718,7 @@ class FullPACO(PACO):
     """
     Algorithm Functions
     """
+    
     def PACOCalc(self,
                  phi0s,
                  cpu=1):
@@ -700,6 +734,7 @@ class FullPACO(PACO):
         cpu : int >= 1
             Number of cores to use for parallel processing. Not yet implemented.
         """
+   
         npx = len(phi0s)  # Number of pixels in an image
         dim = self.m_width/2
 

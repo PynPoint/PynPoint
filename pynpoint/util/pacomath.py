@@ -14,6 +14,7 @@ import cv2
 def rotateImage(image, angle):
     """
     Rotate an image about its center by a given angle
+
     Parameters
     ------------
     image : arr
@@ -21,6 +22,7 @@ def rotateImage(image, angle):
     angle : float
         Clockwise rotation by this angle in degrees.
     """
+    
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
     rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_NEAREST)
@@ -29,6 +31,7 @@ def rotateImage(image, angle):
 def getRotatedPixels(x, y, p0, angles):
     """
     For a given pixel, find the new pixel location after a rotation for each angle in angles
+
     Parameters
     --------------
     x : arr
@@ -40,6 +43,7 @@ def getRotatedPixels(x, y, p0, angles):
     angles : arr
         List of angles for which to compute the new pixel location
     """
+
     # Current pixel
     phi0 = np.array([x[int(p0[0]), int(p0[1])], y[int(p0[0]), int(p0[1])]])
     # Convert to polar coordinates
@@ -59,6 +63,7 @@ def getRotatedPixels(x, y, p0, angles):
 def createCircularMask(shape, radius=4, center=None):
     """
     Returns a 2D boolean mask given some radius and location
+
     Parameters
     -------------
     shape : arr
@@ -69,6 +74,7 @@ def createCircularMask(shape, radius=4, center=None):
         Pixel coordinates denoting the center of the mask,
         None defaults to center of shape
     """
+
     w = shape[0]
     h = shape[1]
     if center is None:
@@ -84,6 +90,7 @@ def resizeImage(image, scaleFactor):
     """
     Rescale an image in both directions by scaleFactor
     """
+
     if scaleFactor == 1:
         return image
     return cv2.resize(image, (0, 0),
@@ -94,12 +101,14 @@ def gaussian2d(x, y, A, sigma):
     """
     A 2D gaussian over range x,y with amplitude A and width sigma
     """
+
     return A*np.exp(-(x**2+y**2)/(2*sigma**2))
 
 def gaussian2dModel(n, params):
     """
     Model function to create a PSF template
     """
+
     sigma = params["sigma"]
     dim = int(n/2)
     x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))
@@ -112,6 +121,7 @@ def psfTemplateModel(n, params):
 
     If model needs rescaling it is done here
     """
+
     psf_template = params["psf_template"]
     print("PSF template shape", np.shape(psf_template))
     #dim = int(n)
@@ -128,6 +138,7 @@ def cartToPol(coords):
     """
     Takes cartesian (2D) coordinates and transforms them into polar.
     """
+
     if len(coords.shape) == 1:
         rho = np.sqrt(coords[0]**2 + coords[1]**2)
         phi = np.arctan2(coords[1], coords[0])
@@ -141,6 +152,7 @@ def polToCart(coords):
     """
     Takes polar coordinates and transforms them to cartesian
     """
+
     if len(coords.shape) == 1:
         x = coords[0]*np.cos(coords[1])
         y = coords[0]*np.sin(coords[0])
@@ -156,6 +168,7 @@ def intPolToCart(coords):
     Possibly unnecessary, float coordinates work
     Output shapes necessary for PACO, but I don't remember why
     """
+
     if len(coords.shape) == 1:
         x = int(coords[0]*np.cos(coords[1]))
         y = int(coords[0]*np.sin(coords[0]))
@@ -169,6 +182,7 @@ def gridCartToPol(x, y):
     """
     Takes cartesian (2D) coordinates and transforms them into polar.
     """
+
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     return(rho, phi)
@@ -188,12 +202,14 @@ def pixelCalc(patch):
     """
     Calculate the mean and inverse covariance within a patch
     Reimplemented in PACO class, can probably be deleted
+
     Parameters
     -------------
     patch : arr
         Array of circular (flattened) patches centered on the same physical
         pixel vertically throughout the image stack
     """
+
     if patch is None:
         return None, None
     T = patch.shape[0]
@@ -212,6 +228,7 @@ def pixelCalc(patch):
 def covariance(rho, S, F):
     """
     Ĉ: Shrinkage covariance matrix
+
     Parameters
     -------------
     rho : float
@@ -221,6 +238,7 @@ def covariance(rho, S, F):
     F : arr
         Diagonal of sample covariance matrix
     """
+
     C = (1.0-rho)*S + rho*F
     return C
 
@@ -236,6 +254,7 @@ def sampleCovariance(r, m, T):
     T : int
         Number of temporal frames
     """
+
     #S = (1.0/T)*np.sum([np.outer((p-m).ravel(),(p-m).ravel().T) for p in r], axis=0)
     S = (1.0/T)*np.sum([np.cov(np.stack((p, m)),\
                                rowvar=False, bias=False) for p in r], axis=0)
@@ -244,16 +263,19 @@ def sampleCovariance(r, m, T):
 def diagSampleCovariance(S):
     """
     F: Diagonal elements of the sample covariance matrix
+
     Parameters
     ----------
     S : arr
         Sample covariance matrix
     """
+
     return np.diag(np.diag(S))
 
 def shrinkageFactor(S, T):
     """
     ρ: Shrinkage factor to regularize covariant matrix
+
     Parameters
     -----------
     S : arr
@@ -261,6 +283,7 @@ def shrinkageFactor(S, T):
     T : int
         Number of temporal frames
     """
+
     top = (np.trace(np.dot(S, S)) + np.trace(S)**2 -\
            2.0*np.sum(np.array([d**2.0 for d in np.diag(S)])))
     bot = ((T+1.0)*(np.trace(np.dot(S, S))-\

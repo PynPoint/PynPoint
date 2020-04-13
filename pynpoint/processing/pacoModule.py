@@ -1,3 +1,6 @@
+"""
+Wrapper for the PACO algorithm implementaion for Pynpoint
+"""
 import sys
 import os
 import math
@@ -6,7 +9,6 @@ import warnings
 
 import multiprocessing as mp
 from typing import Tuple, List
-
 # Required to make parallel processing work
 # Else numpy uses multiple processes, which conflicts
 # with the multiprocessing module.
@@ -49,6 +51,7 @@ class PACOModule(ProcessingModule):
                  verbose: bool = False) -> None:
         """
         Constructor of PACOModule.
+
         Parameters
         ----------
         name_in : str
@@ -82,6 +85,7 @@ class PACOModule(ProcessingModule):
         verbose : bool
             Sets the level of printed output.
         """
+        
         super(PACOModule, self).__init__(name_in)
         self.m_image_in_port = self.add_input_port(image_in_tag)
         if psf_in_tag == image_in_tag:
@@ -106,6 +110,7 @@ class PACOModule(ProcessingModule):
         """
         Run function for PACO
         """
+        
         # Hardware settings
         cpu = self._m_config_port.get_attribute("CPU")
         # Read in science frames and psf model
