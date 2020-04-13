@@ -18,11 +18,11 @@ from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
-from pynpoint.util.limits import contrast_limit,paco_contrast_limit
+from pynpoint.util.limits import contrast_limit, paco_contrast_limit
 from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-from pynpoint.util.paco import PACO,FastPACO,FullPACO
+from pynpoint.util.paco import PACO, FastPACO, FullPACO
 from pynpoint.util.pacomath import *
 
 class ContrastCurveModule(ProcessingModule):
@@ -34,7 +34,6 @@ class ContrastCurveModule(ProcessingModule):
 
     __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber, Evert Nasedkin'
 
-    
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -55,7 +54,7 @@ class ContrastCurveModule(ProcessingModule):
                  psf_rad: float = 4,
                  scaling: float = 1.0,
                  algorithm: str = "fastpaco",
-                 verbose: bool =  False,
+                 verbose: bool = False,
                  **kwargs: float) -> None:
         """
         Constructor of ContrastCurveModule. This module computes the contrast curve using
@@ -65,7 +64,7 @@ class ContrastCurveModule(ProcessingModule):
         ----------
         name_in : str
             Unique name of the module instance. If 'paco' is included anywhere within the name, the
-            module will run using the PACO algorithm, else it will default to PCA. 
+            module will run using the PACO algorithm, else it will default to PCA.
         image_in_tag : str
             Tag of the database entry that contains the stack with images.
         psf_in_tag : str
@@ -106,15 +105,17 @@ class ContrastCurveModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         residuals : str
-            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped'). 
+            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
             PCA version only.
         snr_inject : float
             Signal-to-noise ratio of the injected planet signal that is used to measure the amount
             of self-subtraction.
         scaling: float
-            Resolution scaling factor for PACO, determining sub-pixel sampling resolution. PACO only.
+            Resolution scaling factor for PACO, determining sub-pixel sampling resolution.
+            PACO only.
         algorithm : str
-            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run. PACO only.
+            One of 'fastpaco' or 'fullpaco', depending on which PACO algorithm is to be run.
+            PACO only.
         verbose: bool
             Determines level of output to terminal. PACO only.
         """
@@ -124,44 +125,44 @@ class ContrastCurveModule(ProcessingModule):
         if "paco" in name_in.lower():
             sys.stdout.write("\n\n\r*** WARNING ***\nPlease note that the PACO contrast curve analysis is still being tested. Continue at your own risk!\n\n")
             sys.stdout.flush()
-            self.PACOinit(image_in_tag = image_in_tag,
-                          psf_in_tag = psf_in_tag,
-                          contrast_out_tag = contrast_out_tag,
-                          separation = separation,
-                          angle = angle,
-                          threshold = threshold,
-                          psf_scaling = psf_scaling,
-                          aperture = aperture,
-                          extra_rot = extra_rot,
-                          snr_inject = snr_inject,
-                          psf_rad = psf_rad,
-                          scaling = scaling,
-                          algorithm = algorithm,
-                          verbose = verbose)
+            self.PACOinit(image_in_tag=image_in_tag,
+                          psf_in_tag=psf_in_tag,
+                          contrast_out_tag=contrast_out_tag,
+                          separation=separation,
+                          angle=angle,
+                          threshold=threshold,
+                          psf_scaling=psf_scaling,
+                          aperture=aperture,
+                          extra_rot=extra_rot,
+                          snr_inject=snr_inject,
+                          psf_rad=psf_rad,
+                          scaling=scaling,
+                          algorithm=algorithm,
+                          verbose=verbose)
         else:
-            self.PCAinit(image_in_tag = image_in_tag,
-                         psf_in_tag = psf_in_tag,
-                         contrast_out_tag = contrast_out_tag,
-                         separation = separation,
-                         angle = angle,
-                         threshold = threshold,
-                         psf_scaling = psf_scaling,
-                         aperture = aperture,
-                         pca_number = pca_number,
-                         cent_size = cent_size,
-                         edge_size = edge_size,
-                         extra_rot = extra_rot,
-                         residuals = residuals,
-                         snr_inject = snr_inject,
+            self.PCAinit(image_in_tag=image_in_tag,
+                         psf_in_tag=psf_in_tag,
+                         contrast_out_tag=contrast_out_tag,
+                         separation=separation,
+                         angle=angle,
+                         threshold=threshold,
+                         psf_scaling=psf_scaling,
+                         aperture=aperture,
+                         pca_number=pca_number,
+                         cent_size=cent_size,
+                         edge_size=edge_size,
+                         extra_rot=extra_rot,
+                         residuals=residuals,
+                         snr_inject=snr_inject,
                          **kwargs)
-    @typechecked             
+            
+    @typechecked
     def run(self) -> None:
         if "paco" in self.mod_name.lower():
             self.PACOrun()
         else:
-            self.PCARun()
+            self.PCArun()
 
-    
     @typechecked
     def PACOinit(self,
                  image_in_tag: str = "science",
@@ -177,8 +178,7 @@ class ContrastCurveModule(ProcessingModule):
                  psf_rad: float = 4,
                  scaling: float = 1.0,
                  algorithm: str = "fastpaco",
-                 verbose: bool =  False
-    ) -> None:
+                 verbose: bool = False) -> None:
         """
         Constructor of former PACOContrastCurveModule. This module computes the contrast curve using
         the PACO algorithm.
@@ -187,7 +187,7 @@ class ContrastCurveModule(ProcessingModule):
         ----------
         name_in : str
             Unique name of the module instance. If 'paco' is included anywhere within the name, the
-            module will run using the PACO algorithm, else it will default to PCA. 
+            module will run using the PACO algorithm, else it will default to PCA.
         image_in_tag : str
             Tag of the database entry that contains the stack with images.
         psf_in_tag : str
@@ -235,14 +235,13 @@ class ContrastCurveModule(ProcessingModule):
         else:
             self.m_psf_in_port = self.add_input_port(psf_in_tag)
 
-        self.m_contrast_out_port = self.add_output_port(contrast_out_tag)         
+        self.m_contrast_out_port = self.add_output_port(contrast_out_tag)
 
         self.m_angle = angle
         if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
-           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:         
+           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
             raise ValueError('The angular positions of the fake planets should lie between '
                              '0 deg and 360 deg.')
-            
         self.m_separation = separation
         self.m_aperture = aperture
         self.m_threshold = threshold
@@ -377,6 +376,7 @@ class ContrastCurveModule(ProcessingModule):
 
             raise ValueError('The angular positions of the fake planets should lie between '
                              '0 deg and 360 deg.')
+
     @typechecked
     def PCArun(self) -> None:
         """
@@ -534,7 +534,7 @@ class ContrastCurveModule(ProcessingModule):
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
 
-    @typechecked    
+    @typechecked
     def PACOrun(self) -> None:
         """
         Run method of the module. An artificial planet is injected (based on the noise level) at a
@@ -552,7 +552,6 @@ class ContrastCurveModule(ProcessingModule):
         #                     'number of frames in image_in_tag {1}. The DerotateAndStackModule can '
         #                     'be used to average the PSF frames (without derotating) before '
         #                     'applying the ContrastCurveModule.'.format(psf.shape, images.shape))
-        
         cpu = self._m_config_port.get_attribute("CPU")
         parang = self.m_image_in_port.get_attribute("PARANG")
         pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
@@ -610,32 +609,32 @@ class ContrastCurveModule(ProcessingModule):
         #                                pca_number=self.m_pca_number)
 
         if self.m_algorithm == "fastpaco":
-            fp = FastPACO(image_stack = images,
-                          angles = parang,
-                          psf = psf,
-                          psf_rad = self.m_psf_rad,
-                          px_scale = pixscale,
-                          res_scale = self.m_scale,
-                          verbose = self.m_verbose)
+            fp = FastPACO(image_stack=images,
+                          angles=parang,
+                          psf=psf,
+                          psf_rad=self.m_psf_rad,
+                          px_scale=pixscale,
+                          res_scale=self.m_scale,
+                          verbose=self.m_verbose)
         elif self.m_algorithm == "fullpaco":
-            fp = FullPACO(image_stack = images,
-                          angles = parang,
-                          psf = psf,
-                          psf_rad = self.m_psf_rad,
-                          px_scale = pixscale,
-                          res_scale = self.m_scale,
-                          verbose = self.m_verbose)
+            fp = FullPACO(image_stack=images,
+                          angles=parang,
+                          psf=psf,
+                          psf_rad=self.m_psf_rad,
+                          px_scale=pixscale,
+                          res_scale=self.m_scale,
+                          verbose=self.m_verbose)
 
         # Run PACO
-        a,b  = fp.PACO(cpu = cpu)
+        a, b = fp.PACO(cpu=cpu)
         noise = b/a
         del fp
 
         # Create a queue object which will contain the results
-        print("Using",cpu,"cpus for multiprocessing")
+        print("Using", cpu, "cpus for multiprocessing")
         arglist = []
         names = []
-        for i,pos in enumerate(positions):
+        for i, pos in enumerate(positions):
             arglist.append((tmp_im_str,
                             tmp_psf_str,
                             noise,
@@ -653,8 +652,8 @@ class ContrastCurveModule(ProcessingModule):
             names.append((str(os.path.basename(__file__)) + '_radius=' +
                           str(np.round(pos[0]*pixscale, 1)) + '_angle=' +
                           str(np.round(pos[1], 1))))
-        pool = mp.Pool(processes = cpu)
-        result = pool.starmap(paco_contrast_limit,arglist,chunksize = int(len(arglist)/cpu))
+        pool = mp.Pool(processes=cpu)
+        result = pool.starmap(paco_contrast_limit, arglist, chunksize=int(len(arglist)/cpu))
         pool.close()
         pool.join()
 
@@ -683,7 +682,8 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_contrast_out_port.add_history("PACOContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
-        self.m_contrast_out_port.close_port()	
+        self.m_contrast_out_port.close_port()
+
 
 class MassLimitsModule(ProcessingModule):
     """
@@ -692,7 +692,7 @@ class MassLimitsModule(ProcessingModule):
     """
 
     __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
-	
+
     @typechecked
     def __init__(self,
                  name_in: str,
@@ -916,4 +916,3 @@ class MassLimitsModule(ProcessingModule):
         self.m_mass_out_port.add_history('MassLimitsModule', history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()
-

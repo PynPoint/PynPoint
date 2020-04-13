@@ -1,11 +1,9 @@
 """
 Functions for calculating detection limits.
 """
-
 import math
-
+import os
 from typing import Tuple
-
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture
@@ -15,7 +13,7 @@ from pynpoint.util.analysis import student_t, fake_planet, false_alarm
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-from pynpoint.util.paco import PACO,FastPACO,FullPACO
+from pynpoint.util.paco import PACO, FastPACO, FullPACO
 from pynpoint.util.pacomath import *
 
 @typechecked
@@ -279,7 +277,8 @@ def paco_contrast_limit(path_images,
                        position=(position[0], position[1]),
                        magnitude=mag,
                        psf_scaling=psf_scaling)
-
+    path_fake_planet = os.path.split(path_images)[0] = "/"
+    np.save(path_fake_planet+"injected.npy", fake)
     # Run the PSF subtraction
     #_, im_res = pca_psf_subtraction(images=fake*mask,
     #                                angles=-1.*parang+extra_rot,
@@ -296,25 +295,27 @@ def paco_contrast_limit(path_images,
     #                                ignore=False)
     # Setup PACO
     if algorithm == "fastpaco":
-            fp = FastPACO(image_file = path_images,
-                          angles = parang,
-                          psf = psf,
-                          psf_rad = psf_rad,
-                          px_scale = pixscale,
-                          res_scale = res_scaling,
-                          verbose = False)
+        fp = FastPACO(image_file=path_fake_planet + "injected.npy",
+                      angles=parang,
+                      psf=psf,
+                      psf_rad=psf_rad,
+                      px_scale=pixscale,
+                      res_scale=res_scaling,
+                      verbose=False)
     elif algorithm == "fullpaco":
-            fp = FullPACO(image_file = path_images,
-                          angles = parang,
-                          psf = psf,
-                          psf_rad = psf_rad,
-                          px_scale = pixscale,
-                          res_scale = res_scaling,
-                          verbose = False)
+        fp = FullPACO(image_file=path_fake_planet + "injected.npy",
+                      angles=parang,
+                      psf=psf,
+                      psf_rad=psf_rad,
+                      px_scale=pixscale,
+                      res_scale=res_scaling,
+                      verbose=False)
 
     # Run PACO
     # Restrict to 1 processor since this module is called from a child process
-    a,b  = fp.PACO(cpu = 1)
+    a, b = fp.PACO(cpu=1)
+
+    # Should do something with these?
     snr = b/np.sqrt(a)
     flux_residual = b/a
     flux_out, _, _, _ = false_alarm(image=flux_residual,
@@ -329,7 +330,7 @@ def paco_contrast_limit(path_images,
     #    phi0s = fp.thresholdDetection(snr,self.m_threshold)
     #    init = np.array([flux[int(phi0[0]),int(phi0[1])] for phi0 in phi0s])
     #    ests =  np.array(fp.fluxEstimate(phi0s,self.m_eps,init))
-        
+
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
 
@@ -344,4 +345,3 @@ def paco_contrast_limit(path_images,
 
     # Separation [pix], position antle [deg], contrast [mag], FPF
     return (position[0], position[1], contrast, fpf)
-
