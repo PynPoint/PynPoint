@@ -4,19 +4,35 @@ Functions for Pypeline modules.
 
 import sys
 import time
+import math
+import cmath
+import warnings
 
-from typing import Union
+from typing import Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 
 from typeguard import typechecked
+
+# The following is needed to avoid circular dependencies:
+# The PypelineModule uses methods from module.py, but  methods in this file also use PypelineModule
+# for their type hints. If we were to simply import the PypelineModule class here, this circular
+# dependency would lead to an ImportError at runtime. By using the TYPE_CHECKING flag, we can avoid
+# this: because TYPE_CHECKING is always False at runtime, there are no ImportErrors, while the
+# PypelineModule is still available for static type checkers (i.e., not for the typeguard library).
+# In Python 3.7, this problem can be circumvented more elegantly by using:
+#   >>> from __future__ import annotations
+# This changes the behavior of type hints such that they are no longer evaluated at definition time,
+# see also PEP 563. In Python 4.0, this is supposed to become the new default behavior.
+if TYPE_CHECKING:
+    from pynpoint.core.processing import PypelineModule
 
 
 @typechecked
 def progress(current: int,
              total: int,
              message: str,
-             start_time: float = None) -> None:
+             start_time: Optional[float] = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -37,7 +53,8 @@ def progress(current: int,
         None
     """
 
-    def time_string(delta_time):
+    @typechecked
+    def time_string(delta_time: float) -> str:
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
 
@@ -93,6 +110,7 @@ def memory_frames(memory: Union[int, np.int64],
     Returns
     -------
     numpy.ndarray
+        Array with the indices where a stack of images is subdivided.
     """
 
     if memory == 0 or memory >= nimages:
@@ -112,9 +130,118 @@ def memory_frames(memory: Union[int, np.int64],
 
 
 @typechecked
+def angle_average(angles: np.ndarray) -> float:
+    """
+    Function to calculate the average value of a list of angles.
+
+    Parameters
+    ----------
+    angles : numpy.ndarray
+        Parallactic angles (deg).
+
+    Returns
+    -------
+    float
+        Average angle (deg).
+    """
+
+    cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
+    cmath_phase = cmath.phase(cmath_rect/len(angles))
+
+    return math.degrees(cmath_phase)
+
+
+@typechecked
+def angle_difference(angle_1: float,
+                     angle_2: float) -> float:
+    """
+    Function to calculate the difference between two  angles.
+
+    Parameters
+    ----------
+    angle_1 : float
+        First angle (deg).
+    angle_2 : float
+        Second angle (deg).
+
+    Returns
+    -------
+    float
+        Angle difference (deg).
+    """
+
+    angle_diff = (angle_1-angle_2) % 360.
+
+    if angle_diff >= 180.:
+        angle_diff -= 360.
+
+    return angle_diff
+
+
+@typechecked
+def stack_angles(memory: Union[int, np.int64],
+                 parang: np.ndarray,
+                 max_rotation: float) -> np.ndarray:
+    """
+    Function to subdivide the input images is in quantities of MEMORY with a restriction on the
+    maximum field rotation across a subset of images.
+
+    Parameters
+    ----------
+    memory : int
+        Number of images that is simultaneously loaded into the memory.
+    parang : numpy.ndarray
+        Parallactic angles (deg).
+    max_rotation : float
+        Maximum field rotation (deg).
+
+    Returns
+    -------
+    numpy.ndarray
+        Array with the indices where a stack of images is subdivided.
+    """
+
+    warnings.warn('Testing of util.module.stack_angles has been limited, please use carefully.')
+
+    nimages = parang.size
+
+    if memory == 0 or memory >= nimages:
+        frames = [0, nimages]
+
+    else:
+        frames = [0, ]
+        parang_start = parang[0]
+        im_count = 0
+
+        for i in range(1, parang.size):
+            abs_start_diff = abs(angle_difference(parang_start, parang[i-1]))
+            abs_current_diff = abs(angle_difference(parang[i], parang[i-1]))
+
+            if abs_start_diff > max_rotation or abs_current_diff > max_rotation:
+                frames.append(i)
+                parang_start = parang[i]
+                im_count = 0
+
+            else:
+                im_count += 1
+
+                if im_count == memory:
+                    frames.append(i)
+
+                    if i < parang.size-1:
+                        parang_start = parang[i+1]
+                        im_count = 0
+
+        if frames[-1] != nimages:
+            frames.append(nimages)
+
+    return np.asarray(frames)
+
+
+@typechecked
 def update_arguments(index: int,
                      nimages: int,
-                     args_in: Union[tuple, None]) -> Union[tuple, None]:
+                     args_in: Optional[tuple]) -> Optional[tuple]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -153,8 +280,9 @@ def update_arguments(index: int,
     return args_out
 
 
-@typechecked
-def module_info(pipeline_module) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def module_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print the module name.
 
@@ -178,8 +306,9 @@ def module_info(pipeline_module) -> None:
     print(f'Module name: {pipeline_module._m_name}')
 
 
-@typechecked
-def input_info(pipeline_module) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def input_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print information about the input data.
 
@@ -212,8 +341,10 @@ def input_info(pipeline_module) -> None:
                 print(f' {item} {input_shape}')
 
 
-@typechecked
-def output_info(pipeline_module, output_shape) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def output_info(pipeline_module: 'PypelineModule',
+                output_shape: Dict[str, Tuple[int, ...]]) -> None:
     """
     Function to print information about the output data.
 

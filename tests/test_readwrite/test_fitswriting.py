@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestFitsWritingModule:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -25,11 +25,11 @@ class TestFitsWritingModule:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
         files = ['test.fits', 'test000.fits', 'test001.fits', 'test002.fits', 'test003.fits']
         remove_test_data(self.test_dir, folders=['fits'], files=files)
 
-    def test_fits_reading(self):
+    def test_fits_reading(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    input_dir=self.test_dir+'fits',
@@ -45,7 +45,7 @@ class TestFitsWritingModule:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_fits_writing(self):
+    def test_fits_writing(self) -> None:
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write1',
@@ -57,7 +57,7 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('write1')
 
-    def test_filename_extension(self):
+    def test_filename_extension(self) -> None:
 
         with pytest.raises(ValueError) as error:
             FitsWritingModule(file_name='test.dat',
@@ -70,7 +70,7 @@ class TestFitsWritingModule:
 
         assert str(error.value) == 'Output \'file_name\' requires the FITS extension.'
 
-    def test_data_range(self):
+    def test_data_range(self) -> None:
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write4',
@@ -83,7 +83,7 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('write4')
 
-    def test_not_overwritten(self):
+    def test_not_overwritten(self) -> None:
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write5',
@@ -102,7 +102,7 @@ class TestFitsWritingModule:
         assert warning[0].message.args[0] == 'Filename already present. Use overwrite=True ' \
                                              'to overwrite an existing FITS file.'
 
-    def test_subset_size(self):
+    def test_subset_size(self) -> None:
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write6',
@@ -115,7 +115,7 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('write6')
 
-    def test_subset_size_data_range(self):
+    def test_subset_size_data_range(self) -> None:
 
         module = FitsWritingModule(file_name='test.fits',
                                    name_in='write7',
@@ -128,7 +128,7 @@ class TestFitsWritingModule:
         self.pipeline.add_module(module)
         self.pipeline.run_module('write7')
 
-    def test_attribute_length(self):
+    def test_attribute_length(self) -> None:
 
         text = 'long_text_long_text_long_text_long_text_long_text_long_text_long_text_long_text'
 

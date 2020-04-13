@@ -2,20 +2,22 @@
 Functions for PSF subtraction.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
 from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
+from typeguard import typechecked
 
 
+@typechecked
 def pca_psf_subtraction(images: np.ndarray,
                         angles: np.ndarray,
                         pca_number: int,
-                        pca_sklearn: PCA = None,
-                        im_shape: Tuple[int, int, int] = None,
-                        indices: np.ndarray = None) -> np.ndarray:
+                        pca_sklearn: Optional[PCA] = None,
+                        im_shape: Optional[Tuple[int, int, int]] = None,
+                        indices: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
     """
     Function for PSF subtraction with PCA.
 
@@ -25,12 +27,12 @@ def pca_psf_subtraction(images: np.ndarray,
         Stack of images. Also used as reference images if `pca_sklearn` is set to None. Should be
         in the original 3D shape if `pca_sklearn` is set to None or in the 2D reshaped format if
         `pca_sklearn` is not set to None.
-    parang : numpy.ndarray
+    angles : numpy.ndarray
         Derotation angles (deg).
     pca_number : int
         Number of principal components used for the PSF model.
     pca_sklearn : sklearn.decomposition.pca.PCA, None
-        PCA object with the basis if not set to None.
+        PCA decomposition of the input data.
     im_shape : tuple(int, int, int), None
         Original shape of the stack with images. Required if `pca_sklearn` is not set to None.
     indices : numpy.ndarray, None
@@ -86,6 +88,11 @@ def pca_psf_subtraction(images: np.ndarray,
 
     # reshape to the original image size
     residuals = residuals.reshape(im_shape)
+
+    # check if the number of parang is equal to the number of images
+    if residuals.shape[0] != angles.shape[0]:
+        raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
+                         f'number of parallactic angles ({angles.shape[0]}).')
 
     # derotate the images
     res_rot = np.zeros(residuals.shape)

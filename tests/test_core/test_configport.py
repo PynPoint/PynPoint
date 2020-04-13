@@ -15,14 +15,14 @@ limit = 1e-10
 
 class TestConfigPort:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
         self.test_dir = os.path.dirname(__file__) + '/'
         create_config(self.test_dir+'PynPoint_config.ini')
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
         remove_test_data(self.test_dir)
 
-    def test_create_config_port(self):
+    def test_create_config_port(self) -> None:
         storage = DataStorage(self.test_dir + 'PynPoint_database.hdf5')
 
         with pytest.raises(ValueError) as error:
@@ -52,7 +52,7 @@ class TestConfigPort:
         assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
                                              'ConfigPort.'
 
-    def test_get_config_attribute(self):
+    def test_get_config_attribute(self) -> None:
         create_config(self.test_dir+'PynPoint_config.ini')
         Pypeline(self.test_dir, self.test_dir, self.test_dir)
 

@@ -5,7 +5,7 @@ Functions for stellar extraction.
 import math
 import time
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -19,9 +19,9 @@ from pynpoint.util.module import progress
 
 @typechecked
 def locate_star(image: np.ndarray,
-                center: Union[tuple, None],
-                width: Union[int, None],
-                fwhm: Union[int, None]) -> np.ndarray:
+                center: Optional[tuple],
+                width: Optional[int],
+                fwhm: Optional[int]) -> np.ndarray:
     """
     Function to locate the star by finding the brightest pixel.
 
@@ -68,9 +68,10 @@ def locate_star(image: np.ndarray,
 
 @typechecked
 def star_positions(input_port: InputPort,
-                   fwhm: float,
-                   position: Union[Tuple[int, int, float], Tuple[None, None, float],
-                                   Tuple[int, int, None]] = None) -> np.ndarray:
+                   fwhm: Optional[int],
+                   position: Optional[Union[Tuple[int, int, float],
+                                            Tuple[None, None, float],
+                                            Tuple[int, int, None]]] = None) -> np.ndarray:
     """
     Function to return the position of the star in each image.
 
@@ -78,9 +79,9 @@ def star_positions(input_port: InputPort,
     ----------
     input_port : pynpoint.core.dataio.InputPort
         Input port where the images are stored.
-    fwhm : int
+    fwhm : int, None
         The FWHM (pix) of the Gaussian kernel that is used to smooth the images before the
-        brightest pixel is located.
+        brightest pixel is located. No smoothing is applied if set to None.
     position : tuple(int, int, int), None
         Subframe that is selected to search for the star. The tuple contains the center (pix)
         and size (pix) (pos_x, pos_y, size). Setting `position` to None will use the full

@@ -5,7 +5,7 @@ Utilities for multiprocessing of stacks of images.
 import sys
 import multiprocessing
 
-from typing import Union, List, Callable
+from typing import Callable, List, Optional
 
 import numpy as np
 
@@ -28,7 +28,7 @@ class StackReader(TaskCreator):
                  data_port_in: InputPort,
                  tasks_queue_in: multiprocessing.JoinableQueue,
                  data_mutex_in: multiprocessing.Lock,
-                 num_proc: np.int64,
+                 num_proc: int,
                  stack_size: int,
                  result_shape: tuple) -> None:
         """
@@ -109,7 +109,7 @@ class StackTaskProcessor(TaskProcessor):
                  tasks_queue_in: multiprocessing.JoinableQueue,
                  result_queue_in: multiprocessing.JoinableQueue,
                  function: Callable,
-                 function_args: Union[tuple, None],
+                 function_args: Optional[tuple],
                  nimages: int) -> None:
         """
         Parameters
@@ -190,9 +190,9 @@ class StackProcessingCapsule(MultiprocessingCapsule):
     def __init__(self,
                  image_in_port: InputPort,
                  image_out_port: OutputPort,
-                 num_proc: np.int64,
+                 num_proc: int,
                  function: Callable,
-                 function_args: Union[tuple, None],
+                 function_args: Optional[tuple],
                  stack_size: int,
                  result_shape: tuple,
                  nimages: int) -> None:

@@ -50,7 +50,7 @@ If you do not use a virtual environment then you may have to add the ``--user`` 
 
     $ pip install --user pynpoint
 
-PynPoint is actively being developed. To update the installation to the latest version:
+To update the installation to the most recent version:
 
 .. code-block:: console
 
@@ -61,7 +61,7 @@ PynPoint is actively being developed. To update the installation to the latest v
 Installation from Github
 ------------------------
 
-The repository can also be cloned from Github, which contains the most recent implementations:
+The repository can be cloned from Github, which contains the most recent implementations:
 
 .. code-block:: console
 
@@ -79,6 +79,12 @@ And to update the dependencies to the latest versions with which PynPoint is com
 
     $ pip install --upgrade -r requirements.txt 
 
+Once a local copy of the repository exists, new commits can be pulled from Github with:
+
+.. code-block:: console
+
+    $ git pull origin master
+
 By adding the path of the repository to the ``PYTHONPATH`` environment variable enables PynPoint to be imported from any location:
 
 .. code-block:: console
@@ -88,7 +94,7 @@ By adding the path of the repository to the ``PYTHONPATH`` environment variable 
 .. important::
    Make sure to adjust local path in which PynPoint will be cloned from the Github repository.
 
-Do you want to makes changes to the code? Then please fork the PynPoint repository on the Github page and clone your own fork instead of the main repository. We very much welcome active contributions and pull requests (see :ref:`contributing` section).
+Do you want to makes changes to the code? Then please fork the PynPoint repository on the Github page and clone your own fork instead of the main repository. We very much welcome contributions and pull requests (see :ref:`contributing` section).
 
 Testing Pynpoint
 ----------------

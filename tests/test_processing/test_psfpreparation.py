@@ -17,7 +17,7 @@ limit = 1e-10
 
 class TestPsfPreparation:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -26,11 +26,11 @@ class TestPsfPreparation:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['prep'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='read',
@@ -44,7 +44,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
         module = AngleInterpolationModule(name_in='angle1',
                                           data_tag='read')
@@ -58,7 +58,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_angle_calculation(self):
+    def test_angle_calculation(self) -> None:
 
         self.pipeline.set_attribute('read', 'LATITUDE', -25.)
         self.pipeline.set_attribute('read', 'LONGITUDE', -70.)
@@ -150,7 +150,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), -89.02755918786514, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_angle_interpolation_mismatch(self):
+    def test_angle_interpolation_mismatch(self) -> None:
 
         self.pipeline.set_attribute('read', 'NDIT', [9, 9, 9, 9], static=False)
 
@@ -176,7 +176,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_psf_preparation_norm_mask(self):
+    def test_psf_preparation_norm_mask(self) -> None:
 
         module = PSFpreparationModule(name_in='prep1',
                                       image_in_tag='read',
@@ -201,7 +201,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 0.4268, rtol=limit, atol=0.)
         assert data.shape == (100, 100)
 
-    def test_psf_preparation_none(self):
+    def test_psf_preparation_none(self) -> None:
 
         module = PSFpreparationModule(name_in='prep2',
                                       image_in_tag='read',
@@ -221,7 +221,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_psf_preparation_no_mask_out(self):
+    def test_psf_preparation_no_mask_out(self) -> None:
 
         module = PSFpreparationModule(name_in='prep3',
                                       image_in_tag='read',
@@ -241,7 +241,7 @@ class TestPsfPreparation:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_sdi_preparation(self):
+    def test_sdi_preparation(self) -> None:
 
         module = SDIpreparationModule(name_in='sdi',
                                       wavelength=(0.65, 0.6),

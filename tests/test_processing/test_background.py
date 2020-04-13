@@ -20,7 +20,7 @@ limit = 1e-10
 
 class TestBackground:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -76,11 +76,11 @@ class TestBackground:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['dither', 'star', 'sky', 'line'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         read = FitsReadingModule(name_in='read1',
                                  image_tag='dither',
@@ -131,7 +131,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 0.002502384977510189, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
 
-    def test_simple_background(self):
+    def test_simple_background(self) -> None:
 
         simple = SimpleBackgroundSubtractionModule(shift=20,
                                                    name_in='simple',
@@ -146,7 +146,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 2.7755575615628916e-22, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-    def test_mean_background_shift(self):
+    def test_mean_background_shift(self) -> None:
 
         mean = MeanBackgroundSubtractionModule(shift=20,
                                                cubes=1,
@@ -162,7 +162,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 1.3970872216676808e-07, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-    def test_mean_background_nframes(self):
+    def test_mean_background_nframes(self) -> None:
 
         mean = MeanBackgroundSubtractionModule(shift=None,
                                                cubes=1,
@@ -178,7 +178,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 1.3970872216676808e-07, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-    def test_dithering_attributes(self):
+    def test_dithering_attributes(self) -> None:
 
         pca_dither = DitheringBackgroundModule(name_in='pca_dither1',
                                                image_in_tag='dither',
@@ -243,15 +243,15 @@ class TestBackground:
         assert np.allclose(np.mean(data), 15., rtol=1e-6, atol=0.)
         assert data.shape == (20, 2)
 
-    def test_dithering_center(self):
+    def test_dithering_center(self) -> None:
 
         pca_dither = DitheringBackgroundModule(name_in='pca_dither2',
                                                image_in_tag='dither',
                                                image_out_tag='pca_dither2',
-                                               center=((25., 75.),
-                                                       (75., 75.),
-                                                       (75., 25.),
-                                                       (25., 25.)),
+                                               center=((25, 75),
+                                                       (75, 75),
+                                                       (75, 25),
+                                                       (25, 25)),
                                                cubes=1,
                                                size=0.8,
                                                gaussian=0.1,
@@ -271,7 +271,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 0.0010406279782666378, rtol=1e-3, atol=0.)
         assert data.shape == (80, 31, 31)
 
-    def test_nodding_background(self):
+    def test_nodding_background(self) -> None:
 
         mean = StackCubesModule(name_in='mean',
                                 image_in_tag='sky',
@@ -308,7 +308,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 9.945087327935862e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_line_background_mean(self):
+    def test_line_background_mean(self) -> None:
 
         module = LineSubtractionModule(name_in='line1',
                                        image_in_tag='line',
@@ -324,7 +324,7 @@ class TestBackground:
         assert np.allclose(np.mean(data), 0.0024245904637616735, rtol=limit, atol=0.)
         assert data.shape == (16, 20, 20)
 
-    def test_line_background_median(self):
+    def test_line_background_median(self) -> None:
 
         module = LineSubtractionModule(name_in='line2',
                                        image_in_tag='line',

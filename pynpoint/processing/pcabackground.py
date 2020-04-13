@@ -6,7 +6,7 @@ import time
 import math
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -87,7 +87,9 @@ class PCABackgroundPreparationModule(ProcessingModule):
         self.m_dither = dither
         self.m_combine = combine
 
-    def _prepare(self):
+    @typechecked
+    def _prepare(self) -> Tuple[np.ndarray, np.ndarray]:
+
         nframes = self.m_image_in_port.get_attribute('NFRAMES')
 
         cube_mean = np.zeros((nframes.shape[0],
@@ -123,9 +125,18 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
         return bg_frames, cube_mean
 
-    def _separate(self, bg_frames, bg_indices, parang, cube_mean):
+    @typechecked
+    def _separate(self,
+                  bg_frames: np.ndarray,
+                  bg_indices: np.ndarray,
+                  parang: Optional[np.ndarray],
+                  cube_mean: np.ndarray) -> Tuple[np.array, Optional[np.ndarray], np.ndarray,
+                                                  np.ndarray, Optional[np.ndarray], np.ndarray]:
+    
+        @typechecked
+        def _initialize() -> Tuple[np.array, Optional[np.ndarray], np.ndarray, np.ndarray,
+                                   Optional[np.ndarray], np.ndarray]:
 
-        def _initialize():
             background_nframes = np.empty(0, dtype=np.int64)
             star_nframes = np.empty(0, dtype=np.int64)
 
@@ -143,7 +154,8 @@ class PCABackgroundPreparationModule(ProcessingModule):
             return star_index, star_parang, star_nframes, background_index, \
                 background_parang, background_nframes
 
-        def _select_background(i):
+        @typechecked
+        def _select_background(i: int) -> np.ndarray:
 
             # Previous background cube
             if np.size(bg_indices[bg_indices < i]) > 0:
@@ -193,7 +205,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
             # Background frames
             if bg_frames[i]:
-                background = cube_mean[i, ]
+
                 self.m_background_out_port.append(im_tmp)
 
                 background_nframes = np.append(background_nframes, nframes[i])
@@ -232,15 +244,6 @@ class PCABackgroundPreparationModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_star_out_port.del_all_data()
-        self.m_star_out_port.del_all_attributes()
-
-        self.m_subtracted_out_port.del_all_data()
-        self.m_subtracted_out_port.del_all_attributes()
-
-        self.m_background_out_port.del_all_data()
-        self.m_background_out_port.del_all_attributes()
 
         if 'PARANG' in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute('PARANG')
@@ -296,12 +299,12 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  star_in_tag: str,
                  background_in_tag: str,
                  residuals_out_tag: str,
-                 fit_out_tag: str = None,
-                 mask_out_tag: str = None,
+                 fit_out_tag: Optional[str] = None,
+                 mask_out_tag: Optional[str] = None,
                  pca_number: int = 60,
                  mask_star: float = 0.7,
                  subtract_mean: bool = False,
-                 subframe: float = None,
+                 subframe: Optional[float] = None,
                  gaussian: float = 0.15,
                  **kwargs: tuple) -> None:
         """
@@ -380,7 +383,10 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        def _create_mask(radius, position, nimages):
+        @typechecked
+        def _create_mask(radius: float,
+                         position: np.ndarray,
+                         nimages: int) -> np.ndarray:
             """
             Method for creating a circular mask at the star or planet position.
             """
@@ -403,7 +409,10 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             return mask
 
-        def _create_basis(images, bg_mean, pca_number):
+        @typechecked
+        def _create_basis(images: np.ndarray,
+                          bg_mean: np.ndarray,
+                          pca_number: int) -> np.ndarray:
             """
             Method for creating a set of principal components for a stack of images.
             """
@@ -421,12 +430,17 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             return pca_basis
 
-        def _model_background(basis, im_arr, mask):
+        @typechecked
+        def _model_background(basis: np.ndarray,
+                              im_arr: np.ndarray,
+                              mask: np.ndarray) -> np.ndarray:
             """
             Method for creating a model of the background.
             """
 
-            def _dot_product(x_dot, *p):
+            @typechecked
+            def _dot_product(x_dot: np.ndarray,
+                             *p: np.float64) -> np.ndarray:
                 return np.dot(p, x_dot)
 
             fit_im_chi = np.zeros(im_arr.shape)
@@ -453,17 +467,6 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                 # fit_coeff_chi[i, ] = fitted[0]
 
             return fit_im_chi
-
-        self.m_residuals_out_port.del_all_data()
-        self.m_residuals_out_port.del_all_attributes()
-
-        if self.m_fit_out_port is not None:
-            self.m_fit_out_port.del_all_data()
-            self.m_fit_out_port.del_all_attributes()
-
-        if self.m_mask_out_port is not None:
-            self.m_mask_out_port.del_all_data()
-            self.m_mask_out_port.del_all_attributes()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
@@ -506,7 +509,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             mask = _create_mask(self.m_mask_star,
                                 star[frames[i]:frames[i+1], ],
-                                frames[i+1]-frames[i])
+                                int(frames[i+1]-frames[i]))
 
             fit_im = _model_background(basis_pca, im_star*mask, mask)
 
@@ -547,11 +550,11 @@ class DitheringBackgroundModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 center: tuple = None,
-                 cubes: int = None,
+                 center: Optional[Tuple[Tuple[int, int], ...]] = None,
+                 cubes: Optional[int] = None,
                  size: float = 2.,
                  gaussian: float = 0.15,
-                 subframe: float = None,
+                 subframe: Optional[float] = None,
                  pca_number: int = 60,
                  mask_star: float = 0.7,
                  subtract_mean: bool = False,
@@ -650,7 +653,8 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_image_in_tag = image_in_tag
         self.m_image_out_tag = image_out_tag
 
-    def _initialize(self):
+    @typechecked
+    def _initialize(self) -> Tuple[int, np.ndarray]:
         if self.m_cubes is None:
             dither_x = self.m_image_in_port.get_attribute('DITHER_X')
             dither_y = self.m_image_in_port.get_attribute('DITHER_Y')
@@ -664,9 +668,11 @@ class DitheringBackgroundModule(ProcessingModule):
 
             npix = self.m_image_in_port.get_shape()[1]
 
+            # Compute center from dither and make sure all positions are actually Python integers
             if self.m_center is None:
-                self.m_center = np.copy(dither) + float(npix)/2.
-                self.m_center = tuple(map(tuple, self.m_center))
+                self.m_center = np.copy(dither) + float(npix) / 2.
+                self.m_center = tuple(zip(map(int, self.m_center[:, 0]),
+                                          map(int, self.m_center[:, 1])))
 
             else:
                 if np.size(dither, axis=0) != np.size(self.m_center, axis=0):
@@ -696,20 +702,25 @@ class DitheringBackgroundModule(ProcessingModule):
             None
         """
 
-        def _admin_start(count, n_dither, position, star_pos):
+        @typechecked
+        def _admin_start(count: int,
+                         n_dither: int,
+                         position: Tuple[int, int],
+                         star_pos: Union[np.ndarray, np.int64]) -> None:
             if self.m_crop or self.m_prepare or self.m_pca_background:
-                print('Processing dither position '+str(count+1)+' out of '+str(n_dither)+'...')
-                print('Center position =', position)
+                print(f'Processing dither position {count+1} out of {n_dither}...')
+                print(f'Center position = {position}')
 
                 if self.m_cubes is None and self.m_center is not None:
-                    print('DITHER_X, DITHER_Y =', tuple(star_pos))
+                    print(f'DITHER_X, DITHER_Y = {tuple(star_pos)}')
 
-        def _admin_end(count, n_dither):
+        @typechecked
+        def _admin_end(count: int) -> None:
             if self.m_combine == 'mean':
-                tags.append(self.m_image_in_tag+'_dither_mean'+str(count+1))
+                tags.append(f'{self.m_image_in_tag}_dither_mean{count+1}')
 
             elif self.m_combine == 'pca':
-                tags.append(self.m_image_in_tag+'_dither_pca_res'+str(count+1))
+                tags.append(f'{self.m_image_in_tag}_dither_pca_res{count+1}')
 
         n_dither, star_pos = self._initialize()
         tags = []
@@ -718,15 +729,18 @@ class DitheringBackgroundModule(ProcessingModule):
             _admin_start(i, n_dither, position, star_pos[i])
 
             if self.m_crop:
-                module = CropImagesModule(name_in='crop' + str(i),
+                im_out_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
+
+                module = CropImagesModule(name_in=f'crop{i}',
                                           image_in_tag=self.m_image_in_tag,
-                                          image_out_tag=self.m_image_in_tag + '_dither_crop' +
-                                          str(i+1),
+                                          image_out_tag=im_out_tag,
                                           size=self.m_size,
                                           center=(int(math.ceil(position[0])),
                                                   int(math.ceil(position[1]))))
 
                 module.connect_database(self._m_data_base)
+                module._m_output_ports[im_out_tag].del_all_data()
+                module._m_output_ports[im_out_tag].del_all_attributes()
                 module.run()
 
             if self.m_prepare:
@@ -735,42 +749,56 @@ class DitheringBackgroundModule(ProcessingModule):
                 else:
                     dither_val = (n_dither, self.m_cubes, int(star_pos[i]))
 
-                module = PCABackgroundPreparationModule(name_in='prepare' + str(i),
-                                                        image_in_tag=self.m_image_in_tag +
-                                                        '_dither_crop'+str(i+1),
-                                                        star_out_tag=self.m_image_in_tag +
-                                                        '_dither_star'+str(i+1),
-                                                        subtracted_out_tag=self.m_image_in_tag +
-                                                        '_dither_mean'+str(i+1),
-                                                        background_out_tag=self.m_image_in_tag +
-                                                        '_dither_background' + str(i+1),
+                im_in_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
+                star_out_tag = f'{self.m_image_in_tag}_dither_star{i+1}'
+                sub_out_tag = f'{self.m_image_in_tag}_dither_mean{i+1}'
+                back_out_tag = f'{self.m_image_in_tag}_dither_background{i+1}'
+
+                module = PCABackgroundPreparationModule(name_in=f'prepare{i}',
+                                                        image_in_tag=im_in_tag,
+                                                        star_out_tag=star_out_tag,
+                                                        subtracted_out_tag=sub_out_tag,
+                                                        background_out_tag=back_out_tag,
                                                         dither=dither_val,
                                                         combine='mean')
 
                 module.connect_database(self._m_data_base)
+                module._m_output_ports[star_out_tag].del_all_data()
+                module._m_output_ports[star_out_tag].del_all_attributes()
+                module._m_output_ports[sub_out_tag].del_all_data()
+                module._m_output_ports[sub_out_tag].del_all_attributes()
+                module._m_output_ports[back_out_tag].del_all_data()
+                module._m_output_ports[back_out_tag].del_all_attributes()
                 module.run()
 
             if self.m_pca_background:
+                star_in_tag = f'{self.m_image_in_tag}_dither_star{i+1}'
+                back_in_tag = f'{self.m_image_in_tag}_dither_background{i+1}'
+                res_out_tag = f'{self.m_image_in_tag}_dither_pca_res{i+1}'
+                fit_out_tag = f'{self.m_image_in_tag}_dither_pca_fit{i+1}'
+                mask_out_tag = f'{self.m_image_in_tag}_dither_pca_mask{i+1}'
+
                 module = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
                                                         mask_star=self.m_mask_star,
                                                         subtract_mean=self.m_subtract_mean,
                                                         subframe=self.m_subframe,
-                                                        name_in='pca_background' + str(i),
-                                                        star_in_tag=self.m_image_in_tag +
-                                                        '_dither_star' + str(i+1),
-                                                        background_in_tag=self.m_image_in_tag +
-                                                        '_dither_background' + str(i+1),
-                                                        residuals_out_tag=self.m_image_in_tag +
-                                                        '_dither_pca_res' + str(i+1),
-                                                        fit_out_tag=self.m_image_in_tag +
-                                                        '_dither_pca_fit' + str(i+1),
-                                                        mask_out_tag=self.m_image_in_tag +
-                                                        '_dither_pca_mask' + str(i+1))
+                                                        name_in=f'pca_background{i}',
+                                                        star_in_tag=star_in_tag,
+                                                        background_in_tag=back_in_tag,
+                                                        residuals_out_tag=res_out_tag,
+                                                        fit_out_tag=fit_out_tag,
+                                                        mask_out_tag=mask_out_tag)
 
                 module.connect_database(self._m_data_base)
+                module._m_output_ports[res_out_tag].del_all_data()
+                module._m_output_ports[res_out_tag].del_all_attributes()
+                module._m_output_ports[fit_out_tag].del_all_data()
+                module._m_output_ports[fit_out_tag].del_all_attributes()
+                module._m_output_ports[mask_out_tag].del_all_data()
+                module._m_output_ports[mask_out_tag].del_all_attributes()
                 module.run()
 
-            _admin_end(i, n_dither)
+            _admin_end(i)
 
         if self.m_combine is not None and self.m_image_out_tag is not None:
             module = CombineTagsModule(name_in='combine',
@@ -780,6 +808,8 @@ class DitheringBackgroundModule(ProcessingModule):
                                        image_out_tag=self.m_image_in_tag+'_dither_combine')
 
             module.connect_database(self._m_data_base)
+            module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_data()
+            module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_attributes()
             module.run()
 
             module = SortParangModule(name_in='sort',
@@ -787,4 +817,6 @@ class DitheringBackgroundModule(ProcessingModule):
                                       image_out_tag=self.m_image_out_tag)
 
             module.connect_database(self._m_data_base)
+            module._m_output_ports[self.m_image_out_tag].del_all_data()
+            module._m_output_ports[self.m_image_out_tag].del_all_attributes()
             module.run()

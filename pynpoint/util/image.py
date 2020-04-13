@@ -4,7 +4,7 @@ Functions for image processing.
 
 import math
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -75,7 +75,7 @@ def center_subpixel(image: np.ndarray) -> Tuple[float, float]:
 
 @typechecked
 def crop_image(image: np.ndarray,
-               center: Union[tuple, None],
+               center: Optional[tuple],
                size: int,
                copy: bool = True) -> np.ndarray:
     """
@@ -343,7 +343,7 @@ def polar_to_cartesian(image: np.ndarray,
 
 @typechecked
 def pixel_distance(im_shape: Tuple[int, int],
-                   position: Tuple[int, int] = None) -> np.ndarray:
+                   position: Optional[Tuple[int, int]] = None) -> np.ndarray:
     """
     Function to calculate the distance of each pixel with respect to a given pixel position.
 
@@ -428,8 +428,8 @@ def subpixel_distance(im_shape: Tuple[int, int],
 def select_annulus(image_in: np.ndarray,
                    radius_in: float,
                    radius_out: float,
-                   mask_position: Tuple[float, float] = None,
-                   mask_radius: float = None) -> np.ndarray:
+                   mask_position: Optional[Tuple[float, float]] = None,
+                   mask_radius: Optional[float] = None) -> np.ndarray:
     """
     image_in : numpy.ndarray
         Input image.
@@ -476,7 +476,7 @@ def select_annulus(image_in: np.ndarray,
 
 @typechecked
 def rotate_coordinates(center: Tuple[float, float],
-                       position: Tuple[float, float],
+                       position: Union[Tuple[float, float], np.ndarray],
                        angle: float) -> Tuple[float, float]:
     """
     Function to rotate coordinates around the image center.
@@ -486,7 +486,7 @@ def rotate_coordinates(center: Tuple[float, float],
     center : tuple(float, float)
         Image center (y, x).
     position : tuple(float, float)
-        Position (y, x) in the image.
+        Position (y, x) in the image, or a 2D numpy array of positions.
     angle : float
         Angle (deg) to rotate in counterclockwise direction.
 

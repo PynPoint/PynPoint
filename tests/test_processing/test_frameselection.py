@@ -8,7 +8,7 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectionModule, \
                                                RemoveLastFrameModule, RemoveStartFramesModule, \
                                                ImageStatisticsModule, FrameSimilarityModule, \
-                                               SelectByAttributeModule
+                                               SelectByAttributeModule, ResidualSelectionModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
 warnings.simplefilter('always')
@@ -18,7 +18,7 @@ limit = 1e-10
 
 class TestFrameSelection:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -27,11 +27,11 @@ class TestFrameSelection:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['images'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='read',
@@ -47,7 +47,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(data), 0.0001002167910262529, rtol=limit, atol=0.)
         assert data.shape == (44, 100, 100)
 
-    def test_remove_last_frame(self):
+    def test_remove_last_frame(self) -> None:
 
         module = RemoveLastFrameModule(name_in='last',
                                        image_in_tag='read',
@@ -77,7 +77,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(attribute), 59.5, rtol=limit, atol=0.)
         assert attribute.shape == (40, 2)
 
-    def test_remove_start_frame(self):
+    def test_remove_start_frame(self) -> None:
 
         module = RemoveStartFramesModule(frames=2,
                                          name_in='start',
@@ -100,7 +100,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(attribute), 60.5, rtol=limit, atol=0.)
         assert attribute.shape == (32, 2)
 
-    def test_remove_frames(self):
+    def test_remove_frames(self) -> None:
 
         module = RemoveFramesModule(name_in='remove',
                                     image_in_tag='start',
@@ -137,7 +137,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(attribute), 61.6, rtol=limit, atol=0.)
         assert attribute.shape == (5, 2)
 
-    def test_frame_selection(self):
+    def test_frame_selection(self) -> None:
 
         module = FrameSelectionModule(name_in='select1',
                                       image_in_tag='start',
@@ -229,7 +229,7 @@ class TestFrameSelection:
         assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
         assert attribute.shape == (12, 2)
 
-    def test_image_statistics_full(self):
+    def test_image_statistics_full(self) -> None:
 
         module = ImageStatisticsModule(name_in='stat1',
                                        image_in_tag='read',
@@ -244,7 +244,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(data), 48.479917666979716, rtol=limit, atol=0.)
         assert data.shape == (44, 6)
 
-    def test_image_statistics_posiiton(self):
+    def test_image_statistics_posiiton(self) -> None:
 
         module = ImageStatisticsModule(name_in='stat2',
                                        image_in_tag='read',
@@ -259,7 +259,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(data), -0.05448258074038106, rtol=limit, atol=0.)
         assert data.shape == (44, 6)
 
-    def test_frame_similarity_mse(self):
+    def test_frame_similarity_mse(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi1',
                                        image_tag='read',
@@ -277,7 +277,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 1.7938335695664495e-06, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 4.103008589430469e-08, rtol=limit, atol=0.)
 
-    def test_frame_similarity_pcc(self):
+    def test_frame_similarity_pcc(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi2',
                                        image_tag='read',
@@ -296,7 +296,7 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 43.974652830856314, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 0.9994193494590345, rtol=limit, atol=0.)
 
-    def test_frame_similarity_ssim(self):
+    def test_frame_similarity_ssim(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi3',
                                        image_tag='read',
@@ -316,14 +316,13 @@ class TestFrameSelection:
         assert np.allclose(np.sum(similarity), 43.999059977871184, rtol=limit, atol=0.)
         assert np.allclose(similarity[0], 0.9999793908738922, rtol=limit, atol=0.)
 
-    def test_select_by_attribute(self):
+    def test_select_by_attribute(self) -> None:
 
-        total_length = self.pipeline.get_shape('read')[0]
-        self.pipeline.set_attribute('read', 'INDEX', range(total_length), static=False)
-        attribute_tag = 'SSIM'
+        self.pipeline.set_attribute('read', 'INDEX', np.arange(44), static=False)
+
         module = SelectByAttributeModule(name_in='frame_removal_1',
                                          image_in_tag='read',
-                                         attribute_tag=attribute_tag,
+                                         attribute_tag='SSIM',
                                          number_frames=6,
                                          order='descending',
                                          selected_out_tag='select_sim',
@@ -333,17 +332,33 @@ class TestFrameSelection:
         self.pipeline.run_module('frame_removal_1')
 
         index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
-        similarity = self.pipeline.get_attribute('select_sim', attribute_tag, static=False)
-        sim_removed = self.pipeline.get_attribute('remove_sim', attribute_tag, static=False)
+        sim_selected = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
+        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
 
-        # check attribute length
-        assert self.pipeline.get_shape('select_sim')[0] == 6
-        assert len(similarity) == 6
-        assert len(similarity) == len(index)
-        assert len(similarity) + len(sim_removed) == total_length
+        assert len(sim_selected) == 6
+        assert len(sim_selected) == len(index)
+        assert len(sim_selected) + len(sim_removed) == 44
 
-        # check sorted
-        assert all(similarity[i] >= similarity[i+1] for i in range(len(similarity)-1))
+        assert np.min(sim_selected) > np.max(sim_removed)
 
-        # check that the selected attributes are in the correct tags
-        assert np.min(similarity) > np.max(sim_removed)
+    def test_residual_selection(self) -> None:
+
+        module = ResidualSelectionModule(name_in='residual_select',
+                                         image_in_tag='start',
+                                         selected_out_tag='res_selected',
+                                         removed_out_tag='res_removed',
+                                         percentage=80.,
+                                         annulus_radii=(0.1, 0.2))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('residual_select')
+
+        data = self.pipeline.get_data('res_selected')
+        assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011309037313302, rtol=limit, atol=0.)
+        assert data.shape == (25, 100, 100)
+
+        data = self.pipeline.get_data('res_removed')
+        assert np.allclose(data[0, 50, 50], 0.09806695334723013, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 0.00010011260717437674, rtol=limit, atol=0.)
+        assert data.shape == (7, 100, 100)

@@ -56,11 +56,11 @@ Contributions in the form of bug fixes, new or improved functionalities, and add
 License
 -------
 
-Copyright 2014-2019 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
+Copyright 2014-2020 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and contributors.
 
 PynPoint is distributed under the GNU General Public License v3. See the LICENSE file for the terms and conditions.
 
 Acknowledgements
 ----------------
 
-The PynPoint logo was designed by `Atlas Infographics <https://atlas-infographics.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
+The PynPoint logo was designed by `Atlas Interactive <https://atlas-interactive.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
