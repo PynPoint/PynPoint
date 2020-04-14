@@ -87,7 +87,7 @@ class CropImagesModule(ProcessingModule):
         self.m_size = int(math.ceil(self.m_size / pixscale))
         print(f'New image size (pixels) = {self.m_size}')
 
-        if center is not None:
+        if self.m_center is not None:
             print(f'New image center (x, y) = {self.m_center}')
 
         # Crop images chunk by chunk

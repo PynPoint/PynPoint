@@ -353,7 +353,7 @@ class SimplexMinimizationModule(ProcessingModule):
                        sklearn_pca: Optional[PCA],
                        var_noise: Optional[float]) -> float:
 
-          pos_y = arg[0]
+            pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
 
