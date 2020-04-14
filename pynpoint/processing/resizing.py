@@ -83,7 +83,12 @@ class CropImagesModule(ProcessingModule):
 
         # Convert size parameter from arcseconds to pixels
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        print(f'New image size (arcsec) = {self.m_size}')
         self.m_size = int(math.ceil(self.m_size / pixscale))
+        print(f'New image size (pixels) = {self.m_size}')
+
+        if center is not None:
+            print(f'New image center (x, y) = {self.m_center}')
 
         # Crop images chunk by chunk
         start_time = time.time()
@@ -100,7 +105,7 @@ class CropImagesModule(ProcessingModule):
             self.m_image_out_port.append(images, data_dim=3)
 
         # Save history and copy attributes
-        history = f'image size [pix] = {self.m_size}'
+        history = f'image size (pix) = {self.m_size}'
         self.m_image_out_port.add_history('CropImagesModule', history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

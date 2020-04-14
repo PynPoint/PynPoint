@@ -5,6 +5,8 @@ Coding a New Module
 
 .. _constructor:
 
+There are three different types of pipeline modules: :class:`~pynpoint.core.processing.ReadingModule`, :class:`~pynpoint.core.processing.WritingModule`, and :class:`~pynpoint.core.processing.ProcessingModule`. The concept is similar for these three modules so here we will explain only how to code a processing module.
+
 Class Constructor
 -----------------
 
