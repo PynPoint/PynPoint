@@ -8,7 +8,7 @@ import math
 import warnings
 import multiprocessing as mp
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -126,13 +126,13 @@ class FrameSelectionModule(ProcessingModule):
                  image_in_tag: str,
                  selected_out_tag: str,
                  removed_out_tag: str,
-                 index_out_tag: str = None,
+                 index_out_tag: Optional[str] = None,
                  method: str = 'median',
                  threshold: float = 4.,
-                 fwhm: Union[float, None] = 0.1,
+                 fwhm: Optional[float] = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
-                 position: Union[Tuple[int, int, float], Tuple[None, None, float],
-                                 Tuple[int, int, None]] = None) -> None:
+                 position: Optional[Union[Tuple[int, int, float], Tuple[None, None, float],
+                                    Tuple[int, int, None]]] = None) -> None:
         """
         Parameters
         ----------
@@ -549,7 +549,8 @@ class ImageStatisticsModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  stat_out_tag: str,
-                 position: Union[Tuple[int, int, float], Tuple[None, None, float]] = None) -> None:
+                 position: Optional[Union[Tuple[int, int, float],
+                                          Tuple[None, None, float]]] = None) -> None:
         """
         Parameters
         ----------
@@ -617,7 +618,10 @@ class ImageStatisticsModule(ProcessingModule):
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
-        def _image_stat(image_in, indices):
+        @typechecked
+        def _image_stat(image_in: np.ndarray,
+                        indices: Optional[np.ndarray]) -> np.ndarray:
+
             if indices is None:
                 image_select = np.copy(image_in)
 
@@ -711,12 +715,19 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_window_size = window_size
 
     @staticmethod
-    def _similarity(images, reference_index, mode, window_size, temporal_median=False):
+    @typechecked
+    def _similarity(images: np.ndarray,
+                    reference_index: int,
+                    mode: str,
+                    window_size: int,
+                    temporal_median: Union[bool, np.ndarray] = False) -> Tuple[int, float]:
         """
         Internal function to compute the MSE as defined by Ruane et al. 2019.
         """
 
-        def _temporal_median(reference_index, images):
+        @typechecked
+        def _temporal_median(reference_index: int,
+                             images: np.ndarray) -> np.ndarray:
             """
             Internal function to calculate the temporal median for all frames, except the one with
             the ``reference_index``.
@@ -737,13 +748,13 @@ class FrameSimilarityModule(ProcessingModule):
             return reference_index, mean_squared_error(image_x_i, image_m)
 
         if mode == 'PCC':
-            # calculate the covariance matrix of the flattend images
+            # calculate the covariance matrix of the flattened images
             cov_mat = np.cov(image_x_i.flatten(), image_m.flatten(), ddof=1)
 
             # the variances are stored in the diagonal, therefore take the sqrt to obtain std
             std = np.sqrt(np.diag(cov_mat))
 
-            # does not matter whether [0, 1] or [1, 0] as cov_mat is symmetrics
+            # does not matter whether [0, 1] or [1, 0] as cov_mat is symmetric
             return reference_index, cov_mat[0, 1] / (std[0] * std[1])
 
         if mode == 'SSIM':
@@ -861,7 +872,7 @@ class SelectByAttributeModule(ProcessingModule):
         ----------
         name_in : str
             Unique name of the module instance.
-        image_tag : str
+        image_in_tag : str
             Tag of the database entry that is read as input.
         selected_out_tag : str
             Tag of the database entry to which the selected frames are written.

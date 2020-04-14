@@ -7,7 +7,7 @@ import math
 import shutil
 import subprocess
 
-from typing import Union, List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import h5py
 import numpy as np
@@ -60,7 +60,7 @@ def create_config(filename: str) -> None:
 @typechecked
 def create_random(path: str,
                   ndit: int = 10,
-                  parang: Union[np.ndarray, None] = np.arange(1., 11., 1.)) -> None:
+                  parang: Optional[np.ndarray] = np.arange(1., 11., 1.)) -> None:
     """
     Create a stack of images with Gaussian distributed pixel values.
 
@@ -152,12 +152,12 @@ def create_fake(path: str,
                 nframes: List[int],
                 exp_no: List[int],
                 npix: Tuple[int, int],
-                fwhm: Union[float, None],
+                fwhm: Optional[float],
                 x0: List[float],
                 y0: List[float],
                 angles: List[List[float]],
-                sep: Union[float, None],
-                contrast: Union[float, None]) -> None:
+                sep: Optional[float],
+                contrast: Optional[float]) -> None:
     """
     Create ADI test data with a fake planet.
 
@@ -372,8 +372,8 @@ def create_waffle_data(path: str,
 
 @typechecked
 def remove_test_data(path: str,
-                     folders: List[str] = None,
-                     files: List[str] = None) -> None:
+                     folders: Optional[List[str]] = None,
+                     files: Optional[List[str]] = None) -> None:
     """
     Function to remove data created by the test cases.
 

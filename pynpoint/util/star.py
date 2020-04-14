@@ -5,7 +5,7 @@ Functions for stellar extraction.
 import math
 import time
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -19,9 +19,9 @@ from pynpoint.util.module import progress
 
 @typechecked
 def locate_star(image: np.ndarray,
-                center: Union[tuple, None],
-                width: Union[int, None],
-                fwhm: Union[int, None]) -> np.ndarray:
+                center: Optional[tuple],
+                width: Optional[int],
+                fwhm: Optional[int]) -> np.ndarray:
     """
     Function to locate the star by finding the brightest pixel.
 
@@ -68,9 +68,10 @@ def locate_star(image: np.ndarray,
 
 @typechecked
 def star_positions(input_port: InputPort,
-                   fwhm: Union[int, None],
-                   position: Union[Tuple[int, int, float], Tuple[None, None, float],
-                                   Tuple[int, int, None]] = None) -> np.ndarray:
+                   fwhm: Optional[int],
+                   position: Optional[Union[Tuple[int, int, float],
+                                            Tuple[None, None, float],
+                                            Tuple[int, int, None]]] = None) -> np.ndarray:
     """
     Function to return the position of the star in each image.
 

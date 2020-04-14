@@ -18,7 +18,7 @@ limit = 1e-10
 
 class TestTimeDenoising:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -35,11 +35,11 @@ class TestTimeDenoising:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['images'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='images',
@@ -55,7 +55,7 @@ class TestTimeDenoising:
         assert np.allclose(np.mean(data), 0.0025020285041348557, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
-    def test_wavelet_denoising_cwt_dog(self):
+    def test_wavelet_denoising_cwt_dog(self) -> None:
 
         cwt_config = CwtWaveletConfiguration(wavelet='dog',
                                              wavelet_order=2,
@@ -92,7 +92,7 @@ class TestTimeDenoising:
         assert np.allclose(data, data_multi, rtol=limit, atol=0.)
         assert data.shape == data_multi.shape
 
-    def test_wavelet_denoising_cwt_morlet(self):
+    def test_wavelet_denoising_cwt_morlet(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
@@ -126,7 +126,7 @@ class TestTimeDenoising:
         data = self.pipeline.get_attribute('wavelet_cwt_morlet', 'NFRAMES', static=False)
         assert np.allclose(data, [10, 10, 10, 10], rtol=limit, atol=0.)
 
-    def test_wavelet_denoising_dwt(self):
+    def test_wavelet_denoising_dwt(self) -> None:
 
         dwt_config = DwtWaveletConfiguration(wavelet='db8')
 
@@ -148,7 +148,7 @@ class TestTimeDenoising:
         assert np.allclose(np.mean(data), 0.0024998798596330475, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
-    def test_time_normalization(self):
+    def test_time_normalization(self) -> None:
 
         module = TimeNormalizationModule(name_in='timenorm',
                                          image_in_tag='images',
@@ -162,7 +162,7 @@ class TestTimeDenoising:
         assert np.allclose(np.mean(data), 0.0024483409033199985, rtol=limit, atol=0.)
         assert data.shape == (40, 20, 20)
 
-    def test_wavelet_denoising_odd_size(self):
+    def test_wavelet_denoising_odd_size(self) -> None:
 
         module = AddLinesModule(name_in='add',
                                 image_in_tag='images',

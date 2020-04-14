@@ -20,7 +20,7 @@ limit = 1e-10
 
 class TestResizing:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -29,11 +29,11 @@ class TestResizing:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['resize'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='read',
@@ -49,7 +49,7 @@ class TestResizing:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_crop_images(self):
+    def test_crop_images(self) -> None:
 
         module = CropImagesModule(size=0.3,
                                   center=None,
@@ -79,7 +79,7 @@ class TestResizing:
         assert np.allclose(np.mean(data), -2.9375442509680414e-06, rtol=limit, atol=0.)
         assert data.shape == (40, 13, 13)
 
-    def test_scale_images(self):
+    def test_scale_images(self) -> None:
 
         module = ScaleImagesModule(scaling=(2., 2., None),
                                    name_in='scale1',
@@ -107,7 +107,7 @@ class TestResizing:
         assert np.allclose(np.mean(data), 0.00020058989563476127, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_add_lines(self):
+    def test_add_lines(self) -> None:
 
         module = AddLinesModule(lines=(2, 5, 0, 9),
                                 name_in='add',
@@ -122,7 +122,7 @@ class TestResizing:
         assert np.allclose(np.mean(data), 8.599412485413757e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 109, 107)
 
-    def test_remove_lines(self):
+    def test_remove_lines(self) -> None:
 
         module = RemoveLinesModule(lines=(2, 5, 0, 9),
                                    name_in='remove',

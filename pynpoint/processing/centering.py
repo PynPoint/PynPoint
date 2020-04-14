@@ -6,7 +6,7 @@ import time
 import math
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -34,12 +34,12 @@ class StarAlignmentModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 ref_image_in_tag: str = None,
+                 ref_image_in_tag: Optional[str] = None,
                  interpolation: str = 'spline',
                  accuracy: float = 10.,
-                 resize: float = None,
+                 resize: Optional[float] = None,
                  num_references: int = 10,
-                 subframe: float = None) -> None:
+                 subframe: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -102,7 +102,8 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        def _align_image(image_in):
+        @typechecked
+        def _align_image(image_in: np.ndarray) -> np.ndarray:
             offset = np.array([0., 0.])
 
             for i in range(self.m_num_references):
@@ -198,12 +199,12 @@ class FitCenterModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  fit_out_tag: str,
-                 mask_out_tag: str = None,
+                 mask_out_tag: Optional[str] = None,
                  method: str = 'full',
                  radius: float = 0.1,
                  sign: str = 'positive',
                  model: str = 'gaussian',
-                 filter_size: float = None,
+                 filter_size: Optional[float] = None,
                  **kwargs: tuple) -> None:
         """
         Parameters
@@ -335,7 +336,7 @@ class FitCenterModule(ProcessingModule):
         rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
         @typechecked
-        def gaussian_2d(grid: np.ndarray,
+        def gaussian_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
                         x_center: float,
                         y_center: float,
                         fwhm_x: float,
@@ -348,8 +349,10 @@ class FitCenterModule(ProcessingModule):
 
             Parameters
             ----------
-            grid : numpy.ndarray
-                Two 2D arrays with the mesh grid points in x and y direction.
+            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
+                A tuple of two 2D arrays with the mesh grid points in x and y
+                direction, or an equivalent 3D numpy array with 2 elements
+                along the first axis.
             x_center : float
                 Offset of the model center along the x axis (pix).
             y_center : float
@@ -394,7 +397,7 @@ class FitCenterModule(ProcessingModule):
             return gaussian
 
         @typechecked
-        def moffat_2d(grid: np.ndarray,
+        def moffat_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
                       x_center: float,
                       y_center: float,
                       fwhm_x: float,
@@ -406,10 +409,15 @@ class FitCenterModule(ProcessingModule):
             """
             Function to create a 2D elliptical Moffat model.
 
+            The parametrization used here is equivalent to the one in AsPyLib:
+            http://www.aspylib.com/doc/aspylib_fitting.html#elliptical-moffat-psf
+
             Parameters
             ----------
-            grid : numpy.ndarray
-                Two 2D arrays with the mesh grid points in x and y direction.
+            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
+                A tuple of two 2D arrays with the mesh grid points in x and y
+                direction, or an equivalent 3D numpy array with 2 elements
+                along the first axis.
             x_center : float
                 Offset of the model center along the x axis (pix).
             y_center : float
@@ -469,7 +477,8 @@ class FitCenterModule(ProcessingModule):
 
             return moffat
 
-        def _fit_2d_function(image):
+        @typechecked
+        def _fit_2d_function(image: np.ndarray) -> np.ndarray:
 
             if self.m_filter_size:
                 image = gaussian_filter(image, self.m_filter_size)
@@ -704,8 +713,8 @@ class WaffleCenteringModule(ProcessingModule):
                  image_in_tag: str,
                  center_in_tag: str,
                  image_out_tag: str,
-                 size: float = None,
-                 center: Tuple[float, float] = None,
+                 size: Optional[float] = None,
+                 center: Optional[Tuple[float, float]] = None,
                  radius: float = 45.,
                  pattern: str = 'x',
                  sigma: float = 0.06,
@@ -769,7 +778,8 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        def _get_center(center):
+        @typechecked
+        def _get_center(center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
             center_frame = self.m_center_in_port[0, ]
 
             if center_shape[0] > 1:
@@ -778,7 +788,7 @@ class WaffleCenteringModule(ProcessingModule):
             if center is None:
                 center = center_pixel(center_frame)
             else:
-                center = (np.floor(center[0]), np.floor(center[1]))
+                center = (int(np.floor(center[0])), int(np.floor(center[1])))
 
             return center_frame, center
 

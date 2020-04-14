@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestTextWriting:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -25,18 +25,18 @@ class TestTextWriting:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, files=['image.dat', 'data.dat'])
 
-    def test_input_data(self):
+    def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('images')
         assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_text_writing(self):
+    def test_text_writing(self) -> None:
 
         text_write = TextWritingModule(file_name='image.dat',
                                        name_in='text_write',
@@ -53,7 +53,7 @@ class TestTextWriting:
         assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
         assert data.shape == (100, 100)
 
-    def test_text_writing_ndim(self):
+    def test_text_writing_ndim(self) -> None:
 
         data_4d = np.random.normal(loc=0, scale=2e-4, size=(5, 5, 5, 5))
 
@@ -73,7 +73,7 @@ class TestTextWriting:
 
         assert str(error.value) == 'Only 1D or 2D arrays can be written to a text file.'
 
-    def test_text_writing_int(self):
+    def test_text_writing_int(self) -> None:
 
         data_int = np.arange(1, 101, 1)
 

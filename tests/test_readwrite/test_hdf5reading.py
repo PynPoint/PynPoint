@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestHdf5ReadingModule:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -25,11 +25,11 @@ class TestHdf5ReadingModule:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['data'])
 
-    def test_hdf5_reading(self):
+    def test_hdf5_reading(self) -> None:
 
         data = np.random.normal(loc=0, scale=2e-4, size=(4, 10, 10))
 
@@ -50,7 +50,7 @@ class TestHdf5ReadingModule:
         assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_dictionary_none(self):
+    def test_dictionary_none(self) -> None:
 
         read = Hdf5ReadingModule(name_in='read2',
                                  input_filename='PynPoint_database.hdf5',
@@ -65,7 +65,7 @@ class TestHdf5ReadingModule:
         assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_wrong_tag(self):
+    def test_wrong_tag(self) -> None:
 
         read = Hdf5ReadingModule(name_in='read3',
                                  input_filename='PynPoint_database.hdf5',
@@ -84,7 +84,7 @@ class TestHdf5ReadingModule:
         with h5py.File(self.test_dir+'data/PynPoint_database.hdf5', 'r') as hdf_file:
             assert set(hdf_file.keys()) == set(['extra', 'header_extra', 'header_images', 'images'])
 
-    def test_no_input_filename(self):
+    def test_no_input_filename(self) -> None:
 
         read = Hdf5ReadingModule(name_in='read4',
                                  input_filename=None,

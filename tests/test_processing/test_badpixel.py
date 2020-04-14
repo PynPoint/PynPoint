@@ -18,7 +18,7 @@ limit = 1e-10
 
 class TestBadPixel:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -50,11 +50,11 @@ class TestBadPixel:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir)
 
-    def test_bad_pixel_sigma_filter(self):
+    def test_bad_pixel_sigma_filter(self) -> None:
 
         module = BadPixelSigmaFilterModule(name_in='sigma1',
                                            image_in_tag='images',
@@ -74,7 +74,7 @@ class TestBadPixel:
         assert np.allclose(np.mean(data), 6.721637736047109e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_bad_pixel_map_out(self):
+    def test_bad_pixel_map_out(self) -> None:
 
         module = BadPixelSigmaFilterModule(name_in='sigma2',
                                            image_in_tag='images',
@@ -99,7 +99,7 @@ class TestBadPixel:
         assert np.allclose(np.sum(data), 399994.0, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_bad_pixel_map(self):
+    def test_bad_pixel_map(self) -> None:
 
         module = BadPixelMapModule(name_in='bp_map1',
                                    dark_in_tag='dark',
@@ -123,7 +123,7 @@ class TestBadPixel:
         assert np.mean(data) == 0.9993
         assert data.shape == (1, 100, 100)
 
-    def test_map_no_dark(self):
+    def test_map_no_dark(self) -> None:
 
         module = BadPixelMapModule(name_in='bp_map2',
                                    dark_in_tag=None,
@@ -139,7 +139,7 @@ class TestBadPixel:
         assert np.sum(data) == 9996.0
         assert data.shape == (1, 100, 100)
 
-    def test_map_no_flat(self):
+    def test_map_no_flat(self) -> None:
 
         module = BadPixelMapModule(name_in='bp_map3',
                                    dark_in_tag='dark',
@@ -155,7 +155,7 @@ class TestBadPixel:
         assert np.sum(data) == 9997.0
         assert data.shape == (1, 100, 100)
 
-    def test_bad_pixel_interpolation(self):
+    def test_bad_pixel_interpolation(self) -> None:
 
         module = BadPixelInterpolationModule(name_in='interpolation',
                                              image_in_tag='images',
@@ -173,7 +173,7 @@ class TestBadPixel:
         assert np.allclose(np.mean(data), 3.0499629451215465e-07, rtol=1e-8, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_bad_pixel_time(self):
+    def test_bad_pixel_time(self) -> None:
 
         module = BadPixelTimeFilterModule(name_in='time',
                                           image_in_tag='images',
@@ -190,7 +190,7 @@ class TestBadPixel:
         assert np.allclose(np.mean(data), 2.9727173024489924e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_replace_bad_pixels(self):
+    def test_replace_bad_pixels(self) -> None:
 
         module = ReplaceBadPixelsModule(name_in='replace1',
                                         image_in_tag='images',

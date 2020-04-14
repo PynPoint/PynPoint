@@ -6,6 +6,8 @@ import os
 
 import numpy as np
 
+from typing import Optional
+
 from typeguard import typechecked
 
 from pynpoint.core.processing import WritingModule
@@ -24,8 +26,8 @@ class AttributeWritingModule(WritingModule):
                  data_tag: str,
                  attribute: str,
                  file_name: str = 'attributes.dat',
-                 output_dir: str = None,
-                 header: str = None) -> None:
+                 output_dir: Optional[str] = None,
+                 header: Optional[str] = None) -> None:
         """
         Parameters
         ----------
@@ -101,8 +103,8 @@ class ParangWritingModule(WritingModule):
                  name_in: str,
                  data_tag: str,
                  file_name: str = 'parang.dat',
-                 output_dir: str = None,
-                 header: str = None) -> None:
+                 output_dir: Optional[str] = None,
+                 header: Optional[str] = None) -> None:
         """
         Parameters
         ----------

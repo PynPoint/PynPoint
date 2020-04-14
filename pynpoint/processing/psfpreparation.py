@@ -5,7 +5,7 @@ Pipeline modules to prepare the data for the PSF subtraction.
 import time
 import warnings
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -31,11 +31,11 @@ class PSFpreparationModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 mask_out_tag: str = None,
+                 mask_out_tag: Optional[str] = None,
                  norm: bool = False,
-                 resize: float = None,
-                 cent_size: float = None,
-                 edge_size: float = None) -> None:
+                 resize: Optional[float] = None,
+                 cent_size: Optional[float] = None,
+                 edge_size: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -447,7 +447,10 @@ class AngleCalculationModule(ProcessingModule):
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
 
-    def _attribute_check(self, ndit, steps):
+    @typechecked
+    def _attribute_check(self,
+                         ndit: np.ndarray,
+                         steps: np.ndarray) -> None:
 
         if not np.all(ndit == steps):
             warnings.warn('There is a mismatch between the NDIT and NFRAMES values. A frame '

@@ -8,18 +8,31 @@ import math
 import cmath
 import warnings
 
-from typing import Union
+from typing import Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 
 from typeguard import typechecked
+
+# The following is needed to avoid circular dependencies:
+# The PypelineModule uses methods from module.py, but  methods in this file also use PypelineModule
+# for their type hints. If we were to simply import the PypelineModule class here, this circular
+# dependency would lead to an ImportError at runtime. By using the TYPE_CHECKING flag, we can avoid
+# this: because TYPE_CHECKING is always False at runtime, there are no ImportErrors, while the
+# PypelineModule is still available for static type checkers (i.e., not for the typeguard library).
+# In Python 3.7, this problem can be circumvented more elegantly by using:
+#   >>> from __future__ import annotations
+# This changes the behavior of type hints such that they are no longer evaluated at definition time,
+# see also PEP 563. In Python 4.0, this is supposed to become the new default behavior.
+if TYPE_CHECKING:
+    from pynpoint.core.processing import PypelineModule
 
 
 @typechecked
 def progress(current: int,
              total: int,
              message: str,
-             start_time: float = None) -> None:
+             start_time: Optional[float] = None) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -40,7 +53,8 @@ def progress(current: int,
         None
     """
 
-    def time_string(delta_time):
+    @typechecked
+    def time_string(delta_time: float) -> str:
         """
         Converts to input time in seconds to a string which displays as hh:mm:ss.
 
@@ -227,7 +241,7 @@ def stack_angles(memory: Union[int, np.int64],
 @typechecked
 def update_arguments(index: int,
                      nimages: int,
-                     args_in: Union[tuple, None]) -> Union[tuple, None]:
+                     args_in: Optional[tuple]) -> Optional[tuple]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -266,8 +280,9 @@ def update_arguments(index: int,
     return args_out
 
 
-@typechecked
-def module_info(pipeline_module) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def module_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print the module name.
 
@@ -291,8 +306,9 @@ def module_info(pipeline_module) -> None:
     print(f'Module name: {pipeline_module._m_name}')
 
 
-@typechecked
-def input_info(pipeline_module) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def input_info(pipeline_module: 'PypelineModule') -> None:
     """
     Function to print information about the input data.
 
@@ -325,8 +341,10 @@ def input_info(pipeline_module) -> None:
                 print(f' {item} {input_shape}')
 
 
-@typechecked
-def output_info(pipeline_module, output_shape) -> None:
+# This function *cannot* be decorated with @typechecked, because the typeguard library checks type
+# hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
+def output_info(pipeline_module: 'PypelineModule',
+                output_shape: Dict[str, Tuple[int, ...]]) -> None:
     """
     Function to print information about the output data.
 

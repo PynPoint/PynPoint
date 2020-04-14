@@ -7,6 +7,8 @@ import os
 import time
 import warnings
 
+from typing import Optional
+
 import h5py
 import numpy as np
 
@@ -31,9 +33,9 @@ class Hdf5ReadingModule(ReadingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 input_filename: str = None,
-                 input_dir: str = None,
-                 tag_dictionary: dict = None):
+                 input_filename: Optional[str] = None,
+                 input_dir: Optional[str] = None,
+                 tag_dictionary: Optional[dict] = None):
         """
         Parameters
         ----------

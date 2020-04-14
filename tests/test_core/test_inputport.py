@@ -14,20 +14,20 @@ limit = 1e-10
 
 class TestInputPort:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
         self.test_dir = os.path.dirname(__file__) + '/'
         create_random(self.test_dir)
         create_config(self.test_dir+'PynPoint_config.ini')
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
         remove_test_data(self.test_dir)
 
-    def setup(self):
+    def setup(self) -> None:
         file_in = os.path.dirname(__file__) + '/PynPoint_database.hdf5'
 
         self.storage = DataStorage(file_in)
 
-    def test_create_instance_access_data(self):
+    def test_create_instance_access_data(self) -> None:
         with pytest.raises(ValueError) as error:
             InputPort('config', self.storage)
 
@@ -59,7 +59,7 @@ class TestInputPort:
         with pytest.warns(UserWarning):
             assert port.get_attribute('none') is None
 
-    def test_create_instance_access_non_existing_data(self):
+    def test_create_instance_access_non_existing_data(self) -> None:
         port = InputPort('test', self.storage)
 
         with pytest.warns(UserWarning):
@@ -80,7 +80,7 @@ class TestInputPort:
         with pytest.warns(UserWarning):
             assert port.get_all_static_attributes() is None
 
-    def test_create_instance_no_data_storage(self):
+    def test_create_instance_no_data_storage(self) -> None:
         port = InputPort('test')
 
         with pytest.warns(UserWarning):
@@ -98,7 +98,7 @@ class TestInputPort:
         with pytest.warns(UserWarning):
             assert port.get_all_static_attributes() is None
 
-    def test_get_all_attributes(self):
+    def test_get_all_attributes(self) -> None:
         port = InputPort('images', self.storage)
 
         assert port.get_all_static_attributes() == {'PIXSCALE': 0.01}
@@ -110,7 +110,7 @@ class TestInputPort:
         port = InputPort('images', self.storage)
         assert port.get_all_non_static_attributes() is None
 
-    def test_get_ndim(self):
+    def test_get_ndim(self) -> None:
         with pytest.warns(UserWarning) as warning:
             ndim = InputPort('images', None).get_ndim()
 

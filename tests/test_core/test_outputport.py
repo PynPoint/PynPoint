@@ -1,6 +1,8 @@
 import os
 import warnings
 
+from typing import Tuple
+
 import pytest
 import numpy as np
 
@@ -14,27 +16,27 @@ limit = 1e-10
 
 class TestOutputPort:
 
-    def setup(self):
+    def setup(self) -> None:
         self.storage = DataStorage(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
-    def setup_class(self):
+    def setup_class(self) -> None:
         create_random(os.path.dirname(__file__))
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
         os.remove(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
-    def create_input_port(self, tag_name):
+    def create_input_port(self, tag_name: str) -> InputPort:
         inport = InputPort(tag_name, self.storage)
         inport.open_port()
 
         return inport
 
-    def create_output_port(self, tag_name):
+    def create_output_port(self, tag_name: str) -> OutputPort:
         outport = OutputPort(tag_name, self.storage)
 
         return outport
 
-    def test_create_instance(self):
+    def test_create_instance(self) -> None:
         with pytest.raises(ValueError) as error:
             OutputPort('config', self.storage)
 
@@ -69,7 +71,7 @@ class TestOutputPort:
 
         active_port.del_all_data()
 
-    def test_set_all_new_data(self):
+    def test_set_all_new_data(self) -> None:
         outport = self.create_output_port('new_data')
 
         # ----- 1D input -----
@@ -106,7 +108,7 @@ class TestOutputPort:
         assert np.array_equal(inport.get_all(), [[[1, 3], [2, 4]], [[1, 3], [2, 4]]])
         outport.del_all_data()
 
-    def test_set_all_error(self):
+    def test_set_all_error(self) -> None:
         # ---- Test database not set -----
         data = [1, 2, 3, 4, 0]
 
@@ -164,9 +166,9 @@ class TestOutputPort:
 
         assert str(error.value) == 'Cannot initialize 1D data in 3D data container.'
 
-    def test_set_all_keep_attributes(self):
+    def test_set_all_keep_attributes(self) -> None:
 
-        def init_out_port():
+        def init_out_port() -> Tuple[OutputPort, InputPort]:
             out_port = self.create_output_port('new_data')
             control = self.create_input_port('new_data')
 
@@ -191,7 +193,7 @@ class TestOutputPort:
 
         out_port.del_all_data()
 
-    def test_append_new_data(self):
+    def test_append_new_data(self) -> None:
         # using append even if no data exists
         out_port = self.create_output_port('new_data')
         # ----- 1D input -----
@@ -216,7 +218,7 @@ class TestOutputPort:
         assert np.array_equal(control.get_all(), data)
         out_port.del_all_data()
 
-    def test_append_existing_data(self):
+    def test_append_existing_data(self) -> None:
         out_port = self.create_output_port('new_data')
 
         # ----- 1D -----
@@ -274,7 +276,7 @@ class TestOutputPort:
                                [[223, 46], [1, 15]]])
         out_port.del_all_data()
 
-    def test_append_existing_data_force_overwriting(self):
+    def test_append_existing_data_force_overwriting(self) -> None:
         out_port = self.create_output_port('new_data')
 
         # Error case (no force)
@@ -290,7 +292,7 @@ class TestOutputPort:
                                                   [[223, 46], [1, 15]]])
         out_port.del_all_data()
 
-    def test_append_existing_data_error(self):
+    def test_append_existing_data_error(self) -> None:
         # ---- port not active ----
         out_port = self.create_output_port('new_data')
         out_port.deactivate()
@@ -318,7 +320,7 @@ class TestOutputPort:
                                    'the tag.'
         out_port.del_all_data()
 
-    def test_set_data_using_slicing(self):
+    def test_set_data_using_slicing(self) -> None:
         out_port = self.create_output_port('new_data')
 
         out_port.set_all([2, 5, 6, 7, ])
@@ -333,7 +335,7 @@ class TestOutputPort:
         out_port.activate()
         out_port.del_all_data()
 
-    def test_del_all_data(self):
+    def test_del_all_data(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, 1])
         out_port.del_all_data()
@@ -347,7 +349,7 @@ class TestOutputPort:
         assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
                                              'InputPort.'
 
-    def test_add_static_attribute(self):
+    def test_add_static_attribute(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([1])
         out_port.add_attribute('attr1', value=5)
@@ -373,7 +375,7 @@ class TestOutputPort:
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_add_static_attribute_error(self):
+    def test_add_static_attribute_error(self) -> None:
         out_port = self.create_output_port('new_data')
 
         # add attribute while no data is set
@@ -388,7 +390,7 @@ class TestOutputPort:
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_add_non_static_attribute(self):
+    def test_add_non_static_attribute(self) -> None:
         # two different data types
         out_port = self.create_output_port('new_data')
         out_port.set_all([1])
@@ -400,7 +402,7 @@ class TestOutputPort:
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_append_attribute_data(self):
+    def test_append_attribute_data(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.del_all_data()
         out_port.set_all([1])
@@ -420,7 +422,7 @@ class TestOutputPort:
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_copy_attributes(self):
+    def test_copy_attributes(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.del_all_attributes()
         out_port.del_all_data()
@@ -429,7 +431,7 @@ class TestOutputPort:
         # some static attributes
         out_port.add_attribute('attr1', 33)
         out_port.add_attribute('attr2', 'string')
-        out_port.add_attribute('attr3', [1, 2, 3])
+        out_port.add_attribute('attr3', 3.141)
 
         # non static attributes
         out_port.add_attribute('attr_non_static', [3, 4, 5, 6], static=False)
@@ -449,7 +451,7 @@ class TestOutputPort:
 
         assert copy_control.get_attribute('attr1') == 33
         assert copy_control.get_attribute('attr2') == 'string'
-        assert np.array_equal(copy_control.get_attribute('attr3'), [1, 2, 3])
+        assert np.array_equal(copy_control.get_attribute('attr3'), 3.141)
         assert np.array_equal(copy_control.get_attribute('attr_non_static'), [3, 4, 5, 6])
 
         copy_port.del_all_attributes()
@@ -471,7 +473,7 @@ class TestOutputPort:
         assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
                                              'InputPort.'
 
-    def test_copy_attributes_same_tag(self):
+    def test_copy_attributes_same_tag(self) -> None:
         out_port1 = self.create_output_port('new_data')
         out_port1.set_all([0, ])
 
@@ -489,7 +491,7 @@ class TestOutputPort:
         out_port1.del_all_data()
         out_port1.del_all_attributes()
 
-    def test_del_attribute(self):
+    def test_del_attribute(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
 
@@ -525,7 +527,7 @@ class TestOutputPort:
         out_port.del_all_data()
         out_port.del_all_attributes()
 
-    def test_del_attribute_error_case(self):
+    def test_del_attribute_error_case(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
 
@@ -551,7 +553,7 @@ class TestOutputPort:
         out_port.del_all_attributes()
         out_port.del_all_data()
 
-    def test_del_all_attributes(self):
+    def test_del_all_attributes(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
         out_port.add_attribute('attr_1', 4)
@@ -574,7 +576,7 @@ class TestOutputPort:
 
         out_port.del_all_data()
 
-    def test_add_history(self):
+    def test_add_history(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
         out_port.add_history('Test', 'history')
@@ -582,7 +584,7 @@ class TestOutputPort:
         control = self.create_input_port('new_data')
         assert control.get_attribute('History: Test') == 'history'
 
-    def test_check_attribute(self):
+    def test_check_attribute(self) -> None:
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
         out_port.add_attribute('static', 5, static=True)
@@ -605,7 +607,7 @@ class TestOutputPort:
         out_port.del_all_data()
         out_port.del_all_attributes()
 
-    def test_append_empty_data_new(self):
+    def test_append_empty_data_new(self) -> None:
         out_port = self.create_output_port('empty_data')
 
         with pytest.warns(UserWarning) as warning:
@@ -615,7 +617,7 @@ class TestOutputPort:
         assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
                                              '\'empty_data\' is empty.'
 
-    def test_append_empty_data_add(self):
+    def test_append_empty_data_add(self) -> None:
         out_port = self.create_output_port('empty_data')
 
         with pytest.warns(UserWarning) as warning:

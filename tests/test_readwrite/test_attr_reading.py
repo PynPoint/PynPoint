@@ -16,7 +16,7 @@ limit = 1e-10
 
 class TestAttributeReading:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -33,20 +33,20 @@ class TestAttributeReading:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, files=['parang.dat', 'new.dat',
                                                'attribute.dat', 'data_2d.dat',
                                                'wavelength.dat'])
 
-    def test_input_data(self):
+    def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('images')
         assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
         assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
         assert data.shape == (10, 100, 100)
 
-    def test_parang_reading(self):
+    def test_parang_reading(self) -> None:
 
         module = ParangReadingModule(file_name='parang.dat',
                                      name_in='parang1',
@@ -62,7 +62,7 @@ class TestAttributeReading:
         assert np.allclose(data, np.arange(1., 11., 1.), rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_parang_reading_same(self):
+    def test_parang_reading_same(self) -> None:
 
         module = ParangReadingModule(file_name='parang.dat',
                                      name_in='parang2',
@@ -80,7 +80,7 @@ class TestAttributeReading:
                                              'contains the same values as are present in ' \
                                              'parang.dat.'
 
-    def test_parang_reading_present(self):
+    def test_parang_reading_present(self) -> None:
 
         module = ParangReadingModule(file_name='new.dat',
                                      name_in='parang3',
@@ -98,7 +98,7 @@ class TestAttributeReading:
                                              '\'overwrite\' parameter to True in order to ' \
                                              'overwrite the values with new.dat.'
 
-    def test_parang_reading_overwrite(self):
+    def test_parang_reading_overwrite(self) -> None:
 
         module = ParangReadingModule(file_name='new.dat',
                                      name_in='parang4',
@@ -109,7 +109,7 @@ class TestAttributeReading:
         self.pipeline.add_module(module)
         self.pipeline.run_module('parang4')
 
-    def test_parang_reading_2d(self):
+    def test_parang_reading_2d(self) -> None:
 
         module = ParangReadingModule(file_name='data_2d.dat',
                                      name_in='parang6',
@@ -125,7 +125,7 @@ class TestAttributeReading:
         assert str(error.value) == 'The input file data_2d.dat should contain a 1D data set with ' \
                                    'the parallactic angles.'
 
-    def test_attribute_reading(self):
+    def test_attribute_reading(self) -> None:
 
         module = AttributeReadingModule(file_name='attribute.dat',
                                         attribute='EXP_NO',
@@ -142,7 +142,7 @@ class TestAttributeReading:
         assert np.allclose(data, np.arange(1, 11, 1), rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_attribute_reading_present(self):
+    def test_attribute_reading_present(self) -> None:
 
         module = AttributeReadingModule(file_name='parang.dat',
                                         attribute='PARANG',
@@ -160,7 +160,7 @@ class TestAttributeReading:
                                              'the \'overwrite\' parameter to True in order to ' \
                                              'overwrite the values with parang.dat.'
 
-    def test_attribute_reading_invalid(self):
+    def test_attribute_reading_invalid(self) -> None:
 
         module = AttributeReadingModule(file_name='attribute.dat',
                                         attribute='test',
@@ -176,7 +176,7 @@ class TestAttributeReading:
 
         assert str(error.value) == '\'test\' is not a valid attribute.'
 
-    def test_attribute_reading_2d(self):
+    def test_attribute_reading_2d(self) -> None:
 
         module = AttributeReadingModule(file_name='data_2d.dat',
                                         attribute='DITHER_X',
@@ -193,7 +193,7 @@ class TestAttributeReading:
         assert str(error.value) == 'The input file data_2d.dat should contain a 1D list with ' \
                                    'attributes.'
 
-    def test_attribute_reading_same(self):
+    def test_attribute_reading_same(self) -> None:
 
         module = AttributeReadingModule(file_name='attribute.dat',
                                         attribute='EXP_NO',
@@ -212,7 +212,7 @@ class TestAttributeReading:
                                              'contains the same values as are present in ' \
                                              'attribute.dat.'
 
-    def test_attribute_reading_overwrite(self):
+    def test_attribute_reading_overwrite(self) -> None:
 
         module = AttributeReadingModule(file_name='parang.dat',
                                         attribute='PARANG',
@@ -227,7 +227,7 @@ class TestAttributeReading:
         attribute = self.pipeline.get_attribute('images', 'PARANG', static=False)
         assert np.allclose(attribute, np.arange(1., 11., 1.), rtol=limit, atol=0.)
 
-    def test_wavelength_reading(self):
+    def test_wavelength_reading(self) -> None:
 
         module = WavelengthReadingModule(file_name='wavelength.dat',
                                          name_in='wavelength1',
@@ -243,7 +243,7 @@ class TestAttributeReading:
         assert np.allclose(data, np.arange(1., 11., 1.), rtol=limit, atol=0.)
         assert data.shape == (10, )
 
-    def test_wavelength_reading_same(self):
+    def test_wavelength_reading_same(self) -> None:
 
         module = WavelengthReadingModule(file_name='wavelength.dat',
                                          name_in='wavelength2',
@@ -261,7 +261,7 @@ class TestAttributeReading:
                                              'contains the same values as are present in ' \
                                              'wavelength.dat.'
 
-    def test_wavelength_reading_present(self):
+    def test_wavelength_reading_present(self) -> None:
 
         module = WavelengthReadingModule(file_name='new.dat',
                                          name_in='wavelength3',
@@ -279,7 +279,7 @@ class TestAttributeReading:
                                              'the \'overwrite\' parameter to True in order to ' \
                                              'overwrite the values with new.dat.'
 
-    def test_wavelength_reading_overwrite(self):
+    def test_wavelength_reading_overwrite(self) -> None:
 
         module = WavelengthReadingModule(file_name='new.dat',
                                          name_in='wavelength4',
@@ -290,7 +290,7 @@ class TestAttributeReading:
         self.pipeline.add_module(module)
         self.pipeline.run_module('wavelength4')
 
-    def test_wavelength_reading_2d(self):
+    def test_wavelength_reading_2d(self) -> None:
 
         module = WavelengthReadingModule(file_name='data_2d.dat',
                                          name_in='wavelength6',

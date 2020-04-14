@@ -4,7 +4,7 @@ Functions for point source analysis.
 
 import math
 
-from typing import Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -49,8 +49,9 @@ def false_alarm(image: np.ndarray,
         The planet position (pix) along the vertical axis. The pixel coordinates of the bottom-left
         corner of the image are (-0.5, -0.5).
     size : float
-        The radius of the references apertures (in pixels). Usually, this values should be chosen
-        close to lambda over D, that is, the typical FWHM of the PSF.
+        The radius of the reference apertures (in pixels). Usually, this value is chosen close to
+        one half of the typical FWHM of the PSF (0.514 lambda over D for a perfect Airy pattern; in
+        practice, however, the FWHM is often larger than this).
     ignore : bool
         Whether or not to ignore the immediate neighboring apertures for the noise estimate. This is
         desirable in case there are "self-subtraction wings" left and right of the planet which
@@ -156,11 +157,12 @@ def student_t(t_input: Tuple[str, float],
     t_input : tuple(str, float)
         Tuple with the input type ('sigma' or 'fpf') and the input value.
     radius : float
-        Aperture radius (pix).
+        Aperture radius (in pixels).
     size : float
-        Separation of the aperture center (pix).
+        Separation of the aperture center from the center of the frame (in pixels).
     ignore : bool
-        Ignore neighboring apertures of the point source to exclude the self-subtraction lobes.
+        Whether or not to ignore the immediate neighboring apertures of the point source to exclude
+        potential self-subtraction lobes.
 
     Returns
     -------
@@ -168,7 +170,7 @@ def student_t(t_input: Tuple[str, float],
         False positive fraction (FPF).
     """
 
-    num_ap = int(math.pi*radius/size)
+    num_ap = int(math.pi * radius / size)
 
     if ignore:
         num_ap -= 2
@@ -178,10 +180,13 @@ def student_t(t_input: Tuple[str, float],
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
 
     if t_input[0] == 'sigma':
-        t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
+        t_result = t.sf(t_input[1], num_ap-2, loc=0., scale=1.)
 
     elif t_input[0] == 'fpf':
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
+
+    else:
+        raise ValueError('First element of t_input needs to be "sigma" or "fpf"!')
 
     return t_result
 
@@ -253,7 +258,7 @@ def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
                    sigma: float,
-                   var_noise: Union[float, None]) -> float:
+                   var_noise: Optional[float]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -318,8 +323,8 @@ def merit_function(residuals: np.ndarray,
 def pixel_variance(var_type: str,
                    images: np.ndarray,
                    parang: np.ndarray,
-                   cent_size: Union[float, None],
-                   edge_size: Union[float, None],
+                   cent_size: Optional[float],
+                   edge_size: Optional[float],
                    pca_number: int,
                    residuals: str,
                    aperture: Tuple[int, int, float],
@@ -380,4 +385,4 @@ def pixel_variance(var_type: str,
 
         selected = select_annulus(hes_det, sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
 
-    return np.var(selected)
+    return float(np.var(selected))
