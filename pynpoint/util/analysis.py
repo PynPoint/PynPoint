@@ -4,7 +4,7 @@ Functions for point source analysis.
 
 import math
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -15,7 +15,9 @@ from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
 
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
-                                cartesian_to_polar
+                                cartesian_to_polar, create_mask
+from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
@@ -47,8 +49,9 @@ def false_alarm(image: np.ndarray,
         The planet position (pix) along the vertical axis. The pixel coordinates of the bottom-left
         corner of the image are (-0.5, -0.5).
     size : float
-        The radius of the references apertures (in pixels). Usually, this values should be chosen
-        close to lambda over D, that is, the typical FWHM of the PSF.
+        The radius of the reference apertures (in pixels). Usually, this value is chosen close to
+        one half of the typical FWHM of the PSF (0.514 lambda over D for a perfect Airy pattern; in
+        practice, however, the FWHM is often larger than this).
     ignore : bool
         Whether or not to ignore the immediate neighboring apertures for the noise estimate. This is
         desirable in case there are "self-subtraction wings" left and right of the planet which
@@ -154,11 +157,12 @@ def student_t(t_input: Tuple[str, float],
     t_input : tuple(str, float)
         Tuple with the input type ('sigma' or 'fpf') and the input value.
     radius : float
-        Aperture radius (pix).
+        Aperture radius (in pixels).
     size : float
-        Separation of the aperture center (pix).
+        Separation of the aperture center from the center of the frame (in pixels).
     ignore : bool
-        Ignore neighboring apertures of the point source to exclude the self-subtraction lobes.
+        Whether or not to ignore the immediate neighboring apertures of the point source to exclude
+        potential self-subtraction lobes.
 
     Returns
     -------
@@ -166,7 +170,7 @@ def student_t(t_input: Tuple[str, float],
         False positive fraction (FPF).
     """
 
-    num_ap = int(math.pi*radius/size)
+    num_ap = int(math.pi * radius / size)
 
     if ignore:
         num_ap -= 2
@@ -176,10 +180,13 @@ def student_t(t_input: Tuple[str, float],
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
 
     if t_input[0] == 'sigma':
-        t_result = 1. - t.cdf(t_input[1], num_ap-2, loc=0., scale=1.)
+        t_result = t.sf(t_input[1], num_ap-2, loc=0., scale=1.)
 
     elif t_input[0] == 'fpf':
         t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
+
+    else:
+        raise ValueError('First element of t_input needs to be "sigma" or "fpf"!')
 
     return t_result
 
@@ -250,8 +257,8 @@ def fake_planet(images: np.ndarray,
 def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
-                   sigma: float) -> float:
-
+                   sigma: float,
+                   noise: Optional[float]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -266,6 +273,8 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
+    noise : float, None
+        Variance of the noise which is required when `merit` is set to 'gaussian'.
 
     Returns
     -------
@@ -276,7 +285,7 @@ def merit_function(residuals: np.ndarray,
     rr_grid = pixel_distance(im_shape=residuals.shape,
                              position=(aperture[0], aperture[1]))
 
-    indices = np.where(rr_grid < aperture[2])
+    indices = np.where(rr_grid <= aperture[2])
 
     if merit == 'hessian':
 
@@ -301,21 +310,7 @@ def merit_function(residuals: np.ndarray,
 
     elif merit == 'gaussian':
 
-        # separation (pix) and position angle (deg)
-        sep_ang = cartesian_to_polar(center=center_subpixel(residuals),
-                                     y_pos=aperture[0],
-                                     x_pos=aperture[1])
-
-        if sigma > 0.:
-            residuals = gaussian_filter(input=residuals, sigma=sigma)
-
-        selected = select_annulus(image_in=residuals,
-                                  radius_in=sep_ang[0]-aperture[2],
-                                  radius_out=sep_ang[0]+aperture[2],
-                                  mask_position=aperture[0:2],
-                                  mask_radius=aperture[2])
-
-        chi_square = np.sum(residuals[indices]**2)/np.var(selected)
+        chi_square = np.sum(residuals[indices]**2)/noise
 
     else:
 
@@ -324,3 +319,53 @@ def merit_function(residuals: np.ndarray,
                          '\'poisson\'.')
 
     return chi_square
+
+
+@typechecked
+def gaussian_noise(images: np.ndarray,
+                   parang: np.ndarray,
+                   cent_size: Optional[float],
+                   edge_size: Optional[float],
+                   pca_number: int,
+                   residuals: str,
+                   aperture: Tuple[int, int, float]) -> float:
+    """
+    Function to calculate the variance of the noise. After the PSF subtraction, images are rotated
+    in opposite direction of the regular derotation, therefore dispersing any companion or disk
+    signal. The noise is measured within an annulus.
+
+    Parameters
+    ----------
+    images : numpy.ndarray
+        Input images (3D).
+    parang : numpy.ndarray
+        Parallactic angles.
+    cent_size : float, None
+        Radius of the central mask (pix). No mask is used when set to None.
+    edge_size : float, None
+        Outer radius (pix) beyond which pixels are masked. No outer mask is used when set to
+        None.
+    pca_number : int
+        Number of principal components (PCs) used for the PSF subtraction.
+    residuals : str
+        Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+    aperture : tuple(int, int, float)
+        Aperture position (y, x) and radius (pix).
+
+    Returns
+    -------
+    float
+        Variance of the pixel values.
+    """
+
+    mask = create_mask(images.shape[-2:], (cent_size, edge_size))
+
+    _, im_res_derot = pca_psf_subtraction(images*mask, parang, pca_number)
+
+    res_noise = combine_residuals(residuals, im_res_derot)
+
+    sep_ang = cartesian_to_polar(center_subpixel(res_noise), aperture[0], aperture[1])
+
+    selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+
+    return float(np.var(selected))

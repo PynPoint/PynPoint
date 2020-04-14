@@ -44,7 +44,8 @@ from pynpoint.processing.frameselection import RemoveFramesModule, \
                                                RemoveStartFramesModule, \
                                                ImageStatisticsModule, \
                                                FrameSimilarityModule, \
-                                               SelectByAttributeModule
+                                               SelectByAttributeModule, \
+                                               ResidualSelectionModule
 
 from pynpoint.processing.limits import ContrastCurveModule, \
                                        MassLimitsModule
@@ -78,6 +79,13 @@ from pynpoint.processing.timedenoising import CwtWaveletConfiguration, \
                                               TimeNormalizationModule
 from pynpoint.processing.pacoModule import PACOModule
 
+from pynpoint.readwrite.attr_reading import AttributeReadingModule, \
+                                            ParangReadingModule, \
+                                            WavelengthReadingModule
+
+from pynpoint.readwrite.attr_writing import AttributeWritingModule, \
+                                            ParangWritingModule
+
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 
 from pynpoint.readwrite.fitswriting import FitsWritingModule
@@ -86,20 +94,15 @@ from pynpoint.readwrite.hdf5reading import Hdf5ReadingModule
 
 from pynpoint.readwrite.hdf5writing import Hdf5WritingModule
 
-from pynpoint.readwrite.textwriting import AttributeWritingModule, \
-                                           ParangWritingModule, \
-                                           TextWritingModule
-
-from pynpoint.readwrite.textreading import ParangReadingModule, \
-                                           AttributeReadingModule
+from pynpoint.readwrite.textwriting import TextWritingModule
 
 from pynpoint.readwrite.nearreading import NearReadingModule
 
 warnings.simplefilter('always', DeprecationWarning)
 
-__author__ = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+__author__ = 'Tomas Stolker & Markus Bonse'
 __license__ = 'GPLv3'
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 __maintainer__ = 'Tomas Stolker'
 __email__ = 'tomas.stolker@phys.ethz.ch'
 __status__ = 'Development'

@@ -5,7 +5,7 @@ Module for exporting a dataset from the HDF5 database to a FITS file.
 import os
 import warnings
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 from astropy.io import fits
 from typeguard import typechecked
@@ -32,10 +32,10 @@ class FitsWritingModule(WritingModule):
                  name_in: str,
                  data_tag: str,
                  file_name: str,
-                 output_dir: str = None,
-                 data_range: Tuple[int, int] = None,
+                 output_dir: Optional[str] = None,
+                 data_range: Optional[Tuple[int, int]] = None,
                  overwrite: bool = True,
-                 subset_size: int = None) -> None:
+                 subset_size: Optional[int] = None) -> None:
         """
         Parameters
         ----------
@@ -138,7 +138,7 @@ class FitsWritingModule(WritingModule):
                     frames = memory_frames(self.m_subset_size, nimages)
                     frames = np.asarray(frames) + self.m_range[0]
 
-            for i, item in enumerate(frames[:-1]):
+            for i, _ in enumerate(frames[:-1]):
                 data_select = self.m_data_port[frames[i]:frames[i+1], ]
 
                 if len(frames) == 2:

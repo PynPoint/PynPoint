@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = '2014-2019, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+copyright = '2014-2020, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 author = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 
 # The short X.Y version

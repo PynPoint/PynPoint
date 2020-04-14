@@ -3,18 +3,16 @@ Pipeline modules for stacking and subsampling of images.
 """
 
 import time
-import math
-import cmath
 import warnings
 
-from typing import List
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.module import progress, memory_frames, stack_angles, angle_average
 from pynpoint.util.image import rotate_images
 
 
@@ -28,9 +26,10 @@ class StackAndSubsetModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 random: int = None,
-                 stacking: int = None,
-                 combine: str = 'mean') -> None:
+                 random: Optional[int] = None,
+                 stacking: Optional[int] = None,
+                 combine: str = 'mean',
+                 max_rotation: Optional[float] = None) -> None:
         """
         Parameters
         ----------
@@ -41,12 +40,16 @@ class StackAndSubsetModule(ProcessingModule):
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
             *image_in_tag*.
-        random : int
+        random : int, None
             Number of random images. All images are used if set to None.
-        stacking : int
+        stacking : int, None
             Number of stacked images per subset. No stacking is applied if set to None.
         combine : str
             Method for combining images ('mean' or 'median'). The angles are always mean-combined.
+        max_rotation : float, None
+            Maximum allowed field rotation throughout each subset of stacked images when
+            `stacking` is not None. No restriction on the field rotation is applied if set to
+            None.
 
         Returns
         -------
@@ -62,6 +65,7 @@ class StackAndSubsetModule(ProcessingModule):
         self.m_random = random
         self.m_stacking = stacking
         self.m_combine = combine
+        self.m_max_rotation = max_rotation
 
         if self.m_stacking is None and self.m_random is None:
             warnings.warn('Both \'stacking\' and \'random\' are set to None.')
@@ -78,18 +82,19 @@ class StackAndSubsetModule(ProcessingModule):
             None
         """
 
-        def _mean_angle(angles):
-            cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
-            cmath_phase = cmath.phase(cmath_rect/len(angles))
+        @typechecked
+        def _stack_subsets(nimages: int,
+                           im_shape: Tuple[int, ...],
+                           parang: np.ndarray) -> Tuple[Tuple[int, ...], np.ndarray, np.ndarray]:
 
-            return math.degrees(cmath_phase)
-
-        def _stack(nimages, im_shape, parang):
             im_new = None
             parang_new = None
 
             if self.m_stacking is not None:
-                frames = memory_frames(self.m_stacking, nimages)
+                if self.m_max_rotation is not None:
+                    frames = stack_angles(self.m_stacking, parang, self.m_max_rotation)
+                else:
+                    frames = memory_frames(self.m_stacking, nimages)
 
                 nimages_new = np.size(frames)-1
 
@@ -107,7 +112,7 @@ class StackAndSubsetModule(ProcessingModule):
 
                     if parang is not None:
                         # parang_new[i] = np.mean(parang[frames[i]:frames[i+1]])
-                        parang_new[i] = _mean_angle(parang[frames[i]:frames[i+1]])
+                        parang_new[i] = angle_average(parang[frames[i]:frames[i+1]])
 
                     im_subset = self.m_image_in_port[frames[i]:frames[i+1], ]
 
@@ -124,7 +129,11 @@ class StackAndSubsetModule(ProcessingModule):
 
             return im_shape, im_new, parang_new
 
-        def _subset(im_shape, im_new, parang_new):
+        @typechecked
+        def _random_subset(im_shape: Tuple[int, ...],
+                           im_new: np.ndarray,
+                           parang_new: np.ndarray) -> Tuple[int, np.ndarray, np.ndarray]:
+
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)
                 choice = list(np.sort(choice))
@@ -168,8 +177,8 @@ class StackAndSubsetModule(ProcessingModule):
         else:
             parang = None
 
-        im_shape, im_new, parang_new = _stack(nimages, im_shape, parang)
-        nimages, im_new, parang_new = _subset(im_shape, im_new, parang_new)
+        im_shape, im_new, parang_new = _stack_subsets(nimages, im_shape, parang)
+        nimages, im_new, parang_new = _random_subset(im_shape, im_new, parang_new)
 
         if self.m_random or self.m_stacking:
             self.m_image_out_port.set_all(im_new, keep_attributes=True)
@@ -241,9 +250,6 @@ class StackCubesModule(ProcessingModule):
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
 
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
-
         non_static = self.m_image_in_port.get_all_non_static_attributes()
         nframes = self.m_image_in_port.get_attribute('NFRAMES')
 
@@ -301,7 +307,7 @@ class DerotateAndStackModule(ProcessingModule):
                  image_in_tag: str,
                  image_out_tag: str,
                  derotate: bool = True,
-                 stack: str = None,
+                 stack: Optional[str] = None,
                  extra_rot: float = 0.) -> None:
         """
         Parameters
@@ -348,14 +354,17 @@ class DerotateAndStackModule(ProcessingModule):
             None
         """
 
-        def _initialize(ndim, npix):
+        @typechecked
+        def _initialize(ndim: int,
+                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
+
             if ndim == 2:
                 nimages = 1
             elif ndim == 3:
                 nimages = self.m_image_in_port.get_shape()[0]
 
             if self.m_stack == 'median':
-                frames = [0, nimages]
+                frames = np.array([0, nimages])
             else:
                 frames = memory_frames(memory, nimages)
 
@@ -365,9 +374,6 @@ class DerotateAndStackModule(ProcessingModule):
                 im_tot = None
 
             return nimages, frames, im_tot
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
@@ -476,9 +482,6 @@ class CombineTagsModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_data()
-        self.m_image_out_port.del_all_attributes()
 
         memory = self._m_config_port.get_attribute('MEMORY')
 

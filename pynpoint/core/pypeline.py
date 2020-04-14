@@ -2,21 +2,27 @@
 Module which capsules the methods of the Pypeline.
 """
 
-import os
-import warnings
-import configparser
 import collections
+import configparser
+import json
 import multiprocessing
+import os
+import urllib.request
+import warnings
+from typing import Any, List, Optional, Tuple, Union
+from urllib.error import URLError
 
 import h5py
 import numpy as np
+from typeguard import typechecked
 
 import pynpoint
-
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
-from pynpoint.core.processing import PypelineModule, ReadingModule, WritingModule, ProcessingModule
-from pynpoint.util.module import module_info, input_info, output_info
+from pynpoint.core.processing import ProcessingModule, PypelineModule, \
+    ReadingModule, WritingModule
+from pynpoint.util.module import input_info, module_info, output_info
+from pynpoint.util.types import NonStaticAttribute, StaticAttribute
 
 
 class Pypeline:
@@ -28,10 +34,11 @@ class Pypeline:
     to the Pypeline at once or run a single modules by name.
     """
 
+    @typechecked
     def __init__(self,
-                 working_place_in=None,
-                 input_place_in=None,
-                 output_place_in=None):
+                 working_place_in: Optional[str] = None,
+                 input_place_in: Optional[str] = None,
+                 output_place_in: Optional[str] = None) -> None:
         """
         Constructor of Pypeline.
 
@@ -63,6 +70,17 @@ class Pypeline:
         print(pynpoint_version)
         print(len(pynpoint_version) * '=' + '\n')
 
+        try:
+            contents = urllib.request.urlopen('https://pypi.org/pypi/pynpoint/json').read()
+            data = json.loads(contents)
+            latest_version = data['info']['version']
+
+        except URLError:
+            latest_version = None
+
+        if latest_version is not None and pynpoint.__version__ != latest_version:
+            print(f'A new version ({latest_version}) is available!\n')
+
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
         self._m_output_place = output_place_in
@@ -74,9 +92,10 @@ class Pypeline:
 
         self._config_init()
 
+    @typechecked
     def __setattr__(self,
-                    key,
-                    value):
+                    key: str,
+                    value: Any) -> None:
         """
         This method is called every time a member / attribute of the Pypeline is changed. It checks
         whether a chosen working / input / output directory exists.
@@ -101,8 +120,9 @@ class Pypeline:
         super(Pypeline, self).__setattr__(key, value)
 
     @staticmethod
-    def _validate(module,
-                  tags):
+    @typechecked
+    def _validate(module: Union[ReadingModule, WritingModule, ProcessingModule],
+                  tags: List[str]) -> Tuple[bool, Optional[str]]:
         """
         Internal function which is used for the validation of the pipeline. Validates a
         single module.
@@ -141,7 +161,8 @@ class Pypeline:
 
         return True, None
 
-    def _config_init(self):
+    @typechecked
+    def _config_init(self) -> None:
         """
         Internal function which initializes the configuration file. It reads PynPoint_config.ini
         in the working folder and creates this file with the default (ESO/NACO) settings in case
@@ -153,7 +174,10 @@ class Pypeline:
             None
         """
 
-        def _create_config(filename, attributes):
+        @typechecked
+        def _create_config(filename: str,
+                           attributes: dict) -> None:
+
             file_obj = open(filename, 'w')
             file_obj.write('[header]\n\n')
 
@@ -169,7 +193,10 @@ class Pypeline:
 
             file_obj.close()
 
-        def _read_config(config_file, attributes):
+        @typechecked
+        def _read_config(config_file: str,
+                         attributes: dict) -> dict:
+
             config = configparser.ConfigParser()
             with open(config_file) as cf_open:
                 config.read_file(cf_open)
@@ -204,7 +231,9 @@ class Pypeline:
 
             return attributes
 
-        def _write_config(attributes):
+        @typechecked
+        def _write_config(attributes: dict) -> None:
+
             hdf = h5py.File(self._m_working_place+'/PynPoint_database.hdf5', 'a')
 
             if 'config' in hdf:
@@ -246,8 +275,9 @@ class Pypeline:
         print(f'Number of CPUs: {n_cpu}')
         print(f'Number of threads: {n_thread}')
 
+    @typechecked
     def add_module(self,
-                   module):
+                   module: PypelineModule) -> None:
         """
         Adds a Pypeline module to the internal Pypeline dictionary. The module is appended at the
         end of this ordered dictionary. If the input module is a reading or writing module without
@@ -265,9 +295,6 @@ class Pypeline:
             None
         """
 
-        assert isinstance(module, PypelineModule), 'The added module is not a valid ' \
-                                                   'Pypeline module.'
-
         if isinstance(module, WritingModule):
             if module.m_output_location is None:
                 module.m_output_location = self._m_output_place
@@ -284,8 +311,9 @@ class Pypeline:
 
         self._m_modules[module.name] = module
 
+    @typechecked
     def remove_module(self,
-                      name):
+                      name: str) -> bool:
         """
         Removes a Pypeline module from the internal dictionary.
 
@@ -305,12 +333,13 @@ class Pypeline:
             removed = True
 
         else:
-            warnings.warn(f'Module name \'{name}\' not found in the Pypeline dictionary.')
+            warnings.warn(f'Pipeline module name \'{name}\' not found in the Pypeline dictionary.')
             removed = False
 
         return removed
 
-    def get_module_names(self):
+    @typechecked
+    def get_module_names(self) -> List[str]:
         """
         Function which returns a list of all module names.
 
@@ -322,7 +351,8 @@ class Pypeline:
 
         return list(self._m_modules.keys())
 
-    def validate_pipeline(self):
+    @typechecked
+    def validate_pipeline(self) -> Tuple[bool, Optional[str]]:
         """
         Function which checks if all input ports of the Pypeline are pointing to previous output
         ports.
@@ -350,8 +380,9 @@ class Pypeline:
 
         return validation
 
+    @typechecked
     def validate_pipeline_module(self,
-                                 name):
+                                 name: str) -> Optional[Tuple[bool, Optional[str]]]:
         """
         Checks if the data exists for the module with label *name*.
 
@@ -381,10 +412,11 @@ class Pypeline:
 
         return validate
 
-    def run(self):
+    @typechecked
+    def run(self) -> None:
         """
-        Walks through all saved processing steps and calls their run methods. The order in which
-        the steps are called depends on the order they have been added to the Pypeline.
+        Function for running all pipeline modules that are added to the
+        :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Returns
         -------
@@ -392,33 +424,24 @@ class Pypeline:
             None
         """
 
+        # Validate the pipeline
         validation = self.validate_pipeline()
 
         if not validation[0]:
+            # Check if the input data is available
             raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
                                  f'under a tag which is not created by a previous module or '
-                                 f'does not exist in the database.')
+                                 f'the data does not exist in the database.')
 
+        # Loop over all pipeline modules and run them
         for name in self._m_modules:
-            module_info(self._m_modules[name])
+            self.run_module(name)
 
-            if hasattr(self._m_modules[name], '_m_input_ports'):
-                if len(self._m_modules[name]._m_input_ports) > 0:
-                    input_info(self._m_modules[name])
-
-            self._m_modules[name].run()
-
-            if hasattr(self._m_modules[name], '_m_output_ports'):
-                output_shape = {}
-                for item in self._m_modules[name]._m_output_ports:
-                    output_shape[item] = self.get_shape(item)
-
-                output_info(self._m_modules[name], output_shape)
-
+    @typechecked
     def run_module(self,
-                   name):
+                   name: str) -> None:
         """
-        Runs a single processing module.
+        Function for running a pipeline module.
 
         Parameters
         ----------
@@ -432,33 +455,61 @@ class Pypeline:
         """
 
         if name in self._m_modules:
+            # Validate the pipeline module
             validation = self.validate_pipeline_module(name)
 
             if not validation[0]:
                 raise AttributeError(f'Pipeline module \'{validation[1]}\' is looking for data '
                                      f'under a tag which does not exist in the database.')
 
+            # Print information about the pipeline module
             module_info(self._m_modules[name])
 
+            # Check if the module has any input ports
             if hasattr(self._m_modules[name], '_m_input_ports'):
+                # Check if the list of input ports is not empty
                 if len(self._m_modules[name]._m_input_ports) > 0:
+                    # Print information about the input ports
                     input_info(self._m_modules[name])
 
+            # Check if the module has any output ports
+            if hasattr(self._m_modules[name], '_m_output_ports'):
+                for item in self._m_modules[name]._m_output_ports:
+                    # Check if the module is a ProcessingModule
+                    if isinstance(self._m_modules[name], ProcessingModule):
+                        # Check if the database tag is already used
+                        if item in self.m_data_storage.m_data_bank:
+                            # Check if the output port is not used as input port
+                            if hasattr(self._m_modules[name], '_m_input_ports') and \
+                                    item not in self._m_modules[name]._m_input_ports:
+
+                                print(f'Deleting data and attributes: {item}')
+
+                                # Delete existing data and attributes
+                                self._m_modules[name]._m_output_ports[item].del_all_data()
+                                self._m_modules[name]._m_output_ports[item].del_all_attributes()
+
+            # Run the pipeline module
             self._m_modules[name].run()
 
+            # Check if the module has any output ports
             if hasattr(self._m_modules[name], '_m_output_ports'):
                 output_shape = {}
+
                 for item in self._m_modules[name]._m_output_ports:
+                    # Get the shape of the output port
                     output_shape[item] = self.get_shape(item)
 
+                # Print information about the output ports
                 output_info(self._m_modules[name], output_shape)
 
         else:
-            warnings.warn(f'Module \'{name}\' not found.')
+            warnings.warn(f'Pipeline module \'{name}\' not found.')
 
+    @typechecked
     def get_data(self,
-                 tag,
-                 data_range=None):
+                 tag: str,
+                 data_range: Optional[Tuple[int, int]] = None) -> np.ndarray:
         """
         Function for accessing data in the central database.
 
@@ -488,8 +539,9 @@ class Pypeline:
 
         return data
 
+    @typechecked
     def delete_data(self,
-                    tag):
+                    tag: str) -> None:
         """
         Function for deleting a dataset and related attributes from the central database. Disk
         space does not seem to free up when using this function.
@@ -519,10 +571,11 @@ class Pypeline:
 
         self.m_data_storage.close_connection()
 
+    @typechecked
     def get_attribute(self,
-                      data_tag,
-                      attr_name,
-                      static=True):
+                      data_tag: str,
+                      attr_name: str,
+                      static: bool = True) -> Union[StaticAttribute, NonStaticAttribute]:
         """
         Function for accessing attributes in the central database.
 
@@ -537,8 +590,8 @@ class Pypeline:
 
         Returns
         -------
-        numpy.ndarray
-            The attribute values.
+        StaticAttribute, NonStaticAttribute
+            The values of the attribute, which can either be static or non-static.
         """
 
         self.m_data_storage.open_connection()
@@ -554,11 +607,12 @@ class Pypeline:
 
         return attr
 
+    @typechecked
     def set_attribute(self,
-                      data_tag,
-                      attr_name,
-                      attr_value,
-                      static=True):
+                      data_tag: str,
+                      attr_name: str,
+                      attr_value: Union[StaticAttribute, NonStaticAttribute],
+                      static: bool = True) -> None:
         """
         Function for writing attributes to the central database. Existing values will be
         overwritten.
@@ -569,7 +623,7 @@ class Pypeline:
             Database tag.
         attr_name : str
             Name of the attribute.
-        attr_value : float, int, str, tuple, or numpy.ndarray
+        attr_value : StaticAttribute, NonStaticAttribute
             Attribute value.
         static : bool
             Static or non-static attribute.
@@ -597,34 +651,35 @@ class Pypeline:
 
         self.m_data_storage.close_connection()
 
-    def get_tags(self):
+    @typechecked
+    def get_tags(self) -> np.ndarray:
         """
         Function for listing the database tags, ignoring header and config tags.
 
         Returns
         -------
-        numpy.asarray
+        numpy.ndarray
             Database tags.
         """
 
         self.m_data_storage.open_connection()
 
         tags = list(self.m_data_storage.m_data_bank.keys())
-
         select = []
-        for item in tags:
 
+        for item in tags:
             if item in ('config', 'fits_header') or item[0:7] == 'header_':
                 continue
-            else:
-                select.append(item)
+
+            select.append(item)
 
         self.m_data_storage.close_connection()
 
         return np.asarray(select)
 
+    @typechecked
     def get_shape(self,
-                  tag):
+                  tag: str) -> Optional[Tuple[int, ...]]:
         """
         Function for getting the shape of a database entry.
 

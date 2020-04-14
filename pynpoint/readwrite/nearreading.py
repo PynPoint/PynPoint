@@ -10,7 +10,7 @@ import subprocess
 import threading
 import warnings
 
-from typing import Union, Tuple
+from typing import Optional, Union, Tuple
 
 import numpy as np
 
@@ -38,12 +38,12 @@ class NearReadingModule(ReadingModule):
     @typechecked
     def __init__(self,
                  name_in: str,
-                 input_dir: str = None,
+                 input_dir: Optional[str] = None,
                  chopa_out_tag: str = 'chopa',
                  chopb_out_tag: str = 'chopb',
                  subtract: bool = False,
-                 crop: Union[Tuple[int, int, float], Tuple[None, None, float]] = None,
-                 combine: str = None):
+                 crop: Optional[Union[Tuple[int, int, float], Tuple[None, None, float]]] = None,
+                 combine: Optional[str] = None):
         """
         Parameters
         ----------
@@ -85,9 +85,9 @@ class NearReadingModule(ReadingModule):
         self.m_crop = crop
         self.m_combine = combine
 
+    @staticmethod
     @typechecked
-    def _uncompress_file(self,
-                         filename: str) -> None:
+    def _uncompress_file(filename: str) -> None:
         """
         Internal function to uncompress a .Z file.
 
@@ -159,9 +159,9 @@ class NearReadingModule(ReadingModule):
                 for item in threads:
                     item.join()
 
+    @staticmethod
     @typechecked
-    def check_header(self,
-                     header: fits.header.Header) -> None:
+    def check_header(header: fits.header.Header) -> None:
         """
         Method to check the header information and prompt a warning if a value is not as expected.
 
@@ -242,7 +242,7 @@ class NearReadingModule(ReadingModule):
 
         # write the primary header information to the fits_header group
         header_out_port = self.add_output_port('fits_header/' + filename)
-        header_out_port.set_all(fits_header)
+        header_out_port.set_all(np.array(fits_header))
 
         # shape of the image stacks for chop A/B (hence nimages/2)
         im_shape = (nimages // 2, header_image['NAXIS2'], header_image['NAXIS1'])
@@ -261,9 +261,9 @@ class NearReadingModule(ReadingModule):
 
         return header, im_shape
 
+    @staticmethod
     @typechecked
-    def read_images(self,
-                    filename: str,
+    def read_images(filename: str,
                     im_shape: Tuple[int, int, int]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
@@ -369,7 +369,7 @@ class NearReadingModule(ReadingModule):
         files.sort()
 
         # check if there are FITS files present in the input location
-        assert(files), f'No FITS files found in {self.m_input_location}.'
+        assert files, f'No FITS files found in {self.m_input_location}.'
 
         # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
         if self.m_crop is not None:
@@ -388,7 +388,7 @@ class NearReadingModule(ReadingModule):
 
             if self.m_subtract:
                 chopa = chopa - chopb
-                chopb = -1.*np.copy(chopa)
+                chopb = -1. * np.copy(chopa)
 
             if self.m_crop is not None:
                 chopa = crop_image(chopa,

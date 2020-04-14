@@ -2,6 +2,7 @@ import os
 import warnings
 
 import h5py
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -17,7 +18,7 @@ limit = 1e-10
 
 class TestPsfSubtraction:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -49,17 +50,17 @@ class TestPsfSubtraction:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['science', 'reference'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
-        read = FitsReadingModule(name_in='read1',
-                                 image_tag='science',
-                                 input_dir=self.test_dir+'science')
+        module = FitsReadingModule(name_in='read1',
+                                   image_tag='science',
+                                   input_dir=self.test_dir+'science')
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('science')
@@ -67,11 +68,11 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 0.00010063896953157961, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-        read = FitsReadingModule(name_in='read2',
-                                 image_tag='reference',
-                                 input_dir=self.test_dir+'reference')
+        module = FitsReadingModule(name_in='read2',
+                                   image_tag='reference',
+                                   input_dir=self.test_dir+'reference')
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('reference')
@@ -79,12 +80,12 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
-        angle = AngleInterpolationModule(name_in='angle',
-                                         data_tag='science')
+        module = AngleInterpolationModule(name_in='angle',
+                                          data_tag='science')
 
-        self.pipeline.add_module(angle)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('angle')
 
         data = self.pipeline.get_data('header_science/PARANG')
@@ -93,18 +94,18 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 50.0, rtol=limit, atol=0.)
         assert data.shape == (80, )
 
-    def test_psf_preparation(self):
+    def test_psf_preparation(self) -> None:
 
-        prep = PSFpreparationModule(name_in='prep1',
-                                    image_in_tag='science',
-                                    image_out_tag='science_prep',
-                                    mask_out_tag=None,
-                                    norm=False,
-                                    resize=None,
-                                    cent_size=0.2,
-                                    edge_size=1.0)
+        module = PSFpreparationModule(name_in='prep1',
+                                      image_in_tag='science',
+                                      image_out_tag='science_prep',
+                                      mask_out_tag=None,
+                                      norm=False,
+                                      resize=None,
+                                      cent_size=0.2,
+                                      edge_size=1.0)
 
-        self.pipeline.add_module(prep)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('prep1')
 
         data = self.pipeline.get_data('science_prep')
@@ -114,16 +115,16 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 4.534001223501053e-07, rtol=limit, atol=0.)
         assert data.shape == (80, 100, 100)
 
-        prep = PSFpreparationModule(name_in='prep2',
-                                    image_in_tag='reference',
-                                    image_out_tag='reference_prep',
-                                    mask_out_tag=None,
-                                    norm=False,
-                                    resize=None,
-                                    cent_size=0.2,
-                                    edge_size=1.0)
+        module = PSFpreparationModule(name_in='prep2',
+                                      image_in_tag='reference',
+                                      image_out_tag='reference_prep',
+                                      mask_out_tag=None,
+                                      norm=False,
+                                      resize=None,
+                                      cent_size=0.2,
+                                      edge_size=1.0)
 
-        self.pipeline.add_module(prep)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('prep2')
 
         data = self.pipeline.get_data('reference_prep')
@@ -133,7 +134,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 1.227592050148539e-07, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_classical_adi(self):
+    def test_classical_adi(self) -> None:
 
         module = ClassicalADIModule(threshold=None,
                                     nreference=None,
@@ -155,7 +156,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -8.318786331552922e-08, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_classical_adi_threshold(self):
+    def test_classical_adi_threshold(self) -> None:
 
         module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
                                     nreference=5,
@@ -177,22 +178,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 1.413437242880268e-07, rtol=limit, atol=0.)
         assert data.shape == (1, 100, 100)
 
-    def test_psf_subtraction_pca_single(self):
+    def test_psf_subtraction_pca_single(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_single',
-                                      images_in_tag='science',
-                                      reference_in_tag='science',
-                                      res_mean_tag='res_mean_single',
-                                      res_median_tag='res_median_single',
-                                      res_weighted_tag='res_weighted_single',
-                                      res_rot_mean_clip_tag='res_clip_single',
-                                      res_arr_out_tag='res_arr_single',
-                                      basis_out_tag='basis_single',
-                                      extra_rot=-15.,
-                                      subtract_mean=True)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_single',
+                                         images_in_tag='science',
+                                         reference_in_tag='science',
+                                         res_mean_tag='res_mean_single',
+                                         res_median_tag='res_median_single',
+                                         res_weighted_tag='res_weighted_single',
+                                         res_rot_mean_clip_tag='res_clip_single',
+                                         res_arr_out_tag='res_arr_single',
+                                         basis_out_tag='basis_single',
+                                         extra_rot=-15.,
+                                         subtract_mean=True)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_single')
 
         data = self.pipeline.get_data('res_mean_single')
@@ -219,22 +220,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -1.593245396350998e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_no_mean(self):
+    def test_psf_subtraction_no_mean(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_no_mean',
-                                      images_in_tag='science',
-                                      reference_in_tag='science',
-                                      res_mean_tag='res_mean_no_mean',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_no_mean',
-                                      extra_rot=0.,
-                                      subtract_mean=False)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_no_mean',
+                                         images_in_tag='science',
+                                         reference_in_tag='science',
+                                         res_mean_tag='res_mean_no_mean',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_no_mean',
+                                         extra_rot=0.,
+                                         subtract_mean=False)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_no_mean')
 
         data = self.pipeline.get_data('res_mean_no_mean')
@@ -245,22 +246,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 7.4728664805632875e-06, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref(self):
+    def test_psf_subtraction_ref(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_ref',
-                                      images_in_tag='science',
-                                      reference_in_tag='reference',
-                                      res_mean_tag='res_mean_ref',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_ref',
-                                      extra_rot=0.,
-                                      subtract_mean=True)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_ref',
+                                         images_in_tag='science',
+                                         reference_in_tag='reference',
+                                         res_mean_tag='res_mean_ref',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_ref',
+                                         extra_rot=0.,
+                                         subtract_mean=True)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_ref')
 
         data = self.pipeline.get_data('res_mean_ref')
@@ -271,22 +272,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -1.6780507257603104e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_no_mean(self):
+    def test_psf_subtraction_ref_no_mean(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_ref_no_mean',
-                                      images_in_tag='science',
-                                      reference_in_tag='reference',
-                                      res_mean_tag='res_mean_ref_no_mean',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_ref_no_mean',
-                                      extra_rot=0.,
-                                      subtract_mean=False)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_ref_no_mean',
+                                         images_in_tag='science',
+                                         reference_in_tag='reference',
+                                         res_mean_tag='res_mean_ref_no_mean',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_ref_no_mean',
+                                         extra_rot=0.,
+                                         subtract_mean=False)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_ref_no_mean')
 
         data = self.pipeline.get_data('res_mean_ref_no_mean')
@@ -297,7 +298,7 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 2.3755682312090375e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_single_mask(self):
+    def test_psf_subtraction_pca_single_mask(self) -> None:
 
         pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
                                       name_in='pca_single_mask',
@@ -339,22 +340,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), 5.584100479595007e-06, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_no_mean_mask(self):
+    def test_psf_subtraction_no_mean_mask(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_no_mean_mask',
-                                      images_in_tag='science_prep',
-                                      reference_in_tag='science_prep',
-                                      res_mean_tag='res_mean_no_mean_mask',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_no_mean_mask',
-                                      extra_rot=0.,
-                                      subtract_mean=False)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_no_mean_mask',
+                                         images_in_tag='science_prep',
+                                         reference_in_tag='science_prep',
+                                         res_mean_tag='res_mean_no_mean_mask',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_no_mean_mask',
+                                         extra_rot=0.,
+                                         subtract_mean=False)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_no_mean_mask')
 
         data = self.pipeline.get_data('res_mean_no_mean_mask')
@@ -365,22 +366,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.sum(np.abs(data)), 1025.2018448288406, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_mask(self):
+    def test_psf_subtraction_ref_mask(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_ref_mask',
-                                      images_in_tag='science_prep',
-                                      reference_in_tag='reference_prep',
-                                      res_mean_tag='res_mean_ref_mask',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_ref_mask',
-                                      extra_rot=0.,
-                                      subtract_mean=True)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_ref_mask',
+                                         images_in_tag='science_prep',
+                                         reference_in_tag='reference_prep',
+                                         res_mean_tag='res_mean_ref_mask',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_ref_mask',
+                                         extra_rot=0.,
+                                         subtract_mean=True)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_ref_mask')
 
         data = self.pipeline.get_data('res_mean_ref_mask')
@@ -391,22 +392,22 @@ class TestPsfSubtraction:
         assert np.allclose(np.mean(data), -2.3165670099810983e-05, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_ref_no_mean_mask(self):
+    def test_psf_subtraction_ref_no_mean_mask(self) -> None:
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_ref_no_mean_mask',
-                                      images_in_tag='science_prep',
-                                      reference_in_tag='reference_prep',
-                                      res_mean_tag='res_mean_ref_no_mean_mask',
-                                      res_median_tag=None,
-                                      res_weighted_tag=None,
-                                      res_rot_mean_clip_tag=None,
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_ref_no_mean_mask',
-                                      extra_rot=0.,
-                                      subtract_mean=False)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_ref_no_mean_mask',
+                                         images_in_tag='science_prep',
+                                         reference_in_tag='reference_prep',
+                                         res_mean_tag='res_mean_ref_no_mean_mask',
+                                         res_median_tag=None,
+                                         res_weighted_tag=None,
+                                         res_rot_mean_clip_tag=None,
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_ref_no_mean_mask',
+                                         extra_rot=0.,
+                                         subtract_mean=False)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_ref_no_mean_mask')
 
         data = self.pipeline.get_data('res_mean_ref_no_mean_mask')
@@ -417,25 +418,25 @@ class TestPsfSubtraction:
         assert np.allclose(np.sum(np.abs(data)), 1026.3329224435665, rtol=limit, atol=0.)
         assert data.shape == (20, 100, 100)
 
-    def test_psf_subtraction_pca_multi(self):
+    def test_psf_subtraction_pca_multi(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_multi',
-                                      images_in_tag='science',
-                                      reference_in_tag='science',
-                                      res_mean_tag='res_mean_multi',
-                                      res_median_tag='res_median_multi',
-                                      res_weighted_tag='res_weighted_multi',
-                                      res_rot_mean_clip_tag='res_clip_multi',
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_multi',
-                                      extra_rot=-15.,
-                                      subtract_mean=True)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_multi',
+                                         images_in_tag='science',
+                                         reference_in_tag='science',
+                                         res_mean_tag='res_mean_multi',
+                                         res_median_tag='res_median_multi',
+                                         res_weighted_tag='res_weighted_multi',
+                                         res_rot_mean_clip_tag='res_clip_multi',
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_multi',
+                                         extra_rot=-15.,
+                                         subtract_mean=True)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_multi')
 
         data_single = self.pipeline.get_data('res_mean_single')
@@ -458,25 +459,25 @@ class TestPsfSubtraction:
         assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
 
-    def test_psf_subtraction_pca_multi_mask(self):
+    def test_psf_subtraction_pca_multi_mask(self) -> None:
 
         database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
         database['config'].attrs['CPU'] = 4
 
-        pca = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
-                                      name_in='pca_multi_mask',
-                                      images_in_tag='science_prep',
-                                      reference_in_tag='science_prep',
-                                      res_mean_tag='res_mean_multi_mask',
-                                      res_median_tag='res_median_multi_mask',
-                                      res_weighted_tag='res_weighted_multi_mask',
-                                      res_rot_mean_clip_tag='res_clip_multi_mask',
-                                      res_arr_out_tag=None,
-                                      basis_out_tag='basis_multi_mask',
-                                      extra_rot=-15.,
-                                      subtract_mean=True)
+        module = PcaPsfSubtractionModule(pca_numbers=range(1, 21),
+                                         name_in='pca_multi_mask',
+                                         images_in_tag='science_prep',
+                                         reference_in_tag='science_prep',
+                                         res_mean_tag='res_mean_multi_mask',
+                                         res_median_tag='res_median_multi_mask',
+                                         res_weighted_tag='res_weighted_multi_mask',
+                                         res_rot_mean_clip_tag='res_clip_multi_mask',
+                                         res_arr_out_tag=None,
+                                         basis_out_tag='basis_multi_mask',
+                                         extra_rot=-15.,
+                                         subtract_mean=True)
 
-        self.pipeline.add_module(pca)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('pca_multi_mask')
 
         data_single = self.pipeline.get_data('res_mean_single_mask')
@@ -501,3 +502,26 @@ class TestPsfSubtraction:
         data_multi = self.pipeline.get_data('basis_multi_mask')
         assert np.allclose(data_single, data_multi, rtol=1e-5, atol=0.)
         assert data_single.shape == data_multi.shape
+
+    def test_psf_subtraction_len_parang(self) -> None:
+
+        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
+        database['config'].attrs['CPU'] = 1
+
+        parang = self.pipeline.get_data('header_science/PARANG')
+        self.pipeline.set_attribute('science_prep', 'PARANG', np.append(parang, 0.), static=False)
+
+        module = PcaPsfSubtractionModule(pca_numbers=[5, ],
+                                         name_in='pca_len_parang',
+                                         images_in_tag='science_prep',
+                                         reference_in_tag='science_prep',
+                                         res_mean_tag='res_mean_len_parang',
+                                         extra_rot=0.)
+
+        self.pipeline.add_module(module)
+
+        with pytest.raises(ValueError) as error:
+            self.pipeline.run_module('pca_len_parang')
+
+        assert str(error.value) == 'The number of images (80) is not equal to the number of ' \
+                                   'parallactic angles (81).'

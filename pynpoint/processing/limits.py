@@ -9,7 +9,7 @@ import time
 import warnings
 import multiprocessing as mp
 
-from typing import Tuple, List
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -46,8 +46,8 @@ class ContrastCurveModule(ProcessingModule):
                  psf_scaling: float = 1.,
                  aperture: float = 0.05,
                  pca_number: int = 20,
-                 cent_size: float = None,
-                 edge_size: float = None,
+                 cent_size: Optional[float] = None,
+                 edge_size: Optional[float] = None,
                  extra_rot: float = 0.,
                  residuals: str = 'median',
                  snr_inject: float = 100.,

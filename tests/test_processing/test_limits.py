@@ -19,7 +19,7 @@ limit = 1e-10
 
 class TestLimits:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -28,13 +28,13 @@ class TestLimits:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(path=self.test_dir,
                          folders=['limits'],
                          files=['model.AMES-Cond-2000.M-0.0.NaCo.Vega'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='read',
@@ -48,7 +48,7 @@ class TestLimits:
         assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
         assert data.shape == (40, 100, 100)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
         module = AngleInterpolationModule(name_in='angle',
                                           data_tag='read')
@@ -61,7 +61,7 @@ class TestLimits:
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_contrast_curve(self):
+    def test_contrast_curve(self) -> None:
 
         proc = ['single', 'multi']
 
@@ -95,7 +95,7 @@ class TestLimits:
             assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
             assert data.shape == (1, 4)
 
-    def test_contrast_curve_fpf(self):
+    def test_contrast_curve_fpf(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
@@ -124,7 +124,7 @@ class TestLimits:
         assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
         assert data.shape == (1, 4)
 
-    def test_mass_limits(self):
+    def test_mass_limits(self) -> None:
 
         separation = np.linspace(0.1, 1.0, 10)
         contrast = -2.5*np.log10(1e-4/separation)

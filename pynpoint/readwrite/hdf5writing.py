@@ -4,7 +4,10 @@ Module for writing a list of tags from the database to a separate HDF5 file.
 
 import os
 
+from typing import Optional
+
 import h5py
+
 from typeguard import typechecked
 
 from pynpoint.core.processing import WritingModule
@@ -23,8 +26,8 @@ class Hdf5WritingModule(WritingModule):
     def __init__(self,
                  name_in: str,
                  file_name: str,
-                 output_dir: str = None,
-                 tag_dictionary: dict = None,
+                 output_dir: Optional[str] = None,
+                 tag_dictionary: Optional[dict] = None,
                  keep_attributes: bool = True,
                  overwrite: bool = False) -> None:
         """

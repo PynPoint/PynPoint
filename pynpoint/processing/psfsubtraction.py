@@ -7,7 +7,7 @@ import math
 import warnings
 
 from copy import deepcopy
-from typing import Union, List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -37,12 +37,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  name_in: str,
                  images_in_tag: str,
                  reference_in_tag: str,
-                 res_mean_tag: str = None,
-                 res_median_tag: str = None,
-                 res_weighted_tag: str = None,
-                 res_rot_mean_clip_tag: str = None,
-                 res_arr_out_tag: str = None,
-                 basis_out_tag: str = None,
+                 res_mean_tag: Optional[str] = None,
+                 res_median_tag: Optional[str] = None,
+                 res_weighted_tag: Optional[str] = None,
+                 res_rot_mean_clip_tag: Optional[str] = None,
+                 res_arr_out_tag: Optional[str] = None,
+                 basis_out_tag: Optional[str] = None,
                  pca_numbers: Union[range, List[int], np.ndarray] = range(1, 21),
                  extra_rot: float = 0.,
                  subtract_mean: bool = True) -> None:
@@ -68,9 +68,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             Tag of the database entry of the clipped mean residuals. Not calculated if set to
             None.
         res_arr_out_tag : str, None
-            Tag of the database entry with the image residuals from the PSF subtraction. If a list
-            of PCs is provided in *pca_numbers* then multiple tags will be created in the central
-            database. Not calculated if set to None. Not supported with multiprocessing.
+            Tag of the database entry with the derotated image residuals from the PSF subtraction.
+            The tag name of `res_arr_out_tag` is appended with the number of principal components
+            that was used. Not calculated if set to None. Not supported with multiprocessing.
         basis_out_tag : str, None
             Tag of the database entry with the basis set. Not stored if set to None.
         pca_numbers : range, list(int, ), numpy.ndarray
@@ -132,7 +132,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-    def _run_multi_processing(self, star_reshape, im_shape, indices):
+    @typechecked
+    def _run_multi_processing(self,
+                              star_reshape: np.ndarray,
+                              im_shape: Tuple[int, int, int],
+                              indices: np.ndarray) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
@@ -191,7 +195,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         capsule.run()
 
-    def _run_single_processing(self, star_reshape, im_shape, indices):
+    @typechecked
+    def _run_single_processing(self,
+                               star_reshape: np.ndarray,
+                               im_shape: Tuple[int, int, int],
+                               indices: np.ndarray) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -206,7 +214,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             residuals, res_rot = pca_psf_subtraction(images=star_reshape,
                                                      angles=parang,
-                                                     pca_number=pca_number,
+                                                     pca_number=int(pca_number),
                                                      pca_sklearn=self.m_pca,
                                                      im_shape=im_shape,
                                                      indices=indices)
@@ -243,28 +251,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 stack = combine_residuals(method='clipped', res_rot=res_rot)
                 self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
 
-    def _clear_output_ports(self):
-        if self.m_res_mean_out_port is not None:
-            self.m_res_mean_out_port.del_all_data()
-            self.m_res_mean_out_port.del_all_attributes()
-
-        if self.m_res_median_out_port is not None:
-            self.m_res_median_out_port.del_all_data()
-            self.m_res_median_out_port.del_all_attributes()
-
-        if self.m_res_weighted_out_port is not None:
-            self.m_res_weighted_out_port.del_all_data()
-            self.m_res_weighted_out_port.del_all_attributes()
-
-        if self.m_res_rot_mean_clip_out_port is not None:
-            self.m_res_rot_mean_clip_out_port.del_all_data()
-            self.m_res_rot_mean_clip_out_port.del_all_attributes()
-
-        if self.m_res_arr_out_ports is not None:
-            for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number].del_all_data()
-                self.m_res_arr_out_ports[pca_number].del_all_attributes()
-
     @typechecked
     def run(self) -> None:
         """
@@ -284,8 +270,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if cpu > 1 and self.m_res_arr_out_ports is not None:
             warnings.warn(f'Multiprocessing not possible if \'res_arr_out_tag\' is not set '
                           f'to None.')
-
-        self._clear_output_ports()
 
         # get all data
         star_data = self.m_star_in_port.get_all()
@@ -393,7 +377,7 @@ class ClassicalADIModule(ProcessingModule):
                  res_out_tag: str,
                  stack_out_tag: str,
                  threshold: Union[Tuple[float, float, float], None],
-                 nreference: int = None,
+                 nreference: Optional[int] = None,
                  residuals: str = 'median',
                  extra_rot: float = 0.) -> None:
         """
@@ -455,7 +439,11 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        def _subtract_psf(image, parang_thres, nref, reference):
+        @typechecked
+        def _subtract_psf(image: np.ndarray,
+                          parang_thres: Optional[float],
+                          nref: Optional[int],
+                          reference: Optional[np.ndarray] = None) -> np.ndarray:
 
             if parang_thres:
                 ang_diff = np.abs(parang[self.m_count]-parang)
