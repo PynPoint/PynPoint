@@ -152,7 +152,7 @@ class PACOModule(ProcessingModule):
         flux = b/a
         # Iterative, unbiased flux estimation
         if self.m_flux_calc:
-            phi0s = fp.thresholdDetection(snr, self.m_threshold, self.m_psf_rad)
+            phi0s = fp.thresholdDetection(snr, self.m_threshold)
             init = np.array([flux[int(phi0[0]), int(phi0[1])] for phi0 in phi0s])
             ests = np.array(fp.fluxEstimate(phi0s, self.m_eps, init))
 
