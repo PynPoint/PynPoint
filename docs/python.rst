@@ -26,8 +26,6 @@ The modular architecture of PynPoint allows for easy implementation of new pipel
 
    <a href="https://docs.python.org/3/library/abc.html" target="_blank">Abstract classes</a>
 
-There are three different types of pipeline modules: :class:`~pynpoint.core.processing.ReadingModule`, :class:`~pynpoint.core.processing.WritingModule`, and :class:`~pynpoint.core.processing.ProcessingModule`. The concept is similar for the three types of modules so here we will explain only how to code a processing module.
-
 .. _conventions:
 
 Conventions
@@ -52,4 +50,24 @@ Before we start writing a new PynPoint module, please take notice of the followi
 
    <a href="https://pypi.org/project/pycodestyle/" target="_blank">pycodestyle</a>
 
-Now we are ready to code!
+Unit tests
+----------
+
+PynPoint is a robust pipeline package with 95% of the code covered by |unittest|. Testing of the package is done by running ``make test`` in the cloned repository. This requires the installation of:
+
+   * |pytest|
+   * |pytest-cov|
+
+The unit tests ensure that the output from existing functionalities will not change whenever new code. With these things in mind, we are now ready to code!
+
+.. |unittest| raw:: html
+
+   <a href="https://docs.python.org/3/library/unittest.html" target="_blank">unit tests</a>
+
+.. |pytest| raw:: html
+
+   <a href="https://docs.pytest.org/en/latest/getting-started.html" target="_blank">pytest</a>
+
+.. |pytest-cov| raw:: html
+
+   <a href="https://pytest-cov.readthedocs.io/en/latest/readme.html" target="_blank">pytest-cov</a>

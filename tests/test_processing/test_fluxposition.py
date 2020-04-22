@@ -268,16 +268,16 @@ class TestFluxPosition:
 
         data = self.pipeline.get_data('simplex_res')
         assert np.allclose(data[0, 50, 31], 0.00013866444247059368, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 50, 31], 3.482226033356121e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.125137239656066e-07, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 50, 31], 3.445557381447193e-05, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), 3.1111919894652305e-07, rtol=limit, atol=0.)
         assert data.shape == (36, 101, 101)
 
         data = self.pipeline.get_data('flux_position')
-        assert np.allclose(data[35, 0], 31.420497036174158, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 1], 50.03219573166646, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 2], 0.5016473331983896, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 3], 89.90071436787039, rtol=limit, atol=0.)
-        assert np.allclose(data[35, 4], 6.012537296489204, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 0], 31.695095810580824, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 1], 49.94989598578772, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 2], 0.49423426455813924, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 3], 90.15682908536053, rtol=limit, atol=0.)
+        assert np.allclose(data[35, 4], 5.889773588736068, rtol=limit, atol=0.)
         assert data.shape == (36, 6)
 
     def test_simplex_minimization_reference(self) -> None:

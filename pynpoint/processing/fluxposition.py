@@ -19,7 +19,7 @@ from photutils import aperture_photometry, CircularAperture
 from photutils.aperture import Aperture
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, gaussian_noise
+from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, pixel_variance
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel, rotate_coordinates
 from pynpoint.util.mcmc import lnprob
@@ -158,8 +158,8 @@ class FakePlanetModule(ProcessingModule):
 
 class SimplexMinimizationModule(ProcessingModule):
     """
-    Pipeline module to measure the flux and position of a planet by injecting negative fake planets
-    and minimizing a figure of merit.
+    Pipeline module to retrieve the contrast and position of a planet by injecting negative
+    artificial planets and using a downhill simplex method.
     """
 
     __author__ = 'Tomas Stolker'
@@ -213,11 +213,11 @@ class SimplexMinimizationModule(ProcessingModule):
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should be negative in order to inject negative fake planets.
         merit : str
-            Figure of merit for the minimization. Can be 'hessian', to minimize the sum of the
-            absolute values of the determinant of the Hessian matrix, or 'poisson', to minimize the
-            sum of the absolute pixel values, assuming a Poisson distribution for the noise
-            (Wertz et al. 2017), or 'gaussian', to minimize the ratio of the squared pixel values
-            and the variance of the pixels within an annulus but excluding the aperture area.
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         aperture : float
             Aperture radius (arcsec) at the position specified at *position*.
         sigma : float
@@ -309,8 +309,8 @@ class SimplexMinimizationModule(ProcessingModule):
     def run(self) -> None:
         """
         Run method of the module. The position and contrast of a planet is measured by injecting
-        negative copies of the PSF template and applying a simplex method (Nelder-Mead) for
-        minimization of a figure of merit at the planet location.
+        negative copies of the PSF template and applying a downhill simplex method (Nelder-Mead)
+        for minimization of a figure of merit at the planet location.
 
         Returns
         -------
@@ -351,7 +351,7 @@ class SimplexMinimizationModule(ProcessingModule):
                        count: int,
                        n_components: int,
                        sklearn_pca: Optional[PCA],
-                       noise: Optional[float]) -> float:
+                       var_noise: Optional[float]) -> float:
 
             pos_y = arg[0]
             pos_x = arg[1]
@@ -406,7 +406,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                         merit=self.m_merit,
                                         aperture=aperture,
                                         sigma=self.m_sigma,
-                                        noise=noise)
+                                        var_noise=var_noise)
 
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -464,21 +464,23 @@ class SimplexMinimizationModule(ProcessingModule):
 
                 sklearn_pca.components_ = q_ortho.T
 
-            if self.m_merit in ('poisson', 'hessian'):
-                noise = None
+            if self.m_merit == 'poisson':
+                var_noise = None
 
-            elif self.m_merit == 'gaussian':
-                noise = gaussian_noise(images=images,
-                                       parang=parang,
-                                       cent_size=self.m_cent_size,
-                                       edge_size=self.m_edge_size,
-                                       pca_number=n_components,
-                                       residuals=self.m_residuals,
-                                       aperture=aperture)
+            elif self.m_merit in ['gaussian', 'hessian']:
+                var_noise = pixel_variance(var_type=self.m_merit,
+                                           images=images,
+                                           parang=parang,
+                                           cent_size=self.m_cent_size,
+                                           edge_size=self.m_edge_size,
+                                           pca_number=n_components,
+                                           residuals=self.m_residuals,
+                                           aperture=aperture,
+                                           sigma=self.m_sigma)
 
             minimize(fun=_objective,
                      x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
-                     args=(i, n_components, sklearn_pca, noise),
+                     args=(i, n_components, sklearn_pca, var_noise),
                      method='Nelder-Mead',
                      tol=None,
                      options={'xatol': self.m_tolerance, 'fatol': float('inf')})
@@ -620,7 +622,7 @@ class FalsePositiveModule(ProcessingModule):
                                            size=self.m_aperture,
                                            ignore=self.m_ignore)
 
-            return -snr
+            return -1.*snr
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
@@ -741,12 +743,11 @@ class MCMCsamplingModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
-            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
-            Pixels are assumed to be independent measurements which are expected to be equal to
-            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
-            variance is estimated from the pixel values within an annulus at the separation of
-            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
-            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         residuals : str
             Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
 
@@ -854,17 +855,28 @@ class MCMCsamplingModule(ProcessingModule):
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
-        if self.m_merit == 'poisson':
-            noise = None
+        print(f'Aperture position [x, y]: [{aperture[1]}, {aperture[0]}]')
+        print(f'Aperture radius (pix): {aperture[2]:.2f}')
+        print(f'Figure of merit: {self.m_merit}')
 
-        elif self.m_merit == 'gaussian':
-            noise = gaussian_noise(images=images,
-                                   parang=parang,
-                                   cent_size=self.m_mask[0],
-                                   edge_size=self.m_mask[1],
-                                   pca_number=self.m_pca_number,
-                                   residuals=self.m_residuals,
-                                   aperture=aperture)
+        if self.m_merit == 'poisson':
+            var_noise = None
+
+        elif self.m_merit in ['gaussian', 'hessian']:
+            var_noise = pixel_variance(var_type=self.m_merit,
+                                       images=images,
+                                       parang=parang,
+                                       cent_size=self.m_mask[0],
+                                       edge_size=self.m_mask[1],
+                                       pca_number=self.m_pca_number,
+                                       residuals=self.m_residuals,
+                                       aperture=aperture,
+                                       sigma=0.)
+
+            if self.m_merit == 'gaussian':
+                print(f'Gaussian standard deviation (counts): {np.sqrt(var_noise):.2e}')
+            if self.m_merit == 'hessian':
+                print(f'Hessian standard deviation: {np.sqrt(var_noise):.2e}')
 
         initial = np.zeros((self.m_nwalkers, ndim))
 
@@ -892,7 +904,7 @@ class MCMCsamplingModule(ProcessingModule):
                                                    indices,
                                                    self.m_merit,
                                                    self.m_residuals,
-                                                   noise]))
+                                                   var_noise]))
 
             sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
@@ -1089,12 +1101,11 @@ class SystematicErrorModule(ProcessingModule):
             Additional scaling factor of the planet flux (e.g., to correct for a neutral density
             filter). Should be a positive value.
         merit : str
-            Figure of merit that is used for the likelihood function ('gaussian' or 'poisson').
-            Pixels are assumed to be independent measurements which are expected to be equal to
-            zero in case the best-fit negative PSF template is injected. With 'gaussian', the
-            variance is estimated from the pixel values within an annulus at the separation of
-            the aperture (but excluding the pixels within the aperture). With 'poisson', a Poisson
-            distribution is assumed for the variance of each pixel value (see Wertz et al. 2017).
+            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
+            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
+            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
+            Stolker et al. 2020).
         aperture : float
             Aperture radius (arcsec) that is used for measuring the figure of merit.
         tolerance : float

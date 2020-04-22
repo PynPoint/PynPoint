@@ -258,7 +258,7 @@ def merit_function(residuals: np.ndarray,
                    merit: str,
                    aperture: Tuple[int, int, float],
                    sigma: float,
-                   noise: Optional[float]) -> float:
+                   var_noise: Optional[float]) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -273,13 +273,13 @@ def merit_function(residuals: np.ndarray,
     sigma : float
         Standard deviation (pix) of the Gaussian kernel which is used to smooth the residuals
         before the chi-square is calculated.
-    noise : float, None
-        Variance of the noise which is required when `merit` is set to 'gaussian'.
+    var_noise : float, None
+        Variance of the noise which is required when `merit` is set to 'gaussian' or 'hessian'.
 
     Returns
     -------
     float
-        Chi-square ('poisson' and 'gaussian') or sum of the absolute values ('hessian').
+        Chi-square value.
     """
 
     rr_grid = pixel_distance(im_shape=residuals.shape,
@@ -289,8 +289,6 @@ def merit_function(residuals: np.ndarray,
 
     if merit == 'hessian':
 
-        # This is not the chi-square but simply the sum of the absolute values
-
         hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
                                                             sigma=sigma,
                                                             mode='constant',
@@ -299,7 +297,7 @@ def merit_function(residuals: np.ndarray,
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
-        chi_square = np.sum(np.abs(hes_det[indices]))
+        chi_square = np.sum(hes_det[indices]**2)/var_noise
 
     elif merit == 'poisson':
 
@@ -310,7 +308,7 @@ def merit_function(residuals: np.ndarray,
 
     elif merit == 'gaussian':
 
-        chi_square = np.sum(residuals[indices]**2)/noise
+        chi_square = np.sum(residuals[indices]**2)/var_noise
 
     else:
 
@@ -322,13 +320,15 @@ def merit_function(residuals: np.ndarray,
 
 
 @typechecked
-def gaussian_noise(images: np.ndarray,
+def pixel_variance(var_type: str,
+                   images: np.ndarray,
                    parang: np.ndarray,
                    cent_size: Optional[float],
                    edge_size: Optional[float],
                    pca_number: int,
                    residuals: str,
-                   aperture: Tuple[int, int, float]) -> float:
+                   aperture: Tuple[int, int, float],
+                   sigma: float) -> float:
     """
     Function to calculate the variance of the noise. After the PSF subtraction, images are rotated
     in opposite direction of the regular derotation, therefore dispersing any companion or disk
@@ -336,6 +336,8 @@ def gaussian_noise(images: np.ndarray,
 
     Parameters
     ----------
+    var_type : str
+        Variance type ('gaussian' or 'hessian').
     images : numpy.ndarray
         Input images (3D).
     parang : numpy.ndarray
@@ -351,11 +353,14 @@ def gaussian_noise(images: np.ndarray,
         Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
     aperture : tuple(int, int, float)
         Aperture position (y, x) and radius (pix).
+    sigma : float, None
+        Standard deviation (pix) of the Gaussian kernel which is used to smooth the images.
 
     Returns
     -------
     float
-        Variance of the pixel values.
+        Variance of the pixel values. Either the variance of the pixel values ('gaussian') or
+        the variance of the determinant of the Hessian ('hessian').
     """
 
     mask = create_mask(images.shape[-2:], (cent_size, edge_size))
@@ -366,6 +371,18 @@ def gaussian_noise(images: np.ndarray,
 
     sep_ang = cartesian_to_polar(center_subpixel(res_noise), aperture[0], aperture[1])
 
-    selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+    if var_type == 'gaussian':
+        selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+
+    elif var_type == 'hessian':
+        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_noise[0, ],
+                                                            sigma=sigma,
+                                                            mode='constant',
+                                                            cval=0.,
+                                                            order='rc')
+
+        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+
+        selected = select_annulus(hes_det, sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
 
     return float(np.var(selected))
