@@ -6,12 +6,12 @@ a range of principal components for which the PCA basis is required as input.
 import sys
 import multiprocessing
 
-from typing import Union, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
 from typeguard import typechecked
-from sklearn.decomposition.pca import PCA
+from sklearn.decomposition import PCA
 
 from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
@@ -29,7 +29,7 @@ class PcaTaskCreator(TaskCreator):
     @typechecked
     def __init__(self,
                  tasks_queue_in: multiprocessing.JoinableQueue,
-                 num_proc: np.int64,
+                 num_proc: int,
                  pca_numbers: np.ndarray) -> None:
         """
         Parameters
@@ -147,7 +147,7 @@ class PcaTaskProcessor(TaskProcessor):
 
         residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
                                                  angles=self.m_angles,
-                                                 pca_number=tmp_task.m_input_data,
+                                                 pca_number=int(tmp_task.m_input_data),
                                                  pca_sklearn=self.m_pca_model,
                                                  im_shape=self.m_im_shape,
                                                  indices=self.m_indices)
@@ -184,10 +184,10 @@ class PcaTaskWriter(TaskWriter):
     @typechecked
     def __init__(self,
                  result_queue_in: multiprocessing.JoinableQueue,
-                 mean_out_port: Union[OutputPort, None],
-                 median_out_port: Union[OutputPort, None],
-                 weighted_out_port: Union[OutputPort, None],
-                 clip_out_port: Union[OutputPort, None],
+                 mean_out_port: Optional[OutputPort],
+                 median_out_port: Optional[OutputPort],
+                 weighted_out_port: Optional[OutputPort],
+                 clip_out_port: Optional[OutputPort],
                  data_mutex_in: multiprocessing.Lock,
                  requirements: Tuple[bool, bool, bool, bool]) -> None:
         """
@@ -242,7 +242,7 @@ class PcaTaskWriter(TaskWriter):
             if poison_pill_case == 1:
                 break
 
-            elif poison_pill_case == 2:
+            if poison_pill_case == 2:
                 continue
 
             with self.m_data_mutex:
@@ -278,11 +278,11 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
 
     @typechecked
     def __init__(self,
-                 mean_out_port: Union[OutputPort, None],
-                 median_out_port: Union[OutputPort, None],
-                 weighted_out_port: Union[OutputPort, None],
-                 clip_out_port: Union[OutputPort, None],
-                 num_proc: np.int64,
+                 mean_out_port: Optional[OutputPort],
+                 median_out_port: Optional[OutputPort],
+                 weighted_out_port: Optional[OutputPort],
+                 clip_out_port: Optional[OutputPort],
+                 num_proc: int,
                  pca_numbers: np.ndarray,
                  pca_model: PCA,
                  star_reshape: np.ndarray,

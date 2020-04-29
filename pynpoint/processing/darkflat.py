@@ -103,9 +103,6 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
@@ -150,7 +147,7 @@ class FlatCalibrationModule(ProcessingModule):
             Unique name of the module instance.
         image_in_tag : str
             Tag of the science database that is read as input.
-        dark_in_tag : str
+        flat_in_tag : str
             Tag of the flat field database that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output.
@@ -178,9 +175,6 @@ class FlatCalibrationModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]

@@ -17,7 +17,7 @@ limit = 1e-6
 
 class TestNearInitModule(object):
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
         self.fitsfile = self.test_dir + 'near/images_1.fits'
@@ -39,11 +39,11 @@ class TestNearInitModule(object):
 
         self.positions = ('chopa', 'chopb')
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['near'])
 
-    def test_near_read(self):
+    def test_near_read(self) -> None:
 
         module = NearReadingModule(name_in='read1a',
                                    input_dir=self.test_dir+'near',
@@ -59,7 +59,7 @@ class TestNearInitModule(object):
             assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
             assert data.shape == (20, 10, 10)
 
-    def test_near_subtract_crop_mean(self):
+    def test_near_subtract_crop_mean(self) -> None:
 
         module = NearReadingModule(name_in='read1b',
                                    input_dir=self.test_dir+'near',
@@ -80,7 +80,7 @@ class TestNearInitModule(object):
         assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
         assert data.shape == (4, 7, 7)
 
-    def test_near_median(self):
+    def test_near_median(self) -> None:
 
         module = NearReadingModule(name_in='read1c',
                                    input_dir=self.test_dir+'near',
@@ -99,7 +99,7 @@ class TestNearInitModule(object):
         assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
         assert data.shape == (4, 10, 10)
 
-    def test_static_not_found(self):
+    def test_static_not_found(self) -> None:
 
         self.pipeline.set_attribute('config', 'DIT', 'Test', static=True)
 
@@ -120,7 +120,7 @@ class TestNearInitModule(object):
 
         self.pipeline.set_attribute('config', 'DIT', 'ESO DET SEQ1 DIT', static=True)
 
-    def test_nonstatic_not_found(self):
+    def test_nonstatic_not_found(self) -> None:
 
         self.pipeline.set_attribute('config', 'NDIT', 'Test', static=True)
 
@@ -141,7 +141,7 @@ class TestNearInitModule(object):
 
         self.pipeline.set_attribute('config', 'NDIT', 'None', static=True)
 
-    def test_check_header(self):
+    def test_check_header(self) -> None:
 
         with fits.open(self.fitsfile) as hdulist:
             hdulist[0].header['ESO DET CHOP ST'] = 'F'
@@ -170,7 +170,7 @@ class TestNearInitModule(object):
             hdulist[0].header['ESO DET CHOP CYCSUM'] = 'F'
             hdulist.writeto(self.fitsfile, overwrite=True)
 
-    def test_frame_type_invalid(self):
+    def test_frame_type_invalid(self) -> None:
 
         with fits.open(self.fitsfile) as hdulist:
             hdulist[10].header['ESO DET FRAM TYPE'] = 'Test'
@@ -189,7 +189,7 @@ class TestNearInitModule(object):
         assert str(error.value) == 'Frame type (Test) not a valid value. Expecting HCYCLE1 or ' \
                                    'HCYCLE2 as value for ESO DET FRAM TYPE.'
 
-    def test_frame_type_missing(self):
+    def test_frame_type_missing(self) -> None:
 
         with fits.open(self.fitsfile) as hdulist:
             hdulist[10].header.remove('ESO DET FRAM TYPE')
@@ -207,7 +207,7 @@ class TestNearInitModule(object):
 
         assert str(error.value) == 'Frame type not found in the FITS header. Image number: 9.'
 
-    def test_same_cycle(self):
+    def test_same_cycle(self) -> None:
 
         with fits.open(self.fitsfile) as hdulist:
 
@@ -240,7 +240,7 @@ class TestNearInitModule(object):
         assert warning[1].message.args[0] == 'The number of images is not equal for chop A and ' \
                                              'chop B.'
 
-    def test_odd_number_images(self):
+    def test_odd_number_images(self) -> None:
 
         with fits.open(self.fitsfile) as hdulist:
             del hdulist[11]

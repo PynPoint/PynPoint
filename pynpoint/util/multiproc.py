@@ -4,7 +4,7 @@ Abstract interfaces for multiprocessing applications with the poison pill patter
 
 import multiprocessing
 
-from typing import Union, Callable
+from typing import Callable, Optional, Union
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -82,10 +82,10 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
 
     @typechecked
     def __init__(self,
-                 data_port_in: Union[InputPort, None],
+                 data_port_in: Optional[InputPort],
                  tasks_queue_in: multiprocessing.JoinableQueue,
-                 data_mutex_in: Union[multiprocessing.Lock, None],
-                 num_proc: np.int64) -> None:
+                 data_mutex_in: Optional[multiprocessing.Lock],
+                 num_proc: int) -> None:
         """
         Parameters
         ----------
@@ -274,7 +274,7 @@ class TaskWriter(multiprocessing.Process):
     @typechecked
     def __init__(self,
                  result_queue_in: multiprocessing.JoinableQueue,
-                 data_out_port_in: Union[OutputPort, None],
+                 data_out_port_in: Optional[OutputPort],
                  data_mutex_in: multiprocessing.Lock) -> None:
         """
         Parameters
@@ -374,9 +374,9 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
     @typechecked
     def __init__(self,
-                 image_in_port: Union[InputPort, None],
-                 image_out_port: Union[OutputPort, None],
-                 num_proc: np.int64) -> None:
+                 image_in_port: Optional[InputPort],
+                 image_out_port: Optional[OutputPort],
+                 num_proc: int) -> None:
         """
         Parameters
         ----------
@@ -426,7 +426,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
     @abstractmethod
     @typechecked
     def init_creator(self,
-                     image_in_port: Union[InputPort, None]) -> None:
+                     image_in_port: Optional[InputPort]) -> None:
         """
         Function that is called from the constructor to create a
         :class:`~pynpoint.util.multiproc.TaskCreator`.
@@ -444,7 +444,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
     @typechecked
     def create_writer(self,
-                      image_out_port: Union[OutputPort, None]) -> TaskWriter:
+                      image_out_port: Optional[OutputPort]) -> TaskWriter:
         """
         Function that is called from the constructor to create the
         :class:`~pynpoint.util.multiproc.TaskWriter`.
@@ -501,7 +501,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 @typechecked
 def apply_function(tmp_data: np.ndarray,
                    func: Callable,
-                   func_args: Union[tuple, None]) -> np.ndarray:
+                   func_args: Optional[tuple]) -> np.ndarray:
     """
     Apply a function with optional arguments to the input data.
 

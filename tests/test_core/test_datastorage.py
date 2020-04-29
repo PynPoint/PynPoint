@@ -14,10 +14,10 @@ limit = 1e-10
 
 class TestDataStorage:
 
-    def setup(self):
+    def setup(self) -> None:
         self.test_data = os.path.dirname(__file__) + '/PynPoint_database.hdf5'
 
-    def test_create_storage_with_existing_database(self):
+    def test_create_storage_with_existing_database(self) -> None:
         np.random.seed(1)
         images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
 
@@ -33,7 +33,7 @@ class TestDataStorage:
 
         os.remove(self.test_data)
 
-    def test_create_storage_without_existing_database(self):
+    def test_create_storage_without_existing_database(self) -> None:
         storage = DataStorage(self.test_data)
         storage.open_connection()
         storage.m_data_bank['data'] = [0, 1, 2, 5, 7]
@@ -45,13 +45,13 @@ class TestDataStorage:
 
         os.remove(self.test_data)
 
-    def test_create_storage_with_wrong_location(self):
+    def test_create_storage_with_wrong_location(self) -> None:
         file_in = '/test/test.hdf5'
 
         with pytest.raises(AssertionError):
             DataStorage(file_in)
 
-    def test_open_close_connection(self):
+    def test_open_close_connection(self) -> None:
         storage = DataStorage(self.test_data)
 
         storage.open_connection()

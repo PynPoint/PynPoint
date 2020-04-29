@@ -2,16 +2,12 @@
 Functions for adding attributes to a dataset in the central database.
 """
 
-from __future__ import absolute_import
-
-from typeguard import typechecked
-
 import warnings
 
-import six
 import numpy as np
 
 from astropy.io import fits
+from typeguard import typechecked
 
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import ConfigPort, OutputPort
@@ -50,7 +46,7 @@ def set_static_attr(fits_file: str,
     attributes = get_attributes()
 
     static = []
-    for key, value in six.iteritems(attributes):
+    for key, value in attributes.items():
         if value['config'] == 'header' and value['attribute'] == 'static':
             static.append(key)
 
@@ -107,7 +103,7 @@ def set_nonstatic_attr(header: fits.header.Header,
     attributes = get_attributes()
 
     nonstatic = []
-    for key, value in six.iteritems(attributes):
+    for key, value in attributes.items():
         if value['attribute'] == 'non-static':
             nonstatic.append(key)
 

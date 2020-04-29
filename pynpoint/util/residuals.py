@@ -2,6 +2,8 @@
 Functions for combining the residuals of the PSF subtraction.
 """
 
+from typing import Optional
+
 import numpy as np
 
 from typeguard import typechecked
@@ -11,8 +13,8 @@ from scipy.ndimage import rotate
 @typechecked
 def combine_residuals(method: str,
                       res_rot: np.ndarray,
-                      residuals: np.ndarray = None,
-                      angles: np.ndarray = None) -> np.ndarray:
+                      residuals: Optional[np.ndarray] = None,
+                      angles: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Function for combining the derotated residuals of the PSF subtraction.
 

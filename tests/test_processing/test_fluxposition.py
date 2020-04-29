@@ -9,7 +9,6 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.fluxposition import FakePlanetModule, AperturePhotometryModule, \
                                              FalsePositiveModule, SimplexMinimizationModule, \
                                              MCMCsamplingModule, SystematicErrorModule
-
 from pynpoint.processing.stacksubset import DerotateAndStackModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule
@@ -22,7 +21,7 @@ limit = 1e-10
 
 class TestFluxPosition:
 
-    def setup_class(self):
+    def setup_class(self) -> None:
 
         self.test_dir = os.path.dirname(__file__) + '/'
 
@@ -55,11 +54,11 @@ class TestFluxPosition:
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-    def teardown_class(self):
+    def teardown_class(self) -> None:
 
         remove_test_data(self.test_dir, folders=['flux', 'adi', 'psf', 'ref'])
 
-    def test_read_data(self):
+    def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
                                    image_tag='read',
@@ -109,7 +108,7 @@ class TestFluxPosition:
         assert np.allclose(np.mean(data), 9.827812356946396e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 101, 101)
 
-    def test_aperture_photometry(self):
+    def test_aperture_photometry(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
@@ -147,7 +146,7 @@ class TestFluxPosition:
         # Does not pass on Travis CI
         # assert np.allclose(data, data_multi, rtol=limit, atol=0.)
 
-    def test_angle_interpolation(self):
+    def test_angle_interpolation(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
@@ -163,7 +162,7 @@ class TestFluxPosition:
         assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
         assert data.shape == (40, )
 
-    def test_fake_planet(self):
+    def test_fake_planet(self) -> None:
 
         module = FakePlanetModule(position=(0.5, 90.),
                                   magnitude=6.,
@@ -182,7 +181,7 @@ class TestFluxPosition:
         assert np.allclose(np.mean(data), 9.867026482551375e-05, rtol=limit, atol=0.)
         assert data.shape == (40, 101, 101)
 
-    def test_psf_subtraction(self):
+    def test_psf_subtraction(self) -> None:
 
         module = PcaPsfSubtractionModule(pca_numbers=[2, ],
                                          name_in='pca',
@@ -199,7 +198,7 @@ class TestFluxPosition:
         assert np.allclose(np.mean(data), 1.8409659677297164e-08, rtol=limit, atol=0.)
         assert data.shape == (1, 101, 101)
 
-    def test_false_positive(self):
+    def test_false_positive(self) -> None:
 
         module = FalsePositiveModule(position=(31., 49.),
                                      aperture=0.1,
@@ -220,7 +219,7 @@ class TestFluxPosition:
         assert np.allclose(data[0, 4], 7.333740467578795, rtol=limit, atol=0.)
         assert np.allclose(data[0, 5], 4.5257622875993775e-06, rtol=limit, atol=0.)
 
-    def test_false_positive_optimize(self):
+    def test_false_positive_optimize(self) -> None:
 
         module = FalsePositiveModule(position=(31., 49.),
                                      aperture=0.1,
@@ -243,7 +242,7 @@ class TestFluxPosition:
         assert np.allclose(data[0, 4], 7.831022605121996, rtol=limit, atol=0.)
         assert np.allclose(data[0, 5], 2.3375921055608217e-06, rtol=limit, atol=0.)
 
-    def test_simplex_minimization_hessian(self):
+    def test_simplex_minimization_hessian(self) -> None:
 
         module = SimplexMinimizationModule(name_in='simplex1',
                                            image_in_tag='fake',
@@ -281,7 +280,7 @@ class TestFluxPosition:
         assert np.allclose(data[35, 4], 6.012537296489204, rtol=limit, atol=0.)
         assert data.shape == (36, 6)
 
-    def test_simplex_minimization_reference(self):
+    def test_simplex_minimization_reference(self) -> None:
 
         module = SimplexMinimizationModule(name_in='simplex2',
                                            image_in_tag='fake',
@@ -319,7 +318,7 @@ class TestFluxPosition:
         assert np.allclose(data[43, 4], 5.9953709695084605, rtol=limit, atol=0.)
         assert data.shape == (44, 6)
 
-    def test_mcmc_sampling(self):
+    def test_mcmc_sampling(self) -> None:
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
@@ -366,9 +365,9 @@ class TestFluxPosition:
         assert np.allclose(np.median(data[:, 2]), 0.0, rtol=0., atol=1.)
 
         attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
-        assert np.allclose(attr, 0.3, rtol=0., atol=0.2)
+        assert np.allclose(attr, 0.3, rtol=0., atol=0.3)
 
-    def test_systematic_error(self):
+    def test_systematic_error(self) -> None:
 
         module = SystematicErrorModule(name_in='error',
                                        image_in_tag='fake',
@@ -376,7 +375,7 @@ class TestFluxPosition:
                                        offset_out_tag='offset',
                                        position=(0.5, 90.),
                                        magnitude=6.,
-                                       n_angles=2,
+                                       angles=(0., 180., 2),
                                        psf_scaling=1.,
                                        merit='gaussian',
                                        aperture=0.1,
@@ -390,6 +389,6 @@ class TestFluxPosition:
         self.pipeline.run_module('error')
 
         data = self.pipeline.get_data('offset')
-        assert np.allclose(data[0, 0], -0.004192746397732816, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.004504673197196644, rtol=limit, atol=0.)
+        assert np.allclose(data[0, 0], -0.004066263849143104, rtol=limit, atol=0.)
+        assert np.allclose(np.mean(data), -0.0077784357245382725, rtol=limit, atol=0.)
         assert data.shape == (2, 3)

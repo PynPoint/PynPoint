@@ -2,8 +2,13 @@
 Module to obtain information about the implemented attributes.
 """
 
+from typing import Dict, Union
 
-def get_attributes():
+from typeguard import typechecked
+
+
+@typechecked
+def get_attributes() -> Dict[str, Dict[str, Union[str, float, int, None]]]:
     """
     Function to get a dictionary with all attributes.
 
@@ -89,6 +94,10 @@ def get_attributes():
                        'config': 'header',
                        'value': 'None',
                        'type': 'float'},
+            'WAVELENGTH': {'attribute': 'non-static',
+                           'config': 'header',
+                           'value': 'None',
+                           'type': 'float'},
             'STAR_POSITION': {'attribute': 'non-static',
                               'config': None,
                               'value': None,

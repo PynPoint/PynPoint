@@ -76,9 +76,6 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
-
         # Get memory and number of images to split the frames into chunks
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
@@ -182,7 +179,11 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        def _image_scaling(image_in, scaling_y, scaling_x, scaling_flux):
+        @typechecked
+        def _image_scaling(image_in: np.ndarray,
+                           scaling_y: float,
+                           scaling_x: float,
+                           scaling_flux: float) -> np.ndarray:
 
             return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
 
@@ -254,9 +255,6 @@ class AddLinesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
@@ -338,9 +336,6 @@ class RemoveLinesModule(ProcessingModule):
         NoneType
             None
         """
-
-        self.m_image_out_port.del_all_attributes()
-        self.m_image_out_port.del_all_data()
 
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
