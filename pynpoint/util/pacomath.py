@@ -143,10 +143,9 @@ def cartToPol(coords):
         rho = np.sqrt(coords[0]**2 + coords[1]**2)
         phi = np.arctan2(coords[1], coords[0])
         return np.array((rho, phi))
-    else:
-        rho = np.sqrt(coords[:, 0]**2 + coords[:, 1]**2)
-        phi = np.arctan2(coords[:, 1], coords[:, 0])
-        return np.column_stack((rho, phi))
+    rho = np.sqrt(coords[:, 0]**2 + coords[:, 1]**2)
+    phi = np.arctan2(coords[:, 1], coords[:, 0])
+    return np.column_stack((rho, phi))
 
 def polToCart(coords):
     """
@@ -157,10 +156,9 @@ def polToCart(coords):
         x = coords[0]*np.cos(coords[1])
         y = coords[0]*np.sin(coords[0])
         return np.array((x, y))
-    else:
-        x = coords[:, 0]*np.cos(coords[:, 1])
-        y = coords[:, 0]*np.sin(coords[:, 1])
-        return np.column_stack((x, y))
+    x = coords[:, 0]*np.cos(coords[:, 1])
+    y = coords[:, 0]*np.sin(coords[:, 1])
+    return np.column_stack((x, y))
 
 def intPolToCart(coords):
     """
@@ -173,10 +171,9 @@ def intPolToCart(coords):
         x = int(coords[0]*np.cos(coords[1]))
         y = int(coords[0]*np.sin(coords[0]))
         return np.array((x, y))
-    else:
-        x = coords[:, 0]*np.cos(coords[:, 1]).astype(int)
-        y = coords[:, 0]*np.sin(coords[:, 1]).astype(int)
-        return np.column_stack((x, y))
+    x = coords[:, 0]*np.cos(coords[:, 1]).astype(int)
+    y = coords[:, 0]*np.sin(coords[:, 1]).astype(int)
+    return np.column_stack((x, y))
 
 def gridCartToPol(x, y):
     """
