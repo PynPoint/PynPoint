@@ -131,8 +131,6 @@ class PACO:
         """
         This function is algorithm dependant, and sets up the actual calculation process.
         """
-
-        pass
     
     def PACO(self,
              cpu=1):
@@ -304,18 +302,18 @@ class PACO:
                 print("Scale is 1, no scaling applied.")
             self.m_rescaled = True
             return
-        """
-        try:
-            assert (self.m_width*self.m_scale).is_integer()
-        except AssertionError:
-            print("Cannot rescale image, please change the scale or use the full image")
-            sys.exit(2)
-        try:
-            assert (self.m_height*self.m_scale).is_integer()
-        except AssertionError:
-            print("Cannot rescale image, please change the scale or use the full image")
-            sys.exit(2)   
-        """
+        
+        #try:
+        #    assert (self.m_width*self.m_scale).is_integer()
+        #except AssertionError:
+        #    print("Cannot rescale image, please change the scale or use the full image")
+        #    sys.exit(2)
+        #try:
+        #    assert (self.m_height*self.m_scale).is_integer()
+        #except AssertionError:
+        #    print("Cannot rescale image, please change the scale or use the full image")
+        #    sys.exit(2)   
+        #
         self.rescaleImageSequence(self.m_scale)
 
         self.m_pxscale = self.m_pxscale/self.m_scale
