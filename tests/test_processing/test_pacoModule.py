@@ -25,21 +25,19 @@ class TestPACO:
         up an analysis using PACO.
         """
         working_dir = os.getcwd()
-        input_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/testData/vip_datasets/"
-        output_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/output/"
+        #input_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/testData/vip_datasets/"
+        #output_dir = "/data/ipa/quanz/user_accounts/evertn/PACO/PACO/output/"
         #input_dir = "/home/evert/Documents/PACO/testData/vip_datasets/"
         #output_dir = "/home/evert/Documents/PACO/output/"
-        fits_filename = "naco_betapic_cube.fits"
-        psf_filename = "naco_betapic_psf.fits"
-        par_filename ="naco_betapic_pa.dat"
+        filename = "naco_betapic"
+        fits_filename = filename + "_cube.fits"#"naco_betapic_cube.fits"
+        psf_filename =  filename + "_psf.fits"#"naco_betapic_psf.fits"
+        par_filename =  filename + "_pa.dat"#"naco_betapic_pa.dat"
+
+        # FIXME FIXME FIXME
+        # Exit here until additional methods are written to generate test data.
+        sys.exit(1)
         
-        #angles = fits.getdata(input_dir + par_filename).flatten()
-        #ang = open(input_dir + "naco_betapic_pa.dat",'w+')
-        #for a in angles:
-        #    ang.writelines(str(a) + '\n')
-        #ang.close()
-        
-        #angles = np.genfromtxt(input_dir + par_filename)
         pipeline = Pypeline(working_place_in = working_dir,
                             input_place_in = input_dir,
                             output_place_in = output_dir)
