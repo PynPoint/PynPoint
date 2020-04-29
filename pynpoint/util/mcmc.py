@@ -30,7 +30,7 @@ def lnprob(param: np.ndarray,
            indices: np.ndarray,
            merit: str,
            residuals: str,
-           noise: Optional[float]) -> float:
+           var_noise: Optional[float]) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -75,8 +75,8 @@ def lnprob(param: np.ndarray,
         Poisson distribution is assumed for the variance of each pixel value.
     residuals : str
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
-    noise : float, None
-        Variance of the noise which is required when `merit` is set to 'gaussian'.
+    var_noise : float, None
+        Variance of the noise which is required when `merit` is set to 'gaussian' or 'hessian'.
 
     Returns
     -------
@@ -141,7 +141,7 @@ def lnprob(param: np.ndarray,
                                     merit=merit,
                                     aperture=aperture,
                                     sigma=0.,
-                                    noise=noise)
+                                    var_noise=var_noise)
 
         return -0.5*chi_square
 
