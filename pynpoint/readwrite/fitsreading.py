@@ -62,6 +62,10 @@ class FitsReadingModule(ReadingModule):
             provided directly. If set to None, the FITS files in the `input_dir` are read. All
             paths should be provided either relative to the Python working folder (i.e., the folder
             where Python is executed) or as absolute paths.
+        ifs_data : bool
+            Import IFS data which is stored as a 4D array with the wavelength and temporal
+            dimensions as first and second dimension, respectively. If set to ``False`` (default),
+            the data is imported as a 3D array with the temporal dimension as first dimension. 
 
         Returns
         -------
