@@ -16,7 +16,7 @@ from sklearn.decomposition import PCA
 from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                     TaskInput, MultiprocessingCapsule, to_slice
-from pynpoint.util.psf import pca_psf_subtraction
+from pynpoint.util.sdi import postprocessor
 from pynpoint.util.residuals import combine_residuals
 
 
@@ -89,10 +89,12 @@ class PcaTaskProcessor(TaskProcessor):
                  result_queue_in: multiprocessing.JoinableQueue,
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
+                 scales: np.ndarray,
                  pca_model: PCA,
                  im_shape: Tuple[int, int, int],
                  indices: np.ndarray,
-                 requirements: Tuple[bool, bool, bool, bool]) -> None:
+                 requirements: Tuple[bool, bool, bool, bool],
+                 processing_type: str) -> None:
         """
         Parameters
         ----------
@@ -104,6 +106,8 @@ class PcaTaskProcessor(TaskProcessor):
             Reshaped (2D) stack of images.
         angles : numpy.ndarray
             Derotation angles (deg).
+        scales : numpy.ndarray
+            scaling factors
         pca_model : sklearn.decomposition.pca.PCA
             PCA object with the basis.
         im_shape : tuple(int, int, int)
@@ -112,6 +116,8 @@ class PcaTaskProcessor(TaskProcessor):
             Non-masked image indices.
         requirements : tuple(bool, bool, bool, bool)
             Required output residuals.
+        processing_type : str
+            selected processing type.
 
         Returns
         -------
@@ -124,9 +130,11 @@ class PcaTaskProcessor(TaskProcessor):
         self.m_star_reshape = star_reshape
         self.m_pca_model = pca_model
         self.m_angles = angles
+        self.m_scales = scales
         self.m_im_shape = im_shape
         self.m_indices = indices
         self.m_requirements = requirements
+        self.m_processing_type = processing_type
 
     @typechecked
     def run_job(self,
@@ -145,12 +153,14 @@ class PcaTaskProcessor(TaskProcessor):
             Output residuals.
         """
 
-        residuals, res_rot = pca_psf_subtraction(images=self.m_star_reshape,
+        residuals, res_rot = postprocessor(images=self.m_star_reshape,
                                                  angles=self.m_angles,
+                                                 scales=self.m_scales,
                                                  pca_number=int(tmp_task.m_input_data),
                                                  pca_sklearn=self.m_pca_model,
                                                  im_shape=self.m_im_shape,
-                                                 indices=self.m_indices)
+                                                 indices=self.m_indices,
+                                                 processing_type=self.m_processing_type)
 
         res_output = np.zeros((4, res_rot.shape[1], res_rot.shape[2]))
 
@@ -164,7 +174,8 @@ class PcaTaskProcessor(TaskProcessor):
             res_output[2, ] = combine_residuals(method='weighted',
                                                 res_rot=res_rot,
                                                 residuals=residuals,
-                                                angles=self.m_angles)
+                                                angles=self.m_angles,
+                                                scales=self.m_scales)
 
         if self.m_requirements[3]:
             res_output[3, ] = combine_residuals(method='clipped', res_rot=res_rot)
@@ -287,8 +298,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_model: PCA,
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
+                 scales: np.ndarray,
                  im_shape: Tuple[int, int, int],
-                 indices: np.ndarray) -> None:
+                 indices: np.ndarray,
+                 processing_type: str) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.
 
@@ -312,10 +325,14 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             Reshaped (2D) input images.
         angles : numpy.ndarray
             Derotation angles (deg).
+        scales : numpy.ndarray
+            scaling factors.
         im_shape : tuple(int, int, int)
             Original shape of the input images.
         indices : numpy.ndarray
             Non-masked pixel indices.
+        processing_type : str
+            selection of processing type
 
         Returns
         -------
@@ -331,8 +348,10 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
         self.m_pca_model = pca_model
         self.m_star_reshape = star_reshape
         self.m_angles = angles
+        self.m_scales = scales
         self.m_im_shape = im_shape
         self.m_indices = indices
+        self.m_processing_type = processing_type
 
         self.m_requirements = [False, False, False, False]
 
@@ -417,6 +436,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                                                self.m_result_queue,
                                                self.m_star_reshape,
                                                self.m_angles,
+                                               self.m_scales,
                                                self.m_pca_model,
                                                self.m_im_shape,
                                                self.m_indices,

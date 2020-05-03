@@ -18,9 +18,10 @@ from typeguard import typechecked
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress
 from pynpoint.util.multipca import PcaMultiprocessingCapsule
-from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
-
+from pynpoint.util.ifs import sdi_scaling, scaling_calculation, \
+                              i_want_to_seperate_wavelengths
+from pynpoint.util.sdi import postprocessor
 
 class PcaPsfSubtractionModule(ProcessingModule):
     """
@@ -43,9 +44,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  res_rot_mean_clip_tag: Optional[str] = None,
                  res_arr_out_tag: Optional[str] = None,
                  basis_out_tag: Optional[str] = None,
-                 pca_numbers: Union[range, List[int], np.ndarray] = range(1, 21),
+                 pca_numbers: Union[range, 
+                                    List[int], 
+                                    np.ndarray, 
+                                    Tuple[range, range], 
+                                    Tuple[List[int], List[int]],
+                                    Tuple[np.ndarray, np.ndarray]] = range(1, 21),
                  extra_rot: float = 0.,
-                 subtract_mean: bool = True) -> None:
+                 subtract_mean: bool = True,
+                 processing_type: str = 'ADI') -> None:
         """
         Parameters
         ----------
@@ -80,7 +87,19 @@ class PcaPsfSubtractionModule(ProcessingModule):
             Additional rotation angle of the images (deg).
         subtract_mean : bool
             The mean of the science and reference images is subtracted from the corresponding
-            stack, before the PCA basis is constructed and fitted.
+            stack, before the PCA basis is constructed and fitted..
+        processing_type : str
+            Type of post processing:
+                ADI: Applying ADI with a PCA reduction using pca_number of principal
+                     components. Creates one final image.
+                SDI: Applying SDI with a PCA reduction using pca_number of principal
+                     components. Creates one image per wavelength.
+                ADI+SDI: First applies ADI with a PCA reduction using pca_number of principal
+                     components, then applies SDI with a PCA reduction using pca_number of
+                     prinzipal components. Creates one image per wavelength.
+                SDI+ADI: First applies SDI with a PCA reduction using pca_number of prinzipal
+                     components, then applies ADI with a PCA reduction using pca_number of
+                     prinzipal components. Creates one image per wavelength.
 
         Returns
         -------
@@ -89,10 +108,16 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
 
         super(PcaPsfSubtractionModule, self).__init__(name_in)
-
-        self.m_components = np.sort(np.atleast_1d(pca_numbers))
+        
+        if type(pca_numbers) is tuple:
+            self.m_components = (np.sort(np.atleast_1d(pca_numbers[0])),
+                                 np.sort(np.atleast_1d(pca_numbers[0])))
+        else:    
+            self.m_components = np.sort(np.atleast_1d(pca_numbers))
+            
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
+        self.m_processing_type = processing_type
 
         self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
 
@@ -122,11 +147,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if res_arr_out_tag is None:
             self.m_res_arr_out_ports = None
         else:
-            self.m_res_arr_out_ports = {}
-            for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag +
-                                                                            str(pca_number))
-
+            print(type(self.m_components))
+            if type(self.m_components) is tuple:
+                self.m_res_arr_out_ports = self.add_output_port(res_arr_out_tag)
+            else:
+                self.m_res_arr_out_ports = {}
+                for pca_number in self.m_components:
+                    self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag +
+                                                                                str(pca_number))
+            
         if basis_out_tag is None:
             self.m_basis_out_port = None
         else:
@@ -145,7 +174,19 @@ class PcaPsfSubtractionModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-        tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
+        pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
+        lam = self.m_star_in_port.get_attribute('WAVELENGTH')
+
+        if lam is None:
+            lam = np.ones_like(angles)
+
+        lllam = len(list(set(lam)))
+        scales = scaling_calculation(pixscale, lam)
+
+        if i_want_to_seperate_wavelengths(self.m_processing_type):
+            tmp_output = np.zeros((len(self.m_components)*lllam, im_shape[1], im_shape[2]))
+        else:
+            tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
 
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
@@ -190,16 +231,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
                                             deepcopy(self.m_pca),
                                             deepcopy(star_reshape),
                                             deepcopy(angles),
+                                            deepcopy(scales),
                                             im_shape,
-                                            indices)
+                                            indices,
+                                            self.m_processing_type)
 
         capsule.run()
 
     @typechecked
     def _run_single_processing(self,
                                star_reshape: np.ndarray,
-                               im_shape: Tuple[int, int, int],
-                               indices: np.ndarray) -> None:
+                               im_shape: tuple,
+                               indices: Union[np.ndarray, None]) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -207,49 +250,135 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         start_time = time.time()
 
-        for i, pca_number in enumerate(self.m_components):
-            progress(i, len(self.m_components), 'Creating residuals...', start_time)
+        # calculate parangs
+        parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-            parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+        # calculate scaling factors
+        pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
+        lam = self.m_star_in_port.get_attribute('WAVELENGTH')
+        if lam is None:
+            lam = [1]
+        scales = scaling_calculation(pixscale, lam)
 
-            residuals, res_rot = pca_psf_subtraction(images=star_reshape,
-                                                     angles=parang,
-                                                     pca_number=int(pca_number),
-                                                     pca_sklearn=self.m_pca,
-                                                     im_shape=im_shape,
-                                                     indices=indices)
+        # Set up the pca numbers for correct handling. The first number will be used for the first
+        # PCA step, the second for the subsequent one. If only one step is required, the second pca
+        # number list is kept empty.
+        if self.m_processing_type in ['Wsap', 'Tsap', 'Wasp', 'Tasp']:
+            if type(self.m_components) is not tuple:
+                raise ValueError('The selected processing type requires a tuple for pca_number.')
+            pca_first = self.m_components[0]
+            pca_secon = self.m_components[1]
 
-            hist = f'max PC number = {np.amax(self.m_components)}'
+        else:
+            if type(self.m_components) is tuple:
+                raise Warning('The selected processing type does not require a tuple for pca_number.' +
+                              'To prevent ambiguity, only the first entery of the tuple is used.')
+                pca_first = self.m_components[0]
+            else:
+                pca_first = self.m_components
 
-            # 1.) derotated residuals
-            if self.m_res_arr_out_ports is not None:
-                self.m_res_arr_out_ports[pca_number].set_all(res_rot)
-                self.m_res_arr_out_ports[pca_number].copy_attributes(self.m_star_in_port)
-                self.m_res_arr_out_ports[pca_number].add_history('PcaPsfSubtractionModule', hist)
+            # default value for second pca_number: unsused for all further purposes
+            pca_secon = [-1]
 
-            # 2.) mean residuals
-            if self.m_res_mean_out_port is not None:
-                stack = combine_residuals(method='mean', res_rot=res_rot)
-                self.m_res_mean_out_port.append(stack, data_dim=3)
+        # set up output arrays
+        if i_want_to_seperate_wavelengths(self.m_processing_type):
+            out_array_resi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-3], im_shape[-2], im_shape[-1]))
+            out_array_mean = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            out_array_medi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            out_array_weig = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            out_array_clip = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+        else:
+            out_array_resi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-3], im_shape[-2], im_shape[-1]))
+            out_array_mean = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            out_array_medi = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            out_array_weig = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            out_array_clip = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            
 
-            # 3.) median residuals
-            if self.m_res_median_out_port is not None:
-                stack = combine_residuals(method='median', res_rot=res_rot)
-                self.m_res_median_out_port.append(stack, data_dim=3)
+        # loop over all different combination of pca_numbers and applying the reductions
+        for i, pca_1 in enumerate(pca_first):
+            for j, pca_2 in enumerate(pca_secon):
+                progress(i+j, len(pca_first)+len(pca_secon), 'Creating residuals...', start_time)
 
-            # 4.) noise-weighted residuals
-            if self.m_res_weighted_out_port is not None:
-                stack = combine_residuals(method='weighted',
-                                          res_rot=res_rot,
-                                          residuals=residuals,
-                                          angles=parang)
+                # process images
+                residuals, res_rot = postprocessor(images=star_reshape,
+                                                   angles=parang,
+                                                   scales=scales,
+                                                   pca_number=(pca_1, pca_2),
+                                                   pca_sklearn=self.m_pca,
+                                                   im_shape=im_shape,
+                                                   indices=indices,
+                                                   processing_type=self.m_processing_type)
 
-                self.m_res_weighted_out_port.append(stack, data_dim=3)
+                # 1.) derotated residuals
+                if self.m_res_arr_out_ports is not None:
+                    out_array_resi[i, j] = res_rot
 
-            # 5.) clipped mean residuals
-            if self.m_res_rot_mean_clip_out_port is not None:
-                stack = combine_residuals(method='clipped', res_rot=res_rot)
-                self.m_res_rot_mean_clip_out_port.append(stack, data_dim=3)
+                # 2.) mean residuals
+                if self.m_res_mean_out_port is not None:
+                    out_array_mean[i, j] = combine_residuals(method='mean', 
+                                                             res_rot=res_rot,
+                                                             processing_type=self.m_processing_type)
+
+                # 3.) median residuals
+                if self.m_res_median_out_port is not None:
+                    out_array_medi[i, j] = combine_residuals(method='median', 
+                                                             res_rot=res_rot,
+                                                             processing_type=self.m_processing_type)
+
+                # 4.) noise-weighted residuals
+                if self.m_res_weighted_out_port is not None:
+                    out_array_weig[i, j] = combine_residuals(method='weighted',
+                                                             res_rot=res_rot,
+                                                             residuals=residuals,
+                                                             angles=parang,
+                                                             processing_type=self.m_processing_type)
+
+                # 5.) clipped mean residuals
+                if self.m_res_rot_mean_clip_out_port is not None:
+                    out_array_clip[i, j] = combine_residuals(method='clipped', 
+                                                             res_rot=res_rot,
+                                                             processing_type=self.m_processing_type)
+    
+        # Configurate data output. The arrays are squeezed becuase all dimensions which should not
+        # be output have length 1 and therefore can be removed by squeezing
+#        # 1.) derotated residuals
+#        if self.m_res_arr_out_ports is not None:
+#            if pca_secon[0] == -1:
+#                hist = f'max PC number = {pca_first}'
+#            else:
+#                hist = f'max PC number = {pca_first} / {pca_secon}'
+#            squeezed = np.squeeze(out_array_resi)
+#            
+#            if type(self.m_components) is tuple:
+#                self.m_res_arr_out_ports.set_all(squeezed, data_dim=squeezed.ndim)
+#                self.m_res_arr_out_ports.copy_attributes(self.m_star_in_port)
+#                self.m_res_arr_out_ports.add_history('PcaPsfSubtractionModule', hist)
+#            else:
+#                for p, pca in enumerate(self.m_components):
+#                    self.m_res_arr_out_ports[pca].append(squeezed[p])
+#                    self.m_res_arr_out_ports[pca].add_history('PcaPsfSubtractionModule', hist)
+            
+
+        # 2.) mean residuals
+        if self.m_res_mean_out_port is not None:
+            squeezed = np.squeeze(out_array_mean)
+            self.m_res_mean_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+
+        # 3.) median residuals
+        if self.m_res_median_out_port is not None:
+            squeezed = np.squeeze(out_array_medi)
+            self.m_res_median_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+
+        # 4.) noise-weighted residuals
+        if self.m_res_weighted_out_port is not None:
+            squeezed = np.squeeze(out_array_weig)
+            self.m_res_weighted_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+
+        # 5.) clipped mean residuals
+        if self.m_res_rot_mean_clip_out_port is not None:
+            squeezed = np.squeeze(out_array_clip)
+            self.m_res_rot_mean_clip_out_port.set_all(squeezed, data_dim=squeezed.ndim)
 
     @typechecked
     def run(self) -> None:
@@ -271,69 +400,113 @@ class PcaPsfSubtractionModule(ProcessingModule):
             warnings.warn(f'Multiprocessing not possible if \'res_arr_out_tag\' is not set '
                           f'to None.')
 
+        # Parse processing_type input to postporcesser support
+        valid_pt = ['ADI', 'SDI', 'ADI+SDI', 'SDI+ADI', 'Oadi',
+                    'Tnan', 'Wnan', 'Tadi', 'Wadi', 'Tsdi', 'Wsdi',
+                    'Tsaa', 'Wsaa', 'Tsap', 'Tsap', 'Tasp', 'Wasp']
+        
+        # Check if a valid processing type was selected
+        if self.m_processing_type not in valid_pt:
+            er_msg = ("Invalid processing type " + self.m_processing_type + "; needs to be one of the following: "
+                      + str(valid_pt))
+            raise ValueError(er_msg)
+            
+        if self.m_processing_type == 'ADI':
+            self.m_processing_type = 'Oadi'
+        if self.m_processing_type == 'SDI':
+            self.m_processing_type = 'Wsdi'
+        if self.m_processing_type == 'ADI+SDI':
+            self.m_processing_type = 'Wasp'
+        if self.m_processing_type == 'SDI+ADI':
+            self.m_processing_type = 'Wsap'
+
         # get all data
         star_data = self.m_star_in_port.get_all()
         im_shape = star_data.shape
-
-        # select the first image and get the unmasked image indices
-        im_star = star_data[0, ].reshape(-1)
-        indices = np.where(im_star != 0.)[0]
-
-        # reshape the star data and select the unmasked pixels
-        star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
-        star_reshape = star_reshape[:, indices]
-
-        if self.m_reference_in_port.tag == self.m_star_in_port.tag:
-            ref_reshape = deepcopy(star_reshape)
-
+        
+        # Check if the data of images_in_tags has the required dimensionallity
+        if self.m_processing_type == 'Oadi':
+            if star_data.ndim != 3:
+                raise ValueError('The dimension of the images_in_tags data should be 3')
         else:
-            ref_data = self.m_reference_in_port.get_all()
-            ref_shape = ref_data.shape
+            if star_data.ndim != 4:
+                raise ValueError('The dimension of the images_in_tags data should be 4')
+            if self.m_star_in_port.get_attribute('WAVELENGTH') is None:
+                raise ValueError('The Wavelength information of the images_in_tag is required but was not found.')
+        
+        if self.m_processing_type is 'Oadi':
+            # select the first image and get the unmasked image indices
+            im_star = star_data[0, ].reshape(-1)
+            indices = np.where(im_star != 0.)[0]
 
-            if ref_shape[-2:] != im_shape[-2:]:
-                raise ValueError('The image size of the science data and the reference data '
-                                 'should be identical.')
+            # reshape the star data and select the unmasked pixels
+            star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
+            star_reshape = star_reshape[:, indices]
 
-            # reshape reference data and select the unmasked pixels
-            ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
-            ref_reshape = ref_reshape[:, indices]
+            if self.m_reference_in_port.tag == self.m_star_in_port.tag:
+                ref_reshape = deepcopy(star_reshape)
 
-        # subtract mean from science data, if required
-        if self.m_subtract_mean:
-            mean_star = np.mean(star_reshape, axis=0)
-            star_reshape -= mean_star
+            else:
+                ref_data = self.m_reference_in_port.get_all()
+                ref_shape = ref_data.shape
+    
+                if ref_shape[-2:] != im_shape[-2:]:
+                    raise ValueError('The image size of the science data and the reference data '
+                                     'should be identical.')
+    
+                # reshape reference data and select the unmasked pixels
+                ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
+                ref_reshape = ref_reshape[:, indices]
 
-        # subtract mean from reference data
-        mean_ref = np.mean(ref_reshape, axis=0)
-        ref_reshape -= mean_ref
+            # subtract mean from science data, if required
+            if self.m_subtract_mean:
+                mean_star = np.mean(star_reshape, axis=0)
+                star_reshape -= mean_star
 
-        # create the PCA basis
-        print('Constructing PSF model...', end='')
-        self.m_pca.fit(ref_reshape)
+            # subtract mean from reference data
+            mean_ref = np.mean(ref_reshape, axis=0)
+            ref_reshape -= mean_ref
+            
+            # create the PCA basis
+            print('Constructing PSF model...', end='')
+            self.m_pca.fit(ref_reshape)
+    
+            # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
+            if not self.m_subtract_mean:
+                mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
+    
+                q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
+                                                     self.m_pca.components_[:-1, ])).T)
+    
+                self.m_pca.components_ = q_ortho.T
+                
+            print(' [DONE]')
+            
+            if self.m_basis_out_port is not None:
+                pc_size = self.m_pca.components_.shape[0]
+    
+                basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
+                basis[:, indices] = self.m_pca.components_
+                basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
+    
+                self.m_basis_out_port.set_all(basis)
+        
+        # This set up is used for SDI processes. No preparations are possible because SDI/ADI
+        # combinations are case specific and need to be conducted within the pca_psf_subtraction
+        # function.
+        else:
+            self.m_pca = None
+            indices = None
+            star_reshape = star_data
+            if self.m_basis_out_port is not None:
+                print('Calculating the  PCA basis of SDI processes is ambiguous and ' +
+                      'therefore is skipped.')
 
-        # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
-        if not self.m_subtract_mean:
-            mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
-
-            q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
-                                                 self.m_pca.components_[:-1, ])).T)
-
-            self.m_pca.components_ = q_ortho.T
-
-        print(' [DONE]')
-
-        if self.m_basis_out_port is not None:
-            pc_size = self.m_pca.components_.shape[0]
-
-            basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
-            basis[:, indices] = self.m_pca.components_
-            basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
-
-            self.m_basis_out_port.set_all(basis)
-
+        # Running a single processing PCA analysis 
         if cpu == 1 or self.m_res_arr_out_ports is not None:
             self._run_single_processing(star_reshape, im_shape, indices)
-
+            
+        # Running multiprocessed PCA analysis
         else:
             print('Creating residuals', end='')
             self._run_multi_processing(star_reshape, im_shape, indices)
