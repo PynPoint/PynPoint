@@ -120,19 +120,19 @@ class TestOutputPort:
         assert record[0].message.args[0] == 'OutputPort can not store data unless a database is ' \
                                             'connected.'
 
-        # ---- Test data dim of actual data for new data entry is < 1 or > 3
+        # ---- Test data dim of actual data for new data entry is < 1 or > 5
 
         out_port = self.create_output_port('new_data')
 
-        data = [[[[[2, 2], ], ], ], ]
+        data = [[[[[[2, 2], ], ], ], ]]
 
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=2)
 
-        assert str(error.value) == 'Output port can only save numpy arrays from 1D to 4D. Use ' \
+        assert str(error.value) == 'Output port can only save numpy arrays from 1D to 5D. Use ' \
                                    'Port attributes to save as int, float, or string.'
    
-        # ---- Test data dim of data_dim for new data entry is < 1 or > 3
+        # ---- Test data dim of data_dim for new data entry is < 1 or > 5
 
         out_port = self.create_output_port('new_data')
 
@@ -141,7 +141,7 @@ class TestOutputPort:
         with pytest.raises(ValueError) as error:
             out_port.set_all(data, data_dim=0)
 
-        assert str(error.value) == 'The data dimensions should be 1D, 2D, 3D, or 4D.'
+        assert str(error.value) == 'The data dimensions should be 1D, 2D, 3D, 4D, or 5D.'
 
         # ---- Test data_dim for new data entry is smaller than actual data
 

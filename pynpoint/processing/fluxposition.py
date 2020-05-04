@@ -875,7 +875,7 @@ class MCMCsamplingModule(ProcessingModule):
 
             if self.m_merit == 'gaussian':
                 print(f'Gaussian standard deviation (counts): {np.sqrt(var_noise):.2e}')
-            if self.m_merit == 'hessian':
+            elif self.m_merit == 'hessian':
                 print(f'Hessian standard deviation: {np.sqrt(var_noise):.2e}')
 
         initial = np.zeros((self.m_nwalkers, ndim))

@@ -7,5 +7,5 @@ Thank you for your contribution to the PynPoint repo! Before submitting this PR,
 - [ ] That all unit tests are finishing after running `make test` in your local repo folder. This requires the installation of `pytest` and `pytest-cov`.
 - [ ] To add unit tests in case there are new pipeline modules and/or functionalities added.
 - [ ] That only text files have been added and changed in the commits of the PR. Binary files will clutter up the repo because even after removing such files they will remain in the repo history.
-- [ ] To add and/or update the docstrings.
+- [ ] To add and/or update the docstrings (including the parameters, returns, types, and descriptions).
 - [ ] To add and/or update the typehints and typechecks.

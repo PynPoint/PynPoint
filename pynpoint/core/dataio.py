@@ -511,7 +511,7 @@ class InputPort(Port):
 
         Returns
         -------
-        numpy.ndarray
+        np.ndarray
             The full dataset. Returns None if the data does not exist.
         """
 
@@ -713,21 +713,21 @@ class OutputPort(Port):
         return status
 
     @typechecked
-    def _initialize_database(self,
-                             first_data: Union[np.ndarray, list],
-                             tag: str,
-                             data_dim: Optional[int] = None) -> None:
+    def _init_dataset(self,
+                      first_data: Union[np.ndarray, list],
+                      tag: str,
+                      data_dim: Optional[int] = None) -> None:
         """
-        Internal function which is used to initialize the HDF5 database.
+        Internal function which is used to initialize a dataset in the HDF5 database.
 
         Parameters
         ----------
-        first_data : numpy.ndarray
+        first_data : np.ndarray, list
             The initial data.
         tag : str
             Database tag.
-        data_dim : int
-            Number of dimensions. The dimensions of ``first_data`` is used if set to None.
+        data_dim : int, None
+            Number of dimensions. The dimensions of ``first_data`` is used if set to ``None``.
 
         Returns
         -------
@@ -739,12 +739,12 @@ class OutputPort(Port):
         def _ndim_check(data_dim: int,
                         first_dim: int) -> None:
 
-            if first_dim > 4 or first_dim < 1:
-                raise ValueError('Output port can only save numpy arrays from 1D to 4D. Use Port '
+            if first_dim > 5 or first_dim < 1:
+                raise ValueError('Output port can only save numpy arrays from 1D to 5D. Use Port '
                                  'attributes to save as int, float, or string.')
 
-            if data_dim > 4 or data_dim < 1:
-                raise ValueError('The data dimensions should be 1D, 2D, 3D, or 4D.')
+            if data_dim > 5 or data_dim < 1:
+                raise ValueError('The data dimensions should be 1D, 2D, 3D, 4D, or 5D.')
 
             if data_dim < first_dim:
                 raise ValueError('The dimensions of the data should be equal to or larger than the '
@@ -772,6 +772,10 @@ class OutputPort(Port):
 
             elif first_data.ndim == 4:  # 4D
                 data_shape = (first_data.shape[0], None, first_data.shape[2], first_data.shape[3])
+
+            elif first_data.ndim == 5:  # 5D
+                data_shape = (first_data.shape[0], first_data.shape[1], first_data.shape[2],
+                              first_data.shape[3], first_data.shape[4])
 
         else:
             if data_dim == 2:  # 1D -> 2D
@@ -812,7 +816,7 @@ class OutputPort(Port):
         ----------
         tag : str
             Database tag of the data that will be modified.
-        data : numpy.ndarray
+        data : np.ndarray
             The data that will be stored and replace any old data.
         data_dim : int
             Number of dimension of the data.
@@ -840,7 +844,7 @@ class OutputPort(Port):
             del self._m_data_storage.m_data_bank[tag]
 
         # make new database entry
-        self._initialize_database(data, tag, data_dim=data_dim)
+        self._init_dataset(data, tag, data_dim=data_dim)
 
         if keep_attributes:
             for key, value in tmp_attributes.items():
@@ -860,7 +864,7 @@ class OutputPort(Port):
         ----------
         tag : str
             Database tag of the data that will be modified.
-        data : numpy.ndarray
+        data : np.ndarray
             The data that will be stored and replace any old data.
         data_dim : int
             Number of dimension of the data.
@@ -876,7 +880,7 @@ class OutputPort(Port):
         # check if database entry is new...
         if tag not in self._m_data_storage.m_data_bank:
             # YES -> database entry is new
-            self._initialize_database(data, tag, data_dim=data_dim)
+            self._init_dataset(data, tag, data_dim=data_dim)
             return None
 
         # NO -> database entry exists
@@ -973,7 +977,7 @@ class OutputPort(Port):
         ----------
         key : slice
             Index slice to be changed.
-        value : numpy.ndarray
+        value : np.ndarray
             New data.
 
         Returns
@@ -1036,7 +1040,7 @@ class OutputPort(Port):
 
         Parameters
         ----------
-        data : numpy.ndarray
+        data : np.ndarray
             The data to be saved.
         data_dim : int
             Number of data dimensions. The dimension of the *first_data* is used if set to None.
@@ -1082,7 +1086,7 @@ class OutputPort(Port):
 
         Parameters
         ----------
-        data : numpy.ndarray
+        data : np.ndarray
             The data which will be appended.
         data_dim : int
             Number of data dimensions used if a new data set is created. The dimension of the

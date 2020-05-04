@@ -523,7 +523,7 @@ class Pypeline:
 
         Returns
         -------
-        numpy.ndarray
+        np.ndarray
             The selected dataset from the database.
         """
 
@@ -658,7 +658,7 @@ class Pypeline:
 
         Returns
         -------
-        numpy.ndarray
+        np.ndarray
             Database tags.
         """
 
