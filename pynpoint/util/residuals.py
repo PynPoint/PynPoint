@@ -69,7 +69,6 @@ def combine_residuals(method: str,
         else:
             output = np.asarray(wave_res)
         
-    print(method, output.shape)
     return output
 
 

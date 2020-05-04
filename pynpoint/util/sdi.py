@@ -142,8 +142,14 @@ def postprocessor(images: np.ndarray,
     # SDI and ADI simultaniously
     elif processing_type in ['Wsaa', 'Tsaa']:        
         im_scaled = np.zeros_like(images)
+        scales_flat = np.zeros((len(images)*len(images[0])))
+        angles_flat = np.zeros((len(images)*len(images[0])))
         for ii, _ in enumerate(images[0]):
-            im_scaled[:, ii] = sdi_scaling(images[:, ii], scales)
+            im_scaled[:, ii] = sdi_scaling(images[:, ii], scales)[0]
+            
+        for ii, angle_dim in enumerate(images):
+            angles_flat[ii*len(images[0]):(ii+1)*len(images[0])] = angles
+            scales_flat[ii*len(images[0]):(ii+1)*len(images[0])] = scales[ii]
 
         # alligne wavlength and parang on same axis as it is required for the
         # pca_psf_reduction.
@@ -152,8 +158,8 @@ def postprocessor(images: np.ndarray,
         
         # apply PCA PSF subtraction using the whole datacube at once
         res_raw_i, res_rot_i = pca_psf_subtraction(images=im_reshape*mask,
-                                               angles=angles,
-                                               scales=scales,
+                                               angles=angles_flat,
+                                               scales=scales_flat,
                                                pca_number=int(pca_number[0]),
                                                pca_sklearn=pca_sklearn,
                                                im_shape=im_shape,
