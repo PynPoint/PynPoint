@@ -17,6 +17,7 @@ from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                     TaskInput, MultiprocessingCapsule, to_slice
 from pynpoint.util.sdi import postprocessor
+from pynpoint.util.ifs import i_want_to_seperate_wavelengths
 from pynpoint.util.residuals import combine_residuals
 
 
@@ -30,7 +31,7 @@ class PcaTaskCreator(TaskCreator):
     def __init__(self,
                  tasks_queue_in: multiprocessing.JoinableQueue,
                  num_proc: int,
-                 pca_numbers: np.ndarray) -> None:
+                 pca_numbers: Union[np.ndarray, tuple]) -> None:
         """
         Parameters
         ----------
@@ -61,12 +62,19 @@ class PcaTaskCreator(TaskCreator):
         NoneType
             None
         """
-
-        for i, pca_number in enumerate(self.m_pca_numbers):
-            parameters = (((i, i+1, None), (None, None, None), (None, None, None)), )
-            self.m_task_queue.put(TaskInput(pca_number, parameters))
-
-        self.create_poison_pills()
+        if type(self.m_pca_numbers) is tuple:
+            for i, pca_first in enumerate(self.m_pca_numbers[0]):
+                for j, pca_secon in enumerate(self.m_pca_numbers[1]):
+                    parameters = (((i, i+1, None), (j, j+1, None), (None, None, None)), )
+                    self.m_task_queue.put(TaskInput(tuple((pca_first, pca_secon)), parameters))
+    
+            self.create_poison_pills()
+        else:
+            for i, pca_number in enumerate(self.m_pca_numbers):
+                parameters = (((i, i+1, None), (None, None, None), (None, None, None)), )
+                self.m_task_queue.put(TaskInput(pca_number, parameters))
+    
+            self.create_poison_pills()
 
 
 class PcaTaskProcessor(TaskProcessor):
@@ -90,9 +98,9 @@ class PcaTaskProcessor(TaskProcessor):
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
                  scales: np.ndarray,
-                 pca_model: PCA,
-                 im_shape: Tuple[int, int, int],
-                 indices: np.ndarray,
+                 pca_model: Union[PCA, None],
+                 im_shape: tuple,
+                 indices: Union[np.ndarray, None],
                  requirements: Tuple[bool, bool, bool, bool],
                  processing_type: str) -> None:
         """
@@ -152,33 +160,48 @@ class PcaTaskProcessor(TaskProcessor):
         pynpoint.util.multiproc.TaskResult
             Output residuals.
         """
-
+        
+        if type(tmp_task.m_input_data) is tuple:
+            pca_number = tmp_task.m_input_data
+        else:
+            pca_number = int(tmp_task.m_input_data)
+        
         residuals, res_rot = postprocessor(images=self.m_star_reshape,
                                                  angles=self.m_angles,
                                                  scales=self.m_scales,
-                                                 pca_number=int(tmp_task.m_input_data),
+                                                 pca_number=pca_number,
                                                  pca_sklearn=self.m_pca_model,
                                                  im_shape=self.m_im_shape,
                                                  indices=self.m_indices,
                                                  processing_type=self.m_processing_type)
-
-        res_output = np.zeros((4, res_rot.shape[1], res_rot.shape[2]))
+        
+        if i_want_to_seperate_wavelengths(self.m_processing_type):
+            res_output = np.zeros((4, len(self.m_star_reshape), res_rot.shape[-2], res_rot.shape[-1]))
+        else:
+            res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
 
         if self.m_requirements[0]:
-            res_output[0, ] = combine_residuals(method='mean', res_rot=res_rot)
+            res_output[0, ] = combine_residuals(method='mean', 
+                                                res_rot=res_rot,
+                                                processing_type=self.m_processing_type)
 
         if self.m_requirements[1]:
-            res_output[1, ] = combine_residuals(method='median', res_rot=res_rot)
+            res_output[1, ] = combine_residuals(method='median', 
+                                                res_rot=res_rot,
+                                                processing_type=self.m_processing_type)
 
         if self.m_requirements[2]:
             res_output[2, ] = combine_residuals(method='weighted',
                                                 res_rot=res_rot,
                                                 residuals=residuals,
                                                 angles=self.m_angles,
-                                                scales=self.m_scales)
+                                                scales=self.m_scales,
+                                                processing_type=self.m_processing_type)
 
         if self.m_requirements[3]:
-            res_output[3, ] = combine_residuals(method='clipped', res_rot=res_rot)
+            res_output[3, ] = combine_residuals(method='clipped', 
+                                                res_rot=res_rot,
+                                                processing_type=self.m_processing_type)
 
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -258,6 +281,10 @@ class PcaTaskWriter(TaskWriter):
 
             with self.m_data_mutex:
                 res_slice = to_slice(next_result.m_position)
+                res_slice = (next_result.m_position[0][0], next_result.m_position[1][0])
+                print('---------')
+                print(next_result.m_position)
+                print(res_slice)
 
                 if self.m_requirements[0]:
                     self.m_mean_out_port._check_status_and_activate()
@@ -294,13 +321,13 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  weighted_out_port: Optional[OutputPort],
                  clip_out_port: Optional[OutputPort],
                  num_proc: int,
-                 pca_numbers: np.ndarray,
-                 pca_model: PCA,
+                 pca_numbers: Union[tuple, np.ndarray],
+                 pca_model: Union[PCA, None],
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
                  scales: np.ndarray,
-                 im_shape: Tuple[int, int, int],
-                 indices: np.ndarray,
+                 im_shape: tuple,
+                 indices: Union[np.ndarray, None],
                  processing_type: str) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.
@@ -440,6 +467,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                                                self.m_pca_model,
                                                self.m_im_shape,
                                                self.m_indices,
-                                               self.m_requirements))
+                                               self.m_requirements,
+                                               self.m_processing_type))
 
         return processors

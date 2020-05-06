@@ -111,15 +111,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
         
         if type(pca_numbers) is tuple:
             self.m_components = (np.sort(np.atleast_1d(pca_numbers[0])),
-                                 np.sort(np.atleast_1d(pca_numbers[0])))
+                                 np.sort(np.atleast_1d(pca_numbers[1])))
         else:    
             self.m_components = np.sort(np.atleast_1d(pca_numbers))
+            self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
             
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
         self.m_processing_type = processing_type
 
-        self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
 
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
         self.m_star_in_port = self.add_input_port(images_in_tag)
@@ -147,7 +147,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if res_arr_out_tag is None:
             self.m_res_arr_out_ports = None
         else:
-            print(type(self.m_components))
             if type(self.m_components) is tuple:
                 self.m_res_arr_out_ports = self.add_output_port(res_arr_out_tag)
             else:
@@ -164,8 +163,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
     @typechecked
     def _run_multi_processing(self,
                               star_reshape: np.ndarray,
-                              im_shape: Tuple[int, int, int],
-                              indices: np.ndarray) -> None:
+                              im_shape: tuple,
+                              indices: Union[np.ndarray, None]) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
@@ -178,16 +177,39 @@ class PcaPsfSubtractionModule(ProcessingModule):
         lam = self.m_star_in_port.get_attribute('WAVELENGTH')
 
         if lam is None:
-            lam = np.ones_like(angles)
+            lam = [1]
 
-        lllam = len(list(set(lam)))
         scales = scaling_calculation(pixscale, lam)
+        
+        
+        # Set up the pca numbers for correct handling. The first number will be used for the first
+        # PCA step, the second for the subsequent one. If only one step is required, the second pca
+        # number list is kept empty.
+        if self.m_processing_type in ['Wsap', 'Tsap', 'Wasp', 'Tasp']:
+            if type(self.m_components) is not tuple:
+                raise ValueError('The selected processing type requires a tuple for pca_number.')
+            pca_first = self.m_components[0]
+            pca_secon = self.m_components[1]
 
-        if i_want_to_seperate_wavelengths(self.m_processing_type):
-            tmp_output = np.zeros((len(self.m_components)*lllam, im_shape[1], im_shape[2]))
         else:
-            tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
+            if type(self.m_components) is tuple:
+                raise Warning('The selected processing type does not require a tuple for pca_number.' +
+                              'To prevent ambiguity, only the first entery of the tuple is used.')
+                pca_first = self.m_components[0]
+            else:
+                pca_first = self.m_components
 
+            # default value for second pca_number: unsused for all further purposes
+            pca_secon = [-1]
+
+        if self.m_processing_type is 'Oadi':
+            tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
+        else:
+            if i_want_to_seperate_wavelengths(self.m_processing_type):
+                tmp_output = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            else:
+                tmp_output = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
 
@@ -282,13 +304,13 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # set up output arrays
         if i_want_to_seperate_wavelengths(self.m_processing_type):
-            out_array_resi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-3], im_shape[-2], im_shape[-1]))
+            out_array_resi = np.zeros(im_shape)
             out_array_mean = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
             out_array_medi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
             out_array_weig = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
             out_array_clip = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
         else:
-            out_array_resi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-3], im_shape[-2], im_shape[-1]))
+            out_array_resi = np.zeros(im_shape)
             out_array_mean = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
             out_array_medi = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
             out_array_weig = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
@@ -312,7 +334,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 # 1.) derotated residuals
                 if self.m_res_arr_out_ports is not None:
-                    out_array_resi[i, j] = res_rot
+                    if len(pca_first)+len(pca_secon) == 2:
+                        out_array_resi = residuals
+                    else:
+                        print('Residuals can only be printed if no more than 1 pca number for each ' +
+                              'reduction step is selected. With your pca numbers, no residuals are saved.')
 
                 # 2.) mean residuals
                 if self.m_res_mean_out_port is not None:
@@ -342,22 +368,22 @@ class PcaPsfSubtractionModule(ProcessingModule):
     
         # Configurate data output. The arrays are squeezed becuase all dimensions which should not
         # be output have length 1 and therefore can be removed by squeezing
-#        # 1.) derotated residuals
-#        if self.m_res_arr_out_ports is not None:
-#            if pca_secon[0] == -1:
-#                hist = f'max PC number = {pca_first}'
-#            else:
-#                hist = f'max PC number = {pca_first} / {pca_secon}'
-#            squeezed = np.squeeze(out_array_resi)
-#            
-#            if type(self.m_components) is tuple:
-#                self.m_res_arr_out_ports.set_all(squeezed, data_dim=squeezed.ndim)
-#                self.m_res_arr_out_ports.copy_attributes(self.m_star_in_port)
-#                self.m_res_arr_out_ports.add_history('PcaPsfSubtractionModule', hist)
-#            else:
-#                for p, pca in enumerate(self.m_components):
-#                    self.m_res_arr_out_ports[pca].append(squeezed[p])
-#                    self.m_res_arr_out_ports[pca].add_history('PcaPsfSubtractionModule', hist)
+        # 1.) derotated residuals
+        if self.m_res_arr_out_ports is not None and len(pca_first)+len(pca_secon) == 2:
+            if pca_secon[0] == -1:
+                hist = f'max PC number = {pca_first}'
+            else:
+                hist = f'max PC number = {pca_first} / {pca_secon}'
+            squeezed = np.squeeze(out_array_resi)
+            
+            if type(self.m_components) is tuple:
+                self.m_res_arr_out_ports.set_all(squeezed, data_dim=squeezed.ndim)
+                self.m_res_arr_out_ports.copy_attributes(self.m_star_in_port)
+                self.m_res_arr_out_ports.add_history('PcaPsfSubtractionModule', hist)
+            else:
+                for p, pca in enumerate(self.m_components):
+                    self.m_res_arr_out_ports[pca].append(squeezed[p])
+                    self.m_res_arr_out_ports[pca].add_history('PcaPsfSubtractionModule', hist)
             
 
         # 2.) mean residuals
@@ -403,7 +429,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # Parse processing_type input to postporcesser support
         valid_pt = ['ADI', 'SDI', 'ADI+SDI', 'SDI+ADI', 'Oadi',
                     'Tnan', 'Wnan', 'Tadi', 'Wadi', 'Tsdi', 'Wsdi',
-                    'Tsaa', 'Wsaa', 'Tsap', 'Tsap', 'Tasp', 'Wasp']
+                    'Tsaa', 'Wsaa', 'Tsap', 'Wsap', 'Tasp', 'Wasp']
         
         # Check if a valid processing type was selected
         if self.m_processing_type not in valid_pt:
@@ -511,8 +537,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
             print('Creating residuals', end='')
             self._run_multi_processing(star_reshape, im_shape, indices)
             print(' [DONE]')
-
-        history = f'max PC number = {np.amax(self.m_components)}'
+        
+        if type(self.m_components) is tuple:
+            history = f'max PC number = {np.amax(self.m_components[0])} / {np.amax(self.m_components[1])}'
+        else:
+            history = f'max PC number = {np.amax(self.m_components)}'
 
         # save history for all other ports
         if self.m_res_mean_out_port is not None:

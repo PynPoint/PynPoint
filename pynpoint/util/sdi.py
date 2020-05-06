@@ -98,9 +98,10 @@ def postprocessor(images: np.ndarray,
         res_raw = images
         for j, item in enumerate(angles):
             if images.ndim == 4:
-                res_rot[j, ] = rotate(images[:,j], item, reshape=False)
+                for k, ima in enumerate(images[:, j]):
+                    res_rot[k, j] = rotate(ima, item, reshape=False)
             else:
-                res_rot[j, ] = rotate(images[j], item, reshape=False)
+                res_rot[j] = rotate(images[j], item, reshape=False)
 
     # Wavelength specific adi
     elif processing_type in ['Oadi']:
@@ -141,23 +142,25 @@ def postprocessor(images: np.ndarray,
 
     # SDI and ADI simultaniously
     elif processing_type in ['Wsaa', 'Tsaa']:        
-        im_scaled = np.zeros_like(images)
+        im_scaled = np.zeros((im_shape[0]*im_shape[1], im_shape[2], im_shape[3]))
         scales_flat = np.zeros((len(images)*len(images[0])))
         angles_flat = np.zeros((len(images)*len(images[0])))
-        for ii, _ in enumerate(images[0]):
-            im_scaled[:, ii] = sdi_scaling(images[:, ii], scales)[0]
+        for ii, scale_im in enumerate(images[0]):
+            im_scaled[ii*len(images):(ii+1)*len(images)] = sdi_scaling(images[:, ii], scales)[0]
+            angles_flat[ii*len(images):(ii+1)*len(images)] = angles[ii]*np.ones_like(scales)
+            scales_flat[ii*len(images):(ii+1)*len(images)] = scales
             
-        for ii, angle_dim in enumerate(images):
-            angles_flat[ii*len(images[0]):(ii+1)*len(images[0])] = angles
-            scales_flat[ii*len(images[0]):(ii+1)*len(images[0])] = scales[ii]
+#        for ii, angle_dim in enumerate(images):
+#            angles_flat[ii*len(images[0]):(ii+1)*len(images[0])] = angles
+#            scales_flat[ii*len(images[0]):(ii+1)*len(images[0])] = scales[ii]*np.ones_like(angles)
 
         # alligne wavlength and parang on same axis as it is required for the
         # pca_psf_reduction.
         image_shape = images.shape
-        im_reshape = images.reshape(im_shape[0]*im_shape[1], im_shape[2], im_shape[3])
+#        im_reshape = images.reshape(im_shape[0]*im_shape[1], im_shape[2], im_shape[3])
         
         # apply PCA PSF subtraction using the whole datacube at once
-        res_raw_i, res_rot_i = pca_psf_subtraction(images=im_reshape*mask,
+        res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
                                                angles=angles_flat,
                                                scales=scales_flat,
                                                pca_number=int(pca_number[0]),

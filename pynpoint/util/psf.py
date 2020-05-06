@@ -125,7 +125,7 @@ def pca_psf_subtraction(images: np.ndarray,
         if residuals.shape[0] != angles.shape[0]:
             raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
                              f'number of parallactic angles ({angles.shape[0]}).')
-            
+
         for j, item in enumerate(angles):
             res_rot[j, ] = rotate(scal_cor[j, ], item, reshape=False)
 
