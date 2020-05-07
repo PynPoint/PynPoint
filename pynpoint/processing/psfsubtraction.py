@@ -19,9 +19,10 @@ from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import progress
 from pynpoint.util.multipca import PcaMultiprocessingCapsule
 from pynpoint.util.residuals import combine_residuals
-from pynpoint.util.ifs import sdi_scaling, scaling_calculation, \
+from pynpoint.util.ifs import scaling_calculation, \
                               i_want_to_seperate_wavelengths
 from pynpoint.util.sdi import postprocessor
+
 
 class PcaPsfSubtractionModule(ProcessingModule):
     """
@@ -44,10 +45,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
                  res_rot_mean_clip_tag: Optional[str] = None,
                  res_arr_out_tag: Optional[str] = None,
                  basis_out_tag: Optional[str] = None,
-                 pca_numbers: Union[range, 
-                                    List[int], 
-                                    np.ndarray, 
-                                    Tuple[range, range], 
+                 pca_numbers: Union[range,
+                                    List[int],
+                                    np.ndarray,
+                                    Tuple[range, range],
                                     Tuple[List[int], List[int]],
                                     Tuple[np.ndarray, np.ndarray]] = range(1, 21),
                  extra_rot: float = 0.,
@@ -80,9 +81,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
             that was used. Not calculated if set to None. Not supported with multiprocessing.
         basis_out_tag : str, None
             Tag of the database entry with the basis set. Not stored if set to None.
-        pca_numbers : range, list(int, ), numpy.ndarray
-            Number of principal components used for the PSF model. Can be a single value or a tuple
-            with integers.
+        pca_numbers : Union[range, List[int], np.ndarray,
+                            Tuple[range, range], Tuple[List[int], List[int]], Tuple[np.ndarray, np.ndarray]]
+            Number of principal components used for the PSF model. For ADI and SDI a single value or range is
+            sufficiant. For ADI+SDI and SDI+ADI a tuple is required.
         extra_rot : float
             Additional rotation angle of the images (deg).
         subtract_mean : bool
@@ -108,18 +110,17 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
 
         super(PcaPsfSubtractionModule, self).__init__(name_in)
-        
-        if type(pca_numbers) is tuple:
+
+        if isinstance(pca_numbers, tuple):
             self.m_components = (np.sort(np.atleast_1d(pca_numbers[0])),
                                  np.sort(np.atleast_1d(pca_numbers[1])))
-        else:    
+        else:
             self.m_components = np.sort(np.atleast_1d(pca_numbers))
             self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
-            
+
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
         self.m_processing_type = processing_type
-
 
         self.m_reference_in_port = self.add_input_port(reference_in_tag)
         self.m_star_in_port = self.add_input_port(images_in_tag)
@@ -147,14 +148,14 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if res_arr_out_tag is None:
             self.m_res_arr_out_ports = None
         else:
-            if type(self.m_components) is tuple:
+            if isinstance(self.m_components, tuple):
                 self.m_res_arr_out_ports = self.add_output_port(res_arr_out_tag)
             else:
                 self.m_res_arr_out_ports = {}
                 for pca_number in self.m_components:
                     self.m_res_arr_out_ports[pca_number] = self.add_output_port(res_arr_out_tag +
                                                                                 str(pca_number))
-            
+
         if basis_out_tag is None:
             self.m_basis_out_port = None
         else:
@@ -177,39 +178,46 @@ class PcaPsfSubtractionModule(ProcessingModule):
         lam = self.m_star_in_port.get_attribute('WAVELENGTH')
 
         if lam is None:
-            lam = [1]
+            lam = np.asarray([1])
 
         scales = scaling_calculation(pixscale, lam)
-        
-        
+
         # Set up the pca numbers for correct handling. The first number will be used for the first
         # PCA step, the second for the subsequent one. If only one step is required, the second pca
-        # number list is kept empty.
+        # number will be ignored.
         if self.m_processing_type in ['Wsap', 'Tsap', 'Wasp', 'Tasp']:
-            if type(self.m_components) is not tuple:
+            if not isinstance(self.m_components, tuple):
                 raise ValueError('The selected processing type requires a tuple for pca_number.')
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
 
         else:
-            if type(self.m_components) is tuple:
-                raise Warning('The selected processing type does not require a tuple for pca_number.' +
-                              'To prevent ambiguity, only the first entery of the tuple is used.')
+            if isinstance(self.m_components, tuple):
+                print('The selected processing type does not require a tuple for pca_number.' +
+                      'To prevent ambiguity, only the first entery of the tuple is used.')
                 pca_first = self.m_components[0]
+                self.m_components = self.m_components[0]
             else:
                 pca_first = self.m_components
 
-            # default value for second pca_number: unsused for all further purposes
+            # default value for second pca_number: unused for all further purposes
             pca_secon = [-1]
 
-        if self.m_processing_type is 'Oadi':
+        # prepare the output format depending on the processing type and pca_numbers selected
+        if self.m_processing_type == 'Oadi':
             tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
         else:
             if i_want_to_seperate_wavelengths(self.m_processing_type):
-                tmp_output = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+                if len(pca_first) + len(pca_secon) == 2:
+                    tmp_output = np.zeros((1, len(lam), im_shape[-2], im_shape[-1]))
+                else:
+                    tmp_output = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
             else:
-                tmp_output = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
-            
+                if len(pca_first) + len(pca_secon) == 2:
+                    tmp_output = np.zeros((1, im_shape[-2], im_shape[-1]))
+                else:
+                    tmp_output = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
 
@@ -279,27 +287,27 @@ class PcaPsfSubtractionModule(ProcessingModule):
         pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
         lam = self.m_star_in_port.get_attribute('WAVELENGTH')
         if lam is None:
-            lam = [1]
+            lam = np.asarray([1])
         scales = scaling_calculation(pixscale, lam)
 
         # Set up the pca numbers for correct handling. The first number will be used for the first
         # PCA step, the second for the subsequent one. If only one step is required, the second pca
-        # number list is kept empty.
+        # number will be ignored.
         if self.m_processing_type in ['Wsap', 'Tsap', 'Wasp', 'Tasp']:
-            if type(self.m_components) is not tuple:
+            if not isinstance(self.m_components, tuple):
                 raise ValueError('The selected processing type requires a tuple for pca_number.')
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
 
         else:
-            if type(self.m_components) is tuple:
-                raise Warning('The selected processing type does not require a tuple for pca_number.' +
-                              'To prevent ambiguity, only the first entery of the tuple is used.')
+            if isinstance(self.m_components, tuple):
+                print('The selected processing type does not require a tuple for pca_number.' +
+                      'To prevent ambiguity, only the first entery of the tuple is used.')
                 pca_first = self.m_components[0]
             else:
                 pca_first = self.m_components
 
-            # default value for second pca_number: unsused for all further purposes
+            # default value for second pca_number: unused for all further purposes
             pca_secon = [-1]
 
         # set up output arrays
@@ -315,7 +323,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
             out_array_medi = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
             out_array_weig = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
             out_array_clip = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
-            
 
         # loop over all different combination of pca_numbers and applying the reductions
         for i, pca_1 in enumerate(pca_first):
@@ -334,21 +341,27 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 # 1.) derotated residuals
                 if self.m_res_arr_out_ports is not None:
-                    if len(pca_first)+len(pca_secon) == 2:
-                        out_array_resi = residuals
+                    if self.m_processing_type == 'Oadi':
+                        hist = f'max PC number = {pca_first}'
+                        self.m_res_arr_out_ports[pca_1].set_all(res_rot)
+                        self.m_res_arr_out_ports[pca_1].copy_attributes(self.m_star_in_port)
+                        self.m_res_arr_out_ports[pca_1].add_history('PcaPsfSubtractionModule', hist)
                     else:
-                        print('Residuals can only be printed if no more than 1 pca number for each ' +
-                              'reduction step is selected. With your pca numbers, no residuals are saved.')
+                        if len(pca_first)+len(pca_secon) == 2:
+                            out_array_resi = residuals
+                        else:
+                            print('Residuals can only be printed if no more than 1 pca number for each ' +
+                                  'reduction step is selected. With your pca numbers, no residuals are saved.')
 
                 # 2.) mean residuals
                 if self.m_res_mean_out_port is not None:
-                    out_array_mean[i, j] = combine_residuals(method='mean', 
+                    out_array_mean[i, j] = combine_residuals(method='mean',
                                                              res_rot=res_rot,
                                                              processing_type=self.m_processing_type)
 
                 # 3.) median residuals
                 if self.m_res_median_out_port is not None:
-                    out_array_medi[i, j] = combine_residuals(method='median', 
+                    out_array_medi[i, j] = combine_residuals(method='median',
                                                              res_rot=res_rot,
                                                              processing_type=self.m_processing_type)
 
@@ -362,29 +375,27 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 # 5.) clipped mean residuals
                 if self.m_res_rot_mean_clip_out_port is not None:
-                    out_array_clip[i, j] = combine_residuals(method='clipped', 
+                    out_array_clip[i, j] = combine_residuals(method='clipped',
                                                              res_rot=res_rot,
                                                              processing_type=self.m_processing_type)
-    
-        # Configurate data output. The arrays are squeezed becuase all dimensions which should not
-        # be output have length 1 and therefore can be removed by squeezing
+
+        # Configurate data output according to the processing type
         # 1.) derotated residuals
-        if self.m_res_arr_out_ports is not None and len(pca_first)+len(pca_secon) == 2:
+        if self.m_res_arr_out_ports is not None and len(pca_first)+len(pca_secon) == 2 and self.m_processing_type != 'Oadi':
             if pca_secon[0] == -1:
                 hist = f'max PC number = {pca_first}'
             else:
                 hist = f'max PC number = {pca_first} / {pca_secon}'
             squeezed = np.squeeze(out_array_resi)
-            
-            if type(self.m_components) is tuple:
+
+            if isinstance(self.m_components, tuple):
                 self.m_res_arr_out_ports.set_all(squeezed, data_dim=squeezed.ndim)
                 self.m_res_arr_out_ports.copy_attributes(self.m_star_in_port)
                 self.m_res_arr_out_ports.add_history('PcaPsfSubtractionModule', hist)
             else:
-                for p, pca in enumerate(self.m_components):
-                    self.m_res_arr_out_ports[pca].append(squeezed[p])
+                for i, pca in enumerate(self.m_components):
+                    self.m_res_arr_out_ports[pca].append(squeezed[i])
                     self.m_res_arr_out_ports[pca].add_history('PcaPsfSubtractionModule', hist)
-            
 
         # 2.) mean residuals
         if self.m_res_mean_out_port is not None:
@@ -426,17 +437,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             warnings.warn(f'Multiprocessing not possible if \'res_arr_out_tag\' is not set '
                           f'to None.')
 
-        # Parse processing_type input to postporcesser support
+        # List of all input processing types and internal processing types
         valid_pt = ['ADI', 'SDI', 'ADI+SDI', 'SDI+ADI', 'Oadi',
                     'Tnan', 'Wnan', 'Tadi', 'Wadi', 'Tsdi', 'Wsdi',
                     'Tsaa', 'Wsaa', 'Tsap', 'Wsap', 'Tasp', 'Wasp']
-        
+
         # Check if a valid processing type was selected
         if self.m_processing_type not in valid_pt:
             er_msg = ("Invalid processing type " + self.m_processing_type + "; needs to be one of the following: "
                       + str(valid_pt))
             raise ValueError(er_msg)
-            
+
+        # Parse input processing types to internal processing types
         if self.m_processing_type == 'ADI':
             self.m_processing_type = 'Oadi'
         if self.m_processing_type == 'SDI':
@@ -449,7 +461,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # get all data
         star_data = self.m_star_in_port.get_all()
         im_shape = star_data.shape
-        
+
         # Check if the data of images_in_tags has the required dimensionallity
         if self.m_processing_type == 'Oadi':
             if star_data.ndim != 3:
@@ -459,8 +471,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 raise ValueError('The dimension of the images_in_tags data should be 4')
             if self.m_star_in_port.get_attribute('WAVELENGTH') is None:
                 raise ValueError('The Wavelength information of the images_in_tag is required but was not found.')
-        
-        if self.m_processing_type is 'Oadi':
+
+        if self.m_processing_type == 'Oadi':
             # select the first image and get the unmasked image indices
             im_star = star_data[0, ].reshape(-1)
             indices = np.where(im_star != 0.)[0]
@@ -475,11 +487,11 @@ class PcaPsfSubtractionModule(ProcessingModule):
             else:
                 ref_data = self.m_reference_in_port.get_all()
                 ref_shape = ref_data.shape
-    
+
                 if ref_shape[-2:] != im_shape[-2:]:
                     raise ValueError('The image size of the science data and the reference data '
                                      'should be identical.')
-    
+
                 # reshape reference data and select the unmasked pixels
                 ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
                 ref_reshape = ref_reshape[:, indices]
@@ -492,31 +504,31 @@ class PcaPsfSubtractionModule(ProcessingModule):
             # subtract mean from reference data
             mean_ref = np.mean(ref_reshape, axis=0)
             ref_reshape -= mean_ref
-            
+
             # create the PCA basis
             print('Constructing PSF model...', end='')
             self.m_pca.fit(ref_reshape)
-    
+
             # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
             if not self.m_subtract_mean:
                 mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
-    
+
                 q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
                                                      self.m_pca.components_[:-1, ])).T)
-    
+
                 self.m_pca.components_ = q_ortho.T
-                
+
             print(' [DONE]')
-            
+
             if self.m_basis_out_port is not None:
                 pc_size = self.m_pca.components_.shape[0]
-    
+
                 basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
                 basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
-    
+
                 self.m_basis_out_port.set_all(basis)
-        
+
         # This set up is used for SDI processes. No preparations are possible because SDI/ADI
         # combinations are case specific and need to be conducted within the pca_psf_subtraction
         # function.
@@ -528,17 +540,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 print('Calculating the  PCA basis of SDI processes is ambiguous and ' +
                       'therefore is skipped.')
 
-        # Running a single processing PCA analysis 
+        # Running a single processing PCA analysis
         if cpu == 1 or self.m_res_arr_out_ports is not None:
             self._run_single_processing(star_reshape, im_shape, indices)
-            
+
         # Running multiprocessed PCA analysis
         else:
             print('Creating residuals', end='')
             self._run_multi_processing(star_reshape, im_shape, indices)
             print(' [DONE]')
-        
-        if type(self.m_components) is tuple:
+
+        # write history
+        if isinstance(self.m_components, tuple):
             history = f'max PC number = {np.amax(self.m_components[0])} / {np.amax(self.m_components[1])}'
         else:
             history = f'max PC number = {np.amax(self.m_components)}'

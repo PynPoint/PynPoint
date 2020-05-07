@@ -5,13 +5,11 @@ Various function to support IFS reduction
 @author: Sven Kiefer
 """
 
-
 import numpy as np
 
 from typeguard import typechecked
 
 from pynpoint.util.image import scale_image
-
 
 
 @typechecked
@@ -43,18 +41,18 @@ def sdi_scaling(data_ns: np.ndarray,
     if not data_ns.shape[0] == scaling.shape[0]:
         raise ValueError('Data and lambda do not have the same length')
 
-    #prepare scaling
+    # prepare scaling
     frame_nr = len(data_ns[:, 0, 0])
     data = np.full_like(data_ns, 0)
     max_f1 = 0
     min_f2 = len(data_ns[0, :, 0])
 
-    #scale images
+    # scale images
     for i in range(frame_nr):
 
         swaps = scale_image(data_ns[i, :, :], scaling[i], scaling[i])
 
-        #Calculate assignemnd legnths (all frmaes are centerd after rescaling)
+        # Calculate assignemnd legnths (all frmaes are centerd after rescaling)
         side = len(swaps[0, :])
         siye = len(data[0, :, 0])
         f_1 = (side - siye)//2
@@ -62,7 +60,7 @@ def sdi_scaling(data_ns: np.ndarray,
 
         data[i] = swaps[f_1:f_2, f_1:f_2]
 
-        #Set lower and upper bound
+        # Set lower and upper bound
         if max_f1 < f_1:
             max_f1 = f_1
 
@@ -72,17 +70,13 @@ def sdi_scaling(data_ns: np.ndarray,
     return data, max_f1, min_f2
 
 
-
-
-
-
 @typechecked
 def scaling_calculation(pixscale: float,
                         lam: np.ndarray):
 
     """
-        Function to calculate the rescaling factors according to lambda. Currently only
-        works for SPHERE/IFS
+        Function to calculate the rescaling factors according to lambda.
+        Currently only works for SPHERE/IFS
 
         Parameters
         ----------
@@ -99,10 +93,6 @@ def scaling_calculation(pixscale: float,
     scaling = max(lam) / lam
 
     return scaling
-
-
-
-
 
 
 @typechecked

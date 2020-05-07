@@ -6,9 +6,10 @@ Created on Wed Nov 13 08:27:30 2019
 @author: kiefer
 """
 
+from typing import Union
+
 import numpy as np
 
-from typing import Union, Tuple
 from typeguard import typechecked
 from sklearn.decomposition import PCA
 from scipy.ndimage import rotate
@@ -28,7 +29,6 @@ def postprocessor(images: np.ndarray,
                   mask: np.ndarray = None,
                   processing_type: str = 'Oadi'):
 
-
     """
     Function to apply different kind of post processings. If processing_type = \'Cadi\'
     and mask = None, it is equivalent to pynpoint.util.psf.pca_psf_subtraction.
@@ -40,9 +40,8 @@ def postprocessor(images: np.ndarray,
     angles : numpy.ndarray
         Derotation angles (deg).
     scales : numpy.array
-        Additional scaling factor of the planet flux (e.g., to correct for a neutral density
-        filter). Should have a positive value.
-    pca_number : int
+        Scaling factors
+    pca_number : Union[int, np.int64, tuple]
         Number of principal components used for the PSF subtraction.
     pca_sklearn : sklearn.decomposition.pca.PCA, None
         PCA object with the basis if not set to None.
@@ -54,9 +53,10 @@ def postprocessor(images: np.ndarray,
         Mask (2D).
     processing_type : str
         Type of post processing. Currently supported:
-            Tnan: Applaying no PCA reduction and returning one wavelength avaraged image (Equivalent to Classical ADI)
+            Tnan: Applaying no PCA reduction and returning one wavelength avaraged image
             Wnan: Applaying no PCA reduction and returing one image per Wavelengths
-            Tadi: Applaying ADI and creturning one wavelength avaraged image (Equivalent to IRDIS SDI if all wavelengths are the same)
+            Oadi: Applaying ADI without using the wavelength informtation
+            Tadi: Applaying ADI and creturning one wavelength avaraged image
             Wadi: Applaying ADI and returing one image per Wavelengths
             Tsdi: Applaying SDI and returning one wavelength avaraged image
             Wsdi: Applaying SDI and returing one image per Wavelengths
@@ -66,7 +66,6 @@ def postprocessor(images: np.ndarray,
             Wsap: Applaying SDI then ADI and returing one image per Wavelengths
             Tasp: Applaying ADI then SDI and returning one wavelength avaraged image
             Wasp: Applaying ADI then SDI and returing one image per Wavelengths
-        Each reduction step uses pca_number PCA components to reduce the images.
 
     Returns
     -------
@@ -77,22 +76,22 @@ def postprocessor(images: np.ndarray,
 
     """
 
-    # set up pca_number and check if it has the right dimensions
-    if type(pca_number) is not tuple:
+    # set up pca_numbers and check if they have the right dimensions
+    if not isinstance(pca_number, tuple):
         pca_number = (pca_number, -1)
         if processing_type in ['Wsap', 'Tsap', 'Wasp', 'Tasp']:
             raise ValueError('The processing type ' + processing_type +
-                             'requires two pca numbers.')
+                             'requires a tuple of pca numbers.')
 
     # fall back to default mask if none is given
     if mask is None:
         mask = 1.
 
     # Set up output arrays
-    res_raw = np.zeros_like(images)
-    res_rot = np.zeros_like(images)
+    res_raw = np.zeros(images.shape)
+    res_rot = np.zeros(images.shape)
 
-    #----------------------------------------- List of different processing
+    # ----------------------------------------- List of different processing
     # No reduction
     if processing_type in ['Wnan', 'Tnan']:
         res_raw = images
@@ -103,7 +102,7 @@ def postprocessor(images: np.ndarray,
             else:
                 res_rot[j] = rotate(images[j], item, reshape=False)
 
-    # Wavelength specific adi
+    # Wavelength independendt adi
     elif processing_type in ['Oadi']:
         res_raw, res_rot = pca_psf_subtraction(images=images*mask,
                                                angles=angles,
@@ -115,66 +114,63 @@ def postprocessor(images: np.ndarray,
 
     # Wavelength specific adi
     elif processing_type in ['Wadi', 'Tadi']:
-        for ii, _ in enumerate(images):
-            res_raw_i, res_rot_i = pca_psf_subtraction(images=images[ii]*mask,
+        for i, _ in enumerate(images):
+            res_raw_i, res_rot_i = pca_psf_subtraction(images=images[i]*mask,
                                                        angles=angles,
                                                        scales=np.array([None]),
                                                        pca_number=int(pca_number[0]),
                                                        pca_sklearn=pca_sklearn,
                                                        im_shape=im_shape,
                                                        indices=indices)
-            res_raw[ii] = res_raw_i
-            res_rot[ii] = res_rot_i
+            res_raw[i] = res_raw_i
+            res_rot[i] = res_rot_i
 
-    # SDI for each time frame
+    # time specific sdi
     elif processing_type in ['Wsdi', 'Tsdi']:
-        for ii, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(images[:, ii], scales)
+        for i, _ in enumerate(images[0]):
+            im_scaled, _, _ = sdi_scaling(images[:, i], scales)
             res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
-                                                       angles=angles[ii]*np.ones_like(scales),
+                                                       angles=angles[i]*np.ones_like(scales),
                                                        scales=scales,
                                                        pca_number=int(pca_number[0]),
                                                        pca_sklearn=pca_sklearn,
                                                        im_shape=im_shape,
                                                        indices=indices)
-            res_raw[:, ii] = res_raw_i
-            res_rot[:, ii] = res_rot_i
+            res_raw[:, i] = res_raw_i
+            res_rot[:, i] = res_rot_i
 
     # SDI and ADI simultaniously
-    elif processing_type in ['Wsaa', 'Tsaa']:        
+    elif processing_type in ['Wsaa', 'Tsaa']:
         im_scaled = np.zeros((im_shape[0]*im_shape[1], im_shape[2], im_shape[3]))
         scales_flat = np.zeros((len(images)*len(images[0])))
         angles_flat = np.zeros((len(images)*len(images[0])))
-        for ii, scale_im in enumerate(images[0]):
-            im_scaled[ii*len(images):(ii+1)*len(images)] = sdi_scaling(images[:, ii], scales)[0]
-            angles_flat[ii*len(images):(ii+1)*len(images)] = angles[ii]*np.ones_like(scales)
-            scales_flat[ii*len(images):(ii+1)*len(images)] = scales
-            
-#        for ii, angle_dim in enumerate(images):
-#            angles_flat[ii*len(images[0]):(ii+1)*len(images[0])] = angles
-#            scales_flat[ii*len(images[0]):(ii+1)*len(images[0])] = scales[ii]*np.ones_like(angles)
 
-        # alligne wavlength and parang on same axis as it is required for the
-        # pca_psf_reduction.
-        image_shape = images.shape
-#        im_reshape = images.reshape(im_shape[0]*im_shape[1], im_shape[2], im_shape[3])
-        
+        # alligne data, wavlengths and parangs on one axis as it is required for the
+        # pca_psf_reduction function.
+        for i, _ in enumerate(images[0]):
+            im_scaled[i*len(images):(i+1)*len(images)] = sdi_scaling(images[:, i], scales)[0]
+            angles_flat[i*len(images):(i+1)*len(images)] = angles[i]*np.ones_like(scales)
+            scales_flat[i*len(images):(i+1)*len(images)] = scales
+
         # apply PCA PSF subtraction using the whole datacube at once
         res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
-                                               angles=angles_flat,
-                                               scales=scales_flat,
-                                               pca_number=int(pca_number[0]),
-                                               pca_sklearn=pca_sklearn,
-                                               im_shape=im_shape,
-                                               indices=indices)
+                                                   angles=angles_flat,
+                                                   scales=scales_flat,
+                                                   pca_number=int(pca_number[0]),
+                                                   pca_sklearn=pca_sklearn,
+                                                   im_shape=im_shape,
+                                                   indices=indices)
+
+        image_shape = images.shape
         res_raw = res_raw_i.reshape(image_shape)
         res_rot = res_rot_i.reshape(image_shape)
 
     # SDI then ADI
     elif processing_type in ['Wsap', 'Tsap']:
-        res_raw_int = np.zeros_like(res_raw)
-        for ii, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(images[:, ii], scales)
+        # SDI step
+        res_raw_int = np.zeros(res_raw.shape)
+        for i, _ in enumerate(images[0]):
+            im_scaled, _, _ = sdi_scaling(images[:, i], scales)
             res_raw_i, _ = pca_psf_subtraction(images=im_scaled*mask,
                                                angles=np.array([None]),
                                                scales=scales,
@@ -182,49 +178,50 @@ def postprocessor(images: np.ndarray,
                                                pca_sklearn=pca_sklearn,
                                                im_shape=im_shape,
                                                indices=indices)
-            res_raw_int[:, ii] = res_raw_i
+            res_raw_int[:, i] = res_raw_i
 
-        for jj, lam_j in enumerate(images):
-            res_raw_i, res_rot_i = pca_psf_subtraction(images=res_raw_int[jj]*mask,
+        # ADI step
+        for j, _ in enumerate(images):
+            res_raw_i, res_rot_i = pca_psf_subtraction(images=res_raw_int[j]*mask,
                                                        angles=angles,
                                                        scales=np.array([None]),
                                                        pca_number=int(pca_number[1]),
                                                        pca_sklearn=pca_sklearn,
                                                        im_shape=im_shape,
                                                        indices=indices)
-            res_raw[jj] = res_raw_i
-            res_rot[jj] = res_rot_i
+            res_raw[j] = res_raw_i
+            res_rot[j] = res_rot_i
 
     # ADI then SDI
     elif processing_type in ['Wasp', 'Tasp']:
-        res_raw_int = np.zeros_like(res_raw)
-        for jj, _ in enumerate(images):
-            res_raw_i, _ = pca_psf_subtraction(images=images[jj]*mask,
+        # ADI step
+        res_raw_int = np.zeros(res_raw.shape)
+        for j, _ in enumerate(images):
+            res_raw_i, _ = pca_psf_subtraction(images=images[j]*mask,
                                                angles=np.array([None]),
                                                scales=np.array([None]),
                                                pca_number=int(pca_number[0]),
                                                pca_sklearn=pca_sklearn,
                                                im_shape=im_shape,
                                                indices=indices)
-            res_raw_int[ii] = res_raw_i
+            res_raw_int[j] = res_raw_i
 
-        for ii, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(res_raw_int[:, ii], scales)
+        # SDI step
+        for i, _ in enumerate(images[0]):
+            im_scaled, _, _ = sdi_scaling(res_raw_int[:, i], scales)
             res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
-                                                       angles=angles[ii]*np.ones_like(scales),
+                                                       angles=angles[i]*np.ones_like(scales),
                                                        scales=scales,
                                                        pca_number=int(pca_number[1]),
                                                        pca_sklearn=pca_sklearn,
                                                        im_shape=im_shape,
                                                        indices=indices)
-            res_raw[:, ii] = res_raw_i
-            res_rot[:, ii] = res_rot_i
+            res_raw[:, i] = res_raw_i
+            res_rot[:, i] = res_rot_i
 
     else:
         # Error message if unknown processing type
-        st = 'Processing type ' + processing_type + ' is not supported'
-        raise ValueError(st)
-
-
+        error_msg = 'Processing type ' + processing_type + ' is not supported'
+        raise ValueError(error_msg)
 
     return res_raw, res_rot

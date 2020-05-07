@@ -62,18 +62,18 @@ class PcaTaskCreator(TaskCreator):
         NoneType
             None
         """
-        if type(self.m_pca_numbers) is tuple:
+        if isinstance(self.m_pca_numbers, tuple):
             for i, pca_first in enumerate(self.m_pca_numbers[0]):
                 for j, pca_secon in enumerate(self.m_pca_numbers[1]):
                     parameters = (((i, i+1, None), (j, j+1, None), (None, None, None)), )
                     self.m_task_queue.put(TaskInput(tuple((pca_first, pca_secon)), parameters))
-    
+
             self.create_poison_pills()
         else:
             for i, pca_number in enumerate(self.m_pca_numbers):
                 parameters = (((i, i+1, None), (None, None, None), (None, None, None)), )
                 self.m_task_queue.put(TaskInput(pca_number, parameters))
-    
+
             self.create_poison_pills()
 
 
@@ -160,33 +160,33 @@ class PcaTaskProcessor(TaskProcessor):
         pynpoint.util.multiproc.TaskResult
             Output residuals.
         """
-        
-        if type(tmp_task.m_input_data) is tuple:
+
+        if isinstance(tmp_task.m_input_data, tuple):
             pca_number = tmp_task.m_input_data
         else:
             pca_number = int(tmp_task.m_input_data)
-        
+
         residuals, res_rot = postprocessor(images=self.m_star_reshape,
-                                                 angles=self.m_angles,
-                                                 scales=self.m_scales,
-                                                 pca_number=pca_number,
-                                                 pca_sklearn=self.m_pca_model,
-                                                 im_shape=self.m_im_shape,
-                                                 indices=self.m_indices,
-                                                 processing_type=self.m_processing_type)
-        
+                                           angles=self.m_angles,
+                                           scales=self.m_scales,
+                                           pca_number=pca_number,
+                                           pca_sklearn=self.m_pca_model,
+                                           im_shape=self.m_im_shape,
+                                           indices=self.m_indices,
+                                           processing_type=self.m_processing_type)
+
         if i_want_to_seperate_wavelengths(self.m_processing_type):
             res_output = np.zeros((4, len(self.m_star_reshape), res_rot.shape[-2], res_rot.shape[-1]))
         else:
             res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
 
         if self.m_requirements[0]:
-            res_output[0, ] = combine_residuals(method='mean', 
+            res_output[0, ] = combine_residuals(method='mean',
                                                 res_rot=res_rot,
                                                 processing_type=self.m_processing_type)
 
         if self.m_requirements[1]:
-            res_output[1, ] = combine_residuals(method='median', 
+            res_output[1, ] = combine_residuals(method='median',
                                                 res_rot=res_rot,
                                                 processing_type=self.m_processing_type)
 
@@ -195,11 +195,10 @@ class PcaTaskProcessor(TaskProcessor):
                                                 res_rot=res_rot,
                                                 residuals=residuals,
                                                 angles=self.m_angles,
-                                                scales=self.m_scales,
                                                 processing_type=self.m_processing_type)
 
         if self.m_requirements[3]:
-            res_output[3, ] = combine_residuals(method='clipped', 
+            res_output[3, ] = combine_residuals(method='clipped',
                                                 res_rot=res_rot,
                                                 processing_type=self.m_processing_type)
 
@@ -281,29 +280,29 @@ class PcaTaskWriter(TaskWriter):
 
             with self.m_data_mutex:
                 res_slice = to_slice(next_result.m_position)
-                res_slice = (next_result.m_position[0][0], next_result.m_position[1][0])
-                print('---------')
-                print(next_result.m_position)
-                print(res_slice)
+                if next_result.m_position[1][0] is None:
+                    res_slice = (next_result.m_position[0][0])
+                else:
+                    res_slice = (next_result.m_position[0][0], next_result.m_position[1][0])
 
                 if self.m_requirements[0]:
                     self.m_mean_out_port._check_status_and_activate()
-                    self.m_mean_out_port[res_slice] = next_result.m_data_array[0, :, :]
+                    self.m_mean_out_port[res_slice] = np.squeeze(next_result.m_data_array[0])
                     self.m_mean_out_port.close_port()
 
                 if self.m_requirements[1]:
                     self.m_median_out_port._check_status_and_activate()
-                    self.m_median_out_port[res_slice] = next_result.m_data_array[1, :, :]
+                    self.m_median_out_port[res_slice] = np.squeeze(next_result.m_data_array[1])
                     self.m_median_out_port.close_port()
 
                 if self.m_requirements[2]:
                     self.m_weighted_out_port._check_status_and_activate()
-                    self.m_weighted_out_port[res_slice] = next_result.m_data_array[2, :, :]
+                    self.m_weighted_out_port[res_slice] = np.squeeze(next_result.m_data_array[2])
                     self.m_weighted_out_port.close_port()
 
                 if self.m_requirements[3]:
                     self.m_clip_out_port._check_status_and_activate()
-                    self.m_clip_out_port[res_slice] = next_result.m_data_array[3, :, :]
+                    self.m_clip_out_port[res_slice] = np.squeeze(next_result.m_data_array[3])
                     self.m_clip_out_port.close_port()
 
             self.m_result_queue.task_done()
