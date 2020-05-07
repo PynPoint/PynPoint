@@ -236,6 +236,75 @@ def create_fake(path: str,
 
 
 @typechecked
+def create_ifs_fake(path: str) -> None:
+    """
+    Create ADI or IFS test data with a fake planet.
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    npix = 30
+    fwhm = 3.
+
+    ndit = np.full(20, 6)
+    exp_no = np.linspace(1, 20, 20, dtype=int)
+
+    x0 = y0 = np.full(20, 15)
+
+    # TODO for Tomas: adjust to parang_start and parang_end, the values should be different
+    angles = [[i, i] for i in np.linspace(0., 100., 20)]
+
+    # 6 (Number of wavelengths) // 0.953 (Starting wavelength) // 0.019 (Delta Wavelength)
+    ifs_wav = [6, 0.953, 0.0190526315789474]
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    parang = []
+    for i, item in enumerate(angles):
+        for j in range(ndit[i]):
+            parang.append(item[0]+float(j)*(item[1]-item[0])/float(ndit[i]))
+
+    sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
+
+    x = y = np.arange(0., npix, 1.)
+    xx, yy = np.meshgrid(x, y)
+
+    np.random.seed(1)
+
+    count = 0
+    for j, item in enumerate(ndit):
+        image = np.zeros((item, npix, npix))
+
+        for i in range(ndit[j]):
+            noise = np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
+            image[i, :, :] = noise
+
+            sigma_c = sigma * (ifs_wav[1] + i * ifs_wav[2]) / ifs_wav[1]
+
+            star = (1./(2.*np.pi*sigma_c**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma_c**2))
+            image[i, :, :] += star
+
+            planet = 3e-3*(1./(2.*np.pi*sigma_c**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) / (2.*sigma_c**2))
+
+            x_shift = 10*math.cos(parang[count]*math.pi/180.)
+            y_shift = 10*math.sin(parang[count]*math.pi/180.)
+            planet = shift(planet, (x_shift, y_shift), order=5)
+            image[i, :] += planet
+
+        count += 1
+
+        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, int(ndit[j]), int(exp_no[j]),
+                    angles[j], x0[j]-npix/2., y0[j]-npix/2.)
+
+
+@typechecked
 def create_star_data(path: str,
                      npix_x: int = 100,
                      npix_y: int = 100,

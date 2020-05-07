@@ -31,8 +31,6 @@ def combine_residuals(method: str,
         residuals and stim.
     angles : numpy.ndarray, None
         Derotation angles (deg). Only required for the noise-weighted residuals and stim.
-    lam : numpy.ndarray
-        Wavelength information of res_rot. Must have same dimension
     processing_type : str
         type of processing, if 'W...' an image per wavelength is produced, if 'C...' one avareged
         image is created
@@ -43,7 +41,6 @@ def combine_residuals(method: str,
         Combined residuals (3D). Either an image per wavelength or one averaged image.
 
     """
-
     if res_rot.ndim == 3:
         output = _residuals(method=method,
                             res_rot=np.asarray(res_rot),
@@ -53,9 +50,15 @@ def combine_residuals(method: str,
     if res_rot.ndim == 4:
         wave_res = []
         for k, _ in enumerate(res_rot):
+            # residuals handling
+            if residuals is not None:
+                resi = residuals[k]
+            else:
+                resi = residuals
+                
             wave_res.append(_residuals(method=method,
                                        res_rot=res_rot[k],
-                                       residuals=residuals,
+                                       residuals=resi,
                                        angles=angles)[0])
 
         # if desiered create one final image

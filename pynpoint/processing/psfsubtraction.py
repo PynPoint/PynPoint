@@ -32,7 +32,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
     processes can be set with the CPU keyword in the configuration file.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = 'Markus Bonse, Tomas Stolker, Sven Kiefer'
 
     @typechecked
     def __init__(self,
@@ -357,12 +357,14 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 if self.m_res_mean_out_port is not None:
                     out_array_mean[i, j] = combine_residuals(method='mean',
                                                              res_rot=res_rot,
+                                                             angles=parang,
                                                              processing_type=self.m_processing_type)
 
                 # 3.) median residuals
                 if self.m_res_median_out_port is not None:
                     out_array_medi[i, j] = combine_residuals(method='median',
                                                              res_rot=res_rot,
+                                                             angles=parang,
                                                              processing_type=self.m_processing_type)
 
                 # 4.) noise-weighted residuals
@@ -377,6 +379,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 if self.m_res_rot_mean_clip_out_port is not None:
                     out_array_clip[i, j] = combine_residuals(method='clipped',
                                                              res_rot=res_rot,
+                                                             angles=parang,
                                                              processing_type=self.m_processing_type)
 
         # Configurate data output according to the processing type
