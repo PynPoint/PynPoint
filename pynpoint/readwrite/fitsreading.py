@@ -7,6 +7,8 @@ import time
 
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
+
 from astropy.io import fits
 from typeguard import typechecked
 
@@ -110,7 +112,9 @@ class FitsReadingModule(ReadingModule):
         """
 
         hdulist = fits.open(fits_file)
+
         images = hdulist[0].data.byteswap().newbyteorder()
+        images = np.nan_to_num(images)
 
         if images.ndim == 4 and not self.m_ifs_data:
             raise ValueError('The input data is 4D but ifs_data is set to False. Reading in 4D '
