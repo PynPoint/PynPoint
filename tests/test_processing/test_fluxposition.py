@@ -113,31 +113,31 @@ class TestFluxPosition:
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 1
 
-        module = AperturePhotometryModule(radius=0.1,
-                                          position=None,
-                                          name_in='photometry',
+        module = AperturePhotometryModule(name_in='photometry1',
                                           image_in_tag='read',
-                                          phot_out_tag='photometry')
+                                          phot_out_tag='photometry1',
+                                          radius=0.1,
+                                          position=None)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('photometry')
+        self.pipeline.run_module('photometry1')
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
 
-        module = AperturePhotometryModule(radius=0.1,
-                                          position=None,
-                                          name_in='photometry_multi',
+        module = AperturePhotometryModule(name_in='photometry_multi',
                                           image_in_tag='read',
-                                          phot_out_tag='photometry_multi')
+                                          phot_out_tag='photometry_multi',
+                                          radius=0.1,
+                                          position=None)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('photometry_multi')
 
-        data = self.pipeline.get_data('photometry')
+        data = self.pipeline.get_data('photometry1')
         assert np.allclose(data[0][0], 0.9853286992326858, rtol=limit, atol=0.)
         assert np.allclose(data[39][0], 0.9835251375574492, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.9836439188900222, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(data), 39.34575675560089, rtol=limit, atol=0.)
         assert data.shape == (40, 1)
 
         data_multi = self.pipeline.get_data('photometry_multi')
@@ -145,6 +145,23 @@ class TestFluxPosition:
 
         # Does not pass on Travis CI
         # assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+
+    def test_aperture_photometry_position(self) -> None:
+
+        module = AperturePhotometryModule(name_in='photometry2',
+                                          image_in_tag='read',
+                                          phot_out_tag='photometry2',
+                                          radius=0.1,
+                                          position=(10., 20.))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('photometry2')
+
+        data = self.pipeline.get_data('photometry2')
+        assert np.allclose(data[0][0], 0.00196930037508753, rtol=limit, atol=0.)
+        assert np.allclose(data[39][0], -0.00043932193134473924, rtol=limit, atol=0.)
+        assert np.allclose(np.sum(data), 0.005097664842298726, rtol=limit, atol=0.)
+        assert data.shape == (40, 1)
 
     def test_angle_interpolation(self) -> None:
 
