@@ -208,15 +208,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
             tmp_output = np.zeros((len(self.m_components), im_shape[1], im_shape[2]))
         else:
             if i_want_to_seperate_wavelengths(self.m_processing_type):
-                if len(pca_first) + len(pca_secon) == 2:
-                    tmp_output = np.zeros((1, len(lam), im_shape[-2], im_shape[-1]))
-                else:
+                if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
                     tmp_output = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
-            else:
-                if len(pca_first) + len(pca_secon) == 2:
-                    tmp_output = np.zeros((1, im_shape[-2], im_shape[-1]))
                 else:
+                    tmp_output = np.zeros((len(pca_first), len(lam), im_shape[-2], im_shape[-1]))
+            else:
+                if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
                     tmp_output = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+                else:
+                    tmp_output = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
 
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
@@ -311,18 +311,29 @@ class PcaPsfSubtractionModule(ProcessingModule):
             pca_secon = [-1]
 
         # set up output arrays
+        out_array_resi = np.zeros(im_shape)
         if i_want_to_seperate_wavelengths(self.m_processing_type):
-            out_array_resi = np.zeros(im_shape)
-            out_array_mean = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
-            out_array_medi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
-            out_array_weig = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
-            out_array_clip = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                out_array_mean = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_medi = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_weig = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_clip = np.zeros((len(pca_first), len(pca_secon), len(lam), im_shape[-2], im_shape[-1]))
+            else:
+                out_array_mean = np.zeros((len(pca_first), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_medi = np.zeros((len(pca_first), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_weig = np.zeros((len(pca_first), len(lam), im_shape[-2], im_shape[-1]))
+                out_array_clip = np.zeros((len(pca_first), len(lam), im_shape[-2], im_shape[-1]))
         else:
-            out_array_resi = np.zeros(im_shape)
-            out_array_mean = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
-            out_array_medi = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
-            out_array_weig = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
-            out_array_clip = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                out_array_mean = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+                out_array_medi = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+                out_array_weig = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+                out_array_clip = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
+            else:
+                out_array_mean = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
+                out_array_medi = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
+                out_array_weig = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
+                out_array_clip = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
 
         # loop over all different combination of pca_numbers and applying the reductions
         for i, pca_1 in enumerate(pca_first):
@@ -355,32 +366,57 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 # 2.) mean residuals
                 if self.m_res_mean_out_port is not None:
-                    out_array_mean[i, j] = combine_residuals(method='mean',
-                                                             res_rot=res_rot,
-                                                             angles=parang,
-                                                             processing_type=self.m_processing_type)
+                    if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                        out_array_mean[i, j] = combine_residuals(method='mean',
+                                                                 res_rot=res_rot,
+                                                                 angles=parang,
+                                                                 processing_type=self.m_processing_type)
+                    else:
+                        out_array_mean[i] = combine_residuals(method='mean',
+                                                              res_rot=res_rot,
+                                                              angles=parang,
+                                                              processing_type=self.m_processing_type)
 
                 # 3.) median residuals
                 if self.m_res_median_out_port is not None:
-                    out_array_medi[i, j] = combine_residuals(method='median',
-                                                             res_rot=res_rot,
-                                                             angles=parang,
-                                                             processing_type=self.m_processing_type)
+                    if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                        out_array_medi[i, j] = combine_residuals(method='median',
+                                                                 res_rot=res_rot,
+                                                                 angles=parang,
+                                                                 processing_type=self.m_processing_type)
+                    else:
+                        out_array_medi[i] = combine_residuals(method='median',
+                                                              res_rot=res_rot,
+                                                              angles=parang,
+                                                              processing_type=self.m_processing_type)
 
                 # 4.) noise-weighted residuals
                 if self.m_res_weighted_out_port is not None:
-                    out_array_weig[i, j] = combine_residuals(method='weighted',
-                                                             res_rot=res_rot,
-                                                             residuals=residuals,
-                                                             angles=parang,
-                                                             processing_type=self.m_processing_type)
+                    if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                        out_array_weig[i, j] = combine_residuals(method='weighted',
+                                                                 res_rot=res_rot,
+                                                                 residuals=residuals,
+                                                                 angles=parang,
+                                                                 processing_type=self.m_processing_type)
+                    else:
+                        out_array_weig[i] = combine_residuals(method='weighted',
+                                                              res_rot=res_rot,
+                                                              residuals=residuals,
+                                                              angles=parang,
+                                                              processing_type=self.m_processing_type)
 
                 # 5.) clipped mean residuals
                 if self.m_res_rot_mean_clip_out_port is not None:
-                    out_array_clip[i, j] = combine_residuals(method='clipped',
-                                                             res_rot=res_rot,
-                                                             angles=parang,
-                                                             processing_type=self.m_processing_type)
+                    if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
+                        out_array_clip[i, j] = combine_residuals(method='clipped',
+                                                                 res_rot=res_rot,
+                                                                 angles=parang,
+                                                                 processing_type=self.m_processing_type)
+                    else:
+                        out_array_clip[i] = combine_residuals(method='clipped',
+                                                              res_rot=res_rot,
+                                                              angles=parang,
+                                                              processing_type=self.m_processing_type)
 
         # Configurate data output according to the processing type
         # 1.) derotated residuals
@@ -402,23 +438,24 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # 2.) mean residuals
         if self.m_res_mean_out_port is not None:
-            squeezed = np.squeeze(out_array_mean)
-            self.m_res_mean_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+            self.m_res_mean_out_port.set_all(out_array_mean,
+                                             data_dim=out_array_mean.ndim)
 
         # 3.) median residuals
         if self.m_res_median_out_port is not None:
-            squeezed = np.squeeze(out_array_medi)
-            self.m_res_median_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+            self.m_res_median_out_port.set_all(out_array_medi,
+                                               data_dim=out_array_medi.ndim)
+            print(out_array_medi.ndim)
 
         # 4.) noise-weighted residuals
         if self.m_res_weighted_out_port is not None:
-            squeezed = np.squeeze(out_array_weig)
-            self.m_res_weighted_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+            self.m_res_weighted_out_port.set_all(out_array_weig,
+                                                 data_dim=out_array_weig.ndim)
 
         # 5.) clipped mean residuals
         if self.m_res_rot_mean_clip_out_port is not None:
-            squeezed = np.squeeze(out_array_clip)
-            self.m_res_rot_mean_clip_out_port.set_all(squeezed, data_dim=squeezed.ndim)
+            self.m_res_rot_mean_clip_out_port.set_all(out_array_clip,
+                                                      data_dim=out_array_clip.ndim)
 
     @typechecked
     def run(self) -> None:
@@ -451,19 +488,22 @@ class PcaPsfSubtractionModule(ProcessingModule):
                       + str(valid_pt))
             raise ValueError(er_msg)
 
+        # get all data
+        star_data = self.m_star_in_port.get_all()
+        im_shape = star_data.shape
+
         # Parse input processing types to internal processing types
         if self.m_processing_type == 'ADI':
-            self.m_processing_type = 'Oadi'
+            if star_data.ndim == 3:
+                self.m_processing_type = 'Oadi'
+            else:
+                self.m_processing_type = 'Wadi'
         if self.m_processing_type == 'SDI':
             self.m_processing_type = 'Wsdi'
         if self.m_processing_type == 'ADI+SDI':
             self.m_processing_type = 'Wasp'
         if self.m_processing_type == 'SDI+ADI':
             self.m_processing_type = 'Wsap'
-
-        # get all data
-        star_data = self.m_star_in_port.get_all()
-        im_shape = star_data.shape
 
         # Check if the data of images_in_tags has the required dimensionallity
         if self.m_processing_type == 'Oadi':
