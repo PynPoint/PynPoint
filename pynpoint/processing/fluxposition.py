@@ -1031,10 +1031,14 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_radius /= pixscale
 
         if self.m_position is None:
+            # Returns the center position as (y, x)
             self.m_position = center_subpixel(self.m_image_in_port[0, ])
 
+            # Store the center position as (x, y)
+            self.m_position = (self.m_position[1], self.m_position[0])
+
         # Position in CircularAperture is defined as (x, y)
-        aperture = CircularAperture((self.m_position[1], self.m_position[0]), self.m_radius)
+        aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
 
         self.apply_function_to_images(_photometry,
                                       self.m_image_in_port,
