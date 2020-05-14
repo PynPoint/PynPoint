@@ -10,11 +10,11 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from skimage.feature import register_translation
-from skimage.transform import rescale
+from astropy.modeling import models, fitting
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
-from astropy.modeling import models, fitting
+from skimage.registration import phase_cross_correlation
+from skimage.transform import rescale
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
@@ -108,17 +108,17 @@ class StarAlignmentModule(ProcessingModule):
 
             for i in range(self.m_num_references):
                 if self.m_subframe is None:
-                    tmp_offset, _, _ = register_translation(ref_images[i, :, :],
-                                                            image_in,
-                                                            upsample_factor=self.m_accuracy)
+                    tmp_offset, _, _ = phase_cross_correlation(ref_images[i, :, :],
+                                                               image_in,
+                                                               upsample_factor=self.m_accuracy)
 
                 else:
                     sub_in = crop_image(image_in, None, self.m_subframe)
                     sub_ref = crop_image(ref_images[i, :, :], None, self.m_subframe)
 
-                    tmp_offset, _, _ = register_translation(sub_ref,
-                                                            sub_in,
-                                                            upsample_factor=self.m_accuracy)
+                    tmp_offset, _, _ = phase_cross_correlation(sub_ref,
+                                                               sub_in,
+                                                               upsample_factor=self.m_accuracy)
                 offset += tmp_offset
 
             offset /= float(self.m_num_references)
