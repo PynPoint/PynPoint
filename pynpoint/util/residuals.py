@@ -63,10 +63,8 @@ def combine_residuals(method: str,
 
         # if desiered create one final image
         if not i_want_to_seperate_wavelengths(processing_type):
-            output = _residuals(method=method,
-                                res_rot=np.asarray(wave_res),
-                                residuals=residuals,
-                                angles=angles)
+            output = _residuals(method='median',
+                                res_rot=np.asarray(wave_res))
         else:
             output = np.asarray(wave_res)
 
