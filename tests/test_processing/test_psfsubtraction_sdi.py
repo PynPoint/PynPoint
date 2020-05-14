@@ -86,13 +86,15 @@ class TestPsfSubtractionSdi:
 
     def test_psf_subtraction_pca_sdi(self):
 
-        processing_types = ['SDI', 'SDI+ADI', 'ADI+SDI']
+        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI']
 
-        expected = [[2.1744099321374343e-08, -1.956821429551539e-07, -3.106340537276925e-07, 8.690272190373355e-08],
+        expected = [[-3.9661462067317356e-08, 9.813240333505746e-08, 6.920690625734549e-08, -3.792473707685877e-08],
+                    [2.1744099321374343e-08, -1.956821429551539e-07, -3.106340537276925e-07, 8.690272190373355e-08],
                     [-6.743135285330971e-08, -3.835617222375879e-07, 6.258907827506765e-07, -3.315712845815245e-08],
                     [-4.608125341486133e-08, -1.014224025773705e-07, -6.027023567648257e-07, -1.1293200783123714e-08]]
 
         shape_expc = [(2, 6, 30, 30),
+                      (2, 6, 30, 30),
                       (2, 2, 6, 30, 30),
                       (2, 2, 6, 30, 30)]
 
@@ -118,18 +120,22 @@ class TestPsfSubtractionSdi:
             data = self.pipeline.get_data('res_mean_single_sdi_' + p_type)
             assert np.allclose(np.mean(data), expected[i][0], rtol=limit, atol=0.)
             assert data.shape == shape_expc[i]
+            print(np.mean(data))
 
             data = self.pipeline.get_data('res_median_single_sdi_' + p_type)
             assert np.allclose(np.mean(data), expected[i][1], rtol=limit, atol=0.)
             assert data.shape == shape_expc[i]
+            print(np.mean(data))
 
             data = self.pipeline.get_data('res_weighted_single_sdi_' + p_type)
             assert np.allclose(np.mean(data), expected[i][2], rtol=limit, atol=0.)
             assert data.shape == shape_expc[i]
+            print(np.mean(data))
 
             data = self.pipeline.get_data('res_clip_single_sdi_' + p_type)
             assert np.allclose(np.mean(data), expected[i][3], rtol=limit, atol=0.)
             assert data.shape == shape_expc[i]
+            print(np.mean(data))
 
 #            # res array outs are not supported yet
 #            data = self.pipeline.get_data('res_arr_single_sdi_' + p_type)
@@ -140,3 +146,52 @@ class TestPsfSubtractionSdi:
 #            data = self.pipeline.get_data('basis_single_sdi_' + p_type)
 #            assert np.allclose(np.mean(data), expected[i][5], rtol=limit, atol=0.)
 #            assert data.shape == (5, 30, 30)
+
+    def test_multi_psf_subtraction_pca_sdi(self):
+
+        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI']
+
+        expected = [[-3.96614620673174e-08, 9.813240333503754e-08, 6.920690625734128e-08, -3.7924737076858164e-08],
+                    [2.1744099321366555e-08, -1.9568214295495464e-07, -3.1063405372801503e-07, 8.690272190365003e-08],
+                    [-6.743135285332267e-08, -3.835617222377436e-07, 6.258907828194748e-07, -3.315712845816095e-08],
+                    [-4.6081253414983635e-08, -1.0142240257765332e-07, -6.027023520146822e-07, -1.1293200783270142e-08]]
+
+        shape_expc = [(2, 6, 30, 30),
+                      (2, 6, 30, 30),
+                      (2, 2, 6, 30, 30),
+                      (2, 2, 6, 30, 30)]
+
+        # change sience to sience_prep after available
+        for i, p_type in enumerate(processing_types):
+            pca = PcaPsfSubtractionModule(pca_numbers=(range(1, 3), range(1, 3)),
+                                          name_in='pca_multi_sdi_' + p_type,
+                                          images_in_tag='science',
+                                          reference_in_tag='science',
+                                          res_mean_tag='res_mean_multi_sdi_' + p_type,
+                                          res_median_tag='res_median_multi_sdi_' + p_type,
+                                          res_weighted_tag='res_weighted_multi_sdi_' + p_type,
+                                          res_rot_mean_clip_tag='res_clip_multi_sdi_' + p_type,
+                                          res_arr_out_tag=None,
+                                          basis_out_tag=None,
+                                          extra_rot=-15.,
+                                          subtract_mean=True,
+                                          processing_type=p_type)
+
+            self.pipeline.add_module(pca)
+            self.pipeline.run_module('pca_multi_sdi_' + p_type)
+
+            data = self.pipeline.get_data('res_mean_multi_sdi_' + p_type)
+            assert np.allclose(np.mean(data), expected[i][0], rtol=limit, atol=0.)
+            assert data.shape == shape_expc[i]
+
+            data = self.pipeline.get_data('res_median_multi_sdi_' + p_type)
+            assert np.allclose(np.mean(data), expected[i][1], rtol=limit, atol=0.)
+            assert data.shape == shape_expc[i]
+
+            data = self.pipeline.get_data('res_weighted_multi_sdi_' + p_type)
+            assert np.allclose(np.mean(data), expected[i][2], rtol=limit, atol=0.)
+            assert data.shape == shape_expc[i]
+
+            data = self.pipeline.get_data('res_clip_multi_sdi_' + p_type)
+            assert np.allclose(np.mean(data), expected[i][3], rtol=limit, atol=0.)
+            assert data.shape == shape_expc[i]
