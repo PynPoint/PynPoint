@@ -11,7 +11,7 @@ from pynpoint.util.tests import create_config, create_ifs_fake, remove_test_data
 
 warnings.simplefilter('always')
 
-limit = 1e-10
+limit = 1e-5
 
 
 class TestPsfSubtractionSdi:
