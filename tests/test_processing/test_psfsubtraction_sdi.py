@@ -87,23 +87,29 @@ class TestPsfSubtractionSdi:
 
     def test_psf_subtraction_pca_sdi(self):
 
-        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI', 'Tnan']
+        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI', 'Tsaa']
 
         expected = [[-3.9661462067317356e-08, 9.813240333505746e-08, 6.920690625734549e-08, -3.792473707685877e-08],
                     [2.1744099321374343e-08, -1.956821429551539e-07, -3.106340537276925e-07, 8.690272190373355e-08],
                     [-6.743135285330971e-08, -3.835617222375879e-07, 6.258907827506765e-07, -3.315712845815245e-08],
                     [-4.608125341486133e-08, -1.014224025773705e-07, -6.027023567648257e-07, -1.1293200783123714e-08],
-                    [0.0011152669134962224, 0.0011030610345340278, 0.001114351549402792, 0.0011150859312946666]]
+                    [-5.472341323448938e-07, -2.0368478114120324e-06, -1.620138615639234e-07, -3.928677468945487e-07]]
 
         shape_expc = [(2, 6, 30, 30),
                       (2, 6, 30, 30),
                       (2, 2, 6, 30, 30),
                       (2, 2, 6, 30, 30),
-                      (2, 30, 30)]
+                      (1, 30, 30)]
+        
+        pca_numbers = [(range(1, 3), range(1, 3)),
+                       (range(1, 3), range(1, 3)),
+                       (range(1, 3), range(1, 3)),
+                       (range(1, 3), range(1, 3)),
+                       [1]]
 
         # change sience to sience_prep after available
         for i, p_type in enumerate(processing_types):
-            pca = PcaPsfSubtractionModule(pca_numbers=(range(1, 3), range(1, 3)),
+            pca = PcaPsfSubtractionModule(pca_numbers=pca_numbers[i],
                                           name_in='pca_single_sdi_' + p_type,
                                           images_in_tag='science',
                                           reference_in_tag='science',
@@ -135,29 +141,28 @@ class TestPsfSubtractionSdi:
             data = self.pipeline.get_data('res_clip_single_sdi_' + p_type)
             assert np.allclose(np.mean(data), expected[i][3], rtol=limit, atol=0.)
             assert data.shape == shape_expc[i]
+            
+            if p_type == 'Tsaa':
+                data = self.pipeline.get_data('res_arr_single_sdi_' + p_type + '1')
+                assert np.allclose(np.mean(data),1.4319083501977363e-06, rtol=limit, atol=0.)
+                assert data.shape == (20, 30, 30)
 
-#            # res array outs are not supported yet
-#            data = self.pipeline.get_data('res_arr_single_sdi_' + p_type)
-#            assert np.allclose(np.mean(data), expected[i][4], rtol=limit, atol=0.)
-#            assert data.shape == (120, 30, 30)
-
-#            # res basis outs are not supported yet
-#            data = self.pipeline.get_data('basis_single_sdi_' + p_type)
-#            assert np.allclose(np.mean(data), expected[i][5], rtol=limit, atol=0.)
-#            assert data.shape == (5, 30, 30)
+#                data = self.pipeline.get_data('basis_single_sdi_' + p_type)
+#                assert np.allclose(np.mean(data), expected[i][5], rtol=limit, atol=0.)
+#                assert data.shape == (5, 30, 30)
 
     def test_multi_psf_subtraction_pca_sdi(self):
         
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
             
-        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI', 'Tsaa']
+        processing_types = ['ADI', 'SDI', 'SDI+ADI', 'ADI+SDI', 'Tnan']
 
         expected = [[-3.96614620673174e-08, 9.813240333503754e-08, 6.920690625734128e-08, -3.7924737076858164e-08],
                     [2.1744099321366555e-08, -1.9568214295495464e-07, -3.1063405372801503e-07, 8.690272190365003e-08],
                     [-6.743135285332267e-08, -3.835617222377436e-07, 6.258907828194748e-07, -3.315712845816095e-08],
                     [-4.6081253414983635e-08, -1.0142240257765332e-07, -6.027023520146822e-07, -1.1293200783270142e-08],
-                    [-5.217859691120134e-07, -1.286673780273927e-06, -2.2755802755461952e-07, -4.698175472464411e-07]]
+                    [0.0011152669134962224, 0.0011030610345340278, 0.001114351549402792, 0.0011150859312946666]]
 
         shape_expc = [(2, 6, 30, 30),
                       (2, 6, 30, 30),
