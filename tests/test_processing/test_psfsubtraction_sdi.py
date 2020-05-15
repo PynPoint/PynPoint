@@ -46,7 +46,7 @@ class TestPsfSubtractionSdi:
                                     static=False)
 
         self.pipeline.set_attribute('science', 'PARANG',
-                                    tuple([i for i in np.linspace(0., 100., 20)]),
+                                    tuple([i for i in np.linspace(0., 100., 10)]),
                                     static=False)
 
 # The PSFpreparationModule does currently not support SDI
@@ -106,6 +106,21 @@ class TestPsfSubtractionSdi:
                        (range(1, 3), range(1, 3)),
                        (range(1, 3), range(1, 3)),
                        [1]]
+        
+        
+        processing_types = ['ADI', 'SDI+ADI', 'Tsaa']
+
+        expected = [[5.5244158736150073e-08, -3.892085139880991e-07, -8.12624165698584e-07, 3.850324378983753e-08],
+                    [-2.4088885146364674e-08, -1.6202057980072862e-07, -5.106228277062057e-07, -3.772431121370883e-08],
+                    [-4.612469664581462e-08, -1.4716306329639351e-06, -3.6780528183706394e-07, -4.612469664581486e-08]]
+
+        shape_expc = [(2, 6, 30, 30),
+                      (2, 2, 6, 30, 30),
+                      (1, 30, 30)]
+        
+        pca_numbers = [(range(1, 3), range(1, 3)),
+                       (range(1, 3), range(1, 3)),
+                       [1]]
 
         # change sience to sience_prep after available
         for i, p_type in enumerate(processing_types):
@@ -144,8 +159,8 @@ class TestPsfSubtractionSdi:
             
             if p_type == 'Tsaa':
                 data = self.pipeline.get_data('res_arr_single_sdi_' + p_type + '1')
-                assert np.allclose(np.mean(data),1.4319083501977363e-06, rtol=limit, atol=0.)
-                assert data.shape == (20, 30, 30)
+                assert np.allclose(np.mean(data),8.994101776941848e-07, rtol=limit, atol=0.)
+                assert data.shape == (10, 30, 30)
 
 #                data = self.pipeline.get_data('basis_single_sdi_' + p_type)
 #                assert np.allclose(np.mean(data), expected[i][5], rtol=limit, atol=0.)
@@ -168,6 +183,16 @@ class TestPsfSubtractionSdi:
                       (2, 6, 30, 30),
                       (2, 2, 6, 30, 30),
                       (2, 2, 6, 30, 30),
+                      (2, 30, 30)]
+        
+        processing_types = ['SDI', 'Tasp', 'Tnan']
+
+        expected = [[1.0608921728272943e-08, -2.1214914674705469e-07, -1.1167444221274486e-06, 6.610732512298102e-09],
+                    [2.1107129270565494e-07, -3.214247336073621e-11, 9.622357525155962e-08, 2.092483992124109e-07],
+                    [0.0011147593991561037, 0.0011012846214997752, 0.001107264743685533, 0.0011147858788599398]]
+
+        shape_expc = [(2, 6, 30, 30),
+                      (2, 2, 30, 30),
                       (2, 30, 30)]
 
         # change sience to sience_prep after available

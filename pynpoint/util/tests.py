@@ -252,13 +252,12 @@ def create_ifs_fake(path: str) -> None:
     npix = 30
     fwhm = 3.
 
-    ndit = np.full(20, 6)
-    exp_no = np.linspace(1, 20, 20, dtype=int)
+    ndit = np.full(10, 6)
+    exp_no = np.linspace(1, 10, 10, dtype=int)
 
     x0 = y0 = np.full(20, 15)
 
-    # TODO for Tomas: adjust to parang_start and parang_end, the values should be different
-    angles = [[i, i] for i in np.linspace(0., 100., 20)]
+    angles = [[i, i] for i in np.linspace(0., 100., 10)]
 
     # 6 (Number of wavelengths) // 0.953 (Starting wavelength) // 0.019 (Delta Wavelength)
     ifs_wav = [6, 0.953, 0.0190526315789474]
