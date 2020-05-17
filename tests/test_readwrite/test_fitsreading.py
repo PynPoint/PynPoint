@@ -219,8 +219,8 @@ class TestFitsReading:
                                    image_tag='files',
                                    overwrite=True,
                                    check=True,
-                                   filenames=['fits/images_0.fits',
-                                              'fits/images_2.fits'])
+                                   filenames=[f'{self.test_dir}fits/images_0.fits',
+                                              f'{self.test_dir}fits/images_2.fits'])
 
         self.pipeline.add_module(module)
 
