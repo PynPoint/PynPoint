@@ -203,6 +203,7 @@ class TestFitsReading:
             self.pipeline.run_module('read8')
 
         assert len(warning) == 2
+
         for item in warning:
             assert item.message.args[0] == 'Non-static attribute EXP_NO (=ESO DET EXP NO) not ' \
                                            'found in the FITS header.'
@@ -226,7 +227,7 @@ class TestFitsReading:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read9')
 
-        assert str(error.value) == 'The file fits/images_2.fits does not exist. ' \
+        assert str(error.value) == 'The file {self.test_dir}fits/images_2.fits does not exist. ' \
                                    'Please check that the path is correct.'
 
     def test_fits_read_textfile_exists(self) -> None:
