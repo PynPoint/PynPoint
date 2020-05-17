@@ -1,9 +1,9 @@
 import os
-import warnings
 
 from urllib.request import urlretrieve
 
 import h5py
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -12,18 +12,15 @@ from pynpoint.processing.limits import ContrastCurveModule, MassLimitsModule
 from pynpoint.processing.psfpreparation import AngleInterpolationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestLimits:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'limits')
+        create_star_data(self.test_dir+'self.limits', npix=21, pos_star=10.)
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -31,22 +28,21 @@ class TestLimits:
     def teardown_class(self) -> None:
 
         remove_test_data(path=self.test_dir,
-                         folders=['limits'],
+                         folders=['self.limits'],
                          files=['model.AMES-Cond-2000.M-0.0.NaCo.Vega'])
 
     def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read',
                                    image_tag='read',
-                                   input_dir=self.test_dir+'limits')
+                                   input_dir=self.test_dir+'self.limits')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.allclose(data[0, 10, 10], 0.00012958496246258364, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.012916896297398, rel=self.limit, abs=0.)
+        assert data.shape == (10, 21, 21)
 
     def test_angle_interpolation(self) -> None:
 
@@ -56,10 +52,9 @@ class TestLimits:
         self.pipeline.add_module(module)
         self.pipeline.run_module('angle')
 
-        data = self.pipeline.get_attribute('read', 'PARANG', static=False)
-        assert data[5] == 2.7777777777777777
-        assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        attr = self.pipeline.get_attribute('read', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(900., rel=self.limit, abs=0.)
+        assert attr.shape == (10, )
 
     def test_contrast_curve(self) -> None:
 
@@ -75,24 +70,24 @@ class TestLimits:
                                          image_in_tag='read',
                                          psf_in_tag='read',
                                          contrast_out_tag='limits_'+item,
-                                         separation=(0.5, 0.6, 0.1),
+                                         separation=(0.2, 0.3, 0.2),
                                          angle=(0., 360., 180.),
                                          threshold=('sigma', 5.),
                                          psf_scaling=1.,
-                                         aperture=0.1,
-                                         pca_number=15,
+                                         aperture=0.05,
+                                         pca_number=2,
                                          cent_size=None,
-                                         edge_size=None,
+                                         edge_size=1.,
                                          extra_rot=0.)
 
             self.pipeline.add_module(module)
             self.pipeline.run_module('contrast_'+item)
 
             data = self.pipeline.get_data('limits_'+item)
-            assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 1], 1.2034060712266164, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 2], 0.2594381985736874, rtol=limit, atol=0.)
-            assert np.allclose(data[0, 3], 0.00012147700290954244, rtol=limit, atol=0.)
+            assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
+            assert data[0, 1] == pytest.approx(6.732335026018635, rel=self.limit, abs=0.)
+            assert data[0, 2] == pytest.approx(1.710192043457814e-05, rel=self.limit, abs=0.)
+            assert data[0, 3] == pytest.approx(0.00026866680137822624, rel=self.limit, abs=0.)
             assert data.shape == (1, 4)
 
     def test_contrast_curve_fpf(self) -> None:
@@ -104,24 +99,24 @@ class TestLimits:
                                      image_in_tag='read',
                                      psf_in_tag='read',
                                      contrast_out_tag='limits_fpf',
-                                     separation=(0.5, 0.6, 0.1),
+                                     separation=(0.2, 0.3, 0.2),
                                      angle=(0., 360., 180.),
                                      threshold=('fpf', 1e-6),
                                      psf_scaling=1.,
-                                     aperture=0.1,
-                                     pca_number=15,
+                                     aperture=0.05,
+                                     pca_number=2,
                                      cent_size=None,
-                                     edge_size=None,
+                                     edge_size=1.,
                                      extra_rot=0.)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('contrast_fpf')
 
         data = self.pipeline.get_data('limits_fpf')
-        assert np.allclose(data[0, 0], 5.00000000e-01, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 1], 0.6820548720545829, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 2], 0.2594381985736874, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 3], 1e-6, rtol=limit, atol=0.)
+        assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(6.007026307350983, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(1.710192043457814e-05, rel=self.limit, abs=0.)
+        assert data[0, 3] == pytest.approx(1e-06, rel=self.limit, abs=0.)
         assert data.shape == (1, 4)
 
     def test_mass_limits(self) -> None:
@@ -156,8 +151,8 @@ class TestLimits:
         self.pipeline.run_module('mass')
 
         data = self.pipeline.get_data('mass_limits')
-        assert np.allclose(np.mean(data[:, 0]), 0.55, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 1]), 0.001891690765603738, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 2]), 0.000964309686441908, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data[:, 3]), -0.000696402843279597, rtol=limit, atol=0.)
+        assert np.mean(data[:, 0]) == pytest.approx(0.55, rel=self.limit, abs=0.)
+        assert np.mean(data[:, 1]) == pytest.approx(0.001891690765603738, rel=self.limit, abs=0.)
+        assert np.mean(data[:, 2]) == pytest.approx(0.000964309686441908, rel=self.limit, abs=0.)
+        assert np.mean(data[:, 3]) == pytest.approx(-0.000696402843279597, rel=self.limit, abs=0.)
         assert data.shape == (10, 4)

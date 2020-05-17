@@ -132,7 +132,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                   parang: Optional[np.ndarray],
                   cube_mean: np.ndarray) -> Tuple[np.array, Optional[np.ndarray], np.ndarray,
                                                   np.ndarray, Optional[np.ndarray], np.ndarray]:
-    
+
         @typechecked
         def _initialize() -> Tuple[np.array, Optional[np.ndarray], np.ndarray, np.ndarray,
                                    Optional[np.ndarray], np.ndarray]:

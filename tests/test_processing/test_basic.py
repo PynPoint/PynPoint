@@ -1,6 +1,6 @@
 import os
-import warnings
 
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -9,43 +9,17 @@ from pynpoint.processing.basic import SubtractImagesModule, AddImagesModule, Rot
                                       RepeatImagesModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestBasic:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'data1',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
-
-        create_star_data(path=self.test_dir+'data2',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
-
-        create_star_data(path=self.test_dir+'data3',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[50, 50, 50, 50],
-                         y0=[50, 50, 50, 50],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
+        create_star_data(self.test_dir+'data1')
+        create_star_data(self.test_dir+'data2')
+        create_star_data(self.test_dir+'data3')
 
         create_config(self.test_dir+'PynPoint_config.ini')
 
@@ -86,19 +60,16 @@ class TestBasic:
         self.pipeline.run_module('read3')
 
         data = self.pipeline.get_data('data1')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('data2')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('data3')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_subtract_images(self) -> None:
 
@@ -111,9 +82,8 @@ class TestBasic:
         self.pipeline.run_module('subtract')
 
         data = self.pipeline.get_data('subtract')
-        assert np.allclose(data[0, 50, 50], 0.0, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(0., rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_add_images(self) -> None:
 
@@ -126,9 +96,8 @@ class TestBasic:
         self.pipeline.run_module('add')
 
         data = self.pipeline.get_data('add')
-        assert np.allclose(data[0, 50, 50], 0.19596827004387407, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00020058989563476133, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(20.013877389807828, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_rotate_images(self) -> None:
 
@@ -141,28 +110,24 @@ class TestBasic:
         self.pipeline.run_module('rotate')
 
         data = self.pipeline.get_data('rotate')
-        assert np.allclose(data[0, 50, 50], 0.09746600632363736, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010030089755226848, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.004703952129002, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_repeat_images(self) -> None:
 
         module = RepeatImagesModule(name_in='repeat',
                                     image_in_tag='data1',
                                     image_out_tag='repeat',
-                                    repeat=5)
+                                    repeat=2)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('repeat')
 
         data1 = self.pipeline.get_data('data1')
-        assert data1.shape == (40, 100, 100)
+        assert data1.shape == (10, 11, 11)
 
         data2 = self.pipeline.get_data('repeat')
-        assert data2.shape == (200, 100, 100)
+        assert data2.shape == (20, 11, 11)
 
-        assert np.allclose(data1, data2[0:40], rtol=limit, atol=0.)
-        assert np.allclose(data1, data2[40:80], rtol=limit, atol=0.)
-        assert np.allclose(data1, data2[80:120], rtol=limit, atol=0.)
-        assert np.allclose(data1, data2[120:160], rtol=limit, atol=0.)
-        assert np.allclose(data1, data2[160:200], rtol=limit, atol=0.)
+        assert data1 == pytest.approx(data2[0:10, ], rel=self.limit, abs=0.)
+        assert data1 == pytest.approx(data2[10:20, ], rel=self.limit, abs=0.)

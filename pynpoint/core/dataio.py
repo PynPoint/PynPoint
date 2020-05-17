@@ -436,7 +436,8 @@ class InputPort(Port):
 
     @typechecked
     def __getitem__(self,
-                    item: Union[slice, int, tuple]) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
+                    item: Union[slice, int, tuple]) -> Optional[Union[StaticAttribute,
+                                                                      NonStaticAttribute]]:
         """
         Internal function which handles the data access using slicing. See class documentation for a
         example (:class:`~pynpoint.core.dataio.InputPort`). None if the data does not exist.

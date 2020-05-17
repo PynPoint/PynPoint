@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -10,18 +9,15 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
-warnings.simplefilter('always')
 
-limit = 1e-10
-
-
-class TestFitsReadingModule:
+class TestFitsReading:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'fits')
+        create_star_data(self.test_dir+'fits')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -42,9 +38,8 @@ class TestFitsReadingModule:
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('input')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_fits_reading_overwrite(self) -> None:
 
@@ -58,9 +53,8 @@ class TestFitsReadingModule:
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('input')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_static_not_found(self) -> None:
 
@@ -77,7 +71,8 @@ class TestFitsReadingModule:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read3')
 
-        assert len(warning) == 4
+        assert len(warning) == 2
+
         for item in warning:
             assert item.message.args[0] == 'Static attribute DIT (=Test) not found in the FITS ' \
                                            'header.'
@@ -86,25 +81,15 @@ class TestFitsReadingModule:
 
     def test_static_changing(self) -> None:
 
-        with fits.open(self.test_dir+'fits/image01.fits') as hdu:
+        with fits.open(self.test_dir+'fits/images_0.fits') as hdu:
             header = hdu[0].header
             header['HIERARCH ESO DET DIT'] = 0.1
-            hdu.writeto(self.test_dir+'fits/image01.fits', overwrite=True)
+            hdu.writeto(self.test_dir+'fits/images_0.fits', overwrite=True)
 
-        with fits.open(self.test_dir+'fits/image02.fits') as hdu:
-            header = hdu[0].header
-            header['HIERARCH ESO DET DIT'] = 0.1
-            hdu.writeto(self.test_dir+'fits/image02.fits', overwrite=True)
-
-        with fits.open(self.test_dir+'fits/image03.fits') as hdu:
+        with fits.open(self.test_dir+'fits/images_1.fits') as hdu:
             header = hdu[0].header
             header['HIERARCH ESO DET DIT'] = 0.2
-            hdu.writeto(self.test_dir+'fits/image03.fits', overwrite=True)
-
-        with fits.open(self.test_dir+'fits/image04.fits') as hdu:
-            header = hdu[0].header
-            header['HIERARCH ESO DET DIT'] = 0.2
-            hdu.writeto(self.test_dir+'fits/image04.fits', overwrite=True)
+            hdu.writeto(self.test_dir+'fits/images_1.fits', overwrite=True)
 
         module = FitsReadingModule(name_in='read4',
                                    input_dir=self.test_dir+'fits',
@@ -117,40 +102,25 @@ class TestFitsReadingModule:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read4')
 
-        assert len(warning) == 2
+        assert len(warning) == 1
+
         assert warning[0].message.args[0] == f'Static attribute ESO DET DIT has changed. ' \
                                              f'Possibly the current file {self.test_dir}fits/' \
-                                             f'image03.fits does not belong to the data set ' \
-                                             f'\'input\'. Attribute value is updated.'
-
-        assert warning[1].message.args[0] == f'Static attribute ESO DET DIT has changed. ' \
-                                             f'Possibly the current file {self.test_dir}fits/' \
-                                             f'image04.fits does not belong to the data set ' \
+                                             f'images_1.fits does not belong to the data set ' \
                                              f'\'input\'. Attribute value is updated.'
 
     def test_header_attribute(self) -> None:
 
-        with fits.open(self.test_dir+'fits/image01.fits') as hdu:
+        with fits.open(self.test_dir+'fits/images_0.fits') as hdu:
             header = hdu[0].header
             header['PARANG'] = 1.0
-            hdu.writeto(self.test_dir+'fits/image01.fits', overwrite=True)
+            hdu.writeto(self.test_dir+'fits/images_0.fits', overwrite=True)
 
-        with fits.open(self.test_dir+'fits/image02.fits') as hdu:
+        with fits.open(self.test_dir+'fits/images_1.fits') as hdu:
             header = hdu[0].header
             header['PARANG'] = 2.0
-            hdu.writeto(self.test_dir+'fits/image02.fits', overwrite=True)
-
-        with fits.open(self.test_dir+'fits/image03.fits') as hdu:
-            header = hdu[0].header
-            header['PARANG'] = 3.0
             header['HIERARCH ESO DET DIT'] = 0.1
-            hdu.writeto(self.test_dir+'fits/image03.fits', overwrite=True)
-
-        with fits.open(self.test_dir+'fits/image04.fits') as hdu:
-            header = hdu[0].header
-            header['PARANG'] = 4.0
-            header['HIERARCH ESO DET DIT'] = 0.1
-            hdu.writeto(self.test_dir+'fits/image04.fits', overwrite=True)
+            hdu.writeto(self.test_dir+'fits/images_1.fits', overwrite=True)
 
         module = FitsReadingModule(name_in='read5',
                                    input_dir=self.test_dir+'fits',
@@ -165,12 +135,12 @@ class TestFitsReadingModule:
 
         self.pipeline.set_attribute('config', 'DIT', 'None', static=True)
 
-        for i in range(1, 5):
-            with fits.open(self.test_dir+'fits/image0'+str(i)+'.fits') as hdu:
+        for i in range(2):
+            with fits.open(f'{self.test_dir}/fits/images_{i}.fits') as hdu:
                 header = hdu[0].header
                 del header['HIERARCH ESO DET DIT']
                 del header['HIERARCH ESO DET EXP NO']
-                hdu.writeto(self.test_dir+'fits/image0'+str(i)+'.fits', overwrite=True)
+                hdu.writeto(f'{self.test_dir}/fits/images_{i}.fits', overwrite=True)
 
         module = FitsReadingModule(name_in='read6',
                                    input_dir=self.test_dir+'fits',
@@ -183,7 +153,8 @@ class TestFitsReadingModule:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read6')
 
-        assert len(warning) == 4
+        assert len(warning) == 2
+
         for item in warning:
             assert item.message.args[0] == 'Non-static attribute EXP_NO (=ESO DET EXP NO) not ' \
                                            'found in the FITS header.'
@@ -195,8 +166,8 @@ class TestFitsReadingModule:
                                    image_tag='files',
                                    overwrite=False,
                                    check=True,
-                                   filenames=[self.test_dir+'fits/image01.fits',
-                                              self.test_dir+'fits/image03.fits'])
+                                   filenames=[self.test_dir+'fits/images_0.fits',
+                                              self.test_dir+'fits/images_1.fits'])
 
         self.pipeline.add_module(module)
 
@@ -204,20 +175,20 @@ class TestFitsReadingModule:
             self.pipeline.run_module('read7')
 
         assert len(warning) == 2
+
         for item in warning:
             assert item.message.args[0] == 'Non-static attribute EXP_NO (=ESO DET EXP NO) not ' \
                                            'found in the FITS header.'
 
         data = self.pipeline.get_data('files')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
-        assert data.shape == (20, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_fits_read_textfile(self) -> None:
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
-            file_obj.write(self.test_dir+'fits/image01.fits\n')
-            file_obj.write(self.test_dir+'fits/image03.fits\n')
+            file_obj.write(self.test_dir+'fits/images_0.fits\n')
+            file_obj.write(self.test_dir+'fits/images_1.fits\n')
 
         module = FitsReadingModule(name_in='read8',
                                    input_dir=None,
@@ -237,9 +208,8 @@ class TestFitsReadingModule:
                                            'found in the FITS header.'
 
         data = self.pipeline.get_data('files')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010032245393723324, rtol=limit, atol=0.)
-        assert data.shape == (20, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_fits_read_files_exists(self) -> None:
 
@@ -248,22 +218,22 @@ class TestFitsReadingModule:
                                    image_tag='files',
                                    overwrite=True,
                                    check=True,
-                                   filenames=['fits/image00.fits',
-                                              'fits/image03.fits'])
+                                   filenames=['fits/images_0.fits',
+                                              'fits/images_2.fits'])
 
         self.pipeline.add_module(module)
 
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read9')
 
-        assert str(error.value) == 'The file fits/image00.fits does not exist. ' \
+        assert str(error.value) == 'The file fits/images_2.fits does not exist. ' \
                                    'Please check that the path is correct.'
 
     def test_fits_read_textfile_exists(self) -> None:
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
-            file_obj.write('fits/image00.fits\n')
-            file_obj.write('fits/image03.fits\n')
+            file_obj.write('fits/images_0.fits\n')
+            file_obj.write('fits/images_2.fits\n')
 
         module = FitsReadingModule(name_in='read10',
                                    input_dir=None,
@@ -277,5 +247,5 @@ class TestFitsReadingModule:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read10')
 
-        assert str(error.value) == 'The file fits/image00.fits does not exist. ' \
+        assert str(error.value) == 'The file fits/images_2.fits does not exist. ' \
                                    'Please check that the path is correct.'

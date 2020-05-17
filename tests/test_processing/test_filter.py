@@ -1,6 +1,6 @@
 import os
-import warnings
 
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -8,15 +8,12 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.filter import GaussianFilterModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestFilter:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(self.test_dir+'data')
@@ -41,9 +38,8 @@ class TestFilter:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('data')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_gaussian_filter(self) -> None:
 
@@ -56,6 +52,5 @@ class TestFilter:
         self.pipeline.run_module('filter')
 
         data = self.pipeline.get_data('filtered')
-        assert np.allclose(data[0, 50, 50], 0.0388143943049942, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738068, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
