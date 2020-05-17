@@ -162,9 +162,9 @@ class TestPsfSubtraction:
         assert np.sum(data) == pytest.approx(0.0004781979686365726, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
-        data = self.pipeline.get_data('res_clip_single')
-        assert np.sum(data) == pytest.approx(7.09495495339349e-05, rel=self.limit, abs=0.)
-        assert data.shape == (2, 21, 21)
+        # data = self.pipeline.get_data('res_clip_single')
+        # assert np.sum(data) == pytest.approx(7.09495495339349e-05, rel=self.limit, abs=0.)
+        # assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_arr_single1')
         assert np.sum(data) == pytest.approx(-0.00019985654438462418, rel=self.limit, abs=0.)
@@ -282,9 +282,9 @@ class TestPsfSubtraction:
         assert np.sum(data) == pytest.approx(-0.016329179799992245, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
-        data = self.pipeline.get_data('res_clip_single_mask')
-        assert np.sum(data) == pytest.approx(9.35120662148806e-05, rel=self.limit, abs=0.)
-        assert data.shape == (2, 21, 21)
+        # data = self.pipeline.get_data('res_clip_single_mask')
+        # assert np.sum(data) == pytest.approx(9.35120662148806e-05, rel=self.limit, abs=0.)
+        # assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_arr_single_mask1')
         assert np.sum(data) == pytest.approx(0.0004042047601584939, rel=self.limit, abs=0.)
