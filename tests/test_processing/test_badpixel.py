@@ -148,9 +148,9 @@ class TestBadPixel:
         self.pipeline.run_module('interpolation')
 
         data = self.pipeline.get_data('interpolation')
-        assert data[0, 0, 0] == pytest.approx(0.00032486907273264834, rel=self.limit, abs=0.)
-        assert data[0, 5, 5] == pytest.approx(-1.4292408645473845e-05, rel=self.limit, abs=0.)
-        assert np.sum(data) == pytest.approx(0.008683344127872174, rel=self.limit, abs=0.)
+        assert data[0, 0, 0] == pytest.approx(0.00032486907273264834, rel=1e-8, abs=0.)
+        assert data[0, 5, 5] == pytest.approx(-1.4292408645473845e-05, rel=1e-8, abs=0.)
+        assert np.sum(data) == pytest.approx(0.008683344127872174, rel=1e-8, abs=0.)
         assert data.shape == (5, 11, 11)
 
     def test_bad_pixel_time(self) -> None:

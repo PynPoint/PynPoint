@@ -232,8 +232,8 @@ class TestFitsReading:
     def test_fits_read_textfile_exists(self) -> None:
 
         with open(self.test_dir+'filenames.dat', 'w') as file_obj:
-            file_obj.write('fits/images_0.fits\n')
-            file_obj.write('fits/images_2.fits\n')
+            file_obj.write(self.test_dir+'fits/images_0.fits\n')
+            file_obj.write(self.test_dir+'fits/images_2.fits\n')
 
         module = FitsReadingModule(name_in='read10',
                                    input_dir=None,

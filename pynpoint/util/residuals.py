@@ -22,17 +22,17 @@ def combine_residuals(method: str,
     ----------
     method : str
         Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
-    res_rot : numpy.ndarray
+    res_rot : np.ndarray
         Derotated residuals of the PSF subtraction (3D).
-    residuals : numpy.ndarray, None
+    residuals : np.ndarray, None
         Non-derotated residuals of the PSF subtraction (3D). Only required for the noise-weighted
         residuals.
-    angles : numpy.ndarray, None
+    angles : np.ndarray, None
         Derotation angles (deg). Only required for the noise-weighted residuals.
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Combined residuals (3D).
     """
 
@@ -79,14 +79,14 @@ def combine_residuals(method: str,
 
         for i in range(stack.shape[0]):
             for j in range(stack.shape[1]):
-                temp = res_rot[:, i, j]
+                pix_line = res_rot[:, i, j]
 
-                if temp.var() > 0.0:
-                    no_mean = temp - temp.mean()
+                if np.var(pix_line) > 0.:
+                    no_mean = pix_line - np.mean(pix_line)
 
-                    part1 = no_mean.compress((no_mean < 3.0*np.sqrt(no_mean.var())).flat)
-                    part2 = part1.compress((part1 > (-1.0)*3.0*np.sqrt(no_mean.var())).flat)
+                    part1 = no_mean.compress((no_mean < 3.*np.sqrt(np.var(no_mean))).flat)
+                    part2 = part1.compress((part1 > -3.*np.sqrt(np.var(no_mean))).flat)
 
-                    stack[i, j] = temp.mean() + part2.mean()
+                    stack[i, j] = np.mean(pix_line) + np.mean(part2)
 
     return stack[np.newaxis, ...]
