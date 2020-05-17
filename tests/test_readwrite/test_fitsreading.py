@@ -227,8 +227,8 @@ class TestFitsReading:
         with pytest.raises(ValueError) as error:
             self.pipeline.run_module('read9')
 
-        assert str(error.value) == 'The file {self.test_dir}fits/images_2.fits does not exist. ' \
-                                   'Please check that the path is correct.'
+        assert str(error.value) == f'The file {self.test_dir}fits/images_2.fits does not exist. ' \
+                                   f'Please check that the path is correct.'
 
     def test_fits_read_textfile_exists(self) -> None:
 
