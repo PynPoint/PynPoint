@@ -39,7 +39,7 @@ class TestExtract:
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('star')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         module = FitsReadingModule(name_in='read2',
@@ -52,7 +52,7 @@ class TestExtract:
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('binary')
-        assert np.sum(data) == pytest.approx(10.112910611363908, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(11.012854046962481, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         self.pipeline.set_attribute('binary', 'PARANG', -1.*np.linspace(0., 180., 10), static=False)
@@ -78,7 +78,7 @@ class TestExtract:
                                              '\'index\' is empty.'
 
         data = self.pipeline.get_data('extract1')
-        assert np.sum(data) == pytest.approx(10.00017305407512, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
         attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
@@ -106,7 +106,7 @@ class TestExtract:
                                              '\'index\' is empty.'
 
         data = self.pipeline.get_data('extract2')
-        assert np.sum(data) == pytest.approx(10.00017305407512, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
         attr = self.pipeline.get_attribute('extract2', 'STAR_POSITION', static=False)
@@ -127,7 +127,7 @@ class TestExtract:
         self.pipeline.run_module('extract7')
 
         data = self.pipeline.get_data('extract7')
-        assert np.sum(data) == pytest.approx(10.00017305407512, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
         attr = self.pipeline.get_attribute('extract7', 'STAR_POSITION', static=False)
@@ -151,14 +151,13 @@ class TestExtract:
 
         assert len(warning) == 10
 
-        for i, item in enumerate(warning):
-            assert item.message.args[0] == f'Chosen image size is too large to crop the image ' \
-                                           f'around the brightest pixel (image index = {i}, ' \
-                                           f'pixel [x, y] = [3, 3]). Using the center of ' \
-                                           f'the image instead.'
+        assert warning[0].message.args[0] == f'Chosen image size is too large to crop the image ' \
+                                             f'around the brightest pixel (image index = 0, ' \
+                                             f'pixel [x, y] = [2, 2]). Using the center of ' \
+                                             f'the image instead.'
 
         data = self.pipeline.get_data('extract3')
-        assert np.sum(data) == pytest.approx(10.00017305407512, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
         attr = self.pipeline.get_attribute('extract3', 'STAR_POSITION', static=False)
@@ -207,7 +206,7 @@ class TestExtract:
         self.pipeline.run_module('extract5')
 
         data = self.pipeline.get_data('extract5')
-        assert np.sum(data) == pytest.approx(1.0975425316176672, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(1.3419098759577548, rel=self.limit, abs=0.)
         assert data.shape == (10, 7, 7)
 
     def test_extract_binary_filter(self) -> None:
@@ -225,5 +224,5 @@ class TestExtract:
         self.pipeline.run_module('extract6')
 
         data = self.pipeline.get_data('extract6')
-        assert np.sum(data) == pytest.approx(1.12173965341392, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(1.3789593661036972, rel=self.limit, abs=0.)
         assert data.shape == (10, 7, 7)

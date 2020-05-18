@@ -39,7 +39,7 @@ class TestResizing:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_crop_images(self) -> None:
@@ -63,11 +63,11 @@ class TestResizing:
         self.pipeline.run_module('crop2')
 
         data = self.pipeline.get_data('crop1')
-        assert np.sum(data) == pytest.approx(10.00017305407512, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
         data = self.pipeline.get_data('crop2')
-        assert np.sum(data) == pytest.approx(9.960055761279845, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.64863165433025, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
     def test_scale_images(self) -> None:
@@ -89,11 +89,11 @@ class TestResizing:
         self.pipeline.run_module('scale2')
 
         data = self.pipeline.get_data('scale1')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 22, 22)
 
         data = self.pipeline.get_data('scale2')
-        assert np.sum(data) == pytest.approx(20.01387738980783, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(211.08557759610554, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_add_lines(self) -> None:
@@ -107,7 +107,7 @@ class TestResizing:
         self.pipeline.run_module('add')
 
         data = self.pipeline.get_data('add')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805275, rel=self.limit, abs=0.)
         assert data.shape == (10, 14, 18)
 
     def test_remove_lines(self) -> None:
@@ -121,7 +121,7 @@ class TestResizing:
         self.pipeline.run_module('remove')
 
         data = self.pipeline.get_data('remove')
-        assert np.sum(data) == pytest.approx(6.402284168354905, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(67.49726677462391, rel=self.limit, abs=0.)
         assert data.shape == (10, 8, 4)
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:

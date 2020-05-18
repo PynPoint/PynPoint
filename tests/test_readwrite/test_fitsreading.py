@@ -38,7 +38,7 @@ class TestFitsReading:
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('input')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_fits_reading_overwrite(self) -> None:
@@ -53,7 +53,7 @@ class TestFitsReading:
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('input')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_static_not_found(self) -> None:
@@ -181,7 +181,7 @@ class TestFitsReading:
                                            'found in the FITS header.'
 
         data = self.pipeline.get_data('files')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_fits_read_textfile(self) -> None:
@@ -209,7 +209,7 @@ class TestFitsReading:
                                            'found in the FITS header.'
 
         data = self.pipeline.get_data('files')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_fits_read_files_exists(self) -> None:

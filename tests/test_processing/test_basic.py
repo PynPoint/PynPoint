@@ -60,15 +60,15 @@ class TestBasic:
         self.pipeline.run_module('read3')
 
         data = self.pipeline.get_data('data1')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('data2')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('data3')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_subtract_images(self) -> None:
@@ -96,7 +96,7 @@ class TestBasic:
         self.pipeline.run_module('add')
 
         data = self.pipeline.get_data('add')
-        assert np.sum(data) == pytest.approx(20.013877389807828, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(211.08557759610554, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_rotate_images(self) -> None:
@@ -110,7 +110,7 @@ class TestBasic:
         self.pipeline.run_module('rotate')
 
         data = self.pipeline.get_data('rotate')
-        assert np.sum(data) == pytest.approx(10.004703952129002, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.86657256219851, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_repeat_images(self) -> None:

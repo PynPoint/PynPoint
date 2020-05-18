@@ -41,7 +41,7 @@ class TestLimits:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.sum(data) == pytest.approx(10.012916896297398, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(108.43655133957289, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
     def test_angle_interpolation(self) -> None:
@@ -85,8 +85,8 @@ class TestLimits:
 
             data = self.pipeline.get_data('limits_'+item)
             assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
-            assert data[0, 1] == pytest.approx(6.732335026018635, rel=self.limit, abs=0.)
-            assert data[0, 2] == pytest.approx(1.710192043457814e-05, rel=self.limit, abs=0.)
+            assert data[0, 1] == pytest.approx(2.5223717329932676, rel=self.limit, abs=0.)
+            assert data[0, 2] == pytest.approx(0.0006250749411563979, rel=self.limit, abs=0.)
             assert data[0, 3] == pytest.approx(0.00026866680137822624, rel=self.limit, abs=0.)
             assert data.shape == (1, 4)
 
@@ -114,8 +114,8 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_fpf')
         assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
-        assert data[0, 1] == pytest.approx(6.007026307350983, rel=self.limit, abs=0.)
-        assert data[0, 2] == pytest.approx(1.710192043457814e-05, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(1.797063014325614, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(0.0006250749411564145, rel=self.limit, abs=0.)
         assert data[0, 3] == pytest.approx(1e-06, rel=self.limit, abs=0.)
         assert data.shape == (1, 4)
 

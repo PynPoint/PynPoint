@@ -162,7 +162,7 @@ def create_fake_data(path: str) -> None:
     npix = 21
     fwhm = 3.
     sep = 6.
-    contrast = 1e-2
+    contrast = 1e-1
     pos_star = 10.
     exp_no = 1
     parang = np.linspace(0., 180., 10)
@@ -223,28 +223,25 @@ def create_star_data(path: str,
 
     np.random.seed(1)
 
-    for j, exp_item in enumerate(exp_no):
+    for j, item in enumerate(exp_no):
         sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
 
         x = y = np.arange(0., float(npix), 1.)
         xx, yy = np.meshgrid(x, y)
 
-        image = np.zeros((nimages, npix, npix))
-
-        for i in range(nimages):
-            image[i, ] = np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma**2)) / (2.*np.pi*sigma**2)
-            image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
+        images = np.random.normal(loc=0, scale=0.1, size=(nimages, npix, npix))
+        images += np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma**2))
 
         hdu = fits.PrimaryHDU()
         header = hdu.header
         header['INSTRUME'] = 'IMAGER'
-        header['HIERARCH ESO DET EXP NO'] = exp_item
+        header['HIERARCH ESO DET EXP NO'] = item
         header['HIERARCH ESO DET NDIT'] = nimages
         header['HIERARCH ESO ADA POSANG'] = parang_start[j]
         header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
         header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
         header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
-        hdu.data = image
+        hdu.data = images
         hdu.writeto(os.path.join(path, f'images_{j}.fits'))
 
 

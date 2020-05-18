@@ -38,7 +38,7 @@ class TestPsfSubtraction:
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('science')
-        assert np.sum(data) == pytest.approx(10.112910611363908, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(11.012854046962481, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         self.pipeline.set_attribute('science', 'PARANG', np.linspace(0., 180., 10), static=False)
@@ -51,7 +51,7 @@ class TestPsfSubtraction:
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('reference')
-        assert np.sum(data) == pytest.approx(10.112910611363908, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(11.012854046962481, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
     def test_psf_preparation(self) -> None:
@@ -69,7 +69,7 @@ class TestPsfSubtraction:
         self.pipeline.run_module('prep1')
 
         data = self.pipeline.get_data('science_prep')
-        assert np.sum(data) == pytest.approx(4.12961687969697, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         module = PSFpreparationModule(name_in='prep2',
@@ -85,7 +85,7 @@ class TestPsfSubtraction:
         self.pipeline.run_module('prep2')
 
         data = self.pipeline.get_data('reference_prep')
-        assert np.sum(data) == pytest.approx(4.12961687969697, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
     def test_classical_adi(self) -> None:
@@ -103,11 +103,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('cadi1')
 
         data = self.pipeline.get_data('cadi_res')
-        assert np.sum(data) == pytest.approx(0.03180667624000945, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.8381625719865213, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         data = self.pipeline.get_data('cadi_stack')
-        assert np.sum(data) == pytest.approx(0.0033125568958432454, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.08395606034388256, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
     def test_classical_adi_threshold(self) -> None:
@@ -125,11 +125,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('cadi2')
 
         data = self.pipeline.get_data('cadi_res')
-        assert np.sum(data) == pytest.approx(0.028573647751114366, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.7158207863548083, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         data = self.pipeline.get_data('cadi_stack')
-        assert np.sum(data) == pytest.approx(0.002816265512581978, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.07448334552227256, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
     def test_psf_subtraction_pca_single(self) -> None:
@@ -151,15 +151,15 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_single')
 
         data = self.pipeline.get_data('res_mean_single')
-        assert np.sum(data) == pytest.approx(1.9266185463792424e-05, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-0.00011857022709778602, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_median_single')
-        assert np.sum(data) == pytest.approx(-0.0008669473328962519, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-0.002184868916566093, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_weighted_single')
-        assert np.sum(data) == pytest.approx(0.0004781979686365726, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.08102176735226937, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         # data = self.pipeline.get_data('res_clip_single')
@@ -167,11 +167,11 @@ class TestPsfSubtraction:
         # assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_arr_single1')
-        assert np.sum(data) == pytest.approx(-0.00019985654438462418, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-0.0002751385418691618, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         data = self.pipeline.get_data('basis_single')
-        assert np.sum(data) == pytest.approx(-1.2522071307056604, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.09438697731322143, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_no_mean(self) -> None:
@@ -193,11 +193,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_no_mean')
 
         data = self.pipeline.get_data('res_mean_no_mean')
-        assert np.sum(data) == pytest.approx(0.0005502973266326939, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0005733657032555452, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_no_mean')
-        assert np.sum(data) == pytest.approx(4.902869565457996, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.118005177367776, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_ref(self) -> None:
@@ -219,11 +219,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_ref')
 
         data = self.pipeline.get_data('res_mean_ref')
-        assert np.sum(data) == pytest.approx(0.00044641048097418003, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0005868283126528002, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref')
-        assert np.sum(data) == pytest.approx(-1.2522071307056641, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0943869773132221, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_ref_no_mean(self) -> None:
@@ -245,11 +245,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_ref_no_mean')
 
         data = self.pipeline.get_data('res_mean_ref_no_mean')
-        assert np.sum(data) == pytest.approx(0.000550297326632691, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0005733657032555494, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref_no_mean')
-        assert np.sum(data) == pytest.approx(4.902869565457994, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.118005177367774, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_pca_single_mask(self) -> None:
@@ -271,15 +271,15 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_single_mask')
 
         data = self.pipeline.get_data('res_mean_single_mask')
-        assert np.sum(data) == pytest.approx(9.340356085477662e-05, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.00010696166038626307, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_median_single_mask')
-        assert np.sum(data) == pytest.approx(-0.000986826057178002, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-0.0021005307611346156, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_weighted_single_mask')
-        assert np.sum(data) == pytest.approx(-0.016329179799992245, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.06014309988789256, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         # data = self.pipeline.get_data('res_clip_single_mask')
@@ -287,11 +287,11 @@ class TestPsfSubtraction:
         # assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_arr_single_mask1')
-        assert np.sum(data) == pytest.approx(0.0004042047601584939, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0006170872862547557, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
         data = self.pipeline.get_data('basis_single_mask')
-        assert np.sum(data) == pytest.approx(-0.22848818309833419, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.08411251293842359, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_no_mean_mask(self) -> None:
@@ -313,11 +313,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_no_mean_mask')
 
         data = self.pipeline.get_data('res_mean_no_mean_mask')
-        assert np.sum(data) == pytest.approx(-7.082604137210796e-06, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(2.3542359949502915e-05, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_no_mean_mask')
-        assert np.sum(data) == pytest.approx(4.438596278769076, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.655460951633232, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_ref_mask(self) -> None:
@@ -339,11 +339,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_ref_mask')
 
         data = self.pipeline.get_data('res_mean_ref_mask')
-        assert np.sum(data) == pytest.approx(-3.3947667071097896e-06, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(9.400558926815758e-06, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref_mask')
-        assert np.sum(data) == pytest.approx(-0.22848818309833352, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.08411251293842326, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_ref_no_mean_mask(self) -> None:
@@ -365,11 +365,11 @@ class TestPsfSubtraction:
         self.pipeline.run_module('pca_ref_no_mean_mask')
 
         data = self.pipeline.get_data('res_mean_ref_no_mean_mask')
-        assert np.sum(data) == pytest.approx(-7.0826041372099285e-06, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(2.354235994950671e-05, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref_no_mean_mask')
-        assert np.sum(data) == pytest.approx(4.438596278769075, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(5.655460951633233, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
     def test_psf_subtraction_pca_multi(self) -> None:

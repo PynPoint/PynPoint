@@ -37,7 +37,7 @@ class TestFitsWriting:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('images')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_fits_writing(self) -> None:

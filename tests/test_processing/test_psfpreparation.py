@@ -36,7 +36,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_angle_interpolation(self) -> None:
@@ -178,7 +178,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep1')
 
         data = self.pipeline.get_data('prep1')
-        assert np.sum(data) == pytest.approx(39.967256883974486, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-1.5844830188044685, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('mask1')
@@ -199,7 +199,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep2')
 
         data = self.pipeline.get_data('prep2')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_psf_preparation_no_mask_out(self) -> None:
@@ -216,7 +216,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep3')
 
         data = self.pipeline.get_data('prep3')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_sdi_preparation(self) -> None:
@@ -231,7 +231,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('sdi')
 
         data = self.pipeline.get_data('sdi')
-        assert np.sum(data) == pytest.approx(1.997618856830243, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(21.084666133914183, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         attribute = self.pipeline.get_attribute('sdi', 'History: SDIpreparationModule')

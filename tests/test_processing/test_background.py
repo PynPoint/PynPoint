@@ -54,7 +54,7 @@ class TestBackground:
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('science')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         module = FitsReadingModule(name_in='read3',
@@ -65,7 +65,7 @@ class TestBackground:
         self.pipeline.run_module('read3')
 
         data = self.pipeline.get_data('sky')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_simple_background(self) -> None:
@@ -203,7 +203,7 @@ class TestBackground:
         self.pipeline.run_module('mean')
 
         data = self.pipeline.get_data('mean')
-        assert np.sum(data) == pytest.approx(2.001387738980783, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(21.108557759610548, rel=self.limit, abs=0.)
         assert data.shape == (2, 11, 11)
 
         attr = self.pipeline.get_attribute('mean', 'INDEX', static=False)
@@ -224,7 +224,7 @@ class TestBackground:
         self.pipeline.run_module('nodding')
 
         data = self.pipeline.get_data('nodding')
-        assert np.sum(data) == pytest.approx(0.003586932918149317, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(1.793466459074705, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_line_background_mean(self) -> None:
@@ -239,7 +239,7 @@ class TestBackground:
         self.pipeline.run_module('line1')
 
         data = self.pipeline.get_data('science_line1')
-        assert np.sum(data) == pytest.approx(9.802943121090129, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.55443019231085, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_line_background_median(self) -> None:
@@ -254,5 +254,5 @@ class TestBackground:
         self.pipeline.run_module('line2')
 
         data = self.pipeline.get_data('science_line2')
-        assert np.sum(data) == pytest.approx(9.760322264631155, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(106.09825573198366, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)

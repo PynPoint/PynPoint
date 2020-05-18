@@ -40,7 +40,7 @@ class TestStackSubset:
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('images')
-        assert np.mean(data) == pytest.approx(0.008270197268515632, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.08722544528764692, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         module = FitsReadingModule(name_in='read2',
@@ -71,7 +71,7 @@ class TestStackSubset:
         self.pipeline.run_module('stack1')
 
         data = self.pipeline.get_data('stack1')
-        assert np.mean(data) == pytest.approx(0.008270911903615218, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.08758276283743936, rel=self.limit, abs=0.)
         assert data.shape == (4, 11, 11)
 
         data = self.pipeline.get_data('header_stack1/INDEX')
@@ -109,7 +109,7 @@ class TestStackSubset:
                                              'limited, please use carefully.'
 
         data = self.pipeline.get_data('stack2')
-        assert np.mean(data) == pytest.approx(0.008267361565880088, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.08580759396987508, rel=self.limit, abs=0.)
         assert data.shape == (7, 11, 11)
 
         data = self.pipeline.get_data('header_stack2/INDEX')
@@ -132,7 +132,7 @@ class TestStackSubset:
         self.pipeline.run_module('stackcube')
 
         data = self.pipeline.get_data('mean')
-        assert np.mean(data) == pytest.approx(0.008270197268515632, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.08722544528764689, rel=self.limit, abs=0.)
         assert data.shape == (2, 11, 11)
 
         attribute = self.pipeline.get_attribute('mean', 'INDEX', static=False)
@@ -156,7 +156,7 @@ class TestStackSubset:
         self.pipeline.run_module('derotate1')
 
         data = self.pipeline.get_data('derotate1')
-        assert np.mean(data) == pytest.approx(0.008267872692939852, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.08709860116308817, rel=self.limit, abs=0.)
         assert data.shape == (1, 11, 11)
 
         module = DerotateAndStackModule(name_in='derotate2',
@@ -170,7 +170,7 @@ class TestStackSubset:
         self.pipeline.run_module('derotate2')
 
         data = self.pipeline.get_data('derotate2')
-        assert np.mean(data) == pytest.approx(0.0082679783968536, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.0861160094566323, rel=self.limit, abs=0.)
         assert data.shape == (1, 11, 11)
 
     def test_combine_tags(self) -> None:
@@ -193,7 +193,7 @@ class TestStackSubset:
                                              'combine tags that descend from the same data set.'
 
         data = self.pipeline.get_data('combine1')
-        assert np.mean(data) == pytest.approx(0.008270197268515633, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.0872254452876469, rel=self.limit, abs=0.)
         assert data.shape == (20, 11, 11)
 
         data = self.pipeline.get_data('header_combine1/INDEX')

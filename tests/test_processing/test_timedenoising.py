@@ -40,7 +40,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('images')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_wavelet_denoising_cwt_dog(self) -> None:
@@ -67,7 +67,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('wavelet_cwt_dog')
 
         data = self.pipeline.get_data('wavelet_cwt_dog')
-        assert np.sum(data) == pytest.approx(10.006060275222403, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.1035789572968, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
@@ -106,7 +106,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('wavelet_cwt_morlet')
 
         data = self.pipeline.get_data('wavelet_cwt_morlet')
-        assert np.sum(data) == pytest.approx(10.005578374122138, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.86262840716438, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_attribute('wavelet_cwt_morlet', 'NFRAMES', static=False)
@@ -130,7 +130,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('wavelet_dwt')
 
         data = self.pipeline.get_data('wavelet_dwt')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_time_normalization(self) -> None:
@@ -143,7 +143,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('timenorm')
 
         data = self.pipeline.get_data('timenorm')
-        assert np.sum(data) == pytest.approx(9.539452974963307, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(56.443663773873, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
     def test_wavelet_denoising_even_size(self) -> None:
@@ -157,7 +157,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('add')
 
         data = self.pipeline.get_data('images_even')
-        assert np.sum(data) == pytest.approx(10.006938694903914, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.54278879805275, rel=self.limit, abs=0.)
         assert data.shape == (10, 12, 12)
 
         cwt_config = CwtWaveletConfiguration(wavelet='dog',
@@ -182,7 +182,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('wavelet_even_1')
 
         data = self.pipeline.get_data('wavelet_even_1')
-        assert np.sum(data) == pytest.approx(10.006060275222401, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.1035789572968, rel=self.limit, abs=0.)
         assert data.shape == (10, 12, 12)
 
         module = WaveletTimeDenoisingModule(wavelet_configuration=cwt_config,
@@ -197,7 +197,7 @@ class TestTimeDenoising:
         self.pipeline.run_module('wavelet_even_2')
 
         data = self.pipeline.get_data('wavelet_even_2')
-        assert np.sum(data) == pytest.approx(10.005989313715979, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(105.06809820408587, rel=self.limit, abs=0.)
         assert data.shape == (10, 12, 12)
 
         data = self.pipeline.get_attribute('images', 'NFRAMES', static=False)
