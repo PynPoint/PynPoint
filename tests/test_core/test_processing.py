@@ -172,32 +172,32 @@ class TestProcessing:
         assert np.mean(data) == pytest.approx(1.8259937251367536e-05, rel=self.limit, abs=0.)
         assert data.shape == (5, 5, 5)
 
-    def test_multiproc_large_data(self) -> None:
-
-        self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
-        self.pipeline.set_attribute('config', 'CPU', 1, static=True)
-
-        module = LineSubtractionModule(name_in='subtract_single',
-                                       image_in_tag='large_data',
-                                       image_out_tag='im_sub_single',
-                                       combine='mean',
-                                       mask=None)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('subtract_single')
-
-        self.pipeline.set_attribute('config', 'CPU', 4, static=True)
-
-        module = LineSubtractionModule(name_in='subtract_multi',
-                                       image_in_tag='large_data',
-                                       image_out_tag='im_sub_multi',
-                                       combine='mean',
-                                       mask=None)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('subtract_multi')
-
-        data_single = self.pipeline.get_data('im_sub_single')
-        data_multi = self.pipeline.get_data('im_sub_multi')
-        assert data_single == pytest.approx(data_multi, rel=self.limit, abs=0.)
-        assert data_single.shape == data_multi.shape
+    # def test_multiproc_large_data(self) -> None:
+    #
+    #     self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
+    #     self.pipeline.set_attribute('config', 'CPU', 1, static=True)
+    #
+    #     module = LineSubtractionModule(name_in='subtract_single',
+    #                                    image_in_tag='large_data',
+    #                                    image_out_tag='im_sub_single',
+    #                                    combine='mean',
+    #                                    mask=None)
+    #
+    #     self.pipeline.add_module(module)
+    #     self.pipeline.run_module('subtract_single')
+    #
+    #     self.pipeline.set_attribute('config', 'CPU', 4, static=True)
+    #
+    #     module = LineSubtractionModule(name_in='subtract_multi',
+    #                                    image_in_tag='large_data',
+    #                                    image_out_tag='im_sub_multi',
+    #                                    combine='mean',
+    #                                    mask=None)
+    #
+    #     self.pipeline.add_module(module)
+    #     self.pipeline.run_module('subtract_multi')
+    #
+    #     data_single = self.pipeline.get_data('im_sub_single')
+    #     data_multi = self.pipeline.get_data('im_sub_multi')
+    #     assert data_single == pytest.approx(data_multi, rel=self.limit, abs=0.)
+    #     assert data_single.shape == data_multi.shape

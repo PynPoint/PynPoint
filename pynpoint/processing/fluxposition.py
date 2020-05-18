@@ -1034,6 +1034,9 @@ class AperturePhotometryModule(ProcessingModule):
             # Store the center position as (x, y)
             self.m_position = (self.m_position[1], self.m_position[0])
 
+        print(f'Aperture position (x, y) = ({self.m_position[0]:.1f}, {self.m_position[1]:.1f})')
+        print(f'Aperture radius (pixels) = ({self.m_radius:.1f})')
+
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
 
