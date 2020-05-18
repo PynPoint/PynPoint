@@ -97,9 +97,8 @@ def create_fits(path: str,
                 image: np.ndarray,
                 ndit: int,
                 exp_no: int,
-                parang: np.ndarray,
-                x0: float,
-                y0: float) -> None:
+                dither_x: float,
+                dither_y: float) -> None:
     """
     Create a FITS file with images and header information.
 
@@ -115,12 +114,10 @@ def create_fits(path: str,
         Number of integrations.
     exp_no : int
         Exposure number.
-    parang : list(float, float)
-        Start and end parallactic angle.
-    x0 : float
-        Horizontal dither position.
-    y0 : float
-        Vertical dither position.
+    dither_x : float
+        Horizontal dither position relative to the image center.
+    dither_y : float
+        Vertical dither position relative to the image center.
 
     Returns
     -------
@@ -134,10 +131,10 @@ def create_fits(path: str,
     header['HIERARCH ESO DET EXP NO'] = 1.
     header['HIERARCH ESO DET NDIT'] = ndit
     header['HIERARCH ESO DET EXP NO'] = exp_no
-    header['HIERARCH ESO ADA POSANG'] = parang[0]
-    header['HIERARCH ESO ADA POSANG END'] = parang[1]
-    header['HIERARCH ESO SEQ CUMOFFSETX'] = x0
-    header['HIERARCH ESO SEQ CUMOFFSETY'] = y0
+    header['HIERARCH ESO ADA POSANG'] = 0.
+    header['HIERARCH ESO ADA POSANG END'] = 180.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = dither_x
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = dither_y
     hdu.data = image
     hdu.writeto(os.path.join(path, filename))
 
@@ -191,7 +188,7 @@ def create_fake_data(path: str) -> None:
 
         images[i, ] += star + shift(contrast*star, (x_shift, y_shift), order=5)
 
-    create_fits(path, 'images.fits', images, ndit, exp_no, parang, pos_star, pos_star)
+    create_fits(path, 'images.fits', images, ndit, exp_no, 0., 0.)
 
 
 @typechecked
@@ -249,6 +246,52 @@ def create_star_data(path: str,
         header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
         hdu.data = image
         hdu.writeto(os.path.join(path, f'images_{j}.fits'))
+
+
+@typechecked
+def create_dither_data(path: str) -> None:
+    """
+    Create a dithering dataset with a stellar PSF.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    ndit = 5
+    npix = 21
+    fwhm = 3.
+
+    exp_no = [1, 2, 3, 4]
+    pos_star = [(5., 5.), (5., 15.), (15., 15.), (15., 5.)]
+    parang = np.full(10, 0.)
+
+    np.random.seed(1)
+
+    sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
+
+    x = np.arange(0., 21., 1.)
+    y = np.arange(0., 21., 1.)
+
+    xx, yy = np.meshgrid(x, y)
+
+    for i, item in enumerate(exp_no):
+        images = np.random.normal(loc=0, scale=0.1, size=(ndit, npix, npix))
+
+        for j in range(ndit):
+            images[j, ] += np.exp(-((xx-pos_star[i][0])**2+(yy-pos_star[i][1])**2)/(2.*sigma**2))
+
+        create_fits(path, f'images_{i}.fits', images, ndit, item,
+                    pos_star[i][0]-10., pos_star[i][1]-10.)
 
 
 @typechecked
