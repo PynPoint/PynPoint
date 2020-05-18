@@ -46,6 +46,7 @@ class TestPypeline:
             Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Configuration file not found. Creating ' \
                                              'PynPoint_config.ini with default values ' \
                                              'in the working place.'

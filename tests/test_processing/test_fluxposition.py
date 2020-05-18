@@ -4,8 +4,6 @@ import h5py
 import pytest
 import numpy as np
 
-from astropy.io import fits
-
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.fluxposition import FakePlanetModule, AperturePhotometryModule, \
@@ -103,8 +101,7 @@ class TestFluxPosition:
 
         data_multi = self.pipeline.get_data('photometry2')
         assert data.shape == data_multi.shape
-        # TODO Does not pass on Travis CI
-        assert data == pytest.approx(data_multi, rel=1e-6, abs=0.)
+        assert data == pytest.approx(data_multi, rel=self.limit, abs=0.)
 
     def test_aperture_photometry_position(self) -> None:
 
@@ -272,77 +269,75 @@ class TestFluxPosition:
         assert data[25, 4] == pytest.approx(2.4835815867259954, rel=self.limit, abs=0.)
         assert data.shape == (28, 6)
 
-    # def test_mcmc_sampling(self) -> None:
-    #
-    #     with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
-    #         hdf_file['config'].attrs['CPU'] = 4
-    #
-    #     self.pipeline.set_attribute('adi', 'PARANG', np.arange(0., 200., 10.), static=False)
-    #
-    #     module = DerotateAndStackModule(name_in='stack',
-    #                                     image_in_tag='psf',
-    #                                     image_out_tag='psf_stack',
-    #                                     derotate=False,
-    #                                     stack='mean')
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('stack')
-    #
-    #     data = self.pipeline.get_data('psf_stack')
-    #     assert data.shape == (1, 15, 15)
-    #
-    #     module = MCMCsamplingModule(name_in='mcmc',
-    #                                 image_in_tag='adi',
-    #                                 psf_in_tag='psf_stack',
-    #                                 chain_out_tag='mcmc',
-    #                                 param=(0.15, 0., 1.),
-    #                                 bounds=((0.1, 0.2), (-2., 2.), (-1., 2.)),
-    #                                 nwalkers=50,
-    #                                 nsteps=150,
-    #                                 psf_scaling=-1.,
-    #                                 pca_number=1,
-    #                                 aperture=(7, 13, 0.1),
-    #                                 mask=None,
-    #                                 extra_rot=0.,
-    #                                 merit='gaussian',
-    #                                 residuals='median',
-    #                                 scale=2.,
-    #                                 sigma=(1e-3, 1e-1, 1e-2))
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('mcmc')
-    #
-    #     data = self.pipeline.get_data('mcmc')
-    #     data = data[50:, :, :].reshape((-1, 3))
-    #     assert np.allclose(np.median(data[:, 0]), 0.15, rel=0., abs=0.1)
-    #     assert np.allclose(np.median(data[:, 1]), 0., rel=0., abs=1.0)
-    #     assert np.allclose(np.median(data[:, 2]), 0.0, rel=0., abs=1.)
-    #
-    #     attr = self.pipeline.get_attribute('mcmc', 'ACCEPTANCE', static=True)
-    #     assert np.allclose(attr, 0.3, rel=0., abs=0.3)
-    #
-    # def test_systematic_error(self) -> None:
-    #
-    #     module = SystematicErrorModule(name_in='error',
-    #                                    image_in_tag='fake',
-    #                                    psf_in_tag='read',
-    #                                    offset_out_tag='offset',
-    #                                    position=(0.5, 90.),
-    #                                    magnitude=6.,
-    #                                    angles=(0., 180., 2),
-    #                                    psf_scaling=1.,
-    #                                    merit='gaussian',
-    #                                    aperture=0.1,
-    #                                    tolerance=0.1,
-    #                                    pca_number=10,
-    #                                    mask=(None, None),
-    #                                    extra_rot=0.,
-    #                                    residuals='median')
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('error')
-    #
-    #     data = self.pipeline.get_data('offset')
-    #     assert np.allclose(data[0, 0], -0.004066263849143104, rel=self.limit, abs=0.)
-    #     assert np.allclose(np.mean(data), -0.0077784357245382725, rel=self.limit, abs=0.)
-    #     assert data.shape == (2, 3)
+    def test_mcmc_sampling(self) -> None:
+
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
+
+        module = DerotateAndStackModule(name_in='stack',
+                                        image_in_tag='psf',
+                                        image_out_tag='psf_stack',
+                                        derotate=False,
+                                        stack='mean')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('stack')
+
+        data = self.pipeline.get_data('psf_stack')
+        assert np.sum(data) == pytest.approx(1.00129168962974, rel=self.limit, abs=0.)
+        assert data.shape == (1, 21, 21)
+
+        module = MCMCsamplingModule(name_in='mcmc',
+                                    image_in_tag='adi',
+                                    psf_in_tag='psf_stack',
+                                    chain_out_tag='mcmc',
+                                    param=(0.15, 0., 1.),
+                                    bounds=((0.1, 0.2), (-2., 2.), (-1., 2.)),
+                                    nwalkers=6,
+                                    nsteps=5,
+                                    psf_scaling=-1.,
+                                    pca_number=1,
+                                    aperture=(10, 16, 0.06),
+                                    mask=None,
+                                    extra_rot=0.,
+                                    merit='gaussian',
+                                    residuals='median',
+                                    sigma=(1e-3, 1e-1, 1e-2))
+
+        self.pipeline.add_module(module)
+
+        with pytest.warns(RuntimeWarning) as warning:
+            self.pipeline.run_module('mcmc')
+
+        assert len(warning) == 9
+
+        data = self.pipeline.get_data('mcmc')
+        assert data.shape == (5, 6, 3)
+
+    def test_systematic_error(self) -> None:
+
+        module = SystematicErrorModule(name_in='error',
+                                       image_in_tag='adi',
+                                       psf_in_tag='psf',
+                                       offset_out_tag='offset',
+                                       position=(0.162, 0.),
+                                       magnitude=5.,
+                                       angles=(0., 360., 2),
+                                       psf_scaling=1.,
+                                       merit='gaussian',
+                                       aperture=0.06,
+                                       tolerance=0.1,
+                                       pca_number=1,
+                                       mask=(None, None),
+                                       extra_rot=0.,
+                                       residuals='median',
+                                       offset=2.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('error')
+
+        data = self.pipeline.get_data('offset')
+        assert data[0, 0] == pytest.approx(0.0005429472785307699, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(-0.9121362154218531, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(-0.04495246234853756, rel=self.limit, abs=0.)
+        assert data.shape == (2, 3)

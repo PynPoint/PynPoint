@@ -944,7 +944,7 @@ class MCMCsamplingModule(ProcessingModule):
 
         try:
             autocorr = emcee.autocorr.integrated_time(sampler.get_chain())
-            print(f'Integrated autocorrelation time ={autocorr}')
+            print(f'Integrated autocorrelation time = {autocorr}')
 
         except emcee.autocorr.AutocorrError:
             autocorr = [np.nan, np.nan, np.nan]

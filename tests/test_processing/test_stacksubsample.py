@@ -187,6 +187,7 @@ class TestStackSubset:
             self.pipeline.run_module('combine1')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The non-static keyword FILES is already used but ' \
                                              'with different values. It is advisable to only ' \
                                              'combine tags that descend from the same data set.'
