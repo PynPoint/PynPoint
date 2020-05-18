@@ -320,11 +320,11 @@ class TestCentering:
         self.pipeline.run_module('fit1')
 
         data = self.pipeline.get_data('fit_full')
-        assert np.mean(data[:, 0]) == pytest.approx(0.9776509460662398, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 2]) == pytest.approx(2.0728607288578873, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 4]) == pytest.approx(0.36963891715359626, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 6]) == pytest.approx(0.3185006455033411, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 8]) == pytest.approx(21.68903758655562, rel=1e-3, abs=0.)
+        assert np.mean(data[:, 0]) == pytest.approx(0.97, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 2]) == pytest.approx(2.07, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 4]) == pytest.approx(0.37, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 6]) == pytest.approx(0.32, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 8]) == pytest.approx(21.69, rel=1e-2, abs=0.)
         assert data.shape == (10, 14)
 
         data = self.pipeline.get_data('mask')
@@ -347,11 +347,11 @@ class TestCentering:
         self.pipeline.run_module('fit2')
 
         data = self.pipeline.get_data('fit_mean')
-        assert np.mean(data[:, 0]) == pytest.approx(0.9492793707409797, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 2]) == pytest.approx(2.059513939761893, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 4]) == pytest.approx(0.08496815683313727, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 6]) == pytest.approx(0.0829756518784879, rel=1e-3, abs=0.)
-        assert np.mean(data[:, 8]) == pytest.approx(0.2421981897335256, rel=1e-3, abs=0.)
+        assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 2]) == pytest.approx(2.06, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 4]) == pytest.approx(0.08, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 6]) == pytest.approx(0.08, rel=1e-2, abs=0.)
+        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=1e-2, abs=0.)
         assert data.shape == (10, 16)
 
     def test_shift_images_tag(self) -> None:
