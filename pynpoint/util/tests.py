@@ -252,10 +252,7 @@ def create_star_data(path: str,
 
 
 @typechecked
-def create_waffle_data(path: str,
-                       npix: int,
-                       x_spot: List[float],
-                       y_spot: List[float]) -> None:
+def create_waffle_data(path: str) -> None:
     """
     Create data with satellite spots and Gaussian noise.
 
@@ -263,12 +260,6 @@ def create_waffle_data(path: str,
     ----------
     path : str
         Working folder.
-    npix : int
-        Number of pixels in both dimensions.
-    x_spot : list(float, )
-        Pixel positions in horizontal direction of the satellite spots.
-    y_spot : list(float, )
-        Pixel positions in vertical direction of the satellite spots.
 
     Returns
     -------
@@ -280,6 +271,10 @@ def create_waffle_data(path: str,
         os.makedirs(path)
 
     fwhm = 3
+    npix = 101
+
+    x_spot = [25., 25., 75., 75.]
+    y_spot = [25., 75., 75., 25.]
 
     sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
 
@@ -288,16 +283,14 @@ def create_waffle_data(path: str,
 
     image = np.zeros((npix, npix))
 
-    for j, _ in enumerate(x_spot):
-        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2) /
-                                               (2.*sigma**2))
-        image += star
+    for j in range(4):
+        image += np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2)/(2.*sigma**2))/(2.*np.pi*sigma**2)
 
     hdu = fits.PrimaryHDU()
     header = hdu.header
     header['INSTRUME'] = 'IMAGER'
     header['HIERARCH ESO DET EXP NO'] = 'None'
-    header['HIERARCH ESO DET NDIT'] = 'none'
+    header['HIERARCH ESO DET NDIT'] = 'None'
     header['HIERARCH ESO ADA POSANG'] = 'None'
     header['HIERARCH ESO ADA POSANG END'] = 'None'
     header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
