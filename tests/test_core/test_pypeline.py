@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import h5py
@@ -13,24 +12,22 @@ from pynpoint.readwrite.fitswriting import FitsWritingModule
 from pynpoint.processing.badpixel import BadPixelSigmaFilterModule
 from pynpoint.util.tests import create_config, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestPypeline:
 
     def setup_class(self) -> None:
+
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
         np.random.seed(1)
-        images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
+        images = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
 
         hdu = fits.PrimaryHDU()
         header = hdu.header
         header['INSTRUME'] = 'IMAGER'
         header['HIERARCH ESO DET EXP NO'] = 1
-        header['HIERARCH ESO DET NDIT'] = 10
+        header['HIERARCH ESO DET NDIT'] = 5
         header['HIERARCH ESO INS PIXSCALE'] = 0.01
         header['HIERARCH ESO ADA POSANG'] = 10.
         header['HIERARCH ESO ADA POSANG END'] = 20.
@@ -40,13 +37,16 @@ class TestPypeline:
         hdu.writeto(self.test_dir+'images.fits')
 
     def teardown_class(self) -> None:
+
         remove_test_data(self.test_dir, files=['images.fits'])
 
     def test_create_default_config(self) -> None:
+
         with pytest.warns(UserWarning) as warning:
             Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Configuration file not found. Creating ' \
                                              'PynPoint_config.ini with default values ' \
                                              'in the working place.'
@@ -59,6 +59,7 @@ class TestPypeline:
         assert count == 25
 
     def test_create_none_config(self) -> None:
+
         file_obj = open(self.test_dir+'PynPoint_config.ini', 'w')
         file_obj.write('[header]\n\n')
         file_obj.write('INSTRUMENT: None\n')
@@ -91,7 +92,7 @@ class TestPypeline:
         assert attribute == 0
 
         attribute = pipeline.get_attribute('config', 'PIXSCALE', static=True)
-        assert np.allclose(attribute, 0.0, rtol=limit, atol=0.)
+        assert attribute == pytest.approx(0., rel=self.limit, abs=0.)
 
         attribute = pipeline.get_attribute('config', 'INSTRUMENT', static=True)
         assert attribute == 'None'
@@ -99,6 +100,7 @@ class TestPypeline:
         create_config(self.test_dir+'PynPoint_config.ini')
 
     def test_create_pipeline_path_missing(self) -> None:
+
         dir_non_exists = self.test_dir + 'none/'
         dir_exists = self.test_dir
 
@@ -127,8 +129,9 @@ class TestPypeline:
                                    '- input requested: None.'
 
     def test_create_pipeline_existing_database(self) -> None:
+
         np.random.seed(1)
-        images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
+        images = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
             dset = hdf_file.create_dataset('images', data=images)
@@ -137,20 +140,15 @@ class TestPypeline:
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         data = pipeline.get_data('images')
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
-
-        data = pipeline.get_data('images', data_range=(0, 5))
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 7.576979467771179e-07, rtol=limit, atol=0.)
-        assert data.shape == (5, 100, 100)
+        assert np.mean(data) == pytest.approx(1.1824138000882435e-05, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
         assert pipeline.get_attribute('images', 'PIXSCALE') == 0.01
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_create_pipeline_new_database(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         pipeline.m_data_storage.open_connection()
@@ -161,33 +159,47 @@ class TestPypeline:
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_add_module(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        read = FitsReadingModule(name_in='read1', input_dir=None, image_tag='im_arr1')
-        assert pipeline.add_module(read) is None
+        module = FitsReadingModule(name_in='read1',
+                                   input_dir=None,
+                                   image_tag='im_arr1')
 
-        read = FitsReadingModule(name_in='read2', input_dir=self.test_dir, image_tag='im_arr2')
-        assert pipeline.add_module(read) is None
+        assert pipeline.add_module(module) is None
+
+        module = FitsReadingModule(name_in='read2',
+                                   input_dir=self.test_dir,
+                                   image_tag='im_arr2')
+
+        assert pipeline.add_module(module) is None
 
         with pytest.warns(UserWarning) as warning:
-            pipeline.add_module(read)
+            pipeline.add_module(module)
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Pipeline module names need to be unique. ' \
                                              'Overwriting module \'read2\'.'
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel',
-                                            image_in_tag='im_arr1',
-                                            image_out_tag='im_out')
+        module = BadPixelSigmaFilterModule(name_in='badpixel',
+                                           image_in_tag='im_arr1',
+                                           image_out_tag='im_out')
 
-        assert pipeline.add_module(process) is None
+        assert pipeline.add_module(module) is None
 
-        write = FitsWritingModule(name_in='write1', file_name='result.fits', data_tag='im_arr1')
-        assert pipeline.add_module(write) is None
+        module = FitsWritingModule(name_in='write1',
+                                   file_name='result.fits',
+                                   data_tag='im_arr1')
 
-        write = FitsWritingModule(name_in='write2', file_name='result.fits', data_tag='im_arr1',
-                                  output_dir=self.test_dir)
-        assert pipeline.add_module(write) is None
+        assert pipeline.add_module(module) is None
+
+        module = FitsWritingModule(name_in='write2',
+                                   file_name='result.fits',
+                                   data_tag='im_arr1',
+                                   output_dir=self.test_dir)
+
+        assert pipeline.add_module(module) is None
 
         assert pipeline.run() is None
 
@@ -197,15 +209,19 @@ class TestPypeline:
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_run_module(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        read = FitsReadingModule(name_in='read', image_tag='im_arr')
-        assert pipeline.add_module(read) is None
+        module = FitsReadingModule(name_in='read',
+                                   image_tag='im_arr')
+
+        assert pipeline.add_module(module) is None
         assert pipeline.run_module('read') is None
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_add_wrong_module(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         with pytest.raises(TypeError) as error:
@@ -217,19 +233,24 @@ class TestPypeline:
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_run_module_wrong_tag(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        read = FitsReadingModule(name_in='read')
-        pipeline.add_module(read)
+        module = FitsReadingModule(name_in='read')
 
-        write = FitsWritingModule(name_in='write', file_name='result.fits', data_tag='im_list')
-        pipeline.add_module(write)
+        pipeline.add_module(module)
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel',
-                                            image_in_tag='im_list',
-                                            image_out_tag='im_out')
+        module = FitsWritingModule(name_in='write',
+                                   file_name='result.fits',
+                                   data_tag='im_list')
 
-        pipeline.add_module(process)
+        pipeline.add_module(module)
+
+        module = BadPixelSigmaFilterModule(name_in='badpixel',
+                                           image_in_tag='im_list',
+                                           image_out_tag='im_out')
+
+        pipeline.add_module(module)
 
         with pytest.raises(AttributeError) as error:
             pipeline.run_module('badpixel')
@@ -254,12 +275,14 @@ class TestPypeline:
 
         with pytest.raises(TypeError) as error:
             pipeline._validate('module', 'tag')
+
         assert str(error.value) == 'type of argument "module" must be one of (ReadingModule, ' \
                                    'WritingModule, ProcessingModule); got str instead'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_run_module_non_existing(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         with pytest.warns(UserWarning) as warning:
@@ -271,16 +294,18 @@ class TestPypeline:
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_remove_module(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        read = FitsReadingModule(name_in='read')
-        pipeline.add_module(read)
+        module = FitsReadingModule(name_in='read')
 
-        process = BadPixelSigmaFilterModule(name_in='badpixel',
-                                            image_in_tag='im_arr1',
-                                            image_out_tag='im_out')
+        pipeline.add_module(module)
 
-        pipeline.add_module(process)
+        module = BadPixelSigmaFilterModule(name_in='badpixel',
+                                           image_in_tag='im_arr1',
+                                           image_out_tag='im_out')
+
+        pipeline.add_module(module)
 
         assert pipeline.get_module_names() == ['read', 'badpixel']
         assert pipeline.remove_module('read')
@@ -292,43 +317,50 @@ class TestPypeline:
             pipeline.remove_module('test')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Pipeline module name \'test\' not found in the ' \
                                              'Pypeline dictionary.'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
     def test_get_shape(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        read = FitsReadingModule(name_in='read', image_tag='images')
-        pipeline.add_module(read)
+        module = FitsReadingModule(name_in='read',
+                                   image_tag='images')
+
+        pipeline.add_module(module)
         pipeline.run_module('read')
 
-        assert pipeline.get_shape('images') == (10, 100, 100)
+        assert pipeline.get_shape('images') == (5, 11, 11)
 
     def test_get_tags(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         assert pipeline.get_tags() == 'images'
 
     def test_set_and_get_attribute(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         pipeline.set_attribute('images', 'PIXSCALE', 0.1, static=True)
         pipeline.set_attribute('images', 'PARANG', np.arange(1., 11., 1.), static=False)
 
         attribute = pipeline.get_attribute('images', 'PIXSCALE', static=True)
-        assert np.allclose(attribute, 0.1, rtol=limit, atol=0.)
+        assert attribute == pytest.approx(0.1, rel=self.limit, abs=0.)
 
         attribute = pipeline.get_attribute('images', 'PARANG', static=False)
-        assert np.allclose(attribute, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+        assert attribute == pytest.approx(np.arange(1., 11., 1.), rel=self.limit, abs=0.)
 
         pipeline.set_attribute('images', 'PARANG', np.arange(10., 21., 1.), static=False)
 
         attribute = pipeline.get_attribute('images', 'PARANG', static=False)
-        assert np.allclose(attribute, np.arange(10., 21., 1.), rtol=limit, atol=0.)
+        assert attribute == pytest.approx(np.arange(10., 21., 1.), rel=self.limit, abs=0.)
 
     def test_delete_data(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         pipeline.delete_data('images')
@@ -336,16 +368,19 @@ class TestPypeline:
         assert pipeline.get_tags().size == 0
 
     def test_delete_not_found(self) -> None:
+
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         with pytest.warns(UserWarning) as warning:
             pipeline.delete_data('images')
 
         assert len(warning) == 2
+
         assert warning[0].message.args[0] == 'Dataset \'images\' not found in the database.'
         assert warning[1].message.args[0] == 'Attributes of \'images\' not found in the database.'
 
     def test_omp_num_threads(self) -> None:
+
         os.environ['OMP_NUM_THREADS'] = '2'
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)

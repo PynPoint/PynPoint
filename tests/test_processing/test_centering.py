@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -9,59 +8,20 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.centering import StarAlignmentModule, ShiftImagesModule, \
                                           WaffleCenteringModule, FitCenterModule
 from pynpoint.processing.extract import StarExtractionModule
+from pynpoint.processing.resizing import AddLinesModule
 from pynpoint.util.tests import create_config, create_star_data, create_waffle_data, \
                                 remove_test_data
-
-warnings.simplefilter('always')
-
-limit = 1e-10
 
 
 class TestCentering:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'dither',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[25, 75, 75, 25],
-                         y0=[75, 75, 25, 25],
-                         parang_start=[0., 25., 50., 75.],
-                         parang_end=[25., 50., 75., 100.],
-                         exp_no=[1, 2, 3, 4])
-
-        create_star_data(path=self.test_dir+'star_odd',
-                         npix_x=101,
-                         npix_y=101,
-                         x0=[50],
-                         y0=[50],
-                         parang_start=[0.],
-                         parang_end=[25.],
-                         exp_no=[1],
-                         noise=False)
-
-        create_star_data(path=self.test_dir+'star_even',
-                         npix_x=100,
-                         npix_y=100,
-                         x0=[49.5],
-                         y0=[49.5],
-                         parang_start=[0.],
-                         parang_end=[25.],
-                         exp_no=[1],
-                         noise=False)
-
-        create_waffle_data(path=self.test_dir+'waffle_odd',
-                           npix=101,
-                           x_spot=[20., 20., 80., 80.],
-                           y_spot=[20., 80., 80., 20.])
-
-        create_waffle_data(path=self.test_dir+'waffle_even',
-                           npix=100,
-                           x_spot=[20., 20., 79., 79.],
-                           y_spot=[20., 79., 79., 20.])
-
+        create_star_data(self.test_dir+'star')
+        create_waffle_data(self.test_dir+'waffle')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -69,97 +29,44 @@ class TestCentering:
     def teardown_class(self) -> None:
 
         remove_test_data(path=self.test_dir,
-                         folders=['dither', 'star_odd', 'star_even', 'waffle_odd', 'waffle_even'])
+                         folders=['star', 'waffle'])
 
     def test_read_data(self) -> None:
 
         module = FitsReadingModule(name_in='read1',
-                                   image_tag='dither',
-                                   input_dir=self.test_dir+'dither',
+                                   image_tag='star',
+                                   input_dir=self.test_dir+'star',
                                    overwrite=True,
                                    check=True)
 
         self.pipeline.add_module(module)
 
         module = FitsReadingModule(name_in='read2',
-                                   image_tag='waffle_odd',
-                                   input_dir=self.test_dir+'waffle_odd',
+                                   image_tag='waffle',
+                                   input_dir=self.test_dir+'waffle',
                                    overwrite=True,
                                    check=True)
 
         self.pipeline.add_module(module)
-
-        module = FitsReadingModule(name_in='read3',
-                                   image_tag='waffle_even',
-                                   input_dir=self.test_dir+'waffle_even',
-                                   overwrite=True,
-                                   check=True)
-
-        self.pipeline.add_module(module)
-
-        module = FitsReadingModule(name_in='read4',
-                                   image_tag='star_odd',
-                                   input_dir=self.test_dir+'star_odd',
-                                   overwrite=True,
-                                   check=True)
-
-        self.pipeline.add_module(module)
-
-        read = FitsReadingModule(name_in='read5',
-                                 image_tag='star_even',
-                                 input_dir=self.test_dir+'star_even',
-                                 overwrite=True,
-                                 check=True)
-
-        self.pipeline.add_module(read)
 
         self.pipeline.run_module('read1')
         self.pipeline.run_module('read2')
-        self.pipeline.run_module('read3')
-        self.pipeline.run_module('read4')
-        self.pipeline.run_module('read5')
 
-        data = self.pipeline.get_data('dither')
-        assert np.allclose(data[0, 75, 25], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        data = self.pipeline.get_data('star')
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
-        data = self.pipeline.get_data('waffle_odd')
-        assert np.allclose(data[0, 20, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 20, 80], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 80, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 80, 80], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.0003921184197627874, rtol=1e-4, atol=0.)
+        data = self.pipeline.get_data('waffle')
+        assert np.sum(data) == pytest.approx(4.000000000000196, rel=self.limit, abs=0.)
         assert data.shape == (1, 101, 101)
-
-        data = self.pipeline.get_data('waffle_even')
-        assert np.allclose(data[0, 20, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 20, 79], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 79, 20], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 79, 79], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 0.00040000000000001953, rtol=1e-4, atol=0.)
-        assert data.shape == (1, 100, 100)
-
-        data = self.pipeline.get_data('star_odd')
-        assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 9.80296049406969e-05, rtol=1e-4, atol=0.)
-        assert data.shape == (10, 101, 101)
-
-        data = self.pipeline.get_data('star_even')
-        assert np.allclose(data[0, 49, 49], 0.08406157361512759, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 49, 50], 0.08406157361512759, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 50, 49], 0.08406157361512759, rtol=1e-4, atol=0.)
-        assert np.allclose(data[0, 50, 50], 0.08406157361512759, rtol=1e-4, atol=0.)
-        assert np.allclose(np.mean(data), 9.99999999999951e-05, rtol=1e-4, atol=0.)
-        assert data.shape == (10, 100, 100)
 
     def test_star_extract(self) -> None:
 
         module = StarExtractionModule(name_in='extract1',
-                                      image_in_tag='dither',
+                                      image_in_tag='star',
                                       image_out_tag='extract1',
                                       index_out_tag='index',
-                                      image_size=1.0,
+                                      image_size=0.2,
                                       fwhm_star=0.1,
                                       position=None)
 
@@ -169,17 +76,17 @@ class TestCentering:
             self.pipeline.run_module('extract1')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
                                              '\'index\' is empty.'
 
         data = self.pipeline.get_data('extract1')
-
-        assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
-        assert data.shape == (40, 39, 39)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
         attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
-        assert attr[10, 0] == attr[10, 1] == 75
+        assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
+        assert attr.shape == (10, 2)
 
     def test_star_align(self) -> None:
 
@@ -196,9 +103,8 @@ class TestCentering:
         self.pipeline.run_module('align1')
 
         data = self.pipeline.get_data('align1')
-        assert np.allclose(data[0, 39, 39], 0.023556628129942768, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016446205542266847, rtol=limit, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)
+        assert data.shape == (10, 18, 18)
 
     def test_star_align_subframe(self) -> None:
 
@@ -209,15 +115,14 @@ class TestCentering:
                                      accuracy=10,
                                      resize=None,
                                      num_references=10,
-                                     subframe=0.5)
+                                     subframe=0.1)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('align2')
 
         data = self.pipeline.get_data('align2')
-        assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
-        assert data.shape == (40, 39, 39)
+        assert np.sum(data) == pytest.approx(104.39031104541652, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
     def test_star_align_ref(self) -> None:
 
@@ -234,9 +139,8 @@ class TestCentering:
         self.pipeline.run_module('align3')
 
         data = self.pipeline.get_data('align3')
-        assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
-        assert data.shape == (40, 39, 39)
+        assert np.sum(data) == pytest.approx(104.46997194330757, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
     def test_star_align_number_ref(self) -> None:
 
@@ -246,7 +150,7 @@ class TestCentering:
                                      image_out_tag='align4',
                                      accuracy=10,
                                      resize=None,
-                                     num_references=50,
+                                     num_references=20,
                                      subframe=None)
 
         self.pipeline.add_module(module)
@@ -255,18 +159,18 @@ class TestCentering:
             self.pipeline.run_module('align4')
 
         assert len(warning) == 1
-        assert warning[0].message.args[0] == 'Number of available images (40) is smaller than ' \
-                                             'num_references (50). Using all available images ' \
+
+        assert warning[0].message.args[0] == 'Number of available images (10) is smaller than ' \
+                                             'num_references (20). Using all available images ' \
                                              'instead.'
 
         data = self.pipeline.get_data('align4')
-        assert np.allclose(data[0, 19, 19], 0.09812948027289994, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0006578482216906739, rtol=limit, atol=0.)
-        assert data.shape == (40, 39, 39)
+        assert np.sum(data) == pytest.approx(104.46997194330757, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
     def test_shift_images_spline(self) -> None:
 
-        module = ShiftImagesModule(shift_xy=(6., 4.),
+        module = ShiftImagesModule(shift_xy=(1., 2.),
                                    interpolation='spline',
                                    name_in='shift1',
                                    image_in_tag='align1',
@@ -276,13 +180,12 @@ class TestCentering:
         self.pipeline.run_module('shift1')
 
         data = self.pipeline.get_data('shift')
-        assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016430682224782259, rtol=limit, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(104.20425101355242, rel=self.limit, abs=0.)
+        assert data.shape == (10, 18, 18)
 
     def test_shift_images_fft(self) -> None:
 
-        module = ShiftImagesModule(shift_xy=(6., 4.),
+        module = ShiftImagesModule(shift_xy=(1., 2.),
                                    interpolation='fft',
                                    name_in='shift2',
                                    image_in_tag='align1',
@@ -292,64 +195,114 @@ class TestCentering:
         self.pipeline.run_module('shift2')
 
         data = self.pipeline.get_data('shift_fft')
-        assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016446205542266847, rtol=limit, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)
+        assert data.shape == (10, 18, 18)
 
     def test_waffle_center_odd(self) -> None:
 
-        module = WaffleCenteringModule(size=2.,
-                                       center=(50, 50),
-                                       name_in='waffle_odd',
-                                       image_in_tag='star_odd',
-                                       center_in_tag='waffle_odd',
-                                       image_out_tag='center_odd',
-                                       radius=42.5,
-                                       pattern='x',
-                                       sigma=0.135)
+        module = AddLinesModule(name_in='add',
+                                image_in_tag='star',
+                                image_out_tag='star_add',
+                                lines=(45, 45, 45, 45))
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('waffle_odd')
+        self.pipeline.run_module('add')
 
-        data = self.pipeline.get_data('star_odd')
-        assert np.allclose(data[0, 50, 50], 0.09806026673451182, rtol=limit, atol=0.)
+        data = self.pipeline.get_data('star_add')
+        assert np.sum(data) == pytest.approx(105.54278879805278, rel=self.limit, abs=0.)
+        assert data.shape == (10, 101, 101)
 
-        data = self.pipeline.get_data('center_odd')
-        assert np.allclose(data[0, 37, 37], 0.0980602667345118, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
-        assert data.shape == (10, 75, 75)
+        module = WaffleCenteringModule(size=0.2,
+                                       center=(50, 50),
+                                       name_in='waffle',
+                                       image_in_tag='star_add',
+                                       center_in_tag='waffle',
+                                       image_out_tag='center',
+                                       radius=35.,
+                                       pattern='x',
+                                       sigma=0.05)
 
-        attribute = self.pipeline.get_attribute('center_odd', 'History: WaffleCenteringModule')
-        assert attribute == '[x, y] = [50.0, 50.0]'
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('waffle')
+
+        data = self.pipeline.get_data('center')
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
+
+        attr = self.pipeline.get_attribute('center', 'History: WaffleCenteringModule')
+        assert attr == '[x, y] = [50.0, 50.0]'
 
     def test_waffle_center_even(self) -> None:
 
-        module = WaffleCenteringModule(size=2.,
+        module = AddLinesModule(name_in='add1',
+                                image_in_tag='star_add',
+                                image_out_tag='star_even',
+                                lines=(0, 1, 0, 1))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('add1')
+
+        data = self.pipeline.get_data('star_even')
+        assert np.sum(data) == pytest.approx(105.54278879805275, rel=self.limit, abs=0.)
+        assert data.shape == (10, 102, 102)
+
+        module = AddLinesModule(name_in='add2',
+                                image_in_tag='waffle',
+                                image_out_tag='waffle_even',
+                                lines=(0, 1, 0, 1))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('add2')
+
+        data = self.pipeline.get_data('waffle_even')
+        assert np.sum(data) == pytest.approx(4.000000000000195, rel=self.limit, abs=0.)
+        assert data.shape == (1, 102, 102)
+
+        module = ShiftImagesModule(shift_xy=(0.5, 0.5),
+                                   interpolation='spline',
+                                   name_in='shift3',
+                                   image_in_tag='star_even',
+                                   image_out_tag='star_shift')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('shift3')
+
+        data = self.pipeline.get_data('star_shift')
+        assert np.sum(data) == pytest.approx(105.54278879805274, rel=self.limit, abs=0.)
+        assert data.shape == (10, 102, 102)
+
+        module = ShiftImagesModule(shift_xy=(0.5, 0.5),
+                                   interpolation='spline',
+                                   name_in='shift4',
+                                   image_in_tag='waffle_even',
+                                   image_out_tag='waffle_shift')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('shift4')
+
+        data = self.pipeline.get_data('waffle_shift')
+        assert np.sum(data) == pytest.approx(4.000000000000194, rel=self.limit, abs=0.)
+        assert data.shape == (1, 102, 102)
+
+        module = WaffleCenteringModule(size=0.2,
                                        center=(50, 50),
                                        name_in='waffle_even',
-                                       image_in_tag='star_even',
-                                       center_in_tag='waffle_even',
+                                       image_in_tag='star_shift',
+                                       center_in_tag='waffle_shift',
                                        image_out_tag='center_even',
-                                       radius=42.5,
+                                       radius=35.,
                                        pattern='x',
-                                       sigma=0.135)
+                                       sigma=0.05)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('waffle_even')
 
-        data = self.pipeline.get_data('star_even')
-        assert np.allclose(data[0, 49, 49], 0.08406157361512759, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 49, 50], 0.08406157361512759, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 50, 49], 0.08406157361512759, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 50, 50], 0.08406157361512759, rtol=limit, atol=0.)
-
         data = self.pipeline.get_data('center_even')
-        assert np.allclose(data[0, 37, 37], 0.09778822940550569, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00017777777777778643, rtol=limit, atol=0.)
-        assert data.shape == (10, 75, 75)
+        assert np.sum(data) == pytest.approx(105.22695036281449, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
-        attribute = self.pipeline.get_attribute('center_even', 'History: WaffleCenteringModule')
-        assert attribute == '[x, y] = [49.5, 49.5]'
+        attr = self.pipeline.get_attribute('center_even', 'History: WaffleCenteringModule')
+        assert attr == '[x, y] = [50.5, 50.5]'
 
     def test_fit_center_full(self) -> None:
 
@@ -358,28 +311,25 @@ class TestCentering:
                                  fit_out_tag='fit_full',
                                  mask_out_tag='mask',
                                  method='full',
-                                 radius=0.05,
+                                 radius=0.1,
                                  sign='positive',
                                  model='gaussian',
-                                 guess=(6., 4., 3., 3., 0.01, 0., 0.))
+                                 guess=(1., 2., 3., 3., 0.01, 0., 0.))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('fit1')
 
         data = self.pipeline.get_data('fit_full')
-        assert np.allclose(np.mean(data[:, 0]), 5.999068486622676, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 2]), 4.000055166165185, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 4]), 0.08106141046470318, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 6]), 0.0810026137349896, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 8]), 0.024462594420743763, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 12]), 3.0281141786814477e-05, rtol=1e-3, atol=0.)
-        assert data.shape == (40, 14)
+        assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.01)
+        assert np.mean(data[:, 2]) == pytest.approx(2.07, rel=0., abs=0.01)
+        assert np.mean(data[:, 4]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 6]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.01)
+        assert data.shape == (10, 14)
 
         data = self.pipeline.get_data('mask')
-        assert np.allclose(data[0, 43, 45], 0.023556628129942764, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 43, 55], 0.0, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010827527282995305, rtol=limit, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(103.45599730750453, rel=self.limit, abs=0.)
+        assert data.shape == (10, 18, 18)
 
     def test_fit_center_mean(self) -> None:
 
@@ -388,50 +338,48 @@ class TestCentering:
                                  fit_out_tag='fit_mean',
                                  mask_out_tag=None,
                                  method='mean',
-                                 radius=0.05,
+                                 radius=0.1,
                                  sign='positive',
                                  model='moffat',
-                                 guess=(6., 4., 3., 3., 0.01, 0., 0., 1.))
+                                 guess=(1., 2., 3., 3., 0.01, 0., 0., 1.))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('fit2')
 
         data = self.pipeline.get_data('fit_mean')
-        assert np.allclose(np.mean(data[:, 0]), 5.999072568941366, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 2]), 4.000051869708742, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 4]), 0.08384036587023312, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 6]), 0.08379313488754872, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 8]), 0.025631328037795074, rtol=1e-3, atol=0.)
-        assert np.allclose(np.mean(data[:, 12]), -0.0011275279023032867, rtol=1e-3, atol=0.)
-        assert data.shape == (40, 16)
+        assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.01)
+        assert np.mean(data[:, 2]) == pytest.approx(2.06, rel=0., abs=0.01)
+        assert np.mean(data[:, 4]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 6]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.01)
+        assert data.shape == (10, 16)
 
     def test_shift_images_tag(self) -> None:
 
         module = ShiftImagesModule(shift_xy='fit_full',
                                    interpolation='spline',
-                                   name_in='shift3',
+                                   name_in='shift5',
                                    image_in_tag='shift',
                                    image_out_tag='shift_tag_1')
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('shift3')
+        self.pipeline.run_module('shift5')
 
         data = self.pipeline.get_data('shift_tag_1')
-        assert np.allclose(data[0, 39, 39], 0.023563080974545528, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.0001643062943690491, rtol=1e-6, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(103.76504482668594, rel=1e-6, abs=0.)
+        assert data.shape == (10, 18, 18)
 
     def test_shift_images_tag_mean(self) -> None:
 
         module = ShiftImagesModule(shift_xy='fit_mean',
                                    interpolation='spline',
-                                   name_in='shift4',
+                                   name_in='shift6',
                                    image_in_tag='shift',
                                    image_out_tag='shift_tag_2')
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('shift4')
+        self.pipeline.run_module('shift6')
+
         data = self.pipeline.get_data('shift_tag_2')
-        assert np.allclose(data[0, 20, 31], 5.348337712000518e-05, rtol=1e-6, atol=0.)
-        assert np.allclose(np.mean(data), 0.00016430318227546225, rtol=1e-6, atol=0.)
-        assert data.shape == (40, 78, 78)
+        assert np.sum(data) == pytest.approx(103.42285579230325, rel=1e-6, abs=0.)
+        assert data.shape == (10, 18, 18)

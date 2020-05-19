@@ -1,5 +1,4 @@
 import os
-import warnings
 
 from typing import Tuple
 
@@ -9,34 +8,37 @@ import numpy as np
 from pynpoint.core.dataio import OutputPort, DataStorage, InputPort
 from pynpoint.util.tests import create_random
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestOutputPort:
 
     def setup(self) -> None:
+
+        self.limit = 1e-10
         self.storage = DataStorage(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
     def setup_class(self) -> None:
+
         create_random(os.path.dirname(__file__))
 
     def teardown_class(self) -> None:
+
         os.remove(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
 
     def create_input_port(self, tag_name: str) -> InputPort:
+
         inport = InputPort(tag_name, self.storage)
         inport.open_port()
 
         return inport
 
     def create_output_port(self, tag_name: str) -> OutputPort:
+
         outport = OutputPort(tag_name, self.storage)
 
         return outport
 
     def test_create_instance(self) -> None:
+
         with pytest.raises(ValueError) as error:
             OutputPort('config', self.storage)
 
@@ -61,6 +63,7 @@ class TestOutputPort:
             control_port.get_all()
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
                                              'InputPort.'
 
@@ -72,6 +75,7 @@ class TestOutputPort:
         active_port.del_all_data()
 
     def test_set_all_new_data(self) -> None:
+
         outport = self.create_output_port('new_data')
 
         # ----- 1D input -----
@@ -109,7 +113,9 @@ class TestOutputPort:
         outport.del_all_data()
 
     def test_set_all_error(self) -> None:
+
         # ---- Test database not set -----
+
         data = [1, 2, 3, 4, 0]
 
         with pytest.warns(UserWarning) as record:
@@ -117,6 +123,7 @@ class TestOutputPort:
             out_port.set_all(data)
 
         assert len(record) == 1
+
         assert record[0].message.args[0] == 'OutputPort can not store data unless a database is ' \
                                             'connected.'
 
@@ -131,7 +138,7 @@ class TestOutputPort:
 
         assert str(error.value) == 'Output port can only save numpy arrays from 1D to 5D. Use ' \
                                    'Port attributes to save as int, float, or string.'
-   
+
         # ---- Test data dim of data_dim for new data entry is < 1 or > 5
 
         out_port = self.create_output_port('new_data')
@@ -185,6 +192,7 @@ class TestOutputPort:
             out_port.set_all([[]], data_dim=2, keep_attributes=True)
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
                                              '\'new_data\' is empty.'
 
@@ -194,9 +202,13 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_append_new_data(self) -> None:
+
         # using append even if no data exists
+
         out_port = self.create_output_port('new_data')
+
         # ----- 1D input -----
+
         data = [3, ]
         out_port.append(data)
 
@@ -205,6 +217,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
         # ----- 2D input -----
+
         data = [[3, 3], [3, 2]]
         out_port.append(data)
 
@@ -212,6 +225,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
         # ----- 3D input -----
+
         data = [[[3, 3], [3, 2]], [[3, 1], [3, 1]]]
         out_port.append(data)
 
@@ -219,80 +233,91 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_append_existing_data(self) -> None:
+
         out_port = self.create_output_port('new_data')
 
         # ----- 1D -----
+
         out_port.append([2, 3, 5], data_dim=1)
         out_port.append([3, 3, 5])
 
         control = self.create_input_port('new_data')
 
-        assert np.array_equal(control.get_all(),
-                              [2, 3, 5, 3, 3, 5])
+        assert np.array_equal(control.get_all(), [2, 3, 5, 3, 3, 5])
+
         out_port.del_all_data()
 
         # ----- 2D -----
         # 1D input append to 1D data
+
         out_port.append([1, 1], data_dim=2)
         out_port.append([3, 3])
-        assert np.array_equal(control.get_all(),
-                              [[1, 1], [3, 3]])
+
+        assert np.array_equal(control.get_all(), [[1, 1], [3, 3]])
+
         out_port.del_all_data()
 
         # 1D input append to 2D data
+
         out_port.append([[2, 3], [1, 1]], data_dim=2)
         out_port.append([3, 3])
-        assert np.array_equal(control.get_all(),
-                              [[2, 3], [1, 1], [3, 3]])
+
+        assert np.array_equal(control.get_all(), [[2, 3], [1, 1], [3, 3]])
+
         out_port.del_all_data()
 
         # 2D input append to 2D data
+
         out_port.append([[2, 3], [1, 1]], data_dim=2)
         out_port.append([[3, 3], [8, 8]])
-        assert np.array_equal(control.get_all(),
-                              [[2, 3], [1, 1], [3, 3], [8, 8]])
+
+        assert np.array_equal(control.get_all(), [[2, 3], [1, 1], [3, 3], [8, 8]])
+
         out_port.del_all_data()
 
         # 2D input append to 3D data
-        out_port.append([[[2, 3], [1, 1]],
-                         [[2, 4], [1, 1]]], data_dim=3)
+
+        out_port.append([[[2, 3], [1, 1]], [[2, 4], [1, 1]]], data_dim=3)
+
         out_port.append([[3, 3], [8, 8]])
+
         assert np.array_equal(control.get_all(),
                               [[[2, 3], [1, 1]],
                                [[2, 4], [1, 1]],
                                [[3, 3], [8, 8]]])
+
         out_port.del_all_data()
 
         # 3D input append to 3D data
-        out_port.append([[[2, 3], [1, 1]],
-                         [[2, 4], [1, 1]]], data_dim=3)
-        out_port.append([[[22, 7], [10, 221]],
-                         [[223, 46], [1, 15]]])
+
+        out_port.append([[[2, 3], [1, 1]], [[2, 4], [1, 1]]], data_dim=3)
+        out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
 
         assert np.array_equal(control.get_all(),
                               [[[2, 3], [1, 1]],
                                [[2, 4], [1, 1]],
                                [[22, 7], [10, 221]],
                                [[223, 46], [1, 15]]])
+
         out_port.del_all_data()
 
     def test_append_existing_data_force_overwriting(self) -> None:
+
         out_port = self.create_output_port('new_data')
 
         # Error case (no force)
-        out_port.append([2, 3, 5], data_dim=1)
 
-        out_port.append([[[22, 7], [10, 221]],
-                         [[223, 46], [1, 15]]],
-                        force=True)
+        out_port.append([2, 3, 5], data_dim=1)
+        out_port.append([[[22, 7], [10, 221]], [[223, 46], [1, 15]]], force=True)
 
         control = self.create_input_port('new_data')
 
-        assert np.array_equal(control.get_all(), [[[22, 7], [10, 221]],
-                                                  [[223, 46], [1, 15]]])
+        assert np.array_equal(control.get_all(), [[[22, 7], [10, 221]], [[223, 46], [1, 15]]])
+
         out_port.del_all_data()
 
     def test_append_existing_data_error(self) -> None:
+
         # ---- port not active ----
         out_port = self.create_output_port('new_data')
         out_port.deactivate()
@@ -321,6 +346,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_set_data_using_slicing(self) -> None:
+
         out_port = self.create_output_port('new_data')
 
         out_port.set_all([2, 5, 6, 7, ])
@@ -329,13 +355,17 @@ class TestOutputPort:
         control = self.create_input_port('new_data')
 
         assert np.array_equal(control.get_all(), [2, 5, 6, 44, ])
+
         out_port.deactivate()
         out_port[2] = 0
+
         assert np.array_equal(control.get_all(), [2, 5, 6, 44, ])
+
         out_port.activate()
         out_port.del_all_data()
 
     def test_del_all_data(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, 1])
         out_port.del_all_data()
@@ -350,6 +380,7 @@ class TestOutputPort:
                                              'InputPort.'
 
     def test_add_static_attribute(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([1])
         out_port.add_attribute('attr1', value=5)
@@ -376,6 +407,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_add_static_attribute_error(self) -> None:
+
         out_port = self.create_output_port('new_data')
 
         # add attribute while no data is set
@@ -384,6 +416,7 @@ class TestOutputPort:
 
         # check that only one warning was raised
         assert len(warning) == 1
+
         # check that the message matches
         assert warning[0].message.args[0] == 'Can not store attribute if data tag does not exist.'
 
@@ -391,7 +424,9 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_add_non_static_attribute(self) -> None:
+
         # two different data types
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([1])
         out_port.add_attribute('attr1', value=[6, 3], static=False)
@@ -403,6 +438,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_append_attribute_data(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.del_all_data()
         out_port.set_all([1])
@@ -423,17 +459,20 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_copy_attributes(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.del_all_attributes()
         out_port.del_all_data()
         out_port.set_all([0, ])
 
         # some static attributes
+
         out_port.add_attribute('attr1', 33)
         out_port.add_attribute('attr2', 'string')
         out_port.add_attribute('attr3', 3.141)
 
         # non static attributes
+
         out_port.add_attribute('attr_non_static', [3, 4, 5, 6], static=False)
 
         copy_port = self.create_output_port('other_data')
@@ -441,7 +480,9 @@ class TestOutputPort:
         copy_port.del_all_data()
 
         copy_port.set_all([1, ])
+
         # for attribute overwriting
+
         copy_port.add_attribute('attr_non_static', [3, 4, 44, 6], static=False)
 
         control = self.create_input_port('new_data')
@@ -451,6 +492,7 @@ class TestOutputPort:
 
         assert copy_control.get_attribute('attr1') == 33
         assert copy_control.get_attribute('attr2') == 'string'
+
         assert np.array_equal(copy_control.get_attribute('attr3'), 3.141)
         assert np.array_equal(copy_control.get_attribute('attr_non_static'), [3, 4, 5, 6])
 
@@ -462,6 +504,7 @@ class TestOutputPort:
 
         port = self.create_output_port('test')
         port.deactivate()
+
         assert port.copy_attributes(control) is None
 
         port = self.create_input_port('test')
@@ -474,6 +517,7 @@ class TestOutputPort:
                                              'InputPort.'
 
     def test_copy_attributes_same_tag(self) -> None:
+
         out_port1 = self.create_output_port('new_data')
         out_port1.set_all([0, ])
 
@@ -492,20 +536,24 @@ class TestOutputPort:
         out_port1.del_all_attributes()
 
     def test_del_attribute(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
 
         # static
+
         out_port.add_attribute('attr1', 4)
         out_port.add_attribute('attr2', 5)
 
         # non static
+
         out_port.add_attribute('attr_non_static_1', [1, 2, 3], static=False)
         out_port.add_attribute('attr_non_static_2', [2, 4, 6, 8], static=False)
         out_port.del_attribute('attr1')
         out_port.del_attribute('attr_non_static_1')
 
         # check is only the chosen attributes are deleted and the rest is still there
+
         control = self.create_input_port('new_data')
 
         with pytest.warns(UserWarning) as warning:
@@ -528,10 +576,12 @@ class TestOutputPort:
         out_port.del_all_attributes()
 
     def test_del_attribute_error_case(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
 
         # deactivated port
+
         out_port.add_attribute('attr_1', 5.554)
         out_port.deactivate()
         out_port.del_attribute('attr_1')
@@ -540,13 +590,13 @@ class TestOutputPort:
         assert control.get_attribute('attr_1') == 5.554
 
         out_port.activate()
+
         # not existing
         with pytest.warns(UserWarning) as warning:
             out_port.del_attribute('not_existing')
 
-        # check that only one warning was raised
         assert len(warning) == 1
-        # check that the message matches
+
         assert warning[0].message.args[0] == 'Attribute \'not_existing\' does not exist and ' \
                                              'could not be deleted.'
 
@@ -554,6 +604,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_del_all_attributes(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
         out_port.add_attribute('attr_1', 4)
@@ -577,6 +628,7 @@ class TestOutputPort:
         out_port.del_all_data()
 
     def test_add_history(self) -> None:
+
         out_port = self.create_output_port('new_data')
         out_port.set_all([0, ])
         out_port.add_history('Test', 'history')
@@ -585,7 +637,9 @@ class TestOutputPort:
         assert control.get_attribute('History: Test') == 'history'
 
     def test_check_attribute(self) -> None:
+
         out_port = self.create_output_port('new_data')
+
         out_port.set_all([0, ])
         out_port.add_attribute('static', 5, static=True)
         out_port.add_attribute('non-static', np.arange(1, 11, 1), static=False)
@@ -608,21 +662,25 @@ class TestOutputPort:
         out_port.del_all_attributes()
 
     def test_append_empty_data_new(self) -> None:
+
         out_port = self.create_output_port('empty_data')
 
         with pytest.warns(UserWarning) as warning:
             out_port.append([])
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
                                              '\'empty_data\' is empty.'
 
     def test_append_empty_data_add(self) -> None:
+
         out_port = self.create_output_port('empty_data')
 
         with pytest.warns(UserWarning) as warning:
             out_port.append([])
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The dataset that is appended under the tag name ' \
                                              '\'empty_data\' is empty.'

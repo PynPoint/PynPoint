@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -10,17 +9,14 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.nearreading import NearReadingModule
 from pynpoint.util.tests import create_config, create_near_data, remove_test_data
 
-warnings.simplefilter('always')
 
-limit = 1e-6
-
-
-class TestNearInitModule(object):
+class TestNearReading:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-8
         self.test_dir = os.path.dirname(__file__) + '/'
-        self.fitsfile = self.test_dir + 'near/images_1.fits'
+        self.fitsfile = self.test_dir + 'near/images_0.fits'
 
         create_near_data(path=self.test_dir + 'near')
         create_config(self.test_dir + 'PynPoint_config.ini')
@@ -56,8 +52,8 @@ class TestNearInitModule(object):
         for item in self.positions:
 
             data = self.pipeline.get_data(item)
-            assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
-            assert data.shape == (20, 10, 10)
+            assert np.mean(data) == pytest.approx(0.060582854, rel=self.limit, abs=0.)
+            assert data.shape == (10, 10, 10)
 
     def test_near_subtract_crop_mean(self) -> None:
 
@@ -73,12 +69,12 @@ class TestNearInitModule(object):
         self.pipeline.run_module('read1b')
 
         data = self.pipeline.get_data(self.positions[0])
-        assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
-        assert data.shape == (4, 7, 7)
+        assert np.mean(data) == pytest.approx(0., rel=self.limit, abs=0.)
+        assert data.shape == (2, 7, 7)
 
         data = self.pipeline.get_data(self.positions[1])
-        assert np.allclose(np.mean(data), 0.0, rtol=limit, atol=0.)
-        assert data.shape == (4, 7, 7)
+        assert np.mean(data) == pytest.approx(0., rel=self.limit, abs=0.)
+        assert data.shape == (2, 7, 7)
 
     def test_near_median(self) -> None:
 
@@ -92,12 +88,12 @@ class TestNearInitModule(object):
         self.pipeline.run_module('read1c')
 
         data = self.pipeline.get_data(self.positions[0])
-        assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
-        assert data.shape == (4, 10, 10)
+        assert np.mean(data) == pytest.approx(0.060582854, rel=self.limit, abs=0.)
+        assert data.shape == (2, 10, 10)
 
         data = self.pipeline.get_data(self.positions[1])
-        assert np.allclose(np.mean(data), 0.060582854, rtol=limit, atol=0.)
-        assert data.shape == (4, 10, 10)
+        assert np.mean(data) == pytest.approx(0.060582854, rel=self.limit, abs=0.)
+        assert data.shape == (2, 10, 10)
 
     def test_static_not_found(self) -> None:
 
@@ -113,7 +109,8 @@ class TestNearInitModule(object):
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read2')
 
-        assert len(warning) == 8
+        assert len(warning) == 4
+
         for item in warning:
             assert item.message.args[0] == 'Static attribute DIT (=Test) not found in the FITS ' \
                                            'header.'
@@ -134,7 +131,8 @@ class TestNearInitModule(object):
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read3')
 
-        assert len(warning) == 8
+        assert len(warning) == 4
+
         for item in warning:
             assert item.message.args[0] == 'Non-static attribute NDIT (=Test) not found in the ' \
                                            'FITS header.'
@@ -160,6 +158,7 @@ class TestNearInitModule(object):
             self.pipeline.run_module('read4')
 
         assert len(warning) == 3
+
         assert warning[0].message.args[0] == 'Dataset was obtained without chopping.'
         assert warning[1].message.args[0] == 'Chop cycles (1) have been skipped.'
         assert warning[2].message.args[0] == 'FITS file contains averaged images.'
@@ -215,6 +214,7 @@ class TestNearInitModule(object):
                 hdulist[10].header['ESO DET FRAM TYPE'] = 'HCYCLE1'
 
             assert len(warning) == 1
+
             assert warning[0].message.args[0] == 'Keyword name \'ESO DET FRAM TYPE\' is greater ' \
                                                  'than 8 characters or contains characters not ' \
                                                  'allowed by the FITS standard; a HIERARCH card ' \

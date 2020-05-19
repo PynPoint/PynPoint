@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -9,24 +8,21 @@ from pynpoint.readwrite.attr_reading import ParangReadingModule, AttributeReadin
                                             WavelengthReadingModule
 from pynpoint.util.tests import create_config, create_random, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestAttributeReading:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_random(self.test_dir, ndit=10, parang=None)
+        create_random(self.test_dir, nimages=10)
         create_config(self.test_dir+'PynPoint_config.ini')
 
-        np.savetxt(self.test_dir+'parang.dat', np.arange(1., 11., 1.))
-        np.savetxt(self.test_dir+'new.dat', np.arange(10., 21., 1.))
-        np.savetxt(self.test_dir+'attribute.dat', np.arange(1, 11, 1), fmt='%i')
-        np.savetxt(self.test_dir+'wavelength.dat', np.arange(1, 11, 1))
+        np.savetxt(self.test_dir+'parang.dat', np.arange(10., 20., 1.))
+        np.savetxt(self.test_dir+'new.dat', np.arange(20., 30., 1.))
+        np.savetxt(self.test_dir+'attribute.dat', np.arange(0, 10, 1), fmt='%i')
+        np.savetxt(self.test_dir+'wavelength.dat', np.arange(0., 10., 1.))
 
         data2d = np.random.normal(loc=0, scale=2e-4, size=(10, 10))
         np.savetxt(self.test_dir+'data_2d.dat', data2d)
@@ -42,32 +38,31 @@ class TestAttributeReading:
     def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.007133341144768919, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_parang_reading(self) -> None:
 
-        module = ParangReadingModule(file_name='parang.dat',
-                                     name_in='parang1',
-                                     input_dir=None,
+        module = ParangReadingModule(name_in='parang1',
                                      data_tag='images',
-                                     overwrite=False)
+                                     file_name='parang.dat',
+                                     input_dir=None,
+                                     overwrite=True)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('parang1')
 
         data = self.pipeline.get_data('header_images/PARANG')
         assert data.dtype == 'float64'
-        assert np.allclose(data, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+        assert data == pytest.approx(np.arange(10., 20., 1.), rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
     def test_parang_reading_same(self) -> None:
 
-        module = ParangReadingModule(file_name='parang.dat',
-                                     name_in='parang2',
-                                     input_dir=None,
+        module = ParangReadingModule(name_in='parang2',
                                      data_tag='images',
+                                     file_name='parang.dat',
+                                     input_dir=None,
                                      overwrite=True)
 
         self.pipeline.add_module(module)
@@ -82,10 +77,10 @@ class TestAttributeReading:
 
     def test_parang_reading_present(self) -> None:
 
-        module = ParangReadingModule(file_name='new.dat',
-                                     name_in='parang3',
-                                     input_dir=None,
+        module = ParangReadingModule(name_in='parang3',
                                      data_tag='images',
+                                     file_name='new.dat',
+                                     input_dir=None,
                                      overwrite=False)
 
         self.pipeline.add_module(module)
@@ -111,10 +106,10 @@ class TestAttributeReading:
 
     def test_parang_reading_2d(self) -> None:
 
-        module = ParangReadingModule(file_name='data_2d.dat',
-                                     name_in='parang6',
-                                     input_dir=None,
+        module = ParangReadingModule(name_in='parang6',
                                      data_tag='images',
+                                     file_name='data_2d.dat',
+                                     input_dir=None,
                                      overwrite=False)
 
         self.pipeline.add_module(module)
@@ -139,7 +134,7 @@ class TestAttributeReading:
 
         data = self.pipeline.get_data('header_images/EXP_NO')
         assert data.dtype == 'int64'
-        assert np.allclose(data, np.arange(1, 11, 1), rtol=limit, atol=0.)
+        assert data == pytest.approx(np.arange(10), rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
     def test_attribute_reading_present(self) -> None:
@@ -224,8 +219,8 @@ class TestAttributeReading:
         self.pipeline.add_module(module)
         self.pipeline.run_module('attribute7')
 
-        attribute = self.pipeline.get_attribute('images', 'PARANG', static=False)
-        assert np.allclose(attribute, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+        data = self.pipeline.get_attribute('images', 'PARANG', static=False)
+        assert data == pytest.approx(np.arange(10., 20., 1.), rel=self.limit, abs=0.)
 
     def test_wavelength_reading(self) -> None:
 
@@ -240,7 +235,7 @@ class TestAttributeReading:
 
         data = self.pipeline.get_data('header_images/WAVELENGTH')
         assert data.dtype == 'float64'
-        assert np.allclose(data, np.arange(1., 11., 1.), rtol=limit, atol=0.)
+        assert data == pytest.approx(np.arange(10.), rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
     def test_wavelength_reading_same(self) -> None:

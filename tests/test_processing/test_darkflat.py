@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import h5py
 import pytest
@@ -9,23 +8,20 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.processing.darkflat import DarkCalibrationModule, FlatCalibrationModule
 from pynpoint.util.tests import create_config, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestDarkFlat:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
         np.random.seed(1)
 
-        images = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-        dark = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-        flat = np.random.normal(loc=0, scale=2e-4, size=(10, 100, 100))
-        crop = np.random.normal(loc=0, scale=2e-4, size=(10, 60, 60))
+        images = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
+        dark = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
+        flat = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
+        crop = np.random.normal(loc=0, scale=2e-4, size=(5, 7, 7))
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
             hdf_file.create_dataset('images', data=images)
@@ -44,14 +40,12 @@ class TestDarkFlat:
     def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('dark')
-        assert np.allclose(data[0, 10, 10], 3.528694163309295e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 7.368663496379876e-07, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(-2.0262345764957305e-05, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
         data = self.pipeline.get_data('flat')
-        assert np.allclose(data[0, 10, 10], -0.0004053528990466237, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -4.056978234798532e-07, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.0076413379497053, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_dark_calibration(self) -> None:
 
@@ -64,9 +58,8 @@ class TestDarkFlat:
         self.pipeline.run_module('dark')
 
         data = self.pipeline.get_data('dark_cal')
-        assert np.allclose(data[0, 10, 10], 0.0001881700200690493, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.137393482985464e-07, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.00717386583629883, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_flat_calibration(self) -> None:
 
@@ -79,9 +72,8 @@ class TestDarkFlat:
         self.pipeline.run_module('flat')
 
         data = self.pipeline.get_data('flat_cal')
-        assert np.allclose(data[0, 10, 10], 0.00018817459122508784, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 3.136868889624257e-07, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.00717439711853594, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_flat_crop(self) -> None:
 
@@ -96,13 +88,13 @@ class TestDarkFlat:
             self.pipeline.run_module('flat_crop')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'The calibration images were cropped around their ' \
                                              'center to match the shape of the science images.'
 
         data = self.pipeline.get_data('flat_crop')
-        assert np.allclose(data[0, 10, 10], -8.061511635865643e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.7280213934907495e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 60, 60)
+        assert np.sum(data) == pytest.approx(-0.003242901413605404, rel=self.limit, abs=0.)
+        assert data.shape == (5, 7, 7)
 
     def test_flat_too_small(self) -> None:
 
