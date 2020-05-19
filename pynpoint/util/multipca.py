@@ -176,7 +176,9 @@ class PcaTaskProcessor(TaskProcessor):
                                            processing_type=self.m_processing_type)
 
         if i_want_to_seperate_wavelengths(self.m_processing_type):
-            res_output = np.zeros((4, len(self.m_star_reshape), res_rot.shape[-2], res_rot.shape[-1]))
+            res_output = np.zeros((4, len(self.m_star_reshape),
+                                   res_rot.shape[-2], res_rot.shape[-1]))
+
         else:
             res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
 

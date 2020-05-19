@@ -96,7 +96,7 @@ def pca_psf_subtraction(images: np.ndarray,
     scal_cor = np.zeros(residuals.shape)
 
     if scales[0] is not None:
-        
+
         # check if the number of parang is equal to the number of images
         if residuals.shape[0] != scales.shape[0]:
             raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
@@ -120,7 +120,7 @@ def pca_psf_subtraction(images: np.ndarray,
     res_rot = np.zeros(residuals.shape)
 
     if angles[0] is not None:
-        
+
         # check if the number of parang is equal to the number of images
         if residuals.shape[0] != angles.shape[0]:
             raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '

@@ -142,7 +142,7 @@ def create_fits(path: str,
 @typechecked
 def create_fake_data(path: str) -> None:
     """
-    Create ADI test data with a fake planet.
+    Create an ADI dataset with a star and planet.
 
     Parameters
     ----------
@@ -192,71 +192,57 @@ def create_fake_data(path: str) -> None:
 
 
 @typechecked
-def create_ifs_fake(path: str) -> None:
+def create_ifs_data(path: str) -> None:
     """
-    Create ADI or IFS test data with a fake planet.
+    Create an IFS dataset with a star and planet.
+
     Parameters
     ----------
     path : str
         Working folder.
+
     Returns
     -------
     NoneType
         None
     """
 
-    npix = 30
+    ndit = 10
+    npix = 21
+    nwavel = 3
     fwhm = 3.
+    sep = 6.
+    contrast = 1.
+    pos_star = 10.
+    exp_no = 1
 
-    ndit = np.full(10, 6)
-    exp_no = np.linspace(1, 10, 10, dtype=int)
-
-    x0 = y0 = np.full(20, 15)
-
-    angles = [[i, i] for i in np.linspace(0., 100., 10)]
-
-    # 6 (Number of wavelengths) // 0.953 (Starting wavelength) // 0.019 (Delta Wavelength)
-    ifs_wav = [6, 0.953, 0.0190526315789474]
+    parang = np.linspace(0., 180., 10)
+    wavelength = [1., 1.1, 1.2]
 
     if not os.path.exists(path):
         os.makedirs(path)
 
-    parang = []
-    for i, item in enumerate(angles):
-        for j in range(ndit[i]):
-            parang.append(item[0]+float(j)*(item[1]-item[0])/float(ndit[i]))
-
     sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
 
-    x = y = np.arange(0., npix, 1.)
+    x = y = np.arange(0., 21., 1.)
     xx, yy = np.meshgrid(x, y)
 
     np.random.seed(1)
 
-    count = 0
-    for j, item in enumerate(ndit):
-        image = np.zeros((item, npix, npix))
+    images = np.random.normal(loc=0, scale=0.05, size=(nwavel, ndit, npix, npix))
 
-        for i in range(ndit[j]):
-            noise = np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
-            image[i, :, :] = noise
+    for i, par_item in enumerate(parang):
+        for j, wav_item in enumerate(wavelength):
+            sigma_scale = sigma*wav_item
 
-            sigma_c = sigma * (ifs_wav[1] + i * ifs_wav[2]) / ifs_wav[1]
+            star = np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma_scale**2))
 
-            star = (1./(2.*np.pi*sigma_c**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma_c**2))
-            image[i, :, :] += star
+            x_shift = sep*math.cos(math.radians(par_item))
+            y_shift = sep*math.sin(math.radians(par_item))
 
-            planet = 3e-3*(1./(2.*np.pi*sigma_c**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) / (2.*sigma_c**2))
+            images[j, i, ] += star + shift(contrast*star, (x_shift, y_shift), order=5)
 
-            x_shift = 10*math.cos(parang[count]*math.pi/180.)
-            y_shift = 10*math.sin(parang[count]*math.pi/180.)
-            planet = shift(planet, (x_shift, y_shift), order=5)
-            image[i, :] += planet
-
-        count += 1
-
-        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, int(ndit[j]), int(exp_no[j]),
-                    angles[j], x0[j]-npix/2., y0[j]-npix/2.)
+    create_fits(path, 'images.fits', images, ndit, exp_no, 0., 0.)
 
 
 @typechecked

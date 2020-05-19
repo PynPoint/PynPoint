@@ -55,7 +55,7 @@ def combine_residuals(method: str,
                 resi = residuals[k]
             else:
                 resi = residuals
-                
+
             wave_res.append(_residuals(method=method,
                                        res_rot=res_rot[k],
                                        residuals=resi,
