@@ -7,6 +7,8 @@ import time
 
 from typing import List, Optional, Tuple, Union
 
+import numpy as np
+
 from astropy.io import fits
 from typeguard import typechecked
 
@@ -62,6 +64,10 @@ class FitsReadingModule(ReadingModule):
             provided directly. If set to None, the FITS files in the `input_dir` are read. All
             paths should be provided either relative to the Python working folder (i.e., the folder
             where Python is executed) or as absolute paths.
+        ifs_data : bool
+            Import IFS data which is stored as a 4D array with the wavelength and temporal
+            dimensions as first and second dimension, respectively. If set to ``False`` (default),
+            the data is imported as a 3D array with the temporal dimension as first dimension.
 
         Returns
         -------
@@ -106,7 +112,9 @@ class FitsReadingModule(ReadingModule):
         """
 
         hdulist = fits.open(fits_file)
+
         images = hdulist[0].data.byteswap().newbyteorder()
+        images = np.nan_to_num(images)
 
         if images.ndim == 4 and not self.m_ifs_data:
             raise ValueError('The input data is 4D but ifs_data is set to False. Reading in 4D '

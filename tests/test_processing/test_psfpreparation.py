@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -10,18 +9,15 @@ from pynpoint.processing.psfpreparation import PSFpreparationModule, AngleInterp
                                                AngleCalculationModule, SDIpreparationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestPsfPreparation:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'prep')
+        create_star_data(self.test_dir+'prep')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -40,9 +36,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_angle_interpolation(self) -> None:
 
@@ -53,10 +48,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('angle1')
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.allclose(data[0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[15], 7.777777777777778, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        assert np.sum(data) == pytest.approx(900., rel=self.limit, abs=0.)
+        assert data.shape == (10, )
 
     def test_angle_calculation(self) -> None:
 
@@ -81,9 +74,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('angle2')
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.allclose(data[0], -55.04109770947442, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -54.99858360618869, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        assert np.sum(data) == pytest.approx(-550.2338300130718, rel=self.limit, abs=0.)
+        assert data.shape == (10, )
 
         self.pipeline.set_attribute('read', 'RA', (60000.0, 60000.0, 60000.0, 60000.0),
                                     static=False)
@@ -115,9 +107,8 @@ class TestPsfPreparation:
             assert warning[1].message.args[0] == warning_1
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.allclose(data[0], 170.39102715170227, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 170.46341123194824, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        assert np.sum(data) == pytest.approx(1704.220236104952, rel=self.limit, abs=0.)
+        assert data.shape == (10, )
 
         module = AngleCalculationModule(instrument='SPHERE/IFS',
                                         name_in='angle4',
@@ -146,9 +137,8 @@ class TestPsfPreparation:
             assert warning[2].message.args[0] == warning_2
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.allclose(data[0], -89.12897284829768, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -89.02755918786514, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        assert np.sum(data) == pytest.approx(-890.8506520762833, rel=self.limit, abs=0.)
+        assert data.shape == (10, )
 
     def test_angle_interpolation_mismatch(self) -> None:
 
@@ -171,10 +161,8 @@ class TestPsfPreparation:
             assert warning[0].message.args[0] == warning_0
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.allclose(data[0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[15], 7.777777777777778, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 10.0, rtol=limit, atol=0.)
-        assert data.shape == (40, )
+        assert np.sum(data) == pytest.approx(900., rel=self.limit, abs=0.)
+        assert data.shape == (10, )
 
     def test_psf_preparation_norm_mask(self) -> None:
 
@@ -190,16 +178,12 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep1')
 
         data = self.pipeline.get_data('prep1')
-        assert np.allclose(data[0, 0, 0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[0, 99, 99], 0., rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0001690382058762809, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(-1.5844830188044685, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
         data = self.pipeline.get_data('mask1')
-        assert np.allclose(data[0, 0], 0., rtol=limit, atol=0.)
-        assert np.allclose(data[99, 99], 0., rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.4268, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert np.sum(data) == pytest.approx(52, rel=self.limit, abs=0.)
+        assert data.shape == (11, 11)
 
     def test_psf_preparation_none(self) -> None:
 
@@ -215,11 +199,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep2')
 
         data = self.pipeline.get_data('prep2')
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 99, 99], -0.000287573978535779, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_psf_preparation_no_mask_out(self) -> None:
 
@@ -235,11 +216,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep3')
 
         data = self.pipeline.get_data('prep3')
-        assert np.allclose(data[0, 0, 0], 0.00032486907273264834, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 25, 25], 2.0926464668090656e-05, rtol=limit, atol=0.)
-        assert np.allclose(data[0, 99, 99], -0.000287573978535779, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_sdi_preparation(self) -> None:
 
@@ -253,9 +231,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('sdi')
 
         data = self.pipeline.get_data('sdi')
-        assert np.allclose(data[0, 25, 25], -2.6648118007008814e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 2.0042892634995876e-05, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(21.084666133914183, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
         attribute = self.pipeline.get_attribute('sdi', 'History: SDIpreparationModule')
         assert attribute == '(line, continuum) = (0.65, 0.6)'

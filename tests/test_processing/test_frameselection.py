@@ -1,6 +1,6 @@
 import os
-import warnings
 
+import pytest
 import numpy as np
 
 from pynpoint.core.pypeline import Pypeline
@@ -11,18 +11,15 @@ from pynpoint.processing.frameselection import RemoveFramesModule, FrameSelectio
                                                SelectByAttributeModule, ResidualSelectionModule
 from pynpoint.util.tests import create_config, remove_test_data, create_star_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestFrameSelection:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'images', ndit=10, nframes=11)
+        create_star_data(self.test_dir+'images')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -43,9 +40,18 @@ class TestFrameSelection:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.0001002167910262529, rtol=limit, atol=0.)
-        assert data.shape == (44, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
+
+        attr = self.pipeline.get_attribute('read', 'NDIT', static=False)
+        assert np.sum(attr) == pytest.approx(10, rel=self.limit, abs=0.)
+        assert attr.shape == (2, )
+
+        attr = self.pipeline.get_attribute('read', 'NFRAMES', static=False)
+        assert np.sum(attr) == pytest.approx(10, rel=self.limit, abs=0.)
+        assert attr.shape == (2, )
+
+        self.pipeline.set_attribute('read', 'NDIT', [4, 4], static=False)
 
     def test_remove_last_frame(self) -> None:
 
@@ -57,29 +63,23 @@ class TestFrameSelection:
         self.pipeline.run_module('last')
 
         data = self.pipeline.get_data('last')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010020258903646778, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(84.68885503527224, rel=self.limit, abs=0.)
+        assert data.shape == (8, 11, 11)
 
-        self.pipeline.set_attribute('last', 'PARANG', np.arange(0., 40., 1.), static=False)
+        self.pipeline.set_attribute('last', 'PARANG', np.arange(8.), static=False)
+        self.pipeline.set_attribute('last', 'STAR_POSITION', np.full((8, 2), 5.), static=False)
 
-        star = np.zeros((40, 2))
-        star[:, 0] = np.arange(40., 80., 1.)
-        star[:, 1] = np.arange(40., 80., 1.)
+        attr = self.pipeline.get_attribute('last', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(28., rel=self.limit, abs=0.)
+        assert attr.shape == (8, )
 
-        self.pipeline.set_attribute('last', 'STAR_POSITION', star, static=False)
-
-        attribute = self.pipeline.get_attribute('last', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 19.5, rtol=limit, atol=0.)
-        assert attribute.shape == (40, )
-
-        attribute = self.pipeline.get_attribute('last', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 59.5, rtol=limit, atol=0.)
-        assert attribute.shape == (40, 2)
+        attr = self.pipeline.get_attribute('last', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(80., rel=self.limit, abs=0.)
+        assert attr.shape == (8, 2)
 
     def test_remove_start_frame(self) -> None:
 
-        module = RemoveStartFramesModule(frames=2,
+        module = RemoveStartFramesModule(frames=1,
                                          name_in='start',
                                          image_in_tag='last',
                                          image_out_tag='start')
@@ -88,17 +88,16 @@ class TestFrameSelection:
         self.pipeline.run_module('start')
 
         data = self.pipeline.get_data('start')
-        assert np.allclose(data[0, 50, 50], 0.09797376304048713, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010011298467340513, rtol=limit, atol=0.)
-        assert data.shape == (32, 100, 100)
+        assert np.sum(data) == pytest.approx(64.44307047549808, rel=self.limit, abs=0.)
+        assert data.shape == (6, 11, 11)
 
-        attribute = self.pipeline.get_attribute('start', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 20.5, rtol=limit, atol=0.)
-        assert attribute.shape == (32, )
+        attr = self.pipeline.get_attribute('start', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(24., rel=self.limit, abs=0.)
+        assert attr.shape == (6, )
 
-        attribute = self.pipeline.get_attribute('start', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 60.5, rtol=limit, atol=0.)
-        assert attribute.shape == (32, 2)
+        attr = self.pipeline.get_attribute('start', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(60., rel=self.limit, abs=0.)
+        assert attr.shape == (6, 2)
 
     def test_remove_frames(self) -> None:
 
@@ -106,36 +105,34 @@ class TestFrameSelection:
                                     image_in_tag='start',
                                     selected_out_tag='selected',
                                     removed_out_tag='removed',
-                                    frames=[5, 8, 13, 25, 31])
+                                    frames=[2, 5])
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('remove')
 
         data = self.pipeline.get_data('selected')
-        assert np.allclose(data[0, 50, 50], 0.09797376304048713, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.984682304434105e-05, rtol=limit, atol=0.)
-        assert data.shape == (27, 100, 100)
+        assert np.sum(data) == pytest.approx(43.68337741822863, rel=self.limit, abs=0.)
+        assert data.shape == (4, 11, 11)
 
         data = self.pipeline.get_data('removed')
-        assert np.allclose(data[0, 50, 50], 0.09818692015286978, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010155025747035087, rtol=limit, atol=0.)
-        assert data.shape == (5, 100, 100)
+        assert np.sum(data) == pytest.approx(20.759693057269445, rel=self.limit, abs=0.)
+        assert data.shape == (2, 11, 11)
 
-        attribute = self.pipeline.get_attribute('selected', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 20.296296296296298, rtol=limit, atol=0.)
-        assert attribute.shape == (27, )
+        attr = self.pipeline.get_attribute('selected', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(14., rel=self.limit, abs=0.)
+        assert attr.shape == (4, )
 
-        attribute = self.pipeline.get_attribute('selected', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 60.2962962962963, rtol=limit, atol=0.)
-        assert attribute.shape == (27, 2)
+        attr = self.pipeline.get_attribute('selected', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(40., rel=self.limit, abs=0.)
+        assert attr.shape == (4, 2)
 
-        attribute = self.pipeline.get_attribute('removed', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 21.6, rtol=limit, atol=0.)
-        assert attribute.shape == (5, )
+        attr = self.pipeline.get_attribute('removed', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(10., rel=self.limit, abs=0.)
+        assert attr.shape == (2, )
 
-        attribute = self.pipeline.get_attribute('removed', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 61.6, rtol=limit, atol=0.)
-        assert attribute.shape == (5, 2)
+        attr = self.pipeline.get_attribute('removed', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(20., rel=self.limit, abs=0.)
+        assert attr.shape == (2, 2)
 
     def test_frame_selection(self) -> None:
 
@@ -145,44 +142,41 @@ class TestFrameSelection:
                                       removed_out_tag='removed1',
                                       index_out_tag='index1',
                                       method='median',
-                                      threshold=1.,
+                                      threshold=2.,
                                       fwhm=0.1,
-                                      aperture=('circular', 0.2),
-                                      position=(None, None, 0.5))
+                                      aperture=('circular', 0.1),
+                                      position=(None, None, 0.2))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('select1')
 
         data = self.pipeline.get_data('selected1')
-        assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.980792188317311e-05, rtol=limit, atol=0.)
-        assert data.shape == (22, 100, 100)
+        assert np.sum(data) == pytest.approx(54.58514780071149, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
         data = self.pipeline.get_data('removed1')
-        assert np.allclose(data[0, 50, 50], 0.09797376304048713, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010078412281191547, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(9.857922674786586, rel=self.limit, abs=0.)
+        assert data.shape == (1, 11, 11)
 
         data = self.pipeline.get_data('index1')
-        assert data[-1] == 28
-        assert np.sum(data) == 115
-        assert data.shape == (10, )
+        assert np.sum(data) == pytest.approx(5, rel=self.limit, abs=0.)
+        assert data.shape == (1, )
 
-        attribute = self.pipeline.get_attribute('selected1', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 22.681818181818183, rtol=limit, atol=0.)
-        assert attribute.shape == (22, )
+        attr = self.pipeline.get_attribute('selected1', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(17., rel=self.limit, abs=0.)
+        assert attr.shape == (5, )
 
-        attribute = self.pipeline.get_attribute('selected1', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
-        assert attribute.shape == (22, 2)
+        attr = self.pipeline.get_attribute('selected1', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(50, rel=self.limit, abs=0.)
+        assert attr.shape == (5, 2)
 
-        attribute = self.pipeline.get_attribute('removed1', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 15.7, rtol=limit, atol=0.)
-        assert attribute.shape == (10, )
+        attr = self.pipeline.get_attribute('removed1', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(7., rel=self.limit, abs=0.)
+        assert attr.shape == (1, )
 
-        attribute = self.pipeline.get_attribute('removed1', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
-        assert attribute.shape == (10, 2)
+        attr = self.pipeline.get_attribute('removed1', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(10, rel=self.limit, abs=0.)
+        assert attr.shape == (1, 2)
 
         module = FrameSelectionModule(name_in='select2',
                                       image_in_tag='start',
@@ -190,44 +184,41 @@ class TestFrameSelection:
                                       removed_out_tag='removed2',
                                       index_out_tag='index2',
                                       method='max',
-                                      threshold=3.,
+                                      threshold=1.,
                                       fwhm=0.1,
-                                      aperture=('annulus', 0.1, 0.2),
+                                      aperture=('annulus', 0.05, 0.1),
                                       position=None)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('select2')
 
         data = self.pipeline.get_data('selected2')
-        assert np.allclose(data[0, 50, 50], 0.09797376304048713, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010037996502199598, rtol=limit, atol=0.)
-        assert data.shape == (20, 100, 100)
+        assert np.sum(data) == pytest.approx(21.42652724866543, rel=self.limit, abs=0.)
+        assert data.shape == (2, 11, 11)
 
         data = self.pipeline.get_data('removed2')
-        assert np.allclose(data[0, 50, 50], 0.097912284606689, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 9.966801742575358e-05, rtol=limit, atol=0.)
-        assert data.shape == (12, 100, 100)
+        assert np.sum(data) == pytest.approx(43.016543226832646, rel=self.limit, abs=0.)
+        assert data.shape == (4, 11, 11)
 
         data = self.pipeline.get_data('index2')
-        assert data[-1] == 30
-        assert np.sum(data) == 230
-        assert data.shape == (12, )
+        assert np.sum(data) == pytest.approx(10, rel=self.limit, abs=0.)
+        assert data.shape == (4, )
 
-        attribute = self.pipeline.get_attribute('selected2', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 17.8, rtol=limit, atol=0.)
-        assert attribute.shape == (20, )
+        attr = self.pipeline.get_attribute('selected2', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(8., rel=self.limit, abs=0.)
+        assert attr.shape == (2, )
 
-        attribute = self.pipeline.get_attribute('selected2', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
-        assert attribute.shape == (20, 2)
+        attr = self.pipeline.get_attribute('selected2', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(20, rel=self.limit, abs=0.)
+        assert attr.shape == (2, 2)
 
-        attribute = self.pipeline.get_attribute('removed2', 'PARANG', static=False)
-        assert np.allclose(np.mean(attribute), 25.0, rtol=limit, atol=0.)
-        assert attribute.shape == (12, )
+        attr = self.pipeline.get_attribute('removed2', 'PARANG', static=False)
+        assert np.sum(attr) == pytest.approx(16., rel=self.limit, abs=0.)
+        assert attr.shape == (4, )
 
-        attribute = self.pipeline.get_attribute('removed2', 'STAR_POSITION', static=False)
-        assert np.allclose(np.mean(attribute), 50.0, rtol=limit, atol=0.)
-        assert attribute.shape == (12, 2)
+        attr = self.pipeline.get_attribute('removed2', 'STAR_POSITION', static=False)
+        assert np.sum(attr) == pytest.approx(40, rel=self.limit, abs=0.)
+        assert attr.shape == (4, 2)
 
     def test_image_statistics_full(self) -> None:
 
@@ -240,81 +231,68 @@ class TestFrameSelection:
         self.pipeline.run_module('stat1')
 
         data = self.pipeline.get_data('stat1')
-        assert np.allclose(data[0, 0], -0.0007312880198509591, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), 48.479917666979716, rtol=limit, atol=0.)
-        assert data.shape == (44, 6)
+        assert np.sum(data) == pytest.approx(115.68591492205017, rel=self.limit, abs=0.)
+        assert data.shape == (10, 6)
 
     def test_image_statistics_posiiton(self) -> None:
 
         module = ImageStatisticsModule(name_in='stat2',
                                        image_in_tag='read',
                                        stat_out_tag='stat2',
-                                       position=(70, 20, 0.5))
+                                       position=(5, 5, 0.1))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('stat2')
 
         data = self.pipeline.get_data('stat2')
-        assert np.allclose(data[0, 0], -0.0006306714900382097, rtol=limit, atol=0.)
-        assert np.allclose(np.sum(data), -0.05448258074038106, rtol=limit, atol=0.)
-        assert data.shape == (44, 6)
+        assert np.sum(data) == pytest.approx(118.7138708968444, rel=self.limit, abs=0.)
+        assert data.shape == (10, 6)
 
     def test_frame_similarity_mse(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi1',
                                        image_tag='read',
                                        method='MSE',
-                                       mask_radius=(0., 1.))
+                                       mask_radius=(0., 0.2))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi1')
 
-        similarity = self.pipeline.get_attribute('read', 'MSE', static=False)
-
-        assert len(similarity) == self.pipeline.get_shape('read')[0]
-        assert np.min(similarity) > 0
-        assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 1.7938335695664495e-06, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 4.103008589430469e-08, rtol=limit, atol=0.)
+        attr = self.pipeline.get_attribute('read', 'MSE', static=False)
+        assert np.min(attr) > 0.
+        assert np.sum(attr) == pytest.approx(0.11739141370277852, rel=self.limit, abs=0.)
+        assert attr.shape == (10, )
 
     def test_frame_similarity_pcc(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi2',
                                        image_tag='read',
                                        method='PCC',
-                                       mask_radius=(0., 1.))
+                                       mask_radius=(0., 0.2))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi2')
 
-        similarity = self.pipeline.get_attribute('read', 'PCC', static=False)
-
-        assert len(similarity) == self.pipeline.get_shape('read')[0]
-        assert np.min(similarity) > 0
-        assert np.max(similarity) < 1
-        assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.974652830856314, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9994193494590345, rtol=limit, atol=0.)
+        attr = self.pipeline.get_attribute('read', 'PCC', static=False)
+        assert np.min(attr) > 0.
+        assert np.sum(attr) == pytest.approx(9.134820985662829, rel=self.limit, abs=0.)
+        assert attr.shape == (10, )
 
     def test_frame_similarity_ssim(self) -> None:
 
         module = FrameSimilarityModule(name_in='simi3',
                                        image_tag='read',
                                        method='SSIM',
-                                       mask_radius=(0., 1.),
+                                       mask_radius=(0., 0.2),
                                        temporal_median='constant')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi3')
 
-        similarity = self.pipeline.get_attribute('read', 'SSIM', static=False)
-
-        assert len(similarity) == self.pipeline.get_shape('read')[0]
-        assert np.min(similarity) > 0
-        assert np.max(similarity) < 1
-        assert similarity[4] != similarity[8]
-        assert np.allclose(np.sum(similarity), 43.999059977871184, rtol=limit, atol=0.)
-        assert np.allclose(similarity[0], 0.9999793908738922, rtol=limit, atol=0.)
+        attr = self.pipeline.get_attribute('read', 'SSIM', static=False)
+        assert np.min(attr) > 0.
+        assert np.sum(attr) == pytest.approx(9.096830542868524, rel=self.limit, abs=0.)
+        assert attr.shape == (10, )
 
     def test_select_by_attribute(self) -> None:
 
@@ -331,15 +309,17 @@ class TestFrameSelection:
         self.pipeline.add_module(module)
         self.pipeline.run_module('frame_removal_1')
 
-        index = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
-        sim_selected = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
-        sim_removed = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
+        attr = self.pipeline.get_attribute('select_sim', 'INDEX', static=False)
+        assert np.sum(attr) == pytest.approx(946, rel=self.limit, abs=0.)
+        assert attr.shape == (44, )
 
-        assert len(sim_selected) == 6
-        assert len(sim_selected) == len(index)
-        assert len(sim_selected) + len(sim_removed) == 44
+        attr = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
+        assert np.sum(attr) == pytest.approx(5.556889532446573, rel=self.limit, abs=0.)
+        assert attr.shape == (6, )
 
-        assert np.min(sim_selected) > np.max(sim_removed)
+        attr = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
+        assert np.sum(attr) == pytest.approx(3.539941010421951, rel=self.limit, abs=0.)
+        assert attr.shape == (4, )
 
     def test_residual_selection(self) -> None:
 
@@ -354,11 +334,9 @@ class TestFrameSelection:
         self.pipeline.run_module('residual_select')
 
         data = self.pipeline.get_data('res_selected')
-        assert np.allclose(data[0, 50, 50], 0.09791350617182591, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010011309037313302, rtol=limit, atol=0.)
-        assert data.shape == (25, 100, 100)
+        assert np.sum(data) == pytest.approx(41.77295229983322, rel=self.limit, abs=0.)
+        assert data.shape == (4, 11, 11)
 
         data = self.pipeline.get_data('res_removed')
-        assert np.allclose(data[0, 50, 50], 0.09806695334723013, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010011260717437674, rtol=limit, atol=0.)
-        assert data.shape == (7, 100, 100)
+        assert np.sum(data) == pytest.approx(22.670118175664847, rel=self.limit, abs=0.)
+        assert data.shape == (2, 11, 11)

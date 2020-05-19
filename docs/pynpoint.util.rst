@@ -148,6 +148,14 @@ pynpoint.util.tests module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.util.types module
+--------------------------
+
+.. automodule:: pynpoint.util.types
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.util.wavelets module
 -----------------------------
 

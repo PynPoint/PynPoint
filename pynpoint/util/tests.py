@@ -1,5 +1,5 @@
 """
-Functions for testing the pipeline and modules.
+Functions for testing the pipeline and its modules.
 """
 
 import os
@@ -59,19 +59,16 @@ def create_config(filename: str) -> None:
 
 @typechecked
 def create_random(path: str,
-                  ndit: int = 10,
-                  parang: Optional[np.ndarray] = np.arange(1., 11., 1.)) -> None:
+                  nimages: float = 5) -> None:
     """
-    Create a stack of images with Gaussian distributed pixel values.
+    Create a dataset of images with Gaussian distributed pixel values.
 
     Parameters
     ----------
     path : str
         Working folder.
-    ndit : int
+    nimages : int
         Number of images.
-    parang : numpy.ndarray, None
-        Parallactic angles.
 
     Returns
     -------
@@ -82,17 +79,16 @@ def create_random(path: str,
     if not os.path.exists(path):
         os.makedirs(path)
 
-    file_in = path + '/PynPoint_database.hdf5'
+    file_in = os.path.join(path, 'PynPoint_database.hdf5')
 
     np.random.seed(1)
-    images = np.random.normal(loc=0, scale=2e-4, size=(ndit, 100, 100))
+    images = np.random.normal(loc=0, scale=2e-4, size=(nimages, 11, 11))
 
-    h5f = h5py.File(file_in, 'w')
-    dset = h5f.create_dataset('images', data=images)
-    dset.attrs['PIXSCALE'] = 0.01
-    if parang is not None:
-        h5f.create_dataset('header_images/PARANG', data=parang)
-    h5f.close()
+    with h5py.File(file_in, 'w') as h5_file:
+        dset = h5_file.create_dataset('images', data=images)
+        dset.attrs['PIXSCALE'] = 0.01
+
+        h5_file.create_dataset('header_images/PARANG', data=np.arange(float(nimages)))
 
 
 @typechecked
@@ -100,10 +96,9 @@ def create_fits(path: str,
                 filename: str,
                 image: np.ndarray,
                 ndit: int,
-                exp_no: int = 0,
-                parang: List[float] = [0., 0.],
-                x0: float = 0.,
-                y0: float = 0.) -> None:
+                exp_no: int,
+                dither_x: float,
+                dither_y: float) -> None:
     """
     Create a FITS file with images and header information.
 
@@ -113,18 +108,16 @@ def create_fits(path: str,
         Working folder.
     filename : str
         FITS filename.
-    image : numpy.ndarray
+    image : np.ndarray
         Images.
     ndit : int
         Number of integrations.
     exp_no : int
         Exposure number.
-    parang : list(float, float)
-        Start and end parallactic angle.
-    x0 : float
-        Horizontal dither position.
-    y0 : float
-        Vertical dither position.
+    dither_x : float
+        Horizontal dither position relative to the image center.
+    dither_y : float
+        Vertical dither position relative to the image center.
 
     Returns
     -------
@@ -138,26 +131,16 @@ def create_fits(path: str,
     header['HIERARCH ESO DET EXP NO'] = 1.
     header['HIERARCH ESO DET NDIT'] = ndit
     header['HIERARCH ESO DET EXP NO'] = exp_no
-    header['HIERARCH ESO ADA POSANG'] = parang[0]
-    header['HIERARCH ESO ADA POSANG END'] = parang[1]
-    header['HIERARCH ESO SEQ CUMOFFSETX'] = x0
-    header['HIERARCH ESO SEQ CUMOFFSETY'] = y0
+    header['HIERARCH ESO ADA POSANG'] = 0.
+    header['HIERARCH ESO ADA POSANG END'] = 180.
+    header['HIERARCH ESO SEQ CUMOFFSETX'] = dither_x
+    header['HIERARCH ESO SEQ CUMOFFSETY'] = dither_y
     hdu.data = image
     hdu.writeto(os.path.join(path, filename))
 
 
 @typechecked
-def create_fake(path: str,
-                ndit: List[int],
-                nframes: List[int],
-                exp_no: List[int],
-                npix: Tuple[int, int],
-                fwhm: Optional[float],
-                x0: List[float],
-                y0: List[float],
-                angles: List[List[float]],
-                sep: Optional[float],
-                contrast: Optional[float]) -> None:
+def create_fake_data(path: str) -> None:
     """
     Create ADI test data with a fake planet.
 
@@ -165,26 +148,6 @@ def create_fake(path: str,
     ----------
     path : str
         Working folder.
-    ndit : list(int, )
-        Number of exposures.
-    nframes : list(int, )
-        Number of images.
-    exp_no : list(int, )
-        Exposure numbers.
-    npix : tupe(int, int)
-        Number of pixels in x and y direction.
-    fwhm : float, None
-        Full width at half maximum (pix) of the PSF.
-    x0 : list(float, )
-        Horizontal positions of the star.
-    y0 : list(float, )
-        Vertical positions of the star.
-    angles : list(list(float, float), )
-        Derotation angles (deg).
-    sep : float, None
-        Separation of the planet.
-    contrast : float, None
-        Brightness contrast of the planet.
 
     Returns
     -------
@@ -195,85 +158,52 @@ def create_fake(path: str,
     if not os.path.exists(path):
         os.makedirs(path)
 
-    parang = []
-    for i, item in enumerate(angles):
-        for j in range(ndit[i]):
-            parang.append(item[0]+float(j)*(item[1]-item[0])/float(ndit[i]))
-
-    if fwhm is not None or contrast is not None:
-        sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
-
-    x = np.arange(0., npix[0], 1.)
-    y = np.arange(0., npix[1], 1.)
-    xx, yy = np.meshgrid(x, y)
+    ndit = 10
+    npix = 21
+    fwhm = 3.
+    sep = 6.
+    contrast = 1e-1
+    pos_star = 10.
+    exp_no = 1
+    parang = np.linspace(0., 180., 10)
 
     np.random.seed(1)
 
-    count = 0
-    for j, item in enumerate(nframes):
-        image = np.zeros((item, npix[1], npix[0]))
+    sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
 
-        for i in range(ndit[j]):
-            noise = np.random.normal(loc=0, scale=2e-4, size=(npix[1], npix[0]))
-            image[i, 0:npix[1], 0:npix[0]] = noise
+    x = np.arange(0., 21., 1.)
+    y = np.arange(0., 21., 1.)
 
-            if fwhm is not None:
-                star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2)/(2.*sigma**2))
-                image[i, 0:npix[1], 0:npix[0]] += star
+    xx, yy = np.meshgrid(x, y)
 
-            if contrast is not None and sep is not None:
-                planet = contrast*(1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
-                                                                  (2.*sigma**2))
-                x_shift = sep*math.cos(parang[count]*math.pi/180.)
-                y_shift = sep*math.sin(parang[count]*math.pi/180.)
-                planet = shift(planet, (x_shift, y_shift), order=5)
-                image[i, 0:npix[1], 0:npix[0]] += planet
+    images = np.zeros((ndit, npix, npix))
 
-            count += 1
+    for i, item in enumerate(parang):
+        images[i, ] = np.random.normal(loc=0, scale=2e-4, size=(npix, npix))
 
-        create_fits(path, 'image'+str(j+1).zfill(2)+'.fits', image, ndit[j], exp_no[j],
-                    angles[j], x0[j]-npix[0]/2., y0[j]-npix[1]/2.)
+        star = np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma**2))/(2.*np.pi*sigma**2)
+
+        x_shift = sep*math.cos(math.radians(item))
+        y_shift = sep*math.sin(math.radians(item))
+
+        images[i, ] += star + shift(contrast*star, (x_shift, y_shift), order=5)
+
+    create_fits(path, 'images.fits', images, ndit, exp_no, 0., 0.)
 
 
 @typechecked
 def create_star_data(path: str,
-                     npix_x: int = 100,
-                     npix_y: int = 100,
-                     x0: List[float] = [50., 50., 50., 50.],
-                     y0: List[float] = [50., 50., 50., 50.],
-                     parang_start: List[float] = [0., 5., 10., 15.],
-                     parang_end: List[float] = [5., 10., 15., 20.],
-                     exp_no: List[int] = [1, 2, 3, 4],
-                     ndit: int = 10,
-                     nframes: int = 10,
-                     noise: bool = True) -> None:
+                     npix: int = 11,
+                     pos_star: float = 5.) -> None:
     """
-    Create data with a stellar PSF and Gaussian noise.
+    Create a dataset with a PSF and Gaussian noise.
 
     Parameters
     ----------
     path : str
         Working folder.
-    npix_x : int
-        Number of pixels in horizontal direction.
-    npix_y : int
-        Number of pixels in vertical direction.
-    x0 : list(float, )
-        Positions of the PSF in horizontal direction.
-    y0 : list(float, )
-        Positions of the PSF in vertical direction.
-    parang_start : list(float, )
-        Start values of the parallactic angle (deg).
-    parang_end : list(float, )
-        End values of the parallactic angle (deg).
-    exp_no : list(int, )
-        Exposure numbers.
-    ndit : int
-        Number of exposures.
-    nframes : int
-        Number of frames.
-    noise : bool
-        Adding noise to the images.
+    npix : int
+        Number of pixels in each dimension.
 
     Returns
     -------
@@ -282,6 +212,11 @@ def create_star_data(path: str,
     """
 
     fwhm = 3.
+    nimages = 5
+
+    exp_no = [1, 2]
+    parang_start = [0., 90.]
+    parang_end = [90., 180.]
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -291,35 +226,73 @@ def create_star_data(path: str,
     for j, item in enumerate(exp_no):
         sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
 
-        x = y = np.arange(0., npix_x, 1.)
+        x = y = np.arange(0., float(npix), 1.)
         xx, yy = np.meshgrid(x, y)
 
-        image = np.zeros((nframes, npix_x, npix_y))
-
-        for i in range(nframes):
-            image[i, ] = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x0[j])**2+(yy-y0[j])**2) /
-                                                         (2.*sigma**2))
-            if noise:
-                image[i, ] += np.random.normal(loc=0, scale=2e-4, size=(npix_x, npix_x))
+        images = np.random.normal(loc=0, scale=0.1, size=(nimages, npix, npix))
+        images += np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma**2))
 
         hdu = fits.PrimaryHDU()
         header = hdu.header
         header['INSTRUME'] = 'IMAGER'
         header['HIERARCH ESO DET EXP NO'] = item
-        header['HIERARCH ESO DET NDIT'] = ndit
+        header['HIERARCH ESO DET NDIT'] = nimages
         header['HIERARCH ESO ADA POSANG'] = parang_start[j]
         header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
         header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
         header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
-        hdu.data = image
-        hdu.writeto(os.path.join(path, 'image'+str(j+1).zfill(2)+'.fits'))
+        hdu.data = images
+        hdu.writeto(os.path.join(path, f'images_{j}.fits'))
 
 
 @typechecked
-def create_waffle_data(path: str,
-                       npix: int,
-                       x_spot: List[float],
-                       y_spot: List[float]) -> None:
+def create_dither_data(path: str) -> None:
+    """
+    Create a dithering dataset with a stellar PSF.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    ndit = 5
+    npix = 21
+    fwhm = 3.
+
+    exp_no = [1, 2, 3, 4]
+    pos_star = [(5., 5.), (5., 15.), (15., 15.), (15., 5.)]
+    parang = np.full(10, 0.)
+
+    np.random.seed(1)
+
+    sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
+
+    x = np.arange(0., 21., 1.)
+    y = np.arange(0., 21., 1.)
+
+    xx, yy = np.meshgrid(x, y)
+
+    for i, item in enumerate(exp_no):
+        images = np.random.normal(loc=0, scale=0.1, size=(ndit, npix, npix))
+
+        for j in range(ndit):
+            images[j, ] += np.exp(-((xx-pos_star[i][0])**2+(yy-pos_star[i][1])**2)/(2.*sigma**2))
+
+        create_fits(path, f'images_{i}.fits', images, ndit, item,
+                    pos_star[i][0]-10., pos_star[i][1]-10.)
+
+
+@typechecked
+def create_waffle_data(path: str) -> None:
     """
     Create data with satellite spots and Gaussian noise.
 
@@ -327,12 +300,6 @@ def create_waffle_data(path: str,
     ----------
     path : str
         Working folder.
-    npix : int
-        Number of pixels in both dimensions.
-    x_spot : list(float, )
-        Pixel positions in horizontal direction of the satellite spots.
-    y_spot : list(float, )
-        Pixel positions in vertical direction of the satellite spots.
 
     Returns
     -------
@@ -344,6 +311,10 @@ def create_waffle_data(path: str,
         os.makedirs(path)
 
     fwhm = 3
+    npix = 101
+
+    x_spot = [25., 25., 75., 75.]
+    y_spot = [25., 75., 75., 25.]
 
     sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
 
@@ -352,22 +323,20 @@ def create_waffle_data(path: str,
 
     image = np.zeros((npix, npix))
 
-    for j, _ in enumerate(x_spot):
-        star = (1./(2.*np.pi*sigma**2))*np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2) /
-                                               (2.*sigma**2))
-        image += star
+    for j in range(4):
+        image += np.exp(-((xx-x_spot[j])**2+(yy-y_spot[j])**2)/(2.*sigma**2))/(2.*np.pi*sigma**2)
 
     hdu = fits.PrimaryHDU()
     header = hdu.header
     header['INSTRUME'] = 'IMAGER'
     header['HIERARCH ESO DET EXP NO'] = 'None'
-    header['HIERARCH ESO DET NDIT'] = 'none'
+    header['HIERARCH ESO DET NDIT'] = 'None'
     header['HIERARCH ESO ADA POSANG'] = 'None'
     header['HIERARCH ESO ADA POSANG END'] = 'None'
     header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
     header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
     hdu.data = image
-    hdu.writeto(os.path.join(path, 'image01.fits'))
+    hdu.writeto(os.path.join(path, 'images.fits'))
 
 
 @typechecked
@@ -424,12 +393,13 @@ def create_near_data(path: str) -> None:
         os.makedirs(path)
 
     np.random.seed(1)
-    image = np.random.normal(loc=0, scale=1., size=(10, 10))
 
-    exp_no = [1, 2, 3, 4]
+    image = np.random.normal(loc=0., scale=1., size=(10, 10))
 
-    for item in exp_no:
-        fits_file = os.path.join(path, f'images_'+str(item)+'.fits')
+    exp_no = [1, 2]
+
+    for i, item in enumerate(exp_no):
+        fits_file = os.path.join(path, f'images_{i}.fits')
 
         primary_header = fits.Header()
         primary_header['INSTRUME'] = 'VISIR'
@@ -447,6 +417,7 @@ def create_near_data(path: str) -> None:
         chopb_header['HIERARCH ESO DET FRAM TYPE'] = 'HCYCLE2'
 
         hdu = [fits.PrimaryHDU(header=primary_header)]
+
         for _ in range(5):
             hdu.append(fits.ImageHDU(image, header=chopa_header))
             hdu.append(fits.ImageHDU(image, header=chopb_header))

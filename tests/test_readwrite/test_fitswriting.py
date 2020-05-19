@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 import numpy as np
@@ -9,30 +8,27 @@ from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.readwrite.fitswriting import FitsWritingModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
-warnings.simplefilter('always')
 
-limit = 1e-10
-
-
-class TestFitsWritingModule:
+class TestFitsWriting:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'fits')
+        create_star_data(self.test_dir+'fits_data')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self) -> None:
-        files = ['test.fits', 'test000.fits', 'test001.fits', 'test002.fits', 'test003.fits']
-        remove_test_data(self.test_dir, folders=['fits'], files=files)
+
+        remove_test_data(self.test_dir, folders=['fits_data'], files=['test.fits'])
 
     def test_fits_reading(self) -> None:
 
         module = FitsReadingModule(name_in='read',
-                                   input_dir=self.test_dir+'fits',
+                                   input_dir=self.test_dir+'fits_data',
                                    image_tag='images',
                                    overwrite=True,
                                    check=True)
@@ -41,9 +37,8 @@ class TestFitsWritingModule:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_fits_writing(self) -> None:
 
@@ -99,6 +94,7 @@ class TestFitsWritingModule:
             self.pipeline.run_module('write5')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Filename already present. Use overwrite=True ' \
                                              'to overwrite an existing FITS file.'
 
@@ -150,6 +146,7 @@ class TestFitsWritingModule:
             self.pipeline.run_module('write8')
 
         assert len(warning) == 1
+
         assert warning[0].message.args[0] == 'Key \'hierarch longer_than_eight2\' with value ' \
                                              '\'long_text_long_text_long_text_long_text_long_' \
                                              'text_long_text_long_text_long_text\' is too ' \

@@ -132,7 +132,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                   parang: Optional[np.ndarray],
                   cube_mean: np.ndarray) -> Tuple[np.array, Optional[np.ndarray], np.ndarray,
                                                   np.ndarray, Optional[np.ndarray], np.ndarray]:
-    
+
         @typechecked
         def _initialize() -> Tuple[np.array, Optional[np.ndarray], np.ndarray, np.ndarray,
                                    Optional[np.ndarray], np.ndarray]:
@@ -671,6 +671,7 @@ class DitheringBackgroundModule(ProcessingModule):
             # Compute center from dither and make sure all positions are actually Python integers
             if self.m_center is None:
                 self.m_center = np.copy(dither) + float(npix) / 2.
+
                 self.m_center = tuple(zip(map(int, self.m_center[:, 0]),
                                           map(int, self.m_center[:, 1])))
 

@@ -80,6 +80,9 @@ class Pypeline:
 
         if latest_version is not None and pynpoint.__version__ != latest_version:
             print(f'A new version ({latest_version}) is available!\n')
+            print('Want to stay informed about updates, bug fixes, and new features?')
+            print('Please consider using the \'Watch\' button on the Github page:')
+            print('https://github.com/PynPoint/PynPoint\n')
 
         self._m_working_place = working_place_in
         self._m_input_place = input_place_in
@@ -523,7 +526,7 @@ class Pypeline:
 
         Returns
         -------
-        numpy.ndarray
+        np.ndarray
             The selected dataset from the database.
         """
 
@@ -658,7 +661,7 @@ class Pypeline:
 
         Returns
         -------
-        numpy.ndarray
+        np.ndarray
             Database tags.
         """
 
