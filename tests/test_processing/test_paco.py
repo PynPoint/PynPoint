@@ -73,11 +73,11 @@ class TestPaco:
 
     def test_paco_fast(self) -> None:
 
-        module = PACOModule(name_in='paco',
+        module = PACOModule(name_in='paco1',
                             image_in_tag='science',
                             psf_in_tag='psf_stack',
-                            snr_out_tag='snr',
-                            flux_out_tag='flux',
+                            snr_out_tag='snr_fast',
+                            flux_out_tag='flux_fast',
                             psf_rad=3.,
                             scaling=0.1,
                             algorithm='fastpaco',
@@ -88,15 +88,45 @@ class TestPaco:
         self.pipeline.add_module(module)
 
         with pytest.warns(None) as warning:
-            self.pipeline.run_module('paco')
+            self.pipeline.run_module('paco1')
 
         assert len(warning) == 3
 
-        data = self.pipeline.get_data('snr')
+        data = self.pipeline.get_data('snr_fast')
         # fits.writeto('data.fits', data, overwrite=True)
         # assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
         assert data.shape == (2, 2)
 
-        data = self.pipeline.get_data('flux')
+        data = self.pipeline.get_data('flux_fast')
+        # assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
+        assert data.shape == (2, 2)
+
+    def test_paco_full(self) -> None:
+
+        module = PACOModule(name_in='paco2',
+                            image_in_tag='science',
+                            psf_in_tag='psf_stack',
+                            snr_out_tag='snr_full',
+                            flux_out_tag='flux_full',
+                            psf_rad=3.,
+                            scaling=0.1,
+                            algorithm='fullpaco',
+                            flux_calc=True,
+                            threshold=5.,
+                            flux_prec=0.05)
+
+        self.pipeline.add_module(module)
+
+        with pytest.warns(None) as warning:
+            self.pipeline.run_module('paco2')
+
+        assert len(warning) == 3
+
+        data = self.pipeline.get_data('snr_full')
+        # fits.writeto('data.fits', data, overwrite=True)
+        # assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
+        assert data.shape == (2, 2)
+
+        data = self.pipeline.get_data('flux_full')
         # assert np.sum(data) == pytest.approx(5.029285028467547, rel=self.limit, abs=0.)
         assert data.shape == (2, 2)
