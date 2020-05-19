@@ -245,10 +245,6 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.close_port()
 
-        if self.m_res_arr_out_ports is not None:
-            for pca_number in self.m_components:
-                self.m_res_arr_out_ports[pca_number].close_port()
-
         if self.m_basis_out_port is not None:
             self.m_basis_out_port.close_port()
 
