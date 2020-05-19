@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import h5py
 import pytest
@@ -13,21 +12,18 @@ from pynpoint.processing.extract import StarExtractionModule
 from pynpoint.processing.timedenoising import TimeNormalizationModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestProcessing:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
         np.random.seed(1)
 
-        images = np.random.normal(loc=0, scale=2e-4, size=(100, 10, 10))
-        large_data = np.random.normal(loc=0, scale=2e-4, size=(10000, 100, 100))
+        images = np.random.normal(loc=0, scale=2e-4, size=(5, 11, 11))
+        large_data = np.random.normal(loc=0, scale=2e-4, size=(10000, 5, 5))
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'w') as hdf_file:
             hdf_file.create_dataset('images', data=images)
@@ -90,12 +86,12 @@ class TestProcessing:
         self.pipeline.run_module('subtract')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(1.1824138000882435e-05, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
         data = self.pipeline.get_data('im_subtract')
-        assert np.allclose(np.mean(data), 5.529431079676073e-22, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(-1.2544487946113274e-21, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_apply_function_args_none(self) -> None:
 
@@ -107,8 +103,8 @@ class TestProcessing:
         self.pipeline.run_module('norm')
 
         data = self.pipeline.get_data('im_norm')
-        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(2.4012571778516812e-06, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_apply_function_args_none_memory_none(self) -> None:
 
@@ -122,8 +118,8 @@ class TestProcessing:
         self.pipeline.run_module('norm_none')
 
         data = self.pipeline.get_data('im_norm')
-        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(2.4012571778516812e-06, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_apply_function_same_port(self) -> None:
 
@@ -137,16 +133,16 @@ class TestProcessing:
         self.pipeline.run_module('subtract_same')
 
         data = self.pipeline.get_data('im_subtract')
-        assert np.allclose(np.mean(data), 7.318364664277155e-22, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(-1.4336557652700885e-21, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_apply_function_args_none_memory_none_same_port(self) -> None:
 
         self.pipeline.set_attribute('config', 'MEMORY', 0, static=True)
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(1.1824138000882435e-05, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
         module = TimeNormalizationModule(name_in='norm_none_same',
                                          image_in_tag='images',
@@ -156,8 +152,8 @@ class TestProcessing:
         self.pipeline.run_module('norm_none_same')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(np.mean(data), -3.3117684144801347e-07, rtol=limit, atol=0.)
-        assert data.shape == (100, 10, 10)
+        assert np.mean(data) == pytest.approx(2.4012571778516812e-06, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_apply_function_to_images_memory_none(self) -> None:
 
@@ -173,35 +169,35 @@ class TestProcessing:
         self.pipeline.run_module('extract')
 
         data = self.pipeline.get_data('extract')
-        assert np.allclose(np.mean(data), 1.5591859111937413e-07, rtol=limit, atol=0.)
-        assert data.shape == (100, 5, 5)
+        assert np.mean(data) == pytest.approx(1.8259937251367536e-05, rel=self.limit, abs=0.)
+        assert data.shape == (5, 5, 5)
 
-    def test_multiproc_large_data(self) -> None:
-
-        self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
-        self.pipeline.set_attribute('config', 'CPU', 1, static=True)
-
-        module = LineSubtractionModule(name_in='subtract_single',
-                                       image_in_tag='large_data',
-                                       image_out_tag='im_sub_single',
-                                       combine='mean',
-                                       mask=None)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('subtract_single')
-
-        self.pipeline.set_attribute('config', 'CPU', 4, static=True)
-
-        module = LineSubtractionModule(name_in='subtract_multi',
-                                       image_in_tag='large_data',
-                                       image_out_tag='im_sub_multi',
-                                       combine='mean',
-                                       mask=None)
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('subtract_multi')
-
-        data_single = self.pipeline.get_data('im_sub_single')
-        data_multi = self.pipeline.get_data('im_sub_multi')
-        assert np.allclose(data_single, data_multi, rtol=limit, atol=0.)
-        assert data_single.shape == data_multi.shape
+    # def test_multiproc_large_data(self) -> None:
+    #
+    #     self.pipeline.set_attribute('config', 'MEMORY', 1000, static=True)
+    #     self.pipeline.set_attribute('config', 'CPU', 1, static=True)
+    #
+    #     module = LineSubtractionModule(name_in='subtract_single',
+    #                                    image_in_tag='large_data',
+    #                                    image_out_tag='im_sub_single',
+    #                                    combine='mean',
+    #                                    mask=None)
+    #
+    #     self.pipeline.add_module(module)
+    #     self.pipeline.run_module('subtract_single')
+    #
+    #     self.pipeline.set_attribute('config', 'CPU', 4, static=True)
+    #
+    #     module = LineSubtractionModule(name_in='subtract_multi',
+    #                                    image_in_tag='large_data',
+    #                                    image_out_tag='im_sub_multi',
+    #                                    combine='mean',
+    #                                    mask=None)
+    #
+    #     self.pipeline.add_module(module)
+    #     self.pipeline.run_module('subtract_multi')
+    #
+    #     data_single = self.pipeline.get_data('im_sub_single')
+    #     data_multi = self.pipeline.get_data('im_sub_multi')
+    #     assert data_single == pytest.approx(data_multi, rel=self.limit, abs=0.)
+    #     assert data_single.shape == data_multi.shape

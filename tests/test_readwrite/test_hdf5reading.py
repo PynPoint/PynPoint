@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import h5py
 import pytest
@@ -9,15 +8,12 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.hdf5reading import Hdf5ReadingModule
 from pynpoint.util.tests import create_config, create_random, remove_test_data
 
-warnings.simplefilter('always')
 
-limit = 1e-10
-
-
-class TestHdf5ReadingModule:
+class TestHdf5Reading:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_random(self.test_dir+'data')
@@ -37,42 +33,40 @@ class TestHdf5ReadingModule:
             hdf_file.create_dataset('extra', data=data)
             hdf_file.create_dataset('header_extra/PARANG', data=[1., 2., 3., 4.])
 
-        read = Hdf5ReadingModule(name_in='read1',
-                                 input_filename='PynPoint_database.hdf5',
-                                 input_dir=self.test_dir+'data',
-                                 tag_dictionary={'images': 'images'})
+        module = Hdf5ReadingModule(name_in='read1',
+                                   input_filename='PynPoint_database.hdf5',
+                                   input_dir=self.test_dir+'data',
+                                   tag_dictionary={'images': 'images'})
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read1')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.007153603490533874, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_dictionary_none(self) -> None:
 
-        read = Hdf5ReadingModule(name_in='read2',
-                                 input_filename='PynPoint_database.hdf5',
-                                 input_dir=self.test_dir+'data',
-                                 tag_dictionary=None)
+        module = Hdf5ReadingModule(name_in='read2',
+                                   input_filename='PynPoint_database.hdf5',
+                                   input_dir=self.test_dir+'data',
+                                   tag_dictionary=None)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read2')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.007153603490533874, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)
 
     def test_wrong_tag(self) -> None:
 
-        read = Hdf5ReadingModule(name_in='read3',
-                                 input_filename='PynPoint_database.hdf5',
-                                 input_dir=self.test_dir+'data',
-                                 tag_dictionary={'test': 'test'})
+        module = Hdf5ReadingModule(name_in='read3',
+                                   input_filename='PynPoint_database.hdf5',
+                                   input_dir=self.test_dir+'data',
+                                   tag_dictionary={'test': 'test'})
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
 
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('read3')
@@ -86,15 +80,14 @@ class TestHdf5ReadingModule:
 
     def test_no_input_filename(self) -> None:
 
-        read = Hdf5ReadingModule(name_in='read4',
-                                 input_filename=None,
-                                 input_dir=self.test_dir+'data',
-                                 tag_dictionary=None)
+        module = Hdf5ReadingModule(name_in='read4',
+                                   input_filename=None,
+                                   input_dir=self.test_dir+'data',
+                                   tag_dictionary=None)
 
-        self.pipeline.add_module(read)
+        self.pipeline.add_module(module)
         self.pipeline.run_module('read4')
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.0506056979365338e-06, rtol=limit, atol=0.)
-        assert data.shape == (10, 100, 100)
+        assert np.sum(data) == pytest.approx(0.007153603490533874, rel=self.limit, abs=0.)
+        assert data.shape == (5, 11, 11)

@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import h5py
 import pytest
@@ -9,18 +8,15 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.textwriting import TextWritingModule
 from pynpoint.util.tests import create_config, create_random, remove_test_data
 
-warnings.simplefilter('always')
-
-limit = 1e-10
-
 
 class TestTextWriting:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_random(self.test_dir, ndit=1)
+        create_random(self.test_dir, nimages=1)
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -32,16 +28,15 @@ class TestTextWriting:
     def test_input_data(self) -> None:
 
         data = self.pipeline.get_data('images')
-        assert np.allclose(data[0, 75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
-        assert data.shape == (1, 100, 100)
+        assert np.sum(data) == pytest.approx(0.0008557279524431129, rel=self.limit, abs=0.)
+        assert data.shape == (1, 11, 11)
 
     def test_text_writing(self) -> None:
 
-        text_write = TextWritingModule(file_name='image.dat',
-                                       name_in='text_write',
-                                       output_dir=None,
+        text_write = TextWritingModule(name_in='text_write',
                                        data_tag='images',
+                                       file_name='image.dat',
+                                       output_dir=None,
                                        header=None)
 
         self.pipeline.add_module(text_write)
@@ -49,9 +44,8 @@ class TestTextWriting:
 
         data = np.loadtxt(self.test_dir+'image.dat')
 
-        assert np.allclose(data[75, 25], 6.921353838812206e-05, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 1.9545313398209947e-06, rtol=limit, atol=0.)
-        assert data.shape == (100, 100)
+        assert np.sum(data) == pytest.approx(0.0008557279524431129, rel=self.limit, abs=0.)
+        assert data.shape == (11, 11)
 
     def test_text_writing_ndim(self) -> None:
 
@@ -60,10 +54,10 @@ class TestTextWriting:
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file.create_dataset('data_4d', data=data_4d)
 
-        text_write = TextWritingModule(file_name='data.dat',
-                                       name_in='write_4d',
-                                       output_dir=None,
+        text_write = TextWritingModule(name_in='write_4d',
                                        data_tag='data_4d',
+                                       file_name='data.dat',
+                                       output_dir=None,
                                        header=None)
 
         self.pipeline.add_module(text_write)
@@ -75,15 +69,15 @@ class TestTextWriting:
 
     def test_text_writing_int(self) -> None:
 
-        data_int = np.arange(1, 101, 1)
+        data_int = np.arange(1, 11, 1)
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file.create_dataset('data_int', data=data_int)
 
-        text_write = TextWritingModule(file_name='data.dat',
-                                       name_in='write_int',
-                                       output_dir=None,
+        text_write = TextWritingModule(name_in='write_int',
                                        data_tag='data_int',
+                                       file_name='data.dat',
+                                       output_dir=None,
                                        header=None)
 
         self.pipeline.add_module(text_write)
@@ -91,5 +85,5 @@ class TestTextWriting:
 
         data = np.loadtxt(self.test_dir+'data.dat')
 
-        assert np.allclose(data, data_int, rtol=limit, atol=0.)
-        assert data.shape == (100, )
+        assert data == pytest.approx(data_int, rel=self.limit, abs=0.)
+        assert data.shape == (10, )

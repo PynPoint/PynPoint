@@ -1,30 +1,24 @@
 import os
-import warnings
 
 import h5py
 import pytest
 import numpy as np
-from astropy.io import fits
 
 from pynpoint.core.pypeline import Pypeline
-from pynpoint.processing.basic import RepeatImagesModule
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.resizing import CropImagesModule, ScaleImagesModule, \
                                          AddLinesModule, RemoveLinesModule
 from pynpoint.util.tests import create_config, create_star_data, remove_test_data
-
-warnings.simplefilter('always')
-
-limit = 1e-10
 
 
 class TestResizing:
 
     def setup_class(self) -> None:
 
+        self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
-        create_star_data(path=self.test_dir+'resize')
+        create_star_data(self.test_dir+'resize')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -45,13 +39,12 @@ class TestResizing:
         self.pipeline.run_module('read')
 
         data = self.pipeline.get_data('read')
-        assert np.allclose(data[0, 50, 50], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00010029494781738066, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_crop_images(self) -> None:
 
-        module = CropImagesModule(size=0.3,
+        module = CropImagesModule(size=0.2,
                                   center=None,
                                   name_in='crop1',
                                   image_in_tag='read',
@@ -60,8 +53,8 @@ class TestResizing:
         self.pipeline.add_module(module)
         self.pipeline.run_module('crop1')
 
-        module = CropImagesModule(size=0.3,
-                                  center=(10, 10),
+        module = CropImagesModule(size=0.2,
+                                  center=(4, 4),
                                   name_in='crop2',
                                   image_in_tag='read',
                                   image_out_tag='crop2')
@@ -70,14 +63,12 @@ class TestResizing:
         self.pipeline.run_module('crop2')
 
         data = self.pipeline.get_data('crop1')
-        assert np.allclose(data[0, 7, 7], 0.09798413502193704, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.005917829617688413, rtol=limit, atol=0.)
-        assert data.shape == (40, 13, 13)
+        assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
         data = self.pipeline.get_data('crop2')
-        assert np.allclose(data[0, 7, 7], 0.00021012292977345447, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), -2.9375442509680414e-06, rtol=limit, atol=0.)
-        assert data.shape == (40, 13, 13)
+        assert np.sum(data) == pytest.approx(105.64863165433025, rel=self.limit, abs=0.)
+        assert data.shape == (10, 9, 9)
 
     def test_scale_images(self) -> None:
 
@@ -98,18 +89,16 @@ class TestResizing:
         self.pipeline.run_module('scale2')
 
         data = self.pipeline.get_data('scale1')
-        assert np.allclose(data[0, 100, 100], 0.02356955774929094, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 2.507373695434516e-05, rtol=limit, atol=0.)
-        assert data.shape == (40, 200, 200)
+        assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
+        assert data.shape == (10, 22, 22)
 
         data = self.pipeline.get_data('scale2')
-        assert np.allclose(data[0, 50, 50], 0.19596827004387415, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00020058989563476127, rtol=limit, atol=0.)
-        assert data.shape == (40, 100, 100)
+        assert np.sum(data) == pytest.approx(211.08557759610554, rel=self.limit, abs=0.)
+        assert data.shape == (10, 11, 11)
 
     def test_add_lines(self) -> None:
 
-        module = AddLinesModule(lines=(2, 5, 0, 9),
+        module = AddLinesModule(lines=(2, 5, 0, 3),
                                 name_in='add',
                                 image_in_tag='read',
                                 image_out_tag='add')
@@ -118,13 +107,12 @@ class TestResizing:
         self.pipeline.run_module('add')
 
         data = self.pipeline.get_data('add')
-        assert np.allclose(data[0, 50, 50], 0.02851872141873229, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 8.599412485413757e-05, rtol=limit, atol=0.)
-        assert data.shape == (40, 109, 107)
+        assert np.sum(data) == pytest.approx(105.54278879805275, rel=self.limit, abs=0.)
+        assert data.shape == (10, 14, 18)
 
     def test_remove_lines(self) -> None:
 
-        module = RemoveLinesModule(lines=(2, 5, 0, 9),
+        module = RemoveLinesModule(lines=(2, 5, 0, 3),
                                    name_in='remove',
                                    image_in_tag='read',
                                    image_out_tag='remove')
@@ -133,9 +121,8 @@ class TestResizing:
         self.pipeline.run_module('remove')
 
         data = self.pipeline.get_data('remove')
-        assert np.allclose(data[0, 50, 50], 0.028455980719223083, rtol=limit, atol=0.)
-        assert np.allclose(np.mean(data), 0.00011848528804183087, rtol=limit, atol=0.)
-        assert data.shape == (40, 91, 93)
+        assert np.sum(data) == pytest.approx(67.49726677462391, rel=self.limit, abs=0.)
+        assert data.shape == (10, 8, 4)
 
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['config'].attrs['CPU'] = 4
@@ -143,5 +130,5 @@ class TestResizing:
         self.pipeline.run_module('remove')
 
         data_multi = self.pipeline.get_data('remove')
-        assert np.allclose(data, data_multi, rtol=limit, atol=0.)
+        assert data == pytest.approx(data_multi, rel=self.limit, abs=0.)
         assert data.shape == data_multi.shape
