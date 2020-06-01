@@ -174,13 +174,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         angles = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-        pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
         lam = self.m_star_in_port.get_attribute('WAVELENGTH')
 
         if lam is None:
             lam = np.asarray([1])
 
-        scales = scaling_calculation(pixscale, lam)
+        scales = scaling_calculation(min([im_shape[-1], im_shape[-2]]), lam)
 
         # Set up the pca numbers for correct handling. The first number will be used for the first
         # PCA step, the second for the subsequent one. If only one step is required, the second pca
@@ -216,7 +215,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 if self.m_processing_type in ['Tsap', 'Wsap', 'Tasp', 'Wasp']:
                     tmp_output = np.zeros((len(pca_first), len(pca_secon), im_shape[-2], im_shape[-1]))
                 else:
-                    tmp_output = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))
+                    tmp_output = np.zeros((len(pca_first), im_shape[-2], im_shape[-1]))         
 
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.set_all(tmp_output, keep_attributes=False)
@@ -272,7 +271,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
-        """
+        """      
 
         start_time = time.time()
 
@@ -280,11 +279,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
         parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
         # calculate scaling factors
-        pixscale = self.m_star_in_port.get_attribute('PIXSCALE')
         lam = self.m_star_in_port.get_attribute('WAVELENGTH')
         if lam is None:
             lam = np.asarray([1])
-        scales = scaling_calculation(pixscale, lam)
+        scales = scaling_calculation(min([im_shape[-1], im_shape[-2]]), lam)
 
         # Set up the pca numbers for correct handling. The first number will be used for the first
         # PCA step, the second for the subsequent one. If only one step is required, the second pca

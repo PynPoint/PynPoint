@@ -128,7 +128,7 @@ def postprocessor(images: np.ndarray,
     # time specific sdi
     elif processing_type in ['Wsdi', 'Tsdi']:
         for i, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(images[:, i], scales)
+            im_scaled = sdi_scaling(images[:, i], scales)
             res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
                                                        angles=angles[i]*np.ones_like(scales),
                                                        scales=scales,
@@ -148,7 +148,7 @@ def postprocessor(images: np.ndarray,
         # alligne data, wavlengths and parangs on one axis as it is required for the
         # pca_psf_reduction function.
         for i, _ in enumerate(images[0]):
-            im_scaled[i*len(images):(i+1)*len(images)] = sdi_scaling(images[:, i], scales)[0]
+            im_scaled[i*len(images):(i+1)*len(images)] = sdi_scaling(images[:, i], scales)
             angles_flat[i*len(images):(i+1)*len(images)] = angles[i]*np.ones_like(scales)
             scales_flat[i*len(images):(i+1)*len(images)] = scales
 
@@ -170,7 +170,7 @@ def postprocessor(images: np.ndarray,
         # SDI step
         res_raw_int = np.zeros(res_raw.shape)
         for i, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(images[:, i], scales)
+            im_scaled = sdi_scaling(images[:, i], scales)
             res_raw_i, _ = pca_psf_subtraction(images=im_scaled*mask,
                                                angles=np.array([None]),
                                                scales=scales,
@@ -208,7 +208,7 @@ def postprocessor(images: np.ndarray,
 
         # SDI step
         for i, _ in enumerate(images[0]):
-            im_scaled, _, _ = sdi_scaling(res_raw_int[:, i], scales)
+            im_scaled = sdi_scaling(res_raw_int[:, i], scales)
             res_raw_i, res_rot_i = pca_psf_subtraction(images=im_scaled*mask,
                                                        angles=angles[i]*np.ones_like(scales),
                                                        scales=scales,

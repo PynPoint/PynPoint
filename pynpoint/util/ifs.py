@@ -9,7 +9,7 @@ import numpy as np
 
 from typeguard import typechecked
 
-from pynpoint.util.image import scale_image
+from pynpoint.util.image import scale_image, center_pixel
 
 
 @typechecked
@@ -44,34 +44,27 @@ def sdi_scaling(data_ns: np.ndarray,
     # prepare scaling
     frame_nr = len(data_ns[:, 0, 0])
     data = np.full_like(data_ns, 0)
-    max_f1 = 0
-    min_f2 = len(data_ns[0, :, 0])
 
     # scale images
     for i in range(frame_nr):
 
         swaps = scale_image(data_ns[i, :, :], scaling[i], scaling[i])
 
-        # Calculate assignemnd legnths (all frmaes are centerd after rescaling)
-        side = len(swaps[0, :])
-        siye = len(data[0, :, 0])
-        f_1 = (side - siye)//2
-        f_2 = (side + siye)//2
+        x_0, y_0 = center_pixel(data)
+        x_1, y_1 = center_pixel(swaps)
+        x_2 = x_1 - x_0
+        y_2 = y_1 - y_0
 
-        data[i] = swaps[f_1:f_2, f_1:f_2]
+        if y_2 == 0 or x_2 == 0:
+            data[i] = swaps
+        else:
+            data[i] = swaps[-y_2-data.shape[-2]:-y_2, -x_2-data.shape[-1]:-x_2]
 
-        # Set lower and upper bound
-        if max_f1 < f_1:
-            max_f1 = f_1
-
-        if min_f2 > f_2:
-            min_f2 = f_2
-
-    return data, max_f1, min_f2
+    return data
 
 
 @typechecked
-def scaling_calculation(pixscale: float,
+def scaling_calculation(data_shape: float,
                         lam: np.ndarray):
 
     """
@@ -90,7 +83,21 @@ def scaling_calculation(pixscale: float,
 
     """
 
+    # physical scaling factor
     scaling = max(lam) / lam
+
+    # adjustments due to low image resolution to reduce jitter
+    for i, scal in enumerate(scaling):
+        up_shape = data_shape*scal
+        if up_shape <= data_shape+2:
+            # if the scaling is to small, do not scale the image
+            scaling[i] = 1
+        else:
+            # create always an odd sized image after down scaling
+            if np.floor(up_shape) % 2 == 0:
+                scaling[i] = np.floor(up_shape)/data_shape
+            else:
+                scaling[i] = (np.floor(up_shape)+1)/data_shape
 
     return scaling
 
