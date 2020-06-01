@@ -27,31 +27,29 @@ PynPoint
 .. image:: http://img.shields.io/badge/arXiv-1811.03336-orange.svg?style=flat
     :target: http://arxiv.org/abs/1811.03336
 
-PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of planetary and substellar companions, as well as circumstellar disks in scattered light. The package is stable, has been extensively tested, and is available on `PyPI <https://pypi.org/project/pynpoint/>`_. PynPoint is under continuous development so the latest implementations can be pulled from Github repository.
+PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of planetary and brown dwarf companions. The package is stable, extensively tested, and actively maintained.
 
-The pipeline has a modular architecture with a central data storage in which all results are stored by the processing modules. These modules have specific tasks such as the subtraction of the thermal background emission, frame selection, centering, PSF subtraction, and photometric and astrometric measurements. The tags from the central data storage can be written to FITS, HDF5, and text files with the available I/O modules.
-
-To get a first impression, there is an end-to-end example available of a `SPHERE/ZIMPOL <https://www.eso.org/sci/facilities/paranal/instruments/sphere.html>`_ H-alpha data set of the accreting M dwarf companion of `HD 142527 <http://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C>`_, which can be downloaded `here <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_.
+For a first impression, `this example <https://people.phys.ethz.ch/~stolkert/pynpoint/hd142527_zimpol_h-alpha.tgz>`_ of `HD 142527B <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C/abstract>`_ shows a typical workflow.
 
 Documentation
 -------------
 
-Documentation can be found at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the architecture of PynPoint, and a description of all the pipeline modules and their input parameters.
+Documentation is available at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the pipeline architecture, and a description of all the pipeline modules and input parameters.
 
 Mailing list
 ------------
 
-Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to be informed about new functionalities, pipeline modules, releases, and other PynPoint related news.
+Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to be informed about PynPoint related news.
 
 Attribution
 -----------
 
-If you use PynPoint in your publication then please cite `Stolker et al. (2019) <http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S>`_. Please also cite `Amara & Quanz (2012) <http://ui.adsabs.harvard.edu/abs/2012MNRAS.427..948A>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method. In case you use specifically the PCA-based background subtraction module or the wavelet based speckle suppression module, please give credit to `Hunziker et al. (2018) <http://ui.adsabs.harvard.edu/abs/2018A%26A...611A..23H>`_ or `Bonse, Quanz & Amara (2018) <http://ui.adsabs.harvard.edu/abs/2018arXiv180405063B>`_, respectively.
+If you use PynPoint in your publication then please cite `Stolker et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S/abstract>`_. Please also cite `Amara & Quanz (2012) <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..948A/abstract>`_ as the origin of PynPoint, which focused initially on the use of principal component analysis (PCA) as a PSF subtraction method. In case you use specifically the PCA-based background subtraction module or the wavelet based speckle suppression module, please give credit to `Hunziker et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018A%26A...611A..23H/abstract>`_ or `Bonse, Quanz & Amara (2018) <https://ui.adsabs.harvard.edu/abs/2018arXiv180405063B/abstract>`_, respectively.
 
 Contributing
 ------------
 
-Contributions in the form of bug fixes, new or improved functionalities, and additional pipeline modules are highly appreciated. Please consider forking the repository and creating a pull request to help improve and extend the package. Instructions for writing of modules are provided in the documentation. Bug reports can be provided by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
+Contributions in the form of bug fixes, new or improved functionalities, and pipeline modules are highly appreciated. Please consider forking the repository and creating a pull request to help improve and extend the package. Instructions for `coding of a pipeline module <https://pynpoint.readthedocs.io/en/latest/coding.html>`_ are available in the documentation. Bugs can be reported by creating an `issue <https://github.com/PynPoint/PynPoint/issues>`_ on the Github page.
 
 License
 -------
