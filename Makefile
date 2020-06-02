@@ -46,6 +46,14 @@ clean-build:
 	rm -rf htmlcov/
 	rm -rf .eggs/
 	rm -rf docs/_build
+	rm -rf docs/tutorials/PynPoint_config.ini
+	rm -rf docs/tutorials/PynPoint_database.hdf5
+	rm -rf docs/tutorials/hd142527_zimpol_h-alpha.tgz
+	rm -rf docs/tutorials/input
+	rm -rf docs/tutorials/.ipynb_checkpoints
+	rm -rf docs/tutorials/*.fits
+	rm -rf docs/tutorials/*.dat
+	rm -rf docs/tutorials/*.npy
 
 clean-python:
 	find . -name '*.pyc' -exec rm -f {} +

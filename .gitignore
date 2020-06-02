@@ -36,3 +36,13 @@ pynpoint.egg-info/*
 
 # Vim
 .tags
+
+# Tutorials
+docs/tutorials/PynPoint_config.ini
+docs/tutorials/PynPoint_database.hdf5
+docs/tutorials/hd142527_zimpol_h-alpha.tgz
+docs/tutorials/input
+docs/tutorials/.ipynb_checkpoints
+docs/tutorials/*.fits
+docs/tutorials/*.dat
+docs/tutorials/*.npy

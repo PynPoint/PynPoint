@@ -36,7 +36,6 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
    architecture
    configuration
    tutorial
-   examples
    modules
 
 .. toctree::

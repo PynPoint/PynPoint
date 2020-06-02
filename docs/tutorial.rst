@@ -120,3 +120,15 @@ There are several options to access data from the central HDF5 database:
 .. |HDFView| raw:: html
 
    <a href="https://support.hdfgroup.org/downloads/index.html" target="_blank">HDFView</a>
+
+.. _tutorials:
+
+Examples
+--------
+
+Curious to see an actual workflow with PynPoint? Please have a look at the examples below, which are also available as `Jupyter notebook <https://github.com/PynPoint/PynPoint/tree/master/docs/tutorials>`_.
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/tutorial.ipynb
