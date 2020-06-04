@@ -9,7 +9,7 @@ import numpy as np
 
 from typeguard import typechecked
 
-from pynpoint.util.image import scale_image, center_pixel
+from pynpoint.util.image import scale_image, center_pixel, shift_image
 
 
 @typechecked
@@ -49,16 +49,24 @@ def sdi_scaling(data_ns: np.ndarray,
     for i in range(frame_nr):
 
         swaps = scale_image(data_ns[i, :, :], scaling[i], scaling[i])
+            
+        npix_del = swaps.shape[-1] - data.shape[-1]
 
-        x_0, y_0 = center_pixel(data)
-        x_1, y_1 = center_pixel(swaps)
-        x_2 = x_1 - x_0
-        y_2 = y_1 - y_0
-
-        if y_2 == 0 or x_2 == 0:
-            data[i] = swaps
+        if npix_del == 0:
+            data[i, ] = swaps
         else:
-            data[i] = swaps[-y_2-data.shape[-2]:-y_2, -x_2-data.shape[-1]:-x_2]
+            if npix_del % 2 == 0:
+                npix_del_a = int(npix_del/2)
+                npix_del_b = int(npix_del/2)
+
+            else:
+                npix_del_a = int((npix_del-1)/2)
+                npix_del_b = int((npix_del+1)/2)
+
+            data[i, ] = swaps[npix_del_a:-npix_del_b, npix_del_a:-npix_del_b]
+
+        if npix_del % 2 == 1:
+            data[i, ] = shift_image(data[i, ], (-0.5, -0.5), interpolation='spline')
 
     return data
 
@@ -85,19 +93,6 @@ def scaling_calculation(data_shape: float,
 
     # physical scaling factor
     scaling = max(lam) / lam
-
-    # adjustments due to low image resolution to reduce jitter
-    for i, scal in enumerate(scaling):
-        up_shape = data_shape*scal
-        if up_shape <= data_shape+2:
-            # if the scaling is to small, do not scale the image
-            scaling[i] = 1
-        else:
-            # create always an odd sized image after down scaling
-            if np.floor(up_shape) % 2 == 0:
-                scaling[i] = np.floor(up_shape)/data_shape
-            else:
-                scaling[i] = (np.floor(up_shape)+1)/data_shape
 
     return scaling
 

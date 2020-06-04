@@ -10,7 +10,7 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 from typeguard import typechecked
 
-from pynpoint.util.image import scale_image, center_pixel
+from pynpoint.util.image import scale_image, center_pixel, shift_image
 
 
 @typechecked
@@ -102,29 +102,26 @@ def pca_psf_subtraction(images: np.ndarray,
             raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
                              f'number of wavelengths ({scales.shape[0]}).')
         for i, _ in enumerate(scales):
-
-            data_shape = min(len(residuals[i, 0]), len(residuals[i, :, 0]))
-            down_shape = data_shape/scales[i]
-            if down_shape >= data_shape-2:
-                scal = 1
-            else:
-                if np.floor(down_shape) % 2 == 1:
-                    scal = data_shape/np.floor(down_shape)
-                else:
-                    scal = data_shape/(np.floor(down_shape)+1)
-
             # rescaling the images
-            swaps = scale_image(residuals[i, ], 1/scal, 1/scal)
-
-            x_0, y_0 = center_pixel(scal_cor)
-            x_1, y_1 = center_pixel(swaps)
-            x_2 = x_0 - x_1
-            y_2 = y_0 - y_1
-
-            if y_2 == 0 or x_2 == 0:
-                scal_cor[i] = swaps
+            swaps = scale_image(residuals[i, ], 1/scales[i], 1/scales[i])
+            
+            npix_del = scal_cor.shape[-1] - swaps.shape[-1]
+    
+            if npix_del == 0:
+                scal_cor[i, ] = swaps
             else:
-                scal_cor[i, -y_2-swaps.shape[-2]:-y_2, -x_2-swaps.shape[-1]:-x_2] = swaps
+                if npix_del % 2 == 0:
+                    npix_del_a = int(npix_del/2)
+                    npix_del_b = int(npix_del/2)
+        
+                else:
+                    npix_del_a = int((npix_del-1)/2)
+                    npix_del_b = int((npix_del+1)/2)
+        
+                scal_cor[i, npix_del_a:-npix_del_b, npix_del_a:-npix_del_b] = swaps
+        
+                if npix_del % 2 == 1:
+                    scal_cor[i, ] = shift_image(scal_cor[i, ], (0.5, 0.5), interpolation='spline')
 
     else:
         scal_cor = residuals
