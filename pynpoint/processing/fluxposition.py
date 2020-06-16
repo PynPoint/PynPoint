@@ -1245,6 +1245,7 @@ class SystematicErrorModule(ProcessingModule):
 
             if data[1] > 180.:
                 data[1] -= 360.
+
             elif data[1] < -180.:
                 data[1] += 360.
 

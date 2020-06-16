@@ -609,7 +609,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SDIpreparationModule(ProcessingModule):
     """
-    Module for preparing continuum frames for SDI subtraction.
+    Module for preparing continuum frames for dual-band SDI subtraction.
     """
 
     __author__ = 'Gabriele Cugno, Tomas Stolker'
