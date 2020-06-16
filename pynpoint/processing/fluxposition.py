@@ -2,7 +2,6 @@
 Pipeline modules for photometric and astrometric measurements.
 """
 
-import sys
 import time
 import warnings
 
@@ -303,6 +302,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
         if isinstance(pca_number, int):
             self.m_pca_number = [pca_number]
+
         else:
             self.m_pca_number = pca_number
 
@@ -319,18 +319,28 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
+        print(f'Number of principal components = {self.m_pca_number}')
+        print(f'Figure of merit = {self.m_merit}')
+        print(f'Residuals type = {self.m_residuals}')
+        print(f'Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'Maximum offset = {self.m_offset}')
+
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         aperture = (self.m_position[1], self.m_position[0], self.m_aperture/pixscale)
+        print(f'Aperture position = {self.m_position}')
+        print(f'Aperture radius (pixels) = {int(aperture[2])}')
 
         self.m_sigma /= pixscale
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
+            print(f'Inner mask radius (pixels) = {int(self.m_cent_size)}')
 
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
+            print(f'Outer mask radius (pixels) = {int(self.m_edge_size)}')
 
         psf = self.m_psf_in_port.get_all()
         images = self.m_image_in_port.get_all()
@@ -342,6 +352,12 @@ class SimplexMinimizationModule(ProcessingModule):
                              'the SimplexMinimizationModule.')
 
         center = center_subpixel(psf)
+        print(f'Image center (y, x) = {center}')
+
+        # Rotate the initial position, (y, x), by the extra rotation angle to (y_rot, x_rot)
+        pos_init = rotate_coordinates(center,
+                                      (self.m_position[1], self.m_position[0]),
+                                      self.m_extra_rot)
 
         if self.m_reference_in_port is not None and self.m_merit != 'poisson':
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
@@ -360,7 +376,7 @@ class SimplexMinimizationModule(ProcessingModule):
             mag = arg[2]
 
             # Calculate the absolute offset (pixels) with respect to the initial guess
-            pos_offset = np.sqrt((pos_x-self.m_position[0])**2 + (pos_y-self.m_position[1])**2)
+            pos_offset = np.sqrt((pos_x-pos_init[1])**2 + (pos_y-pos_init[0])**2)
 
             if self.m_offset is not None and pos_offset > self.m_offset:
                 # Return chi-square = inf if the offset needs to be tested and is too large
@@ -432,19 +448,13 @@ class SimplexMinimizationModule(ProcessingModule):
             # Append the results to the output port
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            sys.stdout.write('\rSimplex minimization... ')
-            sys.stdout.write(f'{n_components} PC - chi^2 = {chi_square:.8E}')
-            sys.stdout.flush()
+            print('\rSimplex minimization... ', end='', flush=True)
+            print(f'{n_components} PC - chi^2 = {chi_square:.2f}', end='', flush=True)
 
             return chi_square
 
-        pos_init = rotate_coordinates(center,
-                                      (self.m_position[1], self.m_position[0]),  # (y, x)
-                                      self.m_extra_rot)
-
         for i, n_components in enumerate(self.m_pca_number):
-            sys.stdout.write(f'\rSimplex minimization... {n_components} PC ')
-            sys.stdout.flush()
+            print(f'\rSimplex minimization... {n_components} PC ', end='', flush=True)
 
             if self.m_reference_in_port is None:
                 sklearn_pca = None
@@ -491,15 +501,27 @@ class SimplexMinimizationModule(ProcessingModule):
                                            aperture=aperture,
                                            sigma=self.m_sigma)
 
-            minimize(fun=_objective,
-                     x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
-                     args=(i, n_components, sklearn_pca, var_noise),
-                     method='Nelder-Mead',
-                     tol=None,
-                     options={'xatol': self.m_tolerance, 'fatol': float('inf')})
+            min_result = minimize(fun=_objective,
+                                  x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
+                                  args=(i, n_components, sklearn_pca, var_noise),
+                                  method='Nelder-Mead',
+                                  tol=None,
+                                  options={'xatol': self.m_tolerance, 'fatol': float('inf')})
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+            print(' [DONE]')
+
+            pos_x = min_result.x[1]
+            pos_y = min_result.x[0]
+
+            pos_rot_yx = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
+
+            sep_ang = cartesian_to_polar(center, pos_rot_yx[0], pos_rot_yx[1])
+
+            print('Best-fit parameters:')
+            print(f'   - Position (x, y) = ({pos_rot_yx[1]:.2f}, {pos_rot_yx[0]:.2f})')
+            print(f'   - Separation (mas) = {sep_ang[0]*pixscale*1e3:.2f}')
+            print(f'   - Position angle (deg) = {sep_ang[1]:.2f}')
+            print(f'   - Contrast (mag) = {min_result.x[2]:.2f}')
 
         history = f'merit = {self.m_merit}'
 
@@ -637,13 +659,15 @@ class FalsePositiveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
 
+        print(f'Aperture position = {self.m_position}')
+        print(f'Aperture radius (pixels) = {self.m_aperture:.2f}')
+        print(f'Optimize aperture position = {self.m_optimize}')
+        print(f'Ignore neighboring apertures = {self.m_ignore}')
+        print(f'Minimization tolerance = {self.m_tolerance}')
+
         nimages = self.m_image_in_port.get_shape()[0]
 
-        start_time = time.time()
-
         for j in range(nimages):
-            progress(j, nimages, 'Calculating S/N and FPF...', start_time)
-
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
 
@@ -671,12 +695,14 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
+            print(f'Image #{j:03d} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
+
             sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
 
-        history = f'aperture [arcsec] = {self.m_aperture*pixscale:.2f}'
+        history = f'aperture (arcsec) = {self.m_aperture*pixscale:.2f}'
         self.m_snr_out_port.copy_attributes(self.m_image_in_port)
         self.m_snr_out_port.add_history('FalsePositiveModule', history)
         self.m_snr_out_port.close_port()
@@ -1182,6 +1208,13 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
+        print(f'Number of principal components = {self.m_pca_number}')
+        print(f'Figure of merit = {self.m_merit}')
+        print(f'Residuals type = {self.m_residuals}')
+        print(f'Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'Maximum offset = {self.m_offset}')
+        print(f'Aperture radius (arcsec) = {self.m_aperture}')
+
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         image = self.m_image_in_port[0, ]
 
@@ -1189,7 +1222,8 @@ class SystematicErrorModule(ProcessingModule):
                                   image_in_tag=self.m_image_in_tag,
                                   psf_in_tag=self.m_psf_in_tag,
                                   image_out_tag=f'{self._m_name}_empty',
-                                  position=self.m_position,
+                                  position=(self.m_position[0],
+                                            self.m_position[1]+self.m_extra_rot),
                                   magnitude=self.m_magnitude,
                                   psf_scaling=-self.m_psf_scaling)
 
@@ -1199,6 +1233,7 @@ class SystematicErrorModule(ProcessingModule):
         module.run()
 
         sep = float(self.m_position[0])
+
         angles = np.linspace(self.m_angles[0], self.m_angles[1], self.m_angles[2], endpoint=True)
 
         print('Testing the following parameters:')
@@ -1206,11 +1241,14 @@ class SystematicErrorModule(ProcessingModule):
         print(f'   - Separation (mas) = {sep*1e3:.1f}')
         print(f'   - Position angle range (deg) = {angles[0]} - {angles[-1]}')
 
+        if angles.size > 1:
+            print(f'     in steps of {np.mean(np.diff(angles)):.2f} deg')
+
         # Image center (y, x) with subpixel accuracy
         im_center = center_subpixel(image)
 
         for i, ang in enumerate(angles):
-            print(f'Processing position angle: {ang} deg...')
+            print(f'\nProcessing position angle: {ang} deg...')
 
             # Convert the polar coordiantes of the separation and position angle that is tested
             # into cartesian coordinates (y, x)
@@ -1230,7 +1268,8 @@ class SystematicErrorModule(ProcessingModule):
 
             # Inject the artifical planet
 
-            module = FakePlanetModule(position=planet_sep_ang,
+            module = FakePlanetModule(position=(planet_sep_ang[0],
+                                                planet_sep_ang[1]+self.m_extra_rot),
                                       magnitude=self.m_magnitude,
                                       psf_scaling=self.m_psf_scaling,
                                       name_in=f'{self._m_name}_fake_{i}',
@@ -1261,7 +1300,7 @@ class SystematicErrorModule(ProcessingModule):
                                                cent_size=self.m_mask[0],
                                                edge_size=self.m_mask[1],
                                                extra_rot=self.m_extra_rot,
-                                               residuals='median',
+                                               residuals=self.m_residuals,
                                                offset=self.m_offset)
 
             module.connect_database(self._m_data_base)
@@ -1277,8 +1316,8 @@ class SystematicErrorModule(ProcessingModule):
             # Create a list with the offset between the injected and retrieved values of the
             # separation (arcsec), position angle (deg), contrast (mag), x position (pixels),
             # and y position (pixels).
-            data = [self.m_position[0] - fluxpos_out_port[-1, 2],  # Separation (arcsec)
-                    ang - fluxpos_out_port[-1, 3],  # Position angle (deg)
+            data = [planet_sep_ang[0] - fluxpos_out_port[-1, 2],  # Separation (arcsec)
+                    planet_sep_ang[1] - fluxpos_out_port[-1, 3],  # Position angle (deg)
                     self.m_magnitude - fluxpos_out_port[-1, 4],  # Contrast (mag)
                     planet_pos_xy[0] - fluxpos_out_port[-1, 0],  # Position x (pixels)
                     planet_pos_xy[1] - fluxpos_out_port[-1, 1]]  # Position y (pixels)
@@ -1302,7 +1341,7 @@ class SystematicErrorModule(ProcessingModule):
         x_pos_percen = np.percentile(offsets[:, 3], [16., 50., 84.])
         y_pos_percen = np.percentile(offsets[:, 4], [16., 50., 84.])
 
-        print('Median offset and uncertainties:')
+        print('\nMedian offset and uncertainties:')
 
         print(f'   - Position x (pixels) = {x_pos_percen[1]:.2f} '
               f'(-{x_pos_percen[1]-x_pos_percen[0]:.2f} '
