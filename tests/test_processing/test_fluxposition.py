@@ -322,7 +322,7 @@ class TestFluxPosition:
                                        offset_out_tag='offset',
                                        position=(0.162, 0.),
                                        magnitude=5.,
-                                       angles=(0., 360., 2),
+                                       angles=(0., 180., 2),
                                        psf_scaling=1.,
                                        merit='gaussian',
                                        aperture=0.06,
@@ -331,7 +331,7 @@ class TestFluxPosition:
                                        mask=(None, None),
                                        extra_rot=0.,
                                        residuals='median',
-                                       offset=2.)
+                                       offset=1.)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('error')

@@ -1201,10 +1201,36 @@ class SystematicErrorModule(ProcessingModule):
         sep = float(self.m_position[0])
         angles = np.linspace(self.m_angles[0], self.m_angles[1], self.m_angles[2], endpoint=True)
 
+        print('Testing the following parameters:')
+        print(f'   - Contrast (mag) = {self.m_magnitude:.2f}')
+        print(f'   - Separation (mas) = {sep*1e3:.1f}')
+        print(f'   - Position angle range (deg) = {angles[0]} - {angles[-1]}')
+
+        # Image center (y, x) with subpixel accuracy
+        im_center = center_subpixel(image)
+
         for i, ang in enumerate(angles):
             print(f'Processing position angle: {ang} deg...')
 
-            module = FakePlanetModule(position=(sep, ang),
+            # Convert the polar coordiantes of the separation and position angle that is tested
+            # into cartesian coordinates (y, x)
+            pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
+
+            # Round the coordinates of the planet position to integers, which is required for the
+            # aperture that is used in the SimplexMinimizationModule. Here the position is (x, y).
+            planet_pos_xy = (round(pos_yx[1]), round(pos_yx[0]))
+
+            # Convert the rounded planet position to polar coordinates
+            planet_sep_ang = cartesian_to_polar(im_center,
+                                                float(planet_pos_xy[1]),
+                                                float(planet_pos_xy[0]))
+
+            # Change the separation units to arcsec
+            planet_sep_ang = (planet_sep_ang[0]*pixscale, planet_sep_ang[1])
+
+            # Inject the artifical planet
+
+            module = FakePlanetModule(position=planet_sep_ang,
                                       magnitude=self.m_magnitude,
                                       psf_scaling=self.m_psf_scaling,
                                       name_in=f'{self._m_name}_fake_{i}',
@@ -1217,15 +1243,9 @@ class SystematicErrorModule(ProcessingModule):
             module._m_output_ports[f'{self._m_name}_fake'].del_all_attributes()
             module.run()
 
-            # Convert the polar coordiantes of the separation and position angle that is tested
-            # into cartesian coordinates (y, x)
-            pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
+            # Retrieve the position and contrast of the artificial planet
 
-            # Round the coordinates of the planet and make integer values for the aperture
-            # that is used with the downhill simplex minimization. Here the position is (x, y).
-            aperture_pos = (int(round(pos_yx[1])), int(round(pos_yx[0])))
-
-            module = SimplexMinimizationModule(position=aperture_pos,
+            module = SimplexMinimizationModule(position=planet_pos_xy,
                                                magnitude=self.m_magnitude,
                                                psf_scaling=-self.m_psf_scaling,
                                                name_in=f'{self._m_name}_fake_{i}',
@@ -1260,8 +1280,8 @@ class SystematicErrorModule(ProcessingModule):
             data = [self.m_position[0] - fluxpos_out_port[-1, 2],  # Separation (arcsec)
                     ang - fluxpos_out_port[-1, 3],  # Position angle (deg)
                     self.m_magnitude - fluxpos_out_port[-1, 4],  # Contrast (mag)
-                    pos_yx[1] - fluxpos_out_port[-1, 0],  # Position x (pixels)
-                    pos_yx[0] - fluxpos_out_port[-1, 1]]  # Position y (pixels)
+                    planet_pos_xy[0] - fluxpos_out_port[-1, 0],  # Position x (pixels)
+                    planet_pos_xy[1] - fluxpos_out_port[-1, 1]]  # Position y (pixels)
 
             if data[1] > 180.:
                 data[1] -= 360.

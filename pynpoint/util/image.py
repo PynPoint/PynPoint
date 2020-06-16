@@ -323,7 +323,7 @@ def polar_to_cartesian(image: np.ndarray,
     image : numpy.ndarray
         Input image (2D or 3D).
     sep : float
-        Separation (pix).
+        Separation (pixels).
     ang : float
         Position angle (deg), measured counterclockwise with respect to the positive y-axis.
 
