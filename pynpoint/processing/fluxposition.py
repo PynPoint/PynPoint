@@ -354,21 +354,22 @@ class SimplexMinimizationModule(ProcessingModule):
                        sklearn_pca: Optional[PCA],
                        var_noise: Optional[float]) -> float:
 
+            # Extract the y position, x position, and contrast from the argument tuple
             pos_y = arg[0]
             pos_x = arg[1]
             mag = arg[2]
 
-            if self.m_offset is not None:
-                if pos_x < self.m_position[0] - self.m_offset or \
-                        pos_x > self.m_position[0] + self.m_offset:
-                    return np.inf
+            # Calculate the absolute offset (pixels) with respect to the initial guess
+            pos_offset = np.sqrt((pos_x-self.m_position[0])**2 + (pos_y-self.m_position[1])**2)
 
-                if pos_y < self.m_position[1] - self.m_offset or \
-                        pos_y > self.m_position[1] + self.m_offset:
-                    return np.inf
+            if self.m_offset is not None and pos_offset > self.m_offset:
+                # Return chi-square = inf if the offset needs to be tested and is too large
+                return np.inf
 
+            # Convert the cartesian position to a separation and position angle
             sep_ang = cartesian_to_polar(center, pos_y, pos_x)
 
+            # Inject the negative artifical planet at the position and contrast that is tested
             fake = fake_planet(images=images,
                                psf=psf,
                                parang=parang,
@@ -376,9 +377,11 @@ class SimplexMinimizationModule(ProcessingModule):
                                magnitude=mag,
                                psf_scaling=self.m_psf_scaling)
 
+            # Create a mask
             mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
+                # PSF subtraction with the science data as reference data (ADI)
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=n_components,
@@ -387,6 +390,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                indices=None)
 
             else:
+                # PSF subtraction with separate reference data (RDI)
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
 
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
@@ -396,21 +400,28 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                im_shape=im_shape,
                                                                indices=None)
 
+            # Collapse the residuals of the PSF subtraction
             res_stack = combine_residuals(method=self.m_residuals,
                                           res_rot=im_res_derot,
                                           residuals=im_res_rot,
                                           angles=parang)
 
+            # Appedn the collapsed residuals to the output port
             self.m_res_out_port[count].append(res_stack, data_dim=3)
 
+            # Calculate the chi-square for the tested position and contrast
             chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
                                         aperture=aperture,
                                         sigma=self.m_sigma,
                                         var_noise=var_noise)
 
+            # Apply the extra rotation to the y and x position
+            # The returned position is given as (y, x)
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
+            # Create and array with the x position, y position, separation (arcsec), position
+            # angle (deg), contrast (mag), and chi-square
             res = np.asarray([position[1],
                               position[0],
                               sep_ang[0]*pixscale,
@@ -418,6 +429,7 @@ class SimplexMinimizationModule(ProcessingModule):
                               mag,
                               chi_square])
 
+            # Append the results to the output port
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
             sys.stdout.write('\rSimplex minimization... ')
@@ -604,13 +616,10 @@ class FalsePositiveModule(ProcessingModule):
 
             pos_x, pos_y = arg
 
-            if self.m_offset is not None:
-                if pos_x < self.m_position[0] - self.m_offset or \
-                        pos_x > self.m_position[0] + self.m_offset:
-                    snr = 0.
+            pos_offset = np.sqrt((pos_x-self.m_position[0])**2 + (pos_y-self.m_position[1])**2)
 
-                elif pos_y < self.m_position[1] - self.m_offset or \
-                        pos_y > self.m_position[1] + self.m_offset:
+            if self.m_offset is not None:
+                if pos_offset > self.m_offset:
                     snr = 0.
 
                 else:
@@ -1208,10 +1217,15 @@ class SystematicErrorModule(ProcessingModule):
             module._m_output_ports[f'{self._m_name}_fake'].del_all_attributes()
             module.run()
 
-            position = polar_to_cartesian(image, sep/pixscale, ang)
-            position = (int(round(position[1])), int(round(position[0])))
+            # Convert the polar coordiantes of the separation and position angle that is tested
+            # into cartesian coordinates (y, x)
+            pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
 
-            module = SimplexMinimizationModule(position=position,
+            # Round the coordinates of the planet and make integer values for the aperture
+            # that is used with the downhill simplex minimization. Here the position is (x, y).
+            aperture_pos = (int(round(pos_yx[1])), int(round(pos_yx[0])))
+
+            module = SimplexMinimizationModule(position=aperture_pos,
                                                magnitude=self.m_magnitude,
                                                psf_scaling=-self.m_psf_scaling,
                                                name_in=f'{self._m_name}_fake_{i}',
@@ -1237,14 +1251,21 @@ class SystematicErrorModule(ProcessingModule):
             module._m_output_ports[f'{self._m_name}_fluxpos'].del_all_attributes()
             module.run()
 
+            # Add the input port to collect the results of SimplexMinimizationModule
             fluxpos_out_port = self.add_input_port(f'{self._m_name}_fluxpos')
 
-            data = [self.m_position[0] - fluxpos_out_port[-1, 2],
-                    ang - fluxpos_out_port[-1, 3],
-                    self.m_magnitude - fluxpos_out_port[-1, 4]]
+            # Create a list with the offset between the injected and retrieved values of the
+            # separation (arcsec), position angle (deg), contrast (mag), x position (pixels),
+            # and y position (pixels).
+            data = [self.m_position[0] - fluxpos_out_port[-1, 2],  # Separation (arcsec)
+                    ang - fluxpos_out_port[-1, 3],  # Position angle (deg)
+                    self.m_magnitude - fluxpos_out_port[-1, 4],  # Contrast (mag)
+                    pos_yx[1] - fluxpos_out_port[-1, 0],  # Position x (pixels)
+                    pos_yx[0] - fluxpos_out_port[-1, 1]]  # Position y (pixels)
 
             if data[1] > 180.:
                 data[1] -= 360.
+
             elif data[1] < -180.:
                 data[1] += 360.
 
@@ -1258,18 +1279,28 @@ class SystematicErrorModule(ProcessingModule):
         sep_percen = np.percentile(offsets[:, 0], [16., 50., 84.])
         ang_percen = np.percentile(offsets[:, 1], [16., 50., 84.])
         mag_percen = np.percentile(offsets[:, 2], [16., 50., 84.])
+        x_pos_percen = np.percentile(offsets[:, 3], [16., 50., 84.])
+        y_pos_percen = np.percentile(offsets[:, 4], [16., 50., 84.])
 
-        print('Median and uncertainties:')
+        print('Median offset and uncertainties:')
 
-        print(f'Separation [mas] = {1e3*sep_percen[1]:.2f} '
+        print(f'   - Position x (pixels) = {x_pos_percen[1]:.2f} '
+              f'(-{x_pos_percen[1]-x_pos_percen[0]:.2f} '
+              f'+{x_pos_percen[2]-x_pos_percen[1]:.2f})')
+
+        print(f'   - Position y (pixels) = {y_pos_percen[1]:.2f} '
+              f'(-{y_pos_percen[1]-y_pos_percen[0]:.2f} '
+              f'+{y_pos_percen[2]-y_pos_percen[1]:.2f})')
+
+        print(f'   - Separation (mas) = {1e3*sep_percen[1]:.2f} '
               f'(-{1e3*sep_percen[1]-1e3*sep_percen[0]:.2f} '
               f'+{1e3*sep_percen[2]-1e3*sep_percen[1]:.2f})')
 
-        print(f'Position angle [deg] = {ang_percen[1]:.2f} '
+        print(f'   - Position angle (deg) = {ang_percen[1]:.2f} '
               f'(-{ang_percen[1]-ang_percen[0]:.2f} '
               f'+{ang_percen[2]-ang_percen[1]:.2f})')
 
-        print(f'Contrast [mag] = {mag_percen[1]:.2f} '
+        print(f'   - Contrast (mag) = {mag_percen[1]:.2f} '
               f'(-{mag_percen[1]-mag_percen[0]:.2f} '
               f'+{mag_percen[2]-mag_percen[1]:.2f})')
 
