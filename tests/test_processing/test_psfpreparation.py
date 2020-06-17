@@ -7,7 +7,8 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.psfpreparation import PSFpreparationModule, AngleInterpolationModule, \
                                                AngleCalculationModule, SDIpreparationModule
-from pynpoint.util.tests import create_config, create_star_data, remove_test_data
+from pynpoint.util.tests import create_config, create_star_data, \
+                                create_star_data_ifs, remove_test_data
 
 
 class TestPsfPreparation:
@@ -18,13 +19,14 @@ class TestPsfPreparation:
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(self.test_dir+'prep')
+        create_star_data_ifs(self.test_dir+'prep_ifs')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self) -> None:
 
-        remove_test_data(self.test_dir, folders=['prep'])
+        remove_test_data(self.test_dir, folders=['prep', 'prep_ifs'])
 
     def test_read_data(self) -> None:
 
@@ -38,6 +40,17 @@ class TestPsfPreparation:
         data = self.pipeline.get_data('read')
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+        module = FitsReadingModule(name_in='read_ifs',
+                                   image_tag='read_ifs',
+                                   input_dir=self.test_dir+'prep_ifs')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read_ifs')
+
+        data = self.pipeline.get_data('read_ifs')
+        assert np.sum(data) == pytest.approx(129.89567140238609, rel=self.limit, abs=0.)
+        assert data.shape == (12, 11, 11)
 
     def test_angle_interpolation(self) -> None:
 
@@ -65,6 +78,26 @@ class TestPsfPreparation:
                 '2012-12-01T07:09:02.0000', '2012-12-01T07:09:03.0000')
 
         self.pipeline.set_attribute('read', 'DATE', date, static=False)
+
+        self.pipeline.set_attribute('read_ifs', 'LATITUDE', -25.)
+        self.pipeline.set_attribute('read_ifs', 'LONGITUDE', -70.)
+        self.pipeline.set_attribute('read_ifs', 'DIT', 1.)
+
+        self.pipeline.set_attribute('read_ifs', 'RA', (90., 90., 90., 90.), static=False)
+        self.pipeline.set_attribute('read_ifs', 'DEC', (-51., -51., -51., -51.), static=False)
+        self.pipeline.set_attribute('read_ifs', 'PUPIL', (90., 90., 90., 90.), static=False)
+
+        date = ('2012-12-01T07:09:00.0000', '2012-12-01T07:09:01.0000',
+                '2012-12-01T07:09:02.0000', '2012-12-01T07:09:03.0000')
+
+        self.pipeline.set_attribute('read_ifs', 'DATE', date, static=False)
+
+        date_correction = ('SPHER.2015-11-30T05:28:00.880_00000.fits',
+                           'SPHER.2015-11-30T05:28:00.880_00000.fits',
+                           'SPHER.2015-11-30T05:28:00.880_00000.fits',
+                           'SPHER.2015-11-30T05:28:00.880_00000.fits')
+
+        self.pipeline.set_attribute('read_ifs', 'DATE_CORRECTION', date_correction, static=False)
 
         module = AngleCalculationModule(instrument='NACO',
                                         name_in='angle2',
@@ -112,7 +145,8 @@ class TestPsfPreparation:
 
         module = AngleCalculationModule(instrument='SPHERE/IFS',
                                         name_in='angle4',
-                                        data_tag='read')
+                                        data_tag='read_ifs',
+                                        preprocessing='ESOREFLEX')
 
         self.pipeline.add_module(module)
 
@@ -136,9 +170,10 @@ class TestPsfPreparation:
             assert warning[1].message.args[0] == warning_1
             assert warning[2].message.args[0] == warning_2
 
-        data = self.pipeline.get_data('header_read/PARANG')
-        assert np.sum(data) == pytest.approx(-890.8506520762833, rel=self.limit, abs=0.)
-        assert data.shape == (10, )
+        data = self.pipeline.get_data('header_read_ifs/PARANG')
+        assert np.sum(data) == pytest.approx(-29.91604068247733, rel=self.limit, abs=0.)
+        print(data.shape)
+        assert data.shape == (4, )
 
     def test_angle_interpolation_mismatch(self) -> None:
 
