@@ -254,6 +254,23 @@ class TestPsfPreparation:
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
 
+    def test_psf_preparation_sdi(self) -> None:
+
+        module = PSFpreparationModule(name_in='prep4',
+                                      image_in_tag='read_ifs',
+                                      image_out_tag='prep4',
+                                      mask_out_tag=None,
+                                      norm=False,
+                                      cent_size=None,
+                                      edge_size=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('prep4')
+
+        data = self.pipeline.get_data('prep4')
+        assert np.sum(data) == pytest.approx(129.89567140238609, rel=self.limit, abs=0.)
+        assert data.shape == (12, 11, 11)
+
     def test_sdi_preparation(self) -> None:
 
         module = SDIpreparationModule(name_in='sdi',

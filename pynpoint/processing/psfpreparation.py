@@ -104,8 +104,17 @@ class PSFpreparationModule(ProcessingModule):
 
         # Get the number of images and split into batches to comply with memory constraints
         im_shape = self.m_image_in_port.get_shape()
-        nimages = im_shape[0]
+        nimages = im_shape[-3]
         frames = memory_frames(memory, nimages)
+
+        if len(im_shape) < 4:
+            wavelength_dim = 1
+        else:
+            wavelength_dim = im_shape[-4]
+
+            # Set output shape
+            tmp_output = np.zeros(im_shape)
+            self.m_image_out_port.set_all(tmp_output, keep_attributes=False)
 
         # Convert m_cent_size and m_edge_size from arcseconds to pixels
         if self.m_cent_size is not None:
@@ -123,32 +132,40 @@ class PSFpreparationModule(ProcessingModule):
 
         # Run the PSFpreparationModule for each subset of frames
         start_time = time.time()
-        for i, _ in enumerate(frames[:-1]):
+        for j in range(wavelength_dim):
+            for i, _ in enumerate(frames[:-1]):
 
-            # Print progress to command line
-            progress(i, len(frames[:-1]), 'Preparing images for PSF subtraction...', start_time)
+                # Print progress to command line
+                progress(i + j * len(frames[:-1]), wavelength_dim * len(frames[:-1]),
+                         'Preparing images for PSF subtraction...', start_time)
 
-            # Get the images and ensure they have the correct 3D shape with the following
-            # three dimensions: (batch_size, height, width)
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+                # Get the images and ensure they have the correct 3D shape with the following
+                # three dimensions: (batch_size, height, width)
+                if len(im_shape) < 4:
+                    images = self.m_image_in_port[frames[i]:frames[i+1], ]
+                else:
+                    images = self.m_image_in_port[j, frames[i]:frames[i+1], ]
 
-            if images.ndim == 2:
-                warnings.warn('The input data has 2 dimensions whereas 3 dimensions are required. '
-                              'An extra dimension has been added.')
+                if images.ndim == 2:
+                    warnings.warn('The input data has 2 dimensions whereas 3 dimensions are required. '
+                                  'An extra dimension has been added.')
 
-                images = images[np.newaxis, ...]
+                    images = images[np.newaxis, ...]
 
-            # Apply the mask, i.e., set all pixels to 0 where the mask is False
-            images[:, ~mask] = 0.
+                # Apply the mask, i.e., set all pixels to 0 where the mask is False
+                images[:, ~mask] = 0.
 
-            # If desired, normalize the images using the Frobenius norm
-            if self.m_norm:
-                im_norm = np.linalg.norm(images, ord='fro', axis=(1, 2))
-                images /= im_norm[:, np.newaxis, np.newaxis]
-                norms.append(im_norm)
+                # If desired, normalize the images using the Frobenius norm
+                if self.m_norm:
+                    im_norm = np.linalg.norm(images, ord='fro', axis=(1, 2))
+                    images /= im_norm[:, np.newaxis, np.newaxis]
+                    norms.append(im_norm)
 
-            # Write processed images to output port
-            self.m_image_out_port.append(images, data_dim=3)
+                # Write processed images to output port
+                if len(im_shape) < 4:
+                    self.m_image_out_port.append(images, data_dim=3)
+                else:
+                    self.m_image_out_port[j, frames[i]:frames[i+1], ] = images
 
         # Store information about mask
         if self.m_mask_out_port is not None:
@@ -499,10 +516,7 @@ class AngleCalculationModule(ProcessingModule):
         self._attribute_check(ndit, steps)
 
         # Check requriements for
-        if self.m_instrument != 'SPHERE/IFS':
-            self._attribute_check(ndit, steps)
-
-        else:
+        if self.m_instrument == 'SPHERE/IFS':
             # set up for special corrections required for esoreflex prepared data.
             if self.m_preprocessing == 'ESOREFLEX':
                 if self.m_data_in_port.get_attribute('DATE_CORRECTION') is None:
