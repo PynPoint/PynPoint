@@ -104,6 +104,12 @@ class FakePlanetModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Magnitude = {self.m_magnitude}')
+        print(f'   - PSF scaling = {self.m_psf_scaling}')
+        print(f'   - Separation (arcsec) = {self.m_position[0]}')
+        print(f'   - Position angle (pixels) = {self.m_position[0]}')
+
         memory = self._m_config_port.get_attribute('MEMORY')
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -171,7 +177,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  psf_in_tag: str,
                  res_out_tag: str,
                  flux_position_tag: str,
-                 position: Tuple[int, int],
+                 position: Tuple[float, float],
                  magnitude: float,
                  psf_scaling: float = -1.,
                  merit: str = 'hessian',
@@ -204,9 +210,10 @@ class SimplexMinimizationModule(ProcessingModule):
             output. Each step of the minimization stores the x position (pixels), y position
             (pixels), separation (arcsec), angle (deg), contrast (mag), and the chi-square value.
             The last row contains the best-fit results.
-        position : tuple(int, int)
-            Approximate position (x, y) of the planet in pixels. This is also the location where
-            the figure of merit is calculated within an aperture of radius ``aperture``.
+        position : tuple(float, float)
+            Approximate position (x, y) of the planet in pixels. The figure of merit is calculated
+            within an aperture of radius ``aperture`` centered at the rounded (i.e. integers)
+            coordiantes of ``position``.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float
@@ -319,28 +326,30 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
-        print(f'Number of principal components = {self.m_pca_number}')
-        print(f'Figure of merit = {self.m_merit}')
-        print(f'Residuals type = {self.m_residuals}')
-        print(f'Absolute tolerance (pixels/mag) = {self.m_tolerance}')
-        print(f'Maximum offset = {self.m_offset}')
+        print('Input parameters:')
+        print(f'   - Number of principal components = {self.m_pca_number}')
+        print(f'   - Figure of merit = {self.m_merit}')
+        print(f'   - Residuals type = {self.m_residuals}')
+        print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'   - Maximum offset = {self.m_offset}')
+        print(f'   - Guessed position (x, y) = {self.m_position}')
 
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        aperture = (self.m_position[1], self.m_position[0], self.m_aperture/pixscale)
-        print(f'Aperture position = {self.m_position}')
-        print(f'Aperture radius (pixels) = {int(aperture[2])}')
+        aperture = (round(self.m_position[1]), round(self.m_position[0]), self.m_aperture/pixscale)
+        print(f'   - Aperture position (x, y) = ({aperture[1]}, {aperture[0]})')
+        print(f'   - Aperture radius (pixels) = {int(aperture[2])}')
 
         self.m_sigma /= pixscale
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
-            print(f'Inner mask radius (pixels) = {int(self.m_cent_size)}')
+            print(f'   - Inner mask radius (pixels) = {int(self.m_cent_size)}')
 
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
-            print(f'Outer mask radius (pixels) = {int(self.m_edge_size)}')
+            print(f'   - Outer mask radius (pixels) = {int(self.m_edge_size)}')
 
         psf = self.m_psf_in_port.get_all()
         images = self.m_image_in_port.get_all()
@@ -659,13 +668,16 @@ class FalsePositiveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
 
-        print(f'Aperture position = {self.m_position}')
-        print(f'Aperture radius (pixels) = {self.m_aperture:.2f}')
-        print(f'Optimize aperture position = {self.m_optimize}')
-        print(f'Ignore neighboring apertures = {self.m_ignore}')
-        print(f'Minimization tolerance = {self.m_tolerance}')
+        print('Input parameters:')
+        print(f'   - Aperture position = {self.m_position}')
+        print(f'   - Aperture radius (pixels) = {self.m_aperture:.2f}')
+        print(f'   - Optimize aperture position = {self.m_optimize}')
+        print(f'   - Ignore neighboring apertures = {self.m_ignore}')
+        print(f'   - Minimization tolerance = {self.m_tolerance}')
 
         nimages = self.m_image_in_port.get_shape()[0]
+
+        print('Calculating the S/N and FPF...')
 
         for j in range(nimages):
             image = self.m_image_in_port[j, ]
@@ -695,7 +707,7 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
-            print(f'Image #{j:03d} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
+            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
 
             sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
@@ -849,6 +861,10 @@ class MCMCsamplingModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Number of principal components: {self.m_pca_number}')
+        print(f'   - Figure of merit: {self.m_merit}')
+
         ndim = 3
 
         cpu = self._m_config_port.get_attribute('CPU')
@@ -881,15 +897,13 @@ class MCMCsamplingModule(ProcessingModule):
 
         if isinstance(self.m_aperture, float):
             yx_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
-            aperture = (int(round(yx_pos[0])), int(round(yx_pos[1])), self.m_aperture/pixscale)
+            aperture = (round(yx_pos[0]), round(yx_pos[1]), self.m_aperture/pixscale)
 
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
-        print(f'Number of principal components: {self.m_pca_number}')
-        print(f'Aperture position [x, y]: [{aperture[1]}, {aperture[0]}]')
-        print(f'Aperture radius (pixels): {aperture[2]:.2f}')
-        print(f'Figure of merit: {self.m_merit}')
+        print(f'   - Aperture position (x, y): ({aperture[1]}, {aperture[0]})')
+        print(f'   - Aperture radius (pixels): {aperture[2]:.2f}')
 
         if self.m_merit == 'poisson':
             var_noise = None
@@ -1208,12 +1222,13 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
-        print(f'Number of principal components = {self.m_pca_number}')
-        print(f'Figure of merit = {self.m_merit}')
-        print(f'Residuals type = {self.m_residuals}')
-        print(f'Absolute tolerance (pixels/mag) = {self.m_tolerance}')
-        print(f'Maximum offset = {self.m_offset}')
-        print(f'Aperture radius (arcsec) = {self.m_aperture}')
+        print('Input parameters:')
+        print(f'   - Number of principal components = {self.m_pca_number}')
+        print(f'   - Figure of merit = {self.m_merit}')
+        print(f'   - Residuals type = {self.m_residuals}')
+        print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'   - Maximum offset = {self.m_offset}')
+        print(f'   - Aperture radius (arcsec) = {self.m_aperture}')
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         image = self.m_image_in_port[0, ]
@@ -1252,16 +1267,11 @@ class SystematicErrorModule(ProcessingModule):
 
             # Convert the polar coordiantes of the separation and position angle that is tested
             # into cartesian coordinates (y, x)
-            pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
+            planet_pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
+            planet_pos_xy = (planet_pos_yx[1], planet_pos_yx[0])
 
-            # Round the coordinates of the planet position to integers, which is required for the
-            # aperture that is used in the SimplexMinimizationModule. Here the position is (x, y).
-            planet_pos_xy = (round(pos_yx[1]), round(pos_yx[0]))
-
-            # Convert the rounded planet position to polar coordinates
-            planet_sep_ang = cartesian_to_polar(im_center,
-                                                float(planet_pos_xy[1]),
-                                                float(planet_pos_xy[0]))
+            # Convert the planet position to polar coordinates
+            planet_sep_ang = cartesian_to_polar(im_center, planet_pos_yx[0], planet_pos_yx[1])
 
             # Change the separation units to arcsec
             planet_sep_ang = (planet_sep_ang[0]*pixscale, planet_sep_ang[1])
