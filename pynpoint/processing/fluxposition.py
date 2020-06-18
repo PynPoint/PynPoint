@@ -332,7 +332,8 @@ class SimplexMinimizationModule(ProcessingModule):
         print(f'   - Residuals type = {self.m_residuals}')
         print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
         print(f'   - Maximum offset = {self.m_offset}')
-        print(f'   - Guessed position (x, y) = {self.m_position}')
+        print(f'   - Guessed position (x, y) = ({self.m_position[0]:.2f},'
+              f'{self.m_position[1]:.2f})')
 
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -458,7 +459,7 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
             print('\rSimplex minimization... ', end='', flush=True)
-            print(f'{n_components} PC - chi^2 = {chi_square:.2f}', end='', flush=True)
+            print(f'{n_components} PC - chi^2 = {chi_square:8.2f}', end='', flush=True)
 
             return chi_square
 
@@ -903,7 +904,7 @@ class MCMCsamplingModule(ProcessingModule):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
         print(f'   - Aperture position (x, y): ({aperture[1]}, {aperture[0]})')
-        print(f'   - Aperture radius (pixels): {aperture[2]:.2f}')
+        print(f'   - Aperture radius (pixels): {int(aperture[2])}')
 
         if self.m_merit == 'poisson':
             var_noise = None
