@@ -341,5 +341,5 @@ class TestFluxPosition:
         assert data[0, 1] == pytest.approx(0.2786088210998514, rel=self.limit, abs=0.)
         assert data[0, 2] == pytest.approx(-0.02916297162565762, rel=self.limit, abs=0.)
         assert data[0, 3] == pytest.approx(-0.02969350583704866, rel=self.limit, abs=0.)
-        assert data[0, 4] == pytest.approx(-0.10640807184499579, rel=self.limit, abs=0.)    
+        assert data[0, 4] == pytest.approx(-0.10640807184499579, rel=self.limit, abs=0.)
         assert data.shape == (2, 5)

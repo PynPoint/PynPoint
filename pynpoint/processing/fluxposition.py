@@ -105,10 +105,10 @@ class FakePlanetModule(ProcessingModule):
         """
 
         print('Input parameters:')
-        print(f'   - Magnitude = {self.m_magnitude}')
+        print(f'   - Magnitude = {self.m_magnitude:.2f}')
         print(f'   - PSF scaling = {self.m_psf_scaling}')
-        print(f'   - Separation (arcsec) = {self.m_position[0]}')
-        print(f'   - Position angle (pixels) = {self.m_position[0]}')
+        print(f'   - Separation (arcsec) = {self.m_position[0]:.2f}')
+        print(f'   - Position angle (deg) = {self.m_position[0]:.2f}')
 
         memory = self._m_config_port.get_attribute('MEMORY')
         parang = self.m_image_in_port.get_attribute('PARANG')
@@ -1065,7 +1065,7 @@ class AperturePhotometryModule(ProcessingModule):
 
         @typechecked
         def _photometry(image: np.ndarray,
-                        aperture: Union[Aperture, List[Aperture]]) -> np.ndarray:
+                        aperture: Union[Aperture, List[Aperture]]) -> np.float64:
             # https://photutils.readthedocs.io/en/stable/overview.html
             # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
             # corresponds to the center of the lowest, leftmost array element. This means that
@@ -1096,7 +1096,12 @@ class AperturePhotometryModule(ProcessingModule):
                                       'Aperture photometry',
                                       func_args=(aperture, ))
 
-        history = f'radius [arcsec] = {self.m_radius*pixscale:.3f}'
+        self.m_phot_in_port = self.add_input_port(self.m_phot_out_port.tag)
+        data = self.m_phot_in_port.get_all()
+
+        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data):.2f}')
+
+        history = f'radius (pixels) = {self.m_radius:.3f}'
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history('AperturePhotometryModule', history)
         self.m_phot_out_port.close_port()
