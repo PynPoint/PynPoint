@@ -332,7 +332,7 @@ class SimplexMinimizationModule(ProcessingModule):
         print(f'   - Residuals type = {self.m_residuals}')
         print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
         print(f'   - Maximum offset = {self.m_offset}')
-        print(f'   - Guessed position (x, y) = ({self.m_position[0]:.2f},'
+        print(f'   - Guessed position (x, y) = ({self.m_position[0]:.2f}, '
               f'{self.m_position[1]:.2f})')
 
         parang = self.m_image_in_port.get_attribute('PARANG')
