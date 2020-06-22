@@ -150,10 +150,11 @@ class TestBackground:
 
         data = self.pipeline.get_data('dither_dither_pca_fit1')
         assert np.sum(data) == pytest.approx(-0.01019999314121019, rel=1e-5, abs=0.)
+        print(np.sum(data))
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_res1')
-        assert np.sum(data) == pytest.approx(54.884085831929795, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(54.884085831929795, rel=1e-7, abs=0.)
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_mask1')
