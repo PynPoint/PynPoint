@@ -154,7 +154,7 @@ class TestBackground:
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_res1')
-        assert np.sum(data) == pytest.approx(54.884085831929795, rel=1e-7, abs=0.)
+        assert np.sum(data) == pytest.approx(54.884085831929795, rel=1e-6, abs=0.)
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_mask1')
@@ -162,7 +162,7 @@ class TestBackground:
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('pca_dither1')
-        assert np.sum(data) == pytest.approx(208.774670964812, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(208.774670964812, rel=1e-6, abs=0.)
         assert data.shape == (20, 9, 9)
 
         attr = self.pipeline.get_attribute('dither_dither_pca_res1', 'STAR_POSITION', static=False)
@@ -190,7 +190,7 @@ class TestBackground:
         self.pipeline.run_module('pca_dither2')
 
         data = self.pipeline.get_data('pca_dither2')
-        assert np.sum(data) == pytest.approx(209.8271898501695, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(209.8271898501695, rel=1e-6, abs=0.)
         assert data.shape == (20, 9, 9)
 
     def test_nodding_background(self) -> None:
