@@ -149,7 +149,7 @@ class TestBackground:
         assert data.shape == (15, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_fit1')
-        assert np.sum(data) == pytest.approx(-0.01019999314121019, rel=1e-8, abs=0.)
+        assert np.sum(data) == pytest.approx(-0.01019999314121019, rel=1e-6, abs=0.)
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_res1')
