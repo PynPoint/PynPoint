@@ -28,6 +28,14 @@ pynpoint.util.continuous module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.util.ifs module
+------------------------
+
+.. automodule:: pynpoint.util.ifs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.util.image module
 --------------------------
 
@@ -112,6 +120,14 @@ pynpoint.util.residuals module
 ------------------------------
 
 .. automodule:: pynpoint.util.residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.util.sdi module
+------------------------
+
+.. automodule:: pynpoint.util.sdi
    :members:
    :undoc-members:
    :show-inheritance:

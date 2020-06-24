@@ -16,8 +16,7 @@ from sklearn.decomposition import PCA
 from pynpoint.core.dataio import OutputPort
 from pynpoint.util.multiproc import TaskProcessor, TaskCreator, TaskWriter, TaskResult, \
                                     TaskInput, MultiprocessingCapsule, to_slice
-from pynpoint.util.sdi import postprocessor
-from pynpoint.util.ifs import i_want_to_seperate_wavelengths
+from pynpoint.util.postproc import postprocessor
 from pynpoint.util.residuals import combine_residuals
 
 
@@ -39,7 +38,7 @@ class PcaTaskCreator(TaskCreator):
             Input task queue.
         num_proc : int
             Number of processors.
-        pca_numbers : numpy.ndarray
+        pca_numbers : np.ndarray, tuple
             Principal components for which the residuals are computed.
 
         Returns
@@ -69,6 +68,7 @@ class PcaTaskCreator(TaskCreator):
                     self.m_task_queue.put(TaskInput(tuple((pca_first, pca_secon)), parameters))
 
             self.create_poison_pills()
+
         else:
             for i, pca_number in enumerate(self.m_pca_numbers):
                 parameters = (((i, i+1, None), (None, None, None), (None, None, None)), )
@@ -97,7 +97,7 @@ class PcaTaskProcessor(TaskProcessor):
                  result_queue_in: multiprocessing.JoinableQueue,
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
-                 scales: np.ndarray,
+                 scales: Optional[np.ndarray],
                  pca_model: Union[PCA, None],
                  im_shape: tuple,
                  indices: Union[np.ndarray, None],
@@ -110,17 +110,17 @@ class PcaTaskProcessor(TaskProcessor):
             Input task queue.
         result_queue_in : multiprocessing.queues.JoinableQueue
             Input result queue.
-        star_reshape : numpy.ndarray
+        star_reshape : np.ndarray
             Reshaped (2D) stack of images.
-        angles : numpy.ndarray
+        angles : np.ndarray
             Derotation angles (deg).
-        scales : numpy.ndarray
+        scales : np.ndarray
             scaling factors
         pca_model : sklearn.decomposition.pca.PCA
             PCA object with the basis.
         im_shape : tuple(int, int, int)
             Original shape of the stack of images.
-        indices : numpy.ndarray
+        indices : np.ndarray
             Non-masked image indices.
         requirements : tuple(bool, bool, bool, bool)
             Required output residuals.
@@ -175,34 +175,30 @@ class PcaTaskProcessor(TaskProcessor):
                                            indices=self.m_indices,
                                            processing_type=self.m_processing_type)
 
-        if i_want_to_seperate_wavelengths(self.m_processing_type):
+        if self.m_processing_type == 'ADI' and res_rot.ndim == 3:
+            res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
+
+        else:
             res_output = np.zeros((4, len(self.m_star_reshape),
                                    res_rot.shape[-2], res_rot.shape[-1]))
 
-        else:
-            res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
-
         if self.m_requirements[0]:
             res_output[0, ] = combine_residuals(method='mean',
-                                                res_rot=res_rot,
-                                                processing_type=self.m_processing_type)
+                                                res_rot=res_rot)
 
         if self.m_requirements[1]:
             res_output[1, ] = combine_residuals(method='median',
-                                                res_rot=res_rot,
-                                                processing_type=self.m_processing_type)
+                                                res_rot=res_rot)
 
         if self.m_requirements[2]:
             res_output[2, ] = combine_residuals(method='weighted',
                                                 res_rot=res_rot,
                                                 residuals=residuals,
-                                                angles=self.m_angles,
-                                                processing_type=self.m_processing_type)
+                                                angles=self.m_angles)
 
         if self.m_requirements[3]:
             res_output[3, ] = combine_residuals(method='clipped',
-                                                res_rot=res_rot,
-                                                processing_type=self.m_processing_type)
+                                                res_rot=res_rot)
 
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -326,7 +322,7 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  pca_model: Union[PCA, None],
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
-                 scales: np.ndarray,
+                 scales: Optional[np.ndarray],
                  im_shape: tuple,
                  indices: Union[np.ndarray, None],
                  processing_type: str) -> None:
@@ -345,19 +341,19 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
             Output port for the mean clipped residuals.
         num_proc : int
             Number of processors.
-        pca_numbers : numpy.ndarray
+        pca_numbers : np.ndarray
             Number of principal components.
         pca_model : sklearn.decomposition.pca.PCA
             PCA object with the basis.
-        star_reshape : numpy.ndarray
+        star_reshape : np.ndarray
             Reshaped (2D) input images.
-        angles : numpy.ndarray
+        angles : np.ndarray
             Derotation angles (deg).
-        scales : numpy.ndarray
+        scales : np.ndarray
             scaling factors.
         im_shape : tuple(int, int, int)
             Original shape of the input images.
-        indices : numpy.ndarray
+        indices : np.ndarray
             Non-masked pixel indices.
         processing_type : str
             selection of processing type
