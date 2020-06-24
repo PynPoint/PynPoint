@@ -380,10 +380,16 @@ class SimplexMinimizationModule(ProcessingModule):
                        sklearn_pca: Optional[PCA],
                        var_noise: Optional[float]) -> float:
 
-            # Extract the y position, x position, and contrast from the argument tuple
-            pos_y = arg[0]
-            pos_x = arg[1]
-            mag = arg[2]
+            # Extract the contrast, y position, and x position from the argument tuple
+            mag = arg[0]
+
+            if self.m_offset is None or self.m_offset > 0.:
+                pos_y = arg[1]
+                pos_x = arg[2]
+
+            else:
+                pos_y = pos_init[0]
+                pos_x = pos_init[1]
 
             # Calculate the absolute offset (pixels) with respect to the initial guess
             pos_offset = np.sqrt((pos_x-pos_init[1])**2 + (pos_y-pos_init[0])**2)
@@ -511,8 +517,13 @@ class SimplexMinimizationModule(ProcessingModule):
                                            aperture=aperture,
                                            sigma=self.m_sigma)
 
+            if self.m_offset == 0.:
+                x0_minimize = np.array([self.m_magnitude])
+            else:
+                x0_minimize = np.array([self.m_magnitude, pos_init[0], pos_init[1]])
+
             min_result = minimize(fun=_objective,
-                                  x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
+                                  x0=x0_minimize,
                                   args=(i, n_components, sklearn_pca, var_noise),
                                   method='Nelder-Mead',
                                   tol=None,
