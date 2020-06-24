@@ -81,7 +81,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
             Database entry where the derotated, but not collapsed, residuals are stored. The number
             of principal components is was used is appended to the ``res_arr_out_tag``. The
             residuals are not stored if set to None. This parameter is not supported with
-            multiprocessing (i.e. ``CPU`` > 1).
+            multiprocessing (i.e. ``CPU`` > 1). For IFS data and if the processing type is either 
+            ADI+SDI or SDI+ADI the residuals can only be calculated if exactly 1 principal component 
+            for each ADI and SDI is given with the pca_numbers parameter.
         basis_out_tag : str, None
             Database entry where the principal components are stored. The data is not stored if set
             to None. Only supported for imaging data with ``processing_type='ADI'``.
@@ -188,7 +190,10 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
                                  f'a tuple for with twice a range/list/array as argument for '
                                  f'\'pca_numbers\'.')
-
+            if res_arr_out_tag is not None and len(self.m_components[0]) + len(self.m_components[1]) != 2:
+                raise ValueError(f'If the post-processing type \'{self.m_processing_type}\' '
+                                 'is selected, residuals can only be calculated if no more than '
+                                 '1 principal component for ADI and SDI is given.')
         else:
             raise ValueError('Please select a valid post-processing type.')
 
@@ -359,19 +364,14 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 # 1.) derotated residuals
                 if self.m_res_arr_out_ports is not None:
-                    if self.m_processing_type == 'ADI' and not self.m_ifs_data:
+                    if not self.m_ifs_data:
                         self.m_res_arr_out_ports[pca_1].set_all(res_rot)
                         self.m_res_arr_out_ports[pca_1].copy_attributes(self.m_star_in_port)
                         self.m_res_arr_out_ports[pca_1].add_history(
                             'PcaPsfSubtractionModule', f'max PC number = {pca_first}')
 
                     else:
-                        if len(pca_first)+len(pca_secon) == 2:
-                            out_array_res = residuals
-
-                        else:
-                            print('Residuals can only be printed if no more than 1 pca number for each ' +
-                                  'reduction step is selected. With your pca numbers, no residuals are saved.')
+                        out_array_res = residuals
 
                 # 2.) mean residuals
                 if self.m_res_mean_out_port is not None:
@@ -425,13 +425,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # Configurate data output according to the processing type
         # 1.) derotated residuals
-        if self.m_res_arr_out_ports is not None and len(pca_first)+len(pca_secon) == 2 and self.m_processing_type != 'Oadi':
+        if self.m_res_arr_out_ports is not None and self.m_ifs_data:
             if pca_secon[0] == -1:
                 history = f'max PC number = {pca_first}'
 
             else:
                 history = f'max PC number = {pca_first} / {pca_secon}'
-
+            
+            # squeeze out_array_res to reduce dimensionallity as the residuals of 
+            # SDI+ADI and ADI+SDI are always of the form (1, 1, ...)
             squeezed = np.squeeze(out_array_res)
 
             if isinstance(self.m_components, tuple):

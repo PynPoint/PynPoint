@@ -98,9 +98,9 @@ class PcaTaskProcessor(TaskProcessor):
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
                  scales: Optional[np.ndarray],
-                 pca_model: Union[PCA, None],
+                 pca_model: Optional[PCA],
                  im_shape: tuple,
-                 indices: Union[np.ndarray, None],
+                 indices: Optional[np.ndarray],
                  requirements: Tuple[bool, bool, bool, bool],
                  processing_type: str) -> None:
         """
@@ -161,6 +161,7 @@ class PcaTaskProcessor(TaskProcessor):
             Output residuals.
         """
 
+        # correct data type of pca_number if necessary
         if isinstance(tmp_task.m_input_data, tuple):
             pca_number = tmp_task.m_input_data
         else:
@@ -175,7 +176,9 @@ class PcaTaskProcessor(TaskProcessor):
                                            indices=self.m_indices,
                                            processing_type=self.m_processing_type)
 
-        if self.m_processing_type == 'ADI' and res_rot.ndim == 3:
+
+        # differentiate between IFS data or Mono-Wavelength data
+        if res_rot.ndim == 3:
             res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))
 
         else:
@@ -319,12 +322,12 @@ class PcaMultiprocessingCapsule(MultiprocessingCapsule):
                  clip_out_port: Optional[OutputPort],
                  num_proc: int,
                  pca_numbers: Union[tuple, np.ndarray],
-                 pca_model: Union[PCA, None],
+                 pca_model: Optional[PCA],
                  star_reshape: np.ndarray,
                  angles: np.ndarray,
                  scales: Optional[np.ndarray],
                  im_shape: tuple,
-                 indices: Union[np.ndarray, None],
+                 indices: Optional[np.ndarray],
                  processing_type: str) -> None:
         """
         Constructor of PcaMultiprocessingCapsule.

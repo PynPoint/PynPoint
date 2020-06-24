@@ -22,7 +22,7 @@ def postprocessor(images: np.ndarray,
                   im_shape: Union[None, tuple] = None,
                   indices: np.ndarray = None,
                   mask: np.ndarray = None,
-                  processing_type: str = 'Oadi'):
+                  processing_type: str = 'ADI'):
 
     """
     Function to apply different kind of post processings. It is equivalent to
@@ -108,7 +108,7 @@ def postprocessor(images: np.ndarray,
         # SDI
         res_raw_int = np.zeros(res_raw.shape)
 
-        for i, _ in enumerate(images[0]):
+        for i in range(images.shape[1]):
             im_scaled = sdi_scaling(images[:, i], scales)
 
             res_raw_int[:, i], _ = pca_psf_subtraction(images=im_scaled*mask,
@@ -120,7 +120,7 @@ def postprocessor(images: np.ndarray,
                                                        indices=indices)
 
         # ADI
-        for i, _ in enumerate(images):
+        for i in range(images.shape[0]):
             res_raw[i], res_rot[i] = pca_psf_subtraction(images=res_raw_int[i]*mask,
                                                          angles=angles,
                                                          scales=None,
@@ -133,7 +133,7 @@ def postprocessor(images: np.ndarray,
         # ADI
         res_raw_int = np.zeros(res_raw.shape)
 
-        for i, _ in enumerate(images):
+        for i in range(images.shape[0]):
             res_raw_int[i], _ = pca_psf_subtraction(images=images[i, ]*mask,
                                                     angles=None,
                                                     scales=None,
@@ -143,7 +143,7 @@ def postprocessor(images: np.ndarray,
                                                     indices=indices)
 
         # SDI
-        for i, _ in enumerate(images[0]):
+        for i in range(images.shape[1]):
             im_scaled = sdi_scaling(res_raw_int[:, i], scales)
 
             res_raw[:, i], res_rot[:, i] = pca_psf_subtraction(images=im_scaled*mask,
