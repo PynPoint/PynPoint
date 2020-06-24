@@ -531,8 +531,13 @@ class SimplexMinimizationModule(ProcessingModule):
 
             print(' [DONE]')
 
-            pos_x = min_result.x[1]
-            pos_y = min_result.x[0]
+            if self.m_offset == 0.:
+                pos_x = pos_init[1]
+                pos_y = pos_init[0]
+
+            else:
+                pos_x = min_result.x[1]
+                pos_y = min_result.x[0]
 
             pos_rot_yx = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
@@ -542,7 +547,7 @@ class SimplexMinimizationModule(ProcessingModule):
             print(f'   - Position (x, y) = ({pos_rot_yx[1]:.2f}, {pos_rot_yx[0]:.2f})')
             print(f'   - Separation (mas) = {sep_ang[0]*pixscale*1e3:.2f}')
             print(f'   - Position angle (deg) = {sep_ang[1]:.2f}')
-            print(f'   - Contrast (mag) = {min_result.x[2]:.2f}')
+            print(f'   - Contrast (mag) = {min_result.x[0]:.2f}')
 
         history = f'merit = {self.m_merit}'
 
