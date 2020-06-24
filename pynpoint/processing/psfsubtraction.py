@@ -222,7 +222,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
-        elif self.m_processing_type in ['SDI+ADI', 'SDI+ADI']:
+        elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
 
