@@ -54,6 +54,8 @@ class TestPsfSubtractionSdi:
         shape_expc = [(2, 3, 21, 21), (2, 2, 3, 21, 21), (1, 1, 3, 21, 21)]
 
         pca_numbers = [range(1, 3), (range(1, 3), range(1, 3)), ([1], [1])]
+        
+        res_arr_tags = [None, None, 'res_arr_single_sdi_ADI+SDI']
 
         for i, p_type in enumerate(processing_types):
 
@@ -65,7 +67,7 @@ class TestPsfSubtractionSdi:
                                              res_median_tag='res_median_single_sdi_'+p_type,
                                              res_weighted_tag='res_weighted_single_sdi_'+p_type,
                                              res_rot_mean_clip_tag='res_clip_single_sdi_'+p_type,
-                                             res_arr_out_tag='res_arr_single_sdi_'+p_type,
+                                             res_arr_out_tag=res_arr_tags[i],
                                              basis_out_tag='basis_single_sdi_'+p_type,
                                              extra_rot=0.,
                                              subtract_mean=True,
@@ -75,15 +77,15 @@ class TestPsfSubtractionSdi:
             self.pipeline.run_module('pca_single_sdi_'+p_type)
 
             data = self.pipeline.get_data('res_mean_single_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_median_single_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][1], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][1], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_weighted_single_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][2], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][2], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_clip_single_sdi_'+p_type)
@@ -128,15 +130,15 @@ class TestPsfSubtractionSdi:
             self.pipeline.run_module('pca_multi_sdi_'+p_type)
 
             data = self.pipeline.get_data('res_mean_multi_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_median_multi_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][1], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][1], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_weighted_multi_sdi_'+p_type)
-#            assert np.sum(data) == pytest.approx(expected[i][2], rel=self.limit, abs=0.)
+            assert np.sum(data) == pytest.approx(expected[i][2], rel=self.limit, abs=0.)
             assert data.shape == shape_expc[i]
 
             data = self.pipeline.get_data('res_clip_multi_sdi_'+p_type)
