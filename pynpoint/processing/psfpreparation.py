@@ -107,7 +107,7 @@ class PSFpreparationModule(ProcessingModule):
         nimages = im_shape[-3]
         frames = memory_frames(memory, nimages)
 
-        # Read out number of wavelength 
+        # Read out number of wavelength
         if len(im_shape) < 4:
             wavelength_dim = 1
         else:
@@ -350,9 +350,10 @@ class SortParangModule(ProcessingModule):
 
         index_sort = np.argsort(index)
 
-        nimages = self.m_image_in_port.get_shape()[0]
+        nimages = self.m_image_in_port.get_shape()[-3]
 
         frames = memory_frames(memory, nimages)
+        print(frames)
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):

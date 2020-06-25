@@ -207,7 +207,7 @@ def create_ifs_data(path: str) -> None:
         None
     """
 
-    ndit = 10
+    ndit = 4
     npix = 21
     nwavel = 3
     fwhm = 3.
@@ -216,7 +216,7 @@ def create_ifs_data(path: str) -> None:
     pos_star = 10.
     exp_no = 1
 
-    parang = np.linspace(0., 180., 10)
+    parang = np.linspace(0., 180., 4)
     wavelength = [1., 1.1, 1.2]
 
     if not os.path.exists(path):
