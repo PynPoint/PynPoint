@@ -24,7 +24,7 @@ class PSFpreparationModule(ProcessingModule):
     and image normalization.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker, Timothy Gebhard'
+    __author__ = 'Markus Bonse, Tomas Stolker, Timothy Gebhard, Sven Kiefer'
 
     @typechecked
     def __init__(self,
@@ -107,6 +107,7 @@ class PSFpreparationModule(ProcessingModule):
         nimages = im_shape[-3]
         frames = memory_frames(memory, nimages)
 
+        # Read out number of wavelength 
         if len(im_shape) < 4:
             wavelength_dim = 1
         else:
@@ -329,6 +330,7 @@ class SortParangModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute('MEMORY')
         index = self.m_image_in_port.get_attribute('INDEX')
+        im_shape = self.m_image_in_port.get_shape()
 
         index_new = np.zeros(index.shape, dtype=np.int)
 
@@ -365,8 +367,17 @@ class SortParangModule(ProcessingModule):
                 star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
             # h5py indexing elements must be in increasing order
-            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
-                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+            if len(im_shape) < 4:
+                # image assignment for 3 dim data
+                for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                    self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+            else:
+                # image assignment for 4 dim data
+                # Set output shape
+                tmp_output = np.zeros(im_shape)
+                self.m_image_out_port.set_all(tmp_output, keep_attributes=False)
+                for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                    self.m_image_out_port[:, item, ] = self.m_image_in_port[:, item, ]
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('SortParangModule', 'sorted by INDEX')
@@ -388,7 +399,7 @@ class AngleCalculationModule(ProcessingModule):
     the cube. Instrument specific overheads are included.
     """
 
-    __author__ = 'Alexander Bohn, Tomas Stolker'
+    __author__ = 'Alexander Bohn, Tomas Stolker, Sven Kiefer'
 
     @typechecked
     def __init__(self,
