@@ -300,6 +300,58 @@ def create_star_data(path: str,
 
 
 @typechecked
+def create_star_data_ifs(path: str,
+                         npix: int = 11,
+                         pos_star: float = 5.) -> None:
+    """
+    Create a dataset with a PSF and Gaussian noise.
+    Parameters
+    ----------
+    path : str
+        Working folder.
+    npix : int
+        Number of pixels in each dimension.
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    fwhm = 3.
+    wavelengths = 3
+
+    exp_no = [1, 2, 3, 4]
+    parang_start = [0., 20., 40., 60.]
+    parang_end = [20., 40., 60., 80.]
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    np.random.seed(1)
+
+    for j, item in enumerate(exp_no):
+        sigma = fwhm / (2. * math.sqrt(2.*math.log(2.)))
+
+        x = y = np.arange(0., float(npix), 1.)
+        xx, yy = np.meshgrid(x, y)
+
+        images = np.random.normal(loc=0, scale=0.1, size=(wavelengths, npix, npix))
+        images += np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma**2))
+
+        hdu = fits.PrimaryHDU()
+        header = hdu.header
+        header['INSTRUME'] = 'IMAGER'
+        header['HIERARCH ESO DET EXP NO'] = item
+        header['HIERARCH ESO DET NDIT'] = wavelengths
+        header['HIERARCH ESO ADA POSANG'] = parang_start[j]
+        header['HIERARCH ESO ADA POSANG END'] = parang_end[j]
+        header['HIERARCH ESO SEQ CUMOFFSETX'] = 'None'
+        header['HIERARCH ESO SEQ CUMOFFSETY'] = 'None'
+        hdu.data = images
+        hdu.writeto(os.path.join(path, f'images_{j}.fits'))
+
+
+@typechecked
 def create_dither_data(path: str) -> None:
     """
     Create a dithering dataset with a stellar PSF.
