@@ -11,7 +11,7 @@ from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule, Classica
 from pynpoint.util.tests import create_config, create_fake_data, remove_test_data
 
 
-class TestPsfSubtraction:
+class TestPsfSubtractionAdi:
 
     def setup_class(self) -> None:
 
@@ -282,9 +282,9 @@ class TestPsfSubtraction:
         assert np.sum(data) == pytest.approx(0.06014309988789256, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
-        # data = self.pipeline.get_data('res_clip_single_mask')
+        data = self.pipeline.get_data('res_clip_single_mask')
         # assert np.sum(data) == pytest.approx(9.35120662148806e-05, rel=self.limit, abs=0.)
-        # assert data.shape == (2, 21, 21)
+        assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('res_arr_single_mask1')
         assert np.sum(data) == pytest.approx(0.0006170872862547557, rel=self.limit, abs=0.)

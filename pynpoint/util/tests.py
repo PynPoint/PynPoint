@@ -142,7 +142,7 @@ def create_fits(path: str,
 @typechecked
 def create_fake_data(path: str) -> None:
     """
-    Create ADI test data with a fake planet.
+    Create an ADI dataset with a star and planet.
 
     Parameters
     ----------
@@ -187,6 +187,60 @@ def create_fake_data(path: str) -> None:
         y_shift = sep*math.sin(math.radians(item))
 
         images[i, ] += star + shift(contrast*star, (x_shift, y_shift), order=5)
+
+    create_fits(path, 'images.fits', images, ndit, exp_no, 0., 0.)
+
+
+@typechecked
+def create_ifs_data(path: str) -> None:
+    """
+    Create an IFS dataset with a star and planet.
+
+    Parameters
+    ----------
+    path : str
+        Working folder.
+
+    Returns
+    -------
+    NoneType
+        None
+    """
+
+    ndit = 10
+    npix = 21
+    nwavel = 3
+    fwhm = 3.
+    sep = 6.
+    contrast = 1.
+    pos_star = 10.
+    exp_no = 1
+
+    parang = np.linspace(0., 180., 10)
+    wavelength = [1., 1.1, 1.2]
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    sigma = fwhm / (2.*math.sqrt(2.*math.log(2.)))
+
+    x = y = np.arange(0., 21., 1.)
+    xx, yy = np.meshgrid(x, y)
+
+    np.random.seed(1)
+
+    images = np.random.normal(loc=0, scale=0.05, size=(nwavel, ndit, npix, npix))
+
+    for i, par_item in enumerate(parang):
+        for j, wav_item in enumerate(wavelength):
+            sigma_scale = sigma*wav_item
+
+            star = np.exp(-((xx-pos_star)**2+(yy-pos_star)**2)/(2.*sigma_scale**2))
+
+            x_shift = sep*math.cos(math.radians(par_item))
+            y_shift = sep*math.sin(math.radians(par_item))
+
+            images[j, i, ] += star + shift(contrast*star, (x_shift, y_shift), order=5)
 
     create_fits(path, 'images.fits', images, ndit, exp_no, 0., 0.)
 
