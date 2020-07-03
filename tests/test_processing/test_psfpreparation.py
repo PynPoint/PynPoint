@@ -7,7 +7,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.psfpreparation import PSFpreparationModule, AngleInterpolationModule, \
                                                AngleCalculationModule, SDIpreparationModule
-from pynpoint.util.tests import create_config, create_star_data, create_star_data_ifs, remove_test_data
+from pynpoint.util.tests import create_config, create_star_data, create_ifs_data, remove_test_data
 
 
 class TestPsfPreparation:
@@ -18,7 +18,7 @@ class TestPsfPreparation:
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(self.test_dir+'prep')
-        create_star_data_ifs(self.test_dir+'prep_ifs')
+        create_ifs_data(self.test_dir+'prep_ifs')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -49,8 +49,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('read_ifs')
 
         data = self.pipeline.get_data('read_ifs')
-        assert np.sum(data) == pytest.approx(129.89567140238609, rel=self.limit, abs=0.)
-        assert data.shape == (3, 4, 11, 11)
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_angle_interpolation(self) -> None:
 
@@ -248,6 +248,7 @@ class TestPsfPreparation:
         data = self.pipeline.get_data('prep4')
         assert np.sum(data) == pytest.approx(129.89567140238609, rel=self.limit, abs=0.)
         assert data.shape == (3, 4, 11, 11)
+        assert False
 
     def test_sdi_preparation(self) -> None:
 
