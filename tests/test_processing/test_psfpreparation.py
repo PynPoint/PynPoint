@@ -246,9 +246,8 @@ class TestPsfPreparation:
         self.pipeline.run_module('prep4')
 
         data = self.pipeline.get_data('prep4')
-        assert np.sum(data) == pytest.approx(129.89567140238609, rel=self.limit, abs=0.)
-        assert data.shape == (3, 4, 11, 11)
-        assert False
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_sdi_preparation(self) -> None:
 
