@@ -337,6 +337,8 @@ class SortParangModule(ProcessingModule):
 
         memory = self._m_config_port.get_attribute('MEMORY')
         index = self.m_image_in_port.get_attribute('INDEX')
+        ndim = self.m_image_in_port.get_ndim()
+        im_shape = self.m_image_in_port.get_shape()
 
         index_new = np.zeros(index.shape, dtype=np.int)
 
@@ -356,7 +358,7 @@ class SortParangModule(ProcessingModule):
 
         index_sort = np.argsort(index)
 
-        nimages = self.m_image_in_port.get_shape()[0]
+        nimages = self.m_image_in_port.get_shape()[-3]
 
         frames = memory_frames(memory, nimages)
 
@@ -373,8 +375,13 @@ class SortParangModule(ProcessingModule):
                 star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
             # h5py indexing elements must be in increasing order
-            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
-                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+            if ndim == 3:
+                for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                    self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+
+            elif ndim == 4:
+                for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                    self.m_image_out_port.append(self.m_image_in_port[:, item, ], data_dim=4)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('SortParangModule', 'sorted by INDEX')
