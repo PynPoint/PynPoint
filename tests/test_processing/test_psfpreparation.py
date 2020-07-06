@@ -7,7 +7,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.psfpreparation import PSFpreparationModule, AngleInterpolationModule, \
                                                AngleCalculationModule, SDIpreparationModule
-from pynpoint.util.tests import create_config, create_star_data, remove_test_data
+from pynpoint.util.tests import create_config, create_star_data, create_ifs_data, remove_test_data
 
 
 class TestPsfPreparation:
@@ -18,13 +18,14 @@ class TestPsfPreparation:
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(self.test_dir+'prep')
+        create_ifs_data(self.test_dir+'prep_ifs')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self) -> None:
 
-        remove_test_data(self.test_dir, folders=['prep'])
+        remove_test_data(self.test_dir, folders=['prep', 'prep_ifs'])
 
     def test_read_data(self) -> None:
 
@@ -38,6 +39,18 @@ class TestPsfPreparation:
         data = self.pipeline.get_data('read')
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+        module = FitsReadingModule(name_in='read_ifs',
+                                   image_tag='read_ifs',
+                                   input_dir=self.test_dir+'prep_ifs',
+                                   ifs_data=True)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read_ifs')
+
+        data = self.pipeline.get_data('read_ifs')
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_angle_interpolation(self) -> None:
 
@@ -218,6 +231,23 @@ class TestPsfPreparation:
         data = self.pipeline.get_data('prep3')
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+    def test_psf_preparation_sdi(self) -> None:
+
+        module = PSFpreparationModule(name_in='prep4',
+                                      image_in_tag='read_ifs',
+                                      image_out_tag='prep4',
+                                      mask_out_tag=None,
+                                      norm=False,
+                                      cent_size=None,
+                                      edge_size=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('prep4')
+
+        data = self.pipeline.get_data('prep4')
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_sdi_preparation(self) -> None:
 
