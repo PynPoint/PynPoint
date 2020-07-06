@@ -374,12 +374,13 @@ class SortParangModule(ProcessingModule):
                 star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
             # h5py indexing elements must be in increasing order
-            for j in index_sort[frames[i]:frames[i+1]]:
-                if ndim == 3:
-                    self.m_image_out_port.append(self.m_image_in_port[j, ], data_dim=3)
+            if ndim == 3:
+                for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
+                    self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
 
-                elif ndim == 4:
-                    self.m_image_out_port.append(self.m_image_in_port[:, j, ], data_dim=4)
+            elif ndim == 4:
+                for i in range(self.m_image_in_port.get_shape()[-3]):
+                    self.m_image_out_port.append(self.m_image_in_port[:, i, ], data_dim=4)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('SortParangModule', 'sorted by INDEX')
