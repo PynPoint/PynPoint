@@ -167,15 +167,17 @@ class TestPsfPreparation:
         self.pipeline.run_module('sort1')
         self.pipeline.set_attribute('read', 'INDEX', index, static=False)
 
-        parang_old = self.pipeline.get_data('header_read/PARANG')[::-1]
-        parang_sorted = self.pipeline.get_data('header_read_sorted/PARANG')
+        parang = self.pipeline.get_data('header_read/PARANG')[::-1]
+        parang_sort = self.pipeline.get_data('header_read_sorted/PARANG')
+        assert np.sum(parang) == pytest.approx(np.sum(parang_sort), rel=self.limit, abs=0.)
 
-        for i in range(parang_sorted.shape[0]):
-            assert parang_old[i] == parang_sorted[i]
+        parang_set = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]
+        self.pipeline.set_attribute('read_ifs', 'PARANG', parang_set, static=False)
 
-        self.pipeline.set_attribute('read_ifs', 'PARANG', (0., 1., 2., 3., 4., 5., 6., 7., 8., 9.), static=False)
         data = self.pipeline.get_data('read_sorted')
         assert np.sum(data[0]) == pytest.approx(9.71156815235485, rel=self.limit, abs=0.)
+
+    def test_angle_sort_ifs(self) -> None:
 
         index = self.pipeline.get_data('header_read_ifs/INDEX')
         self.pipeline.set_attribute('read_ifs', 'INDEX', index[::-1], static=False)
@@ -188,12 +190,9 @@ class TestPsfPreparation:
         self.pipeline.run_module('sort2')
         self.pipeline.set_attribute('read_ifs', 'INDEX', index, static=False)
 
-        parang_old = self.pipeline.get_data('header_read_ifs/PARANG')[::-1]
-        parang_sorted = self.pipeline.get_data('header_read_ifs_sorted/PARANG')
-        print(parang_old)
-
-        for i in range(parang_sorted.shape[0]):
-            assert parang_old[i] == parang_sorted[i]
+        parang = self.pipeline.get_data('header_read_ifs/PARANG')[::-1]
+        parang_sort = self.pipeline.get_data('header_read_ifs_sorted/PARANG')
+        assert np.sum(parang) == pytest.approx(np.sum(parang_sort), rel=self.limit, abs=0.)
 
         data = self.pipeline.get_data('read_ifs_sorted')
         assert np.sum(data[0, 0]) == pytest.approx(21.185139976163477, rel=self.limit, abs=0.)
