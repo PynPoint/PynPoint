@@ -195,7 +195,7 @@ class TestPsfPreparation:
         assert np.sum(parang) == pytest.approx(np.sum(parang_sort), rel=self.limit, abs=0.)
 
         data = self.pipeline.get_data('read_ifs_sorted')
-        assert np.sum(data[0, 0]) == pytest.approx(21.75782878234529, rel=self.limit, abs=0.)
+        assert np.sum(data[0, 0]) == pytest.approx(21.185139976163477, rel=self.limit, abs=0.)
 
     def test_angle_interpolation_mismatch(self) -> None:
 
