@@ -21,10 +21,10 @@ from pynpoint.util.image import create_mask, scale_image, shift_image
 class PSFpreparationModule(ProcessingModule):
     """
     Module to prepare the data for PSF subtraction with PCA. The preparation steps include masking
-    and image normalization.
+    and an optional normalization.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker, Timothy Gebhard'
+    __author__ = 'Markus Bonse, Tomas Stolker, Timothy Gebhard, Sven Kiefer'
 
     @typechecked
     def __init__(self,
@@ -49,7 +49,8 @@ class PSFpreparationModule(ProcessingModule):
             Tag of the database entry with the mask that is written as output. If set to None, no
             mask array is saved.
         norm : bool
-            Normalize each image by its Frobenius norm.
+            Normalize each image by its Frobenius norm. Only supported for 3D datasets (i.e.
+            regular imaging).
         resize : float, None
             DEPRECATED. This parameter is currently ignored by the module and will be removed in a
             future version of PynPoint.
@@ -91,25 +92,40 @@ class PSFpreparationModule(ProcessingModule):
     def run(self) -> None:
         """
         Run method of the module. Masks and normalizes the images.
-
         Returns
         -------
         NoneType
             None
         """
 
-        # Get PIXSCALE and MEMORY attributes
+        # Get the PIXSCALE and MEMORY attributes
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         memory = self._m_config_port.get_attribute('MEMORY')
 
-        # Get the number of images and split into batches to comply with memory constraints
+        # Get the numnber of dimensions and shape
+        ndim = self.m_image_in_port.get_ndim()
         im_shape = self.m_image_in_port.get_shape()
-        nimages = im_shape[0]
-        frames = memory_frames(memory, nimages)
+
+        if ndim == 3:
+            # Number of images
+            nimages = im_shape[-3]
+
+            # Split into batches to comply with memory constraints
+            frames = memory_frames(memory, nimages)
+
+        elif ndim == 4:
+            # Process all wavelengths per exposure at once
+            frames = np.linspace(0, im_shape[-3], im_shape[-3]+1)
+
+        if self.m_norm and ndim == 4:
+            warnings.warn('The \'norm\' parameter does not support 4D datasets and will therefore '
+                          'be ignored.')
 
         # Convert m_cent_size and m_edge_size from arcseconds to pixels
+
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
+
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
 
@@ -121,34 +137,42 @@ class PSFpreparationModule(ProcessingModule):
         # we are not normalizing, this list will remain empty)
         norms = list()
 
-        # Run the PSFpreparationModule for each subset of frames
         start_time = time.time()
-        for i, _ in enumerate(frames[:-1]):
 
+        # Run the PSFpreparationModule for each subset of frames
+        for i in range(frames[:-1].size):
             # Print progress to command line
             progress(i, len(frames[:-1]), 'Preparing images for PSF subtraction...', start_time)
 
-            # Get the images and ensure they have the correct 3D shape with the following
-            # three dimensions: (batch_size, height, width)
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            if ndim == 3:
+                # Get the images and ensure they have the correct 3D shape with the following
+                # three dimensions: (batch_size, height, width)
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            if images.ndim == 2:
-                warnings.warn('The input data has 2 dimensions whereas 3 dimensions are required. '
-                              'An extra dimension has been added.')
+                if images.ndim == 2:
+                    warnings.warn('The input data has 2 dimensions whereas 3 dimensions are '
+                                  'required. An extra dimension has been added.')
 
-                images = images[np.newaxis, ...]
+                    images = images[np.newaxis, ...]
+
+            elif ndim == 4:
+                # Process all wavelengths per exposure at once
+                images = self.m_image_in_port[:, i, ]
 
             # Apply the mask, i.e., set all pixels to 0 where the mask is False
             images[:, ~mask] = 0.
 
             # If desired, normalize the images using the Frobenius norm
-            if self.m_norm:
+            if self.m_norm and ndim == 3:
                 im_norm = np.linalg.norm(images, ord='fro', axis=(1, 2))
                 images /= im_norm[:, np.newaxis, np.newaxis]
                 norms.append(im_norm)
 
             # Write processed images to output port
-            self.m_image_out_port.append(images, data_dim=3)
+            if ndim == 3:
+                self.m_image_out_port.append(images, data_dim=3)
+            elif ndim == 4:
+                self.m_image_out_port.append(images, data_dim=4)
 
         # Store information about mask
         if self.m_mask_out_port is not None:
@@ -170,6 +194,7 @@ class PSFpreparationModule(ProcessingModule):
             self.m_image_out_port.add_attribute(name='cent_size',
                                                 value=self.m_cent_size * pixscale,
                                                 static=True)
+
         if self.m_edge_size is not None:
             self.m_image_out_port.add_attribute(name='edge_size',
                                                 value=self.m_edge_size * pixscale,
