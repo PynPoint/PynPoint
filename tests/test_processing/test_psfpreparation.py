@@ -6,7 +6,8 @@ import numpy as np
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.psfpreparation import PSFpreparationModule, AngleInterpolationModule, \
-                                               AngleCalculationModule, SDIpreparationModule
+                                               AngleCalculationModule, SDIpreparationModule, \
+                                               SortParangModule
 from pynpoint.util.tests import create_config, create_star_data, create_ifs_data, remove_test_data
 
 
@@ -152,6 +153,50 @@ class TestPsfPreparation:
         data = self.pipeline.get_data('header_read/PARANG')
         assert np.sum(data) == pytest.approx(-890.8506520762833, rel=self.limit, abs=0.)
         assert data.shape == (10, )
+
+    def test_angle_sort(self) -> None:
+
+        index = self.pipeline.get_data('header_read/INDEX')
+        self.pipeline.set_attribute('read', 'INDEX', index[::-1], static=False)
+
+        module = SortParangModule(name_in='sort1',
+                                  image_in_tag='read',
+                                  image_out_tag='read_sorted')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('sort1')
+        self.pipeline.set_attribute('read', 'INDEX', index, static=False)
+
+        parang_old = self.pipeline.get_data('header_read/PARANG')[::-1]
+        parang_sorted = self.pipeline.get_data('header_read_sorted/PARANG')
+
+        for i in range(parang_sorted.shape[0]):
+            assert parang_old[i] == parang_sorted[i]
+
+        self.pipeline.set_attribute('read_ifs', 'PARANG', (0., 1., 2., 3., 4., 5., 6., 7., 8., 9.), static=False)
+        data = self.pipeline.get_data('read_sorted')
+        assert np.sum(data[0]) == pytest.approx(9.71156815235485, rel=self.limit, abs=0.)
+
+        index = self.pipeline.get_data('header_read_ifs/INDEX')
+        self.pipeline.set_attribute('read_ifs', 'INDEX', index[::-1], static=False)
+
+        module = SortParangModule(name_in='sort2',
+                                  image_in_tag='read_ifs',
+                                  image_out_tag='read_ifs_sorted')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('sort2')
+        self.pipeline.set_attribute('read_ifs', 'INDEX', index, static=False)
+
+        parang_old = self.pipeline.get_data('header_read_ifs/PARANG')[::-1]
+        parang_sorted = self.pipeline.get_data('header_read_ifs_sorted/PARANG')
+        print(parang_old)
+
+        for i in range(parang_sorted.shape[0]):
+            assert parang_old[i] == parang_sorted[i]
+
+        data = self.pipeline.get_data('read_ifs_sorted')
+        assert np.sum(data[0, 0]) == pytest.approx(21.185139976163477, rel=self.limit, abs=0.)
 
     def test_angle_interpolation_mismatch(self) -> None:
 
