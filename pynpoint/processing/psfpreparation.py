@@ -185,10 +185,9 @@ class PSFpreparationModule(ProcessingModule):
         # If the norms list is not empty (i.e., if we have computed the norm for every image),
         # we can also save the corresponding norm vector as an additional attribute
         if norms:
-            if ndim == 3:
-                self.m_image_out_port.add_attribute(name='norm',
-                                                    value=np.hstack(norms),
-                                                    static=False)
+            self.m_image_out_port.add_attribute(name='norm',
+                                                value=np.hstack(norms),
+                                                static=False)
 
         # Save cent_size and edge_size as attributes to the output port
         if self.m_cent_size is not None:
