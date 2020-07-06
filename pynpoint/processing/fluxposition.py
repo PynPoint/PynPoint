@@ -213,7 +213,7 @@ class SimplexMinimizationModule(ProcessingModule):
         position : tuple(float, float)
             Approximate position (x, y) of the planet in pixels. The figure of merit is calculated
             within an aperture of radius ``aperture`` centered at the rounded (i.e. integers)
-            coordiantes of ``position``.
+            coordinates of ``position``.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float
@@ -260,7 +260,8 @@ class SimplexMinimizationModule(ProcessingModule):
             position measurements in the context of RDI.
         offset : float, None
             Offset (pixels) by which the injected negative PSF may deviate from ``position``. The
-            constraint on the position is not applied if set to ``None``.
+            constraint on the position is not applied if set to None. Only the contrast is
+            optimized and the position if fixed to ``position`` if ``offset=0``.
 
         Returns
         -------
@@ -1199,8 +1200,9 @@ class SystematicErrorModule(ProcessingModule):
         residuals : str
             Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
         offset : float, None
-            Offset (pix) by which the negative PSF may deviate from the positive injected PSF. No
-            constraint on the position is applied if set to None.
+            Offset (pixels) by which the negative PSF may deviate from the positive injected PSF.
+            No constraint on the position is applied if set to None. Only the contrast is optimized
+            and the position is fixed to the injected value if ``offset=0``.
 
         Returns
         -------
