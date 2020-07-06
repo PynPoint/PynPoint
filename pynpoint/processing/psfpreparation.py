@@ -169,9 +169,9 @@ class PSFpreparationModule(ProcessingModule):
                 norms.append(im_norm)
 
             # Write processed images to output port
-            if ndim < 4:
+            if ndim == 3:
                 self.m_image_out_port.append(images, data_dim=3)
-            else:
+            elif ndim == 4:
                 self.m_image_out_port.append(images, data_dim=4)
 
         # Store information about mask
