@@ -406,7 +406,8 @@ class AngleCalculationModule(ProcessingModule):
     def __init__(self,
                  name_in: str,
                  data_tag: str,
-                 instrument: str = 'NACO') -> None:
+                 instrument: str = 'NACO',
+                 preprocessing: str = None) -> None:
         """
         Parameters
         ----------
@@ -416,6 +417,8 @@ class AngleCalculationModule(ProcessingModule):
             Tag of the database entry for which the parallactic angles are written as attributes.
         instrument : str
             Instrument name ('NACO', 'SPHERE/IRDIS', or 'SPHERE/IFS').
+        preprocessing: str
+            Name of the program used to preprocess SPHERE/IFS data (None or 'ESOREFLEX')
 
         Returns
         -------
@@ -427,6 +430,7 @@ class AngleCalculationModule(ProcessingModule):
 
         # Parameters
         self.m_instrument = instrument
+        self.m_preprocessing = preprocessing
 
         # Set parameters according to choice of instrument
         if self.m_instrument == 'NACO':
@@ -524,6 +528,27 @@ class AngleCalculationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute('NDIT')
 
         self._attribute_check(ndit, steps)
+        
+        # Check requriements for
+        if self.m_instrument == 'SPHERE/IFS':
+            # set up for special corrections required for esoreflex prepared data.
+            if self.m_preprocessing == 'ESOREFLEX':
+                if self.m_data_in_port.get_attribute('DATE_CORRECTION') is None:
+                    raise ValueError('Angles of EsoReflex prepared images need the ' +
+                                     'DATE_CORRECTION attribute to calculate the angles.')
+
+                cor_pre = self.m_data_in_port.get_attribute('DATE_CORRECTION')
+                datcor = np.zeros((len(cor_pre)))
+
+                for i, item in enumerate(cor_pre):
+                    datcor[i] = item[-9:-5]
+
+            elif self.m_preprocessing == None:
+                pass
+
+            # Error if no valid preprocessing selected
+            else:
+                raise ValueError(self.m_preprocessing + ' is not a valid preprocessing.')
 
         # Load exposure time [hours]
         exptime = self.m_data_in_port.get_attribute('DIT')/3600.
@@ -589,10 +614,25 @@ class AngleCalculationModule(ProcessingModule):
             sid_time = t.sidereal_time('apparent').value
 
             # Extrapolate sideral times from start time of the cube for each frame of it
-            sid_time_arr = np.linspace(sid_time+self.m_O_START,
-                                       (sid_time+self.m_O_START) +
-                                       (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
-                                       tmp_steps)
+            if self.m_instrument == 'SPHERE/IFS':
+
+                # calculation for esoreflex prepared data, requires special correction
+                if self.m_preprocessing == 'ESOREFLEX':
+                    cor_time = sid_time + self.m_O_START + (exptime + self.m_DIT_DELAY + self.m_ROT)*datcor[i]
+                    sid_time_arr = cor_time
+                
+                if self.m_preprocessing == None:
+                    sid_time_arr = np.linspace(sid_time+self.m_O_START,
+                                           (sid_time+self.m_O_START) +
+                                           (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
+                                           tmp_steps)
+
+            else:
+                sid_time_arr = np.linspace(sid_time+self.m_O_START,
+                                           (sid_time+self.m_O_START) +
+                                           (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
+                                           tmp_steps)
+
 
             # Convert to degrees
             sid_time_arr_deg = sid_time_arr * 15.
@@ -633,6 +673,7 @@ class AngleCalculationModule(ProcessingModule):
         if indices.size > 0:
             new_angles_corr[indices] -= 360.
 
+        print(new_angles_corr)
         self.m_data_out_port.add_attribute('PARANG', new_angles_corr, static=False)
 
 
