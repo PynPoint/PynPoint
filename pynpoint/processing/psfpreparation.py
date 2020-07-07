@@ -289,7 +289,7 @@ class AngleInterpolationModule(ProcessingModule):
 
 class SortParangModule(ProcessingModule):
     """
-    Module to sort the images and non-static attributes with increasing INDEX.
+    Module to sort the images and attributes with increasing ``INDEX``.
     """
 
     __author__ = 'Tomas Stolker'
@@ -305,10 +305,10 @@ class SortParangModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the input data.
         image_out_tag : str
-            Tag of the database entry with images that is written as output. Should be different
-            from *image_in_tag*.
+            Database tag where the output data will be stored. Should be different from
+            ``image_in_tag``.
 
         Returns
         -------
@@ -324,7 +324,8 @@ class SortParangModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Sorts the images and relevant non-static attributes.
+        Run method of the module. Sorts the images and attributes with increasing ``INDEX``.
+        Therefore, the images are sorted by there original (usually chronological) order.
 
         Returns
         -------
@@ -332,11 +333,11 @@ class SortParangModule(ProcessingModule):
             None
         """
 
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError('Input and output port should have a different tag.')
-
         memory = self._m_config_port.get_attribute('MEMORY')
         index = self.m_image_in_port.get_attribute('INDEX')
+
+        ndim = self.m_image_in_port.get_ndim()
+        nimages = self.m_image_in_port.get_shape()[-3]
 
         index_new = np.zeros(index.shape, dtype=np.int)
 
@@ -356,11 +357,10 @@ class SortParangModule(ProcessingModule):
 
         index_sort = np.argsort(index)
 
-        nimages = self.m_image_in_port.get_shape()[0]
-
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
+
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Sorting images in time...', start_time)
 
@@ -372,9 +372,13 @@ class SortParangModule(ProcessingModule):
             if star_new is not None:
                 star_new[frames[i]:frames[i+1]] = star[index_sort[frames[i]:frames[i+1]]]
 
-            # h5py indexing elements must be in increasing order
-            for _, item in enumerate(index_sort[frames[i]:frames[i+1]]):
-                self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+            # HDF5 indexing elements must be in increasing order
+            for item in index_sort[frames[i]:frames[i+1]]:
+                if ndim == 3:
+                    self.m_image_out_port.append(self.m_image_in_port[item, ], data_dim=3)
+
+                elif ndim == 4:
+                    self.m_image_out_port.append(self.m_image_in_port[:, item, ], data_dim=4)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('SortParangModule', 'sorted by INDEX')
