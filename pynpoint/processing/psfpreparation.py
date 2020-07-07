@@ -528,7 +528,7 @@ class AngleCalculationModule(ProcessingModule):
         ndit = self.m_data_in_port.get_attribute('NDIT')
 
         self._attribute_check(ndit, steps)
-        
+
         # Check requriements for
         if self.m_instrument == 'SPHERE/IFS':
             # set up for special corrections required for esoreflex prepared data.
@@ -543,7 +543,7 @@ class AngleCalculationModule(ProcessingModule):
                 for i, item in enumerate(cor_pre):
                     datcor[i] = item[-9:-5]
 
-            elif self.m_preprocessing == None:
+            elif self.m_preprocessing is None:
                 pass
 
             # Error if no valid preprocessing selected
@@ -620,19 +620,18 @@ class AngleCalculationModule(ProcessingModule):
                 if self.m_preprocessing == 'ESOREFLEX':
                     cor_time = sid_time + self.m_O_START + (exptime + self.m_DIT_DELAY + self.m_ROT)*datcor[i]
                     sid_time_arr = cor_time
-                
-                if self.m_preprocessing == None:
+
+                if self.m_preprocessing is None:
                     sid_time_arr = np.linspace(sid_time+self.m_O_START,
-                                           (sid_time+self.m_O_START) +
-                                           (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
-                                           tmp_steps)
+                                               (sid_time+self.m_O_START) +
+                                               (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
+                                               tmp_steps)
 
             else:
                 sid_time_arr = np.linspace(sid_time+self.m_O_START,
                                            (sid_time+self.m_O_START) +
                                            (exptime+self.m_DIT_DELAY + self.m_ROT)*(tmp_steps-1),
                                            tmp_steps)
-
 
             # Convert to degrees
             sid_time_arr_deg = sid_time_arr * 15.
@@ -673,7 +672,6 @@ class AngleCalculationModule(ProcessingModule):
         if indices.size > 0:
             new_angles_corr[indices] -= 360.
 
-        print(new_angles_corr)
         self.m_data_out_port.add_attribute('PARANG', new_angles_corr, static=False)
 
 
