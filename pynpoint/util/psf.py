@@ -2,7 +2,7 @@
 Functions for PSF subtraction.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Union, Tuple
 
 import numpy as np
 
@@ -10,13 +10,16 @@ from scipy.ndimage import rotate
 from sklearn.decomposition import PCA
 from typeguard import typechecked
 
+from pynpoint.util.image import scale_image, shift_image
+
 
 @typechecked
 def pca_psf_subtraction(images: np.ndarray,
-                        angles: np.ndarray,
-                        pca_number: int,
+                        angles: Optional[np.ndarray],
+                        pca_number: Union[int, np.int64],
+                        scales: Optional[np.ndarray] = None,
                         pca_sklearn: Optional[PCA] = None,
-                        im_shape: Optional[Tuple[int, int, int]] = None,
+                        im_shape: Optional[tuple] = None,
                         indices: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
     """
     Function for PSF subtraction with PCA.
@@ -31,6 +34,8 @@ def pca_psf_subtraction(images: np.ndarray,
         Parallactic angles (deg).
     pca_number : int
         Number of principal components.
+    scales : np.ndarray, None
+        Scaling factors for SDI. Not used if set to None.
     pca_sklearn : sklearn.decomposition.pca.PCA, None
         PCA object with the principal components.
     im_shape : tuple(int, int, int), None
@@ -103,14 +108,55 @@ def pca_psf_subtraction(images: np.ndarray,
     # Reshape the residuals to the original shape
     residuals = residuals.reshape(im_shape)
 
-    # Check if the number of PARANG is equal to the number of images
-    if residuals.shape[0] != angles.shape[0]:
-        raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
-                         f'number of parallactic angles ({angles.shape[0]}).')
+    # ----------- back scale images
+    scal_cor = np.zeros(residuals.shape)
 
-    # Derotate the images
-    res_derot = np.zeros(residuals.shape)
-    for j, item in enumerate(angles):
-        res_derot[j, ] = rotate(residuals[j, ], item, reshape=False)
+    if scales is not None:
 
-    return residuals, res_derot
+        # check if the number of parang is equal to the number of images
+        if residuals.shape[0] != scales.shape[0]:
+            raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
+                             f'number of wavelengths ({scales.shape[0]}).')
+
+        for i, _ in enumerate(scales):
+            # rescaling the images
+            swaps = scale_image(residuals[i, ], 1/scales[i], 1/scales[i])
+
+            npix_del = scal_cor.shape[-1] - swaps.shape[-1]
+
+            if npix_del == 0:
+                scal_cor[i, ] = swaps
+
+            else:
+                if npix_del % 2 == 0:
+                    npix_del_a = int(npix_del/2)
+                    npix_del_b = int(npix_del/2)
+
+                else:
+                    npix_del_a = int((npix_del-1)/2)
+                    npix_del_b = int((npix_del+1)/2)
+
+                scal_cor[i, npix_del_a:-npix_del_b, npix_del_a:-npix_del_b] = swaps
+
+                if npix_del % 2 == 1:
+                    scal_cor[i, ] = shift_image(scal_cor[i, ], (0.5, 0.5), interpolation='spline')
+
+    else:
+        scal_cor = residuals
+
+    res_rot = np.zeros(residuals.shape)
+
+    if angles is not None:
+
+        # Check if the number of parang is equal to the number of images
+        if residuals.shape[0] != angles.shape[0]:
+            raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
+                             f'number of parallactic angles ({angles.shape[0]}).')
+
+        for j, item in enumerate(angles):
+            res_rot[j, ] = rotate(scal_cor[j, ], item, reshape=False)
+
+    else:
+        res_rot = scal_cor
+
+    return scal_cor, res_rot

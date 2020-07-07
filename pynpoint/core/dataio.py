@@ -858,15 +858,15 @@ class OutputPort(Port):
                     data_dim: Optional[int] = None,
                     force: bool = False) -> None:
         """
-        Internal function for appending data to a dataset or appending non-static attribute
-        information. See :func:`~pynpoint.core.dataio.OutputPort.append` for more information.
+        Internal function for appending data to a dataset or appending non-static attributes.
+        See :func:`~pynpoint.core.dataio.OutputPort.append` for more information.
 
         Parameters
         ----------
         tag : str
-            Database tag of the data that will be modified.
+            Database tag where the data will be stored.
         data : np.ndarray
-            The data that will be stored and replace any old data.
+            The data that will be appended.
         data_dim : int
             Number of dimension of the data.
         force : bool
@@ -1069,31 +1069,30 @@ class OutputPort(Port):
                data_dim: Optional[int] = None,
                force: bool = False) -> None:
         """
-        Appends data to an existing dataset with the tag of the Port along the first
-        dimension. If no data exists with the tag of the Port a new data set is created.
-        For more information about how the dimensions are organized see documentation of
-        the function :func:`~pynpoint.core.dataio.OutputPort.set_all`. Note it is not possible to
-        append data with a different shape or data type to the existing dataset.
+        Appends data to an existing dataset along the first dimension. If no data exists for the
+        :class:`~pynpoint.core.dataio.OutputPort`, then a new data set is created. For more
+        information about how the dimensions are organized, see the documentation of
+        :func:`~pynpoint.core.dataio.OutputPort.set_all`. Note it is not possible to append data
+        with a different shape or data type to an existing dataset.
 
-        **Example:** An internal data set is 3D (storing a stack of 2D images) with shape
-        (233, 300, 300) which mean it contains 233 images with a resolution of 300 x 300 pixel.
-        Thus it is only possible to extend along the first dimension by appending new images with
-        a size of (300, 300) or by appending a stack of images (:, 300, 300). Everything else will
-        raise exceptions.
+        **Example:** An internal data set is 3D (storing a stack of 2D images) with shape of
+        ``(233, 300, 300)``, that is, it contains 233 images with a resolution of 300 by 300
+        pixels. Thus it is only possible to extend along the first dimension by appending new
+        images with a shape of ``(300, 300)`` or by appending a stack of images with a shape of
+        ``(:, 300, 300)``.
 
-        It is possible to force the function to overwrite the existing data set if and only if the
-        shape or type of the input data does not match the existing data. **Warning**: This can
-        delete the existing data.
+        It is possible to force the function to overwrite existing data set if the shape or type of
+        the input data do not match the existing data.
 
         Parameters
         ----------
         data : np.ndarray
-            The data which will be appended.
+            The data that will be appended.
         data_dim : int
             Number of data dimensions used if a new data set is created. The dimension of the
-            *data* is used if set to None.
+            ``data`` is used if set to None.
         force : bool
-            The existing data will be overwritten if shape or type does not match if set to True.
+            The existing data will be overwritten if the shape or type does not match.
 
         Returns
         -------

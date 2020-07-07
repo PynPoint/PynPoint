@@ -323,7 +323,7 @@ def polar_to_cartesian(image: np.ndarray,
     image : np.ndarray
         Input image (2D or 3D).
     sep : float
-        Separation (pix).
+        Separation (pixels).
     ang : float
         Position angle (deg), measured counterclockwise with respect to the positive y-axis.
 
@@ -484,7 +484,7 @@ def rotate_coordinates(center: Tuple[float, float],
     Parameters
     ----------
     center : tuple(float, float)
-        Image center (y, x).
+        Image center (y, x) with subpixel accuracy.
     position : tuple(float, float)
         Position (y, x) in the image, or a 2D numpy array of positions.
     angle : float
@@ -502,4 +502,4 @@ def rotate_coordinates(center: Tuple[float, float],
     pos_x = (position[1] - center[1]) * math.cos(np.radians(angle)) - \
             (position[0] - center[0]) * math.sin(np.radians(angle))
 
-    return center[0] + pos_y, center[1] + pos_x
+    return center[0]+pos_y, center[1]+pos_x

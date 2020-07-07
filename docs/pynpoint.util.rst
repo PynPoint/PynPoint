@@ -92,6 +92,14 @@ pynpoint.util.multistack module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.util.postproc module
+-----------------------------
+
+.. automodule:: pynpoint.util.postproc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.util.psf module
 ------------------------
 
@@ -112,6 +120,14 @@ pynpoint.util.residuals module
 ------------------------------
 
 .. automodule:: pynpoint.util.residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.util.sdi module
+------------------------
+
+.. automodule:: pynpoint.util.sdi
    :members:
    :undoc-members:
    :show-inheritance:

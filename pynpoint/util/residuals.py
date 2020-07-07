@@ -16,6 +16,58 @@ def combine_residuals(method: str,
                       residuals: Optional[np.ndarray] = None,
                       angles: Optional[np.ndarray] = None) -> np.ndarray:
     """
+    Wavelength wrapper for the combine_residual function. Produces an array with either 1
+    or number of wavelengths sized array.
+
+    Parameters
+    ----------
+    method : str
+        Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+    res_rot : np.ndarray
+        Derotated residuals of the PSF subtraction (3D).
+    residuals : np.ndarray, None
+        Non-derotated residuals of the PSF subtraction (3D). Only required for the noise-weighted
+        residuals.
+    angles : np.ndarray, None
+        Derotation angles (deg). Only required for the noise-weighted residuals.
+
+    Returns
+    -------
+    np.ndarray
+        Collapsed residuals (3D).
+    """
+
+    if res_rot.ndim == 3:
+        output = _residuals(method=method,
+                            res_rot=np.asarray(res_rot),
+                            residuals=residuals,
+                            angles=angles)
+
+    if res_rot.ndim == 4:
+        output = np.zeros((res_rot.shape[0], res_rot.shape[2], res_rot.shape[3]))
+
+        for i in range(res_rot.shape[0]):
+            if residuals is None:
+                output[i, ] = _residuals(method=method,
+                                         res_rot=res_rot[i, ],
+                                         residuals=residuals,
+                                         angles=angles)[0]
+
+            else:
+                output[i, ] = _residuals(method=method,
+                                         res_rot=res_rot[i, ],
+                                         residuals=residuals[i, ],
+                                         angles=angles)[0]
+
+    return output
+
+
+@typechecked
+def _residuals(method: str,
+               res_rot: np.ndarray,
+               residuals: Optional[np.ndarray] = None,
+               angles: Optional[np.ndarray] = None) -> np.ndarray:
+    """
     Function for combining the derotated residuals of the PSF subtraction.
 
     Parameters
@@ -50,6 +102,7 @@ def combine_residuals(method: str,
                                axis=0)
 
         res_var = np.zeros(res_repeat.shape)
+
         for j, angle in enumerate(angles):
             # scipy.ndimage.rotate rotates in clockwise direction for positive angles
             res_var[j, ] = rotate(input=res_repeat[j, ],
