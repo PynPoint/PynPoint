@@ -104,14 +104,21 @@ HDF5 Files
 
 There are several options to access data from the central HDF5 database:
 
-	* Use :class:`~pynpoint.readwrite.fitswriting.FitsWritingModule` to export data to a FITS file, as shown in the :ref:`examples` section.
-	* Use the easy access functions of the :class:`pynpoint.core.pypeline` module to retrieve data and attributes from the database:
+   * Use :class:`~pynpoint.readwrite.fitswriting.FitsWritingModule` to export data to a FITS file.
 
-		* ``pipeline.get_data(tag='tag_name')``
+   * Use the easy access functions of the :class:`~pynpoint.core.pypeline.Pypeline` module to retrieve data and attributes from the database:
 
-		* ``pipeline.get_attribute(data_tag='tag_name', attr_name='attr_name')``
+      * ``pipeline.get_data('tag_name')``
 
-	* Use an external tool such as |HDFCompass| or |HDFView| to read, inspect, and visualize data and attributes in the HDF5 database. We recommend using HDFCompass because it is easy to use and has a basic plotting functionality, allowing the user to quickly inspect images from a particular database tag. In HDFCompass, the static attributes can be opened with the `Reopen as HDF5 Attributes` option.
+      * ``pipeline.get_attribute('tag_name', 'attr_name')``
+
+   * Use the |h5py| Python package.
+
+   * Use an external tool such as |HDFCompass| or |HDFView| to read, inspect, and visualize data and attributes in the HDF5 database. We recommend using HDFCompass because it is easy to use and has a basic plotting functionality, allowing the user to quickly inspect images from a particular database tag. In HDFCompass, the static attributes can be opened with the `Reopen as HDF5 Attributes` option.
+
+.. |h5py| raw:: html
+
+   <a href="http://www.h5py.org/" target="_blank">h5py</a>
 
 .. |HDFCompass| raw:: html
 
