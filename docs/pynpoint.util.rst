@@ -104,6 +104,11 @@ pynpoint.util.pacomath module
 -----------------------------
 
 .. automodule:: pynpoint.util.pacomath
+
+pynpoint.util.postproc module
+-----------------------------
+
+.. automodule:: pynpoint.util.postproc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -128,6 +133,14 @@ pynpoint.util.residuals module
 ------------------------------
 
 .. automodule:: pynpoint.util.residuals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.util.sdi module
+------------------------
+
+.. automodule:: pynpoint.util.sdi
    :members:
    :undoc-members:
    :show-inheritance:

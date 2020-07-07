@@ -2,7 +2,6 @@
 Pipeline modules for photometric and astrometric measurements.
 """
 
-import sys
 import time
 import warnings
 
@@ -105,6 +104,12 @@ class FakePlanetModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Magnitude = {self.m_magnitude:.2f}')
+        print(f'   - PSF scaling = {self.m_psf_scaling}')
+        print(f'   - Separation (arcsec) = {self.m_position[0]:.2f}')
+        print(f'   - Position angle (deg) = {self.m_position[0]:.2f}')
+
         memory = self._m_config_port.get_attribute('MEMORY')
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -172,7 +177,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  psf_in_tag: str,
                  res_out_tag: str,
                  flux_position_tag: str,
-                 position: Tuple[int, int],
+                 position: Tuple[float, float],
                  magnitude: float,
                  psf_scaling: float = -1.,
                  merit: str = 'hessian',
@@ -205,9 +210,10 @@ class SimplexMinimizationModule(ProcessingModule):
             output. Each step of the minimization stores the x position (pixels), y position
             (pixels), separation (arcsec), angle (deg), contrast (mag), and the chi-square value.
             The last row contains the best-fit results.
-        position : tuple(int, int)
-            Approximate position (x, y) of the planet in pixels. This is also the location where
-            the figure of merit is calculated within an aperture of radius ``aperture``.
+        position : tuple(float, float)
+            Approximate position (x, y) of the planet in pixels. The figure of merit is calculated
+            within an aperture of radius ``aperture`` centered at the rounded (i.e. integers)
+            coordinates of ``position``.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float
@@ -254,7 +260,8 @@ class SimplexMinimizationModule(ProcessingModule):
             position measurements in the context of RDI.
         offset : float, None
             Offset (pixels) by which the injected negative PSF may deviate from ``position``. The
-            constraint on the position is not applied if set to ``None``.
+            constraint on the position is not applied if set to None. Only the contrast is
+            optimized and the position if fixed to ``position`` if ``offset=0``.
 
         Returns
         -------
@@ -303,6 +310,7 @@ class SimplexMinimizationModule(ProcessingModule):
 
         if isinstance(pca_number, int):
             self.m_pca_number = [pca_number]
+
         else:
             self.m_pca_number = pca_number
 
@@ -319,18 +327,31 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Number of principal components = {self.m_pca_number}')
+        print(f'   - Figure of merit = {self.m_merit}')
+        print(f'   - Residuals type = {self.m_residuals}')
+        print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'   - Maximum offset = {self.m_offset}')
+        print(f'   - Guessed position (x, y) = ({self.m_position[0]:.2f}, '
+              f'{self.m_position[1]:.2f})')
+
         parang = self.m_image_in_port.get_attribute('PARANG')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        aperture = (self.m_position[1], self.m_position[0], self.m_aperture/pixscale)
+        aperture = (round(self.m_position[1]), round(self.m_position[0]), self.m_aperture/pixscale)
+        print(f'   - Aperture position (x, y) = ({aperture[1]}, {aperture[0]})')
+        print(f'   - Aperture radius (pixels) = {int(aperture[2])}')
 
         self.m_sigma /= pixscale
 
         if self.m_cent_size is not None:
             self.m_cent_size /= pixscale
+            print(f'   - Inner mask radius (pixels) = {int(self.m_cent_size)}')
 
         if self.m_edge_size is not None:
             self.m_edge_size /= pixscale
+            print(f'   - Outer mask radius (pixels) = {int(self.m_edge_size)}')
 
         psf = self.m_psf_in_port.get_all()
         images = self.m_image_in_port.get_all()
@@ -342,6 +363,12 @@ class SimplexMinimizationModule(ProcessingModule):
                              'the SimplexMinimizationModule.')
 
         center = center_subpixel(psf)
+        print(f'Image center (y, x) = {center}')
+
+        # Rotate the initial position, (y, x), by the extra rotation angle to (y_rot, x_rot)
+        pos_init = rotate_coordinates(center,
+                                      (self.m_position[1], self.m_position[0]),
+                                      self.m_extra_rot)
 
         if self.m_reference_in_port is not None and self.m_merit != 'poisson':
             raise NotImplementedError('The reference_in_tag can only be used in combination with '
@@ -354,21 +381,28 @@ class SimplexMinimizationModule(ProcessingModule):
                        sklearn_pca: Optional[PCA],
                        var_noise: Optional[float]) -> float:
 
-            pos_y = arg[0]
-            pos_x = arg[1]
-            mag = arg[2]
+            # Extract the contrast, y position, and x position from the argument tuple
+            mag = arg[0]
 
-            if self.m_offset is not None:
-                if pos_x < self.m_position[0] - self.m_offset or \
-                        pos_x > self.m_position[0] + self.m_offset:
-                    return np.inf
+            if self.m_offset is None or self.m_offset > 0.:
+                pos_y = arg[1]
+                pos_x = arg[2]
 
-                if pos_y < self.m_position[1] - self.m_offset or \
-                        pos_y > self.m_position[1] + self.m_offset:
-                    return np.inf
+            else:
+                pos_y = pos_init[0]
+                pos_x = pos_init[1]
 
+            # Calculate the absolute offset (pixels) with respect to the initial guess
+            pos_offset = np.sqrt((pos_x-pos_init[1])**2 + (pos_y-pos_init[0])**2)
+
+            if self.m_offset is not None and pos_offset > self.m_offset:
+                # Return chi-square = inf if the offset needs to be tested and is too large
+                return np.inf
+
+            # Convert the cartesian position to a separation and position angle
             sep_ang = cartesian_to_polar(center, pos_y, pos_x)
 
+            # Inject the negative artifical planet at the position and contrast that is tested
             fake = fake_planet(images=images,
                                psf=psf,
                                parang=parang,
@@ -376,9 +410,11 @@ class SimplexMinimizationModule(ProcessingModule):
                                magnitude=mag,
                                psf_scaling=self.m_psf_scaling)
 
+            # Create a mask
             mask = create_mask(fake.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
             if self.m_reference_in_port is None:
+                # PSF subtraction with the science data as reference data (ADI)
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
                                                                angles=-1.*parang+self.m_extra_rot,
                                                                pca_number=n_components,
@@ -387,6 +423,7 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                indices=None)
 
             else:
+                # PSF subtraction with separate reference data (RDI)
                 im_reshape = np.reshape(fake*mask, (im_shape[0], im_shape[1]*im_shape[2]))
 
                 im_res_rot, im_res_derot = pca_psf_subtraction(images=im_reshape,
@@ -396,21 +433,28 @@ class SimplexMinimizationModule(ProcessingModule):
                                                                im_shape=im_shape,
                                                                indices=None)
 
+            # Collapse the residuals of the PSF subtraction
             res_stack = combine_residuals(method=self.m_residuals,
                                           res_rot=im_res_derot,
                                           residuals=im_res_rot,
                                           angles=parang)
 
+            # Appedn the collapsed residuals to the output port
             self.m_res_out_port[count].append(res_stack, data_dim=3)
 
+            # Calculate the chi-square for the tested position and contrast
             chi_square = merit_function(residuals=res_stack[0, ],
                                         merit=self.m_merit,
                                         aperture=aperture,
                                         sigma=self.m_sigma,
                                         var_noise=var_noise)
 
+            # Apply the extra rotation to the y and x position
+            # The returned position is given as (y, x)
             position = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 
+            # Create and array with the x position, y position, separation (arcsec), position
+            # angle (deg), contrast (mag), and chi-square
             res = np.asarray([position[1],
                               position[0],
                               sep_ang[0]*pixscale,
@@ -418,21 +462,16 @@ class SimplexMinimizationModule(ProcessingModule):
                               mag,
                               chi_square])
 
+            # Append the results to the output port
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            sys.stdout.write('\rSimplex minimization... ')
-            sys.stdout.write(f'{n_components} PC - chi^2 = {chi_square:.8E}')
-            sys.stdout.flush()
+            print('\rSimplex minimization... ', end='', flush=True)
+            print(f'{n_components} PC - chi^2 = {chi_square:8.2f}', end='', flush=True)
 
             return chi_square
 
-        pos_init = rotate_coordinates(center,
-                                      (self.m_position[1], self.m_position[0]),  # (y, x)
-                                      self.m_extra_rot)
-
         for i, n_components in enumerate(self.m_pca_number):
-            sys.stdout.write(f'\rSimplex minimization... {n_components} PC ')
-            sys.stdout.flush()
+            print(f'\rSimplex minimization... {n_components} PC ', end='', flush=True)
 
             if self.m_reference_in_port is None:
                 sklearn_pca = None
@@ -479,15 +518,37 @@ class SimplexMinimizationModule(ProcessingModule):
                                            aperture=aperture,
                                            sigma=self.m_sigma)
 
-            minimize(fun=_objective,
-                     x0=np.array([pos_init[0], pos_init[1], self.m_magnitude]),
-                     args=(i, n_components, sklearn_pca, var_noise),
-                     method='Nelder-Mead',
-                     tol=None,
-                     options={'xatol': self.m_tolerance, 'fatol': float('inf')})
+            if self.m_offset == 0.:
+                x0_minimize = np.array([self.m_magnitude])
+            else:
+                x0_minimize = np.array([self.m_magnitude, pos_init[0], pos_init[1]])
 
-        sys.stdout.write(' [DONE]\n')
-        sys.stdout.flush()
+            min_result = minimize(fun=_objective,
+                                  x0=x0_minimize,
+                                  args=(i, n_components, sklearn_pca, var_noise),
+                                  method='Nelder-Mead',
+                                  tol=None,
+                                  options={'xatol': self.m_tolerance, 'fatol': float('inf')})
+
+            print(' [DONE]')
+
+            if self.m_offset == 0.:
+                pos_x = pos_init[1]
+                pos_y = pos_init[0]
+
+            else:
+                pos_x = min_result.x[1]
+                pos_y = min_result.x[0]
+
+            pos_rot_yx = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
+
+            sep_ang = cartesian_to_polar(center, pos_rot_yx[0], pos_rot_yx[1])
+
+            print('Best-fit parameters:')
+            print(f'   - Position (x, y) = ({pos_rot_yx[1]:.2f}, {pos_rot_yx[0]:.2f})')
+            print(f'   - Separation (mas) = {sep_ang[0]*pixscale*1e3:.2f}')
+            print(f'   - Position angle (deg) = {sep_ang[1]:.2f}')
+            print(f'   - Contrast (mag) = {min_result.x[0]:.2f}')
 
         history = f'merit = {self.m_merit}'
 
@@ -604,13 +665,10 @@ class FalsePositiveModule(ProcessingModule):
 
             pos_x, pos_y = arg
 
-            if self.m_offset is not None:
-                if pos_x < self.m_position[0] - self.m_offset or \
-                        pos_x > self.m_position[0] + self.m_offset:
-                    snr = 0.
+            pos_offset = np.sqrt((pos_x-self.m_position[0])**2 + (pos_y-self.m_position[1])**2)
 
-                elif pos_y < self.m_position[1] - self.m_offset or \
-                        pos_y > self.m_position[1] + self.m_offset:
+            if self.m_offset is not None:
+                if pos_offset > self.m_offset:
                     snr = 0.
 
                 else:
@@ -628,13 +686,18 @@ class FalsePositiveModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_aperture /= pixscale
 
+        print('Input parameters:')
+        print(f'   - Aperture position = {self.m_position}')
+        print(f'   - Aperture radius (pixels) = {self.m_aperture:.2f}')
+        print(f'   - Optimize aperture position = {self.m_optimize}')
+        print(f'   - Ignore neighboring apertures = {self.m_ignore}')
+        print(f'   - Minimization tolerance = {self.m_tolerance}')
+
         nimages = self.m_image_in_port.get_shape()[0]
 
-        start_time = time.time()
+        print('Calculating the S/N and FPF...')
 
         for j in range(nimages):
-            progress(j, nimages, 'Calculating S/N and FPF...', start_time)
-
             image = self.m_image_in_port[j, ]
             center = center_subpixel(image)
 
@@ -662,12 +725,14 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
+            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
+
             sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
 
             self.m_snr_out_port.append(result, data_dim=2)
 
-        history = f'aperture [arcsec] = {self.m_aperture*pixscale:.2f}'
+        history = f'aperture (arcsec) = {self.m_aperture*pixscale:.2f}'
         self.m_snr_out_port.copy_attributes(self.m_image_in_port)
         self.m_snr_out_port.add_history('FalsePositiveModule', history)
         self.m_snr_out_port.close_port()
@@ -814,6 +879,10 @@ class MCMCsamplingModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Number of principal components: {self.m_pca_number}')
+        print(f'   - Figure of merit: {self.m_merit}')
+
         ndim = 3
 
         cpu = self._m_config_port.get_attribute('CPU')
@@ -846,15 +915,13 @@ class MCMCsamplingModule(ProcessingModule):
 
         if isinstance(self.m_aperture, float):
             yx_pos = polar_to_cartesian(images, self.m_param[0]/pixscale, self.m_param[1])
-            aperture = (int(round(yx_pos[0])), int(round(yx_pos[1])), self.m_aperture/pixscale)
+            aperture = (round(yx_pos[0]), round(yx_pos[1]), self.m_aperture/pixscale)
 
         elif isinstance(self.m_aperture, tuple):
             aperture = (self.m_aperture[1], self.m_aperture[0], self.m_aperture[2]/pixscale)
 
-        print(f'Number of principal components: {self.m_pca_number}')
-        print(f'Aperture position [x, y]: [{aperture[1]}, {aperture[0]}]')
-        print(f'Aperture radius (pixels): {aperture[2]:.2f}')
-        print(f'Figure of merit: {self.m_merit}')
+        print(f'   - Aperture position (x, y): ({aperture[1]}, {aperture[0]})')
+        print(f'   - Aperture radius (pixels): {int(aperture[2])}')
 
         if self.m_merit == 'poisson':
             var_noise = None
@@ -1015,7 +1082,7 @@ class AperturePhotometryModule(ProcessingModule):
 
         @typechecked
         def _photometry(image: np.ndarray,
-                        aperture: Union[Aperture, List[Aperture]]) -> np.ndarray:
+                        aperture: Union[Aperture, List[Aperture]]) -> np.float64:
             # https://photutils.readthedocs.io/en/stable/overview.html
             # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
             # corresponds to the center of the lowest, leftmost array element. This means that
@@ -1046,7 +1113,12 @@ class AperturePhotometryModule(ProcessingModule):
                                       'Aperture photometry',
                                       func_args=(aperture, ))
 
-        history = f'radius [arcsec] = {self.m_radius*pixscale:.3f}'
+        self.m_phot_in_port = self.add_input_port(self.m_phot_out_port.tag)
+        data = self.m_phot_in_port.get_all()
+
+        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data):.2f}')
+
+        history = f'radius (pixels) = {self.m_radius:.3f}'
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
         self.m_phot_out_port.add_history('AperturePhotometryModule', history)
         self.m_phot_out_port.close_port()
@@ -1128,8 +1200,9 @@ class SystematicErrorModule(ProcessingModule):
         residuals : str
             Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
         offset : float, None
-            Offset (pix) by which the negative PSF may deviate from the positive injected PSF. No
-            constraint on the position is applied if set to None.
+            Offset (pixels) by which the negative PSF may deviate from the positive injected PSF.
+            No constraint on the position is applied if set to None. Only the contrast is optimized
+            and the position is fixed to the injected value if ``offset=0``.
 
         Returns
         -------
@@ -1173,6 +1246,14 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
+        print('Input parameters:')
+        print(f'   - Number of principal components = {self.m_pca_number}')
+        print(f'   - Figure of merit = {self.m_merit}')
+        print(f'   - Residuals type = {self.m_residuals}')
+        print(f'   - Absolute tolerance (pixels/mag) = {self.m_tolerance}')
+        print(f'   - Maximum offset = {self.m_offset}')
+        print(f'   - Aperture radius (arcsec) = {self.m_aperture}')
+
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         image = self.m_image_in_port[0, ]
 
@@ -1180,7 +1261,8 @@ class SystematicErrorModule(ProcessingModule):
                                   image_in_tag=self.m_image_in_tag,
                                   psf_in_tag=self.m_psf_in_tag,
                                   image_out_tag=f'{self._m_name}_empty',
-                                  position=self.m_position,
+                                  position=(self.m_position[0],
+                                            self.m_position[1]+self.m_extra_rot),
                                   magnitude=self.m_magnitude,
                                   psf_scaling=-self.m_psf_scaling)
 
@@ -1190,12 +1272,38 @@ class SystematicErrorModule(ProcessingModule):
         module.run()
 
         sep = float(self.m_position[0])
+
         angles = np.linspace(self.m_angles[0], self.m_angles[1], self.m_angles[2], endpoint=True)
 
-        for i, ang in enumerate(angles):
-            print(f'Processing position angle: {ang} deg...')
+        print('Testing the following parameters:')
+        print(f'   - Contrast (mag) = {self.m_magnitude:.2f}')
+        print(f'   - Separation (mas) = {sep*1e3:.1f}')
+        print(f'   - Position angle range (deg) = {angles[0]} - {angles[-1]}')
 
-            module = FakePlanetModule(position=(sep, ang),
+        if angles.size > 1:
+            print(f'     in steps of {np.mean(np.diff(angles)):.2f} deg')
+
+        # Image center (y, x) with subpixel accuracy
+        im_center = center_subpixel(image)
+
+        for i, ang in enumerate(angles):
+            print(f'\nProcessing position angle: {ang} deg...')
+
+            # Convert the polar coordiantes of the separation and position angle that is tested
+            # into cartesian coordinates (y, x)
+            planet_pos_yx = polar_to_cartesian(image, sep/pixscale, ang)
+            planet_pos_xy = (planet_pos_yx[1], planet_pos_yx[0])
+
+            # Convert the planet position to polar coordinates
+            planet_sep_ang = cartesian_to_polar(im_center, planet_pos_yx[0], planet_pos_yx[1])
+
+            # Change the separation units to arcsec
+            planet_sep_ang = (planet_sep_ang[0]*pixscale, planet_sep_ang[1])
+
+            # Inject the artifical planet
+
+            module = FakePlanetModule(position=(planet_sep_ang[0],
+                                                planet_sep_ang[1]+self.m_extra_rot),
                                       magnitude=self.m_magnitude,
                                       psf_scaling=self.m_psf_scaling,
                                       name_in=f'{self._m_name}_fake_{i}',
@@ -1208,10 +1316,9 @@ class SystematicErrorModule(ProcessingModule):
             module._m_output_ports[f'{self._m_name}_fake'].del_all_attributes()
             module.run()
 
-            position = polar_to_cartesian(image, sep/pixscale, ang)
-            position = (int(round(position[1])), int(round(position[0])))
+            # Retrieve the position and contrast of the artificial planet
 
-            module = SimplexMinimizationModule(position=position,
+            module = SimplexMinimizationModule(position=planet_pos_xy,
                                                magnitude=self.m_magnitude,
                                                psf_scaling=-self.m_psf_scaling,
                                                name_in=f'{self._m_name}_fake_{i}',
@@ -1227,7 +1334,7 @@ class SystematicErrorModule(ProcessingModule):
                                                cent_size=self.m_mask[0],
                                                edge_size=self.m_mask[1],
                                                extra_rot=self.m_extra_rot,
-                                               residuals='median',
+                                               residuals=self.m_residuals,
                                                offset=self.m_offset)
 
             module.connect_database(self._m_data_base)
@@ -1237,14 +1344,21 @@ class SystematicErrorModule(ProcessingModule):
             module._m_output_ports[f'{self._m_name}_fluxpos'].del_all_attributes()
             module.run()
 
+            # Add the input port to collect the results of SimplexMinimizationModule
             fluxpos_out_port = self.add_input_port(f'{self._m_name}_fluxpos')
 
-            data = [self.m_position[0] - fluxpos_out_port[-1, 2],
-                    ang - fluxpos_out_port[-1, 3],
-                    self.m_magnitude - fluxpos_out_port[-1, 4]]
+            # Create a list with the offset between the injected and retrieved values of the
+            # separation (arcsec), position angle (deg), contrast (mag), x position (pixels),
+            # and y position (pixels).
+            data = [planet_sep_ang[0] - fluxpos_out_port[-1, 2],  # Separation (arcsec)
+                    planet_sep_ang[1] - fluxpos_out_port[-1, 3],  # Position angle (deg)
+                    self.m_magnitude - fluxpos_out_port[-1, 4],  # Contrast (mag)
+                    planet_pos_xy[0] - fluxpos_out_port[-1, 0],  # Position x (pixels)
+                    planet_pos_xy[1] - fluxpos_out_port[-1, 1]]  # Position y (pixels)
 
             if data[1] > 180.:
                 data[1] -= 360.
+
             elif data[1] < -180.:
                 data[1] += 360.
 
@@ -1258,18 +1372,28 @@ class SystematicErrorModule(ProcessingModule):
         sep_percen = np.percentile(offsets[:, 0], [16., 50., 84.])
         ang_percen = np.percentile(offsets[:, 1], [16., 50., 84.])
         mag_percen = np.percentile(offsets[:, 2], [16., 50., 84.])
+        x_pos_percen = np.percentile(offsets[:, 3], [16., 50., 84.])
+        y_pos_percen = np.percentile(offsets[:, 4], [16., 50., 84.])
 
-        print('Median and uncertainties:')
+        print('\nMedian offset and uncertainties:')
 
-        print(f'Separation [mas] = {1e3*sep_percen[1]:.2f} '
+        print(f'   - Position x (pixels) = {x_pos_percen[1]:.2f} '
+              f'(-{x_pos_percen[1]-x_pos_percen[0]:.2f} '
+              f'+{x_pos_percen[2]-x_pos_percen[1]:.2f})')
+
+        print(f'   - Position y (pixels) = {y_pos_percen[1]:.2f} '
+              f'(-{y_pos_percen[1]-y_pos_percen[0]:.2f} '
+              f'+{y_pos_percen[2]-y_pos_percen[1]:.2f})')
+
+        print(f'   - Separation (mas) = {1e3*sep_percen[1]:.2f} '
               f'(-{1e3*sep_percen[1]-1e3*sep_percen[0]:.2f} '
               f'+{1e3*sep_percen[2]-1e3*sep_percen[1]:.2f})')
 
-        print(f'Position angle [deg] = {ang_percen[1]:.2f} '
+        print(f'   - Position angle (deg) = {ang_percen[1]:.2f} '
               f'(-{ang_percen[1]-ang_percen[0]:.2f} '
               f'+{ang_percen[2]-ang_percen[1]:.2f})')
 
-        print(f'Contrast [mag] = {mag_percen[1]:.2f} '
+        print(f'   - Contrast (mag) = {mag_percen[1]:.2f} '
               f'(-{mag_percen[1]-mag_percen[0]:.2f} '
               f'+{mag_percen[2]-mag_percen[1]:.2f})')
 

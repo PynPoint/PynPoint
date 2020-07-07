@@ -22,7 +22,7 @@ def center_pixel(image: np.ndarray) -> Tuple[int, int]:
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D or 3D).
 
     Returns
@@ -58,7 +58,7 @@ def center_subpixel(image: np.ndarray) -> Tuple[float, float]:
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D or 3D).
 
     Returns
@@ -83,7 +83,7 @@ def crop_image(image: np.ndarray,
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D or 3D).
     center : tuple(int, int), None
         The new image center (y, x). The center of the image is used if set to None.
@@ -94,7 +94,7 @@ def crop_image(image: np.ndarray,
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Cropped odd-sized image (2D or 3D).
     """
 
@@ -129,14 +129,14 @@ def rotate_images(images: np.ndarray,
 
     Parameters
     ----------
-    images : numpy.ndarray
+    images : np.ndarray
         Stack of images (3D).
-    angles : numpy.ndarray
+    angles : np.ndarray
         Rotation angles (deg).
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Rotated images.
     """
 
@@ -166,7 +166,7 @@ def create_mask(im_shape: Tuple[int, int],
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Image mask.
     """
 
@@ -204,7 +204,7 @@ def shift_image(image: np.ndarray,
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D or 3D). If 3D the image is not shifted along the 0th axis.
     shift_yx : tuple(float, float), np.ndarray
         Shift (y, x) to be applied (pix). An additional shift of zero pixels will be added
@@ -216,7 +216,7 @@ def shift_image(image: np.ndarray,
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Shifted image.
     """
 
@@ -252,7 +252,7 @@ def scale_image(image: np.ndarray,
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D).
     scaling_y : float
         Scaling factor y.
@@ -261,7 +261,7 @@ def scale_image(image: np.ndarray,
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         Shifted image (2D).
     """
 
@@ -320,10 +320,10 @@ def polar_to_cartesian(image: np.ndarray,
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : np.ndarray
         Input image (2D or 3D).
     sep : float
-        Separation (pix).
+        Separation (pixels).
     ang : float
         Position angle (deg), measured counterclockwise with respect to the positive y-axis.
 
@@ -357,7 +357,7 @@ def pixel_distance(im_shape: Tuple[int, int],
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         2D array with the distances of each pixel from the provided pixel position.
     """
 
@@ -399,7 +399,7 @@ def subpixel_distance(im_shape: Tuple[int, int],
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         2D array with the distances of each pixel from the provided pixel position.
     """
 
@@ -431,7 +431,7 @@ def select_annulus(image_in: np.ndarray,
                    mask_position: Optional[Tuple[float, float]] = None,
                    mask_radius: Optional[float] = None) -> np.ndarray:
     """
-    image_in : numpy.ndarray
+    image_in : np.ndarray
         Input image.
     radius_in : float
         Inner radius of the annulus (pix).
@@ -484,7 +484,7 @@ def rotate_coordinates(center: Tuple[float, float],
     Parameters
     ----------
     center : tuple(float, float)
-        Image center (y, x).
+        Image center (y, x) with subpixel accuracy.
     position : tuple(float, float)
         Position (y, x) in the image, or a 2D numpy array of positions.
     angle : float
@@ -502,4 +502,4 @@ def rotate_coordinates(center: Tuple[float, float],
     pos_x = (position[1] - center[1]) * math.cos(np.radians(angle)) - \
             (position[0] - center[0]) * math.sin(np.radians(angle))
 
-    return center[0] + pos_y, center[1] + pos_x
+    return center[0]+pos_y, center[1]+pos_x
