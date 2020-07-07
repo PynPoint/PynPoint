@@ -28,14 +28,6 @@ pynpoint.util.continuous module
    :undoc-members:
    :show-inheritance:
 
-pynpoint.util.ifs module
-------------------------
-
-.. automodule:: pynpoint.util.ifs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pynpoint.util.image module
 --------------------------
 
@@ -96,6 +88,14 @@ pynpoint.util.multistack module
 -------------------------------
 
 .. automodule:: pynpoint.util.multistack
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pynpoint.util.postproc module
+-----------------------------
+
+.. automodule:: pynpoint.util.postproc
    :members:
    :undoc-members:
    :show-inheritance:

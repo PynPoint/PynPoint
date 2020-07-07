@@ -8,12 +8,18 @@ Here you find a list of all available pipeline modules with a very short descrip
 .. note::
    All PynPoint classes ending with ``Module`` in their name (e.g. :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule`) are pipeline modules that can be added to an instance of :class:`~pynpoint.core.pypeline.Pypeline` (see :ref:`pypeline` section).
 
+.. important::
+   The pipeline modules with multiprocessing functionalities are indicated with "CPU" in parentheses. The number of parallel processes can be set with the ``CPU`` parameter in the central configuration file and the number of images that is simultaneously loaded into the memory with the ``MEMORY`` parameter. Pipeline modules that apply (in parallel) a function to subsets of images use a number of images per subset equal to ``MEMORY`` divided by ``CPU``.
+
+.. important::
+   The pipeline modules that are compatible with both regular imaging and integral field spectroscopy datasets (i.e. 3D and 4D data) are indicated with "IFS" in parentheses. All other modules are only compatible with regular imaging.
+
 .. _readmodule:
 
 Reading Modules
 ---------------
 
-* :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule`: Import FITS files and relevant header information into the database.
+* :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` (IFS): Import FITS files and relevant header information into the database.
 * :class:`~pynpoint.readwrite.hdf5reading.Hdf5ReadingModule`: Import datasets and attributes from an HDF5 file (as created by PynPoint).
 * :class:`~pynpoint.readwrite.attr_reading.AttributeReadingModule`: Import a list of values as dataset attribute.
 * :class:`~pynpoint.readwrite.attr_reading.ParangReadingModule`: Import a list of parallactic angles as dataset attribute.
@@ -141,13 +147,13 @@ PSF Preparation
 * :class:`~pynpoint.processing.psfpreparation.PSFpreparationModule`: Mask the images before the PSF subtraction.
 * :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule`: Interpolate the parallactic angles between the start and end values.
 * :class:`~pynpoint.processing.psfpreparation.AngleCalculationModule`: Calculate the parallactic angles.
-* :class:`~pynpoint.processing.psfpreparation.SortParangModule`: Sort the images by parallactic angle.
+* :class:`~pynpoint.processing.psfpreparation.SortParangModule` (IFS): Sort the images by parallactic angle.
 * :class:`~pynpoint.processing.psfpreparation.SDIpreparationModule`: Prepare the images for SDI.
 
 PSF Subtraction
 ~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` (CPU): PSF subtraction with PCA.
+* :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` (CPU, IFS): PSF subtraction with PCA.
 * :class:`~pynpoint.processing.psfsubtraction.ClassicalADIModule` (CPU): PSF subtraction with classical ADI.
 
 Stacking
@@ -157,6 +163,3 @@ Stacking
 * :class:`~pynpoint.processing.stacksubset.StackCubesModule`: Collapse each original data cube separately.
 * :class:`~pynpoint.processing.stacksubset.DerotateAndStackModule`: Derotate and/or stack the images.
 * :class:`~pynpoint.processing.stacksubset.CombineTagsModule`: Combine multiple database tags into a single dataset.
-
-.. note::
-   The pipeline modules with multiprocessing functionalities are indicated with "CPU" in parentheses. The number of parallel processes can be set with the ``CPU`` parameter in the central configuration file and the number of images that is simultaneously loaded into the memory with the ``MEMORY`` parameter. Pipeline modules that apply (in parallel) a function to subsets of images use a number of images per subset equal to ``MEMORY`` divided by ``CPU``.
