@@ -189,11 +189,11 @@ class TestFluxPosition:
         self.pipeline.run_module('false2')
 
         data = self.pipeline.get_data('snr_fpf2')
-        assert data[0, 1] == pytest.approx(2.0959960937500006, rel=self.limit, abs=0.)
-        assert data[0, 2] == pytest.approx(0.21342343096632785, rel=self.limit, abs=0.)
-        assert data[0, 3] == pytest.approx(179.3133641536648, rel=self.limit, abs=0.)
-        assert data[0, 4] == pytest.approx(24.497480327287796, rel=self.limit, abs=0.)
-        assert data[0, 5] == pytest.approx(2.4056070777715073e-08, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(2.0681640624999993, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(0.21416845852767494, rel=self.limit, abs=0.)
+        assert data[0, 3] == pytest.approx(179.47800221910444, rel=self.limit, abs=0.)
+        assert data[0, 4] == pytest.approx(24.254455766076823, rel=self.limit, abs=0.)
+        assert data[0, 5] == pytest.approx(2.5776271254831863e-08, rel=self.limit, abs=0.)
         assert data.shape == (1, 6)
 
     def test_simplex_minimization_hessian(self) -> None:
@@ -203,7 +203,7 @@ class TestFluxPosition:
                                            psf_in_tag='psf',
                                            res_out_tag='simplex_res',
                                            flux_position_tag='flux_position',
-                                           position=(10, 3),
+                                           position=(10., 3.),
                                            magnitude=2.5,
                                            psf_scaling=-1.,
                                            merit='hessian',
@@ -216,7 +216,7 @@ class TestFluxPosition:
                                            extra_rot=0.,
                                            reference_in_tag=None,
                                            residuals='median',
-                                           offset=3.)
+                                           offset=1.)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simplex1')
@@ -240,7 +240,7 @@ class TestFluxPosition:
                                            psf_in_tag='psf',
                                            res_out_tag='simplex_res_ref',
                                            flux_position_tag='flux_position_ref',
-                                           position=(10, 3),
+                                           position=(10., 3.),
                                            magnitude=2.5,
                                            psf_scaling=-1.,
                                            merit='poisson',
@@ -322,7 +322,7 @@ class TestFluxPosition:
                                        offset_out_tag='offset',
                                        position=(0.162, 0.),
                                        magnitude=5.,
-                                       angles=(0., 360., 2),
+                                       angles=(0., 180., 2),
                                        psf_scaling=1.,
                                        merit='gaussian',
                                        aperture=0.06,
@@ -331,7 +331,7 @@ class TestFluxPosition:
                                        mask=(None, None),
                                        extra_rot=0.,
                                        residuals='median',
-                                       offset=2.)
+                                       offset=1.)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('error')
@@ -340,4 +340,6 @@ class TestFluxPosition:
         assert data[0, 0] == pytest.approx(-0.0028749671933526733, rel=self.limit, abs=0.)
         assert data[0, 1] == pytest.approx(0.2786088210998514, rel=self.limit, abs=0.)
         assert data[0, 2] == pytest.approx(-0.02916297162565762, rel=self.limit, abs=0.)
-        assert data.shape == (2, 3)
+        assert data[0, 3] == pytest.approx(-0.02969350583704866, rel=self.limit, abs=0.)
+        assert data[0, 4] == pytest.approx(-0.10640807184499579, rel=self.limit, abs=0.)
+        assert data.shape == (2, 5)
