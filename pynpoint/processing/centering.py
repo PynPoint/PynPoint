@@ -716,7 +716,8 @@ class WaffleCenteringModule(ProcessingModule):
                  size: Optional[float] = None,
                  center: Optional[Tuple[float, float]] = None,
                  radius: float = 45.,
-                 pattern: str = 'x',
+                 pattern: str = '+',
+                 angle: float = 0.,
                  sigma: float = 0.06,
                  dither: bool = False) -> None:
         """
@@ -740,6 +741,9 @@ class WaffleCenteringModule(ProcessingModule):
             Approximate separation (pix) of the waffle spots from the star.
         pattern : str
             Waffle pattern that is used ('x' or '+').
+        angle : float
+            Angle offset in degrees from the + constelation of the waffle spots (closckwise). Only
+            used if pattern is set to '+'.
         sigma : float
             Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
             masking.
@@ -762,6 +766,7 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_center = center
         self.m_radius = radius
         self.m_pattern = pattern
+        self.m_angle = angle
         self.m_sigma = sigma
         self.m_dither = dither
 
@@ -779,11 +784,16 @@ class WaffleCenteringModule(ProcessingModule):
         """
 
         @typechecked
-        def _get_center(center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
-            center_frame = self.m_center_in_port[0, ]
-
-            if center_shape[0] > 1:
+        def _get_center(image_number: int,
+                        center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
+            
+            if center_shape[-3] > 1:
                 warnings.warn('Multiple center images found. Using the first image of the stack.')
+                
+            if ndim == 3:
+                center_frame = self.m_center_in_port[0, ]
+            elif ndim == 4:
+                center_frame = self.m_center_in_port[image_number, 0, ]
 
             if center is None:
                 center = center_pixel(center_frame)
@@ -794,11 +804,45 @@ class WaffleCenteringModule(ProcessingModule):
 
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
+        ndim = self.m_image_in_port.get_ndim()
 
-        center_frame, self.m_center = _get_center(self.m_center)
+        center_frame, self.m_center = _get_center(0, self.m_center)
 
+        # Read in wavelength information or set it to default values
+        if ndim == 4:    
+            wavelength = self.m_image_in_port.get_attribute('WAVELENGTH')
+
+            if wavelength is None:
+                raise ValueError('The wavelength information is required to centre IFS data. ' +
+                                 'Please add it via the WavelengthReadingModule before using ' +
+                                 'the WaffleCenteringModule.')
+
+            if im_shape[0] != center_shape[0]:
+                raise ValueError('Number of science wavelength channels: {im_shape[0]}. ' +
+                                 'Number of center wavelength channels: {center_shape[0]}. ' +
+                                 'Exactly one center image per wavelength is required.')
+
+            wavelength_min = np.min(wavelength)
+
+        elif ndim == 3:
+            # for none ifs data, use default value
+            wavelength = [1.]
+            wavelength_min = 1.
+
+        # check if science and center images have the same shape
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError('Science and center images should have the same shape.')
+
+        # Setting angle via pattern (used for backwards compability)
+        if self.m_pattern == 'x':
+            self.m_angle = 45.
+
+        elif self.m_pattern == '+':
+            pass
+
+        else:
+            raise ValueError('The pattern {self.m_pattern} is not valid. '
+                             + 'Please select either \'x\' or \'+\'.')
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
@@ -815,9 +859,6 @@ class WaffleCenteringModule(ProcessingModule):
             nframes = np.cumsum(nframes)
             nframes = np.insert(nframes, 0, 0)
 
-        center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
-                                                              sigma=self.m_sigma)
-
         # size of center image, only works with odd value
         ref_image_size = 21
 
@@ -825,136 +866,157 @@ class WaffleCenteringModule(ProcessingModule):
         x_pos = np.zeros(4)
         y_pos = np.zeros(4)
 
+        # Arrays for the center position for each wavelength
+        x_center = np.zeros((len(wavelength)))
+        y_center = np.zeros((len(wavelength)))
+
         # Loop for 4 waffle spots
-        for i in range(4):
-            # Approximate positions of waffle spots
-            if self.m_pattern == 'x':
-                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i + 1)))
-                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i + 1)))
+        for w, wave_nr in enumerate(wavelength):
 
-            elif self.m_pattern == '+':
-                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i)))
-                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
+            # Prapre centering frame
+            center_frame, _ = _get_center(w, self.m_center)
 
-            tmp_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(y_0), int(x_0)),
-                                          size=ref_image_size)
+            center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
+                                                                  sigma=self.m_sigma)
 
-            # find maximum in tmp image
-            coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
-                                      shape=tmp_center_frame.shape)
+            for i in range(4):
+                # Approximate positions of waffle spots
+                radius = self.m_radius * wave_nr / wavelength_min
+                x_0 = np.floor(self.m_center[0] + radius * np.cos(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
+                y_0 = np.floor(self.m_center[1] + radius * np.sin(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
 
-            y_max, x_max = coords[0], coords[1]
+                tmp_center_frame = crop_image(image=center_frame_unsharp,
+                                              center=(int(y_0), int(x_0)),
+                                              size=ref_image_size)
 
-            pixmax = tmp_center_frame[y_max, x_max]
-            max_pos = np.array([x_max, y_max]).reshape(1, 2)
-
-            # Check whether it is the correct maximum: second brightest pixel should be nearby
-            tmp_center_frame[y_max, x_max] = 0.
-
-            # introduce distance parameter
-            dist = np.inf
-
-            while dist > 2:
+                # find maximum in tmp image
                 coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
                                           shape=tmp_center_frame.shape)
 
-                y_max_new, x_max_new = coords[0], coords[1]
+                y_max, x_max = coords[0], coords[1]
 
-                pixmax_new = tmp_center_frame[y_max_new, x_max_new]
+                pixmax = tmp_center_frame[y_max, x_max]
+                max_pos = np.array([x_max, y_max]).reshape(1, 2)
 
-                # Caculate minimal distance to previous points
-                tmp_center_frame[y_max_new, x_max_new] = 0.
+                # Check whether it is the correct maximum: second brightest pixel should be nearby
+                tmp_center_frame[y_max, x_max] = 0.
 
-                dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
-                                                         max_pos[:, 1]-y_max_new)),
-                                              axis=0))
+                # introduce distance parameter
+                dist = np.inf
 
-                if dist <= 2 and pixmax_new < pixmax:
-                    break
+                while dist > 2:
+                    coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                              shape=tmp_center_frame.shape)
 
-                max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
+                    y_max_new, x_max_new = coords[0], coords[1]
 
-                x_max = x_max_new
-                y_max = y_max_new
-                pixmax = pixmax_new
+                    pixmax_new = tmp_center_frame[y_max_new, x_max_new]
 
-            x_0 = x_0 - (ref_image_size-1)/2 + x_max
-            y_0 = y_0 - (ref_image_size-1)/2 + y_max
+                    # Caculate minimal distance to previous points
+                    tmp_center_frame[y_max_new, x_max_new] = 0.
 
-            # create reference image around determined maximum
-            ref_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(y_0), int(x_0)),
-                                          size=ref_image_size)
+                    dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
+                                                             max_pos[:, 1]-y_max_new)),
+                                                  axis=0))
 
-            # Fit the data using astropy.modeling
-            gauss_init = models.Gaussian2D(amplitude=np.amax(ref_center_frame),
-                                           x_mean=x_0,
-                                           y_mean=y_0,
-                                           x_stddev=1.,
-                                           y_stddev=1.,
-                                           theta=0.)
+                    if dist <= 2 and pixmax_new < pixmax:
+                        break
 
-            fit_gauss = fitting.LevMarLSQFitter()
+                    max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
 
-            y_grid, x_grid = np.mgrid[y_0-(ref_image_size-1)/2:y_0+(ref_image_size-1)/2+1,
-                                      x_0-(ref_image_size-1)/2:x_0+(ref_image_size-1)/2+1]
+                    x_max = x_max_new
+                    y_max = y_max_new
+                    pixmax = pixmax_new
 
-            gauss = fit_gauss(gauss_init,
-                              x_grid,
-                              y_grid,
-                              ref_center_frame)
+                x_0 = x_0 - (ref_image_size-1)/2 + x_max
+                y_0 = y_0 - (ref_image_size-1)/2 + y_max
 
-            x_pos[i] = gauss.x_mean.value
-            y_pos[i] = gauss.y_mean.value
+                # create reference image around determined maximum
+                ref_center_frame = crop_image(image=center_frame_unsharp,
+                                              center=(int(y_0), int(x_0)),
+                                              size=ref_image_size)
 
-        # Find star position as intersection of two lines
+                # Fit the data using astropy.modeling
+                gauss_init = models.Gaussian2D(amplitude=np.amax(ref_center_frame),
+                                               x_mean=x_0,
+                                               y_mean=y_0,
+                                               x_stddev=1.,
+                                               y_stddev=1.,
+                                               theta=0.)
 
-        x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
-                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
-                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
-                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+                fit_gauss = fitting.LevMarLSQFitter()
 
-        y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
-            (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+                y_grid, x_grid = np.mgrid[y_0-(ref_image_size-1)/2:y_0+(ref_image_size-1)/2+1,
+                                          x_0-(ref_image_size-1)/2:x_0+(ref_image_size-1)/2+1]
 
-        nimages = self.m_image_in_port.get_shape()[0]
-        npix = self.m_image_in_port.get_shape()[1]
+                gauss = fit_gauss(gauss_init,
+                                  x_grid,
+                                  y_grid,
+                                  ref_center_frame)
+
+                x_pos[i] = gauss.x_mean.value
+                y_pos[i] = gauss.y_mean.value
+
+            # Find star position as intersection of two lines
+
+            x_center[w] = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
+                           (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
+                          ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
+                           (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+
+            y_center[w] = x_center[w]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
+                (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+
+        # Adjust science images
+        nimages = self.m_image_in_port.get_shape()[-3]
+        npix = self.m_image_in_port.get_shape()[-2]
+        nwavelengths = len(wavelength)
 
         start_time = time.time()
+
         for i in range(nimages):
-            progress(i, nimages, 'Centering the images...', start_time)
+            im_storage = []
+            for j in range(nwavelengths):
+                progress(i*nwavelengths + j, nimages*nwavelengths, 'Centering the images...', start_time)
+                
+                if ndim == 3:
+                    image = self.m_image_in_port[i, ]
+                elif ndim == 4:
+                    image = self.m_image_in_port[j, i, ]
 
-            image = self.m_image_in_port[i, ]
+                shift_yx = np.array([(float(im_shape[-2])-1.)/2. - y_center[j],
+                                     (float(im_shape[-1])-1.)/2. - x_center[j]])
 
-            shift_yx = np.array([(float(im_shape[-2])-1.)/2. - y_center,
-                                 (float(im_shape[-1])-1.)/2. - x_center])
+                if self.m_dither:
+                    index = np.digitize(i, nframes, right=False) - 1
 
-            if self.m_dither:
-                index = np.digitize(i, nframes, right=False) - 1
+                    shift_yx[0] -= dither_y[index]
+                    shift_yx[1] -= dither_x[index]
 
-                shift_yx[0] -= dither_y[index]
-                shift_yx[1] -= dither_x[index]
+                if npix % 2 == 0 and self.m_size is not None:
+                    im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
+                    im_tmp[:-1, :-1] = image
+                    image = im_tmp
 
-            if npix % 2 == 0 and self.m_size is not None:
-                im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
-                im_tmp[:-1, :-1] = image
-                image = im_tmp
+                    shift_yx[0] += 0.5
+                    shift_yx[1] += 0.5
 
-                shift_yx[0] += 0.5
-                shift_yx[1] += 0.5
+                im_shift = shift_image(image, shift_yx, 'spline')
 
-            im_shift = shift_image(image, shift_yx, 'spline')
+                if self.m_size is not None:
+                    im_crop = crop_image(im_shift, None, self.m_size)
+                    im_storage.append(im_crop)
+                else:
+                    im_storage.append(im_shift)
 
-            if self.m_size is not None:
-                im_crop = crop_image(im_shift, None, self.m_size)
-                self.m_image_out_port.append(im_crop, data_dim=3)
-            else:
-                self.m_image_out_port.append(im_shift, data_dim=3)
+            if ndim == 3:
+                self.m_image_out_port.append(im_storage[0], data_dim=3)
+            elif ndim == 4:
+                self.m_image_out_port.append(np.asarray(im_storage), data_dim=4)
 
         print(f'Center [x, y] = [{x_center}, {y_center}]')
 
-        history = f'[x, y] = [{round(x_center, 2)}, {round(y_center, 2)}]'
+        history = f'[x, y] = [{round(x_center[j], 2)}, {round(y_center[j], 2)}]'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('WaffleCenteringModule', history)
         self.m_image_out_port.close_port()
