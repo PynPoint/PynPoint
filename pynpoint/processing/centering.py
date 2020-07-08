@@ -786,10 +786,10 @@ class WaffleCenteringModule(ProcessingModule):
         @typechecked
         def _get_center(image_number: int,
                         center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
-            
+
             if center_shape[-3] > 1:
                 warnings.warn('Multiple center images found. Using the first image of the stack.')
-                
+
             if ndim == 3:
                 center_frame = self.m_center_in_port[0, ]
             elif ndim == 4:
@@ -809,7 +809,7 @@ class WaffleCenteringModule(ProcessingModule):
         center_frame, self.m_center = _get_center(0, self.m_center)
 
         # Read in wavelength information or set it to default values
-        if ndim == 4:    
+        if ndim == 4:
             wavelength = self.m_image_in_port.get_attribute('WAVELENGTH')
 
             if wavelength is None:
@@ -978,7 +978,7 @@ class WaffleCenteringModule(ProcessingModule):
             im_storage = []
             for j in range(nwavelengths):
                 progress(i*nwavelengths + j, nimages*nwavelengths, 'Centering the images...', start_time)
-                
+
                 if ndim == 3:
                     image = self.m_image_in_port[i, ]
                 elif ndim == 4:
