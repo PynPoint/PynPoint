@@ -716,8 +716,8 @@ class WaffleCenteringModule(ProcessingModule):
                  size: Optional[float] = None,
                  center: Optional[Tuple[float, float]] = None,
                  radius: float = 45.,
-                 pattern: str = '+',
-                 angle: float = 0.,
+                 pattern: str = None,
+                 angle: float = 45.,
                  sigma: float = 0.06,
                  dither: bool = False) -> None:
         """
@@ -740,10 +740,11 @@ class WaffleCenteringModule(ProcessingModule):
         radius : float
             Approximate separation (pix) of the waffle spots from the star.
         pattern : str
-            Waffle pattern that is used ('x' or '+').
+            This parameter is outdated please use 'angle' instead. Waffle pattern that is used ('x' or '+').
         angle : float
-            Angle offset in degrees from the + constelation of the waffle spots (closckwise). Only
-            used if pattern is set to '+'.
+            Angle offset in degrees from the + position of the waffle spots (clockwise). The 
+            previously used '+' pattern corresponds to 0 degrees and 'x' corresponds to 45 degrees. 
+            SPHERE/IFS data requires an angle of 55 degrees. 
         sigma : float
             Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
             masking.
@@ -813,12 +814,12 @@ class WaffleCenteringModule(ProcessingModule):
             wavelength = self.m_image_in_port.get_attribute('WAVELENGTH')
 
             if wavelength is None:
-                raise ValueError('The wavelength information is required to centre IFS data. ' +
+                raise ValueError(f'The wavelength information is required to centre IFS data. ' +
                                  'Please add it via the WavelengthReadingModule before using ' +
                                  'the WaffleCenteringModule.')
 
             if im_shape[0] != center_shape[0]:
-                raise ValueError('Number of science wavelength channels: {im_shape[0]}. ' +
+                raise ValueError(f'Number of science wavelength channels: {im_shape[0]}. ' +
                                  'Number of center wavelength channels: {center_shape[0]}. ' +
                                  'Exactly one center image per wavelength is required.')
 
@@ -834,15 +835,21 @@ class WaffleCenteringModule(ProcessingModule):
             raise ValueError('Science and center images should have the same shape.')
 
         # Setting angle via pattern (used for backwards compability)
-        if self.m_pattern == 'x':
-            self.m_angle = 45.
+        if self.m_pattern is not None:
+            
+            if self.m_pattern == 'x':
+                self.m_angle = 45.
+    
+            elif self.m_pattern == '+':
+                self.m_angle = 0.
+    
+            else:
+                raise ValueError(f'The pattern {self.m_pattern} is not valid. '
+                                 + 'Please select either \'x\' or \'+\'.')
 
-        elif self.m_pattern == '+':
-            pass
-
-        else:
-            raise ValueError('The pattern {self.m_pattern} is not valid. '
-                             + 'Please select either \'x\' or \'+\'.')
+            warn_msg = (f'The \'pattern\' parameter has been deprecated. Use the ' +
+                        f'\'angle\' parameter instead and set it to {self.m_angle} degrees.')
+            warnings.warn(warn_msg, DeprecationWarning)
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
