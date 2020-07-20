@@ -738,13 +738,15 @@ class WaffleCenteringModule(ProcessingModule):
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
             set to None.
         radius : float
-            Approximate separation (pix) of the waffle spots from the star.
+            Approximate separation (pix) of the waffle spots from the star. For SPHERE/IFS data the
+            minimum separation (the separation of the waffle spots in the image of the shortest wavelength)
+            is required.
         pattern : str
             This parameter is outdated please use 'angle' instead. Waffle pattern that is used ('x' or '+').
         angle : float
-            Angle offset in degrees from the + position of the waffle spots (clockwise). The 
-            previously used '+' pattern corresponds to 0 degrees and 'x' corresponds to 45 degrees. 
-            SPHERE/IFS data requires an angle of 55 degrees. 
+            Angle offset in degrees from the + position of the waffle spots (clockwise). The
+            previously used '+' pattern corresponds to 0 degrees and 'x' corresponds to 45 degrees.
+            SPHERE/IFS data requires an angle of 55.48 degrees.
         sigma : float
             Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
             masking.
@@ -836,13 +838,13 @@ class WaffleCenteringModule(ProcessingModule):
 
         # Setting angle via pattern (used for backwards compability)
         if self.m_pattern is not None:
-            
+
             if self.m_pattern == 'x':
                 self.m_angle = 45.
-    
+
             elif self.m_pattern == '+':
                 self.m_angle = 0.
-    
+
             else:
                 raise ValueError(f'The pattern {self.m_pattern} is not valid. '
                                  + 'Please select either \'x\' or \'+\'.')
