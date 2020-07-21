@@ -701,8 +701,8 @@ class ShiftImagesModule(ProcessingModule):
 
 class WaffleCenteringModule(ProcessingModule):
     """
-    Pipeline module for centering of SPHERE data obtained with a Lyot coronagraph for which center
-    frames with satellite spots are available.
+    Pipeline module for centering of coronagraphic data for which dedicated center frames with
+    satellite spots are available.
     """
 
     __author__ = 'Alexander Bohn'
@@ -738,20 +738,22 @@ class WaffleCenteringModule(ProcessingModule):
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
             set to None.
         radius : float
-            Approximate separation (pix) of the waffle spots from the star. For SPHERE/IFS data the
-            minimum separation (the separation of the waffle spots in the image of the shortest wavelength)
-            is required.
-        pattern : str
-            This parameter is outdated please use 'angle' instead. Waffle pattern that is used ('x' or '+').
+            Approximate separation (pix) of the satellite spots from the star. For IFS data, the
+            separation of the spots in the image with the shortest wavelength is required.
+        pattern : str, None
+            Waffle pattern that is used ('x' or '+'). This parameter will be deprecated in a future
+            release. Please use the ``angle`` parameter instead. The parameter will be ignored if
+            set to None.
         angle : float
-            Angle offset in degrees from the + position of the waffle spots (clockwise). The
-            previously used '+' pattern corresponds to 0 degrees and 'x' corresponds to 45 degrees.
-            SPHERE/IFS data requires an angle of 55.48 degrees.
+            Angle offset (deg) in clockwise direction of the satellite spots with respect to the
+            '+' orientation (i.e. when the spots are located along the horizontal and vertical
+            axis). The previous use of the '+' pattern corresponds to 0 degrees and 'x' pattern
+            corresponds to 45 degrees. SPHERE/IFS data requires an angle of 55.48 degrees.
         sigma : float
             Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
             masking.
         dither : bool
-            Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
+            Apply dithering correction based on the ``DITHER_X`` and ``DITHER_Y`` attributes.
 
         Returns
         -------
@@ -816,13 +818,13 @@ class WaffleCenteringModule(ProcessingModule):
             wavelength = self.m_image_in_port.get_attribute('WAVELENGTH')
 
             if wavelength is None:
-                raise ValueError(f'The wavelength information is required to centre IFS data. ' +
-                                 'Please add it via the WavelengthReadingModule before using ' +
+                raise ValueError('The wavelength information is required to centre IFS data. '
+                                 'Please add it via the WavelengthReadingModule before using '
                                  'the WaffleCenteringModule.')
 
             if im_shape[0] != center_shape[0]:
-                raise ValueError(f'Number of science wavelength channels: {im_shape[0]}. ' +
-                                 'Number of center wavelength channels: {center_shape[0]}. ' +
+                raise ValueError(f'Number of science wavelength channels: {im_shape[0]}. '
+                                 f'Number of center wavelength channels: {center_shape[0]}. '
                                  'Exactly one center image per wavelength is required.')
 
             wavelength_min = np.min(wavelength)
@@ -846,12 +848,13 @@ class WaffleCenteringModule(ProcessingModule):
                 self.m_angle = 0.
 
             else:
-                raise ValueError(f'The pattern {self.m_pattern} is not valid. '
-                                 + 'Please select either \'x\' or \'+\'.')
+                raise ValueError(f'The pattern {self.m_pattern} is not valid. Please select '
+                                 f'either \'x\' or \'+\'.')
 
-            warn_msg = (f'The \'pattern\' parameter has been deprecated. Use the ' +
-                        f'\'angle\' parameter instead and set it to {self.m_angle} degrees.')
-            warnings.warn(warn_msg, DeprecationWarning)
+            warnings.warn(f'The \'pattern\' parameter will be deprecated in a future release. '
+                          f'Please Use the \'angle\' parameter instead and set it to '
+                          f'{self.m_angle} degrees.',
+                          DeprecationWarning)
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
@@ -891,8 +894,12 @@ class WaffleCenteringModule(ProcessingModule):
             for i in range(4):
                 # Approximate positions of waffle spots
                 radius = self.m_radius * wave_nr / wavelength_min
-                x_0 = np.floor(self.m_center[0] + radius * np.cos(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
-                y_0 = np.floor(self.m_center[1] + radius * np.sin(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
+
+                x_0 = np.floor(self.m_center[0] + radius *
+                               np.cos(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
+
+                y_0 = np.floor(self.m_center[1] + radius *
+                               np.sin(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
 
                 tmp_center_frame = crop_image(image=center_frame_unsharp,
                                               center=(int(y_0), int(x_0)),
@@ -986,7 +993,9 @@ class WaffleCenteringModule(ProcessingModule):
         for i in range(nimages):
             im_storage = []
             for j in range(nwavelengths):
-                progress(i*nwavelengths + j, nimages*nwavelengths, 'Centering the images...', start_time)
+                im_index = i*nwavelengths + j
+
+                progress(im_index, nimages*nwavelengths, 'Centering the images...', start_time)
 
                 if ndim == 3:
                     image = self.m_image_in_port[i, ]
