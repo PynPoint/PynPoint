@@ -79,7 +79,21 @@ class CropImagesModule(ProcessingModule):
         # Get memory and number of images to split the frames into chunks
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
-        frames = memory_frames(memory, nimages)
+
+        # Get the numnber of dimensions and shape
+        ndim = self.m_image_in_port.get_ndim()
+        im_shape = self.m_image_in_port.get_shape()
+
+        if ndim == 3:
+            # Number of images
+            nimages = im_shape[-3]
+
+            # Split into batches to comply with memory constraints
+            frames = memory_frames(memory, nimages)
+
+        elif ndim == 4:
+            # Process all wavelengths per exposure at once
+            frames = np.linspace(0, im_shape[-3], im_shape[-3]+1)
 
         # Convert size parameter from arcseconds to pixels
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -96,13 +110,23 @@ class CropImagesModule(ProcessingModule):
 
             # Update progress bar
             progress(i, len(frames[:-1]), 'Cropping images...', start_time)
+            
+            # Select images in the current chunk
+            if ndim == 3:
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
 
-            # Select and crop images in the current chunk
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            elif ndim == 4:
+                # Process all wavelengths per exposure at once
+                images = self.m_image_in_port[:, i, ]
+            
+            # crop images according to input parameters
             images = crop_image(images, self.m_center, self.m_size, copy=False)
 
-            # Write cropped images to output port
-            self.m_image_out_port.append(images, data_dim=3)
+            # Write processed images to output port
+            if ndim == 3:
+                self.m_image_out_port.append(images, data_dim=3)
+            elif ndim == 4:
+                self.m_image_out_port.append(images, data_dim=4)
 
         # Save history and copy attributes
         history = f'image size (pix) = {self.m_size}'
