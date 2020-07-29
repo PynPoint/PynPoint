@@ -223,7 +223,15 @@ class TestCentering:
                                        sigma=0.05)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('waffle')
+
+        with pytest.warns(DeprecationWarning) as warning:
+            self.pipeline.run_module('waffle')
+
+        assert len(warning) == 1
+
+        assert warning[0].message.args[0] == 'The \'pattern\' parameter will be deprecated in a ' \
+                                             'future release. Please Use the \'angle\' ' \
+                                             'parameter instead and set it to 45.0 degrees.'
 
         data = self.pipeline.get_data('center')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
@@ -295,7 +303,15 @@ class TestCentering:
                                        sigma=0.05)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('waffle_even')
+
+        with pytest.warns(DeprecationWarning) as warning:
+            self.pipeline.run_module('waffle_even')
+
+        assert len(warning) == 1
+
+        assert warning[0].message.args[0] == 'The \'pattern\' parameter will be deprecated in a ' \
+                                             'future release. Please Use the \'angle\' ' \
+                                             'parameter instead and set it to 45.0 degrees.'
 
         data = self.pipeline.get_data('center_even')
         assert np.sum(data) == pytest.approx(105.22695036281449, rel=self.limit, abs=0.)
