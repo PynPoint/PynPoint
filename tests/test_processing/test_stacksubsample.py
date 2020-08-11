@@ -7,7 +7,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.stacksubset import StackAndSubsetModule, StackCubesModule, \
                                             DerotateAndStackModule, CombineTagsModule
-from pynpoint.util.tests import create_config, create_star_data, remove_test_data
+from pynpoint.util.tests import create_config, create_star_data, create_ifs_data, remove_test_data
 
 
 class TestStackSubset:
@@ -17,6 +17,7 @@ class TestStackSubset:
         self.limit = 1e-10
         self.test_dir = os.path.dirname(__file__) + '/'
 
+        create_ifs_data(self.test_dir+'data_ifs')
         create_star_data(self.test_dir+'data')
         create_star_data(self.test_dir+'extra')
 
@@ -26,7 +27,7 @@ class TestStackSubset:
 
     def teardown_class(self) -> None:
 
-        remove_test_data(self.test_dir, folders=['data', 'extra'])
+        remove_test_data(self.test_dir, folders=['data_ifs', 'extra', 'data'])
 
     def test_read_data(self) -> None:
 
@@ -54,6 +55,21 @@ class TestStackSubset:
 
         extra = self.pipeline.get_data('extra')
         assert data == pytest.approx(extra, rel=self.limit, abs=0.)
+
+        module = FitsReadingModule(name_in='read_ifs',
+                                   image_tag='images_ifs',
+                                   input_dir=self.test_dir+'data_ifs',
+                                   overwrite=True,
+                                   check=True,
+                                   ifs_data=True)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read_ifs')
+        self.pipeline.set_attribute('images_ifs', 'PARANG', np.linspace(0., 180., 10), static=False)
+
+        data = self.pipeline.get_data('images_ifs')
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_stack_and_subset(self) -> None:
 
@@ -172,6 +188,34 @@ class TestStackSubset:
         data = self.pipeline.get_data('derotate2')
         assert np.mean(data) == pytest.approx(0.0861160094566323, rel=self.limit, abs=0.)
         assert data.shape == (1, 11, 11)
+
+        module = DerotateAndStackModule(name_in='derotate_ifs1',
+                                        image_in_tag='images_ifs',
+                                        image_out_tag='derotate_ifs1',
+                                        derotate=True,
+                                        stack='mean',
+                                        extra_rot=0.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('derotate_ifs1')
+
+        data = self.pipeline.get_data('derotate_ifs1')
+        assert np.mean(data) == pytest.approx(0.056535012036597686, rel=self.limit, abs=0.)
+        assert data.shape == (3, 21, 21)
+
+        module = DerotateAndStackModule(name_in='derotate_ifs2',
+                                        image_in_tag='images_ifs',
+                                        image_out_tag='derotate_ifs2',
+                                        derotate=False,
+                                        stack='median',
+                                        extra_rot=0.)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('derotate_ifs2')
+
+        data = self.pipeline.get_data('derotate_ifs2')
+        assert np.mean(data) == pytest.approx(0.037075807614651415, rel=self.limit, abs=0.)
+        assert data.shape == (3, 21, 21)
 
     def test_combine_tags(self) -> None:
 

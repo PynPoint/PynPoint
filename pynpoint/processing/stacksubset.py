@@ -432,11 +432,14 @@ class DerotateAndStackModule(ProcessingModule):
             
             elif self.m_stack == 'median' and ndim == 4:
                 im_stack = np.median(images, axis=0)
-                self.m_image_out_port.append(im_stack[np.newaxis, ...], data_dim=4)
+                self.m_image_out_port.append(im_stack, data_dim=3)
 
         if self.m_stack == 'mean':
             im_stack = im_tot/float(nimages)
-            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+            if ndim == 4:
+                self.m_image_out_port.set_all(im_stack)
+            else:
+                self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         elif self.m_stack == 'median' and ndim in [2, 3]:
             im_stack = np.median(images, axis=0)
