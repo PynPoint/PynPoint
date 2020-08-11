@@ -361,15 +361,23 @@ class DerotateAndStackModule(ProcessingModule):
             if ndim == 2:
                 nimages = 1
             elif ndim == 3:
-                nimages = self.m_image_in_port.get_shape()[0]
+                nimages = self.m_image_in_port.get_shape()[-3]
 
-            if self.m_stack == 'median':
-                frames = np.array([0, nimages])
-            else:
-                frames = memory_frames(memory, nimages)
+                if self.m_stack == 'median':
+                    frames = np.array([0, nimages])
+                else:
+                    frames = memory_frames(memory, nimages)
+
+            elif ndim == 4:
+                nimages = self.m_image_in_port.get_shape()[-3]
+                nwave = self.m_image_in_port.get_shape()[-4]
+                frames = np.linspace(0, nwave, nwave+1)
 
             if self.m_stack == 'mean':
-                im_tot = np.zeros((npix, npix))
+                if ndim == 4:
+                    im_tot = np.zeros((nwave, npix, npix))
+                else:
+                    im_tot = np.zeros((npix, npix))
             else:
                 im_tot = None
 
@@ -384,7 +392,7 @@ class DerotateAndStackModule(ProcessingModule):
             parang = self.m_image_in_port.get_attribute('PARANG')
 
         ndim = self.m_image_in_port.get_ndim()
-        npix = self.m_image_in_port.get_shape()[1]
+        npix = self.m_image_in_port.get_shape()[-2]
 
         nimages, frames, im_tot = _initialize(ndim, npix)
 
@@ -392,10 +400,20 @@ class DerotateAndStackModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Derotating and/or stacking images...', start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            if ndim == 3:
+                # Get the images and ensure they have the correct 3D shape with the following
+                # three dimensions: (batch_size, height, width)
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            elif ndim == 4:
+                # Process all time frames per exposure at once
+                images = self.m_image_in_port[i, :, ]
 
             if self.m_derotate:
-                angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
+                if ndim == 4:
+                    angles = -parang+self.m_extra_rot
+                else:
+                    angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
                 images = rotate_images(images, angles)
 
             if self.m_stack is None:
@@ -403,15 +421,24 @@ class DerotateAndStackModule(ProcessingModule):
                     self.m_image_out_port.set_all(images[np.newaxis, ...])
                 elif ndim == 3:
                     self.m_image_out_port.append(images, data_dim=3)
+                elif ndim ==4:
+                    self.m_image_out_port.append(images, data_dim=4)
 
             elif self.m_stack == 'mean':
-                im_tot += np.sum(images, axis=0)
+                if ndim == 4:
+                    im_tot[i] = np.sum(images, axis=0)
+                else:
+                    im_tot += np.sum(images, axis=0)
+            
+            elif self.m_stack == 'median' and ndim == 4:
+                im_stack = np.median(images, axis=0)
+                self.m_image_out_port.append(im_stack[np.newaxis, ...], data_dim=4)
 
         if self.m_stack == 'mean':
             im_stack = im_tot/float(nimages)
             self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
-        elif self.m_stack == 'median':
+        elif self.m_stack == 'median' and ndim in [2, 3]:
             im_stack = np.median(images, axis=0)
             self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
