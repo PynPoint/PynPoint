@@ -421,7 +421,7 @@ class DerotateAndStackModule(ProcessingModule):
                     self.m_image_out_port.set_all(images[np.newaxis, ...])
                 elif ndim == 3:
                     self.m_image_out_port.append(images, data_dim=3)
-                elif ndim ==4:
+                elif ndim == 4:
                     self.m_image_out_port.append(images, data_dim=4)
 
             elif self.m_stack == 'mean':
@@ -429,7 +429,7 @@ class DerotateAndStackModule(ProcessingModule):
                     im_tot[i] = np.sum(images, axis=0)
                 else:
                     im_tot += np.sum(images, axis=0)
-            
+
             elif self.m_stack == 'median' and ndim == 4:
                 im_stack = np.median(images, axis=0)
                 self.m_image_out_port.append(im_stack, data_dim=3)
