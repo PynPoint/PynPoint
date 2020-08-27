@@ -189,13 +189,17 @@ class TestStackSubset:
         assert np.mean(data) == pytest.approx(0.0861160094566323, rel=self.limit, abs=0.)
         assert data.shape == (1, 11, 11)
 
+        data = self.pipeline.get_data('derotate2')
+        assert np.mean(data) == pytest.approx(0.0861160094566323, rel=self.limit, abs=0.)
+        assert data.shape == (1, 11, 11)
+
         module = DerotateAndStackModule(name_in='derotate_ifs1',
                                         image_in_tag='images_ifs',
                                         image_out_tag='derotate_ifs1',
                                         derotate=True,
                                         stack='mean',
                                         extra_rot=0.,
-                                        dimension = 'time')
+                                        dimension='time')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('derotate_ifs1')
@@ -210,7 +214,7 @@ class TestStackSubset:
                                         derotate=False,
                                         stack='median',
                                         extra_rot=0.,
-                                        dimension = 'wavelength')
+                                        dimension='wavelength')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('derotate_ifs2')
@@ -218,6 +222,21 @@ class TestStackSubset:
         data = self.pipeline.get_data('derotate_ifs2')
         assert np.mean(data) == pytest.approx(0.055939644983170146, rel=self.limit, abs=0.)
         assert data.shape == (1, 10, 21, 21)
+
+        module = DerotateAndStackModule(name_in='derotate_ifs3',
+                                        image_in_tag='images_ifs',
+                                        image_out_tag='derotate_ifs3',
+                                        derotate=True,
+                                        stack=None,
+                                        extra_rot=0.,
+                                        dimension='wavelength')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('derotate_ifs3')
+
+        data = self.pipeline.get_data('derotate_ifs3')
+        assert np.mean(data) == pytest.approx(0.056535012036597686, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_combine_tags(self) -> None:
 

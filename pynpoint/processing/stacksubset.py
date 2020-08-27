@@ -328,7 +328,7 @@ class DerotateAndStackModule(ProcessingModule):
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
         dimension: str
-            Dimension in which the images are stacked. Can either be 'time' or 'wavelength'. If 
+            Dimension in which the images are stacked. Can either be 'time' or 'wavelength'. If
             ndim = 3, dimension is always set to 'time'.
 
         Returns
@@ -361,7 +361,7 @@ class DerotateAndStackModule(ProcessingModule):
 
         @typechecked
         def _initialize(ndim: int,
-                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
+                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
 
             if ndim == 2:
                 nimages = 1
@@ -394,7 +394,12 @@ class DerotateAndStackModule(ProcessingModule):
             else:
                 im_tot = None
 
-            return nimages, frames, im_tot
+            if self.m_stack is None and ndim == 4:
+                im_none = np.zeros((nwave, nimages, npix, npix))
+            else:
+                im_none = None
+
+            return nimages, frames, im_tot, im_none
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             raise ValueError('Input and output port should have a different tag.')
@@ -407,7 +412,7 @@ class DerotateAndStackModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         npix = self.m_image_in_port.get_shape()[-2]
 
-        nimages, frames, im_tot = _initialize(ndim, npix)
+        nimages, frames, im_tot, im_none = _initialize(ndim, npix)
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
@@ -430,7 +435,8 @@ class DerotateAndStackModule(ProcessingModule):
                     if self.m_dimension == 'time':
                         angles = -parang+self.m_extra_rot
                     elif self.m_dimension == 'wavelength':
-                        angles = -np.ones((nimages))*parang[i]+self.m_extra_rot
+                        nwaves = self.m_image_in_port.get_shape()[-4]
+                        angles = -np.ones((nwaves))*parang[i]+self.m_extra_rot
                 else:
                     angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
                 images = rotate_images(images, angles)
@@ -442,9 +448,9 @@ class DerotateAndStackModule(ProcessingModule):
                     self.m_image_out_port.append(images, data_dim=3)
                 elif ndim == 4:
                     if self.m_dimension == 'time':
-                        self.m_image_out_port.append(images, data_dim=4)
+                        im_none[i] = images
                     elif self.m_dimension == 'wavelength':
-                        self.m_image_out_port.append(images, data_dim=4)
+                        im_none[:, i] = images
 
             elif self.m_stack == 'mean':
                 if ndim == 4:
@@ -475,6 +481,12 @@ class DerotateAndStackModule(ProcessingModule):
             else:
                 im_stack = np.median(images, axis=0)
                 self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+
+        elif self.m_stack is None and ndim == 4:
+            if self.m_dimension == 'time':
+                self.m_image_out_port.set_all(im_none)
+            elif self.m_dimension == 'wavelength':
+                self.m_image_out_port.set_all(im_none)
 
         if self.m_derotate or self.m_stack is not None:
             self.m_image_out_port.copy_attributes(self.m_image_in_port)
