@@ -194,28 +194,30 @@ class TestStackSubset:
                                         image_out_tag='derotate_ifs1',
                                         derotate=True,
                                         stack='mean',
-                                        extra_rot=0.)
+                                        extra_rot=0.,
+                                        dimension = 'time')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('derotate_ifs1')
 
         data = self.pipeline.get_data('derotate_ifs1')
-        assert np.mean(data) == pytest.approx(0.056535012036597686, rel=self.limit, abs=0.)
-        assert data.shape == (3, 21, 21)
+        assert np.mean(data) == pytest.approx(0.18845004012199226, rel=self.limit, abs=0.)
+        assert data.shape == (3, 1, 21, 21)
 
         module = DerotateAndStackModule(name_in='derotate_ifs2',
                                         image_in_tag='images_ifs',
                                         image_out_tag='derotate_ifs2',
                                         derotate=False,
                                         stack='median',
-                                        extra_rot=0.)
+                                        extra_rot=0.,
+                                        dimension = 'wavelength')
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('derotate_ifs2')
 
         data = self.pipeline.get_data('derotate_ifs2')
-        assert np.mean(data) == pytest.approx(0.037075807614651415, rel=self.limit, abs=0.)
-        assert data.shape == (3, 21, 21)
+        assert np.mean(data) == pytest.approx(0.055939644983170146, rel=self.limit, abs=0.)
+        assert data.shape == (1, 10, 21, 21)
 
     def test_combine_tags(self) -> None:
 
