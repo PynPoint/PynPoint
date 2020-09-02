@@ -318,8 +318,9 @@ class DerotateAndStackModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
-            Tag of the database entry that is written as output. The output is either 2D
-            (``stack=False``) or 3D (``stack=True``).
+            Tag of the database entry that is written as output. The shape of the output data is
+            equal to the data from image_in_tag except, if stack is not None, the stacked
+            dimension has a size of 1.
         derotate : bool
             Derotate the images with the ``PARANG`` attribute.
         stack : str
