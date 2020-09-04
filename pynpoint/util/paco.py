@@ -282,7 +282,49 @@ class PACO:
             patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
                                                  int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
         return patch
+        
+    def getPatchFast(self, px, width):
+        """
+        Gets patch at given pixel px with size k for the current img sequence
 
+        Parameters
+        --------------
+        px : (int,int)
+            Pixel coordinates for center of patch
+        width : int
+            width of a square patch to be masked
+        mask : arr
+            Circular mask to select a round patch of pixels, which is then
+            flattened into a 1D array.
+
+        """
+        mask = createCircularMask((self.m_im_stack.shape[1],
+                                   self.m_im_stack.shape[2]),
+                                   radius = self.m_psf_rad,
+                                   center = px)
+        k = int(width/2)
+        if width%2 != 0:
+            k2 = k+1
+        else:
+            k2 = k
+        nx, ny = np.shape(self.m_im_stack[0])[:2]
+        if px[0]+k2 > nx or px[0]-k < 0 or px[1]+k2 > ny or px[1]-k < 0:
+            #print("pixel out of range")
+            #return np.full((self.m_im_stack.shape[0],self.m_psf_area),np.nan)
+            return None
+        patch = np.zeros((self.m_nFrames, self.m_psf_area))
+
+        for i in range(patch.shape[0]):
+            temp = mask*self.m_im_stack[i]
+            patch[i] = temp[mask].flatten()
+        #if mask is not None:
+        #    patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
+        #                                         int(px[1])-k:int(px[1])+k2][mask] for i in range(len(self.m_im_stack))])
+        #else:
+        #    patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
+        #                                         int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
+        return patch
+        
     def setScale(self, scale):
         """
         Set subpixel scaling factor
@@ -588,7 +630,7 @@ class FastPACO(PACO):
                 Cinlst.append(Cinv[int(ang[0]), int(ang[1])])
                 mlst.append(m[int(ang[0]), int(ang[1])])
                 hlst.append(h[int(ang[0]), int(ang[1])])
-                patch[l] = self.getPatch(ang, self.m_pwidth, mask)
+                patch[l] = self.getPatchFast(ang, self.m_pwidth)
             #Cinv_arr = np.array(Cinlst)
             #m_arr = np.array(mlst)
             #hl = np.array(hlst)
@@ -635,7 +677,7 @@ class FastPACO(PACO):
         # Loop over all pixels
         # i is the same as theta_k in the PACO paper
         for p0 in phi0s:
-            apatch = self.getPatch(p0, self.m_pwidth, mask)
+            apatch = self.getPatchFast(p0, self.m_pwidth)
             #if apatch is not None:
             #print(self.m_psf_area,self.m_psf_rad,apatch.shape,h.shape,m.shape,Cinv.shape)
             m[p0[0]][p0[1]], Cinv[p0[0]][p0[1]] = pixelCalc(apatch)

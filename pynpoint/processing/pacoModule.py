@@ -166,11 +166,12 @@ class PACOModule(ProcessingModule):
         # set_attr() for output port
         self.m_snr_out_port.set_all(snr, data_dim=2)
         self.m_snr_out_port.close_port()
-        self.m_flux_out_port.set_all(flux, data_dim=2)
-        self.m_flux_out_port.close_port()
-        self.m_source_flux_out_port.set_all(ests, data_dim=1)
-        self.m_source_flux_out_port.close_port()
-        self.m_source_posn_out_port.set_all(np.array(phi0s), data_dim=2)
-        self.m_source_posn_out_port.close_port()
+        if self.m_flux_calc:
+            self.m_flux_out_port.set_all(flux, data_dim=2)
+            self.m_flux_out_port.close_port()
+            self.m_source_flux_out_port.set_all(ests, data_dim=1)
+            self.m_source_flux_out_port.close_port()
+            self.m_source_posn_out_port.set_all(np.array(phi0s), data_dim=2)
+            self.m_source_posn_out_port.close_port()
         sys.stdout.write("\rRunning PACOModule... [DONE]\n")
         sys.stdout.flush()
