@@ -95,8 +95,11 @@ class PACO:
             if len(psf.shape) > 2:
                 psf = psf[0]
             self.m_psf = psf/np.nanmax(psf) #/np.sum(psf)# HOW SHOULD THE PSF BE NORMALISED!?!?!?
-            mask = createCircularMask(self.m_psf.shape, self.m_psf_rad)
-            self.m_psf_area = self.m_psf[mask].shape[0]
+            #mask = createCircularMask(self.m_psf.shape, self.m_psf_rad)
+            #self.m_psf_area = self.m_psf[mask].shape[0]
+            mask = createCircularMask(self.m_im_stack[0].shape,
+                                      radius = self.m_psf_rad)
+            self.m_psf_area = self.m_im_stack[0][mask].ravel().shape[0]
         else:
             print("Please input a PSF template!")
             sys.exit(1)
@@ -298,10 +301,9 @@ class PACO:
             flattened into a 1D array.
 
         """
-        mask = createCircularMask((self.m_im_stack.shape[1],
-                                   self.m_im_stack.shape[2]),
-                                   radius = self.m_psf_rad,
-                                   center = px)
+        mask = createCircularMask(self.m_im_stack[0].shape,
+                                  radius = self.m_psf_rad,
+                                  center = px)
         k = int(width/2)
         if width%2 != 0:
             k2 = k+1
@@ -309,20 +311,8 @@ class PACO:
             k2 = k
         nx, ny = np.shape(self.m_im_stack[0])[:2]
         if px[0]+k2 > nx or px[0]-k < 0 or px[1]+k2 > ny or px[1]-k < 0:
-            #print("pixel out of range")
-            #return np.full((self.m_im_stack.shape[0],self.m_psf_area),np.nan)
             return None
-        patch = np.zeros((self.m_nFrames, self.m_psf_area))
-
-        for i in range(patch.shape[0]):
-            temp = mask*self.m_im_stack[i]
-            patch[i] = temp[mask].flatten()
-        #if mask is not None:
-        #    patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
-        #                                         int(px[1])-k:int(px[1])+k2][mask] for i in range(len(self.m_im_stack))])
-        #else:
-        #    patch = np.array([self.m_im_stack[i][int(px[0])-k:int(px[0])+k2,
-        #                                         int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
+        patch = self.m_im_stack[np.broadcast_to(mask,self.m_im_stack.shape)].reshape(self.m_nFrames,self.m_psf_area)
         return patch
         
     def setScale(self, scale):
@@ -402,6 +392,45 @@ class PACO:
 
 
 
+    def alfast(self, hfl, Cfl_inv):
+        """
+        alfast
+
+        The sum of a_l is the inverse of the variance of the background at the given pixel
+        This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
+        Parameters
+        -------------
+        hfl : np.array()
+            This is an array of flattened psf templates
+        Cfl_inv : np.array()
+            This is an array of inverse covariance matrices
+        """
+        d1 =  np.einsum('ijk,gj',Cfl_inv,hfl)
+        a = np.einsum('ml,ml',hfl,np.diagonal(d1).T)
+        return a
+
+    def blfast(self, hfl, Cfl_inv, r_fl, m_fl):
+        """
+        blfast
+
+        The sum of b_l is the flux estimate at the given pixel.
+        This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
+        Parameters
+        -------------
+        hfl : np.array()
+            This is an array of flattened psf templates.
+        Cfl_inv : np.array()
+            This is an array of inverse covariance matrices.
+        r_fl : np.array()
+            This is an array of flux measurements following the predicted path.
+        m_fl : np.array()
+            This is an array of mean background statistics for each location in the path.
+        """
+       # diag = np.diagonal(r_fl,axis1=1, axis2=2)
+        d1 =  np.einsum('ijk,gj',Cfl_inv,r_fl-m_fl)
+        b = np.einsum('ml,ml',hfl,np.diagonal(d1).T)
+        return b
+        
     def al(self, hfl, Cfl_inv):
         """
         a_l
@@ -423,7 +452,6 @@ class PACO:
         b = np.sum(np.array([np.dot(np.dot(Cfl_inv[i], hfl[i]).T, (r_fl[i][i]-m_fl[i]))\
                              for i in range(len(hfl))]), axis=0)
         return b
-
     """
     FluxPACO
     """
@@ -592,18 +620,22 @@ class FastPACO(PACO):
 
         a = np.zeros(npx) # Setup output arrays
         b = np.zeros(npx)
+        #mask = createCircularMask(self.m_im_stack[0].shape,
+        #                           radius = self.m_psf_rad)
+        #self.m_psf_area = self.m_im_stack[0][mask].ravel().shape[0]
+        
         if cpu == 1:
-            Cinv, m, h = self.computeStatistics(phi0s)
+            Cinv, m, h, patches = self.computeStatistics(phi0s)
         else:
-            Cinv, m, h = self.computeStatisticsParallel(phi0s, cpu=cpu)
+            Cinv, m, h, patches = self.computeStatisticsParallel(phi0s, cpu=cpu)
 
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
 
         # 2d selection of pixels around a given point:
-        patch = np.zeros((self.m_nFrames, self.m_nFrames, self.m_psf_area))
-        mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
+        patch = np.zeros((self.m_nFrames, self.m_psf_area))
+        #mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
 
         # Currently forcing integer grid, but meshgrid takes floats as arguments...
         x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))
@@ -630,15 +662,16 @@ class FastPACO(PACO):
                 Cinlst.append(Cinv[int(ang[0]), int(ang[1])])
                 mlst.append(m[int(ang[0]), int(ang[1])])
                 hlst.append(h[int(ang[0]), int(ang[1])])
-                patch[l] = self.getPatchFast(ang, self.m_pwidth)
-            #Cinv_arr = np.array(Cinlst)
-            #m_arr = np.array(mlst)
-            #hl = np.array(hlst)
+                patch[l] = patches[int(ang[0]), int(ang[1]),l]
+                #patch[l] = self.getPatchFast([int(ang[0]),int(ang[1])], self.m_pwidth)
+            Cinvlst = np.array(Cinlst)
+            mlst = np.array(mlst)
+            hlst = np.array(hlst)
 
             #print(Cinlst.shape,mlst.shape,hlst.shape,a.shape,patch.shape)
             # Calculate a and b, matrices
-            a[i] = self.al(hlst, Cinlst)
-            b[i] = self.bl(hlst, Cinlst, patch, mlst)
+            a[i] = self.alfast(hlst, Cinlst)
+            b[i] = self.blfast(hlst, Cinlst, patch, mlst)
         if self.m_verbose:
             print("Done")
         return a, b
@@ -658,7 +691,7 @@ class FastPACO(PACO):
         if self.m_verbose:
             print("Precomputing Statistics...")
 
-        mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
+        #mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape, radius=self.m_psf_rad)
 
         # The off axis PSF at each point
@@ -666,7 +699,7 @@ class FastPACO(PACO):
 
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
-        #patch = np.zeros((self.m_nFrames,self.m_psf_area))
+        patch = np.zeros((self.m_width, self.m_height, self.m_nFrames, self.m_psf_area))
 
         # the mean of a temporal column of patches centered at each pixel
         m = np.zeros((self.m_height, self.m_width, self.m_psf_area))
@@ -682,7 +715,8 @@ class FastPACO(PACO):
             #print(self.m_psf_area,self.m_psf_rad,apatch.shape,h.shape,m.shape,Cinv.shape)
             m[p0[0]][p0[1]], Cinv[p0[0]][p0[1]] = pixelCalc(apatch)
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
-        return Cinv, m, h
+            patch[p0[0]][p0[1]] = apatch
+        return Cinv, m, h, patch
 
     def computeStatisticsParallel(self, phi0s, cpu):
         """
