@@ -210,7 +210,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
 
-        if self.m_processing_type != 'ADI':
+        if self.m_ifs_data:
             if 'WAVELENGTH' in self.m_star_in_port.get_all_non_static_attributes():
                 wavelength = self.m_star_in_port.get_attribute('WAVELENGTH')
 

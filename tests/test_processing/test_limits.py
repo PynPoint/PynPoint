@@ -133,8 +133,7 @@ class TestLimits:
         with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
             hdf_file['contrast_limits'] = limits
 
-        url = 'https://phoenix.ens-lyon.fr/Grids/AMES-Cond/ISOCHRONES/' \
-              'model.AMES-Cond-2000.M-0.0.NaCo.Vega'
+        url = 'https://people.phys.ethz.ch/~stolkert/pynpoint/model.AMES-Cond-2000.M-0.0.NaCo.Vega'
 
         filename = self.test_dir + 'model.AMES-Cond-2000.M-0.0.NaCo.Vega'
 

@@ -60,6 +60,14 @@ pynpoint.readwrite.nearreading module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.readwrite.textreading module
+-------------------------------------
+
+.. automodule:: pynpoint.readwrite.textreading
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.readwrite.textwriting module
 -------------------------------------
 
