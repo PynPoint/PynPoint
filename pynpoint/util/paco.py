@@ -316,7 +316,8 @@ class PACO:
         nx, ny = np.shape(self.m_im_stack[0])[:2]
         if px[0]+k2 > nx or px[0]-k < 0 or px[1]+k2 > ny or px[1]-k < 0:
             return None
-        patch = self.m_im_stack[np.broadcast_to(mask,self.m_im_stack.shape)].reshape(self.m_nFrames,self.m_psf_area)
+        patch = self.m_im_stack[np.broadcast_to(mask,self.m_im_stack.shape)]\
+                                .reshape(self.m_nFrames,self.m_psf_area)
         return patch
         
     def setScale(self, scale):
@@ -593,8 +594,8 @@ class PACO:
         #data_min = filters.minimum_filter(snr_map,self.m_psf_rad)
         diff = (data_max > threshold)
         maxima[diff == 0] = 0
-
-        labeled, num_objects = ndimage.label(maxima)
+        
+        labeled = ndimage.label(maxima)
         slices = ndimage.find_objects(labeled)
         x, y = [], []
         for dy, dx in slices:
@@ -869,7 +870,7 @@ class FullPACO(PACO):
             patch = []
             mlst = []
             h = []
-            Clst = []
+            clst = []
             for l, ang in enumerate(angles_px):
                 # Get the column of patches at this point
                 patch.append(self.getPatchFast(ang, self.m_pwidth))
