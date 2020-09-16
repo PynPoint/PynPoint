@@ -865,6 +865,12 @@ class FullPACO(PACO):
             # Get list of pixels for each rotation angle
             angles_px = getRotatedPixels(x, y, p0, self.m_angles)
 
+            # Ensure within image bounds
+            if(int(np.max(angles_px.flatten())) >= self.m_width or \
+               int(np.min(angles_px.flatten())) < 0):
+                a[i] = np.nan
+                b[i] = np.nan
+                continue
             # Iterate over each temporal frame/each angle
             # Same as iterating over phi_l
             patch = []
@@ -873,7 +879,10 @@ class FullPACO(PACO):
             clst = []
             for l, ang in enumerate(angles_px):
                 # Get the column of patches at this point
-                patch.append(self.getPatchFast(ang, self.m_pwidth))
+                apatch = self.getPatchFast(ang, self.m_pwidth)
+                if apatch is None:
+                    continue
+                patch.append(apatch)
                 m, cinv = pixelCalc(patch[l])
                 mlst.append(m)
                 clst.append(cinv)
