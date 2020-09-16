@@ -68,7 +68,7 @@ class PACOModule(ProcessingModule):
             Tag of the database entry that contains the list the unbiased flux estimation
             computed using one of the PACO algorithms
         psf_rad : float
-            Radius around the psf to use as a 'patch'
+            Radius around the psf to use as a 'patch' in arcseconds.
         scaling : float
             Greater than 1 to run paco with subpixel positioning, less than one to run on
             a downscaled resolution for each image.

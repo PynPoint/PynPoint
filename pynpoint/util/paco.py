@@ -161,15 +161,15 @@ class PACO:
             Number of processers to use
         """
 
-        if (self.m_width * self.m_scale)%2 != 0:
-            # This ensures that we're dealing with an even number of pixels.
-            # Necessary so that we can evenly divide and rotate about the center.
-            # Shouldn't be necessary - can use float coordinates?
-            self.m_im_stack = self.m_im_stack[0:self.m_nFrames,
-                                              0:self.m_width -1,
-                                              0:self.m_height-1]
-            self.m_width -= 1
-            self.m_height -= 1
+        #if (self.m_width * self.m_scale)%2 != 0:
+        # This ensures that we're dealing with an even number of pixels.
+        # Necessary so that we can evenly divide and rotate about the center.
+        # Shouldn't be necessary - can use float coordinates?
+        #self.m_im_stack = self.m_im_stack[0:self.m_nFrames,
+        #                                      0:self.m_width -1,
+        #                                      0:self.m_height-1]
+        #    self.m_width -= 1
+        #    self.m_height -= 1
         if not self.m_rescaled:
             self.rescaleAll()
         if self.m_verbose:
