@@ -161,6 +161,10 @@ def intPolToCart(coords):
     Enforce integer (pixel) coordinates
     Possibly unnecessary, float coordinates work
     Output shapes necessary for PACO, but I don't remember why
+    Parameters
+    -------------------
+    coords : np.array()
+        Array of polar coordinates r,phi
     """
 
     if len(coords.shape) == 1:

@@ -148,8 +148,7 @@ class PACO:
         This function is algorithm dependant, and sets up the actual calculation process.
         """
     
-    def PACO(self,
-             cpu=1):
+    def PACO(self, cpu=1):
         """
         PACO
         This function wraps the actual PACO algorithm, setting up the pixel coordinates
@@ -243,18 +242,15 @@ class PACO:
     def setPSF(self, psf):
         """
         Read in the PSF template
+        Parameters
+        -----------------
+        psf: np.array()
+            An unsaturated psf to use as the template.
         """
-
         self.m_psf = psf
         self.m_pwidth = self.m_psf.shape[0]
         mask = createCircularMask(self.m_psf.shape, self.m_psf_rad)
         self.m_psf_area = len(mask[mask])
-    def getPSF(self):
-        """
-        Access the PSF
-        """
-
-        return self.m_psf
 
     # Set parallactic angles
     def setAngles(self, angles):
@@ -299,10 +295,9 @@ class PACO:
     def getPatchFast(self, px, width = None):
         """
         Gets patch at given pixel px with size k for the current img sequence
-
         Parameters
         --------------
-        px : (int,int)
+        px : Tuple(int,int)
             Pixel coordinates for center of patch
         width : int
             width of a square patch to be masked
@@ -406,7 +401,6 @@ class PACO:
     def alfast(self, hfl, Cfl_inv):
         """
         alfast
-
         The sum of a_l is the inverse of the variance of the background at the given pixel
         This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
         
@@ -425,10 +419,9 @@ class PACO:
     def blfast(self, hfl, Cfl_inv, r_fl, m_fl):
         """
         blfast
-
         The sum of b_l is the flux estimate at the given pixel.
-        This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
-
+        This function uses some einstein summing magic in order 
+        to do the matrix multiplication efficiently.
         NOTE: turns out einsum can get slow with large tensors. May not actually be faster.
         Parameters
         -------------
@@ -441,7 +434,6 @@ class PACO:
         m_fl : np.array()
             This is an array of mean background statistics for each location in the path.
         """
-       # diag = np.diagonal(r_fl,axis1=1, axis2=2)
         d1 =  np.einsum('ijk,gj',Cfl_inv,r_fl-m_fl)
         b = np.einsum('ml,ml',hfl,np.diagonal(d1).T)
         return b
