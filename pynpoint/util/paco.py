@@ -262,9 +262,10 @@ class PACO:
     def getPatch(self, px, width, mask=None):
         """
         Gets patch at given pixel px with size k for the current img sequence
+
         Parameters
         --------------
-        px : (int,int)
+        px : Tuple
             Pixel coordinates for center of patch.
         width : int
             Width of a square patch to be masked
@@ -292,10 +293,11 @@ class PACO:
         
     def getPatchFast(self, px, width = None):
         """
-        Gets patch at given pixel px with size k for the current img sequence
+        Gets patch at given pixel px with size k for the current img sequenc
+        
         Parameters
         --------------
-        px : Tuple(int,int)
+        px : Tuple
             Pixel coordinates for center of patch
         width : int
             width of a square patch to be masked
