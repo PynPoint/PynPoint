@@ -595,7 +595,7 @@ class PACO:
         diff = (data_max > threshold)
         maxima[diff == 0] = 0
         
-        labeled = ndimage.label(maxima)
+        labeled, _ = ndimage.label(maxima)
         slices = ndimage.find_objects(labeled)
         x, y = [], []
         for dy, dx in slices:
