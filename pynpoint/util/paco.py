@@ -265,14 +265,13 @@ class PACO:
         Parameters
         --------------
         px : (int,int)
-            Pixel coordinates for center of patch
+            Pixel coordinates for center of patch.
         width : int
-            width of a square patch to be masked
+            Width of a square patch to be masked
         mask : arr
             Circular mask to select a round patch of pixels, which is then
             flattened into a 1D array.
         """
-
         k = int(width/2)
         if width%2 != 0:
             k2 = k+1
@@ -469,7 +468,7 @@ class PACO:
             This is an array of mean background statistics for each location in the path.
         """
 
-        b = np.sum(np.array([np.dot(np.dot(Cfl_inv[i], hfl[i]).T, (r_fl[i][i]-m_fl[i]))\
+        b = np.sum(np.array([np.dot(np.dot(Cfl_inv[i], hfl[i]).T, (r_fl[i]-m_fl[i]))\
                              for i in range(len(hfl))]), axis=0)
         return b
     """
@@ -654,7 +653,7 @@ class FastPACO(PACO):
         # for patches: for each time, we need to store a column of patches
 
         # 2d selection of pixels around a given point:
-        patch = np.zeros((self.m_nFrames, self.m_psf_area))
+        #patch = np.zeros((self.m_nFrames, self.m_psf_area))
         #mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
 
         # Currently forcing integer grid, but meshgrid takes floats as arguments...
@@ -678,15 +677,16 @@ class FastPACO(PACO):
             Cinlst = []
             mlst = []
             hlst = []
+            patch = []
             for l, ang in enumerate(angles_px):
                 Cinlst.append(Cinv[int(ang[0]), int(ang[1])])
                 mlst.append(m[int(ang[0]), int(ang[1])])
                 hlst.append(h[int(ang[0]), int(ang[1])])
-                patch[l] = patches[int(ang[0]), int(ang[1]),l]
+                patch.append(patches[int(ang[0]), int(ang[1]),l])
                 #patch[l] = self.getPatchFast([int(ang[0]),int(ang[1])], self.m_pwidth)
-            Cinlst = np.array(Cinlst)
-            mlst = np.array(mlst)
-            hlst = np.array(hlst)
+            #Cinlst = np.array(Cinlst)
+            #mlst = np.array(mlst)
+            #hlst = np.array(hlst)
 
             #print(Cinlst.shape,mlst.shape,hlst.shape,a.shape,patch.shape)
             # Calculate a and b, matrices
@@ -731,8 +731,6 @@ class FastPACO(PACO):
         # i is the same as theta_k in the PACO paper
         for p0 in phi0s:
             apatch = self.getPatchFast(p0)
-            #if apatch is not None:
-            #print(self.m_psf_area,self.m_psf_rad,apatch.shape,h.shape,m.shape,Cinv.shape)
             m[p0[0]][p0[1]], Cinv[p0[0]][p0[1]] = pixelCalc(apatch)
             h[p0[0]][p0[1]] = self.m_psf[psf_mask]
             patch[p0[0]][p0[1]] = apatch
@@ -839,18 +837,18 @@ class FullPACO(PACO):
         a = np.zeros(npx) # Setup output arrays
         b = np.zeros(npx)
         mask = createCircularMask(self.m_psf.shape, radius=self.m_psf_rad)
-        h = np.zeros((self.m_nFrames, self.m_psf_area)) # The off axis PSF at each point
+        #h = np.zeros((self.m_nFrames, self.m_psf_area)) # The off axis PSF at each point
 
         # Create arrays needed for storage
         # Store for each image pixel, for each temporal frame an image
         # for patches: for each time, we need to store a column of patches
         # 2d selection of pixels around a given point
-        patch = np.zeros((self.m_nFrames, self.m_nFrames, self.m_psf_area))
+        #patch = np.zeros((self.m_nFrames, self.m_nFrames, self.m_psf_area))
 
         # the mean of a temporal column of patches at each pixel
-        m = np.zeros((self.m_nFrames, self.m_psf_area))
+        #m = np.zeros((self.m_nFrames, self.m_psf_area))
         # the inverse covariance matrix at each point
-        Cinv = np.zeros((self.m_nFrames, self.m_psf_area, self.m_psf_area))
+        #Cinv = np.zeros((self.m_nFrames, self.m_psf_area, self.m_psf_area))
 
         if self.m_verbose:
             print("Running Full PACO...")
@@ -868,15 +866,21 @@ class FullPACO(PACO):
 
             # Iterate over each temporal frame/each angle
             # Same as iterating over phi_l
+            patch = []
+            mlst = []
+            h = []
+            Clst = []
             for l, ang in enumerate(angles_px):
                 # Get the column of patches at this point
-                patch[l] = self.getPatchFast(ang, self.m_pwidth)
-                m[l], Cinv[l] = pixelCalc(patch[l])
-                h[l] = self.m_psf[mask]
+                patch.append(self.getPatchFast(ang, self.m_pwidth))
+                m, cinv = pixelCalc(patch[l])
+                mlst.append(m)
+                clst.append(cinv)
+                h.append(self.m_psf[mask])
 
             # Calculate a and b, matrices
-            a[i] = self.al(h, Cinv)
-            b[i] = self.bl(h, Cinv, patch, m)
+            a[i] = self.al(h, clst)
+            b[i] = self.bl(h, clst, patch, mlst)
         if self.m_verbose:
             print("Done")
         return a, b

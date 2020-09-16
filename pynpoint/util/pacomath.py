@@ -284,6 +284,6 @@ def shrinkageFactor(S, T):
     top = (np.trace(np.dot(S, S)) + np.trace(S)**2 -\
            2.0*np.sum(S**2.0))
     bot = ((T+1.0)*(np.trace(np.dot(S, S))-\
-                    np.sum(S**2.0)))
+                    np.sum(np.diag(S)**2.0)))
     p = top/bot
     return max(min(p, 1.0), 0.0)
