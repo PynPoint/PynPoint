@@ -22,7 +22,6 @@ from typeguard import typechecked
 
 
 from pynpoint.util.paco import PACO, FastPACO, FullPACO
-from pynpoint.util.pacomath import *
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask

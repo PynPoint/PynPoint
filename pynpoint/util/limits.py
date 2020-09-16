@@ -14,7 +14,6 @@ from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 from pynpoint.util.paco import PACO, FastPACO, FullPACO
-from pynpoint.util.pacomath import *
 
 @typechecked
 def contrast_limit(path_images: str,

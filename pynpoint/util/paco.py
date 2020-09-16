@@ -6,7 +6,20 @@ from abc import ABCMeta, abstractmethod
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
-from .pacomath import *
+from .pacomath import rotateImage, \
+                      getRotatedPixels, \
+                      createCircularMask,\
+                      resizeImage,\
+                      cartToPol,\
+                      polToCart,\
+                      intPolToCart,\
+                      gridCartToPol,\
+                      pixelCalc,\
+                      covariance,\
+                      sampleCovariance, \
+                      diagSampleCovariance,\
+                      shrinkageFactor
+
 from multiprocessing import Pool
 
 import scipy.ndimage as ndimage
@@ -46,7 +59,7 @@ class PACO:
         image_stack : arr
             Array of 2D science frames taken in pupil tracking/ADI mode
         angles : arr
-            List of differential angles between each frame.
+            List of differential angles between each frame in degrees.
         psf : arr
             2D PSF image. Will be normalized such that the peak is 1.
         psf_rad : float
@@ -142,7 +155,6 @@ class PACO:
         This function wraps the actual PACO algorithm, setting up the pixel coordinates
         that will be iterated over. The output will probably be changes to output the
         true SNR map.
-
         Parameters
         ------------
         cpu : int>=1
@@ -152,7 +164,7 @@ class PACO:
         if (self.m_width * self.m_scale)%2 != 0:
             # This ensures that we're dealing with an even number of pixels.
             # Necessary so that we can evenly divide and rotate about the center.
-            # TODO: Shouldn't be necessary?
+            # Shouldn't be necessary - can use float coordinates?
             self.m_im_stack = self.m_im_stack[0:self.m_nFrames,
                                               0:self.m_width -1,
                                               0:self.m_height-1]
@@ -255,7 +267,6 @@ class PACO:
     def getPatch(self, px, width, mask=None):
         """
         Gets patch at given pixel px with size k for the current img sequence
-
         Parameters
         --------------
         px : (int,int)
@@ -265,7 +276,6 @@ class PACO:
         mask : arr
             Circular mask to select a round patch of pixels, which is then
             flattened into a 1D array.
-
         """
 
         k = int(width/2)
@@ -286,7 +296,7 @@ class PACO:
                                                  int(px[1])-k:int(px[1])+k2] for i in range(len(self.m_im_stack))])
         return patch
         
-    def getPatchFast(self, px, width):
+    def getPatchFast(self, px, width = None):
         """
         Gets patch at given pixel px with size k for the current img sequence
 
@@ -299,8 +309,9 @@ class PACO:
         mask : arr
             Circular mask to select a round patch of pixels, which is then
             flattened into a 1D array.
-
         """
+        if width is None:
+            width = self.m_pwidth
         mask = createCircularMask(self.m_im_stack[0].shape,
                                   radius = self.m_psf_rad,
                                   center = px)
@@ -398,6 +409,8 @@ class PACO:
 
         The sum of a_l is the inverse of the variance of the background at the given pixel
         This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
+        
+        NOTE: turns out einsum can get slow with large tensors. May not actually be faster.
         Parameters
         -------------
         hfl : np.array()
@@ -415,6 +428,8 @@ class PACO:
 
         The sum of b_l is the flux estimate at the given pixel.
         This function uses some einstein summing magic in order to do the matrix multiplication efficiently.
+
+        NOTE: turns out einsum can get slow with large tensors. May not actually be faster.
         Parameters
         -------------
         hfl : np.array()
@@ -434,8 +449,13 @@ class PACO:
     def al(self, hfl, Cfl_inv):
         """
         a_l
-
         The sum of a_l is the inverse of the variance of the background at the given pixel
+        Parameters
+        -------------
+        hfl : np.array()
+            This is an array of flattened psf templates
+        Cfl_inv : np.array()
+            This is an array of inverse covariance matrices
         """
 
         a = np.sum(np.array([np.dot(hfl[i], np.dot(Cfl_inv[i], hfl[i]).T) \
@@ -445,8 +465,17 @@ class PACO:
     def bl(self, hfl, Cfl_inv, r_fl, m_fl):
         """
         b_l
-
         The sum of b_l is the flux estimate at the given pixel.
+        Parameters
+        -------------
+        hfl : np.array()
+            This is an array of flattened psf templates.
+        Cfl_inv : np.array()
+            This is an array of inverse covariance matrices.
+        r_fl : np.array()
+            This is an array of flux measurements following the predicted path.
+        m_fl : np.array()
+            This is an array of mean background statistics for each location in the path.
         """
 
         b = np.sum(np.array([np.dot(np.dot(Cfl_inv[i], hfl[i]).T, (r_fl[i][i]-m_fl[i]))\
@@ -670,8 +699,8 @@ class FastPACO(PACO):
 
             #print(Cinlst.shape,mlst.shape,hlst.shape,a.shape,patch.shape)
             # Calculate a and b, matrices
-            a[i] = self.alfast(hlst, Cinlst)
-            b[i] = self.blfast(hlst, Cinlst, patch, mlst)
+            a[i] = self.al(hlst, Cinlst)
+            b[i] = self.bl(hlst, Cinlst, patch, mlst)
         if self.m_verbose:
             print("Done")
         return a, b
@@ -695,6 +724,7 @@ class FastPACO(PACO):
         psf_mask = createCircularMask(self.m_psf.shape, radius=self.m_psf_rad)
 
         # The off axis PSF at each point
+        # all values are the same for now, but could vary with position.
         h = np.zeros((self.m_width, self.m_height, self.m_psf_area))
 
         # Store for each image pixel, for each temporal frame an image
@@ -710,7 +740,7 @@ class FastPACO(PACO):
         # Loop over all pixels
         # i is the same as theta_k in the PACO paper
         for p0 in phi0s:
-            apatch = self.getPatchFast(p0, self.m_pwidth)
+            apatch = self.getPatchFast(p0)
             #if apatch is not None:
             #print(self.m_psf_area,self.m_psf_rad,apatch.shape,h.shape,m.shape,Cinv.shape)
             m[p0[0]][p0[1]], Cinv[p0[0]][p0[1]] = pixelCalc(apatch)
@@ -743,7 +773,7 @@ class FastPACO(PACO):
         if self.m_verbose:
             print("Precomputing Statistics using %d Processes..."%cpu)
         npx = len(phi0s) # Number of pixels in an image
-        mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
+        #mask = createCircularMask((self.m_pwidth, self.m_pwidth), radius=self.m_psf_rad)
         psf_mask = createCircularMask(self.m_psf.shape, radius=self.m_psf_rad)
 
         # The off axis PSF at each point
@@ -758,9 +788,13 @@ class FastPACO(PACO):
 
         # *** Parallel Processing ***
         #start = time.time()
-        arglist = np.array([self.getPatch(p0, self.m_pwidth, mask) for p0 in phi0s])
+        p_pool = Pool(processes=cpu)
+        patches = p_pool.map(self.getPatchFast, phi0s, chunksize=int(npx/cpu))
+        p_pool.close()
+        p_pool.join()
+        
         p = Pool(processes=cpu)
-        data = p.map(pixelCalc, arglist, chunksize=int(npx/cpu))
+        data = p.map(pixelCalc, patches, chunksize=int(npx/cpu))
         p.close()
         p.join()
         ms, cs = [], []
@@ -773,11 +807,11 @@ class FastPACO(PACO):
                 cs.append(d[1])
         ms = np.array(ms)
         cs = np.array(cs)
+        patches = np.array(patches)
+        patches = patches.reshape((self.m_width, self.m_height, self.m_nFrames, self.m_psf_area))
         m = ms.reshape((self.m_height, self.m_width, self.m_psf_area))
         Cinv = cs.reshape((self.m_height, self.m_width, self.m_psf_area, self.m_psf_area))
-        #end = time.time()
-        #print("Parallel elapsed",end-start)
-        return Cinv, m, h
+        return Cinv, m, h, patches
 
 """
 **************************************************
@@ -833,7 +867,9 @@ class FullPACO(PACO):
 
         # Set up coordinates so 0 is at the center of the image
         x, y = np.meshgrid(np.arange(-dim, dim), np.arange(-dim, dim))
-
+        
+        if cpu > 1:
+            print("Multiprocessing for full PACO is not yet implemented!")
         # Loop over all pixels
         # i is the same as theta_k in the PACO paper
         for i, p0 in enumerate(phi0s):
@@ -844,7 +880,7 @@ class FullPACO(PACO):
             # Same as iterating over phi_l
             for l, ang in enumerate(angles_px):
                 # Get the column of patches at this point
-                patch[l] = self.getPatch(ang, self.m_pwidth, mask)
+                patch[l] = self.getPatchFast(ang, self.m_pwidth)
                 m[l], Cinv[l] = pixelCalc(patch[l])
                 h[l] = self.m_psf[mask]
 

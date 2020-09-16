@@ -48,17 +48,13 @@ def getRotatedPixels(x, y, p0, angles):
     phi0 = np.array([x[int(p0[0]), int(p0[1])], y[int(p0[0]), int(p0[1])]])
     # Convert to polar coordinates
     rphi0 = cartToPol(phi0)
-    angles_rad = rphi0[1] - np.array([a*np.pi/180 for a in angles])
-
+    angles_rad = -1*(angles*np.pi/180.0) + rphi0[1]
     # Rotate the polar coordinates by each frame angle
-    angles_ind = [[rphi0[0], phi] for phi in angles_rad]
-    angles_pol = np.array(list(zip(*angles_ind)))
-
+    angles_pol = np.array([rphi0[0]*np.ones_like(angles_rad),angles_rad])
+    
     # Convert from polar to cartesian and pixel coordinates
     angles_px = np.array(gridPolToCart(angles_pol[0], angles_pol[1]))+int(x.shape[0]/2)
-    angles_px = angles_px.T
-    angles_px = np.fliplr(angles_px)
-    return angles_px
+    return angles_px[::-1].T
 
 def createCircularMask(shape, radius=4, center=None):
     """
@@ -282,8 +278,8 @@ def shrinkageFactor(S, T):
     """
 
     top = (np.trace(np.dot(S, S)) + np.trace(S)**2 -\
-           2.0*np.sum(np.array([d**2.0 for d in np.diag(S)])))
+           2.0*np.sum(S**2.0))
     bot = ((T+1.0)*(np.trace(np.dot(S, S))-\
-                    np.sum(np.array([d**2.0 for d in np.diag(S)]))))
+                    np.sum(S**2.0)))
     p = top/bot
     return max(min(p, 1.0), 0.0)

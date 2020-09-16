@@ -23,7 +23,6 @@ from pynpoint.util.module import progress
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 from pynpoint.util.paco import PACO, FastPACO, FullPACO
-from pynpoint.util.pacomath import *
 
 class ContrastCurveModule(ProcessingModule):
     """
