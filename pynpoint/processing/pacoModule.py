@@ -1,26 +1,6 @@
 """
 Wrapper for the PACO algorithm implementaion for Pynpoint
 """
-<<<<<<< HEAD
-
-import os
-
-# Required to make parallel processing work
-# Else numpy uses multiple processes, which conflicts
-# with the multiprocessing module.
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['OMP_NUM_THREADS'] = '1'
-
-from typing import Tuple, List
-
-import numpy as np
-
-from typeguard import typechecked
-
-from pynpoint.util.paco import PACO, FastPACO, FullPACO
-from pynpoint.util.pacomath import *
-=======
 import sys
 import os
 import math
@@ -40,10 +20,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from typeguard import typechecked
 
-
 from pynpoint.util.paco import PACO, FastPACO, FullPACO
->>>>>>> master
-
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
 from pynpoint.util.module import progress
@@ -131,7 +108,7 @@ class PACOModule(ProcessingModule):
         self.m_psf_rad = psf_rad
         self.m_eps = flux_prec
         self.m_threshold = threshold
-
+        self.m_verbose = verbose
     @typechecked
     def run(self) -> None:
         """
@@ -145,8 +122,6 @@ class PACOModule(ProcessingModule):
 
         # Hardware settings
         cpu = self._m_config_port.get_attribute('CPU')
-
-        self.m_verbose = verbose
         # Read in science frames and psf model
         # Should add existance checks
         images = self.m_image_in_port.get_all()

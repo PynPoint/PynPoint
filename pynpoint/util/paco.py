@@ -1,7 +1,6 @@
 import sys
 import os
 from abc import ABCMeta, abstractmethod
-
 # Required so numpy parallelization doesn't conflict with multiprocessing
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -24,7 +23,7 @@ from multiprocessing import Pool
 
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
-
+import numpy as np
 
 class PACO:
     """
@@ -232,7 +231,7 @@ class PACO:
         """
 
         new_stack = []
-        for i, img in enumerate(self.m_im_stack):
+        for img in self.m_im_stack:
             new_stack.append(resizeImage(img, scale))
         self.m_im_stack = np.array(new_stack)
         self.m_width = int(self.m_width * scale)
@@ -685,7 +684,7 @@ class FastPACO(PACO):
                 hlst.append(h[int(ang[0]), int(ang[1])])
                 patch[l] = patches[int(ang[0]), int(ang[1]),l]
                 #patch[l] = self.getPatchFast([int(ang[0]),int(ang[1])], self.m_pwidth)
-            Cinvlst = np.array(Cinlst)
+            Cinlst = np.array(Cinlst)
             mlst = np.array(mlst)
             hlst = np.array(hlst)
 
@@ -708,7 +707,6 @@ class FastPACO(PACO):
             Array of pixel locations to estimate companion position
 
         """
-
         if self.m_verbose:
             print("Precomputing Statistics...")
 
