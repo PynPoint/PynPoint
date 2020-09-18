@@ -187,8 +187,8 @@ class PACO:
         # Compute a,b
         a, b = self.PACOCalc(np.array(phi0s), cpu=cpu)
         # Reshape into a 2D image, with the same dimensions as the input images
-        a = np.fliplr(np.reshape(a, (self.m_height, self.m_width))).T
-        b = np.fliplr(np.reshape(b, (self.m_height, self.m_width))).T
+        a = np.flipud(np.reshape(a, (self.m_height, self.m_width)))
+        b = np.flipud(np.reshape(b, (self.m_height, self.m_width)))
         return a, b
 
     """
