@@ -187,8 +187,8 @@ class PACO:
         # Compute a,b
         a, b = self.PACOCalc(np.array(phi0s), cpu=cpu)
         # Reshape into a 2D image, with the same dimensions as the input images
-        a = np.reshape(a, (self.m_height, self.m_width))
-        b = np.reshape(b, (self.m_height, self.m_width))
+        a = np.fliplr(np.reshape(a, (self.m_height, self.m_width))).T
+        b = np.fliplr(np.reshape(b, (self.m_height, self.m_width))).T
         return a, b
 
     """
@@ -317,7 +317,7 @@ class PACO:
             k2 = k
         nx, ny = np.shape(self.m_im_stack[0])[:2]
         if px[0]+k2 > nx or px[0]-k < 0 or px[1]+k2 > ny or px[1]-k < 0:
-            return None
+            return np.ones((self.m_nFrames,self.m_psf_area))*np.nan
         patch = self.m_im_stack[np.broadcast_to(mask,self.m_im_stack.shape)]\
                                 .reshape(self.m_nFrames,self.m_psf_area)
         return patch
@@ -780,10 +780,10 @@ class FastPACO(PACO):
         # *** Parallel Processing ***
         #start = time.time()
         p_pool = Pool(processes=cpu)
-        patches = p_pool.map(self.getPatchFast, phi0s, chunksize=int(npx/cpu))
+        p_data = p_pool.map(self.getPatchFast, phi0s, chunksize=int(npx/cpu))
         p_pool.close()
         p_pool.join()
-        
+        patches = [p for p in p_data]
         p = Pool(processes=cpu)
         data = p.map(pixelCalc, patches, chunksize=int(npx/cpu))
         p.close()
