@@ -466,7 +466,7 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
             print('\rSimplex minimization... ', end='', flush=True)
-            print(f'{n_components} PC - chi^2 = {chi_square:8.2f}', end='', flush=True)
+            print(f'{n_components} PC - chi^2 = {chi_square:.2e}', end='', flush=True)
 
             return chi_square
 
@@ -537,8 +537,8 @@ class SimplexMinimizationModule(ProcessingModule):
                 pos_y = pos_init[0]
 
             else:
-                pos_x = min_result.x[1]
-                pos_y = min_result.x[0]
+                pos_x = min_result.x[2]
+                pos_y = min_result.x[1]
 
             pos_rot_yx = rotate_coordinates(center, (pos_y, pos_x), -self.m_extra_rot)
 

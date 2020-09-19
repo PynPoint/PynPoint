@@ -102,7 +102,7 @@ class CropImagesModule(ProcessingModule):
         print(f'New image size (pixels) = {self.m_size}')
 
         if self.m_center is not None:
-            print(f'New image center (x, y) = {self.m_center}')
+            print(f'New image center (x, y) = ({self.m_center[1]}, {self.m_center[0]})')
 
         # Crop images chunk by chunk
         start_time = time.time()
