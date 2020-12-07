@@ -50,7 +50,7 @@ class TextWritingModule(WritingModule):
             None
         """
 
-        super(TextWritingModule, self).__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir)
 
         self.m_data_port = self.add_input_port(data_tag)
 

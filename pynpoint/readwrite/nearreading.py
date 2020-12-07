@@ -76,7 +76,7 @@ class NearReadingModule(ReadingModule):
             None
         """
 
-        super(NearReadingModule, self).__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir)
 
         self.m_chopa_out_port = self.add_output_port(chopa_out_tag)
         self.m_chopb_out_port = self.add_output_port(chopb_out_tag)

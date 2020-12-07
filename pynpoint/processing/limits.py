@@ -106,7 +106,7 @@ class ContrastCurveModule(ProcessingModule):
             None
         """
 
-        super(ContrastCurveModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         if 'sigma' in kwargs:
             warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
@@ -362,7 +362,7 @@ class MassLimitsModule(ProcessingModule):
             None
         """
 
-        super(MassLimitsModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_star_age = star_prop['age']/1000.  # [Myr]
         self.m_star_abs = star_prop['magnitude'] - 5.*math.log10(star_prop['distance']/10.)

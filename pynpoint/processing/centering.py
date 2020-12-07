@@ -73,7 +73,7 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        super(StarAlignmentModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -268,7 +268,7 @@ class FitCenterModule(ProcessingModule):
             elif model == 'moffat':
                 self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
-        super(FitCenterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_fit_out_port = self.add_output_port(fit_out_tag)
@@ -625,7 +625,7 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
-        super(ShiftImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -761,7 +761,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        super(WaffleCenteringModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_center_in_port = self.add_input_port(center_in_tag)

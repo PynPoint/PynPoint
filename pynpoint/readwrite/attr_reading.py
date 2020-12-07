@@ -5,12 +5,12 @@ Modules for reading attributes from a FITS or ASCII file.
 import os
 import warnings
 
-import numpy as np
-
 from typing import Optional
 
-from typeguard import typechecked
+import numpy as np
+
 from astropy.io import fits
+from typeguard import typechecked
 
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.processing import ReadingModule
@@ -59,7 +59,7 @@ class AttributeReadingModule(ReadingModule):
             None
         """
 
-        super(AttributeReadingModule, self).__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -155,7 +155,8 @@ class ParangReadingModule(ReadingModule):
         NoneType
             None
         """
-        super(ParangReadingModule, self).__init__(name_in, input_dir)
+
+        super().__init__(name_in, input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -247,7 +248,8 @@ class WavelengthReadingModule(ReadingModule):
         NoneType
             None
         """
-        super(WavelengthReadingModule, self).__init__(name_in, input_dir)
+
+        super().__init__(name_in, input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 

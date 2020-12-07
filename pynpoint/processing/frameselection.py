@@ -59,7 +59,7 @@ class RemoveFramesModule(ProcessingModule):
             None
         """
 
-        super(RemoveFramesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -178,7 +178,7 @@ class FrameSelectionModule(ProcessingModule):
             None
         """
 
-        super(FrameSelectionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -373,7 +373,7 @@ class RemoveLastFrameModule(ProcessingModule):
             None
         """
 
-        super(RemoveLastFrameModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -457,7 +457,7 @@ class RemoveStartFramesModule(ProcessingModule):
             None
         """
 
-        super(RemoveStartFramesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -572,7 +572,7 @@ class ImageStatisticsModule(ProcessingModule):
             None
         """
 
-        super(ImageStatisticsModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_stat_out_port = self.add_output_port(stat_out_tag)
@@ -695,7 +695,7 @@ class FrameSimilarityModule(ProcessingModule):
             None
         """
 
-        super(FrameSimilarityModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_tag)
         self.m_image_out_port = self.add_output_port(image_tag)
@@ -916,7 +916,7 @@ class SelectByAttributeModule(ProcessingModule):
                                     removed_out_tag='im_arr_removed'))
         """
 
-        super(SelectByAttributeModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_selected_out_port = self.add_output_port(selected_out_tag)
@@ -1015,7 +1015,7 @@ class ResidualSelectionModule(ProcessingModule):
             None
         """
 
-        super(ResidualSelectionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 

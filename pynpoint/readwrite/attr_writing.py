@@ -4,9 +4,9 @@ Modules for writing data as text file.
 
 import os
 
-import numpy as np
-
 from typing import Optional
+
+import numpy as np
 
 from typeguard import typechecked
 
@@ -52,7 +52,7 @@ class AttributeWritingModule(WritingModule):
             None
         """
 
-        super(AttributeWritingModule, self).__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir)
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -126,7 +126,7 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        super(ParangWritingModule, self).__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir)
 
         self.m_data_port = self.add_input_port(data_tag)
 

@@ -75,7 +75,7 @@ class FakePlanetModule(ProcessingModule):
             None
         """
 
-        super(FakePlanetModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -269,7 +269,7 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
-        super(SimplexMinimizationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -637,7 +637,7 @@ class FalsePositiveModule(ProcessingModule):
             warnings.warn('The \'bounds\' keyword argument has been deprecated. Please use '
                           '\'offset\' instead (e.g. offset=3.0).', DeprecationWarning)
 
-        super(FalsePositiveModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_snr_out_port = self.add_output_port(snr_out_tag)
@@ -838,7 +838,7 @@ class MCMCsamplingModule(ProcessingModule):
         else:
             self.m_sigma = (1e-5, 1e-3, 1e-3)
 
-        super(MCMCsamplingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -1060,7 +1060,7 @@ class AperturePhotometryModule(ProcessingModule):
             None
         """
 
-        super(AperturePhotometryModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_phot_out_port = self.add_output_port(phot_out_tag)
@@ -1210,7 +1210,7 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
-        super(SystematicErrorModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_tag = image_in_tag
         self.m_psf_in_tag = psf_in_tag

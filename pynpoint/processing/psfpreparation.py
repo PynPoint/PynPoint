@@ -67,7 +67,7 @@ class PSFpreparationModule(ProcessingModule):
             None
         """
 
-        super(PSFpreparationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -227,7 +227,7 @@ class AngleInterpolationModule(ProcessingModule):
             None
         """
 
-        super(AngleInterpolationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_data_in_port = self.add_input_port(data_tag)
         self.m_data_out_port = self.add_output_port(data_tag)
@@ -316,7 +316,7 @@ class SortParangModule(ProcessingModule):
             None
         """
 
-        super(SortParangModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -423,7 +423,7 @@ class AngleCalculationModule(ProcessingModule):
             None
         """
 
-        super(AngleCalculationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         # Parameters
         self.m_instrument = instrument
@@ -673,7 +673,7 @@ class SDIpreparationModule(ProcessingModule):
             None
         """
 
-        super(SDIpreparationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

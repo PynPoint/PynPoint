@@ -1,14 +1,14 @@
 import os
 
-import pytest
 import numpy as np
+import pytest
 
 from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
-from pynpoint.processing.background import MeanBackgroundSubtractionModule, \
-                                           SimpleBackgroundSubtractionModule, \
-                                           LineSubtractionModule, \
-                                           NoddingBackgroundModule
+from pynpoint.processing.background import LineSubtractionModule, \
+                                           MeanBackgroundSubtractionModule, \
+                                           NoddingBackgroundModule, \
+                                           SimpleBackgroundSubtractionModule
 from pynpoint.processing.pcabackground import DitheringBackgroundModule
 from pynpoint.processing.stacksubset import StackCubesModule
 from pynpoint.util.tests import create_config, create_dither_data, create_star_data, \
@@ -123,11 +123,7 @@ class TestBackground:
                                            gaussian=0.05,
                                            subframe=0.1,
                                            pca_number=1,
-                                           mask_star=0.05,
-                                           crop=True,
-                                           prepare=True,
-                                           pca_background=True,
-                                           combine='pca')
+                                           mask_star=0.05)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('pca_dither1')
@@ -149,12 +145,11 @@ class TestBackground:
         assert data.shape == (15, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_fit1')
-        assert np.sum(data) == pytest.approx(-0.01019999314121019, rel=1e-5, abs=0.)
-        print(np.sum(data))
+        assert np.sum(data) == pytest.approx(-0.6816458444287745, rel=1e-5, abs=0.)
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_res1')
-        assert np.sum(data) == pytest.approx(54.884085831929795, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(55.63879076093719, rel=1e-6, abs=0.)
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('dither_dither_pca_mask1')
@@ -162,11 +157,11 @@ class TestBackground:
         assert data.shape == (5, 9, 9)
 
         data = self.pipeline.get_data('pca_dither1')
-        assert np.sum(data) == pytest.approx(208.774670964812, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(208.24417329569593, rel=1e-6, abs=0.)
         assert data.shape == (20, 9, 9)
 
         attr = self.pipeline.get_attribute('dither_dither_pca_res1', 'STAR_POSITION', static=False)
-        assert np.sum(attr) == pytest.approx(51., rel=self.limit, abs=0.)
+        assert np.sum(attr) == pytest.approx(40., rel=self.limit, abs=0.)
         assert attr.shape == (5, 2)
 
     def test_dithering_center(self) -> None:
@@ -174,23 +169,19 @@ class TestBackground:
         module = DitheringBackgroundModule(name_in='pca_dither2',
                                            image_in_tag='dither',
                                            image_out_tag='pca_dither2',
-                                           center=((5, 5), (5, 15), (15, 15), (15, 5)),
+                                           center=[(5, 5), (5, 15), (15, 15), (15, 5)],
                                            cubes=1,
                                            size=0.2,
                                            gaussian=0.05,
                                            subframe=None,
                                            pca_number=1,
-                                           mask_star=0.05,
-                                           crop=True,
-                                           prepare=True,
-                                           pca_background=True,
-                                           combine='pca')
+                                           mask_star=0.05)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('pca_dither2')
 
         data = self.pipeline.get_data('pca_dither2')
-        assert np.sum(data) == pytest.approx(209.8271898501695, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(208.24417332523367, rel=1e-6, abs=0.)
         assert data.shape == (20, 9, 9)
 
     def test_nodding_background(self) -> None:

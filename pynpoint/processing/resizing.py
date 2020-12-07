@@ -53,7 +53,7 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        super(CropImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -110,7 +110,7 @@ class CropImagesModule(ProcessingModule):
 
             # Update progress bar
             progress(i, len(frames[:-1]), 'Cropping images...', start_time)
-            
+
             # Select images in the current chunk
             if ndim == 3:
                 images = self.m_image_in_port[frames[i]:frames[i+1], ]
@@ -118,7 +118,7 @@ class CropImagesModule(ProcessingModule):
             elif ndim == 4:
                 # Process all wavelengths per exposure at once
                 images = self.m_image_in_port[:, i, ]
-            
+
             # crop images according to input parameters
             images = crop_image(images, self.m_center, self.m_size, copy=False)
 
@@ -172,7 +172,7 @@ class ScaleImagesModule(ProcessingModule):
             None
         """
 
-        super(ScaleImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in=name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -267,7 +267,7 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
-        super(AddLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -348,7 +348,7 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        super(RemoveLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

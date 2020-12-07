@@ -239,7 +239,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        super(BadPixelSigmaFilterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -377,7 +377,7 @@ class BadPixelMapModule(ProcessingModule):
             None
         """
 
-        super(BadPixelMapModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         if dark_in_tag is None:
             self.m_dark_port = None
@@ -488,7 +488,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             None
         """
 
-        super(BadPixelInterpolationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_bp_map_in_port = self.add_input_port(bad_pixel_map_tag)
@@ -569,7 +569,7 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        super(BadPixelTimeFilterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -663,7 +663,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
             None
         """
 
-        super(ReplaceBadPixelsModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_map_in_port = self.add_input_port(map_in_tag)
