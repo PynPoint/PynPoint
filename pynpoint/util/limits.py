@@ -11,7 +11,8 @@ import numpy as np
 from photutils import aperture_photometry, CircularAperture
 from typeguard import typechecked
 
-from pynpoint.util.analysis import student_t, fake_planet, false_alarm
+from pynpoint.util.analysis import student_t, fake_planet,\
+    compute_aperture_flux_elements
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
@@ -113,11 +114,14 @@ def contrast_limit(path_images: str,
     yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
     # Determine the noise level
-    _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                   x_pos=yx_fake[1],
-                                   y_pos=yx_fake[0],
-                                   size=aperture,
-                                   ignore=False)
+    noise_apertures = compute_aperture_flux_elements(image=noise[0, ],
+                                                     x_pos=yx_fake[1],
+                                                     y_pos=yx_fake[0],
+                                                     size=aperture,
+                                                     ignore=False)
+
+    t_noise = np.std(noise_apertures, ddof=1) * \
+              math.sqrt(1 + 1 / (noise_apertures.shape[0]))
 
     # Aperture properties
     im_center = center_subpixel(images)
@@ -146,19 +150,20 @@ def contrast_limit(path_images: str,
 
     # Stack the residuals
     im_res = combine_residuals(method=residuals, res_rot=im_res)
+    flux_out_frame = im_res[0, ] - noise[0, ]
 
-    # Measure the flux of the fake planet
-    flux_out, _, _, _ = false_alarm(image=im_res[0, ],
-                                    x_pos=yx_fake[1],
-                                    y_pos=yx_fake[0],
-                                    size=aperture,
-                                    ignore=False)
+    # Measure the flux of the fake planet after PCA
+    flux_out = compute_aperture_flux_elements(image=flux_out_frame,
+                                              x_pos=yx_fake[1],
+                                              y_pos=yx_fake[0],
+                                              size=aperture,
+                                              ignore=False)[0]
 
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
 
     # Calculate the detection limit
-    contrast = sigma*t_noise/(attenuation*star)
+    contrast = (sigma*t_noise + np.mean(noise_apertures))/(attenuation*star)
 
     # The flux_out can be negative, for example if the aperture includes self-subtraction regions
     if contrast > 0.:
@@ -166,5 +171,5 @@ def contrast_limit(path_images: str,
     else:
         contrast = np.nan
 
-    # Separation [pix], position antle [deg], contrast [mag], FPF
+    # Separation [pix], position angle [deg], contrast [mag], FPF
     return position[0], position[1], contrast, fpf
