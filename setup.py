@@ -2,11 +2,15 @@
 
 from setuptools import setup
 
-from pip._internal.network.session import PipSession
-from pip._internal.req import parse_requirements
+import pathlib
+import pkg_resources
 
-reqs = parse_requirements('requirements.txt', session=False)
-reqs = [str(req.requirement) for req in reqs]
+with pathlib.Path('requirements.txt').open() as requirements_txt:
+    install_requires = [
+        str(requirement)
+        for requirement
+        in pkg_resources.parse_requirements(requirements_txt)
+    ]
 
 setup(
     name='pynpoint',
@@ -24,7 +28,7 @@ setup(
               'pynpoint.processing',
               'pynpoint.util'],
     include_package_data=True,
-    install_requires=reqs,
+    install_requires=install_requires,
     license='GPLv3',
     zip_safe=False,
     keywords='pynpoint',
