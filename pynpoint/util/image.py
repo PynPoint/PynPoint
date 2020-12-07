@@ -267,12 +267,12 @@ def scale_image(image: np.ndarray,
 
     sum_before = np.sum(image)
 
-    im_scale = rescale(image=np.asarray(image, dtype=np.float64),
-                       scale=(scaling_y, scaling_x),
+    im_scale = rescale(image,
+                       (scaling_y, scaling_x),
                        order=5,
                        mode='reflect',
-                       anti_aliasing=True,
-                       multichannel=False)
+                       multichannel=False,
+                       anti_aliasing=True)
 
     sum_after = np.sum(im_scale)
 

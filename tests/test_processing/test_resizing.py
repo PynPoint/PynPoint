@@ -106,7 +106,9 @@ class TestResizing:
                                    image_out_tag='scale1')
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('scale1')
+
+        with pytest.warns(DeprecationWarning):
+            self.pipeline.run_module('scale1')
 
         module = ScaleImagesModule(scaling=(None, None, 2.),
                                    name_in='scale2',
@@ -114,7 +116,9 @@ class TestResizing:
                                    image_out_tag='scale2')
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('scale2')
+
+        with pytest.warns(DeprecationWarning):
+            self.pipeline.run_module('scale2')
 
         data = self.pipeline.get_data('scale1')
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)

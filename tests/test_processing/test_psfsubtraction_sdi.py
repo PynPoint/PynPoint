@@ -47,15 +47,19 @@ class TestPsfSubtractionSdi:
 
         processing_types = ['ADI', 'SDI+ADI', 'ADI+SDI']
 
-        expected = [[-0.176152493909826, -0.7938155399702668, 19.552033067005578, -0.21617058715490922],
-                    [-0.004568154679096975, -0.08621264803633322, 2.2901225325010888, -0.010269745733878437],
-                    [0.008630501634061892, -0.05776205365084376, -0.4285370289350482, 0.0058856438951644455]]
+        expected = [[-0.16718942968552664, -0.790697125718532, 19.507979777136892, -0.21617058715490922],
+                    [-0.001347198747121658, -0.08621264803633322, 2.3073192270025333, -0.010269745733878437],
+                    [0.009450917836998779, -0.05776205365084376, -0.43506678222476264, 0.0058856438951644455]]
 
         shape_expc = [(2, 3, 21, 21), (2, 2, 3, 21, 21), (1, 1, 3, 21, 21)]
 
         pca_numbers = [range(1, 3), (range(1, 3), range(1, 3)), ([1], [1])]
         
         res_arr_tags = [None, None, 'res_arr_single_sdi_ADI+SDI']
+
+        depr_warn = [False, True, True, False,
+                     False, False, False, False,
+                     False, False, False, False]
 
         for i, p_type in enumerate(processing_types):
 
@@ -74,7 +78,13 @@ class TestPsfSubtractionSdi:
                                              processing_type=p_type)
 
             self.pipeline.add_module(module)
-            self.pipeline.run_module('pca_single_sdi_'+p_type)
+
+            if depr_warn[i]:
+                with pytest.warns(DeprecationWarning):
+                    self.pipeline.run_module('pca_single_sdi_'+p_type)
+
+            else:
+                self.pipeline.run_module('pca_single_sdi_'+p_type)
 
             data = self.pipeline.get_data('res_mean_single_sdi_'+p_type)
             assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
@@ -105,8 +115,8 @@ class TestPsfSubtractionSdi:
 
         pca_numbers = [range(1, 3), (range(1, 3), range(1, 3))]
 
-        expected = [[-0.0044942456603888695, 0.02613693149969979, -0.15045543311096457, -0.008432530081399985],
-                    [-0.0094093643053501, -0.08171546066331437, 0.560810054788774, -0.014527353460544753]]
+        expected = [[-0.004159475403024583, 0.02613693149969979, -0.12940723035023394, -0.008432530081399985],
+                    [-0.006580571531064533, -0.08171546066331437, 0.5700432018961117, -0.014527353460544753]]
 
         shape_expc = [(2, 3, 21, 21), (2, 2, 3, 21, 21)]
 
