@@ -5,7 +5,7 @@ from setuptools import setup
 from pip._internal.network.session import PipSession
 from pip._internal.req import parse_requirements
 
-reqs = parse_requirements('requirements.txt', session=PipSession())
+reqs = parse_requirements('requirements.txt', session=False)
 reqs = [str(req.requirement) for req in reqs]
 
 setup(
