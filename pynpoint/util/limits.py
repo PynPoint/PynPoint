@@ -155,6 +155,7 @@ def contrast_limit(path_images: str,
     flux_out_frame = im_res[0, ] - noise[0, ]
 
     # Measure the flux of the fake planet after PCA
+    # the first element is the planet
     flux_out = compute_aperture_flux_elements(image=flux_out_frame,
                                               x_pos=yx_fake[1],
                                               y_pos=yx_fake[0],
