@@ -164,6 +164,9 @@ def contrast_limit(path_images: str,
 
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
+    # the throughput can not be negative. However, this can happen due to numerical inaccuracies
+    if attenuation < 0:
+        attenuation = 0
 
     # Calculate the detection limit
     contrast = (sigma*t_noise + np.mean(noise_apertures))/(attenuation*star)
