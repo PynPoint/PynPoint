@@ -7,6 +7,7 @@ import math
 from typing import Tuple
 
 import numpy as np
+from scipy.stats import t
 
 from photutils import aperture_photometry, CircularAperture
 from typeguard import typechecked
@@ -89,27 +90,6 @@ def contrast_limit(path_images: str,
     images = np.load(path_images)
     psf = np.load(path_psf)
 
-    if threshold[0] == 'sigma':
-        sigma = threshold[1]
-
-        # Calculate the FPF for a given sigma level
-        fpf = student_t(t_input=threshold,
-                        radius=position[0],
-                        size=aperture,
-                        ignore=False)
-
-    elif threshold[0] == 'fpf':
-        fpf = threshold[1]
-
-        # Calculate the sigma level for a given FPF
-        sigma = student_t(t_input=threshold,
-                          radius=position[0],
-                          size=aperture,
-                          ignore=False)
-
-    else:
-        raise ValueError('Threshold type not recognized.')
-
     # Cartesian coordinates of the fake planet
     yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
 
@@ -122,6 +102,28 @@ def contrast_limit(path_images: str,
 
     t_noise = np.std(noise_apertures, ddof=1) * \
               math.sqrt(1 + 1 / (noise_apertures.shape[0]))
+
+    # get sigma from fpf or fpf from sigma
+    # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
+    # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
+
+    if threshold[0] == 'sigma':
+        sigma = threshold[1]
+
+        # Calculate the FPF for a given sigma level
+
+        fpf = t.sf(sigma, noise_apertures.shape[0] - 1,
+                   loc=0., scale=1.)
+
+    elif threshold[0] == 'fpf':
+        fpf = threshold[1]
+
+        # Calculate the sigma level for a given FPF
+        sigma = t.isf(fpf, noise_apertures.shape[0] - 1,
+                      loc=0., scale=1.)
+
+    else:
+        raise ValueError('Threshold type not recognized.')
 
     # Aperture properties
     im_center = center_subpixel(images)
