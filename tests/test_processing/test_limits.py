@@ -87,7 +87,7 @@ class TestLimits:
             assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
             assert data[0, 1] == pytest.approx(2.6861078108299727, rel=self.limit, abs=0.)
             assert data[0, 2] == pytest.approx(0.0016669759086573189, rel=self.limit, abs=0.)
-            assert data[0, 3] == pytest.approx(0.00026866680137822624, rel=self.limit, abs=0.)
+            assert data[0, 3] == pytest.approx(0.00020126490906225968, rel=self.limit, abs=0.)
             assert data.shape == (1, 4)
 
     def test_contrast_curve_fpf(self) -> None:
@@ -114,7 +114,7 @@ class TestLimits:
 
         data = self.pipeline.get_data('limits_fpf')
         assert data[0, 0] == pytest.approx(0.2, rel=self.limit, abs=0.)
-        assert data[0, 1] == pytest.approx(1.914384766259448, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(2.000057185586676, rel=self.limit, abs=0.)
         assert data[0, 2] == pytest.approx(0.0016669759086572645, rel=self.limit, abs=0.)
         assert data[0, 3] == pytest.approx(1e-06, rel=self.limit, abs=0.)
         assert data.shape == (1, 4)
