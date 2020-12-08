@@ -296,8 +296,8 @@ class ContrastCurveModule(ProcessingModule):
 
         result = result.reshape((pos_r.size, pos_t.size, 4))
 
-        mag_mean = np.nanmean(result, axis=1)[:, 2]
-        mag_var = np.nanvar(result, axis=1)[:, 2]
+        mag_mean = np.mean(result[np.isfinite(result)], axis=1)[:, 2]
+        mag_var = np.nanvar(result[np.isfinite(result)], axis=1)[:, 2]
         res_fpf = result[:, 0, 3]
 
         limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
