@@ -149,7 +149,7 @@ class TestFluxPosition:
         self.pipeline.run_module('pca')
 
         data = self.pipeline.get_data('res_mean')
-        assert np.sum(data) == pytest.approx(0.015843543362863227, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.014757351752469366, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
     def test_false_positive(self) -> None:
@@ -219,10 +219,12 @@ class TestFluxPosition:
                                            offset=1.)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('simplex1')
+
+        with pytest.warns(DeprecationWarning):
+            self.pipeline.run_module('simplex1')
 
         data = self.pipeline.get_data('simplex_res')
-        assert np.sum(data) == pytest.approx(0.07149269966957492, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.07079158286664607, rel=self.limit, abs=0.)
         assert data.shape == (25, 21, 21)
 
         data = self.pipeline.get_data('flux_position')
@@ -258,7 +260,7 @@ class TestFluxPosition:
         self.pipeline.run_module('simplex2')
 
         data = self.pipeline.get_data('simplex_res_ref')
-        assert np.sum(data) == pytest.approx(9.91226137018148, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(9.914746160040783, rel=self.limit, abs=0.)
         assert data.shape == (28, 21, 21)
 
         data = self.pipeline.get_data('flux_position_ref')
@@ -305,12 +307,8 @@ class TestFluxPosition:
                                     sigma=(1e-3, 1e-1, 1e-2))
 
         self.pipeline.add_module(module)
-
-        # with pytest.warns(RuntimeWarning) as warning:
         self.pipeline.run_module('mcmc')
 
-        # assert len(warning) == 5
-        #
         # data = self.pipeline.get_data('mcmc')
         # assert data.shape == (5, 6, 3)
 

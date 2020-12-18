@@ -100,7 +100,9 @@ class TestCentering:
                                      subframe=None)
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('align1')
+
+        with pytest.warns(DeprecationWarning):
+            self.pipeline.run_module('align1')
 
         data = self.pipeline.get_data('align1')
         assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)

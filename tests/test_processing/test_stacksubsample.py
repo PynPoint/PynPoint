@@ -205,7 +205,7 @@ class TestStackSubset:
         self.pipeline.run_module('derotate_ifs1')
 
         data = self.pipeline.get_data('derotate_ifs1')
-        assert np.mean(data) == pytest.approx(0.18845004012199226, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.1884438996655355, rel=self.limit, abs=0.)
         assert data.shape == (3, 1, 21, 21)
 
         module = DerotateAndStackModule(name_in='derotate_ifs2',
@@ -235,7 +235,7 @@ class TestStackSubset:
         self.pipeline.run_module('derotate_ifs3')
 
         data = self.pipeline.get_data('derotate_ifs3')
-        assert np.mean(data) == pytest.approx(0.056535012036597686, rel=self.limit, abs=0.)
+        assert np.mean(data) == pytest.approx(0.05653316989966066, rel=self.limit, abs=0.)
         assert data.shape == (3, 10, 21, 21)
 
     def test_combine_tags(self) -> None:
