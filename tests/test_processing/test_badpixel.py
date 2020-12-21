@@ -51,14 +51,14 @@ class TestBadPixel:
                                            image_out_tag='sigma1',
                                            map_out_tag='None',
                                            box=9,
-                                           sigma=5.,
-                                           iterate=1)
+                                           sigma=3.,
+                                           iterate=5)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('sigma1')
 
         data = self.pipeline.get_data('sigma1')
-        assert np.sum(data) == pytest.approx(0.007314386854009355, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.006513475520308432, rel=self.limit, abs=0.)
         assert data.shape == (5, 11, 11)
 
     def test_bad_pixel_map_out(self) -> None:
@@ -68,22 +68,22 @@ class TestBadPixel:
                                            image_out_tag='sigma2',
                                            map_out_tag='bpmap',
                                            box=9,
-                                           sigma=5.,
-                                           iterate=1)
+                                           sigma=2.,
+                                           iterate=3)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('sigma2')
 
         data = self.pipeline.get_data('sigma2')
-        assert data[0, 0, 0] == pytest.approx(0.00032486907273264834, rel=self.limit, abs=0.)
+        assert data[0, 0, 0] == pytest.approx(-2.4570591355257687e-05, rel=self.limit, abs=0.)
         assert data[0, 5, 5] == pytest.approx(9.903775276151606e-06, rel=self.limit, abs=0.)
-        assert np.sum(data) == pytest.approx(0.007314386854009355, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.011777887008566097, rel=self.limit, abs=0.)
         assert data.shape == (5, 11, 11)
 
         data = self.pipeline.get_data('bpmap')
-        assert data[0, 0, 0] == pytest.approx(1., rel=self.limit, abs=0.)
+        assert data[0, 1, 1] == pytest.approx(1., rel=self.limit, abs=0.)
         assert data[0, 5, 5] == pytest.approx(0., rel=self.limit, abs=0.)
-        assert np.sum(data) == pytest.approx(604., rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(519.0, rel=self.limit, abs=0.)
         assert data.shape == (5, 11, 11)
 
     def test_bad_pixel_map(self) -> None:
