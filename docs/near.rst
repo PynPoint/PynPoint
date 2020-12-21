@@ -446,7 +446,7 @@ Or to plot the detection limits with the error bars showing the variance of the 
 
 .. |bash| raw:: html
 
-   <a href="https://people.phys.ethz.ch/~stolkert/pynpoint/near_files.sh" target="_blank">Bash script</a>
+   <a href="https://home.strw.leidenuniv.nl/~stolker/pynpoint/near_files.sh" target="_blank">Bash script</a>
 
 .. |ds9| raw:: html
 

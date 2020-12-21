@@ -219,9 +219,7 @@ class TestFluxPosition:
                                            offset=1.)
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(DeprecationWarning):
-            self.pipeline.run_module('simplex1')
+        self.pipeline.run_module('simplex1')
 
         data = self.pipeline.get_data('simplex_res')
         assert np.sum(data) == pytest.approx(0.07079158286664607, rel=self.limit, abs=0.)

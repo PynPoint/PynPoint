@@ -3,7 +3,6 @@ Pipeline modules for locating and extracting the position of a star.
 """
 
 import math
-import warnings
 
 from typing import Optional, Tuple, Union
 
@@ -12,8 +11,8 @@ import numpy as np
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, center_pixel, rotate_coordinates
-from pynpoint.util.star import locate_star
+from pynpoint.util.apply_func import crop_around_star, crop_rotating_star
+from pynpoint.util.image import rotate_coordinates
 
 
 class StarExtractionModule(ProcessingModule):
@@ -79,8 +78,6 @@ class StarExtractionModule(ProcessingModule):
         self.m_fwhm_star = fwhm_star
         self.m_position = position
 
-        self.m_count = 0
-
     @typechecked
     def run(self) -> None:
         """
@@ -110,61 +107,17 @@ class StarExtractionModule(ProcessingModule):
         star = []
         index = []
 
-        @typechecked
-        def _crop_around_star(image: np.ndarray,
-                              position: Optional[Union[Tuple[int, int, float],
-                                                       Tuple[None, None, float]]],
-                              im_size: int,
-                              fwhm: int) -> np.ndarray:
-
-            if position is None:
-                center = None
-                width = None
-
-            else:
-                if position[0] is None and position[1] is None:
-                    center = None
-                else:
-                    center = (position[1], position[0])  # (y, x)
-
-                width = int(math.ceil(position[2]/pixscale))
-
-            starpos = locate_star(image, center, width, fwhm)
-
-            try:
-                im_crop = crop_image(image, tuple(starpos), im_size)
-
-            except ValueError:
-                if cpu == 1:
-                    warnings.warn(f'Chosen image size is too large to crop the image around the '
-                                  f'brightest pixel (image index = {self.m_count}, pixel [x, y] '
-                                  f'= [{starpos[0]}, {starpos[1]}]). Using the center of the '
-                                  f'image instead.')
-
-                    index.append(self.m_count)
-
-                else:
-                    warnings.warn('Chosen image size is too large to crop the image around the '
-                                  'brightest pixel. Using the center of the image instead.')
-
-                starpos = center_pixel(image)
-                im_crop = crop_image(image, tuple(starpos), im_size)
-
-            if cpu == 1:
-                star.append((starpos[1], starpos[0]))
-                self.m_count += 1
-
-            return im_crop
-
-        self.apply_function_to_images(_crop_around_star,
+        self.apply_function_to_images(crop_around_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Extracting stellar position',
                                       func_args=(self.m_position,
                                                  self.m_image_size,
-                                                 self.m_fwhm_star))
+                                                 self.m_fwhm_star,
+                                                 pixscale,
+                                                 cpu))
 
-        history = f'fwhm_star [pix] = {self.m_fwhm_star}'
+        history = f'fwhm_star (pix) = {self.m_fwhm_star}'
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(index, data_dim=1)
@@ -272,30 +225,16 @@ class ExtractBinaryModule(ProcessingModule):
         if self.m_filter_size is not None:
             self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
 
-        @typechecked
-        def _crop_rotating_star(image: np.ndarray,
-                                position: Union[Tuple[float, float], np.ndarray],
-                                im_size: int,
-                                filter_size: Optional[int]) -> np.ndarray:
-
-            starpos = locate_star(image=image,
-                                  center=tuple(position),
-                                  width=self.m_search_size,
-                                  fwhm=filter_size)
-
-            return crop_image(image=image,
-                              center=tuple(starpos),
-                              size=im_size)
-
-        self.apply_function_to_images(_crop_rotating_star,
+        self.apply_function_to_images(crop_rotating_star,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Extracting binary position',
                                       func_args=(positions,
                                                  self.m_image_size,
-                                                 self.m_filter_size))
+                                                 self.m_filter_size,
+                                                 self.m_search_size))
 
-        history = f'filter [pix] = {self.m_filter_size}'
+        history = f'filter (pix) = {self.m_filter_size}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('ExtractBinaryModule', history)
         self.m_image_out_port.close_port()

@@ -302,9 +302,7 @@ class TestPsfPreparation:
                                       image_out_tag='sdi')
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(DeprecationWarning):
-            self.pipeline.run_module('sdi')
+        self.pipeline.run_module('sdi')
 
         data = self.pipeline.get_data('sdi')
         assert np.sum(data) == pytest.approx(21.084666133914183, rel=self.limit, abs=0.)

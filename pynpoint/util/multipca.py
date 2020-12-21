@@ -176,7 +176,6 @@ class PcaTaskProcessor(TaskProcessor):
                                            indices=self.m_indices,
                                            processing_type=self.m_processing_type)
 
-
         # differentiate between IFS data or Mono-Wavelength data
         if res_rot.ndim == 3:
             res_output = np.zeros((4, res_rot.shape[-2], res_rot.shape[-1]))

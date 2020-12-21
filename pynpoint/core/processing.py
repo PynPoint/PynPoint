@@ -614,9 +614,11 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             # process images in parallel in stacks of MEMORY/CPU images
             print(message, end='')
 
+            args = update_arguments(0, nimages, func_args)
+
             result = apply_function(tmp_data=image_in_port[0, :, :],
                                     func=func,
-                                    func_args=update_arguments(0, nimages, func_args))
+                                    func_args=args)
 
             result_shape = result.shape
 

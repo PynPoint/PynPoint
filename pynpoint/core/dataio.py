@@ -900,8 +900,10 @@ class OutputPort(Port):
 
             if data_dim == 2:
                 data = data[np.newaxis, :]
+
             elif data_dim == 3:
                 data = data[np.newaxis, :, :]
+
             elif data_dim == 4:
                 data = data[:, np.newaxis, :, :]
 
