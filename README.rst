@@ -3,29 +3,26 @@ PynPoint
 
 **Pipeline for processing and analysis of high-contrast imaging data**
 
-.. image:: https://badge.fury.io/py/pynpoint.svg
-    :target: https://pypi.python.org/pypi/pynpoint
+.. image:: https://img.shields.io/pypi/v/pynpoint
+   :target: https://pypi.python.org/pypi/pynpoint
 
-.. image:: https://img.shields.io/badge/Python-3.6%2C%203.7%2C%203.8-yellow.svg?style=flat
-    :target: https://pypi.python.org/pypi/pynpoint
+.. image:: https://img.shields.io/pypi/pyversions/pynpoint
+   :target: https://pypi.python.org/pypi/pynpoint
 
-.. image:: https://travis-ci.org/PynPoint/PynPoint.svg?branch=master
-    :target: https://travis-ci.org/PynPoint/PynPoint
+.. image:: https://img.shields.io/travis/pynpoint/pynpoint
+   :target: https://travis-ci.org/PynPoint/PynPoint
 
-.. image:: https://readthedocs.org/projects/pynpoint/badge/?version=latest
-    :target: http://pynpoint.readthedocs.io/en/latest/?badge=latest
+.. image:: https://img.shields.io/readthedocs/pynpoint
+   :target: http://pynpoint.readthedocs.io
 
-.. image:: https://coveralls.io/repos/github/PynPoint/PynPoint/badge.svg?branch=master
-    :target: https://coveralls.io/github/PynPoint/PynPoint?branch=master
+.. image:: https://img.shields.io/coveralls/github/PynPoint/PynPoint
+   :target: https://coveralls.io/github/PynPoint/PynPoint
 
-.. image:: https://www.codefactor.io/repository/github/pynpoint/pynpoint/badge
-    :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
+.. image:: https://img.shields.io/codefactor/grade/github/PynPoint/PynPoint
+   :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
 
-.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
-    :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
-
-.. image:: http://img.shields.io/badge/arXiv-1811.03336-orange.svg?style=flat
-    :target: http://arxiv.org/abs/1811.03336
+.. image:: https://img.shields.io/github/license/pynpoint/pynpoint
+   :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
 
 PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
 
