@@ -546,7 +546,7 @@ class DitheringBackgroundModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 center: Optional[Union[List[Tuple[int, int]], Tuple[Tuple[int, int]]]] = None,
+                 center: Optional[List[Tuple[int, int]]] = None,
                  cubes: Optional[int] = None,
                  size: float = 2.,
                  gaussian: float = 0.15,

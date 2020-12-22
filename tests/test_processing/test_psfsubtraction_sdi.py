@@ -60,10 +60,6 @@ class TestPsfSubtractionSdi:
 
         res_arr_tags = [None, None, 'res_arr_single_sdi_ADI+SDI']
 
-        depr_warn = [False, True, True, False,
-                     False, False, False, False,
-                     False, False, False, False]
-
         for i, p_type in enumerate(processing_types):
 
             module = PcaPsfSubtractionModule(pca_numbers=pca_numbers[i],
@@ -81,13 +77,7 @@ class TestPsfSubtractionSdi:
                                              processing_type=p_type)
 
             self.pipeline.add_module(module)
-
-            if depr_warn[i]:
-                with pytest.warns(DeprecationWarning):
-                    self.pipeline.run_module('pca_single_sdi_'+p_type)
-
-            else:
-                self.pipeline.run_module('pca_single_sdi_'+p_type)
+            self.pipeline.run_module('pca_single_sdi_'+p_type)
 
             data = self.pipeline.get_data('res_mean_single_sdi_'+p_type)
             assert np.sum(data) == pytest.approx(expected[i][0], rel=self.limit, abs=0.)
