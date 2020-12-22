@@ -89,11 +89,11 @@ class BadPixelSigmaFilterModule(ProcessingModule):
 
         cpu = self._m_config_port.get_attribute('CPU')
 
-        if cpu > 1:
-            if self.m_map_out_port is not None:
-                warnings.warn('The map_out_port can only be used if CPU = 1. No data will be '
-                              'stored to this output port.')
+        if cpu > 1 and self.m_map_out_port is not None:
+            warnings.warn('The \'map_out_port\' can only be used if CPU = 1. No data will '
+                          'be stored to this output port.')
 
+            del self._m_output_ports[self.m_map_out_port.tag]
             self.m_map_out_port = None
 
         self.apply_function_to_images(bad_pixel_sigma_filter,

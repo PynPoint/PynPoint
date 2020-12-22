@@ -1,5 +1,11 @@
 """
-Functions for PSF subtraction.
+Functions that are executed with
+:func:`~pynpoint.core.processing.ProcessingModule.apply_function_to_images` and
+:func:`~pynpoint.core.processing.ProcessingModule.apply_function_in_time`. The functions are placed
+here such that they are pickable by the multiprocessing functionalities. The first two parameters
+are always the sliced data and the index in the dataset.
+
+TODO Docstrings are missing for most of the functions.
 """
 
 import copy
@@ -15,13 +21,14 @@ import pywt
 from numba import jit
 from photutils import aperture_photometry
 from photutils.aperture import Aperture
+from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import curve_fit
 from skimage.registration import phase_cross_correlation
 from skimage.transform import rescale
 from statsmodels.robust import mad
 from typeguard import typechecked
 
-from pynpoint.core.dataio import OutputPort
+from pynpoint.core.dataio import InputPort, OutputPort
 from pynpoint.util.image import center_pixel, crop_image, scale_image, shift_image
 from pynpoint.util.star import locate_star
 from pynpoint.util.wavelets import WaveletAnalysisCapsule
@@ -29,6 +36,7 @@ from pynpoint.util.wavelets import WaveletAnalysisCapsule
 
 @typechecked
 def image_scaling(image_in: np.ndarray,
+                  im_index: int,
                   scaling_y: float,
                   scaling_x: float,
                   scaling_flux: float) -> np.ndarray:
@@ -38,6 +46,7 @@ def image_scaling(image_in: np.ndarray,
 
 @typechecked
 def subtract_line(image_in: np.ndarray,
+                  im_index: int,
                   mask: np.ndarray,
                   combine: str,
                   im_shape: Tuple[int, int]) -> np.ndarray:
@@ -70,6 +79,7 @@ def subtract_line(image_in: np.ndarray,
 
 @typechecked
 def align_image(image_in: np.ndarray,
+                im_index: int,
                 interpolation: str,
                 accuracy: float,
                 resize: Optional[float],
@@ -126,15 +136,16 @@ def align_image(image_in: np.ndarray,
 
 @typechecked
 def fit_2d_function(image: np.ndarray,
+                    im_index: int,
                     radius: float,
                     sign: str,
                     model: str,
-                    filter_size,
-                    model_func,
-                    guess,
-                    mask_out_port,
-                    xx_grid,
-                    yy_grid,
+                    filter_size: Optional[float],
+                    guess: Union[Tuple[float, float, float, float, float, float, float],
+                                 Tuple[float, float, float, float, float, float, float, float]],
+                    mask_out_port: Optional[OutputPort],
+                    xx_grid: np.ndarray,
+                    yy_grid: np.ndarray,
                     rr_ap: np.ndarray,
                     pixscale: float) -> np.ndarray:
 
@@ -327,8 +338,7 @@ def fit_2d_function(image: np.ndarray,
             popt = np.zeros(8)
             perr = np.zeros(8)
 
-        # TODO Add warning with image index
-        # print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
+        print(f'Fit could not converge on image number {im_index}. [WARNING]')
 
     if model == 'gaussian':
 
@@ -356,12 +366,14 @@ def fit_2d_function(image: np.ndarray,
 
 @typechecked
 def crop_around_star(image: np.ndarray,
+                     im_index: int,
                      position: Optional[Union[Tuple[int, int, float],
                                               Tuple[None, None, float]]],
                      im_size: int,
                      fwhm: int,
                      pixscale: float,
-                     cpu: int) -> np.ndarray:
+                     index_out_port: Optional[OutputPort],
+                     image_out_port: OutputPort) -> np.ndarray:
 
     if position is None:
         center = None
@@ -381,33 +393,23 @@ def crop_around_star(image: np.ndarray,
         im_crop = crop_image(image, tuple(starpos), im_size)
 
     except ValueError:
-        # if cpu == 1:
-        #     warnings.warn(f'Chosen image size is too large to crop the image around the '
-        #                   f'brightest pixel (image index = {self.m_count}, pixel [x, y] '
-        #                   f'= [{starpos[0]}, {starpos[1]}]). Using the center of the '
-        #                   f'image instead.')
-        #
-        #     index.append(self.m_count)
-        #
-        # else:
-        #     warnings.warn('Chosen image size is too large to crop the image around the '
-        #                   'brightest pixel. Using the center of the image instead.')
+        warnings.warn(f'Chosen image size is too large to crop the image around the '
+                      f'brightest pixel (image index = {im_index}, pixel [x, y] '
+                      f'= [{starpos[0]}, {starpos[1]}]). Using the center of the '
+                      f'image instead.')
 
-        warnings.warn('Chosen image size is too large to crop the image around the '
-                      'brightest pixel. Using the center of the image instead.')
+        if index_out_port is not None:
+            index_out_port.append(im_index, data_dim=1)
 
         starpos = center_pixel(image)
         im_crop = crop_image(image, tuple(starpos), im_size)
-
-    # if cpu == 1:
-    #     star.append((starpos[1], starpos[0]))
-    #     self.m_count += 1
 
     return im_crop
 
 
 @typechecked
 def crop_rotating_star(image: np.ndarray,
+                       im_index: int,
                        position: Union[Tuple[float, float], np.ndarray],
                        im_size: int,
                        filter_size: Optional[int],
@@ -425,6 +427,7 @@ def crop_rotating_star(image: np.ndarray,
 
 @typechecked
 def photometry(image: np.ndarray,
+               im_index: int,
                aperture: Union[Aperture, List[Aperture]]) -> np.float64:
     # https://photutils.readthedocs.io/en/stable/overview.html
     # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
@@ -437,6 +440,7 @@ def photometry(image: np.ndarray,
 
 @typechecked
 def image_stat(image_in: np.ndarray,
+               im_index: int,
                indices: Optional[np.ndarray]) -> np.ndarray:
 
     if indices is None:
@@ -458,14 +462,14 @@ def image_stat(image_in: np.ndarray,
 
 @typechecked
 def subtract_psf(image: np.ndarray,
+                 im_index: int,
                  parang_thres: Optional[float],
                  nref: Optional[int],
                  reference: Optional[np.ndarray],
-                 image_in_port) -> np.ndarray:
+                 ang_diff: np.ndarray,
+                 image_in_port: InputPort) -> np.ndarray:
 
     if parang_thres:
-        # TODO Use image index
-        ang_diff = np.abs(parang[self.m_count]-parang)
         index_thres = np.where(ang_diff > parang_thres)[0]
 
         if index_thres.size == 0:
@@ -476,8 +480,7 @@ def subtract_psf(image: np.ndarray,
 
         else:
             if nref:
-                # TODO Use image index
-                index_diff = np.abs(self.m_count - index_thres)
+                index_diff = np.abs(im_index - index_thres)
                 index_near = np.argsort(index_diff)[:nref]
                 index_sort = np.sort(index_thres[index_near])
 
@@ -493,6 +496,7 @@ def subtract_psf(image: np.ndarray,
 
 @typechecked
 def dwt_denoise_line_in_time(signal_in: np.ndarray,
+                             im_index: int,
                              threshold_function: bool,
                              padding: str,
                              wavelet_conf) -> np.ndarray:
@@ -530,6 +534,7 @@ def dwt_denoise_line_in_time(signal_in: np.ndarray,
 
 @typechecked
 def cwt_denoise_line_in_time(signal_in: np.ndarray,
+                             im_index: int,
                              threshold_function: bool,
                              padding: str,
                              median_filter: bool,
@@ -567,12 +572,15 @@ def cwt_denoise_line_in_time(signal_in: np.ndarray,
 
 
 @typechecked
-def normalization(image_in: np.ndarray) -> np.ndarray:
+def normalization(image_in: np.ndarray,
+                  im_index: int) -> np.ndarray:
+
     return image_in - np.median(image_in)
 
 
 @typechecked
 def time_filter(timeline: np.ndarray,
+                im_index: int,
                 sigma: Tuple[float, float]) -> np.ndarray:
 
     median = np.median(timeline)
@@ -723,8 +731,9 @@ def bad_pixel_interpolation(image_in: np.ndarray,
 
 @typechecked
 def image_interpolation(image_in: np.ndarray,
+                        im_index: int,
                         iterations: int,
-                        bad_pixel_map) -> np.ndarray:
+                        bad_pixel_map: np.ndarray) -> np.ndarray:
 
     return bad_pixel_interpolation(image_in,
                                    bad_pixel_map,
@@ -733,6 +742,7 @@ def image_interpolation(image_in: np.ndarray,
 
 @typechecked
 def replace_pixels(image: np.ndarray,
+                   im_index: int,
                    index: np.ndarray,
                    size: int,
                    replace: str) -> np.ndarray:
@@ -762,39 +772,6 @@ def replace_pixels(image: np.ndarray,
     return im_mask
 
 
-# @jit(cache=True)
-# def _sigma_detection(dev_image,
-#                      var_image,
-#                      source_image,
-#                      out_image):
-#     """
-#     Internal function to create a map with ones and zeros.
-#
-#     Parameters
-#     ----------
-#     dev_image : np.ndarray
-#         Image of pixel deviations from neighborhood means, squared.
-#     var_image : np.ndarray
-#         Image of pixel neighborhood variances * (N_sigma)^2.
-#     source_image : np.ndarray
-#         Input image.
-#     out_image : np.ndarray
-#         Bad pixel map.
-#
-#     Returns
-#     -------
-#     NoneType
-#         None
-#     """
-#
-#     for i in range(source_image.shape[0]):
-#         for j in range(source_image.shape[1]):
-#             if dev_image[i][j] < var_image[i][j]:
-#                 out_image[i][j] = 1
-#             else:
-#                 out_image[i][j] = 0
-
-
 # This function cannot by @typechecked because of a compatibility issue with numba
 @jit(cache=True)
 def sigma_filter(dev_image: np.ndarray,
@@ -819,6 +796,7 @@ def sigma_filter(dev_image: np.ndarray,
 
 @typechecked
 def bad_pixel_sigma_filter(image_in: np.ndarray,
+                           im_index: int,
                            box: int,
                            sigma: float,
                            iterate: int,
@@ -877,3 +855,12 @@ def bad_pixel_sigma_filter(image_in: np.ndarray,
         map_out_port.append(bad_pixel_map, data_dim=3)
 
     return out_image
+
+
+@typechecked
+def apply_shift(image_in: np.ndarray,
+                im_index: int,
+                shift: Union[Tuple[float, float], np.ndarray],
+                interpolation: str) -> np.ndarray:
+
+    return shift_image(image_in, shift, interpolation)

@@ -72,21 +72,21 @@ class TestExtract:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract1')
 
-        assert len(warning) == 2
+        assert len(warning) == 3
 
-        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'index\' is empty.'
+        assert warning[0].message.args[0] == 'Can not store the attribute \'INSTRUMENT\' because ' \
+                                             'the dataset \'index\' does not exist.'
 
-        assert warning[1].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'header_extract1/STAR_POSITION\' is empty.'
+        assert warning[1].message.args[0] == 'Can not store the attribute \'PIXSCALE\' because ' \
+                                             'the dataset \'index\' does not exist.'
+
+        assert warning[2].message.args[0] == 'Can not store the attribute \'History: ' \
+                                             'StarExtractionModule\' because the dataset ' \
+                                             '\'index\' does not exist.'
 
         data = self.pipeline.get_data('extract1')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        # attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
-        # assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        # assert attr.shape == (10, 2)
 
     def test_extract_center_none(self) -> None:
 
@@ -103,21 +103,21 @@ class TestExtract:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract2')
 
-        assert len(warning) == 2
+        assert len(warning) == 3
 
-        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'index\' is empty.'
+        assert warning[0].message.args[0] == 'Can not store the attribute \'INSTRUMENT\' because ' \
+                                             'the dataset \'index\' does not exist.'
 
-        assert warning[1].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'header_extract2/STAR_POSITION\' is empty.'
+        assert warning[1].message.args[0] == 'Can not store the attribute \'PIXSCALE\' because ' \
+                                             'the dataset \'index\' does not exist.'
+
+        assert warning[2].message.args[0] == 'Can not store the attribute \'History: ' \
+                                             'StarExtractionModule\' because the dataset ' \
+                                             '\'index\' does not exist.'
 
         data = self.pipeline.get_data('extract2')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        # attr = self.pipeline.get_attribute('extract2', 'STAR_POSITION', static=False)
-        # assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        # assert attr.shape == (10, 2)
 
     def test_extract_position(self) -> None:
 
@@ -130,22 +130,11 @@ class TestExtract:
                                       position=(5, 5, 0.2))
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(UserWarning) as warning:
-            self.pipeline.run_module('extract7')
-
-        assert len(warning) == 1
-
-        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'header_extract7/STAR_POSITION\' is empty.'
+        self.pipeline.run_module('extract7')
 
         data = self.pipeline.get_data('extract7')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        # attr = self.pipeline.get_attribute('extract7', 'STAR_POSITION', static=False)
-        # assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        # assert attr.shape == (10, 2)
 
     def test_extract_too_large(self) -> None:
 
@@ -162,24 +151,16 @@ class TestExtract:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract3')
 
-        assert len(warning) == 11
+        assert len(warning) == 10
 
-        # assert warning[0].message.args[0] == f'Chosen image size is too large to crop the image ' \
-        #                                      f'around the brightest pixel (image index = 0, ' \
-        #                                      f'pixel [x, y] = [2, 2]). Using the center of ' \
-        #                                      f'the image instead.'
-
-        # assert warning[0].message.args[0] == 'Chosen image size is too large to crop the image ' \
-        #                                      'brightest pixel. Using the center of the image ' \
-        #                                      'instead.'
+        assert warning[0].message.args[0] == f'Chosen image size is too large to crop the image ' \
+                                             f'around the brightest pixel (image index = 0, ' \
+                                             f'pixel [x, y] = [2, 2]). Using the center of ' \
+                                             f'the image instead.'
 
         data = self.pipeline.get_data('extract3')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        # attr = self.pipeline.get_attribute('extract3', 'STAR_POSITION', static=False)
-        # assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        # assert attr.shape == (10, 2)
 
     def test_star_extract_cpu(self) -> None:
 
@@ -199,11 +180,15 @@ class TestExtract:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract4')
 
-        assert len(warning) == 1
+        assert len(warning) == 2
 
-        assert warning[0].message.args[0] == 'Chosen image size is too large to crop the image ' \
-                                             'around the brightest pixel. Using the center of ' \
-                                             'the image instead.'
+        assert warning[0].message.args[0] == 'The \'index_out_port\' can only be used if ' \
+                                             'CPU = 1. No data will be stored to this output port.'
+
+        assert warning[1].message.args[0] == 'Chosen image size is too large to crop the image ' \
+                                             'around the brightest pixel (image index = 0, ' \
+                                             'pixel [x, y] = [2, 2]). Using the center of the ' \
+                                             'image instead.'
 
     def test_extract_binary(self) -> None:
 

@@ -149,7 +149,7 @@ class ScaleImagesModule(ProcessingModule):
                  scaling: Union[Tuple[float, float, float],
                                 Tuple[None, None, float],
                                 Tuple[float, float, None]],
-                 pixscale: bool = False) -> None:
+                 pixscale: bool = True) -> None:
         """
         Parameters
         ----------
@@ -159,7 +159,7 @@ class ScaleImagesModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            ``image_in_tag``.
         scaling : tuple(float, float, float)
             Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
             scaling_flux). Upsampling and downsampling of the image corresponds to

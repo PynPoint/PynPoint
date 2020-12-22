@@ -3,6 +3,7 @@ Pipeline modules for locating and extracting the position of a star.
 """
 
 import math
+import warnings
 
 from typing import Optional, Tuple, Union
 
@@ -84,9 +85,7 @@ class StarExtractionModule(ProcessingModule):
         Run method of the module. Locates the position of the star (only pixel precision) by
         selecting the highest pixel value. A Gaussian kernel with a FWHM similar to the PSF is
         used to lower the contribution of bad pixels which may have higher values than the peak
-        of the PSF. Images are cropped and written to an output port. The position of the star
-        is attached to the input images (only with ``CPU == 1``) as the non-static attribute
-        ``STAR_POSITION`` (y, x).
+        of the PSF. Images are cropped and written to an output port.
 
         Returns
         -------
@@ -96,16 +95,17 @@ class StarExtractionModule(ProcessingModule):
 
         cpu = self._m_config_port.get_attribute('CPU')
 
-        if cpu > 1:
+        if cpu > 1 and self.m_index_out_port is not None:
+            warnings.warn('The \'index_out_port\' can only be used if CPU = 1. No data will '
+                          'be stored to this output port.')
+
+            del self._m_output_ports[self.m_index_out_port.tag]
             self.m_index_out_port = None
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
         self.m_fwhm_star = int(math.ceil(self.m_fwhm_star/pixscale))
-
-        star = []
-        index = []
 
         self.apply_function_to_images(crop_around_star,
                                       self.m_image_in_port,
@@ -115,20 +115,17 @@ class StarExtractionModule(ProcessingModule):
                                                  self.m_image_size,
                                                  self.m_fwhm_star,
                                                  pixscale,
-                                                 cpu))
+                                                 self.m_index_out_port,
+                                                 self.m_image_out_port))
 
         history = f'fwhm_star (pix) = {self.m_fwhm_star}'
 
         if self.m_index_out_port is not None:
-            self.m_index_out_port.set_all(index, data_dim=1)
             self.m_index_out_port.copy_attributes(self.m_image_in_port)
             self.m_index_out_port.add_history('StarExtractionModule', history)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('StarExtractionModule', history)
-
-        if cpu == 1:
-            self.m_image_out_port.add_attribute('STAR_POSITION', np.asarray(star), static=False)
 
         self.m_image_out_port.close_port()
 

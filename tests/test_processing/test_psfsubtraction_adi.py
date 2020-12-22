@@ -110,27 +110,27 @@ class TestPsfSubtractionAdi:
         assert np.sum(data) == pytest.approx(0.08395606034388256, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
-    # def test_classical_adi_threshold(self) -> None:
-    #
-    #     module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
-    #                                 nreference=5,
-    #                                 residuals='median',
-    #                                 extra_rot=0.,
-    #                                 name_in='cadi2',
-    #                                 image_in_tag='science_prep',
-    #                                 res_out_tag='cadi_res',
-    #                                 stack_out_tag='cadi_stack')
-    #
-    #     self.pipeline.add_module(module)
-    #     self.pipeline.run_module('cadi2')
-    #
-    #     data = self.pipeline.get_data('cadi_res')
-    #     assert np.sum(data) == pytest.approx(0.7158207863548083, rel=self.limit, abs=0.)
-    #     assert data.shape == (10, 21, 21)
-    #
-    #     data = self.pipeline.get_data('cadi_stack')
-    #     assert np.sum(data) == pytest.approx(0.07448334552227256, rel=self.limit, abs=0.)
-    #     assert data.shape == (1, 21, 21)
+    def test_classical_adi_threshold(self) -> None:
+
+        module = ClassicalADIModule(threshold=(0.1, 0.03, 1.),
+                                    nreference=5,
+                                    residuals='median',
+                                    extra_rot=0.,
+                                    name_in='cadi2',
+                                    image_in_tag='science_prep',
+                                    res_out_tag='cadi_res',
+                                    stack_out_tag='cadi_stack')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('cadi2')
+
+        data = self.pipeline.get_data('cadi_res')
+        assert np.sum(data) == pytest.approx(0.7158207863548083, rel=self.limit, abs=0.)
+        assert data.shape == (10, 21, 21)
+
+        data = self.pipeline.get_data('cadi_stack')
+        assert np.sum(data) == pytest.approx(0.07448334552227256, rel=self.limit, abs=0.)
+        assert data.shape == (1, 21, 21)
 
     def test_psf_subtraction_pca_single(self) -> None:
 

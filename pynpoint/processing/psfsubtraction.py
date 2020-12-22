@@ -692,6 +692,8 @@ class ClassicalADIModule(ProcessingModule):
 
         parang = -1.*self.m_image_in_port.get_attribute('PARANG') + self.m_extra_rot
 
+        nimages = self.m_image_in_port.get_shape()[0]
+
         if self.m_threshold:
             parang_thres = 2.*math.atan2(self.m_threshold[2]*self.m_threshold[1],
                                          2.*self.m_threshold[0])
@@ -703,6 +705,11 @@ class ClassicalADIModule(ProcessingModule):
             reference = self.m_image_in_port.get_all()
             reference = np.median(reference, axis=0)
 
+        ang_diff = np.zeros((nimages, parang.shape[0]))
+
+        for i in range(nimages):
+            ang_diff[i, :] = np.abs(parang[i] - parang)
+
         self.apply_function_to_images(subtract_psf,
                                       self.m_image_in_port,
                                       self.m_res_out_port,
@@ -710,6 +717,7 @@ class ClassicalADIModule(ProcessingModule):
                                       func_args=(parang_thres,
                                                  self.m_nreference,
                                                  reference,
+                                                 ang_diff,
                                                  self.m_image_in_port))
 
         self.m_res_in_port = self.add_input_port(self.m_res_out_port._m_tag)

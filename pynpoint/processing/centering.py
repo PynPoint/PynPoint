@@ -17,7 +17,7 @@ from typeguard import typechecked
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import memory_frames, progress
 from pynpoint.util.image import center_pixel, crop_image, shift_image
-from pynpoint.util.apply_func import align_image, fit_2d_function
+from pynpoint.util.apply_func import align_image, apply_shift, fit_2d_function
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -245,7 +245,6 @@ class FitCenterModule(ProcessingModule):
         self.m_sign = sign
         self.m_model = model
         self.m_filter_size = filter_size
-        self.m_model_func = None
 
         self.m_count = 0
 
@@ -310,7 +309,6 @@ class FitCenterModule(ProcessingModule):
                                                      self.m_sign,
                                                      self.m_model,
                                                      self.m_filter_size,
-                                                     self.m_model_func,
                                                      self.m_guess,
                                                      self.m_mask_out_port,
                                                      xx_grid,
@@ -327,11 +325,11 @@ class FitCenterModule(ProcessingModule):
                 im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
             best_fit = fit_2d_function(im_mean/float(nimages),
+                                       0,
                                        self.m_radius,
                                        self.m_sign,
                                        self.m_model,
                                        self.m_filter_size,
-                                       self.m_model_func,
                                        self.m_guess,
                                        self.m_mask_out_port,
                                        xx_grid,
@@ -453,11 +451,12 @@ class ShiftImagesModule(ProcessingModule):
         # apply a constant shift
         if constant:
 
-            self.apply_function_to_images(shift_image,
+            self.apply_function_to_images(apply_shift,
                                           self.m_image_in_port,
                                           self.m_image_out_port,
                                           'Shifting the images',
-                                          func_args=(self.m_shift, self.m_interpolation))
+                                          func_args=(self.m_shift,
+                                                     self.m_interpolation))
 
             # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
