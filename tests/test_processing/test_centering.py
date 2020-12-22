@@ -75,18 +75,14 @@ class TestCentering:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract1')
 
-        assert len(warning) == 1
+        assert len(warning) == 3
 
-        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'index\' is empty.'
+        assert warning[0].message.args[0] == 'Can not store the attribute \'INSTRUMENT\' ' \
+                                             'because the dataset \'index\' does not exist.'
 
         data = self.pipeline.get_data('extract1')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
-        assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        assert attr.shape == (10, 2)
 
     def test_star_align(self) -> None:
 
@@ -100,9 +96,7 @@ class TestCentering:
                                      subframe=None)
 
         self.pipeline.add_module(module)
-
-        with pytest.warns(DeprecationWarning):
-            self.pipeline.run_module('align1')
+        self.pipeline.run_module('align1')
 
         data = self.pipeline.get_data('align1')
         assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)

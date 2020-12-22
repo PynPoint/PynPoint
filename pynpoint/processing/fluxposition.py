@@ -14,10 +14,10 @@ import emcee
 from typeguard import typechecked
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
-from photutils import aperture_photometry, CircularAperture
-from photutils.aperture import Aperture
+from photutils import CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.apply_func import photometry
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, pixel_variance
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel, rotate_coordinates
@@ -725,7 +725,8 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
-            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
+            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), '
+                  f'S/N = {snr:.2f}, FPF = {fpf:.2e}')
 
             sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
@@ -1080,17 +1081,6 @@ class AperturePhotometryModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _photometry(image: np.ndarray,
-                        aperture: Union[Aperture, List[Aperture]]) -> np.float64:
-            # https://photutils.readthedocs.io/en/stable/overview.html
-            # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
-            # corresponds to the center of the lowest, leftmost array element. This means that
-            # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
-            # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
-
-            return np.array(aperture_photometry(image, aperture, method='exact')['aperture_sum'])
-
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_radius /= pixscale
 
@@ -1107,7 +1097,7 @@ class AperturePhotometryModule(ProcessingModule):
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
 
-        self.apply_function_to_images(_photometry,
+        self.apply_function_to_images(photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       'Aperture photometry',

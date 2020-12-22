@@ -9,14 +9,17 @@ import multiprocessing
 import os
 import urllib.request
 import warnings
+
 from typing import Any, List, Optional, Tuple, Union
 from urllib.error import URLError
 
 import h5py
 import numpy as np
+
 from typeguard import typechecked
 
 import pynpoint
+
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import ProcessingModule, PypelineModule, \
@@ -132,9 +135,9 @@ class Pypeline:
 
         Parameters
         ----------
-        module : ReadingModule, WritingModule, or ProcessingModule
+        module : ReadingModule, WritingModule, ProcessingModule
             The pipeline module.
-        tags : list(str, )
+        tags : list(str)
             Tags in the database.
 
         Returns
@@ -158,9 +161,6 @@ class Pypeline:
             for tag in module.get_all_input_tags():
                 if tag not in tags:
                     return False, module.name
-
-        else:
-            return False, None
 
         return True, None
 

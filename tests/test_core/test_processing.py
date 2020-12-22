@@ -69,6 +69,18 @@ class TestProcessing:
         assert warning[0].message.args[0] == 'Tag \'test\' of ProcessingModule \'badpixel\' is ' \
                                              'already used.'
 
+    def test_output_port_set_connection(self) -> None:
+
+        self.pipeline.m_data_storage.open_connection()
+
+        module = BadPixelSigmaFilterModule(name_in='badpixel2',
+                                           image_in_tag='images',
+                                           image_out_tag='im_out')
+
+        self.pipeline.add_module(module)
+
+        port = module.add_output_port('test1')
+
         self.pipeline.m_data_storage.close_connection()
 
     def test_apply_function(self) -> None:

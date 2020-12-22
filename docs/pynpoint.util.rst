@@ -12,6 +12,14 @@ pynpoint.util.analysis module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.util.apply\_func module
+--------------------------------
+
+.. automodule:: pynpoint.util.apply_func
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.util.attributes module
 -------------------------------
 

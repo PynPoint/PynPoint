@@ -900,8 +900,10 @@ class OutputPort(Port):
 
             if data_dim == 2:
                 data = data[np.newaxis, :]
+
             elif data_dim == 3:
                 data = data[np.newaxis, :, :]
+
             elif data_dim == 4:
                 data = data[:, np.newaxis, :, :]
 
@@ -1173,7 +1175,8 @@ class OutputPort(Port):
         if self._check_status_and_activate():
 
             if self._m_tag not in self._m_data_storage.m_data_bank:
-                warnings.warn('Can not store attribute if data tag does not exist.')
+                warnings.warn(f'Can not store the attribute \'{name}\' because the dataset '
+                              f'\'{self._m_tag}\' does not exist.')
 
             else:
                 if static:
