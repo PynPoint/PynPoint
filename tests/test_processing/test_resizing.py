@@ -100,20 +100,22 @@ class TestResizing:
 
     def test_scale_images(self) -> None:
 
-        module = ScaleImagesModule(scaling=(2., 2., None),
-                                   name_in='scale1',
+        module = ScaleImagesModule(name_in='scale1',
                                    image_in_tag='read',
-                                   image_out_tag='scale1')
+                                   image_out_tag='scale1',
+                                   scaling=(2., 2., None),
+                                   pixscale=True)
 
         self.pipeline.add_module(module)
 
         with pytest.warns(DeprecationWarning):
             self.pipeline.run_module('scale1')
 
-        module = ScaleImagesModule(scaling=(None, None, 2.),
-                                   name_in='scale2',
+        module = ScaleImagesModule(name_in='scale2',
                                    image_in_tag='read',
-                                   image_out_tag='scale2')
+                                   image_out_tag='scale2',
+                                   scaling=(None, None, 2.),
+                                   pixscale=True)
 
         self.pipeline.add_module(module)
 
@@ -127,6 +129,15 @@ class TestResizing:
         data = self.pipeline.get_data('scale2')
         assert np.sum(data) == pytest.approx(211.08557759610554, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+        attr = self.pipeline.get_attribute('read', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.027, rel=self.limit, abs=0.)
+
+        attr = self.pipeline.get_attribute('scale1', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.0135, rel=self.limit, abs=0.)
+
+        attr = self.pipeline.get_attribute('scale2', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.027, rel=self.limit, abs=0.)
 
     def test_add_lines(self) -> None:
 

@@ -28,7 +28,7 @@ The following script downloads the data (13 MB), runs the PSF subtraction with P
    input_place = '/path/to/input_place/'
    output_place = '/path/to/output_place/'
 
-   data_url = 'https://people.phys.ethz.ch/~stolkert/pynpoint/betapic_naco_mp.hdf5'
+   data_url = 'https://home.strw.leidenuniv.nl/~stolker/pynpoint/betapic_naco_mp.hdf5'
    data_loc = os.path.join(input_place, 'betapic_naco_mp.hdf5')
 
    urllib.request.urlretrieve(data_url, data_loc)

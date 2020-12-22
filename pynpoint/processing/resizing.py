@@ -5,15 +5,16 @@ Pipeline modules for resizing of images.
 import math
 import time
 
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, scale_image
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.apply_func import image_scaling
+from pynpoint.util.image import crop_image
+from pynpoint.util.module import memory_frames, progress
 
 
 class CropImagesModule(ProcessingModule):
@@ -148,7 +149,7 @@ class ScaleImagesModule(ProcessingModule):
                  scaling: Union[Tuple[float, float, float],
                                 Tuple[None, None, float],
                                 Tuple[float, float, None]],
-                 pixscale: bool = False) -> None:
+                 pixscale: bool = True) -> None:
         """
         Parameters
         ----------
@@ -158,7 +159,7 @@ class ScaleImagesModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            ``image_in_tag``.
         scaling : tuple(float, float, float)
             Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
             scaling_flux). Upsampling and downsampling of the image corresponds to
@@ -208,15 +209,7 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        @typechecked
-        def _image_scaling(image_in: np.ndarray,
-                           scaling_y: float,
-                           scaling_x: float,
-                           scaling_flux: float) -> np.ndarray:
-
-            return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
-
-        self.apply_function_to_images(_image_scaling,
+        self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Scaling images',

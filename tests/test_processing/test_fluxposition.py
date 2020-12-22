@@ -309,9 +309,6 @@ class TestFluxPosition:
         self.pipeline.add_module(module)
         self.pipeline.run_module('mcmc')
 
-        # data = self.pipeline.get_data('mcmc')
-        # assert data.shape == (5, 6, 3)
-
     def test_systematic_error(self) -> None:
 
         module = SystematicErrorModule(name_in='error',

@@ -359,6 +359,14 @@ class TestPypeline:
         attribute = pipeline.get_attribute('images', 'PARANG', static=False)
         assert attribute == pytest.approx(np.arange(10., 21., 1.), rel=self.limit, abs=0.)
 
+    def test_get_data_range(self) -> None:
+
+        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+
+        data = pipeline.get_data('images', data_range=(0, 2))
+
+        assert data.shape == (2, 11, 11)
+
     def test_delete_data(self) -> None:
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)

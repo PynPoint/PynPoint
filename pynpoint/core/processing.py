@@ -6,10 +6,12 @@ import math
 import os
 import time
 import warnings
+
 from abc import ABCMeta, abstractmethod
 from typing import Callable, List, Optional
 
 import numpy as np
+
 from typeguard import typechecked
 
 from pynpoint.core.dataio import ConfigPort, DataStorage, InputPort, OutputPort
@@ -23,32 +25,31 @@ class PypelineModule(metaclass=ABCMeta):
     """
     Abstract interface for the PypelineModule:
 
-        * Reading Module (:class:`pynpoint.core.processing.ReadingModule`)
-        * Writing Module (:class:`pynpoint.core.processing.WritingModule`)
-        * Processing Module (:class:`pynpoint.core.processing.ProcessingModule`)
+        * Reading module (:class:`pynpoint.core.processing.ReadingModule`)
+        * Writing module (:class:`pynpoint.core.processing.WritingModule`)
+        * Processing module (:class:`pynpoint.core.processing.ProcessingModule`)
 
-    Each PypelineModule has a name as a unique identifier in the Pypeline and requires the
-    *connect_database* and *run* methods.
+    Each :class:`~pynpoint.core.processing.PypelineModule` has a name as a unique identifier in the
+    :class:`~pynpoint.core.pypeline.Pypeline` and requires the ``connect_database`` and ``run``
+    methods.
     """
 
     @typechecked
     def __init__(self,
                  name_in: str) -> None:
         """
-        Abstract constructor of a PypelineModule. Needs a name as identifier.
+        Abstract constructor of a :class:`~pynpoint.core.processing.PypelineModule`.
 
         Parameters
         ----------
         name_in : str
-            The name of the PypelineModule.
+            The name of the :class:`~pynpoint.core.processing.PypelineModule`.
 
         Returns
         -------
         NoneType
             None
         """
-
-        assert isinstance(name_in, str), 'Name of the PypelineModule needs to be a string.'
 
         self._m_name = name_in
         self._m_data_base = None
@@ -58,13 +59,13 @@ class PypelineModule(metaclass=ABCMeta):
     @typechecked
     def name(self) -> str:
         """
-        Returns the name of the PypelineModule. This property makes sure that the internal module
-        name can not be changed.
+        Returns the name of the :class:`~pynpoint.core.processing.PypelineModule`. This property
+        makes sure that the internal module name can not be changed.
 
         Returns
         -------
         str
-            The name of the PypelineModule.
+            The name of the :class:`~pynpoint.core.processing.PypelineModule`
         """
 
         return self._m_name
@@ -74,8 +75,9 @@ class PypelineModule(metaclass=ABCMeta):
     def connect_database(self,
                          data_base_in: DataStorage) -> None:
         """
-        Abstract interface for the function *connect_database* which is needed to connect the Ports
-        of a PypelineModule with the DataStorage.
+        Abstract interface for the function ``connect_database`` which is needed to connect a
+        :class:`~pynpoint.core.dataio.Port` of a :class:`~pynpoint.core.processing.PypelineModule`
+        with the :class:`~pynpoint.core.dataio.DataStorage`.
 
         Parameters
         ----------
@@ -87,8 +89,8 @@ class PypelineModule(metaclass=ABCMeta):
     @typechecked
     def run(self) -> None:
         """
-        Abstract interface for the run method of a PypelineModule which inheres the actual
-        algorithm behind the module.
+        Abstract interface for the run method of :class:`~pynpoint.core.processing.PypelineModule`
+        which inheres the actual algorithm behind the module.
         """
 
 
@@ -408,27 +410,31 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                         tag: str,
                         activation: bool = True) -> OutputPort:
         """
-        Function which creates an OutputPort for a ProcessingModule and appends it to the internal
-        OutputPort dictionary. This function should be used by classes inheriting from
-        ProcessingModule to make sure that only output ports with unique tags are added. The new
-        port can be used as: ::
+        Function which creates an :class:`~pynpoint.core.dataio.OutputPort` for a
+        :class:`~pynpoint.core.processing.ProcessingModule` and appends it to the internal
+        :class:`~pynpoint.core.dataio.OutputPort` dictionary. This function should be used by
+        classes inheriting from :class:`~pynpoint.core.processing.ProcessingModule` to make sure
+        that only output ports with unique tags are added. The new port can be used as:
+
+        .. code-block:: python
 
              port = self._m_output_ports[tag]
 
-        or by using the returned Port.
+        or by using the returned :class:`~pynpoint.core.dataio.Port`.
 
         Parameters
         ----------
         tag : str
             Tag of the new output port.
         activation : bool
-            Activation status of the Port after creation. Deactivated ports will not save their
-            results until they are activated.
+            Activation status of the :class:`~pynpoint.core.dataio.Port` after creation.
+            Deactivated ports will not save their results until they are activated.
 
         Returns
         -------
         pynpoint.core.dataio.OutputPort
-            The new OutputPort for the ProcessingModule.
+            The new :class:`~pynpoint.core.dataio.OutputPort` for the
+            :class:`~pynpoint.core.processing.ProcessingModule`.
         """
 
         port = OutputPort(tag, activate_init=activation)
@@ -504,7 +510,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         im_shape = image_in_port.get_shape()
 
-        size = apply_function(init_line, func, func_args).shape[0]
+        size = apply_function(init_line, 0, func, func_args).shape[0]
 
         image_out_port.set_all(data=np.zeros((size, im_shape[1], im_shape[2])),
                                data_dim=3,
@@ -585,9 +591,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
-                    result.append(func(images[i, ]))
+                    result.append(func(images[i, ], i))
                 else:
-                    result.append(func(images[i, ], *args))
+                    result.append(func(images[i, ], i, *args))
 
             image_out_port.set_all(np.asarray(result), keep_attributes=True)
 
@@ -601,9 +607,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
-                    result = func(image_in_port[i, ])
+                    result = func(image_in_port[i, ], i)
                 else:
-                    result = func(image_in_port[i, ], *args)
+                    result = func(image_in_port[i, ], i, *args)
 
                 if result.ndim == 1:
                     image_out_port.append(result, data_dim=2)
@@ -614,9 +620,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             # process images in parallel in stacks of MEMORY/CPU images
             print(message, end='')
 
-            result = apply_function(tmp_data=image_in_port[0, :, :],
-                                    func=func,
-                                    func_args=update_arguments(0, nimages, func_args))
+            args = update_arguments(0, nimages, func_args)
+
+            result = apply_function(image_in_port[0, :, :], 0, func, args)
 
             result_shape = result.shape
 
