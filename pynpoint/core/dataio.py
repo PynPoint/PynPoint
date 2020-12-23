@@ -226,7 +226,7 @@ class ConfigPort(Port):
             None
         """
 
-        super(ConfigPort, self).__init__(tag, data_storage_in)
+        super().__init__(tag, data_storage_in)
 
         if tag != 'config':
             raise ValueError('The tag name of the central configuration should be \'config\'.')
@@ -373,7 +373,7 @@ class InputPort(Port):
             None
         """
 
-        super(InputPort, self).__init__(tag, data_storage_in)
+        super().__init__(tag, data_storage_in)
 
         if tag == 'config':
             raise ValueError('The tag name \'config\' is reserved for the central configuration '
@@ -675,7 +675,7 @@ class OutputPort(Port):
             None
         """
 
-        super(OutputPort, self).__init__(tag, data_storage_in)
+        super().__init__(tag, data_storage_in)
 
         self.m_activate = activate_init
 

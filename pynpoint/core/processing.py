@@ -126,7 +126,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        super(ReadingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Input directory for ' \
             'reading module does not exist - input requested: %s.' % input_dir
@@ -256,7 +256,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        super(WritingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         assert (os.path.isdir(str(output_dir)) or output_dir is None), 'Output directory for ' \
             'writing module does not exist - input requested: %s.' % output_dir
@@ -367,7 +367,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
              The name of the ProcessingModule.
         """
 
-        super(ProcessingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self._m_input_ports = {}
         self._m_output_ports = {}

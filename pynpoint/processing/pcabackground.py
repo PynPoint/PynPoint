@@ -2,29 +2,29 @@
 Pipeline modules for PCA-based background subtraction.
 """
 
-import time
 import math
+import time
 import warnings
 
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
-from scipy.sparse.linalg import svds
 from scipy.optimize import curve_fit
+from scipy.sparse.linalg import svds
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.processing.psfpreparation import SortParangModule
 from pynpoint.processing.resizing import CropImagesModule
 from pynpoint.processing.stacksubset import CombineTagsModule
-from pynpoint.processing.psfpreparation import SortParangModule
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.module import memory_frames, progress
 from pynpoint.util.star import locate_star
 
 
 class PCABackgroundPreparationModule(ProcessingModule):
     """
-    Pipeline module for preparing the PCA background subtraction.
+    Pipeline module for preparing the images for a PCA-based background subtraction.
     """
 
     __author__ = 'Tomas Stolker, Silvan Hunziker'
@@ -38,31 +38,31 @@ class PCABackgroundPreparationModule(ProcessingModule):
                  background_out_tag: str,
                  dither: Union[Tuple[int, int, int],
                                Tuple[int, None, Tuple[float, float]]],
-                 combine: str = 'mean',
-                 **kwargs: str) -> None:
+                 combine: str = 'mean') -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the pipeline module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the images that are read as input.
         star_out_tag : str
-            Output tag with the images containing the star.
+            Database tag to store the images that contain the star.
         subtracted_out_tag : str
-            Output tag with the mean/median background subtracted images with the star.
+            Database tag to store the mean/median background subtracted images with the star.
         background_out_tag : str
-            Output tag with the images containing only background emission.
+            Database tag to store the images that contain only background emission.
         dither : tuple(int, int, int), tuple(int, None, tuple(float, float))
             Tuple with the parameters for separating the star and background frames. The tuple
-            should contain three values (positions, cubes, first) with *positions* the number
-            of unique dithering position, *cubes* the number of consecutive cubes per dithering
-            position, and *first* the index value of the first cube which contains the star
-            (Python indexing starts at zero). Sorting is based on the ``DITHER_X`` and ``DITHER_Y``
-            attributes when *cubes* is set to None. In that case, the *first* value should be
-            a tuple with the ``DITHER_X`` and ``DITHER_Y`` values in which the star appears first.
+            should contain three values, ``(positions, cubes, first)``, with ``positions`` the
+            number of unique dithering position, ``cubes`` the number of consecutive cubes per
+            dithering position, and ``first`` the index value of the first cube which contains the
+            star (Python indexing starts at zero). Sorting is based on the ``DITHER_X`` and
+            ``DITHER_Y`` attributes when ``cubes`` is set to None. In that case, the ``first``
+            value should be a tuple with the ``DITHER_X`` and ``DITHER_Y`` values in which the star
+            appears first.
         combine : str
-            Method to combine the background images ('mean' or 'median').
+            Method for combining the background images ('mean' or 'median').
 
         Returns
         -------
@@ -70,11 +70,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
             None
         """
 
-        if 'mask_planet' in kwargs:
-            warnings.warn('The \'mean_out_tag\' has been replaced by the \'subtracted_out_tag\'.',
-                          DeprecationWarning)
-
-        super(PCABackgroundPreparationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_star_out_port = self.add_output_port(star_out_tag)
@@ -100,6 +96,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         for i, item in enumerate(nframes):
             if self.m_combine == 'mean':
                 cube_mean[i, ] = np.mean(self.m_image_in_port[count:count+item, ], axis=0)
+
             elif self.m_combine == 'median':
                 cube_mean[i, ] = np.median(self.m_image_in_port[count:count+item, ], axis=0)
 
@@ -184,7 +181,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
                 background = (bg_prev+bg_next)/2.
 
             else:
-                raise ValueError('Neither previous nor next background frames found.')
+                raise ValueError('Neither previous nor next background frames are found.')
 
             return background
 
@@ -237,7 +234,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
         """
         Run method of the module. Separates the star and background frames, subtracts the mean
         or median background from both the star and background frames, and writes the star and
-        background frames separately.
+        background frames separately to their respective output ports.
 
         Returns
         -------
@@ -288,7 +285,7 @@ class PCABackgroundPreparationModule(ProcessingModule):
 
 class PCABackgroundSubtractionModule(ProcessingModule):
     """
-    Pipeline module for PCA based background subtraction. See Hunziker et al. 2018 for details.
+    Pipeline module applying a PCA-based background subtraction (see Hunziker et al. 2018).
     """
 
     __author__ = 'Tomas Stolker, Silvan Hunziker'
@@ -303,34 +300,29 @@ class PCABackgroundSubtractionModule(ProcessingModule):
                  mask_out_tag: Optional[str] = None,
                  pca_number: int = 60,
                  mask_star: float = 0.7,
-                 subtract_mean: bool = False,
                  subframe: Optional[float] = None,
                  gaussian: float = 0.15,
-                 **kwargs: tuple) -> None:
+                 **kwargs) -> None:
         """
         Parameters
         ----------
         name_in : str
-            Tag of the database entry with the star images.
+            Unique name of the pipeline module instance.
         star_in_tag : str
-            Tag of the database entry with the star images.
+            Database tag with the input images that contain the star.
         background_in_tag : str
-            Tag of the database entry with the background images.
+            Database tag with the input images that contain only background emission.
         residuals_out_tag : str
-            Tag of the database entry with the residuals of the star images after the background
-            subtraction.
+            Database tag to store the background-subtracted images of the star.
         fit_out_tag : str, None
-            Tag of the database entry with the fitted background. No data is written when set to
-            None.
+            Database tag to store the modeled background images. The data is not stored if the
+            arguments is set to None.
         mask_out_tag : str, None
-            Tag of the database entry with the mask. No data is written when set to None.
+            Database tag to store the mask. The data is not stored if the argument is set to None.
         pca_number : int
-            Number of principal components.
+            Number of principal components that is used to model the background emission.
         mask_star : float
             Radius of the central mask (arcsec).
-        subtract_mean : bool
-            The mean of the background images is subtracted from both the star and background
-            images before the PCA basis is constructed.
         gaussian : float
             Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
             image before the star is located.
@@ -344,10 +336,12 @@ class PCABackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        if 'mask_planet' in kwargs:
-            warnings.warn('The \'mask_planet\' parameter has been deprecated.', DeprecationWarning)
+        super().__init__(name_in)
 
-        super(PCABackgroundSubtractionModule, self).__init__(name_in)
+        if 'subtract_mean' in kwargs:
+            warnings.warn('The \'subtract_mean\' parameter has been deprecated. Subtracting of '
+                          'the mean is no longer optional so subtract_mean=True.',
+                          DeprecationWarning)
 
         self.m_star_in_port = self.add_input_port(star_in_tag)
         self.m_background_in_port = self.add_input_port(background_in_tag)
@@ -365,17 +359,16 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
-        self.m_subtract_mean = subtract_mean
         self.m_gaussian = gaussian
         self.m_subframe = subframe
 
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Creates a PCA basis set of the background frames, masks the PSF
-        in the star frames and optionally an off-axis point source, fits the star frames with a
-        linear combination of the principal components, and writes the residuals of the background
-        subtracted images.
+        Run method of the module. Creates a PCA basis set of the background frames after
+        subtracting the mean background frame from both the star and background frames, masks the
+        PSF of the star, projects the star frames onto the principal components, and stores the
+        residuals of the background subtracted images.
 
         Returns
         -------
@@ -411,14 +404,22 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         @typechecked
         def _create_basis(images: np.ndarray,
-                          bg_mean: np.ndarray,
                           pca_number: int) -> np.ndarray:
             """
-            Method for creating a set of principal components for a stack of images.
-            """
+            Method for calculating the principal components for a stack of background images.
 
-            if self.m_subtract_mean:
-                images -= bg_mean
+            Parameters
+            ----------
+            images : np.ndarray
+                Background images with the mean subtracted from all images.
+            pca_number : int
+                Number of principal components that is used to model the background emission.
+
+            Returns
+            -------
+            np.ndarray
+                Principal components with the second and third dimension reshaped to ``images``.
+            """
 
             _, _, v_svd = svds(images.reshape(images.shape[0],
                                               images.shape[1]*images.shape[2]),
@@ -426,9 +427,7 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
             v_svd = v_svd[::-1, ]
 
-            pca_basis = v_svd.reshape(v_svd.shape[0], images.shape[1], images.shape[2])
-
-            return pca_basis
+            return v_svd.reshape(v_svd.shape[0], images.shape[1], images.shape[2])
 
         @typechecked
         def _model_background(basis: np.ndarray,
@@ -485,15 +484,14 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
         star = np.zeros((nimages, 2))
         for i, _ in enumerate(star):
-            star[i, :] = locate_star(image=self.m_star_in_port[i, ]-bg_mean,
+            star[i, :] = locate_star(image=self.m_star_in_port[i, ] - bg_mean,
                                      center=None,
                                      width=self.m_subframe,
                                      fwhm=self.m_gaussian)
 
         print('Creating PCA basis set...', end='')
 
-        basis_pca = _create_basis(self.m_background_in_port.get_all(),
-                                  bg_mean,
+        basis_pca = _create_basis(self.m_background_in_port.get_all() - bg_mean,
                                   self.m_pca_number)
 
         print(' [DONE]')
@@ -502,10 +500,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Calculating background model...', start_time)
 
-            im_star = self.m_star_in_port[frames[i]:frames[i+1], ]
-
-            if self.m_subtract_mean:
-                im_star -= bg_mean
+            # Subtract the mean background from the star frames
+            im_star = self.m_star_in_port[frames[i]:frames[i+1], ] - bg_mean
 
             mask = _create_mask(self.m_mask_star,
                                 star[frames[i]:frames[i+1], ],
@@ -539,8 +535,8 @@ class PCABackgroundSubtractionModule(ProcessingModule):
 
 class DitheringBackgroundModule(ProcessingModule):
     """
-    Pipeline module for PCA-based background subtraction of data with dithering. This is a wrapper
-    that applies the processing modules required for the PCA background subtraction.
+    Pipeline module for PCA-based background subtraction of dithering data. This is a wrapper that
+    applies the processing modules for either a mean or the PCA-based background subtraction.
     """
 
     __author__ = 'Tomas Stolker'
@@ -550,62 +546,52 @@ class DitheringBackgroundModule(ProcessingModule):
                  name_in: str,
                  image_in_tag: str,
                  image_out_tag: str,
-                 center: Optional[Tuple[Tuple[int, int], ...]] = None,
+                 center: Optional[List[Tuple[int, int]]] = None,
                  cubes: Optional[int] = None,
                  size: float = 2.,
                  gaussian: float = 0.15,
                  subframe: Optional[float] = None,
-                 pca_number: int = 60,
+                 pca_number: Optional[int] = 5,
                  mask_star: float = 0.7,
-                 subtract_mean: bool = False,
-                 **kwargs: Union[bool, str]) -> None:
+                 **kwargs) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with input images.
         image_out_tag : str
-            Tag of the database entry that is written as output. Not written if set to None.
-        center : tuple(tuple(int, int), ), None
-            Tuple with the centers of the dithering positions, e.g. ((x0,y0), (x1,y1)). The order
+            Database tag to store the background subtracted images.
+        center : list(tuple(int, int)), None
+            Tuple with the centers of the dithering positions, e.g. ((x0, y0), (x1, y1)). The order
             of the coordinates should correspond to the order in which the star is present. If
-            *center* and *cubes* are both set to None then sorting and subtracting of the
-            background frames is based on DITHER_X and DITHER_Y. If *center* is specified and
-            *cubes* is set to None then the DITHER_X and DITHER_Y attributes will be used for
-            sorting and subtracting of the background but not for selecting the dither positions.
+            ``center`` and ``cubes`` are both set to None then sorting and subtracting of the
+            background frames is based on ``DITHER_X`` and ``DITHER_Y``. If ``center`` is
+            specified and ``cubes`` is set to None then the ``DITHER_X`` and ``DITHER_Y``
+            attributes will be used for sorting and subtracting of the background but not for
+            selecting the dither positions.
         cubes : int, None
-            Number of consecutive cubes per dither position. If *cubes* is set to None then sorting
-            and subtracting of the background frames is based on DITHER_X and DITHER_Y.
+            Number of consecutive cubes per dither position. If ``cubes`` is set to None then
+            sorting and subtracting of the background frames is based on ``DITHER_X`` and
+            ``DITHER_Y``.
         size : float
-            Image size (arsec) that is cropped at the specified dither positions.
+            Cropped image size (arcsec).
         gaussian : float
             Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
             image before the star is located.
         subframe : float, None
             Size (arcsec) of the subframe that is used to search for the star. Cropping of the
-            subframe is done around the center of the dithering position. If set to None then the
-            full frame size (*size*) will be used.
-        pca_number : int
-            Number of principal components.
+            subframe is done around the center of the dithering position. The full image size
+            (i.e. ``size``) will be used if set to None then.
+        pca_number : int, None
+            Number of principal components that is used to model the background emission. The PCA
+            background subtraction is skipped if the argument is set to None. In that case, the
+            mean background subtracted images are written toe ``image_out_tag``.
         mask_star : float
-            Radius of the central mask (arcsec).
-        subtract_mean : bool
-            The mean of the background images is subtracted from both the star and background
-            images before the PCA basis is constructed.
-
-        Keyword Arguments
-        -----------------
-        crop : bool
-            Skip the step of selecting and cropping of the dithering positions if set to False.
-        prepare : bool
-            Skip the step of preparing the PCA background subtraction if set to False.
-        pca_background : bool
-            Skip the step of the PCA background subtraction if set to False.
-        combine : str
-            Combine the mean background subtracted ('mean') or PCA background subtracted ('pca')
-            frames. This step is ignored if set to None.
+            Radius of the central mask (arcsec) that is used to exclude the star when fitting the
+            principal components. The region behind the mask is included when subtracting the
+            PCA background model.
 
         Returns
         -------
@@ -617,26 +603,29 @@ class DitheringBackgroundModule(ProcessingModule):
             warnings.warn('The \'mask_planet\' parameter has been deprecated.', DeprecationWarning)
 
         if 'crop' in kwargs:
-            self.m_crop = kwargs['crop']
-        else:
-            self.m_crop = True
+            warnings.warn('The \'crop\' parameter has been deprecated. The step to crop the '
+                          'images is no longer optional so crop=True.', DeprecationWarning)
 
         if 'prepare' in kwargs:
-            self.m_prepare = kwargs['prepare']
-        else:
-            self.m_prepare = True
+            warnings.warn('The \'prepare\' parameter has been deprecated. The preparation step '
+                          'is no longer optional so prepare=True.', DeprecationWarning)
 
         if 'pca_background' in kwargs:
-            self.m_pca_background = kwargs['pca_background']
-        else:
-            self.m_pca_background = True
+            warnings.warn('The \'pca_background\' parameter has been deprecated. The PCA '
+                          'background is no longer optional when combine=\'pca\' so '
+                          'pca_background=True.', DeprecationWarning)
+
+        if 'subtract_mean' in kwargs:
+            warnings.warn('The \'subtract_mean\' parameter has been deprecated. Subtracting of '
+                          'the mean is no longer optional so subtract_mean=True.',
+                          DeprecationWarning)
 
         if 'combine' in kwargs:
-            self.m_combine = kwargs['combine']
-        else:
-            self.m_combine = 'pca'
+            warnings.warn('The \'combine\' parameter has been deprecated. To write the mean '
+                          'background subtracted images to image_out_tag is done by setting '
+                          'pca_number=None.', DeprecationWarning)
 
-        super(DitheringBackgroundModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -647,7 +636,6 @@ class DitheringBackgroundModule(ProcessingModule):
         self.m_gaussian = gaussian
         self.m_pca_number = pca_number
         self.m_mask_star = mask_star
-        self.m_subtract_mean = subtract_mean
         self.m_subframe = subframe
 
         self.m_image_in_tag = image_in_tag
@@ -664,6 +652,7 @@ class DitheringBackgroundModule(ProcessingModule):
             dither_xy[:, 1] = dither_y
 
             _, index = np.unique(dither_xy, axis=0, return_index=True)
+
             dither = dither_xy[np.sort(index)]
 
             npix = self.m_image_in_port.get_shape()[1]
@@ -708,19 +697,18 @@ class DitheringBackgroundModule(ProcessingModule):
                          n_dither: int,
                          position: Tuple[int, int],
                          star_pos: Union[np.ndarray, np.int64]) -> None:
-            if self.m_crop or self.m_prepare or self.m_pca_background:
-                print(f'Processing dither position {count+1} out of {n_dither}...')
-                print(f'Center position = {position}')
+            print(f'Processing dither position {count+1} out of {n_dither}...')
+            print(f'Center position = {position}')
 
-                if self.m_cubes is None and self.m_center is not None:
-                    print(f'DITHER_X, DITHER_Y = {tuple(star_pos)}')
+            if self.m_cubes is None and self.m_center is not None:
+                print(f'DITHER_X, DITHER_Y = {tuple(star_pos)}')
 
         @typechecked
         def _admin_end(count: int) -> None:
-            if self.m_combine == 'mean':
+            if self.m_pca_number is None:
                 tags.append(f'{self.m_image_in_tag}_dither_mean{count+1}')
 
-            elif self.m_combine == 'pca':
+            else:
                 tags.append(f'{self.m_image_in_tag}_dither_pca_res{count+1}')
 
         n_dither, star_pos = self._initialize()
@@ -729,66 +717,64 @@ class DitheringBackgroundModule(ProcessingModule):
         for i, position in enumerate(self.m_center):
             _admin_start(i, n_dither, position, star_pos[i])
 
-            if self.m_crop:
-                im_out_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
+            im_out_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
 
-                module = CropImagesModule(name_in=f'crop{i}',
-                                          image_in_tag=self.m_image_in_tag,
-                                          image_out_tag=im_out_tag,
-                                          size=self.m_size,
-                                          center=(int(math.ceil(position[0])),
-                                                  int(math.ceil(position[1]))))
+            module = CropImagesModule(name_in=f'crop{i}',
+                                      image_in_tag=self.m_image_in_tag,
+                                      image_out_tag=im_out_tag,
+                                      size=self.m_size,
+                                      center=(int(math.ceil(position[0])),
+                                              int(math.ceil(position[1]))))
 
-                module.connect_database(self._m_data_base)
-                module._m_output_ports[im_out_tag].del_all_data()
-                module._m_output_ports[im_out_tag].del_all_attributes()
-                module.run()
+            module.connect_database(self._m_data_base)
+            module._m_output_ports[im_out_tag].del_all_data()
+            module._m_output_ports[im_out_tag].del_all_attributes()
+            module.run()
 
-            if self.m_prepare:
-                if self.m_cubes is None:
-                    dither_val = (n_dither, self.m_cubes, tuple(star_pos[i]))
-                else:
-                    dither_val = (n_dither, self.m_cubes, int(star_pos[i]))
+            if self.m_cubes is None:
+                dither_val = (n_dither, self.m_cubes, tuple(star_pos[i]))
+            else:
+                dither_val = (n_dither, self.m_cubes, int(star_pos[i]))
 
-                im_in_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
-                star_out_tag = f'{self.m_image_in_tag}_dither_star{i+1}'
-                sub_out_tag = f'{self.m_image_in_tag}_dither_mean{i+1}'
-                back_out_tag = f'{self.m_image_in_tag}_dither_background{i+1}'
+            im_in_tag = f'{self.m_image_in_tag}_dither_crop{i+1}'
+            star_out_tag = f'{self.m_image_in_tag}_dither_star{i+1}'
+            sub_out_tag = f'{self.m_image_in_tag}_dither_mean{i+1}'
+            back_out_tag = f'{self.m_image_in_tag}_dither_background{i+1}'
 
-                module = PCABackgroundPreparationModule(name_in=f'prepare{i}',
-                                                        image_in_tag=im_in_tag,
-                                                        star_out_tag=star_out_tag,
-                                                        subtracted_out_tag=sub_out_tag,
-                                                        background_out_tag=back_out_tag,
-                                                        dither=dither_val,
-                                                        combine='mean')
+            module = PCABackgroundPreparationModule(name_in=f'prepare{i}',
+                                                    image_in_tag=im_in_tag,
+                                                    star_out_tag=star_out_tag,
+                                                    subtracted_out_tag=sub_out_tag,
+                                                    background_out_tag=back_out_tag,
+                                                    dither=dither_val,
+                                                    combine='mean')
 
-                module.connect_database(self._m_data_base)
-                module._m_output_ports[star_out_tag].del_all_data()
-                module._m_output_ports[star_out_tag].del_all_attributes()
-                module._m_output_ports[sub_out_tag].del_all_data()
-                module._m_output_ports[sub_out_tag].del_all_attributes()
-                module._m_output_ports[back_out_tag].del_all_data()
-                module._m_output_ports[back_out_tag].del_all_attributes()
-                module.run()
+            module.connect_database(self._m_data_base)
+            module._m_output_ports[star_out_tag].del_all_data()
+            module._m_output_ports[star_out_tag].del_all_attributes()
+            module._m_output_ports[sub_out_tag].del_all_data()
+            module._m_output_ports[sub_out_tag].del_all_attributes()
+            module._m_output_ports[back_out_tag].del_all_data()
+            module._m_output_ports[back_out_tag].del_all_attributes()
+            module.run()
 
-            if self.m_pca_background:
+            if self.m_pca_number is not None:
                 star_in_tag = f'{self.m_image_in_tag}_dither_star{i+1}'
                 back_in_tag = f'{self.m_image_in_tag}_dither_background{i+1}'
                 res_out_tag = f'{self.m_image_in_tag}_dither_pca_res{i+1}'
                 fit_out_tag = f'{self.m_image_in_tag}_dither_pca_fit{i+1}'
                 mask_out_tag = f'{self.m_image_in_tag}_dither_pca_mask{i+1}'
 
-                module = PCABackgroundSubtractionModule(pca_number=self.m_pca_number,
-                                                        mask_star=self.m_mask_star,
-                                                        subtract_mean=self.m_subtract_mean,
-                                                        subframe=self.m_subframe,
-                                                        name_in=f'pca_background{i}',
+                module = PCABackgroundSubtractionModule(name_in=f'pca_background{i}',
                                                         star_in_tag=star_in_tag,
                                                         background_in_tag=back_in_tag,
                                                         residuals_out_tag=res_out_tag,
                                                         fit_out_tag=fit_out_tag,
-                                                        mask_out_tag=mask_out_tag)
+                                                        mask_out_tag=mask_out_tag,
+                                                        pca_number=self.m_pca_number,
+                                                        mask_star=self.m_mask_star,
+                                                        subframe=self.m_subframe,
+                                                        gaussian=self.m_gaussian)
 
                 module.connect_database(self._m_data_base)
                 module._m_output_ports[res_out_tag].del_all_data()
@@ -801,23 +787,22 @@ class DitheringBackgroundModule(ProcessingModule):
 
             _admin_end(i)
 
-        if self.m_combine is not None and self.m_image_out_tag is not None:
-            module = CombineTagsModule(name_in='combine',
-                                       check_attr=True,
-                                       index_init=False,
-                                       image_in_tags=tags,
-                                       image_out_tag=self.m_image_in_tag+'_dither_combine')
+        module = CombineTagsModule(name_in='combine',
+                                   check_attr=True,
+                                   index_init=False,
+                                   image_in_tags=tags,
+                                   image_out_tag=self.m_image_in_tag+'_dither_combine')
 
-            module.connect_database(self._m_data_base)
-            module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_data()
-            module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_attributes()
-            module.run()
+        module.connect_database(self._m_data_base)
+        module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_data()
+        module._m_output_ports[self.m_image_in_tag+'_dither_combine'].del_all_attributes()
+        module.run()
 
-            module = SortParangModule(name_in='sort',
-                                      image_in_tag=self.m_image_in_tag+'_dither_combine',
-                                      image_out_tag=self.m_image_out_tag)
+        module = SortParangModule(name_in='sort',
+                                  image_in_tag=self.m_image_in_tag+'_dither_combine',
+                                  image_out_tag=self.m_image_out_tag)
 
-            module.connect_database(self._m_data_base)
-            module._m_output_ports[self.m_image_out_tag].del_all_data()
-            module._m_output_ports[self.m_image_out_tag].del_all_attributes()
-            module.run()
+        module.connect_database(self._m_data_base)
+        module._m_output_ports[self.m_image_out_tag].del_all_data()
+        module._m_output_ports[self.m_image_out_tag].del_all_attributes()
+        module.run()

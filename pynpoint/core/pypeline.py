@@ -123,7 +123,7 @@ class Pypeline:
             assert (os.path.isdir(str(value))), f'Input directory for {key} does not exist - ' \
                                                 f'input requested: {value}.'
 
-        super(Pypeline, self).__setattr__(key, value)
+        super().__setattr__(key, value)
 
     @staticmethod
     @typechecked

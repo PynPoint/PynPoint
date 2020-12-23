@@ -50,7 +50,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        super(SimpleBackgroundSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -132,7 +132,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        super(MeanBackgroundSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -323,7 +323,7 @@ class LineSubtractionModule(ProcessingModule):
             None
         """
 
-        super(LineSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -409,7 +409,7 @@ class NoddingBackgroundModule(ProcessingModule):
             None
         """
 
-        super(NoddingBackgroundModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_science_in_port = self.add_input_port(science_in_tag)
         self.m_sky_in_port = self.add_input_port(sky_in_tag)

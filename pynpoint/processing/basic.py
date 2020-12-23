@@ -44,7 +44,7 @@ class SubtractImagesModule(ProcessingModule):
             None
         """
 
-        super(SubtractImagesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in1_port = self.add_input_port(image_in_tags[0])
         self.m_image_in2_port = self.add_input_port(image_in_tags[1])
@@ -118,7 +118,7 @@ class AddImagesModule(ProcessingModule):
             None
         """
 
-        super(AddImagesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in1_port = self.add_input_port(image_in_tags[0])
         self.m_image_in2_port = self.add_input_port(image_in_tags[1])
@@ -191,7 +191,7 @@ class RotateImagesModule(ProcessingModule):
             None
         """
 
-        super(RotateImagesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -265,7 +265,7 @@ class RepeatImagesModule(ProcessingModule):
             None
         """
 
-        super(RepeatImagesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
