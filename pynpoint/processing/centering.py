@@ -282,8 +282,8 @@ class FitCenterModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
         if cpu > 1 and self.m_mask_out_port is not None:
-                warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
-                              'stored to this output port.')
+            warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
+                          'stored to this output port.')
 
             del self._m_output_ports[self.m_mask_out_port.tag]
             self.m_mask_out_port = None
