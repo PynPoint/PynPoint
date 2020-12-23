@@ -88,7 +88,7 @@ class TestPsfPreparation:
         self.pipeline.run_module('angle2')
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.sum(data) == pytest.approx(-550.2338300130718, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-550.2338288730655, rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
         self.pipeline.set_attribute('read', 'RA', (60000.0, 60000.0, 60000.0, 60000.0),
@@ -121,7 +121,7 @@ class TestPsfPreparation:
             assert warning[1].message.args[0] == warning_1
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.sum(data) == pytest.approx(1704.220236104952, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(1704.2202372447628, rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
         module = AngleCalculationModule(instrument='SPHERE/IFS',
@@ -151,7 +151,7 @@ class TestPsfPreparation:
             assert warning[2].message.args[0] == warning_2
 
         data = self.pipeline.get_data('header_read/PARANG')
-        assert np.sum(data) == pytest.approx(-890.8506520762833, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(-890.8506509366362, rel=self.limit, abs=0.)
         assert data.shape == (10, )
 
     def test_angle_sort(self) -> None:

@@ -2,178 +2,17 @@
 Pipeline modules for the detection and interpolation of bad pixels.
 """
 
-import copy
 import warnings
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
-import cv2
 import numpy as np
 
-from numba import jit
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-
-
-# This function cannot by @typechecked because of a compatibility issue with numba
-@jit(cache=True)
-def _calc_fast_convolution(F_roof_tmp: np.complex128,
-                           W: np.ndarray,
-                           tmp_s: tuple,
-                           N_size: float,
-                           tmp_G: np.ndarray,
-                           N: Tuple[int, ...]) -> np.ndarray:
-
-    new = np.zeros(N, dtype=np.complex64)
-
-    if ((tmp_s[0] == 0) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):
-
-        for m in range(0, N[0], 1):
-            for j in range(0, N[1], 1):
-                new[m, j] = F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]]
-
-    else:
-
-        for m in range(0, N[0], 1):
-            for j in range(0, N[1], 1):
-                new[m, j] = (F_roof_tmp * W[m - tmp_s[0], j - tmp_s[1]] +
-                             np.conjugate(F_roof_tmp) * W[(m + tmp_s[0]) %
-                             N[0], (j + tmp_s[1]) % N[1]])
-
-    if ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
-            ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-            ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):  # causes problems, unknown why
-
-        res = new / float(N_size)
-
-    else:
-
-        res = new / float(N_size)
-
-    tmp_G = tmp_G - res
-
-    return tmp_G
-
-
-@typechecked
-def _bad_pixel_interpolation(image_in: np.ndarray,
-                             bad_pixel_map: np.ndarray,
-                             iterations: int) -> np.ndarray:
-    """
-    Internal function to interpolate bad pixels.
-
-    Parameters
-    ----------
-    image_in : numpy.ndarray
-        Input image.
-    bad_pixel_map : numpy.ndarray
-        Bad pixel map.
-    iterations : int
-        Number of iterations.
-
-    Returns
-    -------
-    numpy.ndarray
-        Image in which the bad pixels have been interpolated.
-    """
-
-    image_in = image_in * bad_pixel_map
-
-    # for names see ref paper
-    g = copy.deepcopy(image_in)
-    G = np.fft.fft2(g)
-    w = copy.deepcopy(bad_pixel_map)
-    W = np.fft.fft2(w)
-
-    N = g.shape
-    N_size = float(N[0] * N[1])
-    F_roof = np.zeros(N, dtype=complex)
-    tmp_G = copy.deepcopy(G)
-
-    iteration = 0
-
-    while iteration < iterations:
-        # 1.) select line using max search and compute conjugate
-        tmp_s = np.unravel_index(np.argmax(abs(tmp_G.real[:, 0: N[1] // 2])),
-                                 (N[0], N[1] // 2))
-
-        tmp_s_conjugate = (np.mod(N[0] - tmp_s[0], N[0]),
-                           np.mod(N[1] - tmp_s[1], N[1]))
-
-        # 2.) compute the new F_roof
-        # special cases s = 0 or s = N/2 no conjugate line exists
-        if ((tmp_s[0] == 0) and (tmp_s[1] == 0)) or \
-                ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == 0)) or \
-                ((tmp_s[0] == 0) and (tmp_s[1] == N[1] / 2)) or \
-                ((tmp_s[0] == N[0] / 2) and (tmp_s[1] == N[1] / 2)):
-            F_roof_tmp = N_size * tmp_G[tmp_s] / W[(0, 0)]
-
-            # 3.) update F_roof
-            F_roof[tmp_s] += F_roof_tmp
-
-        # conjugate line exists
-        else:
-            a = (np.power(np.abs(W[(0, 0)]), 2))
-            b = np.power(np.abs(W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]]), 2)
-
-            if a == b:
-                W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]] += 0.00000000001
-
-            a = (np.power(np.abs(W[(0, 0)]), 2))
-            b = np.power(np.abs(W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]]),
-                         2.0) + 0.01
-            c = a - b
-
-            F_roof_tmp = N_size * (tmp_G[tmp_s] * W[(0, 0)] - np.conj(tmp_G[tmp_s]) *
-                                   W[(2 * tmp_s[0]) % N[0], (2 * tmp_s[1]) % N[1]]) / c
-
-            # 3.) update F_roof
-            F_roof[tmp_s] += F_roof_tmp
-            F_roof[tmp_s_conjugate] += np.conjugate(F_roof_tmp)
-
-        # 4.) calc the new error spectrum using fast numba function
-        tmp_G = _calc_fast_convolution(F_roof_tmp, W, tmp_s, N_size, tmp_G, N)
-
-        iteration += 1
-
-    return image_in * bad_pixel_map + np.fft.ifft2(F_roof).real * (1 - bad_pixel_map)
-
-
-# @jit(cache=True)
-# def _sigma_detection(dev_image,
-#                      var_image,
-#                      source_image,
-#                      out_image):
-#     """
-#     Internal function to create a map with ones and zeros.
-#
-#     Parameters
-#     ----------
-#     dev_image : numpy.ndarray
-#         Image of pixel deviations from neighborhood means, squared.
-#     var_image : numpy.ndarray
-#         Image of pixel neighborhood variances * (N_sigma)^2.
-#     source_image : numpy.ndarray
-#         Input image.
-#     out_image : numpy.ndarray
-#         Bad pixel map.
-#
-#     Returns
-#     -------
-#     NoneType
-#         None
-#     """
-#
-#     for i in range(source_image.shape[0]):
-#         for j in range(source_image.shape[1]):
-#             if dev_image[i][j] < var_image[i][j]:
-#                 out_image[i][j] = 1
-#             else:
-#                 out_image[i][j] = 0
+from pynpoint.util.apply_func import bad_pixel_sigma_filter, image_interpolation, \
+                                     replace_pixels, time_filter
 
 
 class BadPixelSigmaFilterModule(ProcessingModule):
@@ -183,26 +22,6 @@ class BadPixelSigmaFilterModule(ProcessingModule):
     """
 
     __author__ = 'Markus Bonse, Tomas Stolker'
-
-    # This function cannot by @typechecked because of a compatibility issue with numba
-    @staticmethod
-    @jit(cache=True)
-    def _sigma_filter(dev_image: np.ndarray,
-                      var_image: np.ndarray,
-                      mean_image: np.ndarray,
-                      source_image: np.ndarray,
-                      out_image: np.ndarray,
-                      bad_pixel_map: np.ndarray) -> None:
-
-        for i in range(source_image.shape[0]):
-            for j in range(source_image.shape[1]):
-
-                if dev_image[i][j] < var_image[i][j]:
-                    out_image[i][j] = source_image[i][j]
-
-                else:
-                    out_image[i][j] = mean_image[i][j]
-                    bad_pixel_map[i][j] = 0
 
     @typechecked
     def __init__(self,
@@ -239,7 +58,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        super(BadPixelSigmaFilterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -253,6 +72,9 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         self.m_sigma = sigma
         self.m_iterate = iterate
 
+        if self.m_iterate < 1:
+            raise ValueError('The argument of \'iterate\' should be 1 or larger.')
+
     @typechecked
     def run(self) -> None:
         """
@@ -265,65 +87,23 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _bad_pixel_sigma_filter(image_in: np.ndarray,
-                                    box: int,
-                                    sigma: float,
-                                    iterate: int) -> np.ndarray:
-
-            # algorithm adapted from http://idlastro.gsfc.nasa.gov/ftp/pro/image/sigma_filter.pro
-
-            bad_pixel_map = np.ones(image_in.shape)
-
-            if iterate < 1:
-                iterate = 1
-
-            while iterate > 0:
-                box2 = box * box
-
-                source_image = copy.deepcopy(image_in)
-
-                mean_image = (cv2.blur(copy.deepcopy(source_image),
-                                       (box, box)) * box2 - source_image) / (box2 - 1)
-
-                dev_image = (mean_image - source_image) ** 2
-
-                fact = float(sigma ** 2) / (box2 - 2)
-                var_image = fact * (cv2.blur(copy.deepcopy(dev_image),
-                                             (box, box)) * box2 - dev_image)
-
-                out_image = image_in
-
-                self._sigma_filter(dev_image,
-                                   var_image,
-                                   mean_image,
-                                   source_image,
-                                   out_image,
-                                   bad_pixel_map)
-
-                iterate -= 1
-
-            if self.m_map_out_port is not None:
-                self.m_map_out_port.append(bad_pixel_map, data_dim=3)
-
-            return out_image
-
         cpu = self._m_config_port.get_attribute('CPU')
 
-        if cpu > 1:
-            if self.m_map_out_port is not None:
-                warnings.warn('The map_out_port can only be used if CPU=1. No data will be '
-                              'stored to this output port.')
+        if cpu > 1 and self.m_map_out_port is not None:
+            warnings.warn('The \'map_out_port\' can only be used if CPU = 1. No data will '
+                          'be stored to this output port.')
 
+            del self._m_output_ports[self.m_map_out_port.tag]
             self.m_map_out_port = None
 
-        self.apply_function_to_images(_bad_pixel_sigma_filter,
+        self.apply_function_to_images(bad_pixel_sigma_filter,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Bad pixel sigma filter',
                                       func_args=(self.m_box,
                                                  self.m_sigma,
-                                                 self.m_iterate))
+                                                 self.m_iterate,
+                                                 self.m_map_out_port))
 
         history = f'sigma = {self.m_sigma}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -377,7 +157,7 @@ class BadPixelMapModule(ProcessingModule):
             None
         """
 
-        super(BadPixelMapModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         if dark_in_tag is None:
             self.m_dark_port = None
@@ -430,7 +210,7 @@ class BadPixelMapModule(ProcessingModule):
 
             max_flat = np.max(flat)
 
-            print(f'Threshold flat field [counts] = {max_flat*self.m_flat_threshold}')
+            print(f'Threshold flat field (ADU) = {max_flat*self.m_flat_threshold:.2e}')
 
             if self.m_dark_port is None:
                 bpmap = np.ones(flat.shape)
@@ -488,7 +268,7 @@ class BadPixelInterpolationModule(ProcessingModule):
             None
         """
 
-        super(BadPixelInterpolationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_bp_map_in_port = self.add_input_port(bad_pixel_map_tag)
@@ -518,16 +298,12 @@ class BadPixelInterpolationModule(ProcessingModule):
             raise ValueError('The shape of the bad pixel map does not match the shape of the '
                              'images.')
 
-        @typechecked
-        def _image_interpolation(image_in: np.ndarray) -> np.ndarray:
-            return _bad_pixel_interpolation(image_in,
-                                            bad_pixel_map,
-                                            self.m_iterations)
-
-        self.apply_function_to_images(_image_interpolation,
+        self.apply_function_to_images(image_interpolation,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Bad pixel interpolation')
+                                      'Bad pixel interpolation',
+                                      func_args=(self.m_iterations,
+                                                 bad_pixel_map))
 
         history = f'iterations = {self.m_iterations}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -569,7 +345,7 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        super(BadPixelTimeFilterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -589,31 +365,9 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _time_filter(timeline: np.ndarray,
-                         sigma: Tuple[float, float]) -> np.ndarray:
-
-            median = np.median(timeline)
-            std = np.std(timeline)
-
-            index_lower = np.argwhere(timeline < median-sigma[0]*std)
-            index_upper = np.argwhere(timeline > median+sigma[1]*std)
-
-            if index_lower.size > 0:
-                mask = np.ones(timeline.shape, dtype=bool)
-                mask[index_lower] = False
-                timeline[index_lower] = np.mean(timeline[mask])
-
-            if index_upper.size > 0:
-                mask = np.ones(timeline.shape, dtype=bool)
-                mask[index_upper] = False
-                timeline[index_upper] = np.mean(timeline[mask])
-
-            return timeline
-
         print('Temporal filtering of bad pixels ...', end='')
 
-        self.apply_function_in_time(_time_filter,
+        self.apply_function_in_time(time_filter,
                                     self.m_image_in_port,
                                     self.m_image_out_port,
                                     func_args=(self.m_sigma, ))
@@ -663,7 +417,7 @@ class ReplaceBadPixelsModule(ProcessingModule):
             None
         """
 
-        super(ReplaceBadPixelsModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_map_in_port = self.add_input_port(map_in_tag)
@@ -688,39 +442,13 @@ class ReplaceBadPixelsModule(ProcessingModule):
         bpmap = self.m_map_in_port.get_all()[0, ]
         index = np.argwhere(bpmap == 0)
 
-        @typechecked
-        def _replace_pixels(image: np.ndarray,
-                            index: np.ndarray) -> np.ndarray:
-
-            im_mask = np.copy(image)
-
-            for _, item in enumerate(index):
-                im_mask[item[0], item[1]] = np.nan
-
-            for _, item in enumerate(index):
-                im_tmp = im_mask[item[0]-self.m_size:item[0]+self.m_size+1,
-                                 item[1]-self.m_size:item[1]+self.m_size+1]
-
-                if np.size(np.where(im_tmp != np.nan)[0]) == 0:
-                    im_mask[item[0], item[1]] = image[item[0], item[1]]
-
-                else:
-                    if self.m_replace == 'mean':
-                        im_mask[item[0], item[1]] = np.nanmean(im_tmp)
-
-                    elif self.m_replace == 'median':
-                        im_mask[item[0], item[1]] = np.nanmedian(im_tmp)
-
-                    elif self.m_replace == 'nan':
-                        im_mask[item[0], item[1]] = np.nan
-
-            return im_mask
-
-        self.apply_function_to_images(_replace_pixels,
+        self.apply_function_to_images(replace_pixels,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Running ReplaceBadPixelsModule',
-                                      func_args=(index, ))
+                                      func_args=(index,
+                                                 self.m_size,
+                                                 self.m_replace))
 
         history = f'replace = {self.m_replace}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)

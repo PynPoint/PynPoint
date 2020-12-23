@@ -5,7 +5,7 @@ Pipeline modules for stacking and subsampling of images.
 import time
 import warnings
 
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -57,7 +57,7 @@ class StackAndSubsetModule(ProcessingModule):
             None
         """
 
-        super(StackAndSubsetModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -228,7 +228,7 @@ class StackCubesModule(ProcessingModule):
             None
         """
 
-        super(StackCubesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -238,7 +238,7 @@ class StackCubesModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Uses the NFRAMES attribute to select the images of each cube,
+        Run method of the module. Uses the ``NFRAMES`` attribute to select the images of each cube,
         calculates the mean or median of each cube, and saves the data and attributes.
 
         Returns
@@ -298,7 +298,7 @@ class StackCubesModule(ProcessingModule):
 class DerotateAndStackModule(ProcessingModule):
     """
     Pipeline module for derotating and/or stacking (i.e., taking the median or average) of the
-    images.
+    images, either along the time or the wavelengths dimension.
     """
 
     @typechecked
@@ -308,7 +308,8 @@ class DerotateAndStackModule(ProcessingModule):
                  image_out_tag: str,
                  derotate: bool = True,
                  stack: Optional[str] = None,
-                 extra_rot: float = 0.) -> None:
+                 extra_rot: float = 0.,
+                 dimension: str = 'time') -> None:
         """
         Parameters
         ----------
@@ -317,15 +318,19 @@ class DerotateAndStackModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         image_out_tag : str
-            Tag of the database entry that is written as output. The output is either 2D
-            (*stack=False*) or 3D (*stack=True*).
+            Tag of the database entry that is written as output. The shape of the output data is
+            equal to the data from ``image_in_tag``. If the argument of ``stack`` is not None,
+            then the size of the collapsed dimension is equal to 1.
         derotate : bool
-            Derotate the images with the PARANG attribute.
+            Derotate the images with the ``PARANG`` attribute.
         stack : str
             Type of stacking applied after optional derotation ('mean', 'median', or None for no
             stacking).
         extra_rot : float
             Additional rotation angle of the images in clockwise direction (deg).
+        dimension : str
+            Dimension along which the images are stacked. Can either be 'time' or 'wavelength'. If
+            the ``image_in_tag`` has three dimensions then ``dimension`` is always fixed to 'time'.
 
         Returns
         -------
@@ -333,7 +338,7 @@ class DerotateAndStackModule(ProcessingModule):
             None
         """
 
-        super(DerotateAndStackModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -341,12 +346,14 @@ class DerotateAndStackModule(ProcessingModule):
         self.m_derotate = derotate
         self.m_stack = stack
         self.m_extra_rot = extra_rot
+        self.m_dimension = dimension
 
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Uses the PARANG attributes to derotate the images (if *derotate*
-        is set to True) and applies an optional mean or median stacking afterwards.
+        Run method of the module. Uses the ``PARANG`` attributes to derotate the images (if
+        ``derotate`` is set to ``True``) and applies an optional mean or median stacking
+        along the time or wavelengths dimension afterwards.
 
         Returns
         -------
@@ -356,27 +363,55 @@ class DerotateAndStackModule(ProcessingModule):
 
         @typechecked
         def _initialize(ndim: int,
-                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
+                        npix: int) -> Tuple[int, np.ndarray, Optional[np.ndarray],
+                                            Optional[np.ndarray]]:
 
             if ndim == 2:
                 nimages = 1
-            elif ndim == 3:
-                nimages = self.m_image_in_port.get_shape()[0]
 
-            if self.m_stack == 'median':
-                frames = np.array([0, nimages])
-            else:
-                frames = memory_frames(memory, nimages)
+            elif ndim == 3:
+                nimages = self.m_image_in_port.get_shape()[-3]
+
+                if self.m_stack == 'median':
+                    frames = np.array([0, nimages])
+
+                else:
+                    frames = memory_frames(memory, nimages)
+
+            elif ndim == 4:
+                nimages = self.m_image_in_port.get_shape()[-3]
+                nwave = self.m_image_in_port.get_shape()[-4]
+
+                if self.m_dimension == 'time':
+                    frames = np.linspace(0, nwave, nwave+1)
+
+                elif self.m_dimension == 'wavelength':
+                    frames = np.linspace(0, nimages, nimages+1)
+
+                else:
+                    raise ValueError('The dimension should be set to \'time\' or \'wavelength\'.')
 
             if self.m_stack == 'mean':
-                im_tot = np.zeros((npix, npix))
+                if ndim == 4:
+                    if self.m_dimension == 'time':
+                        im_tot = np.zeros((nwave, npix, npix))
+
+                    elif self.m_dimension == 'wavelength':
+                        im_tot = np.zeros((nimages, npix, npix))
+
+                else:
+                    im_tot = np.zeros((npix, npix))
+
             else:
                 im_tot = None
 
-            return nimages, frames, im_tot
+            if self.m_stack is None and ndim == 4:
+                im_none = np.zeros((nwave, nimages, npix, npix))
 
-        if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError('Input and output port should have a different tag.')
+            else:
+                im_none = None
+
+            return nimages, frames, im_tot, im_none
 
         memory = self._m_config_port.get_attribute('MEMORY')
 
@@ -384,36 +419,98 @@ class DerotateAndStackModule(ProcessingModule):
             parang = self.m_image_in_port.get_attribute('PARANG')
 
         ndim = self.m_image_in_port.get_ndim()
-        npix = self.m_image_in_port.get_shape()[1]
+        npix = self.m_image_in_port.get_shape()[-2]
 
-        nimages, frames, im_tot = _initialize(ndim, npix)
+        nimages, frames, im_tot, im_none = _initialize(ndim, npix)
 
         start_time = time.time()
         for i, _ in enumerate(frames[:-1]):
             progress(i, len(frames[:-1]), 'Derotating and/or stacking images...', start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            if ndim == 3:
+                # Get the images and ensure they have the correct 3D shape with the following
+                # three dimensions: (batch_size, height, width)
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            elif ndim == 4:
+                # Process all time frames per exposure at once
+                if self.m_dimension == 'time':
+                    images = self.m_image_in_port[i, :, ]
+
+                elif self.m_dimension == 'wavelength':
+                    images = self.m_image_in_port[:, i, ]
 
             if self.m_derotate:
-                angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
+                if ndim == 4:
+                    if self.m_dimension == 'time':
+                        angles = -1.*parang + self.m_extra_rot
+
+                    elif self.m_dimension == 'wavelength':
+                        n_wavel = self.m_image_in_port.get_shape()[-4]
+                        angles = np.full(n_wavel, -1.*parang[i]) + self.m_extra_rot
+
+                else:
+                    angles = -parang[frames[i]:frames[i+1]]+self.m_extra_rot
+
                 images = rotate_images(images, angles)
 
             if self.m_stack is None:
                 if ndim == 2:
                     self.m_image_out_port.set_all(images[np.newaxis, ...])
+
                 elif ndim == 3:
                     self.m_image_out_port.append(images, data_dim=3)
 
+                elif ndim == 4:
+                    if self.m_dimension == 'time':
+                        im_none[i] = images
+
+                    elif self.m_dimension == 'wavelength':
+                        im_none[:, i] = images
+
             elif self.m_stack == 'mean':
-                im_tot += np.sum(images, axis=0)
+                if ndim == 4:
+                    im_tot[i] = np.sum(images, axis=0)
+
+                else:
+                    im_tot += np.sum(images, axis=0)
 
         if self.m_stack == 'mean':
-            im_stack = im_tot/float(nimages)
-            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+            if ndim == 4:
+                im_stack = im_tot/float(im_tot.shape[0])
+
+                if self.m_dimension == 'time':
+                    self.m_image_out_port.set_all(im_stack[:, np.newaxis, ...])
+
+                elif self.m_dimension == 'wavelength':
+                    self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+
+            else:
+                im_stack = im_tot/float(nimages)
+                self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
 
         elif self.m_stack == 'median':
-            im_stack = np.median(images, axis=0)
-            self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+            if ndim == 4:
+                images = self.m_image_in_port[:]
+
+                if self.m_dimension == 'time':
+                    im_stack = np.median(images, axis=1)
+                    self.m_image_out_port.set_all(im_stack[:, np.newaxis, ...])
+
+                elif self.m_dimension == 'wavelength':
+                    im_stack = np.median(images, axis=0)
+                    self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+
+            else:
+                im_stack = np.median(images, axis=0)
+                self.m_image_out_port.set_all(im_stack[np.newaxis, ...])
+
+        elif self.m_stack is None and ndim == 4:
+            if self.m_dimension == 'time':
+                self.m_image_out_port.set_all(im_none)
+
+            elif self.m_dimension == 'wavelength':
+                self.m_image_out_port.set_all(im_none)
 
         if self.m_derotate or self.m_stack is not None:
             self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -456,7 +553,7 @@ class CombineTagsModule(ProcessingModule):
             None
         """
 
-        super(CombineTagsModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_out_port = self.add_output_port(image_out_tag)
 

@@ -5,15 +5,16 @@ Pipeline modules for resizing of images.
 import math
 import time
 
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, scale_image
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.apply_func import image_scaling
+from pynpoint.util.image import crop_image
+from pynpoint.util.module import memory_frames, progress
 
 
 class CropImagesModule(ProcessingModule):
@@ -53,7 +54,7 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        super(CropImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -79,7 +80,21 @@ class CropImagesModule(ProcessingModule):
         # Get memory and number of images to split the frames into chunks
         memory = self._m_config_port.get_attribute('MEMORY')
         nimages = self.m_image_in_port.get_shape()[0]
-        frames = memory_frames(memory, nimages)
+
+        # Get the numnber of dimensions and shape
+        ndim = self.m_image_in_port.get_ndim()
+        im_shape = self.m_image_in_port.get_shape()
+
+        if ndim == 3:
+            # Number of images
+            nimages = im_shape[-3]
+
+            # Split into batches to comply with memory constraints
+            frames = memory_frames(memory, nimages)
+
+        elif ndim == 4:
+            # Process all wavelengths per exposure at once
+            frames = np.linspace(0, im_shape[-3], im_shape[-3]+1)
 
         # Convert size parameter from arcseconds to pixels
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
@@ -88,7 +103,7 @@ class CropImagesModule(ProcessingModule):
         print(f'New image size (pixels) = {self.m_size}')
 
         if self.m_center is not None:
-            print(f'New image center (x, y) = {self.m_center}')
+            print(f'New image center (x, y) = ({self.m_center[1]}, {self.m_center[0]})')
 
         # Crop images chunk by chunk
         start_time = time.time()
@@ -97,12 +112,22 @@ class CropImagesModule(ProcessingModule):
             # Update progress bar
             progress(i, len(frames[:-1]), 'Cropping images...', start_time)
 
-            # Select and crop images in the current chunk
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            # Select images in the current chunk
+            if ndim == 3:
+                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+
+            elif ndim == 4:
+                # Process all wavelengths per exposure at once
+                images = self.m_image_in_port[:, i, ]
+
+            # crop images according to input parameters
             images = crop_image(images, self.m_center, self.m_size, copy=False)
 
-            # Write cropped images to output port
-            self.m_image_out_port.append(images, data_dim=3)
+            # Write processed images to output port
+            if ndim == 3:
+                self.m_image_out_port.append(images, data_dim=3)
+            elif ndim == 4:
+                self.m_image_out_port.append(images, data_dim=4)
 
         # Save history and copy attributes
         history = f'image size (pix) = {self.m_size}'
@@ -124,7 +149,7 @@ class ScaleImagesModule(ProcessingModule):
                  scaling: Union[Tuple[float, float, float],
                                 Tuple[None, None, float],
                                 Tuple[float, float, None]],
-                 pixscale: bool = False) -> None:
+                 pixscale: bool = True) -> None:
         """
         Parameters
         ----------
@@ -134,7 +159,7 @@ class ScaleImagesModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            ``image_in_tag``.
         scaling : tuple(float, float, float)
             Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
             scaling_flux). Upsampling and downsampling of the image corresponds to
@@ -148,7 +173,7 @@ class ScaleImagesModule(ProcessingModule):
             None
         """
 
-        super(ScaleImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -184,15 +209,7 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        @typechecked
-        def _image_scaling(image_in: np.ndarray,
-                           scaling_y: float,
-                           scaling_x: float,
-                           scaling_flux: float) -> np.ndarray:
-
-            return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
-
-        self.apply_function_to_images(_image_scaling,
+        self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Scaling images',
@@ -243,7 +260,7 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
-        super(AddLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -324,7 +341,7 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        super(RemoveLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

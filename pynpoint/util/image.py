@@ -245,8 +245,8 @@ def shift_image(image: np.ndarray,
 
 @typechecked
 def scale_image(image: np.ndarray,
-                scaling_y: float,
-                scaling_x: float) -> np.ndarray:
+                scaling_y: Union[float, np.float32],
+                scaling_x: Union[float, np.float32]) -> np.ndarray:
     """
     Function to spatially scale an image.
 
@@ -267,12 +267,12 @@ def scale_image(image: np.ndarray,
 
     sum_before = np.sum(image)
 
-    im_scale = rescale(image=np.asarray(image, dtype=np.float64),
-                       scale=(scaling_y, scaling_x),
+    im_scale = rescale(image,
+                       (scaling_y, scaling_x),
                        order=5,
                        mode='reflect',
-                       anti_aliasing=True,
-                       multichannel=False)
+                       multichannel=False,
+                       anti_aliasing=True)
 
     sum_after = np.sum(im_scale)
 

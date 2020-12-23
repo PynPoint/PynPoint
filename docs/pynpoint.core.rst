@@ -36,7 +36,6 @@ pynpoint.core.pypeline module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

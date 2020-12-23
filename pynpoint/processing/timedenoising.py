@@ -7,13 +7,12 @@ Bonse et al. (arXiv:1804.05063) more information.
 from typing import Union
 
 import pywt
-import numpy as np
 
-from statsmodels.robust import mad
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.wavelets import WaveletAnalysisCapsule
+from pynpoint.util.apply_func import cwt_denoise_line_in_time, dwt_denoise_line_in_time, \
+                                     normalization
 
 
 class CwtWaveletConfiguration:
@@ -138,7 +137,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             None
         """
 
-        super(WaveletTimeDenoisingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -174,83 +173,22 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             if self.m_padding == 'none':
                 self.m_padding = 'periodic'
 
-            @typechecked
-            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
-                """
-                Definition of the temporal denoising for DWT.
-
-                Parameters
-                ----------
-                signal_in : np.ndarray
-                    1D input signal.
-
-                Returns
-                -------
-                np.ndarray
-                    Multilevel 1D inverse discrete wavelet transform.
-                """
-
-                if self.m_threshold_function:
-                    threshold_mode = 'soft'
-                else:
-                    threshold_mode = 'hard'
-
-                coef = pywt.wavedec(signal_in,
-                                    wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    level=None,
-                                    mode=self.m_padding)
-
-                sigma = mad(coef[-1])
-
-                threshold = sigma * np.sqrt(2*np.log(len(signal_in)))
-
-                denoised = coef[:]
-
-                for item in denoised[1:]:
-                    denoised[1:] = pywt.threshold(item, value=threshold, mode=threshold_mode)
-
-                return pywt.waverec(denoised,
-                                    wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    mode=self.m_padding)
+            self.apply_function_in_time(dwt_denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_image_out_port,
+                                        func_args=(self.m_threshold_function,
+                                                   self.m_padding,
+                                                   self.m_wavelet_configuration))
 
         elif isinstance(self.m_wavelet_configuration, CwtWaveletConfiguration):
 
-            @typechecked
-            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
-                """
-                Definition of temporal denoising for CWT.
-
-                Parameters
-                ----------
-                signal_in : np.ndarray
-                    1D input signal.
-
-                Returns
-                -------
-                np.ndarray
-                    1D output signal.
-                """
-
-                cwt_capsule = WaveletAnalysisCapsule(
-                    signal_in=signal_in,
-                    padding=self.m_padding,
-                    wavelet_in=self.m_wavelet_configuration.m_wavelet,
-                    order=self.m_wavelet_configuration.m_wavelet_order,
-                    frequency_resolution=self.m_wavelet_configuration.m_resolution)
-
-                cwt_capsule.compute_cwt()
-                cwt_capsule.denoise_spectrum(soft=self.m_threshold_function)
-
-                if self.m_median_filter:
-                    cwt_capsule.median_filter()
-
-                cwt_capsule.update_signal()
-
-                return cwt_capsule.get_signal()
-
-        self.apply_function_in_time(denoise_line_in_time,
-                                    self.m_image_in_port,
-                                    self.m_image_out_port)
+            self.apply_function_in_time(cwt_denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_image_out_port,
+                                        func_args=(self.m_threshold_function,
+                                                   self.m_padding,
+                                                   self.m_median_filter,
+                                                   self.m_wavelet_configuration))
 
         if self.m_threshold_function:
             history = 'threshold_function = soft'
@@ -291,7 +229,7 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
-        super(TimeNormalizationModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -307,11 +245,7 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _normalization(image_in: np.ndarray) -> np.ndarray:
-            return image_in - np.median(image_in)
-
-        self.apply_function_to_images(_normalization,
+        self.apply_function_to_images(normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Time normalization')

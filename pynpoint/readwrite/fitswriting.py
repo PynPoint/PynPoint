@@ -65,7 +65,7 @@ class FitsWritingModule(WritingModule):
             None
         """
 
-        super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
+        super().__init__(name_in, output_dir=output_dir)
 
         if not file_name.endswith('.fits'):
             raise ValueError('Output \'file_name\' requires the FITS extension.')

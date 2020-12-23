@@ -137,11 +137,14 @@ class LineTaskProcessor(TaskProcessor):
                                tmp_task.m_input_data.shape[1],
                                tmp_task.m_input_data.shape[2]))
 
+        count = 0
+
         for i in range(tmp_task.m_input_data.shape[1]):
             for j in range(tmp_task.m_input_data.shape[2]):
-                result_arr[:, i, j] = apply_function(tmp_data=tmp_task.m_input_data[:, i, j],
-                                                     func=self.m_function,
-                                                     func_args=self.m_function_args)
+                result_arr[:, i, j] = apply_function(tmp_task.m_input_data[:, i, j], count,
+                                                     self.m_function, self.m_function_args)
+
+                count += 1
 
         return TaskResult(result_arr, tmp_task.m_job_parameter[1])
 

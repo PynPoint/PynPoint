@@ -73,7 +73,7 @@ Centering
 * :class:`~pynpoint.processing.centering.StarAlignmentModule` (CPU): Align the images with a cross-correlation.
 * :class:`~pynpoint.processing.centering.FitCenterModule` (CPU): Fit the PSF with a 2D Gaussian or Moffat function.
 * :class:`~pynpoint.processing.centering.ShiftImagesModule`: Shift a stack of images.
-* :class:`~pynpoint.processing.centering.WaffleCenteringModule`: Use the waffle spots to center the images.
+* :class:`~pynpoint.processing.centering.WaffleCenteringModule` (IFS): Use the waffle spots to center the images.
 
 Dark and Flat Correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ Frame Selection
 Image Resizing
 ~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.resizing.CropImagesModule`: Crop the images.
+* :class:`~pynpoint.processing.resizing.CropImagesModule` (IFS): Crop the images.
 * :class:`~pynpoint.processing.resizing.ScaleImagesModule` (CPU): Resample the images (spatially and/or in flux).
 * :class:`~pynpoint.processing.resizing.AddLinesModule`: Add pixel lines on the sides of the images.
 * :class:`~pynpoint.processing.resizing.RemoveLinesModule`: Remove pixel lines from the sides of the images.
@@ -144,7 +144,7 @@ PCA Background Subtraction
 PSF Preparation
 ~~~~~~~~~~~~~~~
 
-* :class:`~pynpoint.processing.psfpreparation.PSFpreparationModule`: Mask the images before the PSF subtraction.
+* :class:`~pynpoint.processing.psfpreparation.PSFpreparationModule` (IFS): Mask the images before the PSF subtraction.
 * :class:`~pynpoint.processing.psfpreparation.AngleInterpolationModule`: Interpolate the parallactic angles between the start and end values.
 * :class:`~pynpoint.processing.psfpreparation.AngleCalculationModule`: Calculate the parallactic angles.
 * :class:`~pynpoint.processing.psfpreparation.SortParangModule` (IFS): Sort the images by parallactic angle.
@@ -161,5 +161,5 @@ Stacking
 
 * :class:`~pynpoint.processing.stacksubset.StackAndSubsetModule`: Stack and/or select a random subset of the images.
 * :class:`~pynpoint.processing.stacksubset.StackCubesModule`: Collapse each original data cube separately.
-* :class:`~pynpoint.processing.stacksubset.DerotateAndStackModule`: Derotate and/or stack the images.
+* :class:`~pynpoint.processing.stacksubset.DerotateAndStackModule` (IFS): Derotate and/or stack the images.
 * :class:`~pynpoint.processing.stacksubset.CombineTagsModule`: Combine multiple database tags into a single dataset.

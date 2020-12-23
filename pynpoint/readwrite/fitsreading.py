@@ -75,7 +75,7 @@ class FitsReadingModule(ReadingModule):
             None
         """
 
-        super(FitsReadingModule, self).__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir=input_dir)
 
         self.m_image_out_port = self.add_output_port(image_tag)
 

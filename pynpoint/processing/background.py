@@ -5,14 +5,16 @@ Pipeline modules for subtraction of the background emission.
 import time
 import warnings
 
+from typing import Any, Optional, Union
+
 import numpy as np
 
 from typeguard import typechecked
-from typing import Any, Optional, Union
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.image import create_mask
 from pynpoint.util.module import progress
+from pynpoint.util.apply_func import subtract_line
 
 
 class SimpleBackgroundSubtractionModule(ProcessingModule):
@@ -48,7 +50,7 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        super(SimpleBackgroundSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -130,7 +132,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             None
         """
 
-        super(MeanBackgroundSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -274,7 +276,7 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
             # -----------------------------------------------------------
 
         if isinstance(self.m_shift, np.ndarray):
-            history = f'shift = NFRAMES'
+            history = 'shift = NFRAMES'
         else:
             history = f'shift = {self.m_shift}'
 
@@ -321,7 +323,7 @@ class LineSubtractionModule(ProcessingModule):
             None
         """
 
-        super(LineSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -345,35 +347,6 @@ class LineSubtractionModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
-        @typechecked
-        def _subtract_line(image_in: np.ndarray,
-                           mask: np.ndarray) -> np.ndarray:
-
-            image_tmp = np.copy(image_in)
-            image_tmp[mask == 0.] = np.nan
-
-            if self.m_combine == 'mean':
-                row_mean = np.nanmean(image_tmp, axis=1)
-                col_mean = np.nanmean(image_tmp, axis=0)
-
-                x_grid, y_grid = np.meshgrid(col_mean, row_mean)
-                subtract = (x_grid+y_grid)/2.
-
-            elif self.m_combine == 'median':
-                col_median = np.nanmedian(image_tmp, axis=0)
-                col_2d = np.tile(col_median, (im_shape[1], 1))
-
-                image_tmp -= col_2d
-                image_tmp[mask == 0.] = np.nan
-
-                row_median = np.nanmedian(image_tmp, axis=1)
-                row_2d = np.tile(row_median, (im_shape[0], 1))
-                row_2d = np.rot90(row_2d)  # 90 deg rotation in clockwise direction
-
-                subtract = col_2d + row_2d
-
-            return image_in - subtract
-
         if self.m_mask:
             size = (self.m_mask/pixscale, None)
         else:
@@ -381,11 +354,13 @@ class LineSubtractionModule(ProcessingModule):
 
         mask = create_mask(im_shape, size)
 
-        self.apply_function_to_images(_subtract_line,
+        self.apply_function_to_images(subtract_line,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Background subtraction',
-                                      func_args=(mask, ))
+                                      func_args=(mask,
+                                                 self.m_combine,
+                                                 im_shape))
 
         history = f'combine = {self.m_combine}'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
@@ -434,7 +409,7 @@ class NoddingBackgroundModule(ProcessingModule):
             None
         """
 
-        super(NoddingBackgroundModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_science_in_port = self.add_input_port(science_in_tag)
         self.m_sky_in_port = self.add_input_port(sky_in_tag)

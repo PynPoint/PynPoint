@@ -8,7 +8,7 @@ from pynpoint.core.pypeline import Pypeline
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 from pynpoint.processing.resizing import CropImagesModule, ScaleImagesModule, \
                                          AddLinesModule, RemoveLinesModule
-from pynpoint.util.tests import create_config, create_star_data, remove_test_data
+from pynpoint.util.tests import create_config, create_star_data, create_ifs_data, remove_test_data
 
 
 class TestResizing:
@@ -19,13 +19,14 @@ class TestResizing:
         self.test_dir = os.path.dirname(__file__) + '/'
 
         create_star_data(self.test_dir+'resize')
+        create_ifs_data(self.test_dir+'resize_ifs')
         create_config(self.test_dir+'PynPoint_config.ini')
 
         self.pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
     def teardown_class(self) -> None:
 
-        remove_test_data(self.test_dir, folders=['resize'])
+        remove_test_data(self.test_dir, folders=['resize', 'resize_ifs'])
 
     def test_read_data(self) -> None:
 
@@ -41,6 +42,20 @@ class TestResizing:
         data = self.pipeline.get_data('read')
         assert np.sum(data) == pytest.approx(105.54278879805277, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+        module = FitsReadingModule(name_in='read_ifs',
+                                   image_tag='read_ifs',
+                                   input_dir=self.test_dir+'resize_ifs',
+                                   overwrite=True,
+                                   check=True,
+                                   ifs_data=True)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('read_ifs')
+
+        data = self.pipeline.get_data('read_ifs')
+        assert np.sum(data) == pytest.approx(749.8396528807369, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 21, 21)
 
     def test_crop_images(self) -> None:
 
@@ -62,6 +77,15 @@ class TestResizing:
         self.pipeline.add_module(module)
         self.pipeline.run_module('crop2')
 
+        module = CropImagesModule(size=0.2,
+                                  center=(4, 4),
+                                  name_in='crop_ifs',
+                                  image_in_tag='read_ifs',
+                                  image_out_tag='crop_ifs')
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('crop_ifs')
+
         data = self.pipeline.get_data('crop1')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
@@ -70,20 +94,26 @@ class TestResizing:
         assert np.sum(data) == pytest.approx(105.64863165433025, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
 
+        data = self.pipeline.get_data('crop_ifs')
+        assert np.sum(data) == pytest.approx(15.870936600122521, rel=self.limit, abs=0.)
+        assert data.shape == (3, 10, 9, 9)
+
     def test_scale_images(self) -> None:
 
-        module = ScaleImagesModule(scaling=(2., 2., None),
-                                   name_in='scale1',
+        module = ScaleImagesModule(name_in='scale1',
                                    image_in_tag='read',
-                                   image_out_tag='scale1')
+                                   image_out_tag='scale1',
+                                   scaling=(2., 2., None),
+                                   pixscale=True)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('scale1')
 
-        module = ScaleImagesModule(scaling=(None, None, 2.),
-                                   name_in='scale2',
+        module = ScaleImagesModule(name_in='scale2',
                                    image_in_tag='read',
-                                   image_out_tag='scale2')
+                                   image_out_tag='scale2',
+                                   scaling=(None, None, 2.),
+                                   pixscale=True)
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('scale2')
@@ -95,6 +125,15 @@ class TestResizing:
         data = self.pipeline.get_data('scale2')
         assert np.sum(data) == pytest.approx(211.08557759610554, rel=self.limit, abs=0.)
         assert data.shape == (10, 11, 11)
+
+        attr = self.pipeline.get_attribute('read', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.027, rel=self.limit, abs=0.)
+
+        attr = self.pipeline.get_attribute('scale1', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.0135, rel=self.limit, abs=0.)
+
+        attr = self.pipeline.get_attribute('scale2', 'PIXSCALE', static=True)
+        assert attr == pytest.approx(0.027, rel=self.limit, abs=0.)
 
     def test_add_lines(self) -> None:
 

@@ -2,24 +2,22 @@
 Pipeline modules for aligning and centering of the star.
 """
 
-import time
 import math
+import time
 import warnings
 
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from astropy.modeling import models, fitting
+from astropy.modeling import fitting, models
 from scipy.ndimage.filters import gaussian_filter
-from scipy.optimize import curve_fit
-from skimage.registration import phase_cross_correlation
-from skimage.transform import rescale
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.module import memory_frames, progress
-from pynpoint.util.image import crop_image, shift_image, center_pixel
+from pynpoint.util.image import center_pixel, crop_image, shift_image
+from pynpoint.util.apply_func import align_image, apply_shift, fit_2d_function
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -73,7 +71,7 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        super(StarAlignmentModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -102,49 +100,6 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _align_image(image_in: np.ndarray) -> np.ndarray:
-            offset = np.array([0., 0.])
-
-            for i in range(self.m_num_references):
-                if self.m_subframe is None:
-                    tmp_offset, _, _ = phase_cross_correlation(ref_images[i, :, :],
-                                                               image_in,
-                                                               upsample_factor=self.m_accuracy)
-
-                else:
-                    sub_in = crop_image(image_in, None, self.m_subframe)
-                    sub_ref = crop_image(ref_images[i, :, :], None, self.m_subframe)
-
-                    tmp_offset, _, _ = phase_cross_correlation(sub_ref,
-                                                               sub_in,
-                                                               upsample_factor=self.m_accuracy)
-                offset += tmp_offset
-
-            offset /= float(self.m_num_references)
-
-            if self.m_resize is not None:
-                offset *= self.m_resize
-
-                sum_before = np.sum(image_in)
-
-                tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
-                                    scale=(self.m_resize, self.m_resize),
-                                    order=5,
-                                    mode='reflect',
-                                    anti_aliasing=True,
-                                    multichannel=False)
-
-                sum_after = np.sum(tmp_image)
-
-                # Conserve flux because the rescale function normalizes all values to [0:1].
-                tmp_image = tmp_image*(sum_before/sum_after)
-
-            else:
-                tmp_image = image_in
-
-            return shift_image(tmp_image, offset, self.m_interpolation)
-
         if self.m_ref_image_in_port is None:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
                                       self.m_num_references,
@@ -169,10 +124,17 @@ class StarAlignmentModule(ProcessingModule):
             pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
             self.m_subframe = int(self.m_subframe/pixscale)
 
-        self.apply_function_to_images(_align_image,
+        self.apply_function_to_images(align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Aligning images')
+                                      'Aligning images',
+                                      func_args=(self.m_interpolation,
+                                                 self.m_accuracy,
+                                                 self.m_resize,
+                                                 self.m_num_references,
+                                                 self.m_subframe,
+                                                 ref_images.reshape(-1),
+                                                 ref_images.shape))
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
@@ -180,7 +142,7 @@ class StarAlignmentModule(ProcessingModule):
             pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
             new_pixscale = pixscale/self.m_resize
             self.m_image_out_port.add_attribute('PIXSCALE', new_pixscale)
-            print(f'New pixel scale [arcsec] = {new_pixscale:.2f}')
+            print(f'New pixel scale (arcsec) = {new_pixscale:.2f}')
 
         history = f'resize = {self.m_resize}'
         self.m_image_out_port.add_history('StarAlignmentModule', history)
@@ -268,7 +230,7 @@ class FitCenterModule(ProcessingModule):
             elif model == 'moffat':
                 self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
-        super(FitCenterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_fit_out_port = self.add_output_port(fit_out_tag)
@@ -283,7 +245,6 @@ class FitCenterModule(ProcessingModule):
         self.m_sign = sign
         self.m_model = model
         self.m_filter_size = filter_size
-        self.m_model_func = None
 
         self.m_count = 0
 
@@ -335,229 +296,25 @@ class FitCenterModule(ProcessingModule):
         xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
         rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
 
-        @typechecked
-        def gaussian_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
-                        x_center: float,
-                        y_center: float,
-                        fwhm_x: float,
-                        fwhm_y: float,
-                        amp: float,
-                        theta: float,
-                        offset: float) -> np.ndarray:
-            """
-            Function to create a 2D elliptical Gaussian model.
-
-            Parameters
-            ----------
-            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
-                A tuple of two 2D arrays with the mesh grid points in x and y
-                direction, or an equivalent 3D numpy array with 2 elements
-                along the first axis.
-            x_center : float
-                Offset of the model center along the x axis (pix).
-            y_center : float
-                Offset of the model center along the y axis (pix).
-            fwhm_x : float
-                Full width at half maximum along the x axis (pix).
-            fwhm_y : float
-                Full width at half maximum along the y axis (pix).
-            amp : float
-                Peak flux.
-            theta : float
-                Rotation angle in counterclockwise direction (rad).
-            offset : float
-                Flux offset.
-
-            Returns
-            -------
-            numpy.ndimage
-                Raveled 2D elliptical Gaussian model.
-            """
-
-            (xx_grid, yy_grid) = grid
-
-            x_diff = xx_grid - x_center
-            y_diff = yy_grid - y_center
-
-            sigma_x = fwhm_x/math.sqrt(8.*math.log(2.))
-            sigma_y = fwhm_y/math.sqrt(8.*math.log(2.))
-
-            a_gauss = 0.5 * ((np.cos(theta)/sigma_x)**2 + (np.sin(theta)/sigma_y)**2)
-            b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
-            c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
-
-            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
-                                             c_gauss*y_diff**2))
-
-            if self.m_radius:
-                gaussian = gaussian[rr_ap < self.m_radius]
-            else:
-                gaussian = np.ravel(gaussian)
-
-            return gaussian
-
-        @typechecked
-        def moffat_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
-                      x_center: float,
-                      y_center: float,
-                      fwhm_x: float,
-                      fwhm_y: float,
-                      amp: float,
-                      theta: float,
-                      offset: float,
-                      beta: float) -> np.ndarray:
-            """
-            Function to create a 2D elliptical Moffat model.
-
-            The parametrization used here is equivalent to the one in AsPyLib:
-            http://www.aspylib.com/doc/aspylib_fitting.html#elliptical-moffat-psf
-
-            Parameters
-            ----------
-            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
-                A tuple of two 2D arrays with the mesh grid points in x and y
-                direction, or an equivalent 3D numpy array with 2 elements
-                along the first axis.
-            x_center : float
-                Offset of the model center along the x axis (pix).
-            y_center : float
-                Offset of the model center along the y axis (pix).
-            fwhm_x : float
-                Full width at half maximum along the x axis (pix).
-            fwhm_y : float
-                Full width at half maximum along the y axis (pix).
-            amp : float
-                Peak flux.
-            theta : float
-                Rotation angle in counterclockwise direction (rad).
-            offset : float
-                Flux offset.
-            beta : float
-                Power index.
-
-            Returns
-            -------
-            numpy.ndimage
-                Raveled 2D elliptical Moffat model.
-            """
-
-            (xx_grid, yy_grid) = grid
-
-            x_diff = xx_grid - x_center
-            y_diff = yy_grid - y_center
-
-            if 2.**(1./beta)-1. < 0.:
-                alpha_x = np.nan
-                alpha_y = np.nan
-
-            else:
-                alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
-                alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
-
-            if alpha_x == 0. or alpha_y == 0.:
-                a_moffat = np.nan
-                b_moffat = np.nan
-                c_moffat = np.nan
-
-            else:
-                a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
-                b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
-                c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
-
-            a_term = a_moffat*x_diff**2
-            b_term = b_moffat*y_diff**2
-            c_term = c_moffat*x_diff*y_diff
-
-            moffat = offset + amp / (1.+a_term+b_term+c_term)**beta
-
-            if self.m_radius:
-                moffat = moffat[rr_ap < self.m_radius]
-            else:
-                moffat = np.ravel(moffat)
-
-            return moffat
-
-        @typechecked
-        def _fit_2d_function(image: np.ndarray) -> np.ndarray:
-
-            if self.m_filter_size:
-                image = gaussian_filter(image, self.m_filter_size)
-
-            if self.m_mask_out_port:
-                mask = np.copy(image)
-
-                if self.m_radius:
-                    mask[rr_ap > self.m_radius] = 0.
-
-                self.m_mask_out_port.append(mask, data_dim=3)
-
-            if self.m_sign == 'negative':
-                image = -1.*image + np.abs(np.min(-1.*image))
-
-            if self.m_radius:
-                image = image[rr_ap < self.m_radius]
-            else:
-                image = np.ravel(image)
-
-            if self.m_model == 'gaussian':
-                self.m_model_func = gaussian_2d
-
-            elif self.m_model == 'moffat':
-                self.m_model_func = moffat_2d
-
-            try:
-                popt, pcov = curve_fit(self.m_model_func,
-                                       (xx_grid, yy_grid),
-                                       image,
-                                       p0=self.m_guess,
-                                       sigma=None,
-                                       method='lm')
-
-                perr = np.sqrt(np.diag(pcov))
-
-            except RuntimeError:
-                if self.m_model == 'gaussian':
-                    popt = np.zeros(7)
-                    perr = np.zeros(7)
-
-                elif self.m_model == 'moffat':
-                    popt = np.zeros(8)
-                    perr = np.zeros(8)
-
-                self.m_count += 1
-
-            if self.m_model == 'gaussian':
-
-                best_fit = np.asarray((popt[0], perr[0],
-                                       popt[1], perr[1],
-                                       popt[2]*pixscale, perr[2]*pixscale,
-                                       popt[3]*pixscale, perr[3]*pixscale,
-                                       popt[4], perr[4],
-                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
-                                       popt[6], perr[6]))
-
-            elif self.m_model == 'moffat':
-
-                best_fit = np.asarray((popt[0], perr[0],
-                                       popt[1], perr[1],
-                                       popt[2]*pixscale, perr[2]*pixscale,
-                                       popt[3]*pixscale, perr[3]*pixscale,
-                                       popt[4], perr[4],
-                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
-                                       popt[6], perr[6],
-                                       popt[7], perr[7]))
-
-            return best_fit
-
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         if self.m_method == 'full':
 
-            self.apply_function_to_images(_fit_2d_function,
+            self.apply_function_to_images(fit_2d_function,
                                           self.m_image_in_port,
                                           self.m_fit_out_port,
-                                          'Fitting the stellar PSF')
+                                          'Fitting the stellar PSF',
+                                          func_args=(self.m_radius,
+                                                     self.m_sign,
+                                                     self.m_model,
+                                                     self.m_filter_size,
+                                                     self.m_guess,
+                                                     self.m_mask_out_port,
+                                                     xx_grid,
+                                                     yy_grid,
+                                                     rr_ap,
+                                                     pixscale))
 
         elif self.m_method == 'mean':
             print('Fitting the stellar PSF...', end='')
@@ -567,16 +324,25 @@ class FitCenterModule(ProcessingModule):
             for i, _ in enumerate(frames[:-1]):
                 im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
-            best_fit = _fit_2d_function(im_mean/float(nimages))
+            best_fit = fit_2d_function(im_mean/float(nimages),
+                                       0,
+                                       self.m_radius,
+                                       self.m_sign,
+                                       self.m_model,
+                                       self.m_filter_size,
+                                       self.m_guess,
+                                       self.m_mask_out_port,
+                                       xx_grid,
+                                       yy_grid,
+                                       rr_ap,
+                                       pixscale)
+
             best_fit = best_fit[np.newaxis, ...]
             best_fit = np.repeat(best_fit, nimages, axis=0)
 
             self.m_fit_out_port.set_all(best_fit, data_dim=2)
 
             print(' [DONE]')
-
-        if self.m_count > 0:
-            print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
 
         history = f'model = {self.m_model}'
 
@@ -625,7 +391,7 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
-        super(ShiftImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -685,11 +451,12 @@ class ShiftImagesModule(ProcessingModule):
         # apply a constant shift
         if constant:
 
-            self.apply_function_to_images(shift_image,
+            self.apply_function_to_images(apply_shift,
                                           self.m_image_in_port,
                                           self.m_image_out_port,
                                           'Shifting the images',
-                                          func_args=(self.m_shift, self.m_interpolation))
+                                          func_args=(self.m_shift,
+                                                     self.m_interpolation))
 
             # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
@@ -701,8 +468,8 @@ class ShiftImagesModule(ProcessingModule):
 
 class WaffleCenteringModule(ProcessingModule):
     """
-    Pipeline module for centering of SPHERE data obtained with a Lyot coronagraph for which center
-    frames with satellite spots are available.
+    Pipeline module for centering of coronagraphic data for which dedicated center frames with
+    satellite spots are available.
     """
 
     __author__ = 'Alexander Bohn'
@@ -716,7 +483,8 @@ class WaffleCenteringModule(ProcessingModule):
                  size: Optional[float] = None,
                  center: Optional[Tuple[float, float]] = None,
                  radius: float = 45.,
-                 pattern: str = 'x',
+                 pattern: str = None,
+                 angle: float = 45.,
                  sigma: float = 0.06,
                  dither: bool = False) -> None:
         """
@@ -737,14 +505,22 @@ class WaffleCenteringModule(ProcessingModule):
             Approximate position (x0, y0) of the coronagraph. The center of the image is used if
             set to None.
         radius : float
-            Approximate separation (pix) of the waffle spots from the star.
-        pattern : str
-            Waffle pattern that is used ('x' or '+').
+            Approximate separation (pix) of the satellite spots from the star. For IFS data, the
+            separation of the spots in the image with the shortest wavelength is required.
+        pattern : str, None
+            Waffle pattern that is used ('x' or '+'). This parameter will be deprecated in a future
+            release. Please use the ``angle`` parameter instead. The parameter will be ignored if
+            set to None.
+        angle : float
+            Angle offset (deg) in clockwise direction of the satellite spots with respect to the
+            '+' orientation (i.e. when the spots are located along the horizontal and vertical
+            axis). The previous use of the '+' pattern corresponds to 0 degrees and 'x' pattern
+            corresponds to 45 degrees. SPHERE/IFS data requires an angle of 55.48 degrees.
         sigma : float
             Standard deviation (arcsec) of the Gaussian kernel that is used for the unsharp
             masking.
         dither : bool
-            Apply dithering correction based on the DITHER_X and DITHER_Y attributes.
+            Apply dithering correction based on the ``DITHER_X`` and ``DITHER_Y`` attributes.
 
         Returns
         -------
@@ -752,7 +528,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        super(WaffleCenteringModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_center_in_port = self.add_input_port(center_in_tag)
@@ -762,6 +538,7 @@ class WaffleCenteringModule(ProcessingModule):
         self.m_center = center
         self.m_radius = radius
         self.m_pattern = pattern
+        self.m_angle = angle
         self.m_sigma = sigma
         self.m_dither = dither
 
@@ -779,11 +556,16 @@ class WaffleCenteringModule(ProcessingModule):
         """
 
         @typechecked
-        def _get_center(center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
-            center_frame = self.m_center_in_port[0, ]
+        def _get_center(image_number: int,
+                        center: Optional[Tuple[int, int]]) -> Tuple[np.ndarray, Tuple[int, int]]:
 
-            if center_shape[0] > 1:
+            if center_shape[-3] > 1:
                 warnings.warn('Multiple center images found. Using the first image of the stack.')
+
+            if ndim == 3:
+                center_frame = self.m_center_in_port[0, ]
+            elif ndim == 4:
+                center_frame = self.m_center_in_port[image_number, 0, ]
 
             if center is None:
                 center = center_pixel(center_frame)
@@ -794,11 +576,52 @@ class WaffleCenteringModule(ProcessingModule):
 
         center_shape = self.m_center_in_port.get_shape()
         im_shape = self.m_image_in_port.get_shape()
+        ndim = self.m_image_in_port.get_ndim()
 
-        center_frame, self.m_center = _get_center(self.m_center)
+        center_frame, self.m_center = _get_center(0, self.m_center)
 
+        # Read in wavelength information or set it to default values
+        if ndim == 4:
+            wavelength = self.m_image_in_port.get_attribute('WAVELENGTH')
+
+            if wavelength is None:
+                raise ValueError('The wavelength information is required to centre IFS data. '
+                                 'Please add it via the WavelengthReadingModule before using '
+                                 'the WaffleCenteringModule.')
+
+            if im_shape[0] != center_shape[0]:
+                raise ValueError(f'Number of science wavelength channels: {im_shape[0]}. '
+                                 f'Number of center wavelength channels: {center_shape[0]}. '
+                                 'Exactly one center image per wavelength is required.')
+
+            wavelength_min = np.min(wavelength)
+
+        elif ndim == 3:
+            # for none ifs data, use default value
+            wavelength = [1.]
+            wavelength_min = 1.
+
+        # check if science and center images have the same shape
         if im_shape[-2:] != center_shape[-2:]:
             raise ValueError('Science and center images should have the same shape.')
+
+        # Setting angle via pattern (used for backwards compability)
+        if self.m_pattern is not None:
+
+            if self.m_pattern == 'x':
+                self.m_angle = 45.
+
+            elif self.m_pattern == '+':
+                self.m_angle = 0.
+
+            else:
+                raise ValueError(f'The pattern {self.m_pattern} is not valid. Please select '
+                                 f'either \'x\' or \'+\'.')
+
+            warnings.warn(f'The \'pattern\' parameter will be deprecated in a future release. '
+                          f'Please Use the \'angle\' parameter instead and set it to '
+                          f'{self.m_angle} degrees.',
+                          DeprecationWarning)
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
@@ -815,9 +638,6 @@ class WaffleCenteringModule(ProcessingModule):
             nframes = np.cumsum(nframes)
             nframes = np.insert(nframes, 0, 0)
 
-        center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
-                                                              sigma=self.m_sigma)
-
         # size of center image, only works with odd value
         ref_image_size = 21
 
@@ -825,136 +645,163 @@ class WaffleCenteringModule(ProcessingModule):
         x_pos = np.zeros(4)
         y_pos = np.zeros(4)
 
+        # Arrays for the center position for each wavelength
+        x_center = np.zeros((len(wavelength)))
+        y_center = np.zeros((len(wavelength)))
+
         # Loop for 4 waffle spots
-        for i in range(4):
-            # Approximate positions of waffle spots
-            if self.m_pattern == 'x':
-                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i + 1)))
-                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i + 1)))
+        for w, wave_nr in enumerate(wavelength):
 
-            elif self.m_pattern == '+':
-                x_0 = np.floor(self.m_center[0] + self.m_radius * np.cos(np.pi / 4. * (2 * i)))
-                y_0 = np.floor(self.m_center[1] + self.m_radius * np.sin(np.pi / 4. * (2 * i)))
+            # Prapre centering frame
+            center_frame, _ = _get_center(w, self.m_center)
 
-            tmp_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(y_0), int(x_0)),
-                                          size=ref_image_size)
+            center_frame_unsharp = center_frame - gaussian_filter(input=center_frame,
+                                                                  sigma=self.m_sigma)
 
-            # find maximum in tmp image
-            coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
-                                      shape=tmp_center_frame.shape)
+            for i in range(4):
+                # Approximate positions of waffle spots
+                radius = self.m_radius * wave_nr / wavelength_min
 
-            y_max, x_max = coords[0], coords[1]
+                x_0 = np.floor(self.m_center[0] + radius *
+                               np.cos(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
 
-            pixmax = tmp_center_frame[y_max, x_max]
-            max_pos = np.array([x_max, y_max]).reshape(1, 2)
+                y_0 = np.floor(self.m_center[1] + radius *
+                               np.sin(self.m_angle*np.pi/180 + np.pi / 4. * (2 * i)))
 
-            # Check whether it is the correct maximum: second brightest pixel should be nearby
-            tmp_center_frame[y_max, x_max] = 0.
+                tmp_center_frame = crop_image(image=center_frame_unsharp,
+                                              center=(int(y_0), int(x_0)),
+                                              size=ref_image_size)
 
-            # introduce distance parameter
-            dist = np.inf
-
-            while dist > 2:
+                # find maximum in tmp image
                 coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
                                           shape=tmp_center_frame.shape)
 
-                y_max_new, x_max_new = coords[0], coords[1]
+                y_max, x_max = coords[0], coords[1]
 
-                pixmax_new = tmp_center_frame[y_max_new, x_max_new]
+                pixmax = tmp_center_frame[y_max, x_max]
+                max_pos = np.array([x_max, y_max]).reshape(1, 2)
 
-                # Caculate minimal distance to previous points
-                tmp_center_frame[y_max_new, x_max_new] = 0.
+                # Check whether it is the correct maximum: second brightest pixel should be nearby
+                tmp_center_frame[y_max, x_max] = 0.
 
-                dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
-                                                         max_pos[:, 1]-y_max_new)),
-                                              axis=0))
+                # introduce distance parameter
+                dist = np.inf
 
-                if dist <= 2 and pixmax_new < pixmax:
-                    break
+                while dist > 2:
+                    coords = np.unravel_index(indices=np.argmax(tmp_center_frame),
+                                              shape=tmp_center_frame.shape)
 
-                max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
+                    y_max_new, x_max_new = coords[0], coords[1]
 
-                x_max = x_max_new
-                y_max = y_max_new
-                pixmax = pixmax_new
+                    pixmax_new = tmp_center_frame[y_max_new, x_max_new]
 
-            x_0 = x_0 - (ref_image_size-1)/2 + x_max
-            y_0 = y_0 - (ref_image_size-1)/2 + y_max
+                    # Caculate minimal distance to previous points
+                    tmp_center_frame[y_max_new, x_max_new] = 0.
 
-            # create reference image around determined maximum
-            ref_center_frame = crop_image(image=center_frame_unsharp,
-                                          center=(int(y_0), int(x_0)),
-                                          size=ref_image_size)
+                    dist = np.amin(np.linalg.norm(np.vstack((max_pos[:, 0]-x_max_new,
+                                                             max_pos[:, 1]-y_max_new)),
+                                                  axis=0))
 
-            # Fit the data using astropy.modeling
-            gauss_init = models.Gaussian2D(amplitude=np.amax(ref_center_frame),
-                                           x_mean=x_0,
-                                           y_mean=y_0,
-                                           x_stddev=1.,
-                                           y_stddev=1.,
-                                           theta=0.)
+                    if dist <= 2 and pixmax_new < pixmax:
+                        break
 
-            fit_gauss = fitting.LevMarLSQFitter()
+                    max_pos = np.vstack((max_pos, [x_max_new, y_max_new]))
 
-            y_grid, x_grid = np.mgrid[y_0-(ref_image_size-1)/2:y_0+(ref_image_size-1)/2+1,
-                                      x_0-(ref_image_size-1)/2:x_0+(ref_image_size-1)/2+1]
+                    x_max = x_max_new
+                    y_max = y_max_new
+                    pixmax = pixmax_new
 
-            gauss = fit_gauss(gauss_init,
-                              x_grid,
-                              y_grid,
-                              ref_center_frame)
+                x_0 = x_0 - (ref_image_size-1)/2 + x_max
+                y_0 = y_0 - (ref_image_size-1)/2 + y_max
 
-            x_pos[i] = gauss.x_mean.value
-            y_pos[i] = gauss.y_mean.value
+                # create reference image around determined maximum
+                ref_center_frame = crop_image(image=center_frame_unsharp,
+                                              center=(int(y_0), int(x_0)),
+                                              size=ref_image_size)
 
-        # Find star position as intersection of two lines
+                # Fit the data using astropy.modeling
+                gauss_init = models.Gaussian2D(amplitude=np.amax(ref_center_frame),
+                                               x_mean=x_0,
+                                               y_mean=y_0,
+                                               x_stddev=1.,
+                                               y_stddev=1.,
+                                               theta=0.)
 
-        x_center = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
-                    (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
-                   ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
-                    (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+                fit_gauss = fitting.LevMarLSQFitter()
 
-        y_center = x_center*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
-            (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+                y_grid, x_grid = np.mgrid[y_0-(ref_image_size-1)/2:y_0+(ref_image_size-1)/2+1,
+                                          x_0-(ref_image_size-1)/2:x_0+(ref_image_size-1)/2+1]
 
-        nimages = self.m_image_in_port.get_shape()[0]
-        npix = self.m_image_in_port.get_shape()[1]
+                gauss = fit_gauss(gauss_init,
+                                  x_grid,
+                                  y_grid,
+                                  ref_center_frame)
+
+                x_pos[i] = gauss.x_mean.value
+                y_pos[i] = gauss.y_mean.value
+
+            # Find star position as intersection of two lines
+
+            x_center[w] = ((y_pos[0]-x_pos[0]*(y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0]))) -
+                           (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))) / \
+                          ((y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) -
+                           (y_pos[2]-y_pos[0])/(x_pos[2]-float(x_pos[0])))
+
+            y_center[w] = x_center[w]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])) + \
+                (y_pos[1]-x_pos[1]*(y_pos[1]-y_pos[3])/(x_pos[1]-float(x_pos[3])))
+
+        # Adjust science images
+        nimages = self.m_image_in_port.get_shape()[-3]
+        npix = self.m_image_in_port.get_shape()[-2]
+        nwavelengths = len(wavelength)
 
         start_time = time.time()
+
         for i in range(nimages):
-            progress(i, nimages, 'Centering the images...', start_time)
+            im_storage = []
+            for j in range(nwavelengths):
+                im_index = i*nwavelengths + j
 
-            image = self.m_image_in_port[i, ]
+                progress(im_index, nimages*nwavelengths, 'Centering the images...', start_time)
 
-            shift_yx = np.array([(float(im_shape[-2])-1.)/2. - y_center,
-                                 (float(im_shape[-1])-1.)/2. - x_center])
+                if ndim == 3:
+                    image = self.m_image_in_port[i, ]
+                elif ndim == 4:
+                    image = self.m_image_in_port[j, i, ]
 
-            if self.m_dither:
-                index = np.digitize(i, nframes, right=False) - 1
+                shift_yx = np.array([(float(im_shape[-2])-1.)/2. - y_center[j],
+                                     (float(im_shape[-1])-1.)/2. - x_center[j]])
 
-                shift_yx[0] -= dither_y[index]
-                shift_yx[1] -= dither_x[index]
+                if self.m_dither:
+                    index = np.digitize(i, nframes, right=False) - 1
 
-            if npix % 2 == 0 and self.m_size is not None:
-                im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
-                im_tmp[:-1, :-1] = image
-                image = im_tmp
+                    shift_yx[0] -= dither_y[index]
+                    shift_yx[1] -= dither_x[index]
 
-                shift_yx[0] += 0.5
-                shift_yx[1] += 0.5
+                if npix % 2 == 0 and self.m_size is not None:
+                    im_tmp = np.zeros((image.shape[0]+1, image.shape[1]+1))
+                    im_tmp[:-1, :-1] = image
+                    image = im_tmp
 
-            im_shift = shift_image(image, shift_yx, 'spline')
+                    shift_yx[0] += 0.5
+                    shift_yx[1] += 0.5
 
-            if self.m_size is not None:
-                im_crop = crop_image(im_shift, None, self.m_size)
-                self.m_image_out_port.append(im_crop, data_dim=3)
-            else:
-                self.m_image_out_port.append(im_shift, data_dim=3)
+                im_shift = shift_image(image, shift_yx, 'spline')
+
+                if self.m_size is not None:
+                    im_crop = crop_image(im_shift, None, self.m_size)
+                    im_storage.append(im_crop)
+                else:
+                    im_storage.append(im_shift)
+
+            if ndim == 3:
+                self.m_image_out_port.append(im_storage[0], data_dim=3)
+            elif ndim == 4:
+                self.m_image_out_port.append(np.asarray(im_storage), data_dim=4)
 
         print(f'Center [x, y] = [{x_center}, {y_center}]')
 
-        history = f'[x, y] = [{round(x_center, 2)}, {round(y_center, 2)}]'
+        history = f'[x, y] = [{round(x_center[j], 2)}, {round(y_center[j], 2)}]'
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.add_history('WaffleCenteringModule', history)
         self.m_image_out_port.close_port()

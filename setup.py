@@ -10,12 +10,12 @@ reqs = [str(req.requirement) for req in reqs]
 
 setup(
     name='pynpoint',
-    version='0.8.3',
+    version='0.9.0',
     description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
     long_description_content_type='text/x-rst',
     author='Tomas Stolker & Markus Bonse',
-    author_email='tomas.stolker@phys.ethz.ch',
+    author_email='stolker@strw.leidenuniv.nl',
     url='https://github.com/PynPoint/PynPoint',
     project_urls={'Documentation': 'https://pynpoint.readthedocs.io'},
     packages=['pynpoint',
@@ -36,6 +36,7 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     tests_require=['pytest'],
 )

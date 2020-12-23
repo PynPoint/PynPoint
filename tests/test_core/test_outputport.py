@@ -418,7 +418,8 @@ class TestOutputPort:
         assert len(warning) == 1
 
         # check that the message matches
-        assert warning[0].message.args[0] == 'Can not store attribute if data tag does not exist.'
+        assert warning[0].message.args[0] == 'Can not store the attribute \'attr1\' because ' \
+                                             'the dataset \'new_data\' does not exist.'
 
         out_port.del_all_attributes()
         out_port.del_all_data()

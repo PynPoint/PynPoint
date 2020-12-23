@@ -3,23 +3,11 @@
 PynPoint
 ========
 
-PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets and circumstellar disks. The Python package has been developed at the |ipa| of ETH Zurich in a collaboration between the |planets| and the |cosmo|.
+PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques.
 
 .. figure:: _static/eso.jpg
    :width: 100%
    :target: http://www.eso.org/public/news/eso1310/
-
-.. |ipa| raw:: html
-
-	<a href="http://www.ipa.phys.ethz.ch/" target="_blank">Institute of Particle Physics and Astrophysics</a>
-
-.. |planets| raw:: html
-
-   <a href="https://quanz-group.ethz.ch/" target="_blank">Exoplanets and Habitability Group</a>
-
-.. |cosmo| raw:: html
-
-   <a href="http://www.cosmology.ethz.ch/" target="_blank">Cosmology Research Group</a>
 
 .. toctree::
    :maxdepth: 2

@@ -16,6 +16,7 @@ from typeguard import typechecked
 from skimage.metrics import structural_similarity, mean_squared_error
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.apply_func import image_stat
 from pynpoint.util.image import crop_image, pixel_distance, center_pixel
 from pynpoint.util.module import progress
 from pynpoint.util.remove import write_selected_data, write_selected_attributes
@@ -59,7 +60,7 @@ class RemoveFramesModule(ProcessingModule):
             None
         """
 
-        super(RemoveFramesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -178,7 +179,7 @@ class FrameSelectionModule(ProcessingModule):
             None
         """
 
-        super(FrameSelectionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -373,7 +374,7 @@ class RemoveLastFrameModule(ProcessingModule):
             None
         """
 
-        super(RemoveLastFrameModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -457,7 +458,7 @@ class RemoveStartFramesModule(ProcessingModule):
             None
         """
 
-        super(RemoveStartFramesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -572,7 +573,7 @@ class ImageStatisticsModule(ProcessingModule):
             None
         """
 
-        super(ImageStatisticsModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_stat_out_port = self.add_output_port(stat_out_tag)
@@ -618,27 +619,7 @@ class ImageStatisticsModule(ProcessingModule):
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
-        @typechecked
-        def _image_stat(image_in: np.ndarray,
-                        indices: Optional[np.ndarray]) -> np.ndarray:
-
-            if indices is None:
-                image_select = np.copy(image_in)
-
-            else:
-                image_reshape = np.reshape(image_in, (image_in.shape[0]*image_in.shape[1]))
-                image_select = image_reshape[indices]
-
-            nmin = np.nanmin(image_select)
-            nmax = np.nanmax(image_select)
-            nsum = np.nansum(image_select)
-            mean = np.nanmean(image_select)
-            median = np.nanmedian(image_select)
-            std = np.nanstd(image_select)
-
-            return np.asarray([nmin, nmax, nsum, mean, median, std])
-
-        self.apply_function_to_images(_image_stat,
+        self.apply_function_to_images(image_stat,
                                       self.m_image_in_port,
                                       self.m_stat_out_port,
                                       'Calculating image statistics',
@@ -695,7 +676,7 @@ class FrameSimilarityModule(ProcessingModule):
             None
         """
 
-        super(FrameSimilarityModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_tag)
         self.m_image_out_port = self.add_output_port(image_tag)
@@ -916,7 +897,7 @@ class SelectByAttributeModule(ProcessingModule):
                                     removed_out_tag='im_arr_removed'))
         """
 
-        super(SelectByAttributeModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_selected_out_port = self.add_output_port(selected_out_tag)
@@ -1015,7 +996,7 @@ class ResidualSelectionModule(ProcessingModule):
             None
         """
 
-        super(ResidualSelectionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
