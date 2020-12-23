@@ -10,7 +10,7 @@ reqs = [str(req.requirement) for req in reqs]
 
 setup(
     name='pynpoint',
-    version='0.8.3',
+    version='0.9.0',
     description='Pipeline for processing and analysis of high-contrast imaging data',
     long_description=open('README.rst').read(),
     long_description_content_type='text/x-rst',
