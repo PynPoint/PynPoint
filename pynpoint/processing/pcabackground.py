@@ -562,21 +562,21 @@ class DitheringBackgroundModule(ProcessingModule):
         image_in_tag : str
             Database tag with input images.
         image_out_tag : str
-            Database tag to store the background-subtracted images.
+            Database tag to store the background subtracted images.
         center : list(tuple(int, int)), None
             Tuple with the centers of the dithering positions, e.g. ((x0, y0), (x1, y1)). The order
             of the coordinates should correspond to the order in which the star is present. If
             ``center`` and ``cubes`` are both set to None then sorting and subtracting of the
             background frames is based on ``DITHER_X`` and ``DITHER_Y``. If ``center`` is
             specified and ``cubes`` is set to None then the ``DITHER_X`` and ``DITHER_Y``
-             attributes will be used for sorting and subtracting of the background but not for
+            attributes will be used for sorting and subtracting of the background but not for
             selecting the dither positions.
         cubes : int, None
             Number of consecutive cubes per dither position. If ``cubes`` is set to None then
             sorting and subtracting of the background frames is based on ``DITHER_X`` and
             ``DITHER_Y``.
         size : float
-            Cropped image size (arsec).
+            Cropped image size (arcsec).
         gaussian : float
             Full width at half maximum (arcsec) of the Gaussian kernel that is used to smooth the
             image before the star is located.
