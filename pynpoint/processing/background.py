@@ -409,7 +409,7 @@ class NoddingBackgroundModule(ProcessingModule):
             None
         """
 
-        super().__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_science_in_port = self.add_input_port(science_in_tag)
         self.m_sky_in_port = self.add_input_port(sky_in_tag)

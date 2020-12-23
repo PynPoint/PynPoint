@@ -85,7 +85,7 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        super().__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_dark_in_port = self.add_input_port(dark_in_tag)
@@ -158,7 +158,7 @@ class FlatCalibrationModule(ProcessingModule):
             None
         """
 
-        super().__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_flat_in_port = self.add_input_port(flat_in_tag)

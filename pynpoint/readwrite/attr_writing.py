@@ -52,7 +52,7 @@ class AttributeWritingModule(WritingModule):
             None
         """
 
-        super().__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir=output_dir)
 
         self.m_data_port = self.add_input_port(data_tag)
 
@@ -126,7 +126,7 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        super().__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir=output_dir)
 
         self.m_data_port = self.add_input_port(data_tag)
 

@@ -59,7 +59,7 @@ class AttributeReadingModule(ReadingModule):
             None
         """
 
-        super().__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir=input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -156,7 +156,7 @@ class ParangReadingModule(ReadingModule):
             None
         """
 
-        super().__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir=input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 
@@ -249,7 +249,7 @@ class WavelengthReadingModule(ReadingModule):
             None
         """
 
-        super().__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir=input_dir)
 
         self.m_data_port = self.add_output_port(data_tag)
 
