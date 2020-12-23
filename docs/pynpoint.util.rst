@@ -156,10 +156,10 @@ pynpoint.util.tests module
    :undoc-members:
    :show-inheritance:
 
-pynpoint.util.types module
---------------------------
+pynpoint.util.type\_aliases module
+----------------------------------
 
-.. automodule:: pynpoint.util.types
+.. automodule:: pynpoint.util.type_aliases
    :members:
    :undoc-members:
    :show-inheritance:

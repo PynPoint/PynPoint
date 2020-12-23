@@ -8,9 +8,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from typeguard import typechecked
-from skimage.transform import rescale
 from scipy.ndimage import fourier_shift, shift, rotate
+from skimage.transform import rescale
+from typeguard import typechecked
 
 
 @typechecked
@@ -343,31 +343,39 @@ def polar_to_cartesian(image: np.ndarray,
 
 @typechecked
 def pixel_distance(im_shape: Tuple[int, int],
-                   position: Optional[Tuple[int, int]] = None) -> np.ndarray:
+                   position: Optional[Tuple[int, int]] = None) -> Tuple[
+                       np.ndarray, np.ndarray, np.ndarray]:
     """
     Function to calculate the distance of each pixel with respect to a given pixel position.
+    Supports both odd and even sized images.
 
     Parameters
     ----------
     im_shape : tuple(int, int)
         Image shape (y, x).
     position : tuple(int, int)
-        Pixel center (y, x) from which the distance is calculated. The image center is used if
-        set to None. Python indexing starts at zero so the bottom left pixel is (0, 0).
+        Pixel center (y, x) from which the distance is calculated. The image center is used if set
+        to None. Python indexing starts at zero so the center of the bottom left pixel is (0, 0).
 
     Returns
     -------
     np.ndarray
         2D array with the distances of each pixel from the provided pixel position.
+    np.ndarray
+        2D array with the x coordinates.
+    np.ndarray
+        2D array with the y coordinates.
     """
 
     if im_shape[0] % 2 == 0:
         y_grid = np.linspace(-im_shape[0] / 2 + 0.5, im_shape[0] / 2 - 0.5, im_shape[0])
+
     else:
         y_grid = np.linspace(-(im_shape[0] - 1) / 2, (im_shape[0] - 1) / 2, im_shape[0])
 
     if im_shape[1] % 2 == 0:
         x_grid = np.linspace(-im_shape[1] / 2 + 0.5, im_shape[1] / 2 - 0.5, im_shape[1])
+
     else:
         x_grid = np.linspace(-(im_shape[1] - 1) / 2, (im_shape[1] - 1) / 2, im_shape[1])
 
@@ -380,14 +388,16 @@ def pixel_distance(im_shape: Tuple[int, int],
 
     xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
 
-    return np.sqrt(xx_grid**2 + yy_grid**2)
+    return np.sqrt(xx_grid**2 + yy_grid**2), xx_grid, yy_grid
 
 
 @typechecked
 def subpixel_distance(im_shape: Tuple[int, int],
-                      position: Tuple[float, float]) -> np.ndarray:
+                      position: Tuple[float, float],
+                      shift_center: bool = True) -> np.ndarray:
     """
     Function to calculate the distance of each pixel with respect to a given subpixel position.
+    Supports both odd and even sized images.
 
     Parameters
     ----------
@@ -396,6 +406,8 @@ def subpixel_distance(im_shape: Tuple[int, int],
     position : tuple(float, float)
         Pixel center (y, x) from which the distance is calculated. Python indexing starts at zero
         so the bottom left image corner is (-0.5, -0.5).
+    shift_center : bool
+        Apply the coordinate correction for the image center.
 
     Returns
     -------
@@ -403,23 +415,29 @@ def subpixel_distance(im_shape: Tuple[int, int],
         2D array with the distances of each pixel from the provided pixel position.
     """
 
+    # Get 2D x and y coordinates with respect to the image center
+    _, xx_grid, yy_grid = pixel_distance(im_shape, position=None)
+
     if im_shape[0] % 2 == 0:
-        raise ValueError('The subpixel_distance function has only been implemented for '
-                         'odd-sized images.')
+        # Distance from the image center to the center of the outermost pixel
+        # Even sized images
+        y_size = im_shape[0] / 2 + 0.5
+        x_size = im_shape[1] / 2 + 0.5
 
-    y_size = (im_shape[0] - 1) / 2
-    x_size = (im_shape[1] - 1) / 2
+    else:
+        # Distance from the image center to the center of the outermost pixel
+        # Odd sized images
+        y_size = (im_shape[0] - 1) / 2
+        x_size = (im_shape[1] - 1) / 2
 
-    y_grid = np.linspace(-y_size, y_size, im_shape[0])
-    x_grid = np.linspace(-x_size, x_size, im_shape[1])
+    if shift_center:
+        # Shift the image center to the center of the bottom left pixel
+        yy_grid += y_size
+        xx_grid += x_size
 
-    y_pos = position[0] - y_size
-    x_pos = position[1] - x_size
-
-    y_grid -= y_pos
-    x_grid -= x_pos
-
-    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
+    # Apply a subpixel shift of the coordinate system to the requested position
+    yy_grid -= position[0]
+    xx_grid -= position[1]
 
     return np.sqrt(xx_grid**2 + yy_grid**2)
 

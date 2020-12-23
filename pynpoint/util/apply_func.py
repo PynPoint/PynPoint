@@ -137,7 +137,7 @@ def align_image(image_in: np.ndarray,
 @typechecked
 def fit_2d_function(image: np.ndarray,
                     im_index: int,
-                    radius: float,
+                    mask_radii: Tuple[float, float],
                     sign: str,
                     model: str,
                     filter_size: Optional[float],
@@ -203,12 +203,7 @@ def fit_2d_function(image: np.ndarray,
         gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
                                          c_gauss*y_diff**2))
 
-        if radius:
-            gaussian = gaussian[rr_ap < radius]
-        else:
-            gaussian = np.ravel(gaussian)
-
-        return gaussian
+        return gaussian[(rr_ap > mask_radii[0]) & (rr_ap < mask_radii[1])]
 
     @typechecked
     def moffat_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
@@ -248,9 +243,6 @@ def fit_2d_function(image: np.ndarray,
             Flux offset.
         beta : float
             Power index.
-        radius : float
-            Radius (pixels) around the center of the image beyond which pixels are neglected with
-            the fit.
 
         Returns
         -------
@@ -287,12 +279,7 @@ def fit_2d_function(image: np.ndarray,
 
         moffat = offset + amp / (1.+a_term+b_term+c_term)**beta
 
-        if radius:
-            moffat = moffat[rr_ap < radius]
-        else:
-            moffat = np.ravel(moffat)
-
-        return moffat
+        return moffat[(rr_ap > mask_radii[0]) & (rr_ap < mask_radii[1])]
 
     if filter_size:
         image = gaussian_filter(image, filter_size)
@@ -300,18 +287,14 @@ def fit_2d_function(image: np.ndarray,
     if mask_out_port is not None:
         mask = np.copy(image)
 
-        if radius:
-            mask[rr_ap > radius] = 0.
+        mask[(rr_ap < mask_radii[0]) | (rr_ap > mask_radii[1])] = 0.
 
         mask_out_port.append(mask, data_dim=3)
 
     if sign == 'negative':
         image = -1.*image + np.abs(np.min(-1.*image))
 
-    if radius:
-        image = image[rr_ap < radius]
-    else:
-        image = np.ravel(image)
+    image = image[(rr_ap > mask_radii[0]) & (rr_ap < mask_radii[1])]
 
     if model == 'gaussian':
         model_func = gaussian_2d

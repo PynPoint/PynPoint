@@ -25,7 +25,7 @@ from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import ProcessingModule, PypelineModule, \
     ReadingModule, WritingModule
 from pynpoint.util.module import input_info, module_info, output_info
-from pynpoint.util.types import NonStaticAttribute, StaticAttribute
+from pynpoint.util.type_aliases import NonStaticAttribute, StaticAttribute
 
 
 class Pypeline:

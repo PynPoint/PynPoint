@@ -282,8 +282,7 @@ def merit_function(residuals: np.ndarray,
         Chi-square value.
     """
 
-    rr_grid = pixel_distance(im_shape=residuals.shape,
-                             position=(aperture[0], aperture[1]))
+    rr_grid, _, _ = pixel_distance(residuals.shape, position=(aperture[0], aperture[1]))
 
     indices = np.where(rr_grid <= aperture[2])
 

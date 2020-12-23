@@ -615,7 +615,7 @@ class ImageStatisticsModule(ProcessingModule):
                                    int(self.m_position[0]),  # x position
                                    self.m_position[2]/pixscale)  # radius (pix)
 
-            rr_grid = pixel_distance(im_shape, self.m_position[0:2])
+            rr_grid, _, _ = pixel_distance(im_shape, position=self.m_position[0:2])
             rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
@@ -1024,7 +1024,7 @@ class ResidualSelectionModule(ProcessingModule):
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[-1]
 
-        rr_grid = pixel_distance((npix, npix), position=None)
+        rr_grid, _, _ = pixel_distance((npix, npix), position=None)
 
         pixel_select = np.where((rr_grid > self.m_annulus_radii[0]/pixscale) &
                                 (rr_grid < self.m_annulus_radii[1]/pixscale))

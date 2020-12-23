@@ -15,8 +15,9 @@ from scipy.ndimage.filters import gaussian_filter
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.image import center_pixel, crop_image, pixel_distance, shift_image, \
+                                subpixel_distance
 from pynpoint.util.module import memory_frames, progress
-from pynpoint.util.image import center_pixel, crop_image, shift_image
 from pynpoint.util.apply_func import align_image, apply_shift, fit_2d_function
 
 
@@ -163,45 +164,52 @@ class FitCenterModule(ProcessingModule):
                  fit_out_tag: str,
                  mask_out_tag: Optional[str] = None,
                  method: str = 'full',
-                 radius: float = 0.1,
+                 mask_radii: Tuple[Optional[float], float] = (None, 0.1),
                  sign: str = 'positive',
                  model: str = 'gaussian',
                  filter_size: Optional[float] = None,
-                 **kwargs: tuple) -> None:
+                 **kwargs: Union[Tuple[float, float, float, float, float, float, float],
+                                 Tuple[float, float, float, float, float, float, float, float],
+                                 float]) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with images that are read as input.
+            Database tag of the images that are read as input.
         fit_out_tag : str
-            Tag of the database entry with the best-fit results of the model fit and the 1-sigma
-            errors. Data is written in the following format: x offset (pix), x offset error (pix)
+            Database tag where the best-fit results and 1σ errors will be stored.
+            The data are written in the following format: x offset (pix), x offset error (pix)
             y offset (pix), y offset error (pix), FWHM major axis (arcsec), FWHM major axis error
-            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec), amplitude (counts),
-            amplitude error (counts), angle (deg), angle error (deg) measured in counterclockwise
-            direction with respect to the upward direction (i.e., East of North), offset (counts),
-            offset error (counts), power index (only for Moffat function), and power index error
-            (only for Moffat function). Not used if set to None.
+            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec), amplitude (ADU),
+            amplitude error (ADU), angle (deg), angle error (deg) measured in counterclockwise
+            direction with respect to the upward direction (i.e. east of north), offset (ADU),
+            offset error (ADU), power index (only for Moffat function), and power index error
+            (only for Moffat function). The ``fit_out_tag`` can be used as argument of ``shift_xy``
+            when running the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
         mask_out_tag : str, None
-            Tag of the database entry with the masked images that are written as output. The
-            unmasked part of the images is used for the fit. The effect of the smoothing that is
-            applied by setting the *fwhm* parameter is also visible in the data of the
-            *mask_out_tag*. Data is not written when set to None.
+            Database tag where the masked images will be stored. The unmasked part of the images is
+            used for the fit. The effect of the smoothing that is applied by setting the ``fwhm``
+            argument is also visible in the data of the ``mask_out_tag``. The data are not stored
+            if the argument is set to None. The :class:`~pynpoint.core.dataio.OutputPort` of
+            ``mask_out_tag`` can only be used when ``CPU = 1``.
         method : str
-            Fit and shift all the images individually ('full') or only fit the mean of the cube and
-            shift all images to that location ('mean'). The 'mean' method could be used after
-            running the :class:`~pynpoint.processing.centering.StarAlignmentModule`.
-        radius : float
-            Radius (arcsec) around the center of the image beyond which pixels are neglected with
-            the fit. The radius is centered on the position specified in *guess*, which is the
-            center of the image by default.
+            Fit and shift each image individually ('full') or only fit the mean of the cube and
+            shift each image by this constant offset ('mean'). The 'mean' method can be used in
+            case the images are already aligned with
+            :class:`~pynpoint.processing.centering.StarAlignmentModule`.
+        mask_radii : tuple(float, float), tuple(None, float)
+            Inner and outer radius (arcsec) within and beyond which pixels are neglected during the
+            fit. The radii are centered at the position that specified with the argument of
+            ``guess``, which is the center of the image by default. The outer mask (second value
+            of ``mask_radii``) is mandatory whereas radius of the inner mask is optional and can
+            be set to None.
         sign : str
-            Fit a 'positive' or 'negative' Gaussian/Moffat. A negative model can be used to center
-            coronagraphic data in which a dark hole is present.
+            Fit a 'positive' or 'negative' Gaussian/Moffat function. A 'negative' model can be used
+            to center coronagraphic data in which a dark hole.
         model : str
-            Type of 2D model used to fit the PSF ('gaussian' or 'moffat'). Both models are
+            Type of 2D model that is used for the fit ('gaussian' or 'moffat'). Both models are
             elliptical in shape.
         filter_size : float, None
             Standard deviation (arcsec) of the Gaussian filter that is used to smooth the
@@ -209,10 +217,11 @@ class FitCenterModule(ProcessingModule):
 
         Keyword arguments
         -----------------
-        guess : tuple(float, float, float, float, float, float, float, float)
+        guess : tuple(float, float, float, float, float, float, float, float),
+                tuple(float, float, float, float, float, float, float, float, float)
             The initial parameter values for the least squares fit: x offset with respect to center
             (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
-            (counts), angle (deg), offset (counts), and power index (only for Moffat function).
+            (ADU), angle (deg), offset (ADU), and power index (only for Moffat function).
 
         Returns
         -------
@@ -230,6 +239,13 @@ class FitCenterModule(ProcessingModule):
             elif model == 'moffat':
                 self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
+        if 'radius' in kwargs:
+            mask_radii = (None, kwargs['radius'])
+
+            warnings.warn(f'The \'radius\' parameter has been deprecated. Please use the '
+                          f'\'mask_radii\' parameter instead. The argument of \'mask_radii\' '
+                          f'has been set to {mask_radii}.', DeprecationWarning)
+
         super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
@@ -241,21 +257,19 @@ class FitCenterModule(ProcessingModule):
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
 
         self.m_method = method
-        self.m_radius = radius
+        self.m_mask_radii = mask_radii
         self.m_sign = sign
         self.m_model = model
         self.m_filter_size = filter_size
 
-        self.m_count = 0
-
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
-        the individual images or the mean of the stack with a 2D Gaussian or Moffat function, and
-        stores the best fit results. The fitting results contain zeros in case the algorithm could
-        not converge. The `fit_out_tag` can be directly used as input for the `shift_xy` argument
-        of the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
+        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) method
+        to fit the the individual images or the mean of all images with a 2D Gaussian or Moffat
+        function. The best-fit results and errors are stored and contain zeros in case the
+        algorithm could not converge. The ``fit_out_tag`` can be used as argument of ``shift_xy``
+        when running the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
 
         Returns
         -------
@@ -267,34 +281,30 @@ class FitCenterModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        npix = self.m_image_in_port.get_shape()[-1]
-
         if cpu > 1:
             if self.m_mask_out_port is not None:
                 warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
                               'stored to this output port.')
 
+            del self._m_output_ports[self.m_mask_out_port.tag]
             self.m_mask_out_port = None
 
-        if self.m_radius:
-            self.m_radius /= pixscale
+        if self.m_mask_radii[0] is None:
+            # Convert from arcsec to pixels and change None to 0
+            self.m_mask_radii = (0., self.m_mask_radii[1]/pixscale)
+        else:
+            # Convert from arcsec to pixels
+            self.m_mask_radii = (self.m_mask_radii[0]/pixscale, self.m_mask_radii[1]/pixscale)
 
         if self.m_filter_size:
+            # Convert from arcsec to pixels
             self.m_filter_size /= pixscale
 
-        if npix % 2 == 0:
-            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-            x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
-            y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
+        _, xx_grid, yy_grid = pixel_distance(self.m_image_in_port.get_shape()[-2:], position=None)
 
-        elif npix % 2 == 1:
-            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-            x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
-            y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
-
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-        xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
-        rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
+        rr_ap = subpixel_distance(self.m_image_in_port.get_shape()[-2:],
+                                  position=(self.m_guess[1], self.m_guess[0]),
+                                  shift_center=False)  # (y, x)
 
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
@@ -305,7 +315,7 @@ class FitCenterModule(ProcessingModule):
                                           self.m_image_in_port,
                                           self.m_fit_out_port,
                                           'Fitting the stellar PSF',
-                                          func_args=(self.m_radius,
+                                          func_args=(self.m_mask_radii,
                                                      self.m_sign,
                                                      self.m_model,
                                                      self.m_filter_size,
@@ -326,7 +336,7 @@ class FitCenterModule(ProcessingModule):
 
             best_fit = fit_2d_function(im_mean/float(nimages),
                                        0,
-                                       self.m_radius,
+                                       self.m_mask_radii,
                                        self.m_sign,
                                        self.m_model,
                                        self.m_filter_size,

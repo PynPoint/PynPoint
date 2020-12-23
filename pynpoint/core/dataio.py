@@ -4,14 +4,16 @@ Modules for accessing data and attributes in the central database.
 
 import os
 import warnings
+
 from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Optional, Tuple, Union
 
 import h5py
 import numpy as np
+
 from typeguard import typechecked
 
-from pynpoint.util.types import NonStaticAttribute, StaticAttribute
+from pynpoint.util.type_aliases import NonStaticAttribute, StaticAttribute
 
 
 class DataStorage:

@@ -323,7 +323,7 @@ class TestCentering:
                                  fit_out_tag='fit_full',
                                  mask_out_tag='mask',
                                  method='full',
-                                 radius=0.1,
+                                 mask_radii=(None, 0.1),
                                  sign='positive',
                                  model='gaussian',
                                  guess=(1., 2., 3., 3., 0.01, 0., 0.))
@@ -350,7 +350,7 @@ class TestCentering:
                                  fit_out_tag='fit_mean',
                                  mask_out_tag=None,
                                  method='mean',
-                                 radius=0.1,
+                                 mask_radii=(None, 0.1),
                                  sign='positive',
                                  model='moffat',
                                  guess=(1., 2., 3., 3., 0.01, 0., 0., 1.))
