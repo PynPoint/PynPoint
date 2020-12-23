@@ -244,7 +244,7 @@ class FitCenterModule(ProcessingModule):
 
             warnings.warn(f'The \'radius\' parameter has been deprecated. Please use the '
                           f'\'mask_radii\' parameter instead. The argument of \'mask_radii\' '
-                          f'has been set to {mask_radii}.', DeprecationWarning)
+                          f'is set to {mask_radii}.', DeprecationWarning)
 
         super().__init__(name_in)
 
@@ -281,8 +281,7 @@ class FitCenterModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        if cpu > 1:
-            if self.m_mask_out_port is not None:
+        if cpu > 1 and self.m_mask_out_port is not None:
                 warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
                               'stored to this output port.')
 
@@ -292,6 +291,7 @@ class FitCenterModule(ProcessingModule):
         if self.m_mask_radii[0] is None:
             # Convert from arcsec to pixels and change None to 0
             self.m_mask_radii = (0., self.m_mask_radii[1]/pixscale)
+
         else:
             # Convert from arcsec to pixels
             self.m_mask_radii = (self.m_mask_radii[0]/pixscale, self.m_mask_radii[1]/pixscale)
