@@ -22,19 +22,18 @@ import pynpoint
 
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
-from pynpoint.core.processing import ProcessingModule, PypelineModule, \
-    ReadingModule, WritingModule
+from pynpoint.core.processing import ProcessingModule, PypelineModule, ReadingModule, WritingModule
 from pynpoint.util.module import input_info, module_info, output_info
 from pynpoint.util.type_aliases import NonStaticAttribute, StaticAttribute
 
 
 class Pypeline:
     """
-    A Pypeline instance can be used to manage various processing steps. It inheres an internal
-    dictionary of Pypeline steps (modules) and their names. A Pypeline has a central DataStorage on
-    the hard drive which can be accessed by various modules. The order of the modules depends on
-    the order the steps have been added to the pypeline. It is possible to run all modules attached
-    to the Pypeline at once or run a single modules by name.
+    The :class:`~pynpoint.core.pypeline.Pypeline` class manages the pipeline modules. It inheres an
+    internal dictionary of pipeline modules and has a :class:`~pynpoint.core.dataio.DataStorage`
+    which is accessed by the various modules. The order in which the pipeline modules are executed
+    depends on the order they have been added to the :class:`~pynpoint.core.pypeline.Pypeline`. It
+    is possible to run all modules at once or run a single module by name.
     """
 
     @typechecked
@@ -43,23 +42,23 @@ class Pypeline:
                  input_place_in: Optional[str] = None,
                  output_place_in: Optional[str] = None) -> None:
         """
-        Constructor of Pypeline.
-
         Parameters
         ----------
-        working_place_in : str
-            Working location of the Pypeline which needs to be a folder on the hard drive. The
-            given folder will be used to save the central PynPoint database (an HDF5 file) in
-            which all the intermediate processing steps are saved. Note that the HDF5 file can
-            become very large depending on the size and number of input images.
-        input_place_in : str
-            Default input directory of the Pypeline. All ReadingModules added to the Pypeline
-            use this directory to look for input data. It is possible to specify a different
-            location for the ReadingModules using their constructors.
-        output_place_in : str
-            Default result directory used to save the output of all WritingModules added to the
-            Pypeline. It is possible to specify a different locations for the WritingModules by
-            using their constructors.
+        working_place_in : str, None
+            Working location where the central HDF5 database and the configuration file will be
+            stored. Sufficient space is required in the working folder since each pipeline module
+            stores a dataset in the HDF5 database. The current working folder of Python is used as
+            working folder if the argument is set to None.
+        input_place_in : str, None
+            Default input folder where a :class:`~pynpoint.core.processing.ReadingModule` that is
+            added to the :class:`~pynpoint.core.pypeline.Pypeline` will look for input data. The
+            current working folder of Python is used as input folder if the argument is set to
+            None.
+        output_place_in : str, None
+            Default output folder where a :class:`~pynpoint.core.processing.WritingModule` that is
+            added to the :class:`~pynpoint.core.pypeline.Pypeline` will store output data. The
+            current working folder of Python is used as output folder if the argument is set to
+            None.
 
         Returns
         -------
@@ -87,13 +86,30 @@ class Pypeline:
             print('Please consider using the \'Watch\' button on the Github page:')
             print('https://github.com/PynPoint/PynPoint\n')
 
-        self._m_working_place = working_place_in
-        self._m_input_place = input_place_in
-        self._m_output_place = output_place_in
+        if working_place_in is None:
+            self._m_working_place = os.getcwd()
+        else:
+            self._m_working_place = working_place_in
+
+        if input_place_in is None:
+            self._m_input_place = os.getcwd()
+        else:
+            self._m_input_place = input_place_in
+
+        if output_place_in is None:
+            self._m_output_place = os.getcwd()
+        else:
+            self._m_output_place = output_place_in
+
+        print(f'Working place: {self._m_working_place}')
+        print(f'Input place: {self._m_input_place}')
+        print(f'Output place: {self._m_output_place}\n')
 
         self._m_modules = collections.OrderedDict()
 
-        self.m_data_storage = DataStorage(os.path.join(working_place_in, 'PynPoint_database.hdf5'))
+        hdf5_path = os.path.join(self._m_working_place, 'PynPoint_database.hdf5')
+        self.m_data_storage = DataStorage(hdf5_path)
+
         print(f'Database: {self.m_data_storage._m_location}')
 
         self._config_init()
@@ -103,15 +119,16 @@ class Pypeline:
                     key: str,
                     value: Any) -> None:
         """
-        This method is called every time a member / attribute of the Pypeline is changed. It checks
-        whether a chosen working / input / output directory exists.
+        Internal method which assigns a value to an object attribute. This method is called
+        whenever and attribute of the :class:`~pynpoint.core.pypeline.Pypeline` is changed and
+        checks if the chosen working, input, or output folder exists.
 
         Parameters
         ----------
         key : str
-            Member or attribute name.
+            Attribute name.
         value : str
-            New value for the given member or attribute.
+            Value for the attribute.
 
         Returns
         -------
@@ -119,9 +136,17 @@ class Pypeline:
             None
         """
 
-        if key in ['_m_working_place', '_m_input_place', '_m_output_place']:
-            assert (os.path.isdir(str(value))), f'Input directory for {key} does not exist - ' \
-                                                f'input requested: {value}.'
+        if key == '_m_working_place':
+            error_msg = f'The folder that was chosen for the working place does not exist: {value}.'
+            assert os.path.isdir(str(value)), error_msg
+
+        elif key == '_m_input_place':
+            error_msg = f'The folder that was chosen for the input place does not exist: {value}.'
+            assert os.path.isdir(str(value)), error_msg
+
+        elif key == '_m_output_place':
+            error_msg = f'The folder that was chosen for the output place does not exist: {value}.'
+            assert os.path.isdir(str(value)), error_msg
 
         super().__setattr__(key, value)
 
@@ -130,22 +155,21 @@ class Pypeline:
     def _validate(module: Union[ReadingModule, WritingModule, ProcessingModule],
                   tags: List[str]) -> Tuple[bool, Optional[str]]:
         """
-        Internal function which is used for the validation of the pipeline. Validates a
-        single module.
+        Internal method to validate a :class:`~pynpoint.core.processing.PypelineModule`.
 
         Parameters
         ----------
         module : ReadingModule, WritingModule, ProcessingModule
-            The pipeline module.
+            Pipeline module that will be validated.
         tags : list(str)
-            Tags in the database.
+            Tags that are present in the database.
 
         Returns
         -------
         bool
-            Module validation.
-        str
-            Module name.
+            Validation of the pipeline module.
+        str, None
+            Pipeline module name in case it is not valid. Returns None if the module was validated.
         """
 
         if isinstance(module, ReadingModule):
@@ -158,6 +182,7 @@ class Pypeline:
 
         elif isinstance(module, ProcessingModule):
             tags.extend(module.get_all_output_tags())
+
             for tag in module.get_all_input_tags():
                 if tag not in tags:
                     return False, module.name
@@ -167,9 +192,9 @@ class Pypeline:
     @typechecked
     def _config_init(self) -> None:
         """
-        Internal function which initializes the configuration file. It reads PynPoint_config.ini
-        in the working folder and creates this file with the default (ESO/NACO) settings in case
-        the file is not present.
+        Internal method to initialize the configuration file. The configuration parameters are read
+        from *PynPoint_config.ini* in the working folder. The file is created with default values
+        (ESO/NACO) in case the file is not present.
 
         Returns
         -------
@@ -201,6 +226,7 @@ class Pypeline:
                          attributes: dict) -> dict:
 
             config = configparser.ConfigParser()
+
             with open(config_file) as cf_open:
                 config.read_file(cf_open)
 
@@ -282,15 +308,16 @@ class Pypeline:
     def add_module(self,
                    module: PypelineModule) -> None:
         """
-        Adds a Pypeline module to the internal Pypeline dictionary. The module is appended at the
+        Method for adding a :class:`~pynpoint.core.processing.PypelineModule` to the internal
+        dictionary of the :class:`~pynpoint.core.pypeline.Pypeline`. The module is appended at the
         end of this ordered dictionary. If the input module is a reading or writing module without
-        a specified input or output location then the Pypeline default location is used. Moreover,
-        the given module is connected to the Pypeline internal data storage.
+        a specified input or output location then the default location is used. The module is
+        connected to the internal data storage of the :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Parameters
         ----------
-        module : ReadingModule, WritingModule, or ProcessingModule
-            Input pipeline module.
+        module : ReadingModule, WritingModule, ProcessingModule
+            Pipeline module that will be added to the :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Returns
         -------
@@ -298,19 +325,21 @@ class Pypeline:
             None
         """
 
-        if isinstance(module, WritingModule):
-            if module.m_output_location is None:
-                module.m_output_location = self._m_output_place
-
         if isinstance(module, ReadingModule):
             if module.m_input_location is None:
                 module.m_input_location = self._m_input_place
 
+        if isinstance(module, WritingModule):
+            if module.m_output_location is None:
+                module.m_output_location = self._m_output_place
+
         module.connect_database(self.m_data_storage)
 
         if module.name in self._m_modules:
-            warnings.warn(f'Pipeline module names need to be unique. Overwriting module '
-                          f'\'{module.name}\'.')
+            warnings.warn(f'Names of pipeline modules that are added to the Pypeline need to '
+                          f'be unique. The current pipeline module, \'{module.name}\', does '
+                          f'already exist in the Pypeline dictionary so the previous module '
+                          f'with the same name will be overwritten.')
 
         self._m_modules[module.name] = module
 
@@ -318,7 +347,9 @@ class Pypeline:
     def remove_module(self,
                       name: str) -> bool:
         """
-        Removes a Pypeline module from the internal dictionary.
+        Method to remove a :class:`~pynpoint.core.processing.PypelineModule` from the internal
+        dictionary with pipeline modules that are added to the
+        :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Parameters
         ----------
@@ -328,15 +359,19 @@ class Pypeline:
         Returns
         -------
         bool
-            Confirmation of removal.
+            Confirmation of removing the :class:`~pynpoint.core.processing.PypelineModule`.
         """
 
         if name in self._m_modules:
             del self._m_modules[name]
+
             removed = True
 
         else:
-            warnings.warn(f'Pipeline module name \'{name}\' not found in the Pypeline dictionary.')
+            warnings.warn(f'Pipeline module \'{name}\' is not found in the Pypeline dictionary '
+                          f'so it could not be removed. The dictionary contains the following '
+                          f'modules: {list(self._m_modules.keys())}.')
+
             removed = False
 
         return removed
@@ -344,11 +379,12 @@ class Pypeline:
     @typechecked
     def get_module_names(self) -> List[str]:
         """
-        Function which returns a list of all module names.
+        Method to return a list with the names of all pipeline modules that are added to the
+        :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Returns
         -------
-        list(str, )
+        list(str)
             Ordered list of all Pypeline modules.
         """
 
@@ -357,68 +393,78 @@ class Pypeline:
     @typechecked
     def validate_pipeline(self) -> Tuple[bool, Optional[str]]:
         """
-        Function which checks if all input ports of the Pypeline are pointing to previous output
-        ports.
+        Method to check if each :class:`~pynpoint.core.dataio.InputPort` is pointing to an
+        :class:`~pynpoint.core.dataio.OutputPort` of a previously added
+        :class:`~pynpoint.core.processing.PypelineModule`.
 
         Returns
         -------
         bool
-            Confirmation of pipeline validation.
-        str
-            Module name that is not valid.
+            Validation of the pipeline.
+        str, None
+            Name of the pipeline module that can not be validated. Returns None if all modules
+            were validated.
         """
 
         self.m_data_storage.open_connection()
 
+        # Create list with all datasets that are stored in the database
         data_tags = list(self.m_data_storage.m_data_bank.keys())
 
+        # Initiate the validation in case self._m_modules.values() is empty
+        validation = (True, None)
+
+        # Loop over all pipline modules in the ordered dictionary
         for module in self._m_modules.values():
+            # Validate the pipeline module
             validation = self._validate(module, data_tags)
 
             if not validation[0]:
+                # Break the for loop if a module could not be validated
                 break
-
-        else:
-            validation = True, None
 
         return validation
 
     @typechecked
     def validate_pipeline_module(self,
-                                 name: str) -> Optional[Tuple[bool, Optional[str]]]:
+                                 name: str) -> Tuple[bool, Optional[str]]:
         """
-        Checks if the data exists for the module with label *name*.
+        Method to check if each :class:`~pynpoint.core.dataio.InputPort` of a
+        :class:`~pynpoint.core.processing.PypelineModule` with label ``name`` points to an
+        existing dataset in the database.
 
         Parameters
         ----------
         name : str
-            Name of the module that is checked.
+            Name of the pipeline module instance that will be validated.
 
         Returns
         -------
         bool
-            Confirmation of pipeline module validation.
-        str
-            Module name that is not valid.
+            Validation of the pipeline module.
+        str, None
+            Pipeline module name in case it is not valid. Returns None if the module was validated.
         """
 
         self.m_data_storage.open_connection()
 
-        existing_data_tags = list(self.m_data_storage.m_data_bank.keys())
+        # Create list with all datasets that are stored in the database
+        data_tags = list(self.m_data_storage.m_data_bank.keys())
 
+        # Check if the name is included in the internal dictionary with added modules
         if name in self._m_modules:
-            module = self._m_modules[name]
-            validate = self._validate(module, existing_data_tags)
+            # Validate the pipeline module
+            validate = self._validate(self._m_modules[name], data_tags)
 
         else:
-            validate = None
+            validate = (False, name)
 
         return validate
 
     @typechecked
     def run(self) -> None:
         """
-        Function for running all pipeline modules that are added to the
+        Method for running all pipeline modules that are added to the
         :class:`~pynpoint.core.pypeline.Pypeline`.
 
         Returns
@@ -444,7 +490,7 @@ class Pypeline:
     def run_module(self,
                    name: str) -> None:
         """
-        Function for running a pipeline module.
+        Method for running a pipeline module.
 
         Parameters
         ----------
@@ -514,15 +560,15 @@ class Pypeline:
                  tag: str,
                  data_range: Optional[Tuple[int, int]] = None) -> np.ndarray:
         """
-        Function for accessing data in the central database.
+        Method for reading data from the database.
 
         Parameters
         ----------
         tag : str
             Database tag.
         data_range : tuple(int, int), None
-            Slicing range which can be used to select a subset of images from a 3D dataset. All
-            data are selected if set to None.
+            Slicing range for the first axis of a dataset. This argument can be used to select a
+            subset of images from dataset. The full dataset is read if the argument is set to None.
 
         Returns
         -------
@@ -546,8 +592,8 @@ class Pypeline:
     def delete_data(self,
                     tag: str) -> None:
         """
-        Function for deleting a dataset and related attributes from the central database. Disk
-        space does not seem to free up when using this function.
+        Method for deleting a dataset and related attributes from the central database. Disk
+        space does not seem to free up when using this method.
 
         Parameters
         ----------
@@ -580,7 +626,7 @@ class Pypeline:
                       attr_name: str,
                       static: bool = True) -> Union[StaticAttribute, NonStaticAttribute]:
         """
-        Function for accessing attributes in the central database.
+        Method for reading an attribute from the database.
 
         Parameters
         ----------
@@ -589,12 +635,13 @@ class Pypeline:
         attr_name : str
             Name of the attribute.
         static : bool
-            Static or non-static attribute.
+            Static (True) or non-static attribute (False).
 
         Returns
         -------
         StaticAttribute, NonStaticAttribute
-            The values of the attribute, which can either be static or non-static.
+            Attribute value. For a static attribute, a single value is returned. For a non-static
+            attribute, an array of values is returned.
         """
 
         self.m_data_storage.open_connection()
@@ -617,8 +664,7 @@ class Pypeline:
                       attr_value: Union[StaticAttribute, NonStaticAttribute],
                       static: bool = True) -> None:
         """
-        Function for writing attributes to the central database. Existing values will be
-        overwritten.
+        Method for writing an attribute to the database. Existing values will be overwritten.
 
         Parameters
         ----------
@@ -629,7 +675,7 @@ class Pypeline:
         attr_value : StaticAttribute, NonStaticAttribute
             Attribute value.
         static : bool
-            Static or non-static attribute.
+            Static (True) or non-static attribute (False).
 
         Returns
         -------
@@ -655,36 +701,37 @@ class Pypeline:
         self.m_data_storage.close_connection()
 
     @typechecked
-    def get_tags(self) -> np.ndarray:
+    def get_tags(self) -> List[str]:
         """
-        Function for listing the database tags, ignoring header and config tags.
+        Method for returning a list with all database tags, except header and configuration tags.
 
         Returns
         -------
-        np.ndarray
+        list(str)
             Database tags.
         """
 
         self.m_data_storage.open_connection()
 
         tags = list(self.m_data_storage.m_data_bank.keys())
-        select = []
+
+        selected_tags = []
 
         for item in tags:
-            if item in ('config', 'fits_header') or item[0:7] == 'header_':
+            if item in ['config', 'fits_header'] or item[0:7] == 'header_':
                 continue
 
-            select.append(item)
+            selected_tags.append(item)
 
         self.m_data_storage.close_connection()
 
-        return np.asarray(select)
+        return selected_tags
 
     @typechecked
     def get_shape(self,
                   tag: str) -> Optional[Tuple[int, ...]]:
         """
-        Function for getting the shape of a database entry.
+        Method for returning the shape of a database entry.
 
         Parameters
         ----------
@@ -693,8 +740,8 @@ class Pypeline:
 
         Returns
         -------
-        tuple(int, )
-            Dataset shape.
+        tuple(int, ...), None
+            Shape of the dataset. None is returned if the database tag is not found.
         """
 
         self.m_data_storage.open_connection()

@@ -1,7 +1,7 @@
 """
 Continuous wavelet transform (CWT) and discrete wavelet transform (DWT) denoising for speckle
 suppression in the time domain. The module can be used as additional preprocessing step. See
-Bonse et al. 2018 more information.
+Bonse et al. (arXiv:1804.05063) more information.
 """
 
 from typing import Union
@@ -82,8 +82,8 @@ class DwtWaveletConfiguration:
 
         # create list of supported wavelets
         supported = []
-        for family in pywt.families():
-            supported += pywt.wavelist(family)
+        for item in pywt.families():
+            supported += pywt.wavelist(item)
 
         # check if wavelet is supported
         if wavelet not in supported:
@@ -95,7 +95,7 @@ class DwtWaveletConfiguration:
 class WaveletTimeDenoisingModule(ProcessingModule):
     """
     Pipeline module for speckle subtraction in the time domain by using CWT or DWT wavelet
-    shrinkage (see Bonse et al. 2018).
+    shrinkage. See Bonse et al. (arXiv:1804.05063) for details.
     """
 
     __author__ = 'Markus Bonse, Tomas Stolker'
@@ -113,22 +113,23 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name for the pipeline module.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the input data.
         image_out_tag : str
-            Tag of the database entry that is written as output.
+            Database tag for the output data.
         wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
                                 pynpoint.processing.timedenoising.DwtWaveletConfiguration
-            Instance of DwtWaveletConfiguration or CwtWaveletConfiguration which gives the
-            parameters of the wavelet transformation to be used.
+            Instance of :class:`~pynpoint.processing.timedenoising.DwtWaveletConfiguration` or
+            :class:`~pynpoint.processing.timedenoising.CwtWaveletConfiguration` which contains the
+            parameters for the wavelet transformation.
         padding : str
-            Padding method ('zero', 'mirror', or 'none').
+            Padding method (``'zero'``, ``'mirror'``, or ``'none'``).
         median_filter : bool
-            If true a median filter in time is applied which removes outliers in time like cosmic
-            rays.
+            Apply a median filter in time to remove outliers, for example due to cosmic rays.
         threshold_function : str
-            Threshold function used for wavelet shrinkage in the wavelet space ('soft' or 'hard').
+            Threshold function that is used for wavelet shrinkage in the wavelet space
+            (``'soft'`` or ``'hard'``).
 
         Returns
         -------
@@ -149,6 +150,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         assert threshold_function in ['soft', 'hard']
         self.m_threshold_function = threshold_function == 'soft'
+
+        assert isinstance(wavelet_configuration,
+                          (DwtWaveletConfiguration, CwtWaveletConfiguration))
 
     @typechecked
     def run(self) -> None:
@@ -198,8 +202,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
 class TimeNormalizationModule(ProcessingModule):
     """
-    Pipeline module for normalization of global brightness variations of the detector
-    (see Bonse et al. 2018).
+    Pipeline module for normalization of global brightness variations of the detector. See Bonse
+    et al. (arXiv:1804.05063) for details.
     """
 
     __author__ = 'Markus Bonse, Tomas Stolker'
@@ -213,11 +217,11 @@ class TimeNormalizationModule(ProcessingModule):
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name for the pipeline module.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the input data.
         image_out_tag : str
-            Tag of the database entry that is written as output.
+            Database tag for the output data.
 
         Returns
         -------

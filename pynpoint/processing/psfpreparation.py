@@ -638,7 +638,7 @@ class AngleCalculationModule(ProcessingModule):
 
 class SDIpreparationModule(ProcessingModule):
     """
-    Module for preparing continuum frames for SDI subtraction.
+    Module for preparing continuum frames for dual-band simultaneous differential imaging.
     """
 
     __author__ = 'Gabriele Cugno, Tomas Stolker'
@@ -704,7 +704,7 @@ class SDIpreparationModule(ProcessingModule):
 
         start_time = time.time()
         for i in range(nimages):
-            progress(i, nimages, 'Preparing images for SDI...', start_time)
+            progress(i, nimages, 'Preparing images for dual-band SDI...', start_time)
 
             image = self.m_image_in_port[i, ]
 

@@ -26,7 +26,7 @@ PynPoint
 
 PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
 
-For a first impression, `this example <https://home.strw.leidenuniv.nl/~stolker/pynpoint/hd142527_zimpol_h-alpha.tgz>`_ of `HD 142527B <https://ui.adsabs.harvard.edu/abs/2019A%26A...622A.156C/abstract>`_ shows a typical workflow.
+For a first impression, `this Jupyter notebook <https://pynpoint.readthedocs.io/en/latest/first_example.html>`_ shows the workflow for running the PSF subtraction of a preprocessed dataset.
 
 Documentation
 -------------

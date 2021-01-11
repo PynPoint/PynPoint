@@ -46,7 +46,8 @@ release = version
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'nbsphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -114,7 +115,7 @@ html_static_path = ['_static']
 # html_sidebars = {}
 
 html_logo = '_static/logo.png'
-# html_favicon = '_static/logo.jpg'
+html_favicon = '_static/favicon.png'
 html_search_language = 'en'
 
 html_context = {'display_github': True,
@@ -201,5 +202,3 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
-
-html_css_files = ['custom.css']

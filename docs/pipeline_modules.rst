@@ -1,22 +1,22 @@
-.. _overview:
+.. _pipeline_modules:
 
-Overview
-========
+Pipeline modules
+================
 
-Here you find a list of all available pipeline modules with a very short description of what each module does. Reading modules import data into the database, writing modules export data from the database, and processing modules run a specific task of the data reduction and analysis. More details on the design of the pipeline can be found in the :ref:`architecture` section. 
+This page contains a list of all available pipeline modules and a short description of what they are used for. Reading modules import data into the database, writing modules export data from the database, and processing modules run a specific task of the data reduction or analysis. More details on the design of the pipeline can be found in the :ref:`architecture` section. 
 
 .. note::
    All PynPoint classes ending with ``Module`` in their name (e.g. :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule`) are pipeline modules that can be added to an instance of :class:`~pynpoint.core.pypeline.Pypeline` (see :ref:`pypeline` section).
 
 .. important::
-   The pipeline modules with multiprocessing functionalities are indicated with "CPU" in parentheses. The number of parallel processes can be set with the ``CPU`` parameter in the central configuration file and the number of images that is simultaneously loaded into the memory with the ``MEMORY`` parameter. Pipeline modules that apply (in parallel) a function to subsets of images use a number of images per subset equal to ``MEMORY`` divided by ``CPU``.
+   The pipeline modules with multiprocessing functionalities are indicated with "CPU" in parentheses. The number of parallel processes can be set with the ``CPU`` parameter in the configuration file and the number of images that is simultaneously loaded into the memory with the ``MEMORY`` parameter. Pipeline modules that apply (in parallel) a function to subsets of images use a number of images per subset equal to ``MEMORY`` divided by ``CPU``.
 
 .. important::
    The pipeline modules that are compatible with both regular imaging and integral field spectroscopy datasets (i.e. 3D and 4D data) are indicated with "IFS" in parentheses. All other modules are only compatible with regular imaging.
 
-.. _readmodule:
+.. _reading_module:
 
-Reading Modules
+Reading modules
 ---------------
 
 * :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` (IFS): Import FITS files and relevant header information into the database.
@@ -26,9 +26,9 @@ Reading Modules
 * :class:`~pynpoint.readwrite.attr_reading.WavelengthReadingModule`: Import a list of calibrated wavelengths as dataset attribute.
 * :class:`~pynpoint.readwrite.nearreading.NearReadingModule` (CPU): Import VLT/VISIR data for the NEAR experiment.
 
-.. _writemodule:
+.. _writing_module:
 
-Writing Modules
+Writing modules
 ---------------
 
 * :class:`~pynpoint.readwrite.fitswriting.FitsWritingModule`: Export a dataset from the database to a FITS file.
@@ -37,12 +37,12 @@ Writing Modules
 * :class:`~pynpoint.readwrite.attr_writing.AttributeWritingModule`: Export a list of attribute values to an ASCII file.
 * :class:`~pynpoint.readwrite.attr_writing.ParangWritingModule`: Export the parallactic angles of a dataset to an ASCII file.
 
-.. _procmodule:
+.. _processing_module:
 
-Processing Modules
+Processing modules
 ------------------
 
-Background Subtraction
+Background subtraction
 ~~~~~~~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.background.SimpleBackgroundSubtractionModule`: Simple background subtraction for dithering datasets.
@@ -50,7 +50,7 @@ Background Subtraction
 * :class:`~pynpoint.processing.background.LineSubtractionModule` (CPU): Subtraction of striped detector artifacts.
 * :class:`~pynpoint.processing.background.NoddingBackgroundModule`: Background subtraction for nodding datasets.
 
-Bad Pixel Cleaning
+Bad pixel cleaning
 ~~~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.badpixel.BadPixelSigmaFilterModule` (CPU): Find and replace bad pixels with a sigma filter.
@@ -59,7 +59,7 @@ Bad Pixel Cleaning
 * :class:`~pynpoint.processing.badpixel.BadPixelTimeFilterModule` (CPU): Sigma clipping of bad pixels along the time dimension.
 * :class:`~pynpoint.processing.badpixel.ReplaceBadPixelsModule` (CPU): Replace bad pixels based on a bad pixel map.
 
-Basic Processing
+Basic processing
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.basic.SubtractImagesModule`: Subtract two stacks of images.
@@ -75,7 +75,7 @@ Centering
 * :class:`~pynpoint.processing.centering.ShiftImagesModule`: Shift a stack of images.
 * :class:`~pynpoint.processing.centering.WaffleCenteringModule` (IFS): Use the waffle spots to center the images.
 
-Dark and Flat Correction
+Dark and flat correction
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.darkflat.DarkCalibrationModule`: Dark frame subtraction.
@@ -87,13 +87,13 @@ Denoising
 * :class:`~pynpoint.processing.timedenoising.WaveletTimeDenoisingModule` (CPU): Wavelet-based denoising in the time domain.
 * :class:`~pynpoint.processing.timedenoising.TimeNormalizationModule` (CPU): Normalize a stack of images.
 
-Detection Limits
+Detection limits
 ~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.limits.ContrastCurveModule` (CPU): Compute a contrast curve.
 * :class:`~pynpoint.processing.limits.MassLimitsModule`: Calculate mass limits from a contrast curve and an isochrones model grid.
 
-Extract Star
+Extract star
 ~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.extract.StarExtractionModule` (CPU): Locate and crop the position of the star.
@@ -104,7 +104,7 @@ Filters
 
 * :class:`~pynpoint.processing.filter.GaussianFilterModule`: Apply a Gaussian filter to the images.
 
-Flux and Position
+Flux and position
 ~~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.fluxposition.FakePlanetModule`: Inject an artificial planet in a dataset.
@@ -114,7 +114,7 @@ Flux and Position
 * :class:`~pynpoint.processing.fluxposition.AperturePhotometryModule` (CPU): Compute the integrated flux at a position.
 * :class:`~pynpoint.processing.fluxposition.SystematicErrorModule`: Compute the systematic errors on the flux and position.
 
-Frame Selection
+Frame selection
 ~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.frameselection.RemoveFramesModule`: Remove images by their index number.
@@ -126,7 +126,7 @@ Frame Selection
 * :class:`~pynpoint.processing.frameselection.SelectByAttributeModule`: Select images by the ascending/descending attribute values.
 * :class:`~pynpoint.processing.frameselection.ResidualSelectionModule`: Frame selection on the residuals of the PSF subtraction.
 
-Image Resizing
+Image resizing
 ~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.resizing.CropImagesModule` (IFS): Crop the images.
@@ -134,14 +134,14 @@ Image Resizing
 * :class:`~pynpoint.processing.resizing.AddLinesModule`: Add pixel lines on the sides of the images.
 * :class:`~pynpoint.processing.resizing.RemoveLinesModule`: Remove pixel lines from the sides of the images.
 
-PCA Background Subtraction
+PCA background subtraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.pcabackground.PCABackgroundPreparationModule`: Preparation for the PCA-based background subtraction.
 * :class:`~pynpoint.processing.pcabackground.PCABackgroundSubtractionModule`: PCA-based background subtraction.
 * :class:`~pynpoint.processing.pcabackground.DitheringBackgroundModule`: Wrapper for background subtraction of dithering datasets.
 
-PSF Preparation
+PSF preparation
 ~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.psfpreparation.PSFpreparationModule` (IFS): Mask the images before the PSF subtraction.
@@ -150,7 +150,7 @@ PSF Preparation
 * :class:`~pynpoint.processing.psfpreparation.SortParangModule` (IFS): Sort the images by parallactic angle.
 * :class:`~pynpoint.processing.psfpreparation.SDIpreparationModule`: Prepare the images for SDI.
 
-PSF Subtraction
+PSF subtraction
 ~~~~~~~~~~~~~~~
 
 * :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` (CPU, IFS): PSF subtraction with PCA.
