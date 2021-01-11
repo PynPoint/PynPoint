@@ -115,6 +115,7 @@ html_static_path = ['_static']
 # html_sidebars = {}
 
 html_logo = '_static/logo.png'
+html_favicon = '_static/favicon.png'
 html_search_language = 'en'
 
 html_context = {'display_github': True,
