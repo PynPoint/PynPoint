@@ -815,9 +815,8 @@ class FrameSimilarityModule(ProcessingModule):
             time.sleep(5)
 
         if nfinished != nimages:
-            sys.stdout.write('\r                                                      ')
-            sys.stdout.write('\rCalculating image similarity... [DONE]\n')
-            sys.stdout.flush()
+            print('\r                                                      ')
+            print('\rCalculating image similarity... [DONE]')
 
         # get the results for every async_result object
         for async_result in async_results:

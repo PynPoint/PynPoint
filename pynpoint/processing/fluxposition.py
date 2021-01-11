@@ -443,11 +443,11 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_res_out_port[count].append(res_stack, data_dim=3)
 
             # Calculate the chi-square for the tested position and contrast
-            chi_square = merit_function(residuals=res_stack[0, ],
-                                        merit=self.m_merit,
-                                        aperture=aperture,
-                                        sigma=self.m_sigma,
-                                        var_noise=var_noise)
+            chi_sq = merit_function(residuals=res_stack[0, ],
+                                    merit=self.m_merit,
+                                    aperture=aperture,
+                                    sigma=self.m_sigma,
+                                    var_noise=var_noise)
 
             # Apply the extra rotation to the y and x position
             # The returned position is given as (y, x)
@@ -460,18 +460,17 @@ class SimplexMinimizationModule(ProcessingModule):
                               sep_ang[0]*pixscale,
                               (sep_ang[1]-self.m_extra_rot) % 360.,
                               mag,
-                              chi_square])
+                              chi_sq])
 
             # Append the results to the output port
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            print('\rSimplex minimization... ', end='', flush=True)
-            print(f'{n_components} PC - chi^2 = {chi_square:.2e}', end='', flush=True)
+            print(f'\rSimplex minimization... {n_components} PC - chi^2 = {chi_sq:.2e}', end='')
 
-            return chi_square
+            return chi_sq
 
         for i, n_components in enumerate(self.m_pca_number):
-            print(f'\rSimplex minimization... {n_components} PC ', end='', flush=True)
+            print(f'\rSimplex minimization... {n_components} PC ', end='')
 
             if self.m_reference_in_port is None:
                 sklearn_pca = None

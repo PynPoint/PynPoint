@@ -12,12 +12,12 @@ A configuration file has to be stored in the ``working_place_in`` with the name 
 
 .. _config_file:
 
-Config File
------------
+Configuration file
+------------------
 
 The file contains two different sections of configuration parameters. The ``header`` section is used to link attributes in PynPoint with header values in the FITS files that will be imported into the database. For example, some of the pipeline modules require values for the dithering position. These attributes are stored as ``DITHER_X`` and ``DITHER_Y`` in the central database and are for example provided by the ``ESO SEQ CUMOFFSETX`` and ``ESO SEQ CUMOFFSETY`` values in the FITS header. Setting ``DITHER_X: ESO SEQ CUMOFFSETX`` in the ``header`` section of the configuration file makes sure that the relevant FITS header values are imported when :class:`~pynpoint.readwrite.fitsreading.FitsReadingModule` is executed. Therefore, FITS files have to be imported again if values in the ``header`` section are changed. Values can be set to ``None`` since ``header`` values are only required for some of the pipeline modules.
 
-The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` and :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule`. A complete overview of the pipeline modules that support multiprocessing is available in the :ref:`overview` section.
+The second section of the configuration values contains the central settings that are used by the pipeline modules. These values are stored in the ``settings`` section of the configuration file. The pixel scale can be provided in arcsec per pixel (e.g. ``PIXSCALE: 0.027``), the number of images that will be simultaneously loaded into the memory (e.g. ``MEMORY: 1000``), and the number of cores that are used for pipeline modules that have multiprocessing capabilities (e.g. ``CPU: 8``) such as :class:`~pynpoint.processing.psfsubtraction.PcaPsfSubtractionModule` and :class:`~pynpoint.processing.fluxposition.MCMCsamplingModule`. A complete overview of the pipeline modules that support multiprocessing is available in the :ref:`pipeline_modules` section.
 
 Note that some of the pipeline modules provide also multithreading support, which by default runs on all available CPUs. The multithreading can be controlled from the command line by setting the ``OMP_NUM_THREADS`` environment variable:
 

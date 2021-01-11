@@ -40,6 +40,7 @@ pynpoint.egg-info/*
 # Tutorials
 docs/tutorials/PynPoint_config.ini
 docs/tutorials/PynPoint_database.hdf5
+docs/tutorials/betapic_naco_mp.hdf5
 docs/tutorials/hd142527_zimpol_h-alpha.tgz
 docs/tutorials/input
 docs/tutorials/.ipynb_checkpoints
