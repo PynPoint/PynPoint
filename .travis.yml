@@ -22,6 +22,8 @@ install:
   - pip install PyYAML
   - pip install sphinx
   - pip install sphinx-rtd-theme
+  - pip install nbsphinx
+  - pip install jupyter
 
 script:
   - make docs
