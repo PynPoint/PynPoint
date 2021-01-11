@@ -14,6 +14,7 @@ env:
 
 before_install:
   - sudo apt-get install ncompress
+  - sudo apt-get install pandoc
 
 install:
   - pip install -r requirements.txt
