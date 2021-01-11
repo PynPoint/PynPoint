@@ -3,12 +3,14 @@
 Installation
 ============
 
-PynPoint is compatible with Python 3.6/3.7/3.8. Earlier versions (up to v0.7.0) are also compatible with Python 2.7, but we highly recommend using Python 3 since several key Python projects have already |python| Python 2.
+PynPoint is compatible with Python 3.6/3.7/3.8. Earlier versions (up to v0.7.0) are also compatible with Python 2.7.
+
+.. _virtual_environment:
 
 Virtual Environment
 -------------------
 
-PynPoint is available in the |pypi| and on |github|. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv`, for example with the |pip|:
+PynPoint is available in the `PyPI repository <https://pypi.org/project/pynpoint/>`_ and on `Github <https://github.com/PynPoint/PynPoint>`_. We recommend using a Python virtual environment to install and run PynPoint such that the correct versions of the dependencies can be installed without affecting other installed Python packages. First install `virtualenv`, for example with the `pip package manager <https://packaging.python.org/tutorials/installing-packages/>`_:
 
 .. code-block:: console
 
@@ -34,6 +36,8 @@ A virtual environment can be deactivated with:
 
 .. important::
    Make sure to adjust the path where the virtual environment is installed and activated.
+
+.. _installation_pypi:
 
 Installation from PyPI
 ----------------------
@@ -61,19 +65,31 @@ To update the installation to the most recent version:
 Installation from Github
 ------------------------
 
-The repository can be cloned from Github, which contains the most recent implementations:
+Instead of using ``pip``, the repository with the most recent implementations can also be cloned from Github:
 
 .. code-block:: console
 
     $ git clone git@github.com:PynPoint/PynPoint.git
 
-In that case, the dependencies can be installed from the PynPoint folder:
+The package is installed by running the setup script:
+
+.. code-block:: console
+
+    $ python setup.py install
+
+Alternatively, the path of the repository can be added to the ``PYTHONPATH`` environment variable such that PynPoint can be imported from any working folder:
+
+.. code-block:: console
+
+    $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/pynpoint'" >> folder_name/bin/activate
+
+The dependencies can also be installed manually from the PynPoint folder:
 
 .. code-block:: console
 
     $ pip install -r requirements.txt
 
-And to update the dependencies to the latest versions with which PynPoint is compatible:
+Or updated to the latest versions with which PynPoint is compatible:
 
 .. code-block:: console
 
@@ -85,16 +101,12 @@ Once a local copy of the repository exists, new commits can be pulled from Githu
 
     $ git pull origin master
 
-By adding the path of the repository to the ``PYTHONPATH`` environment variable enables PynPoint to be imported from any location:
-
-.. code-block:: console
-
-    $ echo "export PYTHONPATH='$PYTHONPATH:/path/to/pynpoint'" >> folder_name/bin/activate
-
 .. important::
    Make sure to adjust local path in which PynPoint will be cloned from the Github repository.
 
 Do you want to makes changes to the code? Then please fork the PynPoint repository on the Github page and clone your own fork instead of the main repository. We very much welcome contributions and pull requests (see :ref:`contributing` section).
+
+.. _testing_pynpoint:
 
 Testing Pynpoint
 ----------------
@@ -115,19 +127,3 @@ The installation can be tested by starting Python in interactive mode and printi
          >>> sys.path
 
    The result should contain the folder in which the Github repository was cloned or the folder in which Python modules are installed with pip.
-
-.. |python| raw:: html
-
-   <a href="https://python3statement.org/" target="_blank">stopped supporting</a>
-
-.. |pypi| raw:: html
-
-   <a href="https://pypi.org/project/pynpoint/" target="_blank">PyPI repository</a>
-
-.. |github| raw:: html
-
-   <a href="https://github.com/PynPoint/PynPoint" target="_blank">Github</a>
-
-.. |pip| raw:: html
-
-   <a href="https://packaging.python.org/tutorials/installing-packages/" target="_blank">pip package manager</a>

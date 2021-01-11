@@ -3,7 +3,6 @@ Pipeline modules for estimating detection limits.
 """
 
 import os
-import sys
 import math
 import time
 import warnings
@@ -275,9 +274,8 @@ class ContrastCurveModule(ProcessingModule):
             time.sleep(5)
 
         if nfinished != len(positions):
-            sys.stdout.write('\r                                                      ')
-            sys.stdout.write('\rCalculating detection limits... [DONE]\n')
-            sys.stdout.flush()
+            print('\r                                                      ')
+            print('\rCalculating detection limits... [DONE]')
 
         # get the results for every async_result object
         for item in async_results:
@@ -392,11 +390,11 @@ class MassLimitsModule(ProcessingModule):
 
         Returns
         -------
-        list(float, )
+        list(float)
             List with all the ages from the model grid.
-        list(numpy.ndarray, )
+        list(np.ndarray)
             List with all the isochrone data, so the length is the same as the number of ages.
-        list(str, )
+        list(str)
             List with all the column names from the model grid.
         """
 
@@ -449,21 +447,21 @@ class MassLimitsModule(ProcessingModule):
 
         Parameters
         ----------
-        age_eval : numpy.ndarray
+        age_eval : np.ndarray
             Age at which the system is evaluated. Must be of the same shape as `mag_eval`.
-        mag_eval : numpy.ndarray
+        mag_eval : np.ndarray
             Absolute magnitude for which the system is evaluated. Must be of the same shape as
             `age_eval`.
         filter_index: int
             Column index where the filter is located.
-        model_age: list(float, )
+        model_age: list(float)
             List of ages which are given by the model.
-        model_data: list(numpy.ndarray, )
+        model_data: list(np.ndarray)
             List of arrays containing the model data.
 
         Returns
         -------
-        griddata : numpy.ndarray
+        griddata : np.ndarray
             Interpolated values for the given evaluation points (age_eval, mag_eval). Has the
             same shape as age_eval and mag_eval.
         """

@@ -3,7 +3,7 @@
 PynPoint
 ========
 
-PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques.
+PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques.
 
 .. figure:: _static/eso.jpg
    :width: 100%
@@ -11,38 +11,38 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started
+   :caption: Getting started
 
    installation
-   running
+   tutorials/first_example.ipynb
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Documentation
+   :caption: User documentation
 
-   overview
    architecture
    configuration
-   tutorial
-   examples
+   pipeline_modules
+   running_pynpoint
+   tutorials
    modules
 
 .. toctree::
    :maxdepth: 2
-   :caption: NEAR Documentation
+   :caption: NEAR documentation
 
    near
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer Documentation
+   :caption: Developer documentation
 
    python
    coding
 
 .. toctree::
    :maxdepth: 2
-   :caption: About PynPoint
+   :caption: About
 
    mailing
    contributing

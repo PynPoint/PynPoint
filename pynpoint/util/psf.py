@@ -27,21 +27,23 @@ def pca_psf_subtraction(images: np.ndarray,
     Parameters
     ----------
     images : np.ndarray
-        Stack of images. Also used as reference images if `pca_sklearn` is set to None. Should be
-        in the original 3D shape if `pca_sklearn` is set to None or in the 2D reshaped format if
-        `pca_sklearn` is not set to None.
-    angles : np.ndarray, None
-        Derotation angles (deg). The images are not derotated (e.g. for SDI) if set to None.
+        Stack of images. Also used as reference images if ```pca_sklearn``` is set to None. The
+        data should have the original 3D shape if ``pca_sklearn`` is set to None or it should be
+        in a 2D reshaped format if ``pca_sklearn`` is not set to None.
+    angles : np.ndarray
+        Parallactic angles (deg).
     pca_number : int
-        Number of principal components used for the PSF model.
+        Number of principal components.
     scales : np.ndarray, None
         Scaling factors for SDI. Not used if set to None.
     pca_sklearn : sklearn.decomposition.pca.PCA, None
-        PCA decomposition of the input data.
+        PCA object with the principal components.
     im_shape : tuple(int, int, int), None
-        Original shape of the stack with images. Required if `pca_sklearn` is not set to None.
+        The original 3D shape of the stack with images. Only required if ``pca_sklearn`` is not set
+        to None.
     indices : np.ndarray, None
-        Non-masked image indices. All pixels are used if set to None.
+        Array with the indices of the pixels that are used for the PSF subtraction. All pixels are
+        used if set to None.
 
     Returns
     -------
@@ -52,46 +54,58 @@ def pca_psf_subtraction(images: np.ndarray,
     """
 
     if pca_sklearn is None:
+        # Create a PCA object if not provided as argument
         pca_sklearn = PCA(n_components=pca_number, svd_solver='arpack')
 
+        # The 3D shape of the array with images
         im_shape = images.shape
 
         if indices is None:
-            # select the first image and get the unmasked image indices
+            # Select the first image and get the unmasked image indices
             im_star = images[0, ].reshape(-1)
             indices = np.where(im_star != 0.)[0]
 
-        # reshape the images and select the unmasked pixels
+        # Reshape the images and select the unmasked pixels
         im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
         im_reshape = im_reshape[:, indices]
 
-        # subtract mean image
+        # Subtract the mean image
+        # This is also done by sklearn.decomposition.PCA.fit()
         im_reshape -= np.mean(im_reshape, axis=0)
 
-        # create pca basis
+        # Fit the principal components
         pca_sklearn.fit(im_reshape)
 
     else:
+        # If the PCA object is already there then so are the reshaped data
         im_reshape = np.copy(images)
 
-    # create pca representation
-    zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
+    # Project the data on the principal components
+    # Note that this is the same as sklearn.decomposition.PCA.transform()
+    # It is harcoded because the number of components has been adjusted
     pca_rep = np.matmul(pca_sklearn.components_[:pca_number], im_reshape.T)
+
+    # The zeros are added with vstack to account for the components that have not been used for the
+    # transformation to the lower-dimensional space, while they were initiated with the PCA object.
+    # Since inverse_transform uses the number of initial components, the zeros are added for
+    # components > pca_number. These components do not impact the inverse transformation.
+    zeros = np.zeros((pca_sklearn.n_components - pca_number, im_reshape.shape[0]))
     pca_rep = np.vstack((pca_rep, zeros)).T
 
-    # create psf model
+    # Transform the data back to the original space
     psf_model = pca_sklearn.inverse_transform(pca_rep)
 
-    # create original array size
+    # Create an array with the original shape
     residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
 
-    # subtract the psf model
+    # Select all pixel indices if set to None
     if indices is None:
         indices = np.arange(0, im_reshape.shape[1], 1)
 
+    # Subtract the PSF model
     residuals[:, indices] = im_reshape - psf_model
 
-    # reshape to the original image size
+    # Reshape the residuals to the original shape
     residuals = residuals.reshape(im_shape)
 
     # ----------- back scale images

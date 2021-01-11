@@ -1,10 +1,10 @@
-.PHONY: help clean clean-build clean-python clean-test test test-all coverage docs
+.PHONY: help pypi pypi-test test coverage docs clean clean-build clean-python clean-test
 
 help:
-	@echo "pypi - submit package to the PyPI server"
-	@echo "pypi-test - submit package to the TestPyPI server"
+	@echo "pypi - submit to PyPI server"
+	@echo "pypi-test - submit to TestPyPI server"
 	@echo "docs - generate Sphinx documentation"
-	@echo "test - run test cases"
+	@echo "test - run unit tests"
 	@echo "coverage - check code coverage"
 	@echo "clean - remove all artifacts"
 	@echo "clean-build - remove build artifacts"
@@ -26,6 +26,7 @@ docs:
 	rm -f docs/pynpoint.processing.rst
 	rm -f docs/pynpoint.util.rst
 	sphinx-apidoc -o docs pynpoint
+	cd docs/
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
@@ -46,6 +47,15 @@ clean-build:
 	rm -rf htmlcov/
 	rm -rf .eggs/
 	rm -rf docs/_build
+	rm -rf docs/tutorials/PynPoint_config.ini
+	rm -rf docs/tutorials/PynPoint_database.hdf5
+	rm -rf docs/tutorials/betapic_naco_mp.hdf5
+	rm -rf docs/tutorials/hd142527_zimpol_h-alpha.tgz
+	rm -rf docs/tutorials/input
+	rm -rf docs/tutorials/.ipynb_checkpoints
+	rm -rf docs/tutorials/*.fits
+	rm -rf docs/tutorials/*.dat
+	rm -rf docs/tutorials/*.npy
 
 clean-python:
 	find . -name '*.pyc' -exec rm -f {} +

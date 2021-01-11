@@ -3,15 +3,12 @@
 About
 =====
 
-.. _team:
+.. _contact:
 
-Development Team
-----------------
+Contact
+-------
 
-* Tomas Stolker <stolker@strw.leidenuniv.nl>
-* Markus Bonse <mbonse@phys.ethz.ch>
-* Sascha Quanz <sascha.quanz@phys.ethz.ch>
-* Adam Amara <adam.amara@port.ac.uk>
+Questions can be directed to `Tomas Stolker <https://home.strw.leidenuniv.nl/~stolker/>`_ (stolker@strw.leidenuniv.nl) and `Markus Bonse <https://ipa.phys.ethz.ch/people/person-detail.MjIxMTA5.TGlzdC8zNDM1LDU5MTA3MzQ0MA==.html>`_ (mbonse@phys.ethz.ch), who have been the main developers during the recent years.
 
 .. _attribution:
 
@@ -25,11 +22,6 @@ If you use PynPoint in your publication then please cite `Stolker et al. (2019) 
 Acknowledgements 
 ----------------
 
-We would like to thank several people who provided contributions and helped testing the package before its release:
-
-* Anna Boehle (ETH Zurich)
-* Alexander Bohn (Leiden University)
-* Gabriele Cugno (ETH Zurich)
-* Silvan Hunziker (ETH Zurich)
+We would like to thank those who have provided `contributions <https://github.com/PynPoint/PynPoint/graphs/contributors>`_ to PynPoint.
 
 The PynPoint logo was designed by `Atlas Interactive <https://atlas-interactive.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.

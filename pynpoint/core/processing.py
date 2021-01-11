@@ -207,7 +207,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
 
         Returns
         -------
-        list(str, )
+        list(str)
             List of output tags.
         """
 
@@ -330,7 +330,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
 
         Returns
         -------
-        list(str, )
+        list(str)
             List of input tags.
         """
 
@@ -657,7 +657,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         Returns
         -------
-        list(str, )
+        list(str)
             List of input tags.
         """
 
@@ -670,7 +670,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         Returns
         -------
-        list(str, )
+        list(str)
             List of output tags.
         """
 
