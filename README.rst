@@ -24,14 +24,12 @@ PynPoint
 .. image:: https://img.shields.io/github/license/pynpoint/pynpoint
    :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
 
-PynPoint is a generic, end-to-end pipeline for the data reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
-
-For a first impression, `this Jupyter notebook <https://pynpoint.readthedocs.io/en/latest/first_example.html>`_ shows the workflow for running the PSF subtraction of a preprocessed dataset.
+PynPoint is a generic, end-to-end pipeline for the reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
 
 Documentation
 -------------
 
-Documentation is available at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the pipeline architecture, and a description of all the pipeline modules and input parameters.
+Documentation is available at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the pipeline architecture, and several notebook tutorials.
 
 Mailing list
 ------------
