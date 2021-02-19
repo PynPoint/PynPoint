@@ -24,21 +24,7 @@ In this example, we will process the images of chop A (i.e., frames in which alp
 Setup
 ^^^^^
 
-To get started, use the instructions available in the :ref:`installation` section to install PynPoint.
-
-The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a `Bash script <https://home.strw.leidenuniv.nl/~stolker/pynpoint/near_files.sh>`_ available to download all the FITS files (126 Gb). First make the bash script executable:
-
-.. code-block:: console
-
-    $ chmod +x near_files.sh
-
-And then execute it as:
-
-.. code-block:: console
-
-   $ ./near_files.sh
-
-You can also start by downloading only a few files by running a subset of the bash script lines (useful for validating the pipeline installation because analyzing the full data set takes hours).
+To get started, use the instructions available in the :ref:`installation` section to install PynPoint. We also need to download the NEAR data associated with the ESO program that was provided above. It is recommended to start with downloading only a few files to first validate the pipeline installation.
 
 Now that we have the data, we can start the data reduction with PynPoint!
 

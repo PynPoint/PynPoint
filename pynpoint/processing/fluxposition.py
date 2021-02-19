@@ -180,7 +180,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  position: Tuple[float, float],
                  magnitude: float,
                  psf_scaling: float = -1.,
-                 merit: str = 'hessian',
+                 merit: str = 'gaussian',
                  aperture: float = 0.1,
                  sigma: float = 0.0,
                  tolerance: float = 0.1,
@@ -211,9 +211,11 @@ class SimplexMinimizationModule(ProcessingModule):
             (pixels), separation (arcsec), angle (deg), contrast (mag), and the chi-square value.
             The last row contains the best-fit results.
         position : tuple(float, float)
-            Approximate position (x, y) of the planet in pixels. The figure of merit is calculated
-            within an aperture of radius ``aperture`` centered at the rounded (i.e. integers)
-            coordinates of ``position``.
+            Approximate position of the planet (x, y), provided with subpixel precision (i.e. as
+            floats). The figure of merit is calculated within an aperture of radius ``aperture``
+            centered at the rounded (i.e. integers) coordinates of ``position``. When setting,
+            ``offset=0.``, the ``position`` is used as fixed position of the planet while only
+            retrieving the contrast.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float

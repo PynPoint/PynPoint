@@ -189,7 +189,7 @@ class ParangReadingModule(ReadingModule):
                              f'the parallactic angles.')
 
         print(f'Number of angles: {parang.size}')
-        print(f'Rotation range: {parang[0]:.2f} - {parang[-1]:.2f} deg')
+        print(f'Rotation range: {parang[0]:.2f} -> {parang[-1]:.2f} deg')
 
         status = self.m_data_port.check_non_static_attribute('PARANG', parang)
 
