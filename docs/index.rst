@@ -12,6 +12,7 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
 .. toctree::
    :maxdepth: 2
    :caption: Getting started
+   :hidden:
 
    installation
    tutorials/first_example.ipynb
@@ -19,6 +20,7 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
 .. toctree::
    :maxdepth: 2
    :caption: User documentation
+   :hidden:
 
    architecture
    configuration
@@ -30,12 +32,14 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
 .. toctree::
    :maxdepth: 2
    :caption: NEAR documentation
+   :hidden:
 
    near
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer documentation
+   :hidden:
 
    python
    coding
@@ -43,6 +47,7 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
 .. toctree::
    :maxdepth: 2
    :caption: About
+   :hidden:
 
    mailing
    contributing

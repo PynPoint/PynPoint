@@ -9,8 +9,8 @@ PynPoint
 .. image:: https://img.shields.io/pypi/pyversions/pynpoint
    :target: https://pypi.python.org/pypi/pynpoint
 
-.. image:: https://img.shields.io/travis/pynpoint/pynpoint
-   :target: https://travis-ci.org/PynPoint/PynPoint
+.. image:: https://github.com/PynPoint/PynPoint/workflows/CI/badge.svg?branch=main
+   :target: https://github.com/PynPoint/PynPoint/actions
 
 .. image:: https://img.shields.io/readthedocs/pynpoint
    :target: http://pynpoint.readthedocs.io
@@ -22,7 +22,7 @@ PynPoint
    :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
 
 .. image:: https://img.shields.io/github/license/pynpoint/pynpoint
-   :target: https://github.com/PynPoint/PynPoint/blob/master/LICENSE
+   :target: https://github.com/PynPoint/PynPoint/blob/main/LICENSE
 
 PynPoint is a generic, end-to-end pipeline for the reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
 
