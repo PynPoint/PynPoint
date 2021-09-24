@@ -15,8 +15,8 @@ PynPoint
 .. image:: https://img.shields.io/readthedocs/pynpoint
    :target: http://pynpoint.readthedocs.io
 
-.. image:: https://img.shields.io/coveralls/github/PynPoint/PynPoint
-   :target: https://coveralls.io/github/PynPoint/PynPoint
+.. image:: https://codecov.io/gh/PynPoint/PynPoint/branch/main/graph/badge.svg?token=35stSKWsaJ
+   :target: https://codecov.io/gh/PynPoint/PynPoint    
 
 .. image:: https://img.shields.io/codefactor/grade/github/PynPoint/PynPoint
    :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint

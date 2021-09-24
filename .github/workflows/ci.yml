@@ -22,10 +22,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install pandoc
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install flake8 pytest pytest-cov sphinx
-          pip install -r requirements.txt
           pip install -r docs/requirements.txt
+          pip install -r requirements.txt
           pip install .
 
       - name: Lint with flake8
@@ -42,3 +42,6 @@ jobs:
       - name: Run pytest
         run: |
           make test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
