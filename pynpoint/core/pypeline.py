@@ -10,7 +10,7 @@ import os
 import urllib.request
 import warnings
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.error import URLError
 
 import h5py
@@ -754,3 +754,49 @@ class Pypeline:
         self.m_data_storage.close_connection()
 
         return data_shape
+
+    @typechecked
+    def list_attributes(self,
+                        data_tag: str) -> Dict[str, Union[str, np.float64, np.ndarray]]:
+        """
+        Method for printing and returning an overview of all attributes of a dataset.
+
+        Parameters
+        ----------
+        data_tag : str
+            Database tag of which the attributes will be extracted.
+
+        Returns
+        -------
+        dict(str, bool)
+            Dictionary with all attributes, both static and non-static.
+        """
+
+        data_text = f'Attribute overview of {data_tag}'
+
+        print('\n' + len(data_text) * '-')
+        print(data_text)
+        print(len(data_text) * '-' + '\n')
+
+        self.m_data_storage.open_connection()
+
+        attributes = {}
+
+        print('Static attributes:')
+
+        for key in self.m_data_storage.m_data_bank[data_tag].attrs:
+            value = self.m_data_storage.m_data_bank[data_tag].attrs[key]
+            attributes[key] = value
+            print(f'\n   - {key} = {value}')
+
+        print('\nNon-static attributes:')
+
+        for key in self.m_data_storage.m_data_bank[f'header_{data_tag}']:
+            value = self.m_data_storage.m_data_bank[f'header_{data_tag}/{key}']
+            value = list(value)
+            attributes[key] = value
+            print(f'\n   - {key} = {value}')
+
+        self.m_data_storage.close_connection()
+
+        return attributes

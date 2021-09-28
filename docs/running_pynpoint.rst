@@ -107,3 +107,16 @@ There are several ways to access the datasets in the HDF5 database that is used 
 * The `h5py <http://www.h5py.org/>`_ Python package can be used to access the HDF5 file directly.
 
 * There are external tools available such as `HDFCompass <https://support.hdfgroup.org/projects/compass/download.html>`_ or `HDFView <https://support.hdfgroup.org/downloads/index.html>`_ to read, inspect, and visualize data and attributes. HDFCompass is easy to use and has a basic plotting functionality. In HDFCompass, the static PynPoint attributes can be opened with the *Reopen as HDF5 Attributes* option.
+
+.. _data_attributes:
+
+Dataset attributes
+------------------
+
+In addition to the :meth:`~pynpoint.core.pypeline.Pypeline.get_attribute` method, it is also possible to print and return all attributes of a dataset by using the :meth:`~pynpoint.core.pypeline.Pypeline.list_attributes` method of :class:`~pynpoint.core.pypeline.Pypeline`:
+
+.. code-block:: python
+
+  attr_dict = pipeline.list_attributes('tag_name')
+
+The method returns a dictionary with both the static and non-static attributes.
