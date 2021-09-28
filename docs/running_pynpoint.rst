@@ -113,10 +113,10 @@ There are several ways to access the datasets in the HDF5 database that is used 
 Dataset attributes
 ------------------
 
-In addition to the :meth:`~pynpoint.core.pypeline.Pypeline.get_attribute` method, it is also possible to print and return all attributes of a dataset by using the :meth:`~pynpoint.core.pypeline.Pypeline.list_attributes` method of :class:`~pynpoint.core.pypeline.Pypeline`:
+Apart from using :meth:`~pynpoint.core.pypeline.Pypeline.get_attribute`, it is also possible to print and return all attributes of a dataset with the :meth:`~pynpoint.core.pypeline.Pypeline.list_attributes` method of :class:`~pynpoint.core.pypeline.Pypeline`:
 
 .. code-block:: python
 
   attr_dict = pipeline.list_attributes('tag_name')
 
-The method returns a dictionary with both the static and non-static attributes.
+The method returns a dictionary that contains both the static and non-static attributes.

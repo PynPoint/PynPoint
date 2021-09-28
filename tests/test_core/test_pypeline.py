@@ -339,6 +339,18 @@ class TestPypeline:
 
         assert pipeline.get_tags() == ['images']
 
+    def test_list_attributes(self) -> None:
+
+        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+
+        attr_dict = pipeline.list_attributes('images')
+
+        assert len(attr_dict) == 11
+        assert attr_dict['INSTRUMENT'] == 'IMAGER'
+        assert attr_dict['PIXSCALE'] == 0.027
+        assert attr_dict['NFRAMES'] == [5]
+        assert attr_dict['PARANG_START'] == [10.]
+
     def test_set_and_get_attribute(self) -> None:
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)

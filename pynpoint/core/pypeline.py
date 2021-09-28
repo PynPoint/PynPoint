@@ -772,11 +772,11 @@ class Pypeline:
             Dictionary with all attributes, both static and non-static.
         """
 
-        data_text = f'Attribute overview of {data_tag}'
+        print_text = f'Attribute overview of {data_tag}'
 
-        print('\n' + len(data_text) * '-')
-        print(data_text)
-        print(len(data_text) * '-' + '\n')
+        print('\n' + len(print_text) * '-')
+        print(print_text)
+        print(len(print_text) * '-' + '\n')
 
         self.m_data_storage.open_connection()
 
@@ -784,18 +784,15 @@ class Pypeline:
 
         print('Static attributes:')
 
-        for key in self.m_data_storage.m_data_bank[data_tag].attrs:
-            value = self.m_data_storage.m_data_bank[data_tag].attrs[key]
+        for key, value in self.m_data_storage.m_data_bank[data_tag].attrs.items():
             attributes[key] = value
             print(f'\n   - {key} = {value}')
 
         print('\nNon-static attributes:')
 
-        for key in self.m_data_storage.m_data_bank[f'header_{data_tag}']:
-            value = self.m_data_storage.m_data_bank[f'header_{data_tag}/{key}']
-            value = list(value)
-            attributes[key] = value
-            print(f'\n   - {key} = {value}')
+        for key, value in self.m_data_storage.m_data_bank[f'header_{data_tag}'].items():
+            attributes[key] = list(value)
+            print(f'\n   - {key} = {list(value)}')
 
         self.m_data_storage.close_connection()
 
