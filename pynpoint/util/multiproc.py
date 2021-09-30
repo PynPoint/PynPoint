@@ -3,6 +3,7 @@ Abstract interfaces for multiprocessing applications with the poison pill patter
 """
 
 import multiprocessing
+from sys import platform
 
 from typing import Callable, Optional, Union
 from abc import ABCMeta, abstractmethod
@@ -17,7 +18,8 @@ from pynpoint.core.dataio import InputPort, OutputPort
 # On macOS, the spawn start method is the default since Python 3.8. The fork start method should
 # be considered unsafe as it can lead to crashes of the subprocess.
 # TODO Not using the fork method results in an error.
-multiprocessing.set_start_method('fork')
+if platform != 'win32':
+    multiprocessing.set_start_method('fork')
 
 
 class TaskInput:
