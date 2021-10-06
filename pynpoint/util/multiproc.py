@@ -29,7 +29,7 @@ class TaskInput:
 
     @typechecked
     def __init__(self,
-                 input_data: Union[np.ndarray, np.int64, tuple],
+                 input_data: Union[np.ndarray, np.integer, tuple],
                  job_parameter: tuple) -> None:
         """
         Parameters
