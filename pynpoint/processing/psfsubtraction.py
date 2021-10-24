@@ -184,7 +184,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-        if self.m_processing_type in ['ADI', 'SDI', 'CODI'].:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             if not isinstance(self.m_components, (range, list, np.ndarray)):
                 raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
                                  f'a single range/list/array as argument for \'pca_numbers\'.')
