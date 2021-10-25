@@ -423,8 +423,8 @@ class TestPsfSubtractionAdi:
 
     def test_psf_subtraction_pca_multi_mask(self) -> None:
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 3),
                                          name_in='pca_multi_mask',
@@ -470,8 +470,8 @@ class TestPsfSubtractionAdi:
 
     def test_psf_subtraction_len_parang(self) -> None:
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         parang = self.pipeline.get_data('header_science/PARANG')
         self.pipeline.set_attribute('science_prep', 'PARANG', np.append(parang, 0.), static=False)

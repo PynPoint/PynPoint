@@ -118,6 +118,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 - ADI+SDI: Angular and spectral differential imaging. Can only be applied on IFS
                   datasets. The collapsed residuals are stored as 5D datasets with one image per
                   wavelength and each of the principal components.
+                - CODI: Perform ADI and SDI simultaniously. Usually requires a lot more PC than
+                  the other techniques. The collapsed residuals are stored as 4D datasets with one image per
+                  wavelength and each of the principal components.
 
         Returns
         -------
@@ -181,7 +184,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             if not isinstance(self.m_components, (range, list, np.ndarray)):
                 raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
                                  f'a single range/list/array as argument for \'pca_numbers\'.')
@@ -226,7 +229,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
@@ -235,7 +238,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             pca_secon = self.m_components[1]
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI']:
+            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
                 res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
 
             elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
@@ -323,7 +326,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
@@ -336,7 +339,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         out_array_res = np.zeros(im_shape)
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI']:
+            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
                 res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
 
             elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:

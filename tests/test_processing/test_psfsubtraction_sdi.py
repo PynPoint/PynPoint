@@ -45,20 +45,22 @@ class TestPsfSubtractionSdi:
 
     def test_psf_subtraction_sdi(self) -> None:
 
-        processing_types = ['ADI', 'SDI+ADI', 'ADI+SDI']
+        processing_types = ['ADI', 'SDI+ADI', 'ADI+SDI', 'CODI']
 
         expected = [[-0.16718942968552664, -0.790697125718532,
                      19.507979777136892, -0.21617058715490922],
                     [-0.001347198747121658, -0.08621264803633322,
                      2.3073192270025333, -0.010269745733878437],
                     [0.009450917836998779, -0.05776205365084376,
-                     -0.43506678222476264, 0.0058856438951644455]]
+                     -0.43506678222476264, 0.0058856438951644455],
+                    [-0.2428739554898396, -0.5069023645693083,
+                     9.326414176548905, 0.00]]
 
-        shape_expc = [(2, 3, 21, 21), (2, 2, 3, 21, 21), (1, 1, 3, 21, 21)]
+        shape_expc = [(2, 3, 21, 21), (2, 2, 3, 21, 21), (1, 1, 3, 21, 21), (2, 3, 21, 21)]
 
-        pca_numbers = [range(1, 3), (range(1, 3), range(1, 3)), ([1], [1])]
+        pca_numbers = [range(1, 3), (range(1, 3), range(1, 3)), ([1], [1]), range(1, 3)]
 
-        res_arr_tags = [None, None, 'res_arr_single_sdi_ADI+SDI']
+        res_arr_tags = [None, None, 'res_arr_single_sdi_ADI+SDI', None]
 
         for i, p_type in enumerate(processing_types):
 
