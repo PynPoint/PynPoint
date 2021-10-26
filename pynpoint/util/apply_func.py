@@ -382,7 +382,7 @@ def crop_around_star(image: np.ndarray,
                       f'image instead.')
 
         if index_out_port is not None:
-            index_out_port.append(im_index, data_dim=1)
+            index_out_port.append([im_index], data_dim=1)
 
         starpos = center_pixel(image)
         im_crop = crop_image(image, tuple(starpos), im_size)

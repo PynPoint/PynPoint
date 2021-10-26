@@ -3,7 +3,7 @@
 Installation
 ============
 
-PynPoint is compatible with Python 3.7/3.8/3.9. Earlier versions (up to v0.7.0) are also compatible with Python 2.7.
+PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.7/3.8/3.9. Earlier versions of PynPoint (up to v0.7.0) are also compatible with Python 2.7.
 
 .. _virtual_environment:
 
@@ -72,7 +72,7 @@ The Github repository contains the latest commits. Installation from Github is a
 
 .. code-block:: console
 
-   $ pip install git+git://github.com/PynPoint/PynPoint.git@main
+   $ pip install git+git://github.com/PynPoint/PynPoint.git
 
 This will also install the required dependencies.
 

@@ -12,7 +12,7 @@ The modular architecture of PynPoint allows for easy implementation of new pipel
 
     * Python `types <https://docs.python.org/3/library/stdtypes.html>`_ such as lists, tuples, and dictionaries.
     * `Classes <https://docs.python.org/3/tutorial/classes.html>`_ and in particular the concept of inheritance.
-    * `Absrtact classes <https://docs.python.org/3/library/abc.html>`_ as interfaces.
+    * `Abstract classes <https://docs.python.org/3/library/abc.html>`_ as interfaces.
 
 .. _conventions:
 

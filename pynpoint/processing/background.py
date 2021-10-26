@@ -111,6 +111,8 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
                  shift: Optional[int] = None,
                  cubes: int = 1) -> None:
         """
+        Parameters
+        ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str

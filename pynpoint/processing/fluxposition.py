@@ -1066,6 +1066,7 @@ class AperturePhotometryModule(ProcessingModule):
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_phot_out_port = self.add_output_port(phot_out_tag)
+        self.m_phot_in_port = None
 
         self.m_radius = radius
         self.m_position = position
@@ -1107,7 +1108,7 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_phot_in_port = self.add_input_port(self.m_phot_out_port.tag)
         data = self.m_phot_in_port.get_all()
 
-        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data):.2f}')
+        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data)/np.sqrt(data.size):.2f}')
 
         history = f'radius (pixels) = {self.m_radius:.3f}'
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)

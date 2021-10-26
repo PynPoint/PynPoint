@@ -47,7 +47,7 @@ class ContrastCurveModule(ProcessingModule):
                  cent_size: Optional[float] = None,
                  edge_size: Optional[float] = None,
                  extra_rot: float = 0.,
-                 residuals: str = 'median',
+                 residuals: str = 'mean',
                  snr_inject: float = 100.,
                  **kwargs: float) -> None:
         """
