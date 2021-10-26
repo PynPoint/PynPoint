@@ -119,8 +119,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
                   datasets. The collapsed residuals are stored as 5D datasets with one image per
                   wavelength and each of the principal components.
                 - CODI: Perform ADI and SDI simultaniously. Usually requires a lot more PC than
-                  the other techniques. The collapsed residuals are stored as 4D datasets with one image per
-                  wavelength and each of the principal components.
+                  the other techniques. The collapsed residuals are stored as 4D datasets with one
+                  image per wavelength and each of the principal components.
 
         Returns
         -------

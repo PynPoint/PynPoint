@@ -2,7 +2,6 @@
 Pipeline modules for frame selection.
 """
 
-import sys
 import time
 import math
 import warnings
@@ -129,7 +128,7 @@ class FrameSelectionModule(ProcessingModule):
                  removed_out_tag: str,
                  index_out_tag: Optional[str] = None,
                  method: str = 'median',
-                 threshold: float = 4.,
+                 threshold: Union[float, Tuple[float, float]] = 4.,
                  fwhm: Optional[float] = 0.1,
                  aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
                  position: Optional[Union[Tuple[int, int, float], Tuple[None, None, float],
@@ -142,36 +141,53 @@ class FrameSelectionModule(ProcessingModule):
         image_in_tag : str
             Tag of the database entry that is read as input.
         selected_out_tag : str
-            Tag of the database entry with the selected images that are written as output. Should
-            be different from `image_in_tag`.
+            Tag of the database entry with the selected images that are
+            written as output. Should be different from
+            ``image_in_tag``.
         removed_out_tag : str
-            Tag of the database entry with the removed images that are written as output. Should
-            be different from `image_in_tag`.
+            Tag of the database entry with the removed images that are
+            written as output. Should be different from
+            ``image_in_tag``.
         index_out_tag : str, None
-            Tag of the database entry with the list of frames indices that are removed with the
-            frames selection. No data is written when set to None.
+            Tag of the database entry with the list of frames indices
+            that are removed with the frames selection. No data is
+            written when set to ``None``.
         method : str
-            Perform the sigma clipping with respect to the median or maximum aperture flux by
-            setting the `method` to 'median' or 'max'.
-        threshold : float
-            Threshold in units of sigma for the frame selection. All images that are a `threshold`
-            number of sigmas away from the median/maximum photometry will be removed.
+            Method used for the frame selection. Either sigma clipping
+            is applied with respect to the median (``method='median'``)
+            or maximum (``method='max'``) aperture flux or fluxes
+            outside a specified range (``method='range'``) are removed.
+            In the latter case, the ``threshold`` argument should be
+            a tuple with the minimum and maximum flux value.
+        threshold : float, tuple(float, float)
+            Threshold in units of sigma for the frame selection in case
+            ``method='median'`` or ``method='max'``. All images that are
+            a ``threshold`` number of sigmas away from the
+            median/maximum aperture flux will be removed. In case
+            ``method='range'``, the argument should be a tuple with the
+            minimum and maximum flux. Aperture fluxes within this range
+            will be selected and stored at ``selected_out_tag``.
         fwhm : float, None
-            The FWHM (arcsec) of the Gaussian kernel that is used to smooth the images before the
-            brightest pixel is located. Recommended to be similar in size to the FWHM of the
-            stellar PSF. No smoothing is applied if set to None.
+            The FWHM (arcsec) of the Gaussian kernel that is used to
+            smooth the images before the brightest pixel is located.
+            Recommended to be similar in size to the FWHM of the
+            stellar PSF. No smoothing is applied if set to ``None``.
         aperture : tuple(str, float), tuple(str, float, float)
-            Tuple with the aperture properties for measuring the photometry around the location of
-            the brightest pixel. The first element contains the aperture type ('circular',
-            'annulus', or 'ratio'). For a circular aperture, the second element contains the
-            aperture radius (arcsec). For the other two types, the second and third element are the
+            Tuple with the aperture properties for measuring the
+            photometry around the location of the brightest pixel. The
+            first element contains the aperture type ('circular',
+            'annulus', or 'ratio'). For a circular aperture, the second
+            element contains the aperture radius (arcsec). For the
+            other two types, the second and third element are the
             inner and outer radii (arcsec) of the aperture.
         position : tuple(int, int, float), None
-            Subframe that is selected to search for the star. The tuple contains the center (pix)
-            and size (arcsec) (pos_x, pos_y, size). Setting `position` to None will use the full
-            image to search for the star. If `position=(None, None, size)` then the center of the
-            image will be used. If `position=(pos_x, pos_y, None)` then a fixed position is used
-            for the aperture.
+            Subframe that is selected to search for the star. The tuple
+            contains the center (pix) and size (arcsec) (pos_x, pos_y,
+            size). Setting ``position`` to None will use the full image
+            to search for the star. If `position=(None, None, size)`
+            then the center of the image will be used. If
+            ``position=(pos_x, pos_y, None)`` then a fixed position is
+            used for the aperture.
 
         Returns
         -------
@@ -211,11 +227,13 @@ class FrameSelectionModule(ProcessingModule):
         position : np.ndarray
             Center position (y, x) of the aperture.
         aperture : tuple(str, float, float)
-            Tuple with the aperture properties for measuring the photometry around the location of
-            the brightest pixel. The first element contains the aperture type ('circular',
-            'annulus', or 'ratio'). For a circular aperture, the second element is empty and the
-            third element contains the aperture radius (pix). For the other two types, the
-            second and third element are the inner and outer radii (pix) of the aperture.
+            Tuple with the aperture properties for measuring the
+            photometry around the location of the brightest pixel. The
+            first element contains the aperture type ('circular',
+            'annulus', or 'ratio'). For a circular aperture, the second
+            element is empty and the third element contains the aperture
+            radius (pix). For the other two types, the second and third
+            element are the inner and outer radii (pix) of the aperture.
 
         Returns
         -------
@@ -253,10 +271,11 @@ class FrameSelectionModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Smooths the images with a Gaussian kernel, locates the brightest
-        pixel in each image, measures the integrated flux around the brightest pixel, calculates
-        the median and standard deviation of the photometry, and applies sigma clipping to remove
-        low quality images.
+        Run method of the module. Smooths the images with a Gaussian
+        kernel, locates the brightest pixel in each image, measures the
+        integrated flux around the brightest pixel, calculates the
+        median and standard deviation of the photometry, and applies
+        sigma clipping to remove low quality images.
 
         Returns
         -------
@@ -303,11 +322,20 @@ class FrameSelectionModule(ProcessingModule):
             phot_ref = np.nanmax(phot)
             print(f'Maximum = {phot_ref:.2f}')
 
+        elif self.m_method == 'range':
+            phot_ref = np.nanmedian(phot)
+            print(f'Median = {phot_ref:.2f}')
+
         phot_std = np.nanstd(phot)
         print(f'Standard deviation = {phot_std:.2f}')
 
-        index_del = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
-                                  (phot < phot_ref - self.m_threshold*phot_std))
+        if self.m_method in ['median', 'max']:
+            index_del = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
+                                      (phot < phot_ref - self.m_threshold*phot_std))
+
+        elif self.m_method == 'range':
+            index_del = np.logical_or((phot < self.m_threshold[0]),
+                                      (phot > self.m_threshold[1]))
 
         index_del[np.isnan(phot)] = True
         index_del = np.where(index_del)[0]
