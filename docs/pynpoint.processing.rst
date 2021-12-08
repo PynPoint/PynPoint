@@ -132,7 +132,6 @@ pynpoint.processing.timedenoising module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

@@ -59,7 +59,7 @@ class Hdf5ReadingModule(ReadingModule):
             None
         """
 
-        super(Hdf5ReadingModule, self).__init__(name_in, input_dir)
+        super().__init__(name_in, input_dir=input_dir)
 
         if tag_dictionary is None:
             tag_dictionary = {}

@@ -1,0 +1,4 @@
+nbsphinx
+pandoc
+jupyter
+sphinx_book_theme

@@ -101,32 +101,26 @@ class TestPypeline:
 
     def test_create_pipeline_path_missing(self) -> None:
 
-        dir_non_exists = self.test_dir + 'none/'
+        dir_non_exists = self.test_dir + 'none_dir/'
         dir_exists = self.test_dir
 
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_non_exists, dir_exists, dir_exists)
 
-        assert str(error.value) == 'Input directory for _m_working_place does not exist ' \
-                                   '- input requested: '+self.test_dir+'none/.'
+        assert str(error.value) == 'The folder that was chosen for the working place does not ' \
+                                   'exist: '+self.test_dir+'none_dir/.'
 
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_exists, dir_non_exists, dir_exists)
 
-        assert str(error.value) == 'Input directory for _m_input_place does not exist ' \
-                                   '- input requested: '+self.test_dir+'none/.'
+        assert str(error.value) == 'The folder that was chosen for the input place does not ' \
+                                   'exist: '+self.test_dir+'none_dir/.'
 
         with pytest.raises(AssertionError) as error:
             Pypeline(dir_exists, dir_exists, dir_non_exists)
 
-        assert str(error.value) == 'Input directory for _m_output_place does not exist ' \
-                                   '- input requested: '+self.test_dir+'none/.'
-
-        with pytest.raises(AssertionError) as error:
-            Pypeline()
-
-        assert str(error.value) == 'Input directory for _m_working_place does not exist ' \
-                                   '- input requested: None.'
+        assert str(error.value) == 'The folder that was chosen for the output place does not ' \
+                                   'exist: '+self.test_dir+'none_dir/.'
 
     def test_create_pipeline_existing_database(self) -> None:
 
@@ -179,8 +173,11 @@ class TestPypeline:
 
         assert len(warning) == 1
 
-        assert warning[0].message.args[0] == 'Pipeline module names need to be unique. ' \
-                                             'Overwriting module \'read2\'.'
+        assert warning[0].message.args[0] == 'Names of pipeline modules that are added to the ' \
+                                             'Pypeline need to be unique. The current pipeline ' \
+                                             'module, \'read2\', does already exist in the ' \
+                                             'Pypeline dictionary so the previous module with ' \
+                                             'the same name will be overwritten.'
 
         module = BadPixelSigmaFilterModule(name_in='badpixel',
                                            image_in_tag='im_arr1',
@@ -271,7 +268,7 @@ class TestPypeline:
                                    'which is not created by a previous module or the data does ' \
                                    'not exist in the database.'
 
-        assert pipeline.validate_pipeline_module('test') is None
+        assert pipeline.validate_pipeline_module('test') == (False, 'test')
 
         with pytest.raises(TypeError) as error:
             pipeline._validate('module', 'tag')
@@ -318,8 +315,9 @@ class TestPypeline:
 
         assert len(warning) == 1
 
-        assert warning[0].message.args[0] == 'Pipeline module name \'test\' not found in the ' \
-                                             'Pypeline dictionary.'
+        assert warning[0].message.args[0] == 'Pipeline module \'test\' is not found in the ' \
+                                             'Pypeline dictionary so it could not be removed. ' \
+                                             'The dictionary contains the following modules: [].' \
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
@@ -339,7 +337,19 @@ class TestPypeline:
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
-        assert pipeline.get_tags() == 'images'
+        assert pipeline.get_tags() == ['images']
+
+    def test_list_attributes(self) -> None:
+
+        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+
+        attr_dict = pipeline.list_attributes('images')
+
+        assert len(attr_dict) == 11
+        assert attr_dict['INSTRUMENT'] == 'IMAGER'
+        assert attr_dict['PIXSCALE'] == 0.027
+        assert attr_dict['NFRAMES'] == [5]
+        assert attr_dict['PARANG_START'] == [10.]
 
     def test_set_and_get_attribute(self) -> None:
 
@@ -359,13 +369,21 @@ class TestPypeline:
         attribute = pipeline.get_attribute('images', 'PARANG', static=False)
         assert attribute == pytest.approx(np.arange(10., 21., 1.), rel=self.limit, abs=0.)
 
+    def test_get_data_range(self) -> None:
+
+        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
+
+        data = pipeline.get_data('images', data_range=(0, 2))
+
+        assert data.shape == (2, 11, 11)
+
     def test_delete_data(self) -> None:
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
 
         pipeline.delete_data('images')
 
-        assert pipeline.get_tags().size == 0
+        assert len(pipeline.get_tags()) == 0
 
     def test_delete_not_found(self) -> None:
 

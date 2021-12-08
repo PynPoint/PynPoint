@@ -193,7 +193,7 @@ class TestPsfSubtractionAdi:
         self.pipeline.run_module('pca_no_mean')
 
         data = self.pipeline.get_data('res_mean_no_mean')
-        assert np.sum(data) == pytest.approx(0.0005733657032555452, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0006081272007585688, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_no_mean')
@@ -219,7 +219,7 @@ class TestPsfSubtractionAdi:
         self.pipeline.run_module('pca_ref')
 
         data = self.pipeline.get_data('res_mean_ref')
-        assert np.sum(data) == pytest.approx(0.0005868283126528002, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0006330226118859073, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref')
@@ -245,7 +245,7 @@ class TestPsfSubtractionAdi:
         self.pipeline.run_module('pca_ref_no_mean')
 
         data = self.pipeline.get_data('res_mean_ref_no_mean')
-        assert np.sum(data) == pytest.approx(0.0005733657032555494, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0006081272007585764, rel=self.limit, abs=0.)
         assert data.shape == (2, 21, 21)
 
         data = self.pipeline.get_data('basis_ref_no_mean')
@@ -423,8 +423,8 @@ class TestPsfSubtractionAdi:
 
     def test_psf_subtraction_pca_multi_mask(self) -> None:
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 4
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 4
 
         module = PcaPsfSubtractionModule(pca_numbers=range(1, 3),
                                          name_in='pca_multi_mask',
@@ -470,8 +470,8 @@ class TestPsfSubtractionAdi:
 
     def test_psf_subtraction_len_parang(self) -> None:
 
-        database = h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a')
-        database['config'].attrs['CPU'] = 1
+        with h5py.File(self.test_dir+'PynPoint_database.hdf5', 'a') as hdf_file:
+            hdf_file['config'].attrs['CPU'] = 1
 
         parang = self.pipeline.get_data('header_science/PARANG')
         self.pipeline.set_attribute('science_prep', 'PARANG', np.append(parang, 0.), static=False)

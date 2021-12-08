@@ -2,24 +2,23 @@
 Pipeline modules for aligning and centering of the star.
 """
 
-import time
 import math
+import time
 import warnings
 
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from astropy.modeling import models, fitting
+from astropy.modeling import fitting, models
 from scipy.ndimage.filters import gaussian_filter
-from scipy.optimize import curve_fit
-from skimage.registration import phase_cross_correlation
-from skimage.transform import rescale
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.image import center_pixel, crop_image, pixel_distance, shift_image, \
+                                subpixel_distance
 from pynpoint.util.module import memory_frames, progress
-from pynpoint.util.image import crop_image, shift_image, center_pixel
+from pynpoint.util.apply_func import align_image, apply_shift, fit_2d_function
 
 
 class StarAlignmentModule(ProcessingModule):
@@ -73,7 +72,7 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        super(StarAlignmentModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -102,49 +101,6 @@ class StarAlignmentModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _align_image(image_in: np.ndarray) -> np.ndarray:
-            offset = np.array([0., 0.])
-
-            for i in range(self.m_num_references):
-                if self.m_subframe is None:
-                    tmp_offset, _, _ = phase_cross_correlation(ref_images[i, :, :],
-                                                               image_in,
-                                                               upsample_factor=self.m_accuracy)
-
-                else:
-                    sub_in = crop_image(image_in, None, self.m_subframe)
-                    sub_ref = crop_image(ref_images[i, :, :], None, self.m_subframe)
-
-                    tmp_offset, _, _ = phase_cross_correlation(sub_ref,
-                                                               sub_in,
-                                                               upsample_factor=self.m_accuracy)
-                offset += tmp_offset
-
-            offset /= float(self.m_num_references)
-
-            if self.m_resize is not None:
-                offset *= self.m_resize
-
-                sum_before = np.sum(image_in)
-
-                tmp_image = rescale(image=np.asarray(image_in, dtype=np.float64),
-                                    scale=(self.m_resize, self.m_resize),
-                                    order=5,
-                                    mode='reflect',
-                                    anti_aliasing=True,
-                                    multichannel=False)
-
-                sum_after = np.sum(tmp_image)
-
-                # Conserve flux because the rescale function normalizes all values to [0:1].
-                tmp_image = tmp_image*(sum_before/sum_after)
-
-            else:
-                tmp_image = image_in
-
-            return shift_image(tmp_image, offset, self.m_interpolation)
-
         if self.m_ref_image_in_port is None:
             random = np.random.choice(self.m_image_in_port.get_shape()[0],
                                       self.m_num_references,
@@ -169,10 +125,17 @@ class StarAlignmentModule(ProcessingModule):
             pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
             self.m_subframe = int(self.m_subframe/pixscale)
 
-        self.apply_function_to_images(_align_image,
+        self.apply_function_to_images(align_image,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
-                                      'Aligning images')
+                                      'Aligning images',
+                                      func_args=(self.m_interpolation,
+                                                 self.m_accuracy,
+                                                 self.m_resize,
+                                                 self.m_num_references,
+                                                 self.m_subframe,
+                                                 ref_images.reshape(-1),
+                                                 ref_images.shape))
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
@@ -180,7 +143,7 @@ class StarAlignmentModule(ProcessingModule):
             pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
             new_pixscale = pixscale/self.m_resize
             self.m_image_out_port.add_attribute('PIXSCALE', new_pixscale)
-            print(f'New pixel scale [arcsec] = {new_pixscale:.2f}')
+            print(f'New pixel scale (arcsec) = {new_pixscale:.2f}')
 
         history = f'resize = {self.m_resize}'
         self.m_image_out_port.add_history('StarAlignmentModule', history)
@@ -201,45 +164,52 @@ class FitCenterModule(ProcessingModule):
                  fit_out_tag: str,
                  mask_out_tag: Optional[str] = None,
                  method: str = 'full',
-                 radius: float = 0.1,
+                 mask_radii: Tuple[Optional[float], float] = (None, 0.1),
                  sign: str = 'positive',
                  model: str = 'gaussian',
                  filter_size: Optional[float] = None,
-                 **kwargs: tuple) -> None:
+                 **kwargs: Union[Tuple[float, float, float, float, float, float, float],
+                                 Tuple[float, float, float, float, float, float, float, float],
+                                 float]) -> None:
         """
         Parameters
         ----------
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with images that are read as input.
+            Database tag of the images that are read as input.
         fit_out_tag : str
-            Tag of the database entry with the best-fit results of the model fit and the 1-sigma
-            errors. Data is written in the following format: x offset (pix), x offset error (pix)
+            Database tag where the best-fit results and 1σ errors will be stored.
+            The data are written in the following format: x offset (pix), x offset error (pix)
             y offset (pix), y offset error (pix), FWHM major axis (arcsec), FWHM major axis error
-            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec), amplitude (counts),
-            amplitude error (counts), angle (deg), angle error (deg) measured in counterclockwise
-            direction with respect to the upward direction (i.e., East of North), offset (counts),
-            offset error (counts), power index (only for Moffat function), and power index error
-            (only for Moffat function). Not used if set to None.
+            (arcsec), FWHM minor axis (arcsec), FWHM minor axis error (arcsec), amplitude (ADU),
+            amplitude error (ADU), angle (deg), angle error (deg) measured in counterclockwise
+            direction with respect to the upward direction (i.e. east of north), offset (ADU),
+            offset error (ADU), power index (only for Moffat function), and power index error
+            (only for Moffat function). The ``fit_out_tag`` can be used as argument of ``shift_xy``
+            when running the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
         mask_out_tag : str, None
-            Tag of the database entry with the masked images that are written as output. The
-            unmasked part of the images is used for the fit. The effect of the smoothing that is
-            applied by setting the *fwhm* parameter is also visible in the data of the
-            *mask_out_tag*. Data is not written when set to None.
+            Database tag where the masked images will be stored. The unmasked part of the images is
+            used for the fit. The effect of the smoothing that is applied by setting the ``fwhm``
+            argument is also visible in the data of the ``mask_out_tag``. The data are not stored
+            if the argument is set to None. The :class:`~pynpoint.core.dataio.OutputPort` of
+            ``mask_out_tag`` can only be used when ``CPU = 1``.
         method : str
-            Fit and shift all the images individually ('full') or only fit the mean of the cube and
-            shift all images to that location ('mean'). The 'mean' method could be used after
-            running the :class:`~pynpoint.processing.centering.StarAlignmentModule`.
-        radius : float
-            Radius (arcsec) around the center of the image beyond which pixels are neglected with
-            the fit. The radius is centered on the position specified in *guess*, which is the
-            center of the image by default.
+            Fit and shift each image individually ('full') or only fit the mean of the cube and
+            shift each image by this constant offset ('mean'). The 'mean' method can be used in
+            case the images are already aligned with
+            :class:`~pynpoint.processing.centering.StarAlignmentModule`.
+        mask_radii : tuple(float, float), tuple(None, float)
+            Inner and outer radius (arcsec) within and beyond which pixels are neglected during the
+            fit. The radii are centered at the position that specified with the argument of
+            ``guess``, which is the center of the image by default. The outer mask (second value
+            of ``mask_radii``) is mandatory whereas radius of the inner mask is optional and can
+            be set to None.
         sign : str
-            Fit a 'positive' or 'negative' Gaussian/Moffat. A negative model can be used to center
-            coronagraphic data in which a dark hole is present.
+            Fit a 'positive' or 'negative' Gaussian/Moffat function. A 'negative' model can be used
+            to center coronagraphic data in which a dark hole.
         model : str
-            Type of 2D model used to fit the PSF ('gaussian' or 'moffat'). Both models are
+            Type of 2D model that is used for the fit ('gaussian' or 'moffat'). Both models are
             elliptical in shape.
         filter_size : float, None
             Standard deviation (arcsec) of the Gaussian filter that is used to smooth the
@@ -247,10 +217,11 @@ class FitCenterModule(ProcessingModule):
 
         Keyword arguments
         -----------------
-        guess : tuple(float, float, float, float, float, float, float, float)
+        guess : tuple(float, float, float, float, float, float, float, float),
+                tuple(float, float, float, float, float, float, float, float, float)
             The initial parameter values for the least squares fit: x offset with respect to center
             (pix), y offset with respect to center (pix), FWHM x (pix), FWHM y (pix), amplitude
-            (counts), angle (deg), offset (counts), and power index (only for Moffat function).
+            (ADU), angle (deg), offset (ADU), and power index (only for Moffat function).
 
         Returns
         -------
@@ -268,7 +239,14 @@ class FitCenterModule(ProcessingModule):
             elif model == 'moffat':
                 self.m_guess = (0., 0., 1., 1., 1., 0., 0., 1.)
 
-        super(FitCenterModule, self).__init__(name_in)
+        if 'radius' in kwargs:
+            mask_radii = (None, kwargs['radius'])
+
+            warnings.warn(f'The \'radius\' parameter has been deprecated. Please use the '
+                          f'\'mask_radii\' parameter instead. The argument of \'mask_radii\' '
+                          f'is set to {mask_radii}.', DeprecationWarning)
+
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_fit_out_port = self.add_output_port(fit_out_tag)
@@ -279,22 +257,19 @@ class FitCenterModule(ProcessingModule):
             self.m_mask_out_port = self.add_output_port(mask_out_tag)
 
         self.m_method = method
-        self.m_radius = radius
+        self.m_mask_radii = mask_radii
         self.m_sign = sign
         self.m_model = model
         self.m_filter_size = filter_size
-        self.m_model_func = None
-
-        self.m_count = 0
 
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) to fit the
-        the individual images or the mean of the stack with a 2D Gaussian or Moffat function, and
-        stores the best fit results. The fitting results contain zeros in case the algorithm could
-        not converge. The `fit_out_tag` can be directly used as input for the `shift_xy` argument
-        of the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
+        Run method of the module. Uses a non-linear least squares (Levenberg-Marquardt) method
+        to fit the the individual images or the mean of all images with a 2D Gaussian or Moffat
+        function. The best-fit results and errors are stored and contain zeros in case the
+        algorithm could not converge. The ``fit_out_tag`` can be used as argument of ``shift_xy``
+        when running the :class:`~pynpoint.processing.centering.ShiftImagesModule`.
 
         Returns
         -------
@@ -306,258 +281,50 @@ class FitCenterModule(ProcessingModule):
         cpu = self._m_config_port.get_attribute('CPU')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        npix = self.m_image_in_port.get_shape()[-1]
+        if cpu > 1 and self.m_mask_out_port is not None:
+            warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
+                          'stored to this output port.')
 
-        if cpu > 1:
-            if self.m_mask_out_port is not None:
-                warnings.warn('The mask_out_port can only be used if CPU=1. No data will be '
-                              'stored to this output port.')
-
+            del self._m_output_ports[self.m_mask_out_port.tag]
             self.m_mask_out_port = None
 
-        if self.m_radius:
-            self.m_radius /= pixscale
+        if self.m_mask_radii[0] is None:
+            # Convert from arcsec to pixels and change None to 0
+            self.m_mask_radii = (0., self.m_mask_radii[1]/pixscale)
+
+        else:
+            # Convert from arcsec to pixels
+            self.m_mask_radii = (self.m_mask_radii[0]/pixscale, self.m_mask_radii[1]/pixscale)
 
         if self.m_filter_size:
+            # Convert from arcsec to pixels
             self.m_filter_size /= pixscale
 
-        if npix % 2 == 0:
-            x_grid = y_grid = np.linspace(-npix/2+0.5, npix/2-0.5, npix)
-            x_ap = np.linspace(-npix/2+0.5-self.m_guess[0], npix/2-0.5-self.m_guess[0], npix)
-            y_ap = np.linspace(-npix/2+0.5-self.m_guess[1], npix/2-0.5-self.m_guess[1], npix)
+        _, xx_grid, yy_grid = pixel_distance(self.m_image_in_port.get_shape()[-2:], position=None)
 
-        elif npix % 2 == 1:
-            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
-            x_ap = np.linspace(-(npix-1)/2-self.m_guess[0], (npix-1)/2-self.m_guess[0], npix)
-            y_ap = np.linspace(-(npix-1)/2-self.m_guess[1], (npix-1)/2-self.m_guess[1], npix)
-
-        xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-        xx_ap, yy_ap = np.meshgrid(x_ap, y_ap)
-        rr_ap = np.sqrt(xx_ap**2+yy_ap**2)
-
-        @typechecked
-        def gaussian_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
-                        x_center: float,
-                        y_center: float,
-                        fwhm_x: float,
-                        fwhm_y: float,
-                        amp: float,
-                        theta: float,
-                        offset: float) -> np.ndarray:
-            """
-            Function to create a 2D elliptical Gaussian model.
-
-            Parameters
-            ----------
-            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
-                A tuple of two 2D arrays with the mesh grid points in x and y
-                direction, or an equivalent 3D numpy array with 2 elements
-                along the first axis.
-            x_center : float
-                Offset of the model center along the x axis (pix).
-            y_center : float
-                Offset of the model center along the y axis (pix).
-            fwhm_x : float
-                Full width at half maximum along the x axis (pix).
-            fwhm_y : float
-                Full width at half maximum along the y axis (pix).
-            amp : float
-                Peak flux.
-            theta : float
-                Rotation angle in counterclockwise direction (rad).
-            offset : float
-                Flux offset.
-
-            Returns
-            -------
-            numpy.ndimage
-                Raveled 2D elliptical Gaussian model.
-            """
-
-            (xx_grid, yy_grid) = grid
-
-            x_diff = xx_grid - x_center
-            y_diff = yy_grid - y_center
-
-            sigma_x = fwhm_x/math.sqrt(8.*math.log(2.))
-            sigma_y = fwhm_y/math.sqrt(8.*math.log(2.))
-
-            a_gauss = 0.5 * ((np.cos(theta)/sigma_x)**2 + (np.sin(theta)/sigma_y)**2)
-            b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
-            c_gauss = 0.5 * ((np.sin(theta)/sigma_x)**2 + (np.cos(theta)/sigma_y)**2)
-
-            gaussian = offset + amp*np.exp(-(a_gauss*x_diff**2 + b_gauss*x_diff*y_diff +
-                                             c_gauss*y_diff**2))
-
-            if self.m_radius:
-                gaussian = gaussian[rr_ap < self.m_radius]
-            else:
-                gaussian = np.ravel(gaussian)
-
-            return gaussian
-
-        @typechecked
-        def moffat_2d(grid: Union[Tuple[np.ndarray, np.ndarray], np.ndarray],
-                      x_center: float,
-                      y_center: float,
-                      fwhm_x: float,
-                      fwhm_y: float,
-                      amp: float,
-                      theta: float,
-                      offset: float,
-                      beta: float) -> np.ndarray:
-            """
-            Function to create a 2D elliptical Moffat model.
-
-            The parametrization used here is equivalent to the one in AsPyLib:
-            http://www.aspylib.com/doc/aspylib_fitting.html#elliptical-moffat-psf
-
-            Parameters
-            ----------
-            grid : tuple(numpy.ndarray, numpy.ndarray), numpy.ndarray
-                A tuple of two 2D arrays with the mesh grid points in x and y
-                direction, or an equivalent 3D numpy array with 2 elements
-                along the first axis.
-            x_center : float
-                Offset of the model center along the x axis (pix).
-            y_center : float
-                Offset of the model center along the y axis (pix).
-            fwhm_x : float
-                Full width at half maximum along the x axis (pix).
-            fwhm_y : float
-                Full width at half maximum along the y axis (pix).
-            amp : float
-                Peak flux.
-            theta : float
-                Rotation angle in counterclockwise direction (rad).
-            offset : float
-                Flux offset.
-            beta : float
-                Power index.
-
-            Returns
-            -------
-            numpy.ndimage
-                Raveled 2D elliptical Moffat model.
-            """
-
-            (xx_grid, yy_grid) = grid
-
-            x_diff = xx_grid - x_center
-            y_diff = yy_grid - y_center
-
-            if 2.**(1./beta)-1. < 0.:
-                alpha_x = np.nan
-                alpha_y = np.nan
-
-            else:
-                alpha_x = 0.5*fwhm_x/np.sqrt(2.**(1./beta)-1.)
-                alpha_y = 0.5*fwhm_y/np.sqrt(2.**(1./beta)-1.)
-
-            if alpha_x == 0. or alpha_y == 0.:
-                a_moffat = np.nan
-                b_moffat = np.nan
-                c_moffat = np.nan
-
-            else:
-                a_moffat = (np.cos(theta)/alpha_x)**2. + (np.sin(theta)/alpha_y)**2.
-                b_moffat = (np.sin(theta)/alpha_x)**2. + (np.cos(theta)/alpha_y)**2.
-                c_moffat = 2.*np.sin(theta)*np.cos(theta)*(1./alpha_x**2. - 1./alpha_y**2.)
-
-            a_term = a_moffat*x_diff**2
-            b_term = b_moffat*y_diff**2
-            c_term = c_moffat*x_diff*y_diff
-
-            moffat = offset + amp / (1.+a_term+b_term+c_term)**beta
-
-            if self.m_radius:
-                moffat = moffat[rr_ap < self.m_radius]
-            else:
-                moffat = np.ravel(moffat)
-
-            return moffat
-
-        @typechecked
-        def _fit_2d_function(image: np.ndarray) -> np.ndarray:
-
-            if self.m_filter_size:
-                image = gaussian_filter(image, self.m_filter_size)
-
-            if self.m_mask_out_port:
-                mask = np.copy(image)
-
-                if self.m_radius:
-                    mask[rr_ap > self.m_radius] = 0.
-
-                self.m_mask_out_port.append(mask, data_dim=3)
-
-            if self.m_sign == 'negative':
-                image = -1.*image + np.abs(np.min(-1.*image))
-
-            if self.m_radius:
-                image = image[rr_ap < self.m_radius]
-            else:
-                image = np.ravel(image)
-
-            if self.m_model == 'gaussian':
-                self.m_model_func = gaussian_2d
-
-            elif self.m_model == 'moffat':
-                self.m_model_func = moffat_2d
-
-            try:
-                popt, pcov = curve_fit(self.m_model_func,
-                                       (xx_grid, yy_grid),
-                                       image,
-                                       p0=self.m_guess,
-                                       sigma=None,
-                                       method='lm')
-
-                perr = np.sqrt(np.diag(pcov))
-
-            except RuntimeError:
-                if self.m_model == 'gaussian':
-                    popt = np.zeros(7)
-                    perr = np.zeros(7)
-
-                elif self.m_model == 'moffat':
-                    popt = np.zeros(8)
-                    perr = np.zeros(8)
-
-                self.m_count += 1
-
-            if self.m_model == 'gaussian':
-
-                best_fit = np.asarray((popt[0], perr[0],
-                                       popt[1], perr[1],
-                                       popt[2]*pixscale, perr[2]*pixscale,
-                                       popt[3]*pixscale, perr[3]*pixscale,
-                                       popt[4], perr[4],
-                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
-                                       popt[6], perr[6]))
-
-            elif self.m_model == 'moffat':
-
-                best_fit = np.asarray((popt[0], perr[0],
-                                       popt[1], perr[1],
-                                       popt[2]*pixscale, perr[2]*pixscale,
-                                       popt[3]*pixscale, perr[3]*pixscale,
-                                       popt[4], perr[4],
-                                       math.degrees(popt[5]) % 360., math.degrees(perr[5]),
-                                       popt[6], perr[6],
-                                       popt[7], perr[7]))
-
-            return best_fit
+        rr_ap = subpixel_distance(self.m_image_in_port.get_shape()[-2:],
+                                  position=(self.m_guess[1], self.m_guess[0]),
+                                  shift_center=False)  # (y, x)
 
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         if self.m_method == 'full':
 
-            self.apply_function_to_images(_fit_2d_function,
+            self.apply_function_to_images(fit_2d_function,
                                           self.m_image_in_port,
                                           self.m_fit_out_port,
-                                          'Fitting the stellar PSF')
+                                          'Fitting the stellar PSF',
+                                          func_args=(self.m_mask_radii,
+                                                     self.m_sign,
+                                                     self.m_model,
+                                                     self.m_filter_size,
+                                                     self.m_guess,
+                                                     self.m_mask_out_port,
+                                                     xx_grid,
+                                                     yy_grid,
+                                                     rr_ap,
+                                                     pixscale))
 
         elif self.m_method == 'mean':
             print('Fitting the stellar PSF...', end='')
@@ -567,16 +334,25 @@ class FitCenterModule(ProcessingModule):
             for i, _ in enumerate(frames[:-1]):
                 im_mean += np.sum(self.m_image_in_port[frames[i]:frames[i+1], ], axis=0)
 
-            best_fit = _fit_2d_function(im_mean/float(nimages))
+            best_fit = fit_2d_function(im_mean/float(nimages),
+                                       0,
+                                       self.m_mask_radii,
+                                       self.m_sign,
+                                       self.m_model,
+                                       self.m_filter_size,
+                                       self.m_guess,
+                                       self.m_mask_out_port,
+                                       xx_grid,
+                                       yy_grid,
+                                       rr_ap,
+                                       pixscale)
+
             best_fit = best_fit[np.newaxis, ...]
             best_fit = np.repeat(best_fit, nimages, axis=0)
 
             self.m_fit_out_port.set_all(best_fit, data_dim=2)
 
             print(' [DONE]')
-
-        if self.m_count > 0:
-            print(f'Fit could not converge on {self.m_count} image(s). [WARNING]')
 
         history = f'model = {self.m_model}'
 
@@ -625,7 +401,7 @@ class ShiftImagesModule(ProcessingModule):
             None
         """
 
-        super(ShiftImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -685,11 +461,12 @@ class ShiftImagesModule(ProcessingModule):
         # apply a constant shift
         if constant:
 
-            self.apply_function_to_images(shift_image,
+            self.apply_function_to_images(apply_shift,
                                           self.m_image_in_port,
                                           self.m_image_out_port,
                                           'Shifting the images',
-                                          func_args=(self.m_shift, self.m_interpolation))
+                                          func_args=(self.m_shift,
+                                                     self.m_interpolation))
 
             # if self.m_fit_in_port is None or constant:
             history = f'shift_xy = {self.m_shift[0]:.2f}, {self.m_shift[1]:.2f}'
@@ -761,7 +538,7 @@ class WaffleCenteringModule(ProcessingModule):
             None
         """
 
-        super(WaffleCenteringModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_center_in_port = self.add_input_port(center_in_tag)

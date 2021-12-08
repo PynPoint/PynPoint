@@ -3,58 +3,51 @@
 PynPoint
 ========
 
-PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets and circumstellar disks. The Python package has been developed at the |ipa| of ETH Zurich in a collaboration between the |planets| and the |cosmo|.
+PynPoint is a pipeline for processing and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques.
 
 .. figure:: _static/eso.jpg
    :width: 100%
    :target: http://www.eso.org/public/news/eso1310/
 
-.. |ipa| raw:: html
-
-	<a href="http://www.ipa.phys.ethz.ch/" target="_blank">Institute of Particle Physics and Astrophysics</a>
-
-.. |planets| raw:: html
-
-   <a href="https://quanz-group.ethz.ch/" target="_blank">Exoplanets and Habitability Group</a>
-
-.. |cosmo| raw:: html
-
-   <a href="http://www.cosmology.ethz.ch/" target="_blank">Cosmology Research Group</a>
-
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started
+   :caption: Getting started
+   :hidden:
 
    installation
-   running
+   tutorials/first_example.ipynb
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Documentation
+   :caption: User documentation
+   :hidden:
 
-   overview
    architecture
    configuration
-   tutorial
-   examples
+   pipeline_modules
+   running_pynpoint
+   tutorials
    modules
 
 .. toctree::
    :maxdepth: 2
-   :caption: NEAR Documentation
+   :caption: NEAR documentation
+   :hidden:
 
    near
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer Documentation
+   :caption: Developer documentation
+   :hidden:
 
    python
    coding
 
 .. toctree::
    :maxdepth: 2
-   :caption: About PynPoint
+   :caption: About
+   :hidden:
 
    mailing
    contributing

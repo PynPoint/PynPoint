@@ -16,6 +16,7 @@ from sklearn.decomposition import PCA
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.apply_func import subtract_psf
 from pynpoint.util.module import progress
 from pynpoint.util.multipca import PcaMultiprocessingCapsule
 from pynpoint.util.residuals import combine_residuals
@@ -81,8 +82,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
             Database entry where the derotated, but not collapsed, residuals are stored. The number
             of principal components is was used is appended to the ``res_arr_out_tag``. The
             residuals are not stored if set to None. This parameter is not supported with
-            multiprocessing (i.e. ``CPU`` > 1). For IFS data and if the processing type is either 
-            ADI+SDI or SDI+ADI the residuals can only be calculated if exactly 1 principal component 
+            multiprocessing (i.e. ``CPU`` > 1). For IFS data and if the processing type is either
+            ADI+SDI or SDI+ADI the residuals can only be calculated if exactly 1 principal component
             for each ADI and SDI is given with the pca_numbers parameter.
         basis_out_tag : str, None
             Database entry where the principal components are stored. The data is not stored if set
@@ -117,6 +118,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 - ADI+SDI: Angular and spectral differential imaging. Can only be applied on IFS
                   datasets. The collapsed residuals are stored as 5D datasets with one image per
                   wavelength and each of the principal components.
+                - CODI: Perform ADI and SDI simultaniously. Usually requires a lot more PC than
+                  the other techniques. The collapsed residuals are stored as 4D datasets with one
+                  image per wavelength and each of the principal components.
 
         Returns
         -------
@@ -124,7 +128,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             None
         """
 
-        super(PcaPsfSubtractionModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_pca_numbers = pca_numbers
 
@@ -180,7 +184,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             if not isinstance(self.m_components, (range, list, np.ndarray)):
                 raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
                                  f'a single range/list/array as argument for \'pca_numbers\'.')
@@ -190,7 +194,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
                                  f'a tuple for with twice a range/list/array as argument for '
                                  f'\'pca_numbers\'.')
-            if res_arr_out_tag is not None and len(self.m_components[0]) + len(self.m_components[1]) != 2:
+
+            if res_arr_out_tag is not None and len(self.m_components[0]) + \
+                    len(self.m_components[1]) != 2:
                 raise ValueError(f'If the post-processing type \'{self.m_processing_type}\' '
                                  'is selected, residuals can only be calculated if no more than '
                                  '1 principal component for ADI and SDI is given.')
@@ -223,7 +229,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
@@ -232,11 +238,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
             pca_secon = self.m_components[1]
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI']:
+            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
                 res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
 
             elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                res_shape = (len(pca_first), len(pca_secon), len(wavelength), im_shape[-2], im_shape[-1])
+                res_shape = (len(pca_first), len(pca_secon), len(wavelength),
+                             im_shape[-2], im_shape[-1])
 
         else:
             res_shape = (len(self.m_components), im_shape[1], im_shape[2])
@@ -319,7 +326,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI']:
+        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
@@ -332,7 +339,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         out_array_res = np.zeros(im_shape)
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI']:
+            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
                 res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
 
             elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
@@ -431,8 +438,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
             else:
                 history = f'max PC number = {pca_first} / {pca_secon}'
-            
-            # squeeze out_array_res to reduce dimensionallity as the residuals of 
+
+            # squeeze out_array_res to reduce dimensionallity as the residuals of
             # SDI+ADI and ADI+SDI are always of the form (1, 1, ...)
             squeezed = np.squeeze(out_array_res)
 
@@ -544,7 +551,8 @@ class PcaPsfSubtractionModule(ProcessingModule):
             print('Constructing PSF model...', end='')
             self.m_pca.fit(ref_reshape)
 
-            # add mean of reference array as 1st PC and orthogonalize it with respect to the PCA basis
+            # add mean of reference array as 1st PC and orthogonalize it with respect to
+            # the other principal components
             if not self.m_subtract_mean:
                 mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
 
@@ -658,7 +666,7 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        super(ClassicalADIModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_res_out_port = self.add_output_port(res_out_tag)
@@ -668,8 +676,6 @@ class ClassicalADIModule(ProcessingModule):
         self.m_nreference = nreference
         self.m_extra_rot = extra_rot
         self.m_residuals = residuals
-
-        self.m_count = 0
 
     @typechecked
     def run(self) -> None:
@@ -687,38 +693,9 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _subtract_psf(image: np.ndarray,
-                          parang_thres: Optional[float],
-                          nref: Optional[int],
-                          reference: Optional[np.ndarray] = None) -> np.ndarray:
-
-            if parang_thres:
-                ang_diff = np.abs(parang[self.m_count]-parang)
-                index_thres = np.where(ang_diff > parang_thres)[0]
-
-                if index_thres.size == 0:
-                    reference = self.m_image_in_port.get_all()
-                    warnings.warn('No images meet the rotation threshold. Creating a reference '
-                                  'PSF from the median of all images instead.')
-
-                else:
-                    if nref:
-                        index_diff = np.abs(self.m_count - index_thres)
-                        index_near = np.argsort(index_diff)[:nref]
-                        index_sort = np.sort(index_thres[index_near])
-                        reference = self.m_image_in_port[index_sort, :, :]
-
-                    else:
-                        reference = self.m_image_in_port[index_thres, :, :]
-
-                reference = np.median(reference, axis=0)
-
-            self.m_count += 1
-
-            return image-reference
-
         parang = -1.*self.m_image_in_port.get_attribute('PARANG') + self.m_extra_rot
+
+        nimages = self.m_image_in_port.get_shape()[0]
 
         if self.m_threshold:
             parang_thres = 2.*math.atan2(self.m_threshold[2]*self.m_threshold[1],
@@ -731,11 +708,20 @@ class ClassicalADIModule(ProcessingModule):
             reference = self.m_image_in_port.get_all()
             reference = np.median(reference, axis=0)
 
-        self.apply_function_to_images(_subtract_psf,
+        ang_diff = np.zeros((nimages, parang.shape[0]))
+
+        for i in range(nimages):
+            ang_diff[i, :] = np.abs(parang[i] - parang)
+
+        self.apply_function_to_images(subtract_psf,
                                       self.m_image_in_port,
                                       self.m_res_out_port,
                                       'Classical ADI',
-                                      func_args=(parang_thres, self.m_nreference, reference))
+                                      func_args=(parang_thres,
+                                                 self.m_nreference,
+                                                 reference,
+                                                 ang_diff,
+                                                 self.m_image_in_port))
 
         self.m_res_in_port = self.add_input_port(self.m_res_out_port._m_tag)
         im_res = self.m_res_in_port.get_all()

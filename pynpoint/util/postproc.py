@@ -155,4 +155,29 @@ def postprocessor(images: np.ndarray,
                                                                im_shape=im_shape,
                                                                indices=indices)
 
+    elif processing_type == 'CODI':
+        # flatten images from 4D to 3D
+        ims = images.shape
+        im_scaled_flat = np.zeros((ims[0]*ims[1], ims[2], ims[3]))
+        scales_flat = np.zeros((ims[0]*ims[1]))
+        angles_flat = np.zeros((ims[0]*ims[1]))
+        for i in range(ims[1]):
+            im_scaled_flat[i*ims[0]:(i+1)*ims[0]] = sdi_scaling(images[:, i], scales)
+            scales_flat[i*ims[0]:(i+1)*ims[0]] = scales
+            angles_flat[i*ims[0]:(i+1)*ims[0]] = angles[i]
+
+        # codi
+        res_raw_flat, res_rot_flat = pca_psf_subtraction(images=im_scaled_flat*mask,
+                                                         angles=angles_flat,
+                                                         scales=scales_flat,
+                                                         pca_number=pca_number[0],
+                                                         pca_sklearn=pca_sklearn,
+                                                         im_shape=im_shape,
+                                                         indices=indices)
+
+        # inflate images from 3D to 4D
+        for i in range(ims[1]):
+            res_raw[:, i] = res_raw_flat[i*ims[0]:(i+1)*ims[0]]
+            res_rot[:, i] = res_rot_flat[i*ims[0]:(i+1)*ims[0]]
+
     return res_raw, res_rot

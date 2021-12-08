@@ -44,7 +44,7 @@ class GaussianFilterModule(ProcessingModule):
             None
         """
 
-        super(GaussianFilterModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

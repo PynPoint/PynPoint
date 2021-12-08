@@ -1,6 +1,6 @@
 .. _near_data:
 
-Data Reduction
+Data reduction
 ==============
 
 .. _near_intro:
@@ -8,9 +8,9 @@ Data Reduction
 Introduction
 ------------
 
-The documentation on this page contains an introduction into data reduction of the modified |visir| instrument for the |near| (New Earths in the Alpha Cen Region) experiment. All data are available in the ESO archive under program ID |archive|.
+The documentation on this page contains an introduction into data reduction of the modified `VLT/VISIR <https://www.eso.org/sci/facilities/paranal/instruments/visir.html>`_ instrument for the `NEAR <https://www.eso.org/public/news/eso1702/>`_ (New Earths in the Alpha Cen Region) experiment. All data are available in the ESO archive under program ID `2102.C-5011(A) <http://archive.eso.org/wdb/wdb/eso/sched_rep_arc/query?progid=2102.C-5011(A)>`_.
 
-The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`overview` section. Further details about the pipeline architecture and data processing are also available in |stolker|. More in-depth information of the input parameters for individual PynPoint modules can be found in the :ref:`api`. 
+The basic processing steps with PynPoint are described in the example below while a complete overview of all available pipeline modules can be found in the :ref:`pipeline_modules` section. Further details about the pipeline architecture and data processing are also available in `Stolker et al. (2019) <http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..>`_. More in-depth information of the input parameters for individual PynPoint modules can be found in the :ref:`api`. 
 
 Please also have a look at the :ref:`attribution` section when using PynPoint results in a publication. 
 
@@ -24,21 +24,7 @@ In this example, we will process the images of chop A (i.e., frames in which alp
 Setup
 ^^^^^
 
-To get started, use the instructions available in the :ref:`installation` section to install PynPoint.
-
-The results shown below are based on 1 hour of commissioning data of alpha Cen. There is a |bash| available to download all the FITS files (126 Gb). First make the bash script executable:
-
-.. code-block:: console
-
-    $ chmod +x near_files.sh
-
-And then execute it as:
-
-.. code-block:: console
-
-   $ ./near_files.sh
-
-You can also start by downloading only a few files by running a subset of the bash script lines (useful for validating the pipeline installation because analyzing the full data set takes hours).
+To get started, use the instructions available in the :ref:`installation` section to install PynPoint. We also need to download the NEAR data associated with the ESO program that was provided above. It is recommended to start with downloading only a few files to first validate the pipeline installation.
 
 Now that we have the data, we can start the data reduction with PynPoint!
 
@@ -75,7 +61,6 @@ Then we create a configuration file which contains the global pipeline settings 
 The ``MEMORY`` and ``CPU`` setting can be adjusted. They define the number of images that is simultaneously loaded into the computer memory and the number of parallel processes that are used by some of the pipeline modules.
 
 Note that in addition to the config file above, the ``working_place`` directory is also used to store the database file (`PynPoint_database.hdf5`). This database stores all intermediate results (typically a stack of images), which allows the user to rerun particular processing steps without having to rerun the complete pipeline. 
-
 
 Running PynPoint
 ^^^^^^^^^^^^^^^^
@@ -391,7 +376,7 @@ PynPoint also includes a module to calculate the detection limits of the final i
 Results
 -------
 
-The images that were exported to a FITS file can be visualized with a tool such as |ds9|. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction:
+The images that were exported to a FITS file can be visualized with a tool such as `DS9 <http://ds9.si.edu/site/Home.html>`_. We can also use the :class:`~pynpoint.core.pypeline.Pypeline` functionalities to get the data from the database (without having to rerun the pipeline). For example, to get the residuals of the PSF subtraction:
 
 .. code-block:: python
 
@@ -427,27 +412,3 @@ Or to plot the detection limits with the error bars showing the variance of the 
 .. image:: _static/near_limits.png
    :width: 70%
    :align: center
-
-.. |visir| raw:: html
-
-   <a href="https://www.eso.org/sci/facilities/paranal/instruments/visir.html" target="_blank">VLT/VISIR</a>
-
-.. |near| raw:: html
-
-   <a href="https://www.eso.org/public/news/eso1702/" target="_blank">NEAR</a>
-
-.. |stolker| raw:: html
-
-   <a href="http://ui.adsabs.harvard.edu/abs/2019A%26A...621A..59S" target="_blank">Stolker et al. (2019)</a>
-
-.. |archive| raw:: html
-
-   <a href="http://archive.eso.org/wdb/wdb/eso/sched_rep_arc/query?progid=2102.C-5011(A)" target="_blank">2102.C-5011(A)</a>
-
-.. |bash| raw:: html
-
-   <a href="https://people.phys.ethz.ch/~stolkert/pynpoint/near_files.sh" target="_blank">Bash script</a>
-
-.. |ds9| raw:: html
-
-   <a href="http://ds9.si.edu/site/Home.html" target="_blank">DS9</a>

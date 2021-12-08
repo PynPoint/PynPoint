@@ -170,9 +170,7 @@ class StackTaskProcessor(TaskProcessor):
 
             args = update_arguments(index, self.m_nimages, self.m_function_args)
 
-            result_arr[i, ] = apply_function(tmp_data=tmp_task.m_input_data[i, ],
-                                             func=self.m_function,
-                                             func_args=args)
+            result_arr[i, ] = apply_function(tmp_task.m_input_data[i, ], i, self.m_function, args)
 
         sys.stdout.write('.')
         sys.stdout.flush()

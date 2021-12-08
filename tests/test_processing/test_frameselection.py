@@ -220,6 +220,32 @@ class TestFrameSelection:
         assert np.sum(attr) == pytest.approx(40, rel=self.limit, abs=0.)
         assert attr.shape == (4, 2)
 
+        module = FrameSelectionModule(name_in='select3',
+                                      image_in_tag='start',
+                                      selected_out_tag='selected3',
+                                      removed_out_tag='removed3',
+                                      index_out_tag='index3',
+                                      method='range',
+                                      threshold=(10., 10.7),
+                                      fwhm=0.1,
+                                      aperture=('circular', 0.1),
+                                      position=None)
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('select3')
+
+        data = self.pipeline.get_data('selected3')
+        assert np.sum(data) == pytest.approx(22.2568501695632, rel=self.limit, abs=0.)
+        assert data.shape == (2, 11, 11)
+
+        data = self.pipeline.get_data('removed3')
+        assert np.sum(data) == pytest.approx(42.18622030593487, rel=self.limit, abs=0.)
+        assert data.shape == (4, 11, 11)
+
+        data = self.pipeline.get_data('index3')
+        assert np.sum(data) == pytest.approx(12, rel=self.limit, abs=0.)
+        assert data.shape == (4, )
+
     def test_image_statistics_full(self) -> None:
 
         module = ImageStatisticsModule(name_in='stat1',

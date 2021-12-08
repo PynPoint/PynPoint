@@ -12,6 +12,14 @@ pynpoint.util.analysis module
    :undoc-members:
    :show-inheritance:
 
+pynpoint.util.apply\_func module
+--------------------------------
+
+.. automodule:: pynpoint.util.apply_func
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pynpoint.util.attributes module
 -------------------------------
 
@@ -148,10 +156,10 @@ pynpoint.util.tests module
    :undoc-members:
    :show-inheritance:
 
-pynpoint.util.types module
---------------------------
+pynpoint.util.type\_aliases module
+----------------------------------
 
-.. automodule:: pynpoint.util.types
+.. automodule:: pynpoint.util.type_aliases
    :members:
    :undoc-members:
    :show-inheritance:
@@ -163,7 +171,6 @@ pynpoint.util.wavelets module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

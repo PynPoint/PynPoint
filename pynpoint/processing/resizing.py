@@ -5,15 +5,16 @@ Pipeline modules for resizing of images.
 import math
 import time
 
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.image import crop_image, scale_image
-from pynpoint.util.module import progress, memory_frames
+from pynpoint.util.apply_func import image_scaling
+from pynpoint.util.image import crop_image
+from pynpoint.util.module import memory_frames, progress
 
 
 class CropImagesModule(ProcessingModule):
@@ -53,7 +54,7 @@ class CropImagesModule(ProcessingModule):
             None
         """
 
-        super(CropImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -110,7 +111,7 @@ class CropImagesModule(ProcessingModule):
 
             # Update progress bar
             progress(i, len(frames[:-1]), 'Cropping images...', start_time)
-            
+
             # Select images in the current chunk
             if ndim == 3:
                 images = self.m_image_in_port[frames[i]:frames[i+1], ]
@@ -118,7 +119,7 @@ class CropImagesModule(ProcessingModule):
             elif ndim == 4:
                 # Process all wavelengths per exposure at once
                 images = self.m_image_in_port[:, i, ]
-            
+
             # crop images according to input parameters
             images = crop_image(images, self.m_center, self.m_size, copy=False)
 
@@ -148,7 +149,7 @@ class ScaleImagesModule(ProcessingModule):
                  scaling: Union[Tuple[float, float, float],
                                 Tuple[None, None, float],
                                 Tuple[float, float, None]],
-                 pixscale: bool = False) -> None:
+                 pixscale: bool = True) -> None:
         """
         Parameters
         ----------
@@ -158,7 +159,7 @@ class ScaleImagesModule(ProcessingModule):
             Tag of the database entry that is read as input.
         image_out_tag : str
             Tag of the database entry that is written as output. Should be different from
-            *image_in_tag*.
+            ``image_in_tag``.
         scaling : tuple(float, float, float)
             Tuple with the scaling factors for the image size and flux, (scaling_x, scaling_y,
             scaling_flux). Upsampling and downsampling of the image corresponds to
@@ -172,7 +173,7 @@ class ScaleImagesModule(ProcessingModule):
             None
         """
 
-        super(ScaleImagesModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -208,15 +209,7 @@ class ScaleImagesModule(ProcessingModule):
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
 
-        @typechecked
-        def _image_scaling(image_in: np.ndarray,
-                           scaling_y: float,
-                           scaling_x: float,
-                           scaling_flux: float) -> np.ndarray:
-
-            return scaling_flux * scale_image(image_in, scaling_y, scaling_x)
-
-        self.apply_function_to_images(_image_scaling,
+        self.apply_function_to_images(image_scaling,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Scaling images',
@@ -267,7 +260,7 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
-        super(AddLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -348,7 +341,7 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        super(RemoveLinesModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)

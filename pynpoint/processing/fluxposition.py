@@ -14,10 +14,10 @@ import emcee
 from typeguard import typechecked
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
-from photutils import aperture_photometry, CircularAperture
-from photutils.aperture import Aperture
+from photutils import CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
+from pynpoint.util.apply_func import photometry
 from pynpoint.util.analysis import fake_planet, merit_function, false_alarm, pixel_variance
 from pynpoint.util.image import create_mask, polar_to_cartesian, cartesian_to_polar, \
                                 center_subpixel, rotate_coordinates
@@ -75,7 +75,7 @@ class FakePlanetModule(ProcessingModule):
             None
         """
 
-        super(FakePlanetModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -180,7 +180,7 @@ class SimplexMinimizationModule(ProcessingModule):
                  position: Tuple[float, float],
                  magnitude: float,
                  psf_scaling: float = -1.,
-                 merit: str = 'hessian',
+                 merit: str = 'gaussian',
                  aperture: float = 0.1,
                  sigma: float = 0.0,
                  tolerance: float = 0.1,
@@ -211,9 +211,11 @@ class SimplexMinimizationModule(ProcessingModule):
             (pixels), separation (arcsec), angle (deg), contrast (mag), and the chi-square value.
             The last row contains the best-fit results.
         position : tuple(float, float)
-            Approximate position (x, y) of the planet in pixels. The figure of merit is calculated
-            within an aperture of radius ``aperture`` centered at the rounded (i.e. integers)
-            coordinates of ``position``.
+            Approximate position of the planet (x, y), provided with subpixel precision (i.e. as
+            floats). The figure of merit is calculated within an aperture of radius ``aperture``
+            centered at the rounded (i.e. integers) coordinates of ``position``. When setting,
+            ``offset=0.``, the ``position`` is used as fixed position of the planet while only
+            retrieving the contrast.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float
@@ -269,7 +271,7 @@ class SimplexMinimizationModule(ProcessingModule):
             None
         """
 
-        super(SimplexMinimizationModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -443,11 +445,11 @@ class SimplexMinimizationModule(ProcessingModule):
             self.m_res_out_port[count].append(res_stack, data_dim=3)
 
             # Calculate the chi-square for the tested position and contrast
-            chi_square = merit_function(residuals=res_stack[0, ],
-                                        merit=self.m_merit,
-                                        aperture=aperture,
-                                        sigma=self.m_sigma,
-                                        var_noise=var_noise)
+            chi_sq = merit_function(residuals=res_stack[0, ],
+                                    merit=self.m_merit,
+                                    aperture=aperture,
+                                    sigma=self.m_sigma,
+                                    var_noise=var_noise)
 
             # Apply the extra rotation to the y and x position
             # The returned position is given as (y, x)
@@ -460,18 +462,17 @@ class SimplexMinimizationModule(ProcessingModule):
                               sep_ang[0]*pixscale,
                               (sep_ang[1]-self.m_extra_rot) % 360.,
                               mag,
-                              chi_square])
+                              chi_sq])
 
             # Append the results to the output port
             self.m_flux_pos_port[count].append(res, data_dim=2)
 
-            print('\rSimplex minimization... ', end='', flush=True)
-            print(f'{n_components} PC - chi^2 = {chi_square:.2e}', end='', flush=True)
+            print(f'\rSimplex minimization... {n_components} PC - chi^2 = {chi_sq:.2e}', end='')
 
-            return chi_square
+            return chi_sq
 
         for i, n_components in enumerate(self.m_pca_number):
-            print(f'\rSimplex minimization... {n_components} PC ', end='', flush=True)
+            print(f'\rSimplex minimization... {n_components} PC ', end='')
 
             if self.m_reference_in_port is None:
                 sklearn_pca = None
@@ -637,7 +638,7 @@ class FalsePositiveModule(ProcessingModule):
             warnings.warn('The \'bounds\' keyword argument has been deprecated. Please use '
                           '\'offset\' instead (e.g. offset=3.0).', DeprecationWarning)
 
-        super(FalsePositiveModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_snr_out_port = self.add_output_port(snr_out_tag)
@@ -725,7 +726,8 @@ class FalsePositiveModule(ProcessingModule):
 
                 x_pos, y_pos = self.m_position[0], self.m_position[1]
 
-            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), S/N = {snr:.2f}, FPF = {fpf:.2e}')
+            print(f'Image {j+1:03d}/{nimages} -> (x, y) = ({x_pos:.2f}, {y_pos:.2f}), '
+                  f'S/N = {snr:.2f}, FPF = {fpf:.2e}')
 
             sep_ang = cartesian_to_polar(center, y_pos, x_pos)
             result = np.column_stack((x_pos, y_pos, sep_ang[0]*pixscale, sep_ang[1], snr, fpf))
@@ -838,7 +840,7 @@ class MCMCsamplingModule(ProcessingModule):
         else:
             self.m_sigma = (1e-5, 1e-3, 1e-3)
 
-        super(MCMCsamplingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -1060,10 +1062,11 @@ class AperturePhotometryModule(ProcessingModule):
             None
         """
 
-        super(AperturePhotometryModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_phot_out_port = self.add_output_port(phot_out_tag)
+        self.m_phot_in_port = None
 
         self.m_radius = radius
         self.m_position = position
@@ -1079,17 +1082,6 @@ class AperturePhotometryModule(ProcessingModule):
         NoneType
             None
         """
-
-        @typechecked
-        def _photometry(image: np.ndarray,
-                        aperture: Union[Aperture, List[Aperture]]) -> np.float64:
-            # https://photutils.readthedocs.io/en/stable/overview.html
-            # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
-            # corresponds to the center of the lowest, leftmost array element. This means that
-            # the value of data[0, 0] is taken as the value over the range -0.5 < x <= 0.5,
-            # -0.5 < y <= 0.5. Note that this is the same coordinate system as used by PynPoint.
-
-            return np.array(aperture_photometry(image, aperture, method='exact')['aperture_sum'])
 
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         self.m_radius /= pixscale
@@ -1107,7 +1099,7 @@ class AperturePhotometryModule(ProcessingModule):
         # Position in CircularAperture is defined as (x, y)
         aperture = CircularAperture((self.m_position[0], self.m_position[1]), self.m_radius)
 
-        self.apply_function_to_images(_photometry,
+        self.apply_function_to_images(photometry,
                                       self.m_image_in_port,
                                       self.m_phot_out_port,
                                       'Aperture photometry',
@@ -1116,7 +1108,7 @@ class AperturePhotometryModule(ProcessingModule):
         self.m_phot_in_port = self.add_input_port(self.m_phot_out_port.tag)
         data = self.m_phot_in_port.get_all()
 
-        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data):.2f}')
+        print(f'Mean flux (counts) = {np.mean(data):.2f} +/- {np.std(data)/np.sqrt(data.size):.2f}')
 
         history = f'radius (pixels) = {self.m_radius:.3f}'
         self.m_phot_out_port.copy_attributes(self.m_image_in_port)
@@ -1210,7 +1202,7 @@ class SystematicErrorModule(ProcessingModule):
             None
         """
 
-        super(SystematicErrorModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_tag = image_in_tag
         self.m_psf_in_tag = psf_in_tag

@@ -52,7 +52,7 @@ class FitsWritingModule(WritingModule):
             A two element tuple which specifies a begin and end frame of the export. This can be
             used to save a subsets of a large dataset. The whole dataset will be exported if set
             to None.
-        overwrite : bool, None
+        overwrite : bool
             Overwrite an existing FITS file with an identical filename.
         subset_size : int, None
             Size of the subsets that are created when storing the data. This can be useful if the
@@ -65,7 +65,7 @@ class FitsWritingModule(WritingModule):
             None
         """
 
-        super(FitsWritingModule, self).__init__(name_in=name_in, output_dir=output_dir)
+        super().__init__(name_in, output_dir=output_dir)
 
         if not file_name.endswith('.fits'):
             raise ValueError('Output \'file_name\' requires the FITS extension.')

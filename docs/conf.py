@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = '2014-2020, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+copyright = '2014-2021, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 author = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 
 # The short X.Y version
@@ -46,7 +46,8 @@ release = version
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'nbsphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -82,21 +83,26 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = { 'logo_only': True,
-                       'display_version': False,
-                       'prev_next_buttons_location': 'bottom',
-                       'style_external_links': False,
-                       'collapse_navigation': True,
-                       'sticky_navigation': True,
-                       'navigation_depth': 2,
-                       'includehidden': True,
-                       'titles_only': False }
+html_theme_options = {
+    'path_to_docs': 'docs',
+    'repository_url': 'https://github.com/PynPoint/PynPoint',
+    'repository_branch': 'main',
+    'launch_buttons': {
+        'binderhub_url': 'https://mybinder.org',
+        'notebook_interface': 'jupyterlab',
+    },
+    'use_edit_page_button': True,
+    'use_issues_button': True,
+    'use_repository_button': True,
+    'use_download_button': True,
+    'logo_only': True,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -114,13 +120,13 @@ html_static_path = ['_static']
 # html_sidebars = {}
 
 html_logo = '_static/logo.png'
-# html_favicon = '_static/logo.jpg'
+html_favicon = '_static/favicon.png'
 html_search_language = 'en'
 
 html_context = {'display_github': True,
                 'github_user': 'PynPoint',
                 'github_repo': 'PynPoint',
-                'github_version': 'master/docs/'}
+                'github_version': 'main/docs/'}
 
 autoclass_content = 'both'
 
@@ -201,5 +207,3 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
-
-html_css_files = ['custom.css']

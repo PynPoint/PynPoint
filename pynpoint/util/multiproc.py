@@ -3,6 +3,7 @@ Abstract interfaces for multiprocessing applications with the poison pill patter
 """
 
 import multiprocessing
+from sys import platform
 
 from typing import Callable, Optional, Union
 from abc import ABCMeta, abstractmethod
@@ -14,6 +15,14 @@ from typeguard import typechecked
 from pynpoint.core.dataio import InputPort, OutputPort
 
 
+# On macOS, the spawn start method is the default since Python 3.8.
+# The fork start method should  be considered unsafe as it can lead
+# to crashes of the subprocess.
+# TODO Not using the fork method results in an error.
+# if platform != 'win32':
+#     multiprocessing.set_start_method('fork')
+
+
 class TaskInput:
     """
     Class for tasks that are processed by the :class:`~pynpoint.util.multiproc.TaskProcessor`.
@@ -21,12 +30,12 @@ class TaskInput:
 
     @typechecked
     def __init__(self,
-                 input_data: Union[np.ndarray, np.int64, tuple],
+                 input_data: Union[np.ndarray, np.integer, tuple],
                  job_parameter: tuple) -> None:
         """
         Parameters
         ----------
-        input_data : int, float, numpy.ndarray
+        input_data : int, float, np.ndarray
             Input data for by the :class:`~pynpoint.util.multiproc.TaskProcessor`.
         job_parameter : tuple
             Additional data or parameters.
@@ -53,7 +62,7 @@ class TaskResult:
         """
         Parameters
         ----------
-        data_array : numpy.ndarray
+        data_array : np.ndarray
             Array with the results for a given position.
         position : tuple(tuple(int, int, int), tuple(int, int, int), tuple(int, int, int))
              The position where the results will be stored.
@@ -500,6 +509,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
 @typechecked
 def apply_function(tmp_data: np.ndarray,
+                   data_index: int,
                    func: Callable,
                    func_args: Optional[tuple]) -> np.ndarray:
     """
@@ -507,8 +517,11 @@ def apply_function(tmp_data: np.ndarray,
 
     Parameters
     ----------
-    tmp_data : numpy.ndarray
+    tmp_data : np.ndarray
         Input data.
+    data_index : int
+        Index of the data subset. When processing a stack of images, the argument of ``data_index``
+        is the image index in the full stack.
     func : function
         Function.
     func_args : tuple, None
@@ -516,14 +529,14 @@ def apply_function(tmp_data: np.ndarray,
 
     Returns
     -------
-    numpy.ndarray
+    np.ndarray
         The results of the function.
     """
 
     if func_args is None:
-        result = np.array(func(tmp_data))
+        result = np.array(func(tmp_data, data_index))
     else:
-        result = np.array(func(tmp_data, *func_args))
+        result = np.array(func(tmp_data, data_index, *func_args))
 
     return result
 

@@ -1,19 +1,18 @@
 """
 Continuous wavelet transform (CWT) and discrete wavelet transform (DWT) denoising for speckle
 suppression in the time domain. The module can be used as additional preprocessing step. See
-Bonse et al. 2018 more information.
+Bonse et al. (arXiv:1804.05063) more information.
 """
 
 from typing import Union
 
 import pywt
-import numpy as np
 
-from statsmodels.robust import mad
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.wavelets import WaveletAnalysisCapsule
+from pynpoint.util.apply_func import cwt_denoise_line_in_time, dwt_denoise_line_in_time, \
+                                     normalization
 
 
 class CwtWaveletConfiguration:
@@ -83,8 +82,8 @@ class DwtWaveletConfiguration:
 
         # create list of supported wavelets
         supported = []
-        for family in pywt.families():
-            supported += pywt.wavelist(family)
+        for item in pywt.families():
+            supported += pywt.wavelist(item)
 
         # check if wavelet is supported
         if wavelet not in supported:
@@ -96,7 +95,7 @@ class DwtWaveletConfiguration:
 class WaveletTimeDenoisingModule(ProcessingModule):
     """
     Pipeline module for speckle subtraction in the time domain by using CWT or DWT wavelet
-    shrinkage (see Bonse et al. 2018).
+    shrinkage. See Bonse et al. (arXiv:1804.05063) for details.
     """
 
     __author__ = 'Markus Bonse, Tomas Stolker'
@@ -114,22 +113,23 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name for the pipeline module.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the input data.
         image_out_tag : str
-            Tag of the database entry that is written as output.
+            Database tag for the output data.
         wavelet_configuration : pynpoint.processing.timedenoising.CwtWaveletConfiguration or \
                                 pynpoint.processing.timedenoising.DwtWaveletConfiguration
-            Instance of DwtWaveletConfiguration or CwtWaveletConfiguration which gives the
-            parameters of the wavelet transformation to be used.
+            Instance of :class:`~pynpoint.processing.timedenoising.DwtWaveletConfiguration` or
+            :class:`~pynpoint.processing.timedenoising.CwtWaveletConfiguration` which contains the
+            parameters for the wavelet transformation.
         padding : str
-            Padding method ('zero', 'mirror', or 'none').
+            Padding method (``'zero'``, ``'mirror'``, or ``'none'``).
         median_filter : bool
-            If true a median filter in time is applied which removes outliers in time like cosmic
-            rays.
+            Apply a median filter in time to remove outliers, for example due to cosmic rays.
         threshold_function : str
-            Threshold function used for wavelet shrinkage in the wavelet space ('soft' or 'hard').
+            Threshold function that is used for wavelet shrinkage in the wavelet space
+            (``'soft'`` or ``'hard'``).
 
         Returns
         -------
@@ -137,7 +137,7 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             None
         """
 
-        super(WaveletTimeDenoisingModule, self).__init__(name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -150,6 +150,9 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         assert threshold_function in ['soft', 'hard']
         self.m_threshold_function = threshold_function == 'soft'
+
+        assert isinstance(wavelet_configuration,
+                          (DwtWaveletConfiguration, CwtWaveletConfiguration))
 
     @typechecked
     def run(self) -> None:
@@ -170,87 +173,22 @@ class WaveletTimeDenoisingModule(ProcessingModule):
             if self.m_padding == 'none':
                 self.m_padding = 'periodic'
 
-            @typechecked
-            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
-                """
-                Definition of the temporal denoising for DWT.
-
-                Parameters
-                ----------
-                signal_in : numpy.ndarray
-                    1D input signal.
-
-                Returns
-                -------
-                numpy.ndarray
-                    Multilevel 1D inverse discrete wavelet transform.
-                """
-
-                if self.m_threshold_function:
-                    threshold_mode = 'soft'
-                else:
-                    threshold_mode = 'hard'
-
-                coef = pywt.wavedec(signal_in,
-                                    wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    level=None,
-                                    mode=self.m_padding)
-
-                sigma = mad(coef[-1])
-                threshold = sigma * np.sqrt(2 * np.log(len(signal_in)))
-
-                denoised = coef[:]
-
-                denoised[1:] = (pywt.threshold(i,
-                                               value=threshold,
-                                               mode=threshold_mode)
-                                for i in denoised[1:])
-
-                return pywt.waverec(denoised,
-                                    wavelet=self.m_wavelet_configuration.m_wavelet,
-                                    mode=self.m_padding)
+            self.apply_function_in_time(dwt_denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_image_out_port,
+                                        func_args=(self.m_threshold_function,
+                                                   self.m_padding,
+                                                   self.m_wavelet_configuration))
 
         elif isinstance(self.m_wavelet_configuration, CwtWaveletConfiguration):
 
-            @typechecked
-            def denoise_line_in_time(signal_in: np.ndarray) -> np.ndarray:
-                """
-                Definition of temporal denoising for CWT.
-
-                Parameters
-                ----------
-                signal_in : numpy.ndarray
-                    1D input signal.
-
-                Returns
-                -------
-                numpy.ndarray
-                    1D output signal.
-                """
-
-                cwt_capsule = WaveletAnalysisCapsule(
-                    signal_in=signal_in,
-                    padding=self.m_padding,
-                    wavelet_in=self.m_wavelet_configuration.m_wavelet,
-                    order=self.m_wavelet_configuration.m_wavelet_order,
-                    frequency_resolution=self.m_wavelet_configuration.m_resolution)
-
-                cwt_capsule.compute_cwt()
-                cwt_capsule.denoise_spectrum(soft=self.m_threshold_function)
-
-                if self.m_median_filter:
-                    cwt_capsule.median_filter()
-
-                cwt_capsule.update_signal()
-
-                return cwt_capsule.get_signal()
-
-        else:
-            return
-
-        self.apply_function_in_time(denoise_line_in_time,
-                                    self.m_image_in_port,
-                                    self.m_image_out_port)
+            self.apply_function_in_time(cwt_denoise_line_in_time,
+                                        self.m_image_in_port,
+                                        self.m_image_out_port,
+                                        func_args=(self.m_threshold_function,
+                                                   self.m_padding,
+                                                   self.m_median_filter,
+                                                   self.m_wavelet_configuration))
 
         if self.m_threshold_function:
             history = 'threshold_function = soft'
@@ -264,8 +202,8 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
 class TimeNormalizationModule(ProcessingModule):
     """
-    Pipeline module for normalization of global brightness variations of the detector
-    (see Bonse et al. 2018).
+    Pipeline module for normalization of global brightness variations of the detector. See Bonse
+    et al. (arXiv:1804.05063) for details.
     """
 
     __author__ = 'Markus Bonse, Tomas Stolker'
@@ -279,11 +217,11 @@ class TimeNormalizationModule(ProcessingModule):
         Parameters
         ----------
         name_in : str
-            Unique name of the module instance.
+            Unique name for the pipeline module.
         image_in_tag : str
-            Tag of the database entry that is read as input.
+            Database tag with the input data.
         image_out_tag : str
-            Tag of the database entry that is written as output.
+            Database tag for the output data.
 
         Returns
         -------
@@ -291,7 +229,7 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
-        super(TimeNormalizationModule, self).__init__(name_in=name_in)
+        super().__init__(name_in)
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
         self.m_image_out_port = self.add_output_port(image_out_tag)
@@ -307,11 +245,7 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
-        @typechecked
-        def _normalization(image_in: np.ndarray) -> np.ndarray:
-            return image_in - np.median(image_in)
-
-        self.apply_function_to_images(_normalization,
+        self.apply_function_to_images(normalization,
                                       self.m_image_in_port,
                                       self.m_image_out_port,
                                       'Time normalization')

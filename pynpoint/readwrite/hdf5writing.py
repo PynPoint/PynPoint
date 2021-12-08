@@ -55,7 +55,7 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        super(Hdf5WritingModule, self).__init__(name_in, output_dir)
+        super().__init__(name_in, output_dir=output_dir)
 
         if tag_dictionary is None:
             tag_dictionary = {}

@@ -75,18 +75,14 @@ class TestCentering:
         with pytest.warns(UserWarning) as warning:
             self.pipeline.run_module('extract1')
 
-        assert len(warning) == 1
+        assert len(warning) == 3
 
-        assert warning[0].message.args[0] == 'The new dataset that is stored under the tag name ' \
-                                             '\'index\' is empty.'
+        assert warning[0].message.args[0] == 'Can not store the attribute \'INSTRUMENT\' ' \
+                                             'because the dataset \'index\' does not exist.'
 
         data = self.pipeline.get_data('extract1')
         assert np.sum(data) == pytest.approx(104.93318507061295, rel=self.limit, abs=0.)
         assert data.shape == (10, 9, 9)
-
-        attr = self.pipeline.get_attribute('extract1', 'STAR_POSITION', static=False)
-        assert np.sum(attr) == pytest.approx(100, rel=self.limit, abs=0.)
-        assert attr.shape == (10, 2)
 
     def test_star_align(self) -> None:
 
@@ -327,7 +323,7 @@ class TestCentering:
                                  fit_out_tag='fit_full',
                                  mask_out_tag='mask',
                                  method='full',
-                                 radius=0.1,
+                                 mask_radii=(None, 0.1),
                                  sign='positive',
                                  model='gaussian',
                                  guess=(1., 2., 3., 3., 0.01, 0., 0.))
@@ -354,7 +350,7 @@ class TestCentering:
                                  fit_out_tag='fit_mean',
                                  mask_out_tag=None,
                                  method='mean',
-                                 radius=0.1,
+                                 mask_radii=(None, 0.1),
                                  sign='positive',
                                  model='moffat',
                                  guess=(1., 2., 3., 3., 0.01, 0., 0., 1.))
