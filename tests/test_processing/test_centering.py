@@ -379,7 +379,7 @@ class TestCentering:
         self.pipeline.run_module('shift5')
 
         data = self.pipeline.get_data('shift_tag_1')
-        assert np.sum(data) == pytest.approx(103.76410960085425, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(103.76410960085425, rel=1e-6, abs=0.9)
         assert data.shape == (10, 18, 18)
 
     def test_shift_images_tag_mean(self) -> None:
