@@ -99,7 +99,7 @@ class TestCentering:
         self.pipeline.run_module('align1')
 
         data = self.pipeline.get_data('align1')
-        assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.7074742320535, rel=self.limit, abs=0.)
         assert data.shape == (10, 18, 18)
 
     def test_star_align_subframe(self) -> None:
@@ -176,7 +176,7 @@ class TestCentering:
         self.pipeline.run_module('shift1')
 
         data = self.pipeline.get_data('shift')
-        assert np.sum(data) == pytest.approx(104.20425101355242, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.20425101355244, rel=self.limit, abs=0.)
         assert data.shape == (10, 18, 18)
 
     def test_shift_images_fft(self) -> None:
@@ -191,7 +191,7 @@ class TestCentering:
         self.pipeline.run_module('shift2')
 
         data = self.pipeline.get_data('shift_fft')
-        assert np.sum(data) == pytest.approx(104.70747423205349, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(104.7074742320535, rel=self.limit, abs=0.)
         assert data.shape == (10, 18, 18)
 
     def test_waffle_center_odd(self) -> None:
@@ -332,10 +332,11 @@ class TestCentering:
         self.pipeline.run_module('fit1')
 
         data = self.pipeline.get_data('fit_full')
+
         assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.01)
         assert np.mean(data[:, 2]) == pytest.approx(2.07, rel=0., abs=0.01)
-        assert np.mean(data[:, 4]) == pytest.approx(0.08, rel=0., abs=0.01)
-        assert np.mean(data[:, 6]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 4]) == pytest.approx(0.0676, rel=0., abs=0.01)
+        assert np.mean(data[:, 6]) == pytest.approx(0.0665, rel=0., abs=0.01)
         assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.01)
         assert data.shape == (10, 14)
 
@@ -360,10 +361,10 @@ class TestCentering:
 
         data = self.pipeline.get_data('fit_mean')
         assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.01)
-        assert np.mean(data[:, 2]) == pytest.approx(2.06, rel=0., abs=0.01)
-        assert np.mean(data[:, 4]) == pytest.approx(0.08, rel=0., abs=0.01)
+        assert np.mean(data[:, 2]) == pytest.approx(2.059, rel=0., abs=0.01)
+        assert np.mean(data[:, 4]) == pytest.approx(0.083, rel=0., abs=0.01)
         assert np.mean(data[:, 6]) == pytest.approx(0.08, rel=0., abs=0.01)
-        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.01)
+        assert np.mean(data[:, 8]) == pytest.approx(0.242, rel=0., abs=0.01)
         assert data.shape == (10, 16)
 
     def test_shift_images_tag(self) -> None:
@@ -378,7 +379,7 @@ class TestCentering:
         self.pipeline.run_module('shift5')
 
         data = self.pipeline.get_data('shift_tag_1')
-        assert np.sum(data) == pytest.approx(103.76504482668594, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(103.76410960085425, rel=1e-6, abs=0.)
         assert data.shape == (10, 18, 18)
 
     def test_shift_images_tag_mean(self) -> None:
@@ -393,5 +394,5 @@ class TestCentering:
         self.pipeline.run_module('shift6')
 
         data = self.pipeline.get_data('shift_tag_2')
-        assert np.sum(data) == pytest.approx(103.42285579230325, rel=1e-6, abs=0.)
+        assert np.sum(data) == pytest.approx(103.42285439876926, rel=1e-6, abs=0.)
         assert data.shape == (10, 18, 18)
