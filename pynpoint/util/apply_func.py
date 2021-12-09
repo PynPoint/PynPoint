@@ -122,7 +122,7 @@ def align_image(image_in: np.ndarray,
                             (resize, resize),
                             order=5,
                             mode='reflect',
-                            multichannel=False,
+                            channel_axis=None,
                             anti_aliasing=True)
 
         sum_after = np.sum(tmp_image)

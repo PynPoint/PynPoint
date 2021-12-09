@@ -271,7 +271,7 @@ def scale_image(image: np.ndarray,
                        (scaling_y, scaling_x),
                        order=5,
                        mode='reflect',
-                       multichannel=False,
+                       channel_axis=None,
                        anti_aliasing=True)
 
     sum_after = np.sum(im_scale)
