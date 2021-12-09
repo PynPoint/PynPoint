@@ -333,11 +333,11 @@ class TestCentering:
 
         data = self.pipeline.get_data('fit_full')
 
-        assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.01)
-        assert np.mean(data[:, 2]) == pytest.approx(2.07, rel=0., abs=0.01)
-        assert np.mean(data[:, 4]) == pytest.approx(0.0676, rel=0., abs=0.01)
-        assert np.mean(data[:, 6]) == pytest.approx(0.0665, rel=0., abs=0.01)
-        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.01)
+        assert np.mean(data[:, 0]) == pytest.approx(0.94, rel=0., abs=0.05)
+        assert np.mean(data[:, 2]) == pytest.approx(2.07, rel=0., abs=0.05)
+        assert np.mean(data[:, 4]) == pytest.approx(0.0676, rel=0., abs=0.05)
+        assert np.mean(data[:, 6]) == pytest.approx(0.0665, rel=0., abs=0.05)
+        assert np.mean(data[:, 8]) == pytest.approx(0.24, rel=0., abs=0.05)
         assert data.shape == (10, 14)
 
         data = self.pipeline.get_data('mask')
