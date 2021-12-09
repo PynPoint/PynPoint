@@ -273,8 +273,11 @@ class TestPypeline:
         with pytest.raises(TypeError) as error:
             pipeline._validate('module', 'tag')
 
-        assert str(error.value) == 'type of argument "module" must be one of (ReadingModule, ' \
-                                   'WritingModule, ProcessingModule); got str instead'
+        assert str(error.value) == 'type of argument "module" must be one of (' \
+                                   'pynpoint.core.processing.ReadingModule, ' \
+                                   'pynpoint.core.processing.WritingModule, ' \
+                                   'pynpoint.core.processing.ProcessingModule); ' \
+                                   'got str instead'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
