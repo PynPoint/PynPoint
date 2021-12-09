@@ -208,7 +208,7 @@ class ExtractBinaryModule(ProcessingModule):
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         parang = self.m_image_in_port.get_attribute('PARANG')
 
-        positions = np.zeros((parang.shape[0], 2), dtype=np.int)
+        positions = np.zeros((parang.shape[0], 2), dtype=int)
 
         for i, item in enumerate(parang):
             # rotates in counterclockwise direction, hence the minus sign in angle

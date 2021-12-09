@@ -73,7 +73,7 @@ class RemoveFramesModule(ProcessingModule):
             self.m_index_in_port = None
 
             if isinstance(frames, (range, list)):
-                self.m_frames = np.asarray(frames, dtype=np.int)
+                self.m_frames = np.asarray(frames, dtype=int)
 
             elif isinstance(frames, np.ndarray):
                 self.m_frames = frames
@@ -440,8 +440,8 @@ class RemoveLastFrameModule(ProcessingModule):
 
             self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
 
-        nframes_new = np.asarray(nframes_new, dtype=np.int)
-        index_new = np.asarray(index_new, dtype=np.int)
+        nframes_new = np.asarray(nframes_new, dtype=int)
+        index_new = np.asarray(index_new, dtype=int)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 

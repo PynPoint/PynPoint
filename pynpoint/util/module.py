@@ -121,7 +121,7 @@ def memory_frames(memory: Union[int, np.int64],
                              stop=nimages - nimages % memory,
                              num=int(float(nimages)/float(memory))+1,
                              endpoint=True,
-                             dtype=np.int)
+                             dtype=np.int64)
 
         if nimages % memory > 0:
             frames = np.append(frames, nimages)

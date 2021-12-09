@@ -282,11 +282,11 @@ class StackCubesModule(ProcessingModule):
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if 'INDEX' in non_static:
-            index = np.arange(0, nimages, 1, dtype=np.int)
+            index = np.arange(0, nimages, 1, dtype=int)
             self.m_image_out_port.add_attribute('INDEX', index, static=False)
 
         if 'NFRAMES' in non_static:
-            nframes = np.ones(nimages, dtype=np.int)
+            nframes = np.ones(nimages, dtype=int)
             self.m_image_out_port.add_attribute('NFRAMES', nframes, static=False)
 
         if 'PARANG' in non_static:
