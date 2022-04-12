@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 
-from setuptools import setup
-
-import pathlib
 import pkg_resources
+import setuptools
 
-with pathlib.Path('requirements.txt').open() as requirements_txt:
-    install_requires = [
-        str(requirement)
-        for requirement
-        in pkg_resources.parse_requirements(requirements_txt)
-    ]
+with open('requirements.txt') as req_txt:
+    parse_req = pkg_resources.parse_requirements(req_txt)
+    install_requires = [str(req) for req in parse_req]
 
-setup(
+setuptools.setup(
     name='pynpoint',
     version='0.10.0',
     description='Pipeline for processing and analysis of high-contrast imaging data',
@@ -22,13 +17,9 @@ setup(
     author_email='stolker@strw.leidenuniv.nl',
     url='https://github.com/PynPoint/PynPoint',
     project_urls={'Documentation': 'https://pynpoint.readthedocs.io'},
-    packages=['pynpoint',
-              'pynpoint.core',
-              'pynpoint.readwrite',
-              'pynpoint.processing',
-              'pynpoint.util'],
-    include_package_data=True,
+    packages=setuptools.find_packages(include=['pynpoint', 'pynpoint.*']),
     install_requires=install_requires,
+    tests_require=['pytest'],
     license='GPLv3',
     zip_safe=False,
     keywords='pynpoint',
@@ -38,9 +29,8 @@ setup(
         'Topic :: Scientific/Engineering :: Astronomy',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
-    tests_require=['pytest'],
 )

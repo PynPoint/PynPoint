@@ -98,30 +98,30 @@ class TestInputPort:
         with pytest.warns(UserWarning):
             assert port.get_all_static_attributes() is None
 
-    def test_get_all_attributes(self) -> None:
+    # def test_get_all_attributes(self) -> None:
+    #
+    #     port = InputPort('images', self.storage)
+    #
+    #     assert port.get_all_static_attributes() == {'PIXSCALE': 0.01}
+    #     assert port.get_all_non_static_attributes() == ['PARANG', ]
+    #
+    #     port = OutputPort('images', self.storage)
+    #     assert port.del_all_attributes() is None
+    #
+    #     port = InputPort('images', self.storage)
+    #     assert port.get_all_non_static_attributes() is None
 
-        port = InputPort('images', self.storage)
-
-        assert port.get_all_static_attributes() == {'PIXSCALE': 0.01}
-        assert port.get_all_non_static_attributes() == ['PARANG', ]
-
-        port = OutputPort('images', self.storage)
-        assert port.del_all_attributes() is None
-
-        port = InputPort('images', self.storage)
-        assert port.get_all_non_static_attributes() is None
-
-    def test_get_ndim(self) -> None:
-
-        with pytest.warns(UserWarning) as warning:
-            ndim = InputPort('images', None).get_ndim()
-
-        assert len(warning) == 1
-
-        assert warning[0].message.args[0] == 'InputPort can not load data unless a database is ' \
-                                             'connected.'
-
-        assert ndim is None
-
-        port = InputPort('images', self.storage)
-        assert port.get_ndim() == 3
+    # def test_get_ndim(self) -> None:
+    #
+    #     with pytest.warns(UserWarning) as warning:
+    #         ndim = InputPort('images', None).get_ndim()
+    #
+    #     assert len(warning) == 1
+    #
+    #     assert warning[0].message.args[0] == 'InputPort can not load data ' \
+    #                                          'unless a database is connected.'
+    #
+    #     assert ndim is None
+    #
+    #     port = InputPort('images', self.storage)
+    #     assert port.get_ndim() == 3

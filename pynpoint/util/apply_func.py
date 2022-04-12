@@ -21,7 +21,7 @@ import pywt
 from numba import jit
 from photutils import aperture_photometry
 from photutils.aperture import Aperture
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from scipy.optimize import curve_fit
 from skimage.registration import phase_cross_correlation
 from skimage.transform import rescale

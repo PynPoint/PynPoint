@@ -3,7 +3,7 @@
 Installation
 ============
 
-PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.7/3.8/3.9.
+PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.8/3.9/3.10.
 
 .. _virtual_environment:
 

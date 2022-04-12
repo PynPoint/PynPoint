@@ -10,7 +10,7 @@ import numpy as np
 
 from typeguard import typechecked
 from scipy.stats import t
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils import aperture_photometry, CircularAperture
 
@@ -30,7 +30,7 @@ def compute_aperture_flux_elements(image: np.ndarray,
     This function can be used to to estimate the residual flux of a planet at position
     (x_pos, y_pos) and the respective noise elements with same separation (see function false_alarm)
     It can also be used to compute the noise apertures is if no planet is present
-     (needed for contrast curves).
+    (needed for contrast curves).
 
     Parameters
     ----------
@@ -94,9 +94,9 @@ def compute_aperture_flux_elements(image: np.ndarray,
     for i, theta in enumerate(ap_theta):
         # Compute the position of the current aperture in polar coordinates and convert to Cartesian
         x_tmp = center[1] + (x_pos - center[1]) * math.cos(theta) - \
-                (y_pos - center[0]) * math.sin(theta)
+            (y_pos - center[0]) * math.sin(theta)
         y_tmp = center[0] + (x_pos - center[1]) * math.sin(theta) + \
-                (y_pos - center[0]) * math.cos(theta)
+            (y_pos - center[0]) * math.cos(theta)
 
         # Place a circular aperture at a position and sum up the flux inside the aperture
         aperture = CircularAperture((x_tmp, y_tmp), size)
@@ -181,7 +181,7 @@ def false_alarm(image: np.ndarray,
     # NOTE: `ddof=1` is a necessary argument for np.std() in order to compute the *unbiased*
     #       estimate (i.e., including Bessel's corrections) of the standard deviation.
     noise = np.std(noise_apertures, ddof=1) *\
-            math.sqrt(1 + 1 / (noise_apertures.shape[0]))
+        math.sqrt(1 + 1 / (noise_apertures.shape[0]))
 
     # Compute the signal-to-noise ratio by dividing the "signal" through the "noise"
     snr = signal / noise

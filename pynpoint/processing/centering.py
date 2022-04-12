@@ -11,7 +11,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from astropy.modeling import fitting, models
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule

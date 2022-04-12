@@ -101,7 +101,7 @@ def contrast_limit(path_images: str,
                                                      ignore=False)
 
     t_noise = np.std(noise_apertures, ddof=1) * \
-              math.sqrt(1 + 1 / (noise_apertures.shape[0]))
+        math.sqrt(1 + 1 / (noise_apertures.shape[0]))
 
     # get sigma from fpf or fpf from sigma
     # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
