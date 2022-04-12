@@ -58,7 +58,7 @@ def write_selected_data(memory: Union[int, np.int64],
         subset_del = np.where(np.logical_and(indices >= frames[i], indices < frames[i+1]))[0]
         index_del = indices[subset_del] % memory
 
-        index_sel = np.ones(images.shape[0], np.bool)
+        index_sel = np.ones(images.shape[0], bool)
         index_sel[index_del] = False
 
         if selected_out_port is not None and index_sel.size > 0:
@@ -109,7 +109,7 @@ def write_selected_attributes(indices: np.ndarray,
 
     non_static = image_in_port.get_all_non_static_attributes()
 
-    index_sel = np.ones(image_in_port.get_shape()[0], np.bool)
+    index_sel = np.ones(image_in_port.get_shape()[0], bool)
     index_sel[indices] = False
 
     for i, attr_item in enumerate(non_static):
@@ -126,8 +126,8 @@ def write_selected_attributes(indices: np.ndarray,
     if 'NFRAMES' in non_static:
         nframes = image_in_port.get_attribute('NFRAMES')
 
-        nframes_sel = np.zeros(nframes.shape, dtype=np.int)
-        nframes_del = np.zeros(nframes.shape, dtype=np.int)
+        nframes_sel = np.zeros(nframes.shape, dtype=int)
+        nframes_del = np.zeros(nframes.shape, dtype=int)
 
         for i, frames in enumerate(nframes):
             if indices.size == 0:

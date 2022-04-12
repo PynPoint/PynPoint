@@ -20,6 +20,93 @@ from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
+def compute_aperture_flux_elements(image: np.ndarray,
+                                   x_pos: float,
+                                   y_pos: float,
+                                   size: float,
+                                   ignore: bool):
+    """
+    Computes the average fluxes inside apertures with the same separation from the center.
+    This function can be used to to estimate the residual flux of a planet at position
+    (x_pos, y_pos) and the respective noise elements with same separation (see function false_alarm)
+    It can also be used to compute the noise apertures is if no planet is present
+     (needed for contrast curves).
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        The input image as a 2D numpy array. For example, this could be a residual frame returned by
+        a :class:`.PcaPsfSubtractionModule`.
+    x_pos : float
+        The planet position (in pixels) along the horizontal axis. The pixel coordinates of the
+        bottom-left corner of the image are (-0.5, -0.5). If no planet is present x_pos and y_pos
+        determine the separation from the center.
+    y_pos : float
+        The planet position (pix) along the vertical axis. The pixel coordinates of the bottom-left
+        corner of the image are (-0.5, -0.5). If no planet is present x_pos and y_pos
+        determine the separation from the center.
+    size : float
+        The radius of the reference apertures (in pixels). Usually, this value is chosen close to
+        one half of the typical FWHM of the PSF (0.514 lambda over D for a perfect Airy pattern; in
+        practice, however, the FWHM is often larger than this).
+    ignore : bool
+        Whether or not to ignore the immediate neighboring apertures for the noise estimate. This is
+        desirable in case there are "self-subtraction wings" left and right of the planet which
+        would bias the estimation of the noise level at the separation of the planet if not ignored.
+
+    Returns
+    -------
+    ap_phot :
+        A list of aperture photometry values. If a planet was present ap_phot[0] contains the flux
+        of the planet and ap_phot[1:] contains the noise. If not planet was present ap_phot[...]
+        gives the aperture photometry of the noise elements.
+    """
+
+    # Compute the center of the current frame (with subpixel precision) and use it to compute the
+    # radius of the given position in polar coordinates (with the origin at the center of the frame)
+    center = center_subpixel(image)
+    radius = math.sqrt((center[0] - y_pos)**2 + (center[1] - x_pos)**2)
+
+    # Compute the number of apertures which we can place at the separation of  the given position
+    num_ap = int(math.pi * radius / size)
+
+    # Compute the angles at which to place the reference apertures
+    ap_theta = np.linspace(0, 2 * math.pi, num_ap, endpoint=False)
+
+    # If ignore is True, delete the apertures immediately right and left of the aperture placed on
+    # the planet signal. These apertures often contain "self-subtraction wings", which means they
+    # cannot be considered to originate from the same distribution. In accordance with section 3.2
+    # of Mawet et al. (2014), such apertures are ignored to prevent bias.
+    if ignore:
+        num_ap -= 2
+        ap_theta = np.delete(ap_theta, [1, np.size(ap_theta) - 1])
+
+    # If the number of apertures is 2 or less, we cannot compute the false positive fraction
+    if num_ap < 3:
+        raise ValueError(
+            f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
+            'false positive fraction.')
+
+    # Initialize a numpy array in which we will store the integrated flux of all reference apertures
+    ap_phot = np.zeros(num_ap)
+
+    # Loop over all reference apertures and measure the integrated flux
+    for i, theta in enumerate(ap_theta):
+        # Compute the position of the current aperture in polar coordinates and convert to Cartesian
+        x_tmp = center[1] + (x_pos - center[1]) * math.cos(theta) - \
+                (y_pos - center[0]) * math.sin(theta)
+        y_tmp = center[0] + (x_pos - center[1]) * math.sin(theta) + \
+                (y_pos - center[0]) * math.cos(theta)
+
+        # Place a circular aperture at a position and sum up the flux inside the aperture
+        aperture = CircularAperture((x_tmp, y_tmp), size)
+        phot_table = aperture_photometry(image, aperture, method='exact')
+
+        ap_phot[i] = phot_table['aperture_sum']
+
+    return ap_phot
+
+
 @typechecked
 def false_alarm(image: np.ndarray,
                 x_pos: float,
@@ -73,46 +160,11 @@ def false_alarm(image: np.ndarray,
         The false positive fraction (FPF) as defined by Mawet et al. (2014) in eq. (10).
     """
 
-    # Compute the center of the current frame (with subpixel precision) and use it to compute the
-    # radius of the given position in polar coordinates (with the origin at the center of the frame)
-    center = center_subpixel(image)
-    radius = math.sqrt((center[0] - y_pos)**2 + (center[1] - x_pos)**2)
-
-    # Compute the number of apertures which we can place at the separation of  the given position
-    num_ap = int(math.pi * radius / size)
-
-    # Compute the angles at which to place the reference apertures
-    ap_theta = np.linspace(0, 2 * math.pi, num_ap, endpoint=False)
-
-    # If ignore is True, delete the apertures immediately right and left of the aperture placed on
-    # the planet signal. These apertures often contain "self-subtraction wings", which means they
-    # cannot be considered to originate from the same distribution. In accordance with section 3.2
-    # of Mawet et al. (2014), such apertures are ignored to prevent bias.
-    if ignore:
-        num_ap -= 2
-        ap_theta = np.delete(ap_theta, [1, np.size(ap_theta) - 1])
-
-    # If the number of apertures is 2 or less, we cannot compute the false positive fraction
-    if num_ap < 3:
-        raise ValueError(f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
-                         'false positive fraction.')
-
-    # Initialize a numpy array in which we will store the integrated flux of all reference apertures
-    ap_phot = np.zeros(num_ap)
-
-    # Loop over all reference apertures and measure the integrated flux
-    for i, theta in enumerate(ap_theta):
-
-        # Compute the position of the current aperture in polar coordinates and convert to Cartesian
-        x_tmp = center[1] + (x_pos - center[1]) * math.cos(theta) - \
-                            (y_pos - center[0]) * math.sin(theta)
-        y_tmp = center[0] + (x_pos - center[1]) * math.sin(theta) + \
-                            (y_pos - center[0]) * math.cos(theta)
-
-        # Place a circular aperture at this position and sum up the flux inside the aperture
-        aperture = CircularAperture((x_tmp, y_tmp), size)
-        phot_table = aperture_photometry(image, aperture, method='exact')
-        ap_phot[i] = phot_table['aperture_sum']
+    ap_phot = compute_aperture_flux_elements(image=image,
+                                             x_pos=x_pos,
+                                             y_pos=y_pos,
+                                             size=size,
+                                             ignore=ignore)
 
     # Define shortcuts to the signal and the noise aperture sums
     signal_aperture = ap_phot[0]
@@ -128,7 +180,8 @@ def false_alarm(image: np.ndarray,
     # in the noise apertures times a correction factor to account for the small sample statistics.
     # NOTE: `ddof=1` is a necessary argument for np.std() in order to compute the *unbiased*
     #       estimate (i.e., including Bessel's corrections) of the standard deviation.
-    noise = np.std(ap_phot[1:], ddof=1) * math.sqrt(1 + 1 / (num_ap - 1))
+    noise = np.std(noise_apertures, ddof=1) *\
+            math.sqrt(1 + 1 / (noise_apertures.shape[0]))
 
     # Compute the signal-to-noise ratio by dividing the "signal" through the "noise"
     snr = signal / noise
@@ -139,7 +192,7 @@ def false_alarm(image: np.ndarray,
     # more details on the Student's t distribution).
     # For numerical reasons, we use the survival function (SF), which is defined precisely as 1-CDF,
     # but may give more accurate results according to the scipy documentation.
-    fpf = t.sf(snr, df=(num_ap - 2))
+    fpf = t.sf(snr, df=(noise_apertures.shape[0] - 1))
 
     return signal_aperture, noise, snr, fpf
 

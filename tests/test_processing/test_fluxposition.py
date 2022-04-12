@@ -133,7 +133,7 @@ class TestFluxPosition:
         self.pipeline.run_module('fake')
 
         data = self.pipeline.get_data('fake')
-        assert np.sum(data) == pytest.approx(21.51956021269913, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(21.273233520675586, rel=self.limit, abs=0.)
         assert data.shape == (10, 21, 21)
 
     def test_psf_subtraction(self) -> None:
@@ -149,7 +149,7 @@ class TestFluxPosition:
         self.pipeline.run_module('pca')
 
         data = self.pipeline.get_data('res_mean')
-        assert np.sum(data) == pytest.approx(0.014757351752469366, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.013659056187572433, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
     def test_false_positive(self) -> None:
@@ -169,8 +169,8 @@ class TestFluxPosition:
         assert data[0, 1] == pytest.approx(2., rel=self.limit, abs=0.)
         assert data[0, 2] == pytest.approx(0.216, rel=self.limit, abs=0.)
         assert data[0, 3] == pytest.approx(180., rel=self.limit, abs=0.)
-        assert data[0, 4] == pytest.approx(23.555448981008507, rel=self.limit, abs=0.)
-        assert data[0, 5] == pytest.approx(3.1561982060476726e-08, rel=self.limit, abs=0.)
+        assert data[0, 4] == pytest.approx(26.661611583224417, rel=self.limit, abs=0.)
+        assert data[0, 5] == pytest.approx(1.3375156927387672e-08, rel=self.limit, abs=0.)
         assert data.shape == (1, 6)
 
     def test_false_positive_optimize(self) -> None:
@@ -189,11 +189,11 @@ class TestFluxPosition:
         self.pipeline.run_module('false2')
 
         data = self.pipeline.get_data('snr_fpf2')
-        assert data[0, 1] == pytest.approx(2.0681640624999993, rel=self.limit, abs=0.)
-        assert data[0, 2] == pytest.approx(0.21416845852767494, rel=self.limit, abs=0.)
-        assert data[0, 3] == pytest.approx(179.47800221910444, rel=self.limit, abs=0.)
-        assert data[0, 4] == pytest.approx(24.254455766076823, rel=self.limit, abs=0.)
-        assert data[0, 5] == pytest.approx(2.5776271254831863e-08, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(2.0747802734374985, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(0.2139883890923524, rel=self.limit, abs=0.)
+        assert data[0, 3] == pytest.approx(179.52168877335356, rel=self.limit, abs=0.)
+        assert data[0, 4] == pytest.approx(27.457328210661814, rel=self.limit, abs=0.)
+        assert data[0, 5] == pytest.approx(1.0905578015907869e-08, rel=self.limit, abs=0.)
         assert data.shape == (1, 6)
 
     def test_simplex_minimization_hessian(self) -> None:
@@ -222,16 +222,17 @@ class TestFluxPosition:
         self.pipeline.run_module('simplex1')
 
         data = self.pipeline.get_data('simplex_res')
-        assert np.sum(data) == pytest.approx(0.07079158286664607, rel=self.limit, abs=0.)
-        assert data.shape == (25, 21, 21)
+
+        assert np.sum(data) == pytest.approx(0.2781582369128238, rel=self.limit, abs=0.)
+        assert data.shape == (35, 21, 21)
 
         data = self.pipeline.get_data('flux_position')
-        assert data[24, 0] == pytest.approx(9.933213305898484, rel=self.limit, abs=0.)
-        assert data[24, 1] == pytest.approx(2.637268518518516, rel=self.limit, abs=0.)
-        assert data[24, 2] == pytest.approx(0.198801928351391, rel=self.limit, abs=0.)
-        assert data[24, 3] == pytest.approx(179.48028924294857, rel=self.limit, abs=0.)
-        assert data[24, 4] == pytest.approx(2.4782450274348378, rel=self.limit, abs=0.)
-        assert data.shape == (25, 6)
+        assert data[24, 0] == pytest.approx(9.931627229080938, rel=self.limit, abs=0.)
+        assert data[24, 1] == pytest.approx(2.6575231481481456, rel=self.limit, abs=0.)
+        assert data[24, 2] == pytest.approx(0.1982554700445013, rel=self.limit, abs=0.)
+        assert data[24, 3] == pytest.approx(179.46648003649148, rel=self.limit, abs=0.)
+        assert data[24, 4] == pytest.approx(2.5256451474622708, rel=self.limit, abs=0.)
+        assert data.shape == (35, 6)
 
     def test_simplex_minimization_reference(self) -> None:
 
@@ -258,7 +259,7 @@ class TestFluxPosition:
         self.pipeline.run_module('simplex2')
 
         data = self.pipeline.get_data('simplex_res_ref')
-        assert np.sum(data) == pytest.approx(9.914746160040783, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(9.734993454838076, rel=self.limit, abs=0.)
         assert data.shape == (28, 21, 21)
 
         data = self.pipeline.get_data('flux_position_ref')
@@ -330,9 +331,9 @@ class TestFluxPosition:
         self.pipeline.run_module('error')
 
         data = self.pipeline.get_data('offset')
-        assert data[0, 0] == pytest.approx(-0.0028749671933526733, rel=self.limit, abs=0.)
-        assert data[0, 1] == pytest.approx(0.2786088210998514, rel=self.limit, abs=0.)
-        assert data[0, 2] == pytest.approx(-0.02916297162565762, rel=self.limit, abs=0.)
-        assert data[0, 3] == pytest.approx(-0.02969350583704866, rel=self.limit, abs=0.)
-        assert data[0, 4] == pytest.approx(-0.10640807184499579, rel=self.limit, abs=0.)
+        assert data[0, 0] == pytest.approx(-0.001114020093541973, rel=self.limit, abs=0.)
+        assert data[0, 1] == pytest.approx(-0.012163271644183737, rel=self.limit, abs=0.)
+        assert data[0, 2] == pytest.approx(-0.017943854263249293, rel=self.limit, abs=0.)
+        assert data[0, 3] == pytest.approx(0.001282493868968615, rel=self.limit, abs=0.)
+        assert data[0, 4] == pytest.approx(-0.04125986733475884, rel=self.limit, abs=0.)
         assert data.shape == (2, 5)

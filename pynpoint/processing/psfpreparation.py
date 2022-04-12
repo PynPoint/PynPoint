@@ -339,7 +339,7 @@ class SortParangModule(ProcessingModule):
         ndim = self.m_image_in_port.get_ndim()
         nimages = self.m_image_in_port.get_shape()[-3]
 
-        index_new = np.zeros(index.shape, dtype=np.int)
+        index_new = np.zeros(index.shape, dtype=int)
 
         if 'PARANG' in self.m_image_in_port.get_all_non_static_attributes():
             parang = self.m_image_in_port.get_attribute('PARANG')

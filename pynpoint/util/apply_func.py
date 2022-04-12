@@ -98,6 +98,7 @@ def align_image(image_in: np.ndarray,
         if subframe is None:
             tmp_offset, _, _ = phase_cross_correlation(ref_images[i, :, :],
                                                        image_in,
+                                                       normalization=None,
                                                        upsample_factor=accuracy)
 
         else:
@@ -106,6 +107,7 @@ def align_image(image_in: np.ndarray,
 
             tmp_offset, _, _ = phase_cross_correlation(sub_ref,
                                                        sub_in,
+                                                       normalization=None,
                                                        upsample_factor=accuracy)
         offset += tmp_offset
 
@@ -120,7 +122,7 @@ def align_image(image_in: np.ndarray,
                             (resize, resize),
                             order=5,
                             mode='reflect',
-                            multichannel=False,
+                            channel_axis=None,
                             anti_aliasing=True)
 
         sum_after = np.sum(tmp_image)

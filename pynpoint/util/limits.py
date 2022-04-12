@@ -7,11 +7,13 @@ import math
 from typing import Tuple
 
 import numpy as np
+from scipy.stats import t
 
 from photutils import aperture_photometry, CircularAperture
 from typeguard import typechecked
 
-from pynpoint.util.analysis import student_t, fake_planet, false_alarm
+from pynpoint.util.analysis import student_t, fake_planet,\
+    compute_aperture_flux_elements
 from pynpoint.util.image import polar_to_cartesian, center_subpixel
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
@@ -88,36 +90,40 @@ def contrast_limit(path_images: str,
     images = np.load(path_images)
     psf = np.load(path_psf)
 
+    # Cartesian coordinates of the fake planet
+    yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
+
+    # Determine the noise level
+    noise_apertures = compute_aperture_flux_elements(image=noise[0, ],
+                                                     x_pos=yx_fake[1],
+                                                     y_pos=yx_fake[0],
+                                                     size=aperture,
+                                                     ignore=False)
+
+    t_noise = np.std(noise_apertures, ddof=1) * \
+              math.sqrt(1 + 1 / (noise_apertures.shape[0]))
+
+    # get sigma from fpf or fpf from sigma
+    # Note that the number of degrees of freedom is given by nu = n-1 with n the number of samples.
+    # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
+
     if threshold[0] == 'sigma':
         sigma = threshold[1]
 
         # Calculate the FPF for a given sigma level
-        fpf = student_t(t_input=threshold,
-                        radius=position[0],
-                        size=aperture,
-                        ignore=False)
+
+        fpf = t.sf(sigma, noise_apertures.shape[0] - 1,
+                   loc=0., scale=1.)
 
     elif threshold[0] == 'fpf':
         fpf = threshold[1]
 
         # Calculate the sigma level for a given FPF
-        sigma = student_t(t_input=threshold,
-                          radius=position[0],
-                          size=aperture,
-                          ignore=False)
+        sigma = t.isf(fpf, noise_apertures.shape[0] - 1,
+                      loc=0., scale=1.)
 
     else:
         raise ValueError('Threshold type not recognized.')
-
-    # Cartesian coordinates of the fake planet
-    yx_fake = polar_to_cartesian(images, position[0], position[1]-extra_rot)
-
-    # Determine the noise level
-    _, t_noise, _, _ = false_alarm(image=noise[0, ],
-                                   x_pos=yx_fake[1],
-                                   y_pos=yx_fake[0],
-                                   size=aperture,
-                                   ignore=False)
 
     # Aperture properties
     im_center = center_subpixel(images)
@@ -146,19 +152,24 @@ def contrast_limit(path_images: str,
 
     # Stack the residuals
     im_res = combine_residuals(method=residuals, res_rot=im_res)
+    flux_out_frame = im_res[0, ] - noise[0, ]
 
-    # Measure the flux of the fake planet
-    flux_out, _, _, _ = false_alarm(image=im_res[0, ],
-                                    x_pos=yx_fake[1],
-                                    y_pos=yx_fake[0],
-                                    size=aperture,
-                                    ignore=False)
+    # Measure the flux of the fake planet after PCA
+    # the first element is the planet
+    flux_out = compute_aperture_flux_elements(image=flux_out_frame,
+                                              x_pos=yx_fake[1],
+                                              y_pos=yx_fake[0],
+                                              size=aperture,
+                                              ignore=False)[0]
 
     # Calculate the amount of self-subtraction
     attenuation = flux_out/flux_in
+    # the throughput can not be negative. However, this can happen due to numerical inaccuracies
+    if attenuation < 0:
+        attenuation = 0
 
     # Calculate the detection limit
-    contrast = sigma*t_noise/(attenuation*star)
+    contrast = (sigma*t_noise + np.mean(noise_apertures))/(attenuation*star)
 
     # The flux_out can be negative, for example if the aperture includes self-subtraction regions
     if contrast > 0.:
@@ -166,5 +177,5 @@ def contrast_limit(path_images: str,
     else:
         contrast = np.nan
 
-    # Separation [pix], position antle [deg], contrast [mag], FPF
+    # Separation [pix], position angle [deg], contrast [mag], FPF
     return position[0], position[1], contrast, fpf
