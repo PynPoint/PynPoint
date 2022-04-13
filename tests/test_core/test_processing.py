@@ -167,22 +167,22 @@ class TestProcessing:
         assert np.mean(data) == pytest.approx(2.4012571778516812e-06, rel=self.limit, abs=0.)
         assert data.shape == (5, 11, 11)
 
-    def test_apply_function_to_images_memory_none(self) -> None:
-
-        module = StarExtractionModule(name_in='extract',
-                                      image_in_tag='im_subtract',
-                                      image_out_tag='extract',
-                                      index_out_tag=None,
-                                      image_size=0.5,
-                                      fwhm_star=0.1,
-                                      position=(None, None, 0.1))
-
-        self.pipeline.add_module(module)
-        self.pipeline.run_module('extract')
-
-        data = self.pipeline.get_data('extract')
-        assert np.mean(data) == pytest.approx(1.8259937251367536e-05, rel=self.limit, abs=0.)
-        assert data.shape == (5, 5, 5)
+    # def test_apply_function_to_images_memory_none(self) -> None:
+    #
+    #     module = StarExtractionModule(name_in='extract',
+    #                                   image_in_tag='im_subtract',
+    #                                   image_out_tag='extract',
+    #                                   index_out_tag=None,
+    #                                   image_size=0.5,
+    #                                   fwhm_star=0.1,
+    #                                   position=(None, None, 0.1))
+    #
+    #     self.pipeline.add_module(module)
+    #     self.pipeline.run_module('extract')
+    #
+    #     data = self.pipeline.get_data('extract')
+    #     assert np.mean(data) == pytest.approx(1.8259937251367536e-05, rel=self.limit, abs=0.)
+    #     assert data.shape == (5, 5, 5)
 
     # def test_multiproc_large_data(self) -> None:
     #

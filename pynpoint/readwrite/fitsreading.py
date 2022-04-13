@@ -4,6 +4,7 @@ Module for reading FITS files.
 
 import os
 import time
+import warnings
 
 from typing import List, Optional, Tuple, Union
 
@@ -111,9 +112,27 @@ class FitsReadingModule(ReadingModule):
             Image shape.
         """
 
-        hdulist = fits.open(fits_file)
+        hdu_list = fits.open(fits_file)
 
-        images = hdulist[0].data.byteswap().newbyteorder()
+        if hdu_list[0].data is not None:
+            images = hdu_list[0].data.byteswap().newbyteorder()
+
+        elif len(hdu_list) > 1:
+            for i, item in enumerate(hdu_list[1:]):
+                if isinstance(item, fits.hdu.image.ImageHDU):
+                    warnings.simplefilter('always', UserWarning)
+
+                    warnings.warn(f"No data was found in the PrimaryHDU "
+                                  f"so reading data from the ImageHDU "
+                                  f"at number {i+1} instead.")
+
+                    images = hdu_list[i+1].data.byteswap().newbyteorder()
+
+                    break
+
+        else:
+            raise RuntimeError(f"No data was found in {fits_file}.")
+
         images = np.nan_to_num(images)
 
         if images.ndim == 4 and not self.m_ifs_data:
@@ -140,13 +159,13 @@ class FitsReadingModule(ReadingModule):
             else:
                 self.m_image_out_port.append(images, data_dim=3)
 
-        header = hdulist[0].header
+        header = hdu_list[0].header
 
         fits_header = []
         for key in header:
             fits_header.append(f'{key} = {header[key]}')
 
-        hdulist.close()
+        hdu_list.close()
 
         header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
         header_out_port.set_all(fits_header)

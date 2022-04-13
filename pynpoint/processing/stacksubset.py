@@ -47,7 +47,7 @@ class StackAndSubsetModule(ProcessingModule):
         combine : str
             Method for combining images ('mean' or 'median'). The angles are always mean-combined.
         max_rotation : float, None
-            Maximum allowed field rotation throughout each subset of stacked images when
+            Maximum allowed field rotation (deg) throughout each subset of stacked images when
             `stacking` is not None. No restriction on the field rotation is applied if set to
             None.
 

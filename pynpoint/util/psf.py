@@ -16,7 +16,7 @@ from pynpoint.util.image import scale_image, shift_image
 @typechecked
 def pca_psf_subtraction(images: np.ndarray,
                         angles: Optional[np.ndarray],
-                        pca_number: Union[int, np.int64],
+                        pca_number: Union[int, np.int32, np.int64],
                         scales: Optional[np.ndarray] = None,
                         pca_sklearn: Optional[PCA] = None,
                         im_shape: Optional[tuple] = None,

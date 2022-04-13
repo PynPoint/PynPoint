@@ -329,10 +329,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
+            n_pca_total = len(pca_first)
 
         elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
+            n_pca_total = len(pca_first) + len(pca_secon)
 
         # Setup output arrays
 
@@ -357,7 +359,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # loop over all different combination of pca_numbers and applying the reductions
         for i, pca_1 in enumerate(pca_first):
             for j, pca_2 in enumerate(pca_secon):
-                progress(i+j, len(pca_first)+len(pca_secon), 'Creating residuals...', start_time)
+                progress(i+j, n_pca_total, 'Creating residuals...', start_time)
 
                 # process images
                 residuals, res_rot = postprocessor(images=star_reshape,

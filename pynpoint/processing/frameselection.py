@@ -691,6 +691,7 @@ class FrameSimilarityModule(ProcessingModule):
             These measures compare each image to the temporal median of the image set.
         mask_radius : tuple(float, float)
             Inner and outer radius (arcsec) of the mask that is applied to the images.
+            The inner radius is actually not used so can be set to zero.
         window_size : float
             Size (arcsec) of the sliding window that is used when the SSIM similarity is
             calculated.
@@ -807,7 +808,8 @@ class FrameSimilarityModule(ProcessingModule):
         # close the port during the calculations
         self.m_image_out_port.close_port()
 
-        images = crop_image(images, None, int(self.m_mask_radii[1]))
+        # Change the radius to the image size
+        images = crop_image(images, None, int(2.*self.m_mask_radii[1]))
 
         if self.m_temporal_median == 'constant':
             temporal_median = np.median(images, axis=0)

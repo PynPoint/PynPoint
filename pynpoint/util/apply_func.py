@@ -323,7 +323,7 @@ def fit_2d_function(image: np.ndarray,
             popt = np.zeros(8)
             perr = np.zeros(8)
 
-        print(f'Fit could not converge on image number {im_index}. [WARNING]')
+        warnings.warn(f'Fit could not converge on image number {im_index}.')
 
     if model == 'gaussian':
 

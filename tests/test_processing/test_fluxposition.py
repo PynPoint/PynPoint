@@ -288,7 +288,7 @@ class TestFluxPosition:
         assert np.sum(data) == pytest.approx(10.843655133957288, rel=self.limit, abs=0.)
         assert data.shape == (1, 21, 21)
 
-        module = MCMCsamplingModule(name_in='mcmc',
+        module = MCMCsamplingModule(name_in='mcmc1',
                                     image_in_tag='adi',
                                     psf_in_tag='psf_stack',
                                     chain_out_tag='mcmc',
@@ -303,10 +303,44 @@ class TestFluxPosition:
                                     extra_rot=0.,
                                     merit='gaussian',
                                     residuals='median',
+                                    resume=False,
                                     sigma=(1e-3, 1e-1, 1e-2))
 
         self.pipeline.add_module(module)
-        self.pipeline.run_module('mcmc')
+        self.pipeline.run_module('mcmc1')
+
+        data = self.pipeline.get_data('mcmc')
+        assert data.shape == (5, 6, 3)
+
+        data = self.pipeline.get_data('mcmc_backend')
+        assert data.shape == (3, )
+
+        module = MCMCsamplingModule(name_in='mcmc2',
+                                    image_in_tag='adi',
+                                    psf_in_tag='psf_stack',
+                                    chain_out_tag='mcmc',
+                                    param=(0.15, 0., 1.),
+                                    bounds=((0.1, 0.2), (-2., 2.), (-1., 2.)),
+                                    nwalkers=6,
+                                    nsteps=5,
+                                    psf_scaling=-1.,
+                                    pca_number=1,
+                                    aperture=(10, 16, 0.06),
+                                    mask=None,
+                                    extra_rot=0.,
+                                    merit='gaussian',
+                                    residuals='median',
+                                    resume=True,
+                                    sigma=(1e-3, 1e-1, 1e-2))
+
+        self.pipeline.add_module(module)
+        self.pipeline.run_module('mcmc2')
+
+        data = self.pipeline.get_data('mcmc')
+        assert data.shape == (10, 6, 3)
+
+        data = self.pipeline.get_data('mcmc_backend')
+        assert data.shape == (3, )
 
     def test_systematic_error(self) -> None:
 

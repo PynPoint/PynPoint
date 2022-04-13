@@ -279,7 +279,7 @@ class TestFrameSelection:
         module = FrameSimilarityModule(name_in='simi1',
                                        image_tag='read',
                                        method='MSE',
-                                       mask_radius=(0., 0.2))
+                                       mask_radius=(0., 0.1))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi1')
@@ -294,7 +294,7 @@ class TestFrameSelection:
         module = FrameSimilarityModule(name_in='simi2',
                                        image_tag='read',
                                        method='PCC',
-                                       mask_radius=(0., 0.2))
+                                       mask_radius=(0., 0.1))
 
         self.pipeline.add_module(module)
         self.pipeline.run_module('simi2')
@@ -309,7 +309,7 @@ class TestFrameSelection:
         module = FrameSimilarityModule(name_in='simi3',
                                        image_tag='read',
                                        method='SSIM',
-                                       mask_radius=(0., 0.2),
+                                       mask_radius=(0., 0.1),
                                        temporal_median='constant')
 
         self.pipeline.add_module(module)

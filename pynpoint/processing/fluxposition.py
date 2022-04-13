@@ -2,6 +2,7 @@
 Pipeline modules for photometric and astrometric measurements.
 """
 
+import os
 import time
 import warnings
 
@@ -29,7 +30,8 @@ from pynpoint.util.residuals import combine_residuals
 
 class FakePlanetModule(ProcessingModule):
     """
-    Pipeline module to inject a positive or negative artificial planet into a stack of images.
+    Pipeline module to inject a positive or negative artificial planet
+    into a stack of images.
     """
 
     __author__ = 'Tomas Stolker'
@@ -50,24 +52,30 @@ class FakePlanetModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with images that are read as input.
+            Tag of the database entry with images that are read as
+            input.
         psf_in_tag : str
-            Tag of the database entry that contains the reference PSF that is used as fake planet.
-            Can be either a single image (2D) or a cube (3D) with the dimensions equal to
-            *image_in_tag*.
+            Tag of the database entry that contains the reference PSF
+            that is used as fake planet. Can be either a single image
+            (2D) or a cube (3D) with the dimensions equal to
+            ``image_in_tag``.
         image_out_tag : str
-            Tag of the database entry with images that are written as output.
+            Tag of the database entry with images that are written as
+            output.
         position : tuple(float, float)
-            Angular separation (arcsec) and position angle (deg) of the fake planet. Angle is
-            measured in counterclockwise direction with respect to the upward direction (i.e.,
+            Angular separation (arcsec) and position angle (deg) of
+            the fake planet. Angle is measured in counterclockwise
+            direction with respect to the upward direction (i.e.,
             East of North).
         magnitude : float
             Magnitude of the fake planet with respect to the star.
         psf_scaling : float
-            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
-            filter). A negative value will inject a negative planet signal.
+            Additional scaling factor of the planet flux (e.g., to
+            correct for a neutral density filter). A negative value
+            will inject a negative planet signal.
         interpolation : str
-            Type of interpolation that is used for shifting the images (spline, bilinear, or fft).
+            Type of interpolation that is used for shifting the
+            images (spline, bilinear, or fft).
 
         Returns
         -------
@@ -94,9 +102,10 @@ class FakePlanetModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. Shifts the PSF template to the location of the fake planet
-        with an additional correction for the parallactic angle and an optional flux scaling.
-        The stack of images with the injected planet signal is stored.
+        Run method of the module. Shifts the PSF template to the
+        location of the fake planet with an additional correction
+        for the parallactic angle and an optional flux scaling. The
+        stack of images with the injected planet signal is stored.
 
         Returns
         -------
@@ -108,7 +117,7 @@ class FakePlanetModule(ProcessingModule):
         print(f'   - Magnitude = {self.m_magnitude:.2f}')
         print(f'   - PSF scaling = {self.m_psf_scaling}')
         print(f'   - Separation (arcsec) = {self.m_position[0]:.2f}')
-        print(f'   - Position angle (deg) = {self.m_position[0]:.2f}')
+        print(f'   - Position angle (deg) = {self.m_position[1]:.2f}')
 
         memory = self._m_config_port.get_attribute('MEMORY')
         parang = self.m_image_in_port.get_attribute('PARANG')
@@ -163,9 +172,9 @@ class FakePlanetModule(ProcessingModule):
 
 class SimplexMinimizationModule(ProcessingModule):
     """
-    Pipeline module to retrieve the contrast and position of a planet by injecting negative
-    artificial planets and using a downhill simplex method. The module supports both ADI and
-    RDI.
+    Pipeline module to retrieve the contrast and position of a planet
+    by injecting negative artificial planets and using a downhill
+    simplex method. The module supports both ADI and RDI.
     """
 
     __author__ = 'Tomas Stolker'
@@ -197,73 +206,98 @@ class SimplexMinimizationModule(ProcessingModule):
         name_in : str
             Unique name of the module instance.
         image_in_tag : str
-            Tag of the database entry with the science images that are read as input.
+            Tag of the database entry with the science images that are
+            read as input.
         psf_in_tag : str
-            Tag of the database entry with the reference PSF that is used as fake planet. Can be
-            either a single image or a stack of images equal in size to ``image_in_tag``.
+            Tag of the database entry with the reference PSF that is
+            used as fake planet. Can be either a single image or a
+            stack of images equal in size to ``image_in_tag``.
         res_out_tag : str
-            Tag of the database entry with the image residuals that are written as output. The
-            residuals are stored for each step of the minimization. The last image contains the
+            Tag of the database entry with the image residuals that
+            are written as output. The residuals are stored for each
+            step of the minimization. The last image contains the
             best-fit residuals.
         flux_position_tag : str
-            Tag of the database entry with the flux and position results that are written as
-            output. Each step of the minimization stores the x position (pixels), y position
-            (pixels), separation (arcsec), angle (deg), contrast (mag), and the chi-square value.
-            The last row contains the best-fit results.
+            Tag of the database entry with the flux and position
+            results that are written as output. Each step of the
+            minimization stores the x position (pixels), y position
+            (pixels), separation (arcsec), angle (deg), contrast
+            (mag), and the chi-square value. The last row contains
+            the best-fit results.
         position : tuple(float, float)
-            Approximate position of the planet (x, y), provided with subpixel precision (i.e. as
-            floats). The figure of merit is calculated within an aperture of radius ``aperture``
-            centered at the rounded (i.e. integers) coordinates of ``position``. When setting,
-            ``offset=0.``, the ``position`` is used as fixed position of the planet while only
+            Approximate position of the planet (x, y), provided with
+            subpixel precision (i.e. as floats). The figure of merit
+            is calculated within an aperture of radius ``aperture``
+            centered at the rounded (i.e. integers) coordinates of
+            ``position``. When setting, ``offset=0.``, the ``position``
+            is used as fixed position of the planet while only
             retrieving the contrast.
         magnitude : float
             Approximate magnitude of the planet relative to the star.
         psf_scaling : float
-            Additional scaling factor of the planet flux (e.g., to correct for a neutral density
-            filter). Should be a negative value in order to inject negative fake planets.
+            Additional scaling factor of the planet flux (e.g., to
+            correct for a neutral density filter). Should be a negative
+            value in order to inject negative fake planets.
         merit : str
-            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
-            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
-            ('gaussian' or 'poisson'). For the latter case, the estimated noise is assumed to
-            follow a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Stolker et al.
-            2020).
+            Figure of merit for the minimization ('hessian', 'gaussian',
+            or 'poisson'). Either the determinant of the Hessian matrix
+            is minimized ('hessian') or the flux of each pixel
+            ('gaussian' or 'poisson'). For the latter case, the
+            estimated noise is assumed to follow a Poisson (see Wertz et
+            al. 2017) or Gaussian distribution (see Stolker et al. 2020).
         aperture : float
-            Aperture radius (arcsec) at the position specified at ``position``.
+            Aperture radius (arcsec) at the position specified at
+            ``position``.
         sigma : float
-            Standard deviation (arcsec) of the Gaussian kernel that is used to smooth the images
-            before the figure of merit is calculated (in order to reduce small pixel-to-pixel
+            Standard deviation (arcsec) of the Gaussian kernel that is
+            used to smooth the images before the figure of merit is
+            calculated (in order to reduce small pixel-to-pixel
             variations).
         tolerance : float
-            Absolute error on the input parameters, position (pixels) and contrast (mag), that is
-            used as acceptance level for convergence. Note that only a single value can be
-            specified which is used for both the position and flux so ``tolerance=0.1`` corresponds
-            to a precision of 0.1 mag and 0.1 pix. The tolerance on the output (i.e., the
-            chi-square value) is set to ``np.inf`` such that the condition is always met.
+            Absolute error on the input parameters, position (pixels)
+            and contrast (mag), that is used as acceptance level for
+            convergence. Note that only a single value can be specified
+            which is used for both the position and flux so
+            ``tolerance=0.1`` corresponds to a precision of 0.1 mag and
+            0.1 pix. The tolerance on the output (i.e., the chi-square
+            value) is set to ``np.inf`` such that the condition is
+            always met.
         pca_number : int, range, list(int, )
-            Number of principal components (PCs) used for the PSF subtraction. Can be either a
-            single value, or a range or list of values. In the latter case, the ``res_out_tag`` and
-            ```flux_position_tag``` contain a 3 digit number with the number of PCs.
+            Number of principal components (PCs) used for the PSF
+            subtraction. Can be either a single value, or a range or
+            list of values. In the latter case, the ``res_out_tag`` and
+            ```flux_position_tag``` contain a 3 digit number with the
+             number of PCs.
         cent_size : float, None
-            Radius of the central mask (arcsec). No mask is used when set to ``None``. The mask is
-            applied after the artificial planet is injected.
+            Radius of the central mask (arcsec). No mask is used when
+            set to ``None``. The mask is applied after the artificial
+            planet is injected.
         edge_size : float, None
-            Outer radius (arcsec) beyond which pixels are masked. No outer mask is used when set to
-            ``None``. The radius will be set to half the image size if the argument is larger than
-            half the image size. The mask is applied after the artificial planet is injected.
+            Outer radius (arcsec) beyond which pixels are masked. No
+            outer mask is used when set to ``None``. The radius will be
+            set to half the image size if the argument is larger than
+            half the image size. The mask is applied after the
+            artificial planet is injected.
         extra_rot : float
-            Additional rotation angle of the images in clockwise direction (deg).
+            Additional rotation angle of the images in clockwise
+            direction (deg).
         residuals : str
-            Method for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+            Method for combining the residuals ('mean', 'median',
+            'weighted', or 'clipped').
         reference_in_tag : str, None
-            Tag of the database entry with the reference images that are read as input. The data of
-            the ``image_in_tag`` itself is used as reference data for the PSF subtraction if set to
-            ``None``. Note that the mean is not subtracted from the data of ``image_in_tag`` and
-            ``reference_in_tag`` in case the ``reference_in_tag`` is used, to allow for flux and
+            Tag of the database entry with the reference images that
+            are read as input. The data of the ``image_in_tag`` itself
+            is used as reference data for the PSF subtraction if set to
+            ``None``. Note that the mean is not subtracted from the
+            data of ``image_in_tag`` and ``reference_in_tag`` in case
+            the ``reference_in_tag`` is used, to allow for flux and
             position measurements in the context of RDI.
         offset : float, None
-            Offset (pixels) by which the injected negative PSF may deviate from ``position``. The
-            constraint on the position is not applied if set to None. Only the contrast is
-            optimized and the position if fixed to ``position`` if ``offset=0``.
+            Offset (pixels) by which the injected negative PSF may
+            deviate from ``position``. The constraint on the position
+            is not applied if set to None. Only the contrast is
+            optimized and the position if fixed to ``position`` if
+            ``offset=0``.
 
         Returns
         -------
@@ -319,9 +353,10 @@ class SimplexMinimizationModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. The position and contrast of a planet is measured by injecting
-        negative copies of the PSF template and applying a downhill simplex method (Nelder-Mead)
-        for minimization of a figure of merit at the planet location.
+        Run method of the module. The position and contrast of a planet
+        is measured by injecting negative copies of the PSF template
+        and applying a downhill simplex method (Nelder-Mead) for
+        minimization of a figure of merit at the planet location.
 
         Returns
         -------
@@ -742,9 +777,10 @@ class FalsePositiveModule(ProcessingModule):
 
 class MCMCsamplingModule(ProcessingModule):
     """
-    Pipeline module to measure the separation, position angle, and contrast of a planet with
-    injection of negative artificial planets and sampling of the posterior distribution with
-    ``emcee``, an affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
+    Pipeline module to measure the separation, position angle, and
+    contrast of a planet with injection of negative artificial planets
+    and sampling of the posterior distribution with ``emcee``, an
+    affine invariant Markov chain Monte Carlo (MCMC) ensemble sampler.
     """
 
     __author__ = 'Tomas Stolker'
@@ -767,6 +803,7 @@ class MCMCsamplingModule(ProcessingModule):
                  extra_rot: float = 0.,
                  merit: str = 'gaussian',
                  residuals: str = 'median',
+                 resume: bool = False,
                  **kwargs: Union[float, Tuple[float, float, float]]) -> None:
         """
         Parameters
@@ -776,58 +813,79 @@ class MCMCsamplingModule(ProcessingModule):
         image_in_tag : str
             Database tag with the science images.
         psf_in_tag : str
-            Database tag with the reference PSF that is used as artificial planet. The dataset can
-            be either a single image, or a stack of images with the dimensions equal to
-            ``image_in_tag``.
+            Database tag with the reference PSF that is used as
+            artificial planet. The dataset can be either a single
+            image, or a stack of images with the dimensions equal
+            to ``image_in_tag``.
         chain_out_tag : str
-            Database tag were the posterior samples will be stored. The shape of the array is
-            ``(nsteps, nwalkers, 3)``. The mean acceptance fraction and the integrated
-            autocorrelation time are stored as attributes.
+            Database tag were the posterior samples will be stored.
+            The shape of the array is ``(nsteps, nwalkers, 3)``. The
+            mean acceptance fraction and the integrated autocorrelation
+            time are stored as attributes.
         param : tuple(float, float, float)
-            The approximate separation (arcsec), angle (deg), and contrast (mag), for example
-            obtained with the :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
-            The angle is measured in counterclockwise direction with respect to the upward
-            direction (i.e., East of North). The separation and angle are also used as (fixed)
-            position for the aperture if ``aperture`` contains a float (i.e. the radius).
+            The approximate separation (arcsec), angle (deg), and
+            contrast (mag), for example obtained with the
+            :class:`~pynpoint.processing.fluxposition.SimplexMinimizationModule`.
+            The angle is measured in counterclockwise direction with
+            respect to the upward direction (i.e., East of North). The
+            separation and angle are also used as (fixed) position for the
+            aperture if ``aperture`` contains a float (i.e. the radius).
         bounds : tuple(tuple(float, float), tuple(float, float), tuple(float, float))
-            The prior boundaries for the separation (arcsec), angle (deg), and contrast (mag). Each
-            set of boundaries is specified as a tuple.
+            The prior boundaries for the separation (arcsec), angle
+            (deg), and contrast (mag). Each set of boundaries is
+            specified as a tuple.
         nwalkers : int
             Number of walkers.
         nsteps : int
             Number of steps per walker.
         psf_scaling : float
-            Additional scaling factor of the planet flux (e.g. to correct for a neutral density
-            filter or difference in exposure time). The value should be negative in order to inject
-            negative fake planets.
+            Additional scaling factor of the planet flux (e.g. to
+            correct for a neutral density filter or difference in
+            exposure time). The value should be negative in order
+            to inject negative fake planets.
         pca_number : int
-            Number of principal components used for the PSF subtraction.
+            Number of principal components used for the PSF
+            subtraction.
         aperture : float, tuple(int, int, float)
-            Either the aperture radius (arcsec) at the position of `param` or tuple with the
-            position and aperture radius (arcsec) as (pos_x, pos_y, radius).
+            Either the aperture radius (arcsec) at the position of
+            ``param`` or tuple with the position and aperture radius
+            (arcsec) as ``(pos_x, pos_y, radius)``.
         mask : tuple(float, float), None
-            Inner and outer mask radius (arcsec) for the PSF subtraction. Both elements of the
-            tuple can be set to None. Masked pixels are excluded from the PCA computation,
-            resulting in a smaller runtime. Masking is done after the artificial planet is
-            injected.
+            Inner and outer mask radius (arcsec) for the PSF
+            subtraction. Both elements of the tuple can be set to
+            ``None``. Masked pixels are excluded from the PCA
+            computation, resulting in a smaller runtime. Masking is
+            done after the artificial planet is injected.
         extra_rot : float
             Additional rotation angle of the images (deg).
         merit : str
-            Figure of merit for the minimization ('hessian', 'gaussian', or 'poisson'). Either the
-            determinant of the Hessian matrix is minimized ('hessian') or the flux of each pixel
-            ('gaussian' or 'poisson'). For the latter case, the estimate noise is assumed to follow
-            a Poisson (see Wertz et al. 2017) or Gaussian distribution (see Wertz et al. 2017 and
-            Stolker et al. 2020).
+            Figure of merit for the minimization ('hessian',
+            'gaussian', or 'poisson'). Either the determinant of the
+            Hessian matrix is minimized ('hessian') or the flux of each
+            pixel ('gaussian' or 'poisson'). For the latter case, the
+            estimate noise is assumed to follow a Poisson (see Wertz et
+            al. 2017) or Gaussian distribution (see Wertz et al. 2017
+            and Stolker et al. 2020).
         residuals : str
-            Method used for combining the residuals ('mean', 'median', 'weighted', or 'clipped').
+            Method used for combining the residuals ('mean', 'median',
+            'weighted', or 'clipped').
+        resume : bool
+            Resume from the last state of the chain that was stored by
+            the backend of ``emcee``. Set to ``True`` for continuing
+            with the samples from a previous run, for example when it
+            was interrupted or to create more steps for the walkers.
+            The backend data of ``emcee`` is stored with the tag
+            ``[chain_out_tag]_backend`` in the HDF5 database.
 
         Keyword arguments
         -----------------
         sigma : tuple(float, float, float)
-            The standard deviations that randomly initializes the start positions of the walkers in
-            a small ball around the a priori preferred position. The tuple should contain a value
-            for the separation (arcsec), position angle (deg), and contrast (mag). The default is
-            set to (1e-5, 1e-3, 1e-3).
+            The standard deviations that randomly initializes the
+            start positions of the walkers in a small ball around
+            the a priori preferred position. The tuple should contain
+            a value for the separation (arcsec), position angle (deg),
+            and contrast (mag). The default is set to
+            ``(1e-5, 1e-3, 1e-3)``.
 
         Returns
         -------
@@ -861,6 +919,7 @@ class MCMCsamplingModule(ProcessingModule):
         self.m_extra_rot = extra_rot
         self.m_merit = merit
         self.m_residuals = residuals
+        self.m_resume = resume
 
         if mask is None:
             self.m_mask = (None, None)
@@ -870,10 +929,12 @@ class MCMCsamplingModule(ProcessingModule):
     @typechecked
     def run(self) -> None:
         """
-        Run method of the module. The posterior distributions of the separation, position angle,
-        and flux contrast are sampled with the affine invariant Markov chain Monte Carlo (MCMC)
-        ensemble sampler emcee. At each step, a negative copy of the PSF template is injected
-        and the likelihood function is evaluated at the approximate position of the planet.
+        Run method of the module. The posterior distributions of the
+        separation, position angle, and flux contrast are sampled with
+        the affine invariant Markov chain Monte Carlo (MCMC) ensemble
+        sampler ``emcee``. At each step, a negative copy of the PSF
+        template is injected and the likelihood function is evaluated
+        at the approximate position of the planet.
 
         Returns
         -------
@@ -888,6 +949,7 @@ class MCMCsamplingModule(ProcessingModule):
         ndim = 3
 
         cpu = self._m_config_port.get_attribute('CPU')
+        work_place = self._m_config_port.get_attribute('WORKING_PLACE')
         pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
         parang = self.m_image_in_port.get_attribute('PARANG')
 
@@ -950,6 +1012,15 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
+        backend = emcee.backends.HDFBackend(
+            os.path.join(work_place, 'PynPoint_database.hdf5'),
+            name=self.m_chain_out_port.tag+'_backend', read_only=False)
+
+        if not self.m_resume:
+            print('Reset backend of emcee...', end='', flush=True)
+            backend.reset(self.m_nwalkers, ndim)
+            print(' [DONE]')
+
         print('Sampling the posterior distributions with MCMC...')
 
         with Pool(processes=cpu) as pool:
@@ -970,7 +1041,8 @@ class MCMCsamplingModule(ProcessingModule):
                                                    indices,
                                                    self.m_merit,
                                                    self.m_residuals,
-                                                   var_noise]))
+                                                   var_noise]),
+                                            backend=backend)
 
             sampler.run_mcmc(initial, self.m_nsteps, progress=True)
 
@@ -1155,8 +1227,8 @@ class SystematicErrorModule(ProcessingModule):
             either a single image or a stack of images equal in size to ``image_in_tag``.
         offset_out_tag : str
             Tag of the database entry at which the differences are stored between the injected and
-            and retrieved values of the separation (arcsec), position angle (deg), and contrast
-            (mag).
+            and retrieved values of the separation (arcsec), position angle (deg), contrast
+            (mag), x position (pix), and y position (pix).
         position : tuple(float, float)
             Separation (arcsec) and position angle (deg) that are used to remove the planet signal.
             The separation is also used to estimate the systematic error.
