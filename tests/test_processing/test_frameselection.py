@@ -260,7 +260,7 @@ class TestFrameSelection:
         assert np.sum(data) == pytest.approx(115.68591492205017, rel=self.limit, abs=0.)
         assert data.shape == (10, 6)
 
-    def test_image_statistics_posiiton(self) -> None:
+    def test_image_statistics_position(self) -> None:
 
         module = ImageStatisticsModule(name_in='stat2',
                                        image_in_tag='read',
@@ -317,7 +317,7 @@ class TestFrameSelection:
 
         attr = self.pipeline.get_attribute('read', 'SSIM', static=False)
         assert np.min(attr) > 0.
-        assert np.sum(attr) == pytest.approx(9.096830542868524, rel=self.limit, abs=0.)
+        assert np.sum(attr) == pytest.approx(9.074290801266256, rel=self.limit, abs=0.)
         assert attr.shape == (10, )
 
     def test_select_by_attribute(self) -> None:
@@ -340,11 +340,11 @@ class TestFrameSelection:
         assert attr.shape == (44, )
 
         attr = self.pipeline.get_attribute('select_sim', 'SSIM', static=False)
-        assert np.sum(attr) == pytest.approx(5.556889532446573, rel=self.limit, abs=0.)
+        assert np.sum(attr) == pytest.approx(5.545578246610884, rel=self.limit, abs=0.)
         assert attr.shape == (6, )
 
         attr = self.pipeline.get_attribute('remove_sim', 'SSIM', static=False)
-        assert np.sum(attr) == pytest.approx(3.539941010421951, rel=self.limit, abs=0.)
+        assert np.sum(attr) == pytest.approx(3.528712554655373, rel=self.limit, abs=0.)
         assert attr.shape == (4, )
 
     def test_residual_selection(self) -> None:

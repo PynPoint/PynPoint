@@ -9,7 +9,7 @@ from typing import Tuple
 import numpy as np
 from scipy.stats import t
 
-from photutils import aperture_photometry, CircularAperture
+from photutils.aperture import aperture_photometry, CircularAperture
 from typeguard import typechecked
 
 from pynpoint.util.analysis import student_t, fake_planet,\

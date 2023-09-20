@@ -15,7 +15,7 @@ from pynpoint.util.continuous import autoscales, cwt, icwt
 
 
 # This function cannot by @typechecked because of a compatibility issue with numba
-@jit(cache=True)
+@jit(cache=True, nopython=True)
 def _fast_zeros(soft: bool,
                 spectrum: np.ndarray,
                 uthresh: float) -> np.ndarray:

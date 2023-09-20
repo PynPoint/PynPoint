@@ -773,7 +773,17 @@ class FrameSimilarityModule(ProcessingModule):
                 winsize = int(window_size) + 1
             else:
                 winsize = int(window_size)
-            return reference_index, structural_similarity(image_x_i, image_m, win_size=winsize)
+
+            # TODO Unclear what value to pass to data_range
+            # Previously the argument was not requires
+            data_range = np.amax(image_x_i)-np.amin(image_x_i)
+
+            struc_sim = structural_similarity(im1=image_x_i,
+                                              im2=image_m,
+                                              win_size=winsize,
+                                              data_range=data_range)
+
+            return reference_index, struc_sim
 
     @typechecked
     def run(self) -> None:

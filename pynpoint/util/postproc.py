@@ -18,10 +18,10 @@ def postprocessor(images: np.ndarray,
                   angles: np.ndarray,
                   scales: Optional[np.ndarray],
                   pca_number: Union[int, Tuple[Union[int, np.int32, np.int64], Union[int, np.int32, np.int64]]],
-                  pca_sklearn: PCA = None,
+                  pca_sklearn: Optional[PCA] = None,
                   im_shape: Union[None, tuple] = None,
-                  indices: np.ndarray = None,
-                  mask: np.ndarray = None,
+                  indices: Optional[np.ndarray] = None,
+                  mask: Optional[np.ndarray] = None,
                   processing_type: str = 'ADI'):
 
     """

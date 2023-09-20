@@ -9,7 +9,7 @@ from pynpoint.core.dataio import DataStorage
 
 class TestDataStorage:
 
-    def setup(self) -> None:
+    def setup_class(self) -> None:
 
         self.limit = 1e-10
         self.test_data = os.path.dirname(__file__) + '/PynPoint_database.hdf5'

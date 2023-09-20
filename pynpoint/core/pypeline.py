@@ -579,10 +579,10 @@ class Pypeline:
         self.m_data_storage.open_connection()
 
         if data_range is None:
-            data = np.asarray(self.m_data_storage.m_data_bank[tag])
+            data = np.array(self.m_data_storage.m_data_bank[tag])
 
         else:
-            data = np.asarray(self.m_data_storage.m_data_bank[tag][data_range[0]:data_range[1], ])
+            data = np.array(self.m_data_storage.m_data_bank[tag][data_range[0]:data_range[1], ])
 
         self.m_data_storage.close_connection()
 

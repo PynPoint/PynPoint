@@ -17,15 +17,13 @@ class TestInputPort:
         create_random(self.test_dir)
         create_config(self.test_dir+'PynPoint_config.ini')
 
-    def teardown_class(self) -> None:
-
-        remove_test_data(self.test_dir)
-
-    def setup(self) -> None:
-
         file_in = os.path.dirname(__file__) + '/PynPoint_database.hdf5'
 
         self.storage = DataStorage(file_in)
+
+    def teardown_class(self) -> None:
+
+        remove_test_data(self.test_dir)
 
     def test_create_instance_access_data(self) -> None:
 

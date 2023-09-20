@@ -12,7 +12,7 @@ from typeguard import typechecked
 from scipy.stats import t
 from scipy.ndimage import gaussian_filter
 from skimage.feature import hessian_matrix
-from photutils import aperture_photometry, CircularAperture
+from photutils.aperture import aperture_photometry, CircularAperture
 
 from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
                                 cartesian_to_polar, create_mask
@@ -345,7 +345,8 @@ def merit_function(residuals: np.ndarray,
                                                             sigma=sigma,
                                                             mode='constant',
                                                             cval=0.,
-                                                            order='rc')
+                                                            order='rc',
+                                                            use_gaussian_derivatives=False)
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 
@@ -431,7 +432,8 @@ def pixel_variance(var_type: str,
                                                             sigma=sigma,
                                                             mode='constant',
                                                             cval=0.,
-                                                            order='rc')
+                                                            order='rc',
+                                                            use_gaussian_derivatives=False)
 
         hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
 

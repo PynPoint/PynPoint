@@ -11,12 +11,10 @@ from pynpoint.util.tests import create_random
 
 class TestOutputPort:
 
-    def setup(self) -> None:
+    def setup_class(self) -> None:
 
         self.limit = 1e-10
         self.storage = DataStorage(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
-
-    def setup_class(self) -> None:
 
         create_random(os.path.dirname(__file__))
 

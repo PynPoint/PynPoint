@@ -19,8 +19,7 @@ import numpy as np
 import pywt
 
 from numba import jit
-from photutils import aperture_photometry
-from photutils.aperture import Aperture
+from photutils.aperture import Aperture, aperture_photometry
 from scipy.ndimage import gaussian_filter
 from scipy.optimize import curve_fit
 from skimage.registration import phase_cross_correlation
@@ -413,7 +412,7 @@ def crop_rotating_star(image: np.ndarray,
 @typechecked
 def photometry(image: np.ndarray,
                im_index: int,
-               aperture: Union[Aperture, List[Aperture]]) -> np.float64:
+               aperture: Union[Aperture, List[Aperture]]) -> np.ndarray:
     # https://photutils.readthedocs.io/en/stable/overview.html
     # In Photutils, pixel coordinates are zero-indexed, meaning that (x, y) = (0, 0)
     # corresponds to the center of the lowest, leftmost array element. This means that
@@ -588,7 +587,7 @@ def time_filter(timeline: np.ndarray,
 
 
 # This function cannot by @typechecked because of a compatibility issue with numba
-@jit(cache=True)
+@jit(cache=True, nopython=True)
 def calc_fast_convolution(F_roof_tmp: np.complex128,
                           W: np.ndarray,
                           tmp_s: tuple,
@@ -758,7 +757,7 @@ def replace_pixels(image: np.ndarray,
 
 
 # This function cannot by @typechecked because of a compatibility issue with numba
-@jit(cache=True)
+@jit(cache=True, nopython=True)
 def sigma_filter(dev_image: np.ndarray,
                  var_image: np.ndarray,
                  mean_image: np.ndarray,

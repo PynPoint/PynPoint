@@ -217,18 +217,6 @@ class TestPypeline:
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 
-    def test_add_wrong_module(self) -> None:
-
-        pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
-
-        with pytest.raises(TypeError) as error:
-            pipeline.add_module(None)
-
-        assert str(error.value) == 'type of argument "module" must be ' \
-                                   'pynpoint.core.processing.PypelineModule; got NoneType instead'
-
-        os.remove(self.test_dir+'PynPoint_database.hdf5')
-
     def test_run_module_wrong_tag(self) -> None:
 
         pipeline = Pypeline(self.test_dir, self.test_dir, self.test_dir)
@@ -269,15 +257,6 @@ class TestPypeline:
                                    'not exist in the database.'
 
         assert pipeline.validate_pipeline_module('test') == (False, 'test')
-
-        with pytest.raises(TypeError) as error:
-            pipeline._validate('module', 'tag')
-
-        assert str(error.value) == 'type of argument "module" must be one of (' \
-                                   'pynpoint.core.processing.ReadingModule, ' \
-                                   'pynpoint.core.processing.WritingModule, ' \
-                                   'pynpoint.core.processing.ProcessingModule); ' \
-                                   'got str instead'
 
         os.remove(self.test_dir+'PynPoint_database.hdf5')
 

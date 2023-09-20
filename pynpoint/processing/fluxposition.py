@@ -15,7 +15,7 @@ import emcee
 from typeguard import typechecked
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
-from photutils import CircularAperture
+from photutils.aperture import CircularAperture
 
 from pynpoint.core.processing import ProcessingModule
 from pynpoint.util.apply_func import photometry
@@ -1111,7 +1111,7 @@ class AperturePhotometryModule(ProcessingModule):
                  image_in_tag: str,
                  phot_out_tag: str,
                  radius: float = 0.1,
-                 position: Tuple[float, float] = None) -> None:
+                 position: Optional[Tuple[float, float]] = None) -> None:
         """
         Parameters
         ----------
