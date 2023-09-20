@@ -31,11 +31,6 @@ Documentation
 
 Documentation is available at `http://pynpoint.readthedocs.io <http://pynpoint.readthedocs.io>`_, including installation instructions, details on the pipeline architecture, and several notebook tutorials.
 
-Mailing list
-------------
-
-Please subscribe to the `mailing list <https://pynpoint.readthedocs.io/en/latest/mailing.html>`_ if you want to be informed about PynPoint related news.
-
 Attribution
 -----------
 

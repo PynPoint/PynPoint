@@ -49,6 +49,5 @@ PynPoint is a pipeline for processing and analysis of high-contrast imaging data
    :caption: About
    :hidden:
 
-   mailing
    contributing
    about

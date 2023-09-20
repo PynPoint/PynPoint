@@ -3,7 +3,7 @@
 Installation
 ============
 
-PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.8/3.9/3.10.
+PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.9/3.10/3.11.
 
 .. _virtual_environment:
 
@@ -72,7 +72,7 @@ The Github repository contains the latest commits. Installation from Github is a
 
 .. code-block:: console
 
-   $ pip install git+git://github.com/PynPoint/PynPoint.git
+   $ pip install git+https://github.com/PynPoint/PynPoint.git
 
 Cloning the repository
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -81,7 +81,7 @@ Alternatively, the Github repository can be cloned, which is in particular usefu
 
 .. code-block:: console
 
-    $ git clone git@github.com:PynPoint/PynPoint.git
+    $ git clone https://github.com/PynPoint/PynPoint.git
 
 The package is installed by running ``pip`` in the local repository folder:
 
@@ -119,9 +119,9 @@ Or updated to the latest versions with which PynPoint is compatible:
 Testing Pynpoint
 ----------------
 
-The installation can be tested by starting Python in interactive mode and printing the PynPoint version:
+The installation can be tested by starting Python in interactive mode and creating an instance of the ``Pypeline``:
 
 .. code-block:: python
 
     >>> import pynpoint
-    >>> pynpoint.__version__
+    >>> pipeline = pynpoint.Pypeline()
