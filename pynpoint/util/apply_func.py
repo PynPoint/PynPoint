@@ -8,10 +8,9 @@ are always the sliced data and the index in the dataset.
 TODO Docstrings are missing for most of the functions.
 """
 
-import copy
-import math
 import warnings
 
+from copy import deepcopy
 from typing import List, Optional, Union, Tuple
 
 import cv2
@@ -31,6 +30,9 @@ from pynpoint.core.dataio import InputPort, OutputPort
 from pynpoint.util.image import center_pixel, crop_image, scale_image, shift_image
 from pynpoint.util.star import locate_star
 from pynpoint.util.wavelets import WaveletAnalysisCapsule
+
+
+warnings.filterwarnings("always")
 
 
 @typechecked
@@ -194,8 +196,8 @@ def fit_2d_function(image: np.ndarray,
         x_diff = xx_grid - x_center
         y_diff = yy_grid - y_center
 
-        sigma_x = fwhm_x/math.sqrt(8.*math.log(2.))
-        sigma_y = fwhm_y/math.sqrt(8.*math.log(2.))
+        sigma_x = fwhm_x/np.sqrt(8.*np.log(2.))
+        sigma_y = fwhm_y/np.sqrt(8.*np.log(2.))
 
         a_gauss = 0.5 * ((np.cos(theta)/sigma_x)**2 + (np.sin(theta)/sigma_y)**2)
         b_gauss = 0.5 * ((np.sin(2.*theta)/sigma_x**2) - (np.sin(2.*theta)/sigma_y**2))
@@ -303,26 +305,46 @@ def fit_2d_function(image: np.ndarray,
     elif model == 'moffat':
         model_func = moffat_2d
 
-    try:
-        popt, pcov = curve_fit(model_func,
-                               (xx_grid, yy_grid),
-                               image,
-                               p0=guess,
-                               sigma=None,
-                               method='lm')
-
-        perr = np.sqrt(np.diag(pcov))
-
-    except RuntimeError:
+    if np.sum(np.abs(image) < 1e-6) > 0:
+        # Skip the fit if the region is partially masked.
+        # This could happen for a source  close to the edge
+        # of the field of view of derotated images. In that
+        # case, the source might be visible only in part of
+        # the data, depending on the parallactic angles
         if model == 'gaussian':
-            popt = np.zeros(7)
-            perr = np.zeros(7)
+            popt = np.full(7, np.nan)
+            perr = np.full(7, np.nan)
 
         elif model == 'moffat':
-            popt = np.zeros(8)
-            perr = np.zeros(8)
+            popt = np.full(8, np.nan)
+            perr = np.full(8, np.nan)
 
-        warnings.warn(f'Fit could not converge on image number {im_index}.')
+        warnings.warn(f'Could not run the fit on image number {im_index}.')
+
+    else:
+        try:
+            popt, pcov, infodict, _, _ = curve_fit(model_func,
+                                                   (xx_grid, yy_grid),
+                                                   image,
+                                                   p0=guess,
+                                                   sigma=None,
+                                                   method='lm',
+                                                   full_output=True,
+                                                   maxfev=0)
+
+            perr = np.sqrt(np.diag(pcov))
+
+        except RuntimeError:
+            if model == 'gaussian':
+                popt = np.full(7, np.nan)
+                perr = np.full(7, np.nan)
+
+            elif model == 'moffat':
+                popt = np.full(8, np.nan)
+                perr = np.full(8, np.nan)
+
+            warnings.warn(f'Fit could not converge on image number {im_index}.')
+            infodict = None
 
     if model == 'gaussian':
 
@@ -331,7 +353,7 @@ def fit_2d_function(image: np.ndarray,
                                popt[2]*pixscale, perr[2]*pixscale,
                                popt[3]*pixscale, perr[3]*pixscale,
                                popt[4], perr[4],
-                               math.degrees(popt[5]) % 360., math.degrees(perr[5]),
+                               np.degrees(popt[5]) % 360., np.degrees(perr[5]),
                                popt[6], perr[6]))
 
     elif model == 'moffat':
@@ -341,7 +363,7 @@ def fit_2d_function(image: np.ndarray,
                                popt[2]*pixscale, perr[2]*pixscale,
                                popt[3]*pixscale, perr[3]*pixscale,
                                popt[4], perr[4],
-                               math.degrees(popt[5]) % 360., math.degrees(perr[5]),
+                               np.degrees(popt[5]) % 360., np.degrees(perr[5]),
                                popt[6], perr[6],
                                popt[7], perr[7]))
 
@@ -369,7 +391,7 @@ def crop_around_star(image: np.ndarray,
         else:
             center = (position[1], position[0])  # (y, x)
 
-        width = int(math.ceil(position[2]/pixscale))
+        width = int(np.ceil(position[2]/pixscale))
 
     starpos = locate_star(image, center, width, fwhm)
 
@@ -654,15 +676,15 @@ def bad_pixel_interpolation(image_in: np.ndarray,
     image_in = image_in * bad_pixel_map
 
     # for names see ref paper
-    g = copy.deepcopy(image_in)
+    g = deepcopy(image_in)
     G = np.fft.fft2(g)
-    w = copy.deepcopy(bad_pixel_map)
+    w = deepcopy(bad_pixel_map)
     W = np.fft.fft2(w)
 
     N = g.shape
     N_size = float(N[0] * N[1])
     F_roof = np.zeros(N, dtype=complex)
-    tmp_G = copy.deepcopy(G)
+    tmp_G = deepcopy(G)
 
     iteration = 0
 
@@ -795,9 +817,9 @@ def bad_pixel_sigma_filter(image_in: np.ndarray,
     while iterate > 0:
         # Source image
 
-        source_image = copy.deepcopy(image_in)
+        source_image = deepcopy(image_in)
 
-        source_blur = cv2.blur(copy.deepcopy(source_image), (box, box))
+        source_blur = cv2.blur(deepcopy(source_image), (box, box))
 
         # Mean image
 
@@ -809,7 +831,7 @@ def bad_pixel_sigma_filter(image_in: np.ndarray,
 
         dev_image = (mean_image - source_image) ** 2
 
-        dev_blur = cv2.blur(copy.deepcopy(dev_image), (box, box))
+        dev_blur = cv2.blur(deepcopy(dev_image), (box, box))
 
         # Compute variance by smoothing the image with the deviations from the mean
 

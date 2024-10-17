@@ -254,7 +254,7 @@ class AngleInterpolationModule(ProcessingModule):
         if 'NDIT' in self.m_data_in_port.get_all_non_static_attributes():
             ndit = self.m_data_in_port.get_attribute('NDIT')
 
-            if not np.all(ndit == steps):
+            if len(ndit) != len(steps) or not np.all(ndit == steps):
                 warnings.warn('There is a mismatch between the NDIT and NFRAMES values. The '
                               'parallactic angles are calculated with a linear interpolation by '
                               'using NFRAMES steps. A frame selection should be applied after '

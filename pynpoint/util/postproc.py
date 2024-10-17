@@ -66,7 +66,7 @@ def postprocessor(images: np.ndarray,
         pca_number = (pca_number, -1)
 
     if mask is None:
-        mask = 1.
+        mask = np.ones(images.shape[-2:])
 
     res_raw = np.zeros(images.shape)
     res_rot = np.zeros(images.shape)

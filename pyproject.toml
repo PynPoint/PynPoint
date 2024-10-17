@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynpoint"
+version = "0.11.0"
+authors = [
+    {name = "Tomas Stolker", email = "stolker@strw.leidenuniv.nl"},
+    {name = "Markus Bonse", email = "mbonse@phys.ethz.ch"},
+]
+description = "Pipeline for processing and analysis of high-contrast imaging dat"
+readme = "README.rst"
+requires-python = ">=3.9,<3.12"
+license = {text = "MIT License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dynamic = ["dependencies"]
+
+[project.urls]
+Documentation = "https://pynpoint.readthedocs.io"
+Repository = "https://github.com/PynPoint/PynPoint"
+Issues = "https://github.com/PynPoint/PynPoint/issues"
+
+[tool.setuptools]
+packages = ["pynpoint"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

@@ -101,8 +101,7 @@ def compute_aperture_flux_elements(image: np.ndarray,
         # Place a circular aperture at a position and sum up the flux inside the aperture
         aperture = CircularAperture((x_tmp, y_tmp), size)
         phot_table = aperture_photometry(image, aperture, method='exact')
-
-        ap_phot[i] = phot_table['aperture_sum']
+        ap_phot[i] = phot_table['aperture_sum'][0]
 
     return ap_phot
 

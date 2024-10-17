@@ -8,7 +8,7 @@ import time
 import warnings
 import multiprocessing as mp
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -440,7 +440,7 @@ class MassLimitsModule(ProcessingModule):
     @typechecked
     def interpolate_model(age_eval: np.ndarray,
                           mag_eval: np.ndarray,
-                          filter_index: int,
+                          filter_index: Union[int, np.int64],
                           model_age: List[float],
                           model_data: List[np.ndarray]) -> np.ndarray:
         """
@@ -507,8 +507,7 @@ class MassLimitsModule(ProcessingModule):
 
         # find the column index of the filter
         # simple argwhere gives empty list?!
-        filter_index = np.argwhere([self.m_instr_filter == j for j in model_header])[0]
-        filter_index = int(filter_index)
+        filter_index = np.argwhere([self.m_instr_filter == j for j in model_header])[0][0]
 
         contrast_data = self.m_contrast_in_port.get_all()
 

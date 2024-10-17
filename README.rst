@@ -3,26 +3,9 @@ PynPoint
 
 **Pipeline for processing and analysis of high-contrast imaging data**
 
-.. image:: https://img.shields.io/pypi/v/pynpoint
-   :target: https://pypi.python.org/pypi/pynpoint
+.. container::
 
-.. image:: https://img.shields.io/pypi/pyversions/pynpoint
-   :target: https://pypi.python.org/pypi/pynpoint
-
-.. image:: https://github.com/PynPoint/PynPoint/workflows/CI/badge.svg?branch=main
-   :target: https://github.com/PynPoint/PynPoint/actions
-
-.. image:: https://img.shields.io/readthedocs/pynpoint
-   :target: http://pynpoint.readthedocs.io
-
-.. image:: https://codecov.io/gh/PynPoint/PynPoint/branch/main/graph/badge.svg?token=35stSKWsaJ
-   :target: https://codecov.io/gh/PynPoint/PynPoint    
-
-.. image:: https://img.shields.io/codefactor/grade/github/PynPoint/PynPoint
-   :target: https://www.codefactor.io/repository/github/pynpoint/pynpoint
-
-.. image:: https://img.shields.io/github/license/pynpoint/pynpoint
-   :target: https://github.com/PynPoint/PynPoint/blob/main/LICENSE
+    |PyPI Status| |Python Versions| |CI Status| |Docs Status| |Code Coverage| |Code Quality| |License|
 
 PynPoint is a generic, end-to-end pipeline for the reduction and analysis of high-contrast imaging data of exoplanets. The pipeline uses principal component analysis (PCA) for the subtraction of the stellar PSF and supports post-processing with ADI, RDI, and SDI techniques. The package is stable, extensively tested, and actively maintained.
 
@@ -51,4 +34,25 @@ PynPoint is distributed under the GNU General Public License v3. See the `LICENS
 Acknowledgements
 ----------------
 
-The PynPoint logo was designed by `Atlas Interactive <https://atlas-interactive.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
+The PynPoint logo was designed by `Atlas Digital <https://atlas-digital.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
+
+.. |PyPI Status| image:: https://img.shields.io/pypi/v/pynpoint
+   :target: https://pypi.python.org/pypi/pynpoint
+
+.. |Python Versions| image:: https://img.shields.io/pypi/pyversions/pynpoint
+   :target: https://pypi.python.org/pypi/pynpoint
+
+.. |CI Status| image:: https://github.com/PynPoint/PynPoint/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/PynPoint/PynPoint/actions
+
+.. |Docs Status| image:: https://img.shields.io/readthedocs/pynpoint
+   :target: http://pynpoint.readthedocs.io
+
+.. |Code Coverage| image:: https://codecov.io/gh/PynPoint/PynPoint/branch/main/graph/badge.svg?token=LSSCPMJ5JH
+   :target: https://codecov.io/gh/PynPoint/PynPoint
+
+.. |Code Quality| image:: https://img.shields.io/codefactor/grade/github/PynPoint/PynPoint
+   :target: https://www.codefactor.io/repository/github/PynPoint/PynPoint
+
+.. |License| image:: https://img.shields.io/github/license/PynPoint/PynPoint
+   :target: https://github.com/PynPoint/PynPoint/blob/main/LICENSE
