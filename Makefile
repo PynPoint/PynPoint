@@ -2,23 +2,24 @@
 
 help:
 	@echo "pypi - submit to PyPI server"
+	@echo "pypi-check - check the distribution for PyPI"
 	@echo "pypi-test - submit to TestPyPI server"
 	@echo "docs - generate Sphinx documentation"
-	@echo "test - run unit tests"
 	@echo "coverage - check code coverage"
-	@echo "clean - remove all artifacts"
-	@echo "clean-build - remove build artifacts"
-	@echo "clean-python - remove Python artifacts"
-	@echo "clean-test - remove test artifacts"
+	@echo "test - run unit tests"
+	@echo "clean - remove artifacts"
 
 pypi:
-	python setup.py sdist bdist_wheel
-	twine check dist/*
+	python -m build
 	twine upload dist/*
 
+pypi-check:
+	python -m build
+	twine check dist/*
+
 pypi-test:
-	python setup.py sdist bdist_wheel
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	python -m build
+	twine upload -r testpypi dist/*
 
 docs:
 	rm -f docs/pynpoint.core.rst
@@ -39,9 +40,7 @@ coverage:
 	coverage report -m
 	coverage html
 
-clean: clean-build clean-python clean-test
-
-clean-build:
+clean:
 	rm -rf dist/
 	rm -rf build/
 	rm -rf htmlcov/
@@ -56,14 +55,6 @@ clean-build:
 	rm -rf docs/tutorials/*.fits
 	rm -rf docs/tutorials/*.dat
 	rm -rf docs/tutorials/*.npy
-
-clean-python:
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -rf {} +
-
-clean-test:
 	rm -f coverage.xml
 	rm -f .coverage
 	rm -f .coverage.*

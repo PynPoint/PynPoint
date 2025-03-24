@@ -115,7 +115,8 @@ class FitsReadingModule(ReadingModule):
         hdu_list = fits.open(fits_file)
 
         if hdu_list[0].data is not None:
-            images = hdu_list[0].data.byteswap().newbyteorder()
+            images = hdu_list[0].data.byteswap()
+            images = images.view(images.dtype.newbyteorder("="))
 
         elif len(hdu_list) > 1:
             for i, item in enumerate(hdu_list[1:]):
@@ -126,7 +127,8 @@ class FitsReadingModule(ReadingModule):
                                   f"so reading data from the ImageHDU "
                                   f"at number {i+1} instead.")
 
-                    images = hdu_list[i+1].data.byteswap().newbyteorder()
+                    images = hdu_list[i+1].data.byteswap()
+                    images = images.view(images.dtype.newbyteorder("="))
 
                     break
 

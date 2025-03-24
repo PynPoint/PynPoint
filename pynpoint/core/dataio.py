@@ -278,7 +278,7 @@ class ConfigPort(Port):
         if not self._check_status_and_activate():
             status = False
 
-        elif self._check_if_data_exists() is False:
+        elif not self._check_if_data_exists():
             warnings.warn('No data under the tag which is linked by the ConfigPort.')
             status = False
 
@@ -427,7 +427,7 @@ class InputPort(Port):
         if not self._check_status_and_activate():
             status = False
 
-        elif self._check_if_data_exists() is False:
+        elif not self._check_if_data_exists():
             warnings.warn('No data under the tag which is linked by the InputPort.')
             status = False
 
@@ -471,16 +471,16 @@ class InputPort(Port):
 
         Returns
         -------
-        tuple(int, )
+        tuple(int), None
             Shape of the dataset. Returns None if the dataset does not exist.
         """
 
-        if not self._check_error_cases():
-            data_shape = None
-
-        else:
+        if self._check_error_cases():
             self.open_port()
             data_shape = self._m_data_storage.m_data_bank[self._m_tag].shape
+
+        else:
+            data_shape = None
 
         return data_shape
 
@@ -495,12 +495,12 @@ class InputPort(Port):
             Number of dimensions of the dataset. Returns None if the dataset does not exist.
         """
 
-        if not self._check_error_cases():
-            ndim = None
-
-        else:
+        if self._check_error_cases():
             self.open_port()
             ndim = self._m_data_storage.m_data_bank[self._m_tag].ndim
+
+        else:
+            ndim = None
 
         return ndim
 
@@ -518,11 +518,11 @@ class InputPort(Port):
             The full dataset. Returns None if the data does not exist.
         """
 
-        if not self._check_error_cases():
-            data = None
+        if self._check_error_cases():
+            data = np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
 
         else:
-            data = np.asarray(self._m_data_storage.m_data_bank[self._m_tag][...])
+            data = None
 
         return data
 
@@ -546,10 +546,7 @@ class InputPort(Port):
             The attribute value. Returns None if the attribute does not exist.
         """
 
-        if not self._check_error_cases():
-            attr_val = None
-
-        else:
+        if self._check_error_cases():
             if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
                 # static attribute
                 attr_val = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
@@ -562,6 +559,9 @@ class InputPort(Port):
             else:
                 warnings.warn(f'The attribute \'{name}\' was not found.')
                 attr_val = None
+
+        else:
+            attr_val = None
 
         # Convert numpy types to base types (e.g., np.float64 -> float)
         if isinstance(attr_val, np.generic):
@@ -580,11 +580,11 @@ class InputPort(Port):
             Dictionary of all attributes, as `{attr_name:attr_value}`.
         """
 
-        if not self._check_error_cases():
-            attr_dict = None
+        if self._check_error_cases():
+            attr_dict = dict(self._m_data_storage.m_data_bank[self._m_tag].attrs)
 
         else:
-            attr_dict = dict(self._m_data_storage.m_data_bank[self._m_tag].attrs)
+            attr_dict = None
 
         return attr_dict
 
@@ -601,10 +601,7 @@ class InputPort(Port):
             List of all existing non-static attribute keys.
         """
 
-        if not self._check_error_cases():
-            attr_key = None
-
-        else:
+        if self._check_error_cases():
             attr_key = []
 
             if 'header_' + self._m_tag + '/' in self._m_data_storage.m_data_bank:
@@ -613,6 +610,9 @@ class InputPort(Port):
 
             else:
                 attr_key = None
+
+        else:
+            attr_key = None
 
         return attr_key
 

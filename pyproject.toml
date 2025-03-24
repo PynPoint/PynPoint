@@ -11,10 +11,12 @@ authors = [
 ]
 description = "Pipeline for processing and analysis of high-contrast imaging dat"
 readme = "README.rst"
-requires-python = ">=3.9,<3.12"
+requires-python = ">=3.10,<3.13"
 license = {text = "MIT License"}
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",

@@ -266,8 +266,8 @@ class SimplexMinimizationModule(ProcessingModule):
             Number of principal components (PCs) used for the PSF
             subtraction. Can be either a single value, or a range or
             list of values. In the latter case, the ``res_out_tag`` and
-            ```flux_position_tag``` contain a 3 digit number with the
-             number of PCs.
+            ``flux_position_tag`` contain a 3 digit number with the
+            number of PCs.
         cent_size : float, None
             Radius of the central mask (arcsec). No mask is used when
             set to ``None``. The mask is applied after the artificial
@@ -1012,6 +1012,8 @@ class MCMCsamplingModule(ProcessingModule):
         initial[:, 1] = self.m_param[1] + np.random.normal(0, self.m_sigma[1], self.m_nwalkers)
         initial[:, 2] = self.m_param[2] + np.random.normal(0, self.m_sigma[2], self.m_nwalkers)
 
+        print('Sampling the posterior distributions with MCMC...')
+
         backend = emcee.backends.HDFBackend(
             os.path.join(work_place, 'PynPoint_database.hdf5'),
             name=self.m_chain_out_port.tag+'_backend', read_only=False)
@@ -1020,8 +1022,6 @@ class MCMCsamplingModule(ProcessingModule):
             print('Reset backend of emcee...', end='', flush=True)
             backend.reset(self.m_nwalkers, ndim)
             print(' [DONE]')
-
-        print('Sampling the posterior distributions with MCMC...')
 
         with Pool(processes=cpu) as pool:
             sampler = emcee.EnsembleSampler(self.m_nwalkers,

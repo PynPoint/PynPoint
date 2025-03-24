@@ -79,9 +79,7 @@ class TestBackground:
         self.pipeline.run_module('simple')
 
         data = self.pipeline.get_data('simple')
-        # TODO Unclear why the absolute value is required
-        # Local the sum is 3.55 and on Github -3.55
-        assert np.abs(np.sum(data)) == pytest.approx(3.552713678800501e-15, rel=self.limit, abs=0.)
+        assert np.sum(data) == pytest.approx(0.0, rel=0.0, abs=1e-10)
         assert data.shape == (20, 21, 21)
 
     def test_mean_background_shift(self) -> None:

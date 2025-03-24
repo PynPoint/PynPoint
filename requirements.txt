@@ -2,10 +2,11 @@ astropy
 emcee
 h5py
 numba
-numpy < 2.0.0
+numpy
 opencv-python
 photutils
 PyWavelets
+schwimmbad
 scikit-image
 scikit-learn
 scipy

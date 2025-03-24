@@ -308,13 +308,15 @@ class NearReadingModule(ReadingModule):
             # write the HDU image to the chop A or B array
             # count the number of chop A and B images
             if cycle == 'HCYCLE1' and cycle != prev_cycle:
-                chopa[count_chopa, ] = hdulist[i+1].data.byteswap().newbyteorder()
+                data_tmp = hdulist[i+1].data.byteswap()
+                chopa[count_chopa, ] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
 
                 count_chopa += 1
                 prev_cycle = cycle
 
             elif cycle == 'HCYCLE2' and cycle != prev_cycle:
-                chopb[count_chopb, ] = hdulist[i+1].data.byteswap().newbyteorder()
+                data_tmp = hdulist[i+1].data.byteswap()
+                chopb[count_chopb, ] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
 
                 count_chopb += 1
                 prev_cycle = cycle
