@@ -30,26 +30,28 @@ class ContrastCurveModule(ProcessingModule):
     parallel if ``CPU`` is set to a value larger than 1 in the configuration file.
     """
 
-    __author__ = 'Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber'
+    __author__ = "Tomas Stolker, Jasper Jonker, Benedikt Schmidhuber"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 psf_in_tag: str,
-                 contrast_out_tag: str,
-                 separation: Tuple[float, float, float] = (0.1, 1., 0.01),
-                 angle: Tuple[float, float, float] = (0., 360., 60.),
-                 threshold: Tuple[str, float] = ('sigma', 5.),
-                 psf_scaling: float = 1.,
-                 aperture: float = 0.05,
-                 pca_number: int = 20,
-                 cent_size: Optional[float] = None,
-                 edge_size: Optional[float] = None,
-                 extra_rot: float = 0.,
-                 residuals: str = 'mean',
-                 snr_inject: float = 100.,
-                 **kwargs: float) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        psf_in_tag: str,
+        contrast_out_tag: str,
+        separation: Tuple[float, float, float] = (0.1, 1.0, 0.01),
+        angle: Tuple[float, float, float] = (0.0, 360.0, 60.0),
+        threshold: Tuple[str, float] = ("sigma", 5.0),
+        psf_scaling: float = 1.0,
+        aperture: float = 0.05,
+        pca_number: int = 20,
+        cent_size: Optional[float] = None,
+        edge_size: Optional[float] = None,
+        extra_rot: float = 0.0,
+        residuals: str = "mean",
+        snr_inject: float = 100.0,
+        **kwargs: float,
+    ) -> None:
         """
         Parameters
         ----------
@@ -107,25 +109,40 @@ class ContrastCurveModule(ProcessingModule):
 
         super().__init__(name_in)
 
-        if 'sigma' in kwargs:
-            warnings.warn('The \'sigma\' parameter has been deprecated. Please use the '
-                          '\'threshold\' parameter instead.', DeprecationWarning)
+        if "sigma" in kwargs:
+            warnings.warn(
+                "The 'sigma' parameter has been deprecated. Please use the "
+                "'threshold' parameter instead.",
+                DeprecationWarning,
+            )
 
-        if 'norm' in kwargs:
-            warnings.warn('The \'norm\' parameter has been deprecated. It is not recommended to '
-                          'normalize the images before PSF subtraction.', DeprecationWarning)
+        if "norm" in kwargs:
+            warnings.warn(
+                "The 'norm' parameter has been deprecated. It is not recommended to "
+                "normalize the images before PSF subtraction.",
+                DeprecationWarning,
+            )
 
-        if 'accuracy' in kwargs:
-            warnings.warn('The \'accuracy\' parameter has been deprecated. The parameter is no '
-                          'longer required.', DeprecationWarning)
+        if "accuracy" in kwargs:
+            warnings.warn(
+                "The 'accuracy' parameter has been deprecated. The parameter is no "
+                "longer required.",
+                DeprecationWarning,
+            )
 
-        if 'magnitude' in kwargs:
-            warnings.warn('The \'magnitude\' parameter has been deprecated. The parameter is no '
-                          'longer required.', DeprecationWarning)
+        if "magnitude" in kwargs:
+            warnings.warn(
+                "The 'magnitude' parameter has been deprecated. The parameter is no "
+                "longer required.",
+                DeprecationWarning,
+            )
 
-        if 'ignore' in kwargs:
-            warnings.warn('The \'ignore\' parameter has been deprecated. The parameter is no '
-                          'longer required.', DeprecationWarning)
+        if "ignore" in kwargs:
+            warnings.warn(
+                "The 'ignore' parameter has been deprecated. The parameter is no "
+                "longer required.",
+                DeprecationWarning,
+            )
 
         self.m_image_in_port = self.add_input_port(image_in_tag)
 
@@ -148,11 +165,19 @@ class ContrastCurveModule(ProcessingModule):
         self.m_residuals = residuals
         self.m_snr_inject = snr_inject
 
-        if self.m_angle[0] < 0. or self.m_angle[0] > 360. or self.m_angle[1] < 0. or \
-           self.m_angle[1] > 360. or self.m_angle[2] < 0. or self.m_angle[2] > 360.:
+        if (
+            self.m_angle[0] < 0.0
+            or self.m_angle[0] > 360.0
+            or self.m_angle[1] < 0.0
+            or self.m_angle[1] > 360.0
+            or self.m_angle[2] < 0.0
+            or self.m_angle[2] > 360.0
+        ):
 
-            raise ValueError('The angular positions of the fake planets should lie between '
-                             '0 deg and 360 deg.')
+            raise ValueError(
+                "The angular positions of the fake planets should lie between "
+                "0 deg and 360 deg."
+            )
 
     @typechecked
     def run(self) -> None:
@@ -174,16 +199,18 @@ class ContrastCurveModule(ProcessingModule):
         psf = self.m_psf_in_port.get_all()
 
         if psf.shape[0] != 1 and psf.shape[0] != images.shape[0]:
-            raise ValueError(f'The number of frames in psf_in_tag {psf.shape} does not match with '
-                             f'the number of frames in image_in_tag {images.shape}. The '
-                             f'DerotateAndStackModule can be used to average the PSF frames '
-                             f'(without derotating) before applying the ContrastCurveModule.')
+            raise ValueError(
+                f"The number of frames in psf_in_tag {psf.shape} does not match with "
+                f"the number of frames in image_in_tag {images.shape}. The "
+                f"DerotateAndStackModule can be used to average the PSF frames "
+                f"(without derotating) before applying the ContrastCurveModule."
+            )
 
-        cpu = self._m_config_port.get_attribute('CPU')
-        working_place = self._m_config_port.get_attribute('WORKING_PLACE')
+        cpu = self._m_config_port.get_attribute("CPU")
+        working_place = self._m_config_port.get_attribute("WORKING_PLACE")
 
-        parang = self.m_image_in_port.get_attribute('PARANG')
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        parang = self.m_image_in_port.get_attribute("PARANG")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         self.m_image_in_port.close_port()
         self.m_psf_in_port.close_port()
@@ -196,25 +223,29 @@ class ContrastCurveModule(ProcessingModule):
 
         self.m_aperture /= pixscale
 
-        pos_r = np.arange(self.m_separation[0]/pixscale,
-                          self.m_separation[1]/pixscale,
-                          self.m_separation[2]/pixscale)
+        pos_r = np.arange(
+            self.m_separation[0] / pixscale,
+            self.m_separation[1] / pixscale,
+            self.m_separation[2] / pixscale,
+        )
 
-        pos_t = np.arange(self.m_angle[0]+self.m_extra_rot,
-                          self.m_angle[1]+self.m_extra_rot,
-                          self.m_angle[2])
+        pos_t = np.arange(
+            self.m_angle[0] + self.m_extra_rot,
+            self.m_angle[1] + self.m_extra_rot,
+            self.m_angle[2],
+        )
 
         if self.m_cent_size is None:
-            index_del = np.argwhere(pos_r-self.m_aperture <= 0.)
+            index_del = np.argwhere(pos_r - self.m_aperture <= 0.0)
         else:
-            index_del = np.argwhere(pos_r-self.m_aperture <= self.m_cent_size)
+            index_del = np.argwhere(pos_r - self.m_aperture <= self.m_cent_size)
 
         pos_r = np.delete(pos_r, index_del)
 
-        if self.m_edge_size is None or self.m_edge_size > images.shape[1]/2.:
-            index_del = np.argwhere(pos_r+self.m_aperture >= images.shape[1]/2.)
+        if self.m_edge_size is None or self.m_edge_size > images.shape[1] / 2.0:
+            index_del = np.argwhere(pos_r + self.m_aperture >= images.shape[1] / 2.0)
         else:
-            index_del = np.argwhere(pos_r+self.m_aperture >= self.m_edge_size)
+            index_del = np.argwhere(pos_r + self.m_aperture >= self.m_edge_size)
 
         pos_r = np.delete(pos_r, index_del)
 
@@ -227,37 +258,45 @@ class ContrastCurveModule(ProcessingModule):
         async_results = []
 
         # Create temporary files
-        tmp_im_str = os.path.join(working_place, 'tmp_images.npy')
-        tmp_psf_str = os.path.join(working_place, 'tmp_psf.npy')
+        tmp_im_str = os.path.join(working_place, "tmp_images.npy")
+        tmp_psf_str = os.path.join(working_place, "tmp_psf.npy")
 
         np.save(tmp_im_str, images)
         np.save(tmp_psf_str, psf)
 
         mask = create_mask(images.shape[-2:], (self.m_cent_size, self.m_edge_size))
 
-        _, im_res = pca_psf_subtraction(images=images*mask,
-                                        angles=-1.*parang+self.m_extra_rot,
-                                        pca_number=self.m_pca_number)
+        _, im_res = pca_psf_subtraction(
+            images=images * mask,
+            angles=-1.0 * parang + self.m_extra_rot,
+            pca_number=self.m_pca_number,
+        )
 
         noise = combine_residuals(method=self.m_residuals, res_rot=im_res)
 
         pool = mp.Pool(cpu)
 
         for pos in positions:
-            async_results.append(pool.apply_async(contrast_limit,
-                                                  args=(tmp_im_str,
-                                                        tmp_psf_str,
-                                                        noise,
-                                                        mask,
-                                                        parang,
-                                                        self.m_psf_scaling,
-                                                        self.m_extra_rot,
-                                                        self.m_pca_number,
-                                                        self.m_threshold,
-                                                        self.m_aperture,
-                                                        self.m_residuals,
-                                                        self.m_snr_inject,
-                                                        pos)))
+            async_results.append(
+                pool.apply_async(
+                    contrast_limit,
+                    args=(
+                        tmp_im_str,
+                        tmp_psf_str,
+                        noise,
+                        mask,
+                        parang,
+                        self.m_psf_scaling,
+                        self.m_extra_rot,
+                        self.m_pca_number,
+                        self.m_threshold,
+                        self.m_aperture,
+                        self.m_residuals,
+                        self.m_snr_inject,
+                        pos,
+                    ),
+                )
+            )
 
         pool.close()
 
@@ -268,14 +307,16 @@ class ContrastCurveModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, len(positions), 'Calculating detection limits...', start_time)
+            progress(
+                nfinished, len(positions), "Calculating detection limits...", start_time
+            )
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
 
         if nfinished != len(positions):
-            print('\r                                                      ')
-            print('\rCalculating detection limits... [DONE]')
+            print("\r                                                      ")
+            print("\rCalculating detection limits... [DONE]")
 
         # get the results for every async_result object
         for item in async_results:
@@ -299,15 +340,15 @@ class ContrastCurveModule(ProcessingModule):
         mag_var = np.nanvar(result, axis=1)[:, 2]
         res_fpf = result[:, 0, 3]
 
-        limits = np.column_stack((pos_r*pixscale, mag_mean, mag_var, res_fpf))
+        limits = np.column_stack((pos_r * pixscale, mag_mean, mag_var, res_fpf))
 
         self.m_image_in_port._check_status_and_activate()
         self.m_contrast_out_port._check_status_and_activate()
 
         self.m_contrast_out_port.set_all(limits, data_dim=2)
 
-        history = f'{self.m_threshold[0]} = {self.m_threshold[1]}'
-        self.m_contrast_out_port.add_history('ContrastCurveModule', history)
+        history = f"{self.m_threshold[0]} = {self.m_threshold[1]}"
+        self.m_contrast_out_port.add_history("ContrastCurveModule", history)
         self.m_contrast_out_port.copy_attributes(self.m_image_in_port)
         self.m_contrast_out_port.close_port()
 
@@ -318,17 +359,18 @@ class MassLimitsModule(ProcessingModule):
     downloaded from https://phoenix.ens-lyon.fr/Grids/.
     """
 
-    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
+    __author__ = "Benedikt Schmidhuber, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 contrast_in_tag: str,
-                 mass_out_tag: str,
-                 model_file: str,
-                 star_prop: dict,
-                 instr_filter: str = 'L\'') -> None:
-
+    def __init__(
+        self,
+        name_in: str,
+        contrast_in_tag: str,
+        mass_out_tag: str,
+        model_file: str,
+        star_prop: dict,
+        instr_filter: str = "L'",
+    ) -> None:
         """
         Parameters
         ----------
@@ -363,23 +405,29 @@ class MassLimitsModule(ProcessingModule):
 
         super().__init__(name_in)
 
-        self.m_star_age = star_prop['age']/1000.  # [Myr]
-        self.m_star_abs = star_prop['magnitude'] - 5.*math.log10(star_prop['distance']/10.)
+        self.m_star_age = star_prop["age"] / 1000.0  # [Myr]
+        self.m_star_abs = star_prop["magnitude"] - 5.0 * math.log10(
+            star_prop["distance"] / 10.0
+        )
 
         self.m_instr_filter = instr_filter
         self.m_model_file = model_file
 
         if not os.path.exists(self.m_model_file):
-            raise ValueError('The path does not appear to be an existing file. Please check the'
-                             'path. If you are unsure about the path, pass the absolute path to the'
-                             'model file.')
+            raise ValueError(
+                "The path does not appear to be an existing file. Please check the"
+                "path. If you are unsure about the path, pass the absolute path to the"
+                "model file."
+            )
 
         self.m_contrast_in_port = self.add_input_port(contrast_in_tag)
         self.m_mass_out_port = self.add_output_port(mass_out_tag)
 
     @staticmethod
     @typechecked
-    def read_model(model_file_path: str) -> Tuple[List[float], List[np.ndarray], List[str]]:
+    def read_model(
+        model_file_path: str,
+    ) -> Tuple[List[float], List[np.ndarray], List[str]]:
         """
         Reads the data from the model file and structures it. Returns an array of available model
         ages and a list of model data for each age.
@@ -403,10 +451,10 @@ class MassLimitsModule(ProcessingModule):
         data = []
         with open(model_file_path) as file:
             for line in file:
-                if ('---' in line) or line == '\n':
+                if ("---" in line) or line == "\n":
                     continue
                 else:
-                    data += [list(filter(None, line.rstrip().split(' ')))]
+                    data += [list(filter(None, line.rstrip().split(" ")))]
 
         # initialize list of ages
         ages = []
@@ -417,15 +465,15 @@ class MassLimitsModule(ProcessingModule):
 
         k = -1
         for _line in data:
-            if '(Gyr)' in _line:
+            if "(Gyr)" in _line:
                 # get time line
                 ages += [float(_line[-1])]
                 isochrones += [[]]
                 k += 1
 
-            elif 'lg(g)' in _line:
+            elif "lg(g)" in _line:
                 # get header line
-                header = ['M/Ms', 'Teff(K)'] + _line[1:]
+                header = ["M/Ms", "Teff(K)"] + _line[1:]
 
             else:
                 # save the data
@@ -438,11 +486,13 @@ class MassLimitsModule(ProcessingModule):
 
     @staticmethod
     @typechecked
-    def interpolate_model(age_eval: np.ndarray,
-                          mag_eval: np.ndarray,
-                          filter_index: Union[int, np.int64],
-                          model_age: List[float],
-                          model_data: List[np.ndarray]) -> np.ndarray:
+    def interpolate_model(
+        age_eval: np.ndarray,
+        mag_eval: np.ndarray,
+        filter_index: Union[int, np.int64],
+        model_age: List[float],
+        model_data: List[np.ndarray],
+    ) -> np.ndarray:
         """
         Interpolates the grid based model data.
 
@@ -482,7 +532,7 @@ class MassLimitsModule(ProcessingModule):
         grid_points = grid_points.reshape(-1, 2)
         interp = np.column_stack((age_eval, mag_eval))
 
-        return griddata(grid_points, grid_values, interp, method='cubic', rescale=True)
+        return griddata(grid_points, grid_values, interp, method="cubic", rescale=True)
 
     @typechecked
     def run(self) -> None:
@@ -502,12 +552,16 @@ class MassLimitsModule(ProcessingModule):
 
         model_age, model_data, model_header = self.read_model(self.m_model_file)
 
-        assert self.m_instr_filter in model_header, 'The selected filter was not found in the ' \
-                                                    'list of available filters from the model.'
+        assert self.m_instr_filter in model_header, (
+            "The selected filter was not found in the "
+            "list of available filters from the model."
+        )
 
         # find the column index of the filter
         # simple argwhere gives empty list?!
-        filter_index = np.argwhere([self.m_instr_filter == j for j in model_header])[0][0]
+        filter_index = np.argwhere([self.m_instr_filter == j for j in model_header])[0][
+            0
+        ]
 
         contrast_data = self.m_contrast_in_port.get_all()
 
@@ -515,35 +569,47 @@ class MassLimitsModule(ProcessingModule):
         contrast = contrast_data[:, 1]
         contrast_std = np.sqrt(contrast_data[:, 2])
 
-        age_eval = self.m_star_age*np.ones_like(contrast)
-        mag_eval = self.m_star_abs+contrast
+        age_eval = self.m_star_age * np.ones_like(contrast)
+        mag_eval = self.m_star_abs + contrast
 
-        print('Interpolating isochrones...', end='')
+        print("Interpolating isochrones...", end="")
 
-        mass = self.interpolate_model(age_eval=age_eval,
-                                      mag_eval=mag_eval,
-                                      filter_index=filter_index,
-                                      model_age=model_age,
-                                      model_data=model_data)
+        mass = self.interpolate_model(
+            age_eval=age_eval,
+            mag_eval=mag_eval,
+            filter_index=filter_index,
+            model_age=model_age,
+            model_data=model_data,
+        )
 
-        mass_upper = self.interpolate_model(age_eval=age_eval,
-                                            mag_eval=mag_eval-contrast_std,
-                                            filter_index=filter_index,
-                                            model_age=model_age,
-                                            model_data=model_data) - mass
+        mass_upper = (
+            self.interpolate_model(
+                age_eval=age_eval,
+                mag_eval=mag_eval - contrast_std,
+                filter_index=filter_index,
+                model_age=model_age,
+                model_data=model_data,
+            )
+            - mass
+        )
 
-        mass_lower = self.interpolate_model(age_eval=age_eval,
-                                            mag_eval=mag_eval+contrast_std,
-                                            filter_index=filter_index,
-                                            model_age=model_age,
-                                            model_data=model_data) - mass
+        mass_lower = (
+            self.interpolate_model(
+                age_eval=age_eval,
+                mag_eval=mag_eval + contrast_std,
+                filter_index=filter_index,
+                model_age=model_age,
+                model_data=model_data,
+            )
+            - mass
+        )
 
         mass_limits = np.column_stack((separation, mass, mass_upper, mass_lower))
         self.m_mass_out_port.set_all(mass_limits, data_dim=2)
 
-        print(' [DONE]')
+        print(" [DONE]")
 
-        history = f'filter = {self.m_instr_filter}'
-        self.m_mass_out_port.add_history('MassLimitsModule', history)
+        history = f"filter = {self.m_instr_filter}"
+        self.m_mass_out_port.add_history("MassLimitsModule", history)
         self.m_mass_out_port.copy_attributes(self.m_contrast_in_port)
         self.m_mass_out_port.close_port()

@@ -18,14 +18,16 @@ class SubtractImagesModule(ProcessingModule):
     Pipeline module for subtracting two sets of images.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tags: Tuple[str, str],
-                 image_out_tag: str,
-                 scaling: float = 1.) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tags: Tuple[str, str],
+        image_out_tag: str,
+        scaling: float = 1.0,
+    ) -> None:
         """
         Parameters
         ----------
@@ -65,24 +67,26 @@ class SubtractImagesModule(ProcessingModule):
         """
 
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
-            raise ValueError('The shape of the two input tags has to be the same.')
+            raise ValueError("The shape of the two input tags has to be the same.")
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in1_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Subtracting images...', start_time)
+            progress(i, len(frames[:-1]), "Subtracting images...", start_time)
 
-            images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
-            images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
+            images1 = self.m_image_in1_port[frames[i] : frames[i + 1],]
+            images2 = self.m_image_in2_port[frames[i] : frames[i + 1],]
 
-            self.m_image_out_port.append(self.m_scaling*(images1-images2), data_dim=3)
+            self.m_image_out_port.append(
+                self.m_scaling * (images1 - images2), data_dim=3
+            )
 
-        history = f'scaling = {self.m_scaling}'
-        self.m_image_out_port.add_history('SubtractImagesModule', history)
+        history = f"scaling = {self.m_scaling}"
+        self.m_image_out_port.add_history("SubtractImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in1_port)
         self.m_image_out_port.close_port()
 
@@ -92,14 +96,16 @@ class AddImagesModule(ProcessingModule):
     Pipeline module for adding two sets of images.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tags: Tuple[str, str],
-                 image_out_tag: str,
-                 scaling: float = 1.) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tags: Tuple[str, str],
+        image_out_tag: str,
+        scaling: float = 1.0,
+    ) -> None:
         """
         Parameters
         ----------
@@ -139,24 +145,26 @@ class AddImagesModule(ProcessingModule):
         """
 
         if self.m_image_in1_port.get_shape() != self.m_image_in2_port.get_shape():
-            raise ValueError('The shape of the two input tags has to be the same.')
+            raise ValueError("The shape of the two input tags has to be the same.")
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in1_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Adding images...', start_time)
+            progress(i, len(frames[:-1]), "Adding images...", start_time)
 
-            images1 = self.m_image_in1_port[frames[i]:frames[i+1], ]
-            images2 = self.m_image_in2_port[frames[i]:frames[i+1], ]
+            images1 = self.m_image_in1_port[frames[i] : frames[i + 1],]
+            images2 = self.m_image_in2_port[frames[i] : frames[i + 1],]
 
-            self.m_image_out_port.append(self.m_scaling*(images1+images2), data_dim=3)
+            self.m_image_out_port.append(
+                self.m_scaling * (images1 + images2), data_dim=3
+            )
 
-        history = f'scaling = {self.m_scaling}'
-        self.m_image_out_port.add_history('AddImagesModule', history)
+        history = f"scaling = {self.m_scaling}"
+        self.m_image_out_port.add_history("AddImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in1_port)
         self.m_image_out_port.close_port()
 
@@ -166,14 +174,12 @@ class RotateImagesModule(ProcessingModule):
     Pipeline module for rotating images.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 angle: float) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, image_out_tag: str, angle: float
+    ) -> None:
         """
         Parameters
         ----------
@@ -209,27 +215,27 @@ class RotateImagesModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Rotating images...', start_time)
+            progress(i, len(frames[:-1]), "Rotating images...", start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i] : frames[i + 1],]
 
-            for j in range(frames[i+1]-frames[i]):
-                im_tmp = images[j, ]
+            for j in range(frames[i + 1] - frames[i]):
+                im_tmp = images[j,]
 
                 # ndimage.rotate rotates in clockwise direction for positive angles
                 im_tmp = rotate(im_tmp, self.m_angle, reshape=False)
 
                 self.m_image_out_port.append(im_tmp, data_dim=3)
 
-        history = f'angle [deg] = {self.m_angle}'
-        self.m_image_out_port.add_history('RotateImagesModule', history)
+        history = f"angle [deg] = {self.m_angle}"
+        self.m_image_out_port.add_history("RotateImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -239,14 +245,12 @@ class RepeatImagesModule(ProcessingModule):
     Pipeline module for repeating the images from a dataset.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 repeat: int) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, image_out_tag: str, repeat: int
+    ) -> None:
         """
         Parameters
         ----------
@@ -284,20 +288,20 @@ class RepeatImagesModule(ProcessingModule):
         """
 
         nimages = self.m_image_in_port.get_shape()[0]
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
 
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
 
         for i in range(self.m_repeat):
-            progress(i, self.m_repeat, 'Repeating images...', start_time)
+            progress(i, self.m_repeat, "Repeating images...", start_time)
 
             for j, _ in enumerate(frames[:-1]):
-                images = self.m_image_in_port[frames[j]:frames[j+1], ]
+                images = self.m_image_in_port[frames[j] : frames[j + 1],]
                 self.m_image_out_port.append(images, data_dim=3)
 
-        history = f'repeat = {self.m_repeat}'
-        self.m_image_out_port.add_history('RepeatImagesModule', history)
+        history = f"repeat = {self.m_repeat}"
+        self.m_image_out_port.add_history("RepeatImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

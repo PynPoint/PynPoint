@@ -33,17 +33,19 @@ class NearReadingModule(ReadingModule):
     contains the average of all images.
     """
 
-    __author__ = 'Jasper Jonker, Tomas Stolker, Anna Boehle'
+    __author__ = "Jasper Jonker, Tomas Stolker, Anna Boehle"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 input_dir: Optional[str] = None,
-                 chopa_out_tag: str = 'chopa',
-                 chopb_out_tag: str = 'chopb',
-                 subtract: bool = False,
-                 crop: Optional[Union[Tuple[int, int, float], Tuple[None, None, float]]] = None,
-                 combine: Optional[str] = None):
+    def __init__(
+        self,
+        name_in: str,
+        input_dir: Optional[str] = None,
+        chopa_out_tag: str = "chopa",
+        chopb_out_tag: str = "chopb",
+        subtract: bool = False,
+        crop: Optional[Union[Tuple[int, int, float], Tuple[None, None, float]]] = None,
+        combine: Optional[str] = None,
+    ):
         """
         Parameters
         ----------
@@ -104,12 +106,12 @@ class NearReadingModule(ReadingModule):
 
         try:
             # try running a subprocess with the 'uncompress' command
-            command = 'uncompress ' + filename
+            command = "uncompress " + filename
             subprocess.check_call(shlex.split(command))
 
-        except(FileNotFoundError, OSError):
+        except (FileNotFoundError, OSError):
             # or else run a subprocess with the 'gunzip' command
-            command = 'gunzip -d ' + filename
+            command = "gunzip -d " + filename
             subprocess.check_call(shlex.split(command))
 
     @typechecked
@@ -125,12 +127,12 @@ class NearReadingModule(ReadingModule):
             None
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
+        cpu = self._m_config_port.get_attribute("CPU")
 
         # list all files ending with .fits.Z in the input location
         files = []
         for item in os.listdir(self.m_input_location):
-            if item.endswith('.fits.Z'):
+            if item.endswith(".fits.Z"):
                 files.append(os.path.join(self.m_input_location, item))
 
         if files:
@@ -139,16 +141,18 @@ class NearReadingModule(ReadingModule):
 
             start_time = time.time()
             for i, _ in enumerate(indices[:-1]):
-                progress(i, len(indices[:-1]), 'Uncompressing NEAR data...', start_time)
+                progress(i, len(indices[:-1]), "Uncompressing NEAR data...", start_time)
 
                 # select subset of compressed files
-                subset = files[indices[i]:indices[i+1]]
+                subset = files[indices[i] : indices[i + 1]]
 
                 # create a list of threads to uncompress CPU number of files
                 # each file is processed by a different thread
                 threads = []
                 for filename in subset:
-                    thread = threading.Thread(target=self._uncompress_file, args=(filename, ))
+                    thread = threading.Thread(
+                        target=self._uncompress_file, args=(filename,)
+                    )
                     threads.append(thread)
 
                 # start the threads
@@ -176,19 +180,20 @@ class NearReadingModule(ReadingModule):
             None
         """
 
-        if str(header['ESO DET CHOP ST']) == 'F':
-            warnings.warn('Dataset was obtained without chopping.')
+        if str(header["ESO DET CHOP ST"]) == "F":
+            warnings.warn("Dataset was obtained without chopping.")
 
-        skipped = int(header['ESO DET CHOP CYCSKIP'])
+        skipped = int(header["ESO DET CHOP CYCSKIP"])
         if skipped != 0:
-            warnings.warn(f'Chop cycles ({skipped}) have been skipped.')
+            warnings.warn(f"Chop cycles ({skipped}) have been skipped.")
 
-        if str(header['ESO DET CHOP CYCSUM']) == 'T':
-            warnings.warn('FITS file contains averaged images.')
+        if str(header["ESO DET CHOP CYCSUM"]) == "T":
+            warnings.warn("FITS file contains averaged images.")
 
     @typechecked
-    def read_header(self,
-                    filename: str) -> Tuple[fits.header.Header, Tuple[int, int, int]]:
+    def read_header(
+        self, filename: str
+    ) -> Tuple[fits.header.Header, Tuple[int, int, int]]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
         contains only a general header. The subsequent HDUs contain a single image with a small
@@ -215,7 +220,7 @@ class NearReadingModule(ReadingModule):
 
         # check if the file contains an even number of images, as expected with two chop positions
         if nimages % 2 != 0:
-            warnings.warn(f'FITS file contains odd number of images: {filename}')
+            warnings.warn(f"FITS file contains odd number of images: {filename}")
 
             # decreasing nimages to an even number such that nimages // 2 gives the correct size
             nimages -= 1
@@ -224,12 +229,14 @@ class NearReadingModule(ReadingModule):
         header = hdulist[0].header
 
         # number of chop cycles
-        ncycles = header['ESO DET CHOP NCYCLES']
+        ncycles = header["ESO DET CHOP NCYCLES"]
 
         # number of chop cycles should be equal to half the number of available images
         if ncycles != nimages // 2:
-            warnings.warn(f'The number of chop cycles ({ncycles}) is not equal to half the '
-                          f'number of available HDU images ({nimages // 2}).')
+            warnings.warn(
+                f"The number of chop cycles ({ncycles}) is not equal to half the "
+                f"number of available HDU images ({nimages // 2})."
+            )
 
         # header of the first image
         header_image = hdulist[1].header
@@ -238,21 +245,21 @@ class NearReadingModule(ReadingModule):
         fits_header = []
         for key in header:
             if key:
-                fits_header.append(str(key)+' = '+str(header[key]))
+                fits_header.append(str(key) + " = " + str(header[key]))
 
         # write the primary header information to the fits_header group
-        header_out_port = self.add_output_port('fits_header/' + filename)
+        header_out_port = self.add_output_port("fits_header/" + filename)
         header_out_port.set_all(np.array(fits_header))
 
         # shape of the image stacks for chop A/B (hence nimages/2)
-        im_shape = (nimages // 2, header_image['NAXIS2'], header_image['NAXIS1'])
+        im_shape = (nimages // 2, header_image["NAXIS2"], header_image["NAXIS1"])
 
         # set the NAXIS image shape in the primary header
         # required by util.attributes.set_nonstatic_attr
-        header.set('NAXIS', 3)
-        header.set('NAXIS1', im_shape[2])
-        header.set('NAXIS2', im_shape[1])
-        header.set('NAXIS3', im_shape[0])
+        header.set("NAXIS", 3)
+        header.set("NAXIS1", im_shape[2])
+        header.set("NAXIS2", im_shape[1])
+        header.set("NAXIS3", im_shape[0])
 
         # check primary header
         self.check_header(header)
@@ -263,8 +270,9 @@ class NearReadingModule(ReadingModule):
 
     @staticmethod
     @typechecked
-    def read_images(filename: str,
-                    im_shape: Tuple[int, int, int]) -> Tuple[np.ndarray, np.ndarray]:
+    def read_images(
+        filename: str, im_shape: Tuple[int, int, int]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Function that opens a FITS file and separates the chop A and chop B images. The primary HDU
         contains only a general header. The subsequent HDUs contain a single image with a small
@@ -295,44 +303,50 @@ class NearReadingModule(ReadingModule):
         count_chopa, count_chopb = 0, 0
         prev_cycle = None
 
-        for i in range(2*im_shape[0]):
+        for i in range(2 * im_shape[0]):
             # get the chop position (HCYCLE1 = chop A, HCYCLE2 = chop B)
             # primary HDU is skipped with +1
-            if 'ESO DET FRAM TYPE' in hdulist[i+1].header:
-                cycle = hdulist[i+1].header['ESO DET FRAM TYPE']
+            if "ESO DET FRAM TYPE" in hdulist[i + 1].header:
+                cycle = hdulist[i + 1].header["ESO DET FRAM TYPE"]
 
             else:
                 hdulist.close()
-                raise ValueError(f'Frame type not found in the FITS header. Image number: {i}.')
+                raise ValueError(
+                    f"Frame type not found in the FITS header. Image number: {i}."
+                )
 
             # write the HDU image to the chop A or B array
             # count the number of chop A and B images
-            if cycle == 'HCYCLE1' and cycle != prev_cycle:
-                data_tmp = hdulist[i+1].data.byteswap()
-                chopa[count_chopa, ] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
+            if cycle == "HCYCLE1" and cycle != prev_cycle:
+                data_tmp = hdulist[i + 1].data.byteswap()
+                chopa[count_chopa,] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
 
                 count_chopa += 1
                 prev_cycle = cycle
 
-            elif cycle == 'HCYCLE2' and cycle != prev_cycle:
-                data_tmp = hdulist[i+1].data.byteswap()
-                chopb[count_chopb, ] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
+            elif cycle == "HCYCLE2" and cycle != prev_cycle:
+                data_tmp = hdulist[i + 1].data.byteswap()
+                chopb[count_chopb,] = data_tmp.view(data_tmp.dtype.newbyteorder("="))
 
                 count_chopb += 1
                 prev_cycle = cycle
 
             elif cycle == prev_cycle:
-                warnings.warn(f'Previous and current chop position ({cycle}) are the same. '
-                              'Skipping the current image.')
+                warnings.warn(
+                    f"Previous and current chop position ({cycle}) are the same. "
+                    "Skipping the current image."
+                )
 
             else:
                 hdulist.close()
-                raise ValueError(f'Frame type ({cycle}) not a valid value. Expecting HCYCLE1 or '
-                                 'HCYCLE2 as value for ESO DET FRAM TYPE.')
+                raise ValueError(
+                    f"Frame type ({cycle}) not a valid value. Expecting HCYCLE1 or "
+                    "HCYCLE2 as value for ESO DET FRAM TYPE."
+                )
 
         # check if the number of chop A and B images is equal, this error should never occur
         if count_chopa != count_chopb:
-            warnings.warn('The number of images is not equal for chop A and chop B.')
+            warnings.warn("The number of images is not equal for chop A and chop B.")
 
         hdulist.close()
 
@@ -365,22 +379,26 @@ class NearReadingModule(ReadingModule):
         files = []
 
         for filename in os.listdir(self.m_input_location):
-            if filename.endswith('.fits'):
+            if filename.endswith(".fits"):
                 files.append(os.path.join(self.m_input_location, filename))
 
         files.sort()
 
         # check if there are FITS files present in the input location
-        assert files, f'No FITS files found in {self.m_input_location}.'
+        assert files, f"No FITS files found in {self.m_input_location}."
 
         # if cropping chop A, get pixscale and convert crop_size to pixels and swap x/y
         if self.m_crop is not None:
-            pixscale = self._m_config_port.get_attribute('PIXSCALE')
-            self.m_crop = (self.m_crop[1], self.m_crop[0], int(math.ceil(self.m_crop[2]/pixscale)))
+            pixscale = self._m_config_port.get_attribute("PIXSCALE")
+            self.m_crop = (
+                self.m_crop[1],
+                self.m_crop[0],
+                int(math.ceil(self.m_crop[2] / pixscale)),
+            )
 
         start_time = time.time()
         for i, filename in enumerate(files):
-            progress(i, len(files), 'Preprocessing NEAR data...', start_time)
+            progress(i, len(files), "Preprocessing NEAR data...", start_time)
 
             # get the primary header data and the image shape
             header, im_shape = self.read_header(filename)
@@ -390,30 +408,28 @@ class NearReadingModule(ReadingModule):
 
             if self.m_subtract:
                 chopa = chopa - chopb
-                chopb = -1. * np.copy(chopa)
+                chopb = -1.0 * np.copy(chopa)
 
             if self.m_crop is not None:
-                chopa = crop_image(chopa,
-                                   center=self.m_crop[0:2],
-                                   size=self.m_crop[2],
-                                   copy=False)
+                chopa = crop_image(
+                    chopa, center=self.m_crop[0:2], size=self.m_crop[2], copy=False
+                )
 
-                chopb = crop_image(chopb,
-                                   center=self.m_crop[0:2],
-                                   size=self.m_crop[2],
-                                   copy=False)
+                chopb = crop_image(
+                    chopb, center=self.m_crop[0:2], size=self.m_crop[2], copy=False
+                )
 
             if self.m_combine is not None:
 
-                if self.m_combine == 'mean':
+                if self.m_combine == "mean":
                     chopa = np.mean(chopa, axis=0)
                     chopb = np.mean(chopb, axis=0)
 
-                elif self.m_combine == 'median':
+                elif self.m_combine == "median":
                     chopa = np.median(chopa, axis=0)
                     chopb = np.median(chopb, axis=0)
 
-                header[self._m_config_port.get_attribute('NFRAMES')] = 1
+                header[self._m_config_port.get_attribute("NFRAMES")] = 1
 
             # append the images of chop A and B
             self.m_chopa_out_port.append(chopa, data_dim=3)
@@ -425,34 +441,40 @@ class NearReadingModule(ReadingModule):
             for port in (self.m_chopa_out_port, self.m_chopb_out_port):
 
                 # set the static attributes
-                set_static_attr(fits_file=filename,
-                                header=header,
-                                config_port=self._m_config_port,
-                                image_out_port=port,
-                                check=True)
+                set_static_attr(
+                    fits_file=filename,
+                    header=header,
+                    config_port=self._m_config_port,
+                    image_out_port=port,
+                    check=True,
+                )
 
                 # set the non-static attributes
-                set_nonstatic_attr(header=header,
-                                   config_port=self._m_config_port,
-                                   image_out_port=port,
-                                   check=True)
+                set_nonstatic_attr(
+                    header=header,
+                    config_port=self._m_config_port,
+                    image_out_port=port,
+                    check=True,
+                )
 
                 # set the remaining attributes
-                set_extra_attr(fits_file=filename,
-                               nimages=im_shape[0]//2,
-                               config_port=self._m_config_port,
-                               image_out_port=port,
-                               first_index=first_index)
+                set_extra_attr(
+                    fits_file=filename,
+                    nimages=im_shape[0] // 2,
+                    config_port=self._m_config_port,
+                    image_out_port=port,
+                    first_index=first_index,
+                )
 
                 # increase the first value of the INDEX attribute
-                first_index += im_shape[0]//2
+                first_index += im_shape[0] // 2
 
                 # flush the output port
                 port.flush()
 
         # add history information
-        self.m_chopa_out_port.add_history('NearReadingModule', 'Chop A')
-        self.m_chopb_out_port.add_history('NearReadingModule', 'Chop B')
+        self.m_chopa_out_port.add_history("NearReadingModule", "Chop A")
+        self.m_chopb_out_port.add_history("NearReadingModule", "Chop B")
 
         # close all connections to the database
         self.m_chopa_out_port.close_port()

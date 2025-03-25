@@ -29,10 +29,9 @@ if TYPE_CHECKING:
 
 
 @typechecked
-def progress(current: int,
-             total: int,
-             message: str,
-             start_time: Optional[float] = None) -> None:
+def progress(
+    current: int, total: int, message: str, start_time: Optional[float] = None
+) -> None:
     """
     Function to show and update the progress as standard output.
 
@@ -69,34 +68,35 @@ def progress(current: int,
             String with the formatted time.
         """
 
-        hours = int(delta_time / 3600.)
-        minutes = int((delta_time % 3600.) / 60.)
-        seconds = int(delta_time % 60.)
+        hours = int(delta_time / 3600.0)
+        minutes = int((delta_time % 3600.0) / 60.0)
+        seconds = int(delta_time % 60.0)
 
-        return f'{hours:>02}:{minutes:>02}:{seconds:>02}'
+        return f"{hours:>02}:{minutes:>02}:{seconds:>02}"
 
     fraction = float(current) / float(total)
-    percentage = 100.*fraction
+    percentage = 100.0 * fraction
 
     if start_time is None:
-        sys.stdout.write(f'\r{message} {percentage:4.1f}% \r')
+        sys.stdout.write(f"\r{message} {percentage:4.1f}% \r")
 
     else:
-        if fraction > 0. and current+1 != total:
+        if fraction > 0.0 and current + 1 != total:
             time_taken = time.time() - start_time
-            time_left = time_taken / fraction * (1. - fraction)
-            sys.stdout.write(f'{message} {percentage:4.1f}% - ETA: {time_string(time_left)}\r')
+            time_left = time_taken / fraction * (1.0 - fraction)
+            sys.stdout.write(
+                f"{message} {percentage:4.1f}% - ETA: {time_string(time_left)}\r"
+            )
 
-    if current+1 == total:
-        sys.stdout.write((29 + len(message)) * ' ' + '\r')
-        sys.stdout.write(message+' [DONE]\n')
+    if current + 1 == total:
+        sys.stdout.write((29 + len(message)) * " " + "\r")
+        sys.stdout.write(message + " [DONE]\n")
 
     sys.stdout.flush()
 
 
 @typechecked
-def memory_frames(memory: Union[int, np.int64],
-                  nimages: int) -> np.ndarray:
+def memory_frames(memory: Union[int, np.int64], nimages: int) -> np.ndarray:
     """
     Function to subdivide the input images is in quantities of MEMORY.
 
@@ -117,11 +117,13 @@ def memory_frames(memory: Union[int, np.int64],
         frames = np.asarray([0, nimages])
 
     else:
-        frames = np.linspace(start=0,
-                             stop=nimages - nimages % memory,
-                             num=int(float(nimages)/float(memory))+1,
-                             endpoint=True,
-                             dtype=np.int64)
+        frames = np.linspace(
+            start=0,
+            stop=nimages - nimages % memory,
+            num=int(float(nimages) / float(memory)) + 1,
+            endpoint=True,
+            dtype=np.int64,
+        )
 
         if nimages % memory > 0:
             frames = np.append(frames, nimages)
@@ -146,14 +148,13 @@ def angle_average(angles: np.ndarray) -> float:
     """
 
     cmath_rect = sum(cmath.rect(1, math.radians(ang)) for ang in angles)
-    cmath_phase = cmath.phase(cmath_rect/len(angles))
+    cmath_phase = cmath.phase(cmath_rect / len(angles))
 
     return math.degrees(cmath_phase)
 
 
 @typechecked
-def angle_difference(angle_1: float,
-                     angle_2: float) -> float:
+def angle_difference(angle_1: float, angle_2: float) -> float:
     """
     Function to calculate the difference between two  angles.
 
@@ -170,18 +171,18 @@ def angle_difference(angle_1: float,
         Angle difference (deg).
     """
 
-    angle_diff = (angle_1-angle_2) % 360.
+    angle_diff = (angle_1 - angle_2) % 360.0
 
-    if angle_diff >= 180.:
-        angle_diff -= 360.
+    if angle_diff >= 180.0:
+        angle_diff -= 360.0
 
     return angle_diff
 
 
 @typechecked
-def stack_angles(memory: Union[int, np.int64],
-                 parang: np.ndarray,
-                 max_rotation: float) -> np.ndarray:
+def stack_angles(
+    memory: Union[int, np.int64], parang: np.ndarray, max_rotation: float
+) -> np.ndarray:
     """
     Function to subdivide the input images is in quantities of MEMORY with a restriction on the
     maximum field rotation across a subset of images.
@@ -201,7 +202,9 @@ def stack_angles(memory: Union[int, np.int64],
         Array with the indices where a stack of images is subdivided.
     """
 
-    warnings.warn('Testing of util.module.stack_angles has been limited, please use carefully.')
+    warnings.warn(
+        "Testing of util.module.stack_angles has been limited, please use carefully."
+    )
 
     nimages = parang.size
 
@@ -209,13 +212,15 @@ def stack_angles(memory: Union[int, np.int64],
         frames = [0, nimages]
 
     else:
-        frames = [0, ]
+        frames = [
+            0,
+        ]
         parang_start = parang[0]
         im_count = 0
 
         for i in range(1, parang.size):
-            abs_start_diff = abs(angle_difference(parang_start, parang[i-1]))
-            abs_current_diff = abs(angle_difference(parang[i], parang[i-1]))
+            abs_start_diff = abs(angle_difference(parang_start, parang[i - 1]))
+            abs_current_diff = abs(angle_difference(parang[i], parang[i - 1]))
 
             if abs_start_diff > max_rotation or abs_current_diff > max_rotation:
                 frames.append(i)
@@ -228,8 +233,8 @@ def stack_angles(memory: Union[int, np.int64],
                 if im_count == memory:
                     frames.append(i)
 
-                    if i < parang.size-1:
-                        parang_start = parang[i+1]
+                    if i < parang.size - 1:
+                        parang_start = parang[i + 1]
                         im_count = 0
 
         if frames[-1] != nimages:
@@ -239,9 +244,9 @@ def stack_angles(memory: Union[int, np.int64],
 
 
 @typechecked
-def update_arguments(index: int,
-                     nimages: int,
-                     args_in: Optional[tuple]) -> Optional[tuple]:
+def update_arguments(
+    index: int, nimages: int, args_in: Optional[tuple]
+) -> Optional[tuple]:
     """
     Function to update the arguments of an input function. Specifically, arguments which contain an
     array with the first dimension equal in size to the total number of images will be substituted
@@ -282,7 +287,7 @@ def update_arguments(index: int,
 
 # This function *cannot* be decorated with @typechecked, because the typeguard library checks type
 # hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
-def module_info(pipeline_module: 'PypelineModule') -> None:
+def module_info(pipeline_module: "PypelineModule") -> None:
     """
     Function to print the module name.
 
@@ -300,15 +305,15 @@ def module_info(pipeline_module: 'PypelineModule') -> None:
     module_name = type(pipeline_module).__name__
     str_length = len(module_name)
 
-    print('\n' + str_length * '-')
+    print("\n" + str_length * "-")
     print(module_name)
-    print(str_length * '-' + '\n')
-    print(f'Module name: {pipeline_module._m_name}')
+    print(str_length * "-" + "\n")
+    print(f"Module name: {pipeline_module._m_name}")
 
 
 # This function *cannot* be decorated with @typechecked, because the typeguard library checks type
 # hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
-def input_info(pipeline_module: 'PypelineModule') -> None:
+def input_info(pipeline_module: "PypelineModule") -> None:
     """
     Function to print information about the input data.
 
@@ -327,24 +332,25 @@ def input_info(pipeline_module: 'PypelineModule') -> None:
 
     if len(input_ports) == 1:
         input_shape = pipeline_module._m_input_ports[input_ports[0]].get_shape()
-        print(f'Input port: {input_ports[0]} {input_shape}')
+        print(f"Input port: {input_ports[0]} {input_shape}")
 
     else:
-        print('Input ports:', end='')
+        print("Input ports:", end="")
 
         for i, item in enumerate(input_ports):
             input_shape = pipeline_module._m_input_ports[input_ports[i]].get_shape()
 
             if i < len(input_ports) - 1:
-                print(f' {item} {input_shape},', end='')
+                print(f" {item} {input_shape},", end="")
             else:
-                print(f' {item} {input_shape}')
+                print(f" {item} {input_shape}")
 
 
 # This function *cannot* be decorated with @typechecked, because the typeguard library checks type
 # hints at *runtime*, when PypelineModule is not available without causing circular dependencies.
-def output_info(pipeline_module: 'PypelineModule',
-                output_shape: Dict[str, Tuple[int, ...]]) -> None:
+def output_info(
+    pipeline_module: "PypelineModule", output_shape: Dict[str, Tuple[int, ...]]
+) -> None:
     """
     Function to print information about the output data.
 
@@ -364,14 +370,14 @@ def output_info(pipeline_module: 'PypelineModule',
     output_ports = list(pipeline_module._m_output_ports.keys())
 
     if len(output_ports) == 1:
-        if output_ports[0][:11] != 'fits_header':
-            print(f'Output port: {output_ports[0]} {output_shape[output_ports[0]]}')
+        if output_ports[0][:11] != "fits_header":
+            print(f"Output port: {output_ports[0]} {output_shape[output_ports[0]]}")
 
     else:
-        print('Output ports:', end='')
+        print("Output ports:", end="")
 
         for i, item in enumerate(output_ports):
             if i < len(output_ports) - 1:
-                print(f' {item} {output_shape[output_ports[i]]},', end='')
+                print(f" {item} {output_shape[output_ports[i]]},", end="")
             else:
-                print(f' {item} {output_shape[output_ports[i]]}')
+                print(f" {item} {output_shape[output_ports[i]]}")

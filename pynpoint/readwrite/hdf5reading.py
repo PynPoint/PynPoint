@@ -28,14 +28,16 @@ class Hdf5ReadingModule(ReadingModule):
     may lead to inconsistencies in the central database.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 input_filename: Optional[str] = None,
-                 input_dir: Optional[str] = None,
-                 tag_dictionary: Optional[dict] = None):
+    def __init__(
+        self,
+        name_in: str,
+        input_filename: Optional[str] = None,
+        input_dir: Optional[str] = None,
+        tag_dictionary: Optional[dict] = None,
+    ):
         """
         Parameters
         ----------
@@ -71,8 +73,7 @@ class Hdf5ReadingModule(ReadingModule):
         self._m_tag_dictionary = tag_dictionary
 
     @typechecked
-    def read_single_hdf5(self,
-                         file_in: str) -> None:
+    def read_single_hdf5(self, file_in: str) -> None:
         """
         Function which reads a single HDF5 file.
 
@@ -87,15 +88,17 @@ class Hdf5ReadingModule(ReadingModule):
             None
         """
 
-        hdf5_file = h5py.File(file_in, mode='r')
+        hdf5_file = h5py.File(file_in, mode="r")
 
         for tag_in in self._m_tag_dictionary:
             tag_in = str(tag_in)  # unicode keys cause errors
             tag_out = self._m_tag_dictionary[tag_in]
 
             if tag_in not in hdf5_file:
-                warnings.warn(f'The dataset with tag name \'{tag_in}\' is not found in the HDF5 '
-                              f'file.')
+                warnings.warn(
+                    f"The dataset with tag name '{tag_in}' is not found in the HDF5 "
+                    f"file."
+                )
 
                 continue
 
@@ -108,9 +111,9 @@ class Hdf5ReadingModule(ReadingModule):
                 port_out.add_attribute(name=attr_name, value=attr_value)
 
             # add non-static attributes
-            if 'header_' + tag_in in hdf5_file:
-                for attr_name in hdf5_file['header_' + tag_in]:
-                    attr_val = hdf5_file['header_' + tag_in + '/' + attr_name][...]
+            if "header_" + tag_in in hdf5_file:
+                for attr_name in hdf5_file["header_" + tag_in]:
+                    attr_val = hdf5_file["header_" + tag_in + "/" + attr_name][...]
                     port_out.add_attribute(name=attr_name, value=attr_val, static=False)
 
     @typechecked
@@ -128,23 +131,24 @@ class Hdf5ReadingModule(ReadingModule):
         # create list of files to be read
         files = []
 
-        tmp_dir = os.path.join(self.m_input_location, '')
+        tmp_dir = os.path.join(self.m_input_location, "")
 
         # check if a single input file is given
         if self.m_filename is not None:
             # create file path + filename
-            assert(os.path.isfile((tmp_dir + str(self.m_filename)))), \
-                   f'Error: Input file does not exist. Input requested: {self.m_filename}'
+            assert os.path.isfile(
+                (tmp_dir + str(self.m_filename))
+            ), f"Error: Input file does not exist. Input requested: {self.m_filename}"
 
             files.append((tmp_dir + str(self.m_filename)))
 
         else:
             # look for all HDF5 files in the directory
             for tmp_file in os.listdir(self.m_input_location):
-                if tmp_file.endswith('.hdf5') or tmp_file.endswith('.h5'):
+                if tmp_file.endswith(".hdf5") or tmp_file.endswith(".h5"):
                     files.append(tmp_dir + str(tmp_file))
 
         start_time = time.time()
         for i, tmp_file in enumerate(files):
-            progress(i, len(files), 'Reading HDF5 file...', start_time)
+            progress(i, len(files), "Reading HDF5 file...", start_time)
             self.read_single_hdf5(tmp_file)

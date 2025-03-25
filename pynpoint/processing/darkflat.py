@@ -16,8 +16,7 @@ from pynpoint.util.module import progress, memory_frames
 
 
 @typechecked
-def _master_frame(data: np.ndarray,
-                  im_shape: Tuple[int, int, int]) -> np.ndarray:
+def _master_frame(data: np.ndarray, im_shape: Tuple[int, int, int]) -> np.ndarray:
     """
     Internal function which creates a master dark/flat by calculating the mean (3D data) and
     cropping the frames to the shape of the science images if needed.
@@ -38,7 +37,9 @@ def _master_frame(data: np.ndarray,
     shape_in = (im_shape[1], im_shape[2])
 
     if data.shape[0] < shape_in[0] or data.shape[1] < shape_in[1]:
-        raise ValueError('Shape of the calibration images is smaller than the science images.')
+        raise ValueError(
+            "Shape of the calibration images is smaller than the science images."
+        )
 
     if data.shape != shape_in:
         cal_shape = data.shape
@@ -46,10 +47,12 @@ def _master_frame(data: np.ndarray,
         x_off = (cal_shape[0] - shape_in[0]) // 2
         y_off = (cal_shape[1] - shape_in[1]) // 2
 
-        data = data[x_off:x_off+shape_in[0], y_off:y_off+shape_in[1]]
+        data = data[x_off : x_off + shape_in[0], y_off : y_off + shape_in[1]]
 
-        warnings.warn('The calibration images were cropped around their center to match the shape '
-                      'of the science images.')
+        warnings.warn(
+            "The calibration images were cropped around their center to match the shape "
+            "of the science images."
+        )
 
     return data
 
@@ -59,14 +62,12 @@ class DarkCalibrationModule(ProcessingModule):
     Pipeline module to subtract a master dark from the science data.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 dark_in_tag: str,
-                 image_out_tag: str) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, dark_in_tag: str, image_out_tag: str
+    ) -> None:
         """
         Parameters
         ----------
@@ -103,26 +104,27 @@ class DarkCalibrationModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         dark = self.m_dark_in_port.get_all()
 
-        master = _master_frame(data=np.mean(dark, axis=0),
-                               im_shape=self.m_image_in_port.get_shape())
+        master = _master_frame(
+            data=np.mean(dark, axis=0), im_shape=self.m_image_in_port.get_shape()
+        )
 
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Subtracting the dark current...', start_time)
+            progress(i, len(frames[:-1]), "Subtracting the dark current...", start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i] : frames[i + 1],]
 
             self.m_image_out_port.append(images - master, data_dim=3)
 
-        history = f'dark_in_tag = {self.m_dark_in_port.tag}'
-        self.m_image_out_port.add_history('DarkCalibrationModule', history)
+        history = f"dark_in_tag = {self.m_dark_in_port.tag}"
+        self.m_image_out_port.add_history("DarkCalibrationModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -132,14 +134,12 @@ class FlatCalibrationModule(ProcessingModule):
     Pipeline module to apply a flat field correction to the science data.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 flat_in_tag: str,
-                 image_out_tag: str) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, flat_in_tag: str, image_out_tag: str
+    ) -> None:
         """
         Parameters
         ----------
@@ -176,18 +176,19 @@ class FlatCalibrationModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         flat = self.m_flat_in_port.get_all()
 
-        master = _master_frame(data=np.mean(flat, axis=0),
-                               im_shape=self.m_image_in_port.get_shape())
+        master = _master_frame(
+            data=np.mean(flat, axis=0), im_shape=self.m_image_in_port.get_shape()
+        )
 
         # shift all values to greater or equal to +1.0
         flat_min = np.amin(master)
-        master -= flat_min - 1.
+        master -= flat_min - 1.0
 
         # normalization, median value is 1 afterwards
         master /= np.median(master)
@@ -195,13 +196,13 @@ class FlatCalibrationModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Flat fielding the images...', start_time)
+            progress(i, len(frames[:-1]), "Flat fielding the images...", start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i] : frames[i + 1],]
 
-            self.m_image_out_port.append(images/master, data_dim=3)
+            self.m_image_out_port.append(images / master, data_dim=3)
 
-        history = f'flat_in_tag = {self.m_flat_in_port.tag}'
-        self.m_image_out_port.add_history('FlatCalibrationModule', history)
+        history = f"flat_in_tag = {self.m_flat_in_port.tag}"
+        self.m_image_out_port.add_history("FlatCalibrationModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

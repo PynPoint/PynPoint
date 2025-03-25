@@ -28,9 +28,10 @@ from typeguard import typechecked
 
 
 @typechecked
-def normalization(s: Union[np.ndarray, np.generic],
-                  dt: int) -> Union[np.ndarray, np.generic]:
-    """"
+def normalization(
+    s: Union[np.ndarray, np.generic], dt: int
+) -> Union[np.ndarray, np.generic]:
+    """ "
     Parameters
     ----------
     s : numpy.ndarray
@@ -48,11 +49,8 @@ def normalization(s: Union[np.ndarray, np.generic],
 
 
 @typechecked
-def morletft(s: np.ndarray,
-             w: np.ndarray,
-             w0: int,
-             dt: int) -> np.ndarray:
-    """"
+def morletft(s: np.ndarray, w: np.ndarray, w0: int, dt: int) -> np.ndarray:
+    """ "
     Fourier transformed morlet function.
 
     Parameters
@@ -78,16 +76,13 @@ def morletft(s: np.ndarray,
 
     for i in range(s.shape[0]):
         n = normalization(s[i], dt)
-        wavelet[i][pos] = n * p * np.exp(-(s[i] * w[pos] - w0) ** 2 / 2.0)
+        wavelet[i][pos] = n * p * np.exp(-((s[i] * w[pos] - w0) ** 2) / 2.0)
 
     return wavelet
 
 
 @typechecked
-def dogft(s: np.ndarray,
-          w: np.ndarray,
-          order: int,
-          dt: int) -> np.ndarray:
+def dogft(s: np.ndarray, w: np.ndarray, order: int, dt: int) -> np.ndarray:
     """
     Fourier transformed DOG function.
 
@@ -108,20 +103,19 @@ def dogft(s: np.ndarray,
         Normalized Fourier transformed DOG function.
     """
 
-    p = - (0.0 + 1.0j) ** order / np.sqrt(gamma(order + 0.5))
+    p = -((0.0 + 1.0j) ** order) / np.sqrt(gamma(order + 0.5))
     wavelet = np.zeros((s.shape[0], w.shape[0]), dtype=np.complex128)
 
     for i in range(s.shape[0]):
         n = normalization(s[i], dt)
         h = s[i] * w
-        wavelet[i] = n * p * h ** order * np.exp(-h ** 2 / 2.0)
+        wavelet[i] = n * p * h**order * np.exp(-(h**2) / 2.0)
 
     return wavelet
 
 
 @typechecked
-def angularfreq(N: int,
-                dt: int) -> np.ndarray:
+def angularfreq(N: int, dt: int) -> np.ndarray:
     """
     Compute angular frequencies.
 
@@ -153,11 +147,7 @@ def angularfreq(N: int,
 
 
 @typechecked
-def autoscales(N: int,
-               dt: int,
-               dj: float,
-               wf: str,
-               p: int) -> np.ndarray:
+def autoscales(N: int, dt: int, dj: float, wf: str, p: int) -> np.ndarray:
     """
     Compute scales as fractional power of two.
 
@@ -180,18 +170,18 @@ def autoscales(N: int,
         Scales (1D).
     """
 
-    if wf == 'dog':
+    if wf == "dog":
         s0 = (dt * np.sqrt(p + 0.5)) / np.pi
 
-    elif wf == 'morlet':
-        s0 = (dt * (p + np.sqrt(2 + p ** 2))) / (2 * np.pi)
+    elif wf == "morlet":
+        s0 = (dt * (p + np.sqrt(2 + p**2))) / (2 * np.pi)
 
     else:
-        raise ValueError('Wavelet function not available.')
+        raise ValueError("Wavelet function not available.")
 
     # See (9) and (10) at page 67.
 
-    J = int(np.floor(dj ** -1 * np.log2((N * dt) / s0)))
+    J = int(np.floor(dj**-1 * np.log2((N * dt) / s0)))
     s = np.empty(J + 1)
 
     for i in range(s.shape[0]):
@@ -254,11 +244,9 @@ def autoscales(N: int,
 
 
 @typechecked
-def cwt(x: np.ndarray,
-        dt: int,
-        scales: np.ndarray,
-        wf: str = "dog",
-        p: int = 2) -> np.ndarray:
+def cwt(
+    x: np.ndarray, dt: int, scales: np.ndarray, wf: str = "dog", p: int = 2
+) -> np.ndarray:
     """
     Continuous Wavelet Transform.
 
@@ -285,21 +273,21 @@ def cwt(x: np.ndarray,
     scales_arr = np.asarray(scales)
 
     if x_arr.ndim != 1:
-        raise ValueError('x must be an 1d numpy array of list')
+        raise ValueError("x must be an 1d numpy array of list")
 
     if scales_arr.ndim != 1:
-        raise ValueError('scales must be an 1d numpy array of list')
+        raise ValueError("scales must be an 1d numpy array of list")
 
     w = angularfreq(N=x_arr.shape[0], dt=dt)
 
-    if wf == 'dog':
+    if wf == "dog":
         wft = dogft(s=scales_arr, w=w, order=p, dt=dt)
 
-    elif wf == 'morlet':
+    elif wf == "morlet":
         wft = morletft(s=scales_arr, w=w, w0=p, dt=dt)
 
     else:
-        raise ValueError('wavelet function is not available')
+        raise ValueError("wavelet function is not available")
 
     X_ARR = np.empty((wft.shape[0], wft.shape[1]), dtype=np.complex128)
 
@@ -312,8 +300,7 @@ def cwt(x: np.ndarray,
 
 
 @typechecked
-def icwt(X: np.ndarray,
-         scales: np.ndarray) -> np.ndarray:
+def icwt(X: np.ndarray, scales: np.ndarray) -> np.ndarray:
     """
     Inverse Continuous Wavelet Transform. The reconstruction factor is not applied.
 
@@ -334,7 +321,7 @@ def icwt(X: np.ndarray,
     scales_arr = np.asarray(scales)
 
     if X_arr.shape[0] != scales_arr.shape[0]:
-        raise ValueError('X, scales: shape mismatch')
+        raise ValueError("X, scales: shape mismatch")
 
     # See (11), (13) at page 68
     X_ARR = np.empty_like(X_arr)

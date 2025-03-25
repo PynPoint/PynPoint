@@ -20,15 +20,17 @@ class TextWritingModule(WritingModule):
     the use of the Pypeline default output directory as well as a specified location.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 data_tag: str,
-                 file_name: str,
-                 output_dir: Optional[str] = None,
-                 header: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        data_tag: str,
+        file_name: str,
+        output_dir: Optional[str] = None,
+        header: Optional[str] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -69,9 +71,9 @@ class TextWritingModule(WritingModule):
         """
 
         if self.m_header is None:
-            self.m_header = ''
+            self.m_header = ""
 
-        print('Writing text file...', end='')
+        print("Writing text file...", end="")
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
@@ -81,14 +83,14 @@ class TextWritingModule(WritingModule):
             data = np.squeeze(data, axis=0)
 
         if data.ndim > 2:
-            raise ValueError('Only 1D or 2D arrays can be written to a text file.')
+            raise ValueError("Only 1D or 2D arrays can be written to a text file.")
 
-        if data.dtype == 'int32' or data.dtype == 'int64':
-            np.savetxt(out_name, data, header=self.m_header, comments='# ', fmt='%i')
+        if data.dtype == "int32" or data.dtype == "int64":
+            np.savetxt(out_name, data, header=self.m_header, comments="# ", fmt="%i")
 
-        elif data.dtype == 'float32' or data.dtype == 'float64':
-            np.savetxt(out_name, data, header=self.m_header, comments='# ')
+        elif data.dtype == "float32" or data.dtype == "float64":
+            np.savetxt(out_name, data, header=self.m_header, comments="# ")
 
-        print(' [DONE]')
+        print(" [DONE]")
 
         self.m_data_port.close_port()

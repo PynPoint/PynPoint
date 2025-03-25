@@ -28,9 +28,9 @@ class TaskInput:
     """
 
     @typechecked
-    def __init__(self,
-                 input_data: Union[np.ndarray, np.integer, tuple],
-                 job_parameter: tuple) -> None:
+    def __init__(
+        self, input_data: Union[np.ndarray, np.integer, tuple], job_parameter: tuple
+    ) -> None:
         """
         Parameters
         ----------
@@ -55,9 +55,7 @@ class TaskResult:
     """
 
     @typechecked
-    def __init__(self,
-                 data_array: np.ndarray,
-                 position: tuple) -> None:
+    def __init__(self, data_array: np.ndarray, position: tuple) -> None:
         """
         Parameters
         ----------
@@ -89,11 +87,13 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 data_port_in: Optional[InputPort],
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 data_mutex_in: Optional[multiprocessing.Lock],
-                 num_proc: int) -> None:
+    def __init__(
+        self,
+        data_port_in: Optional[InputPort],
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        data_mutex_in: Optional[multiprocessing.Lock],
+        num_proc: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -135,7 +135,7 @@ class TaskCreator(multiprocessing.Process, metaclass=ABCMeta):
             None
         """
 
-        for _ in range(self.m_num_proc-1):
+        for _ in range(self.m_num_proc - 1):
             # poison pills
             self.m_task_queue.put(1)
 
@@ -167,9 +167,11 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 result_queue_in: multiprocessing.JoinableQueue) -> None:
+    def __init__(
+        self,
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        result_queue_in: multiprocessing.JoinableQueue,
+    ) -> None:
         """
         Parameters
         ----------
@@ -190,8 +192,7 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
         self.m_result_queue = result_queue_in
 
     @typechecked
-    def check_poison_pill(self,
-                          next_task: Union[TaskInput, int, None]) -> bool:
+    def check_poison_pill(self, next_task: Union[TaskInput, int, None]) -> bool:
         """
         Function to check if the next task is a poison pill.
 
@@ -251,8 +252,7 @@ class TaskProcessor(multiprocessing.Process, metaclass=ABCMeta):
 
     @abstractmethod
     @typechecked
-    def run_job(self,
-                tmp_task: TaskInput) -> None:
+    def run_job(self, tmp_task: TaskInput) -> None:
         """
         Abstract interface for the :func:`~pynpoint.util.multiproc.TaskProcessor.run_job` method
         which is called from the :func:`~pynpoint.util.multiproc.TaskProcessor.run` method for each
@@ -280,10 +280,12 @@ class TaskWriter(multiprocessing.Process):
     """
 
     @typechecked
-    def __init__(self,
-                 result_queue_in: multiprocessing.JoinableQueue,
-                 data_out_port_in: Optional[OutputPort],
-                 data_mutex_in: multiprocessing.Lock) -> None:
+    def __init__(
+        self,
+        result_queue_in: multiprocessing.JoinableQueue,
+        data_out_port_in: Optional[OutputPort],
+        data_mutex_in: multiprocessing.Lock,
+    ) -> None:
         """
         Parameters
         ----------
@@ -308,8 +310,7 @@ class TaskWriter(multiprocessing.Process):
         self.m_data_out_port = data_out_port_in
 
     @typechecked
-    def check_poison_pill(self,
-                          next_result: Union[TaskResult, None]) -> int:
+    def check_poison_pill(self, next_result: Union[TaskResult, None]) -> int:
         """
         Function to check if the next result is a poison pill.
 
@@ -369,7 +370,9 @@ class TaskWriter(multiprocessing.Process):
 
             with self.m_data_mutex:
                 self.m_data_out_port._check_status_and_activate()
-                self.m_data_out_port[to_slice(next_result.m_position)] = next_result.m_data_array
+                self.m_data_out_port[to_slice(next_result.m_position)] = (
+                    next_result.m_data_array
+                )
                 self.m_data_out_port.close_port()
 
             self.m_result_queue.task_done()
@@ -381,10 +384,12 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 image_in_port: Optional[InputPort],
-                 image_out_port: Optional[OutputPort],
-                 num_proc: int) -> None:
+    def __init__(
+        self,
+        image_in_port: Optional[InputPort],
+        image_out_port: Optional[OutputPort],
+        num_proc: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -433,8 +438,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
     @abstractmethod
     @typechecked
-    def init_creator(self,
-                     image_in_port: Optional[InputPort]) -> None:
+    def init_creator(self, image_in_port: Optional[InputPort]) -> None:
         """
         Function that is called from the constructor to create a
         :class:`~pynpoint.util.multiproc.TaskCreator`.
@@ -451,8 +455,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
         """
 
     @typechecked
-    def create_writer(self,
-                      image_out_port: Optional[OutputPort]) -> TaskWriter:
+    def create_writer(self, image_out_port: Optional[OutputPort]) -> TaskWriter:
         """
         Function that is called from the constructor to create the
         :class:`~pynpoint.util.multiproc.TaskWriter`.
@@ -468,9 +471,7 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
             Task writer.
         """
 
-        return TaskWriter(self.m_result_queue,
-                          image_out_port,
-                          self.m_data_mutex)
+        return TaskWriter(self.m_result_queue, image_out_port, self.m_data_mutex)
 
     @typechecked
     def run(self) -> None:
@@ -507,10 +508,9 @@ class MultiprocessingCapsule(metaclass=ABCMeta):
 
 
 @typechecked
-def apply_function(tmp_data: np.ndarray,
-                   data_index: int,
-                   func: Callable,
-                   func_args: Optional[tuple]) -> np.ndarray:
+def apply_function(
+    tmp_data: np.ndarray, data_index: int, func: Callable, func_args: Optional[tuple]
+) -> np.ndarray:
     """
     Apply a function with optional arguments to the input data.
 

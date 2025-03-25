@@ -14,17 +14,21 @@ from scipy.ndimage import gaussian_filter
 from skimage.feature import hessian_matrix
 from photutils.aperture import aperture_photometry, CircularAperture
 
-from pynpoint.util.image import shift_image, center_subpixel, pixel_distance, select_annulus, \
-                                cartesian_to_polar, create_mask
+from pynpoint.util.image import (
+    shift_image,
+    center_subpixel,
+    pixel_distance,
+    select_annulus,
+    cartesian_to_polar,
+    create_mask,
+)
 from pynpoint.util.psf import pca_psf_subtraction
 from pynpoint.util.residuals import combine_residuals
 
 
-def compute_aperture_flux_elements(image: np.ndarray,
-                                   x_pos: float,
-                                   y_pos: float,
-                                   size: float,
-                                   ignore: bool):
+def compute_aperture_flux_elements(
+    image: np.ndarray, x_pos: float, y_pos: float, size: float, ignore: bool
+):
     """
     Computes the average fluxes inside apertures with the same separation from the center.
     This function can be used to to estimate the residual flux of a planet at position
@@ -65,7 +69,7 @@ def compute_aperture_flux_elements(image: np.ndarray,
     # Compute the center of the current frame (with subpixel precision) and use it to compute the
     # radius of the given position in polar coordinates (with the origin at the center of the frame)
     center = center_subpixel(image)
-    radius = math.sqrt((center[0] - y_pos)**2 + (center[1] - x_pos)**2)
+    radius = math.sqrt((center[0] - y_pos) ** 2 + (center[1] - x_pos) ** 2)
 
     # Compute the number of apertures which we can place at the separation of  the given position
     num_ap = int(math.pi * radius / size)
@@ -84,8 +88,9 @@ def compute_aperture_flux_elements(image: np.ndarray,
     # If the number of apertures is 2 or less, we cannot compute the false positive fraction
     if num_ap < 3:
         raise ValueError(
-            f'Number of apertures (num_ap={num_ap}) is too small to calculate the '
-            'false positive fraction.')
+            f"Number of apertures (num_ap={num_ap}) is too small to calculate the "
+            "false positive fraction."
+        )
 
     # Initialize a numpy array in which we will store the integrated flux of all reference apertures
     ap_phot = np.zeros(num_ap)
@@ -93,25 +98,29 @@ def compute_aperture_flux_elements(image: np.ndarray,
     # Loop over all reference apertures and measure the integrated flux
     for i, theta in enumerate(ap_theta):
         # Compute the position of the current aperture in polar coordinates and convert to Cartesian
-        x_tmp = center[1] + (x_pos - center[1]) * math.cos(theta) - \
-            (y_pos - center[0]) * math.sin(theta)
-        y_tmp = center[0] + (x_pos - center[1]) * math.sin(theta) + \
-            (y_pos - center[0]) * math.cos(theta)
+        x_tmp = (
+            center[1]
+            + (x_pos - center[1]) * math.cos(theta)
+            - (y_pos - center[0]) * math.sin(theta)
+        )
+        y_tmp = (
+            center[0]
+            + (x_pos - center[1]) * math.sin(theta)
+            + (y_pos - center[0]) * math.cos(theta)
+        )
 
         # Place a circular aperture at a position and sum up the flux inside the aperture
         aperture = CircularAperture((x_tmp, y_tmp), size)
-        phot_table = aperture_photometry(image, aperture, method='exact')
-        ap_phot[i] = phot_table['aperture_sum'][0]
+        phot_table = aperture_photometry(image, aperture, method="exact")
+        ap_phot[i] = phot_table["aperture_sum"][0]
 
     return ap_phot
 
 
 @typechecked
-def false_alarm(image: np.ndarray,
-                x_pos: float,
-                y_pos: float,
-                size: float,
-                ignore: bool) -> Tuple[float, float, float, float]:
+def false_alarm(
+    image: np.ndarray, x_pos: float, y_pos: float, size: float, ignore: bool
+) -> Tuple[float, float, float, float]:
     """
     Compute the signal-to-noise ratio (SNR), which is formally defined as the test statistic of a
     two-sample t-test, and related quantities (such as the FPF) at a given position in an image.
@@ -159,11 +168,9 @@ def false_alarm(image: np.ndarray,
         The false positive fraction (FPF) as defined by Mawet et al. (2014) in eq. (10).
     """
 
-    ap_phot = compute_aperture_flux_elements(image=image,
-                                             x_pos=x_pos,
-                                             y_pos=y_pos,
-                                             size=size,
-                                             ignore=ignore)
+    ap_phot = compute_aperture_flux_elements(
+        image=image, x_pos=x_pos, y_pos=y_pos, size=size, ignore=ignore
+    )
 
     # Define shortcuts to the signal and the noise aperture sums
     signal_aperture = ap_phot[0]
@@ -179,8 +186,9 @@ def false_alarm(image: np.ndarray,
     # in the noise apertures times a correction factor to account for the small sample statistics.
     # NOTE: `ddof=1` is a necessary argument for np.std() in order to compute the *unbiased*
     #       estimate (i.e., including Bessel's corrections) of the standard deviation.
-    noise = np.std(noise_apertures, ddof=1) *\
-        math.sqrt(1 + 1 / (noise_apertures.shape[0]))
+    noise = np.std(noise_apertures, ddof=1) * math.sqrt(
+        1 + 1 / (noise_apertures.shape[0])
+    )
 
     # Compute the signal-to-noise ratio by dividing the "signal" through the "noise"
     snr = signal / noise
@@ -197,10 +205,9 @@ def false_alarm(image: np.ndarray,
 
 
 @typechecked
-def student_t(t_input: Tuple[str, float],
-              radius: float,
-              size: float,
-              ignore: bool) -> float:
+def student_t(
+    t_input: Tuple[str, float], radius: float, size: float, ignore: bool
+) -> float:
     """
     Function to calculate the false positive fraction for a given sigma level (Mawet et al. 2014).
 
@@ -231,11 +238,11 @@ def student_t(t_input: Tuple[str, float],
     # The number of samples is equal to the number of apertures minus 1 (i.e. the planet aperture).
     # See Section 3 of Mawet et al. (2014) for more details on the Student's t distribution.
 
-    if t_input[0] == 'sigma':
-        t_result = t.sf(t_input[1], num_ap-2, loc=0., scale=1.)
+    if t_input[0] == "sigma":
+        t_result = t.sf(t_input[1], num_ap - 2, loc=0.0, scale=1.0)
 
-    elif t_input[0] == 'fpf':
-        t_result = t.ppf(1. - t_input[1], num_ap-2, loc=0., scale=1.)
+    elif t_input[0] == "fpf":
+        t_result = t.ppf(1.0 - t_input[1], num_ap - 2, loc=0.0, scale=1.0)
 
     else:
         raise ValueError('First element of t_input needs to be "sigma" or "fpf"!')
@@ -244,13 +251,15 @@ def student_t(t_input: Tuple[str, float],
 
 
 @typechecked
-def fake_planet(images: np.ndarray,
-                psf: np.ndarray,
-                parang: np.ndarray,
-                position: Tuple[float, float],
-                magnitude: float,
-                psf_scaling: float,
-                interpolation: str = 'spline') -> np.ndarray:
+def fake_planet(
+    images: np.ndarray,
+    psf: np.ndarray,
+    parang: np.ndarray,
+    position: Tuple[float, float],
+    magnitude: float,
+    psf_scaling: float,
+    interpolation: str = "spline",
+) -> np.ndarray:
     """
     Function to inject artificial planets in a dataset.
 
@@ -279,38 +288,44 @@ def fake_planet(images: np.ndarray,
     """
 
     sep = position[0]
-    ang = np.radians(position[1] + 90. - parang)
+    ang = np.radians(position[1] + 90.0 - parang)
 
-    flux_ratio = 10. ** (-magnitude / 2.5)
-    psf = psf*psf_scaling*flux_ratio
+    flux_ratio = 10.0 ** (-magnitude / 2.5)
+    psf = psf * psf_scaling * flux_ratio
 
-    x_shift = sep*np.cos(ang)
-    y_shift = sep*np.sin(ang)
+    x_shift = sep * np.cos(ang)
+    y_shift = sep * np.sin(ang)
 
     im_shift = np.zeros(images.shape)
 
     for i in range(images.shape[0]):
         if psf.shape[0] == 1:
-            im_shift[i, ] = shift_image(psf[0, ],
-                                        (float(y_shift[i]), float(x_shift[i])),
-                                        interpolation,
-                                        mode='reflect')
+            im_shift[i,] = shift_image(
+                psf[0,],
+                (float(y_shift[i]), float(x_shift[i])),
+                interpolation,
+                mode="reflect",
+            )
 
         else:
-            im_shift[i, ] = shift_image(psf[i, ],
-                                        (float(y_shift[i]), float(x_shift[i])),
-                                        interpolation,
-                                        mode='reflect')
+            im_shift[i,] = shift_image(
+                psf[i,],
+                (float(y_shift[i]), float(x_shift[i])),
+                interpolation,
+                mode="reflect",
+            )
 
     return images + im_shift
 
 
 @typechecked
-def merit_function(residuals: np.ndarray,
-                   merit: str,
-                   aperture: Tuple[int, int, float],
-                   sigma: float,
-                   var_noise: Optional[float]) -> float:
+def merit_function(
+    residuals: np.ndarray,
+    merit: str,
+    aperture: Tuple[int, int, float],
+    sigma: float,
+    var_noise: Optional[float],
+) -> float:
     """
     Function to calculate the figure of merit at a given position in the image residuals.
 
@@ -338,49 +353,55 @@ def merit_function(residuals: np.ndarray,
 
     indices = np.where(rr_grid <= aperture[2])
 
-    if merit == 'hessian':
+    if merit == "hessian":
 
-        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=residuals,
-                                                            sigma=sigma,
-                                                            mode='constant',
-                                                            cval=0.,
-                                                            order='rc',
-                                                            use_gaussian_derivatives=False)
+        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(
+            image=residuals,
+            sigma=sigma,
+            mode="constant",
+            cval=0.0,
+            order="rc",
+            use_gaussian_derivatives=False,
+        )
 
-        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+        hes_det = (hessian_rr * hessian_cc) - (hessian_rc * hessian_rc)
 
-        chi_square = np.sum(hes_det[indices]**2)/var_noise
+        chi_square = np.sum(hes_det[indices] ** 2) / var_noise
 
-    elif merit == 'poisson':
+    elif merit == "poisson":
 
-        if sigma > 0.:
+        if sigma > 0.0:
             residuals = gaussian_filter(input=residuals, sigma=sigma)
 
         chi_square = np.sum(np.abs(residuals[indices]))
 
-    elif merit == 'gaussian':
+    elif merit == "gaussian":
 
-        chi_square = np.sum(residuals[indices]**2)/var_noise
+        chi_square = np.sum(residuals[indices] ** 2) / var_noise
 
     else:
 
-        raise ValueError('Figure of merit not recognized. Please use \'hessian\', \'poisson\' '
-                         'or \'gaussian\'. Previous use of \'sum\' should now be set as '
-                         '\'poisson\'.')
+        raise ValueError(
+            "Figure of merit not recognized. Please use 'hessian', 'poisson' "
+            "or 'gaussian'. Previous use of 'sum' should now be set as "
+            "'poisson'."
+        )
 
     return chi_square
 
 
 @typechecked
-def pixel_variance(var_type: str,
-                   images: np.ndarray,
-                   parang: np.ndarray,
-                   cent_size: Optional[float],
-                   edge_size: Optional[float],
-                   pca_number: int,
-                   residuals: str,
-                   aperture: Tuple[int, int, float],
-                   sigma: float) -> float:
+def pixel_variance(
+    var_type: str,
+    images: np.ndarray,
+    parang: np.ndarray,
+    cent_size: Optional[float],
+    edge_size: Optional[float],
+    pca_number: int,
+    residuals: str,
+    aperture: Tuple[int, int, float],
+    sigma: float,
+) -> float:
     """
     Function to calculate the variance of the noise. After the PSF subtraction, images are rotated
     in opposite direction of the regular derotation, therefore dispersing any companion or disk
@@ -417,25 +438,31 @@ def pixel_variance(var_type: str,
 
     mask = create_mask(images.shape[-2:], (cent_size, edge_size))
 
-    _, im_res_derot = pca_psf_subtraction(images*mask, parang, pca_number)
+    _, im_res_derot = pca_psf_subtraction(images * mask, parang, pca_number)
 
     res_noise = combine_residuals(residuals, im_res_derot)
 
     sep_ang = cartesian_to_polar(center_subpixel(res_noise), aperture[0], aperture[1])
 
-    if var_type == 'gaussian':
-        selected = select_annulus(res_noise[0, ], sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+    if var_type == "gaussian":
+        selected = select_annulus(
+            res_noise[0,], sep_ang[0] - aperture[2], sep_ang[0] + aperture[2]
+        )
 
-    elif var_type == 'hessian':
-        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(image=res_noise[0, ],
-                                                            sigma=sigma,
-                                                            mode='constant',
-                                                            cval=0.,
-                                                            order='rc',
-                                                            use_gaussian_derivatives=False)
+    elif var_type == "hessian":
+        hessian_rr, hessian_rc, hessian_cc = hessian_matrix(
+            image=res_noise[0,],
+            sigma=sigma,
+            mode="constant",
+            cval=0.0,
+            order="rc",
+            use_gaussian_derivatives=False,
+        )
 
-        hes_det = (hessian_rr*hessian_cc) - (hessian_rc*hessian_rc)
+        hes_det = (hessian_rr * hessian_cc) - (hessian_rc * hessian_rc)
 
-        selected = select_annulus(hes_det, sep_ang[0]-aperture[2], sep_ang[0]+aperture[2])
+        selected = select_annulus(
+            hes_det, sep_ang[0] - aperture[2], sep_ang[0] + aperture[2]
+        )
 
     return float(np.var(selected))

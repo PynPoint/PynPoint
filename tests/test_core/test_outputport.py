@@ -14,13 +14,15 @@ class TestOutputPort:
     def setup_class(self) -> None:
 
         self.limit = 1e-10
-        self.storage = DataStorage(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
+        self.storage = DataStorage(
+            os.path.dirname(__file__) + "/PynPoint_database.hdf5"
+        )
 
         create_random(os.path.dirname(__file__))
 
     def teardown_class(self) -> None:
 
-        os.remove(os.path.dirname(__file__) + '/PynPoint_database.hdf5')
+        os.remove(os.path.dirname(__file__) + "/PynPoint_database.hdf5")
 
     def create_input_port(self, tag_name: str) -> InputPort:
 
@@ -38,20 +40,25 @@ class TestOutputPort:
     def test_create_instance(self) -> None:
 
         with pytest.raises(ValueError) as error:
-            OutputPort('config', self.storage)
+            OutputPort("config", self.storage)
 
-        assert str(error.value) == 'The tag name \'config\' is reserved for the central ' \
-                                   'configuration of PynPoint.'
+        assert (
+            str(error.value) == "The tag name 'config' is reserved for the central "
+            "configuration of PynPoint."
+        )
 
         with pytest.raises(ValueError) as error:
-            OutputPort('fits_header', self.storage)
+            OutputPort("fits_header", self.storage)
 
-        assert str(error.value) == 'The tag name \'fits_header\' is reserved for storage of the ' \
-                                   'FITS headers.'
+        assert (
+            str(error.value)
+            == "The tag name 'fits_header' is reserved for storage of the "
+            "FITS headers."
+        )
 
-        active_port = OutputPort('test', self.storage, activate_init=True)
-        deactive_port = OutputPort('test', self.storage, activate_init=False)
-        control_port = InputPort('test', self.storage)
+        active_port = OutputPort("test", self.storage, activate_init=True)
+        deactive_port = OutputPort("test", self.storage, activate_init=False)
+        control_port = InputPort("test", self.storage)
 
         deactive_port.open_port()
         deactive_port.set_all(np.asarray([0, 1, 2, 3]))
@@ -62,8 +69,11 @@ class TestOutputPort:
 
         assert len(warning) == 1
 
-        assert warning[0].message.args[0] == 'No data under the tag which is linked by the ' \
-                                             'InputPort.'
+        assert (
+            warning[0].message.args[0]
+            == "No data under the tag which is linked by the "
+            "InputPort."
+        )
 
         active_port.set_all(np.asarray([0, 1, 2, 3]))
         active_port.flush()

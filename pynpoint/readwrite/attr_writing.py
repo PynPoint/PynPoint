@@ -18,16 +18,18 @@ class AttributeWritingModule(WritingModule):
     Module for writing a 1D or 2D array of non-static attributes to a text file.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 data_tag: str,
-                 attribute: str,
-                 file_name: str = 'attributes.dat',
-                 output_dir: Optional[str] = None,
-                 header: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        data_tag: str,
+        attribute: str,
+        file_name: str = "attributes.dat",
+        output_dir: Optional[str] = None,
+        header: Optional[str] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -72,21 +74,23 @@ class AttributeWritingModule(WritingModule):
         """
 
         if self.m_header is None:
-            self.m_header = ''
+            self.m_header = ""
 
-        print('Writing attribute data...', end='')
+        print("Writing attribute data...", end="")
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
         if self.m_attribute not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError(f'The \'{self.m_attribute}\' attribute is not present in '
-                             f'\'{self.m_data_port.tag}\'.')
+            raise ValueError(
+                f"The '{self.m_attribute}' attribute is not present in "
+                f"'{self.m_data_port.tag}'."
+            )
 
         values = self.m_data_port.get_attribute(self.m_attribute)
 
-        np.savetxt(out_name, values, header=self.m_header, comments='# ')
+        np.savetxt(out_name, values, header=self.m_header, comments="# ")
 
-        print(' [DONE]')
+        print(" [DONE]")
 
         self.m_data_port.close_port()
 
@@ -96,15 +100,17 @@ class ParangWritingModule(WritingModule):
     Module for writing a list of parallactic angles to a text file.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 data_tag: str,
-                 file_name: str = 'parang.dat',
-                 output_dir: Optional[str] = None,
-                 header: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        data_tag: str,
+        file_name: str = "parang.dat",
+        output_dir: Optional[str] = None,
+        header: Optional[str] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -145,20 +151,22 @@ class ParangWritingModule(WritingModule):
             None
         """
 
-        print('Writing parallactic angles...', end='')
+        print("Writing parallactic angles...", end="")
 
         if self.m_header is None:
-            self.m_header = ''
+            self.m_header = ""
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        if 'PARANG' not in self.m_data_port.get_all_non_static_attributes():
-            raise ValueError(f'The PARANG attribute is not present in \'{self.m_data_port.tag}\'.')
+        if "PARANG" not in self.m_data_port.get_all_non_static_attributes():
+            raise ValueError(
+                f"The PARANG attribute is not present in '{self.m_data_port.tag}'."
+            )
 
-        parang = self.m_data_port.get_attribute('PARANG')
+        parang = self.m_data_port.get_attribute("PARANG")
 
-        np.savetxt(out_name, parang, header=self.m_header, comments='# ')
+        np.savetxt(out_name, parang, header=self.m_header, comments="# ")
 
-        print(' [DONE]')
+        print(" [DONE]")
 
         self.m_data_port.close_port()

@@ -31,17 +31,19 @@ class FitsReadingModule(ReadingModule):
     in the central database.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 input_dir: Optional[str] = None,
-                 image_tag: str = 'im_arr',
-                 overwrite: bool = True,
-                 check: bool = True,
-                 filenames: Optional[Union[str, List[str]]] = None,
-                 ifs_data: bool = False) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        input_dir: Optional[str] = None,
+        image_tag: str = "im_arr",
+        overwrite: bool = True,
+        check: bool = True,
+        filenames: Optional[Union[str, List[str]]] = None,
+        ifs_data: bool = False,
+    ) -> None:
         """
         Parameters
         ----------
@@ -86,9 +88,9 @@ class FitsReadingModule(ReadingModule):
         self.m_ifs_data = ifs_data
 
     @typechecked
-    def read_single_file(self,
-                         fits_file: str,
-                         overwrite_tags: list) -> Tuple[fits.header.Header, tuple]:
+    def read_single_file(
+        self, fits_file: str, overwrite_tags: list
+    ) -> Tuple[fits.header.Header, tuple]:
         """
         Function which reads a single FITS file and appends it to the database. The function gets
         a list of *overwriting_tags*. If a new key (header entry or image data) is found that is
@@ -121,13 +123,15 @@ class FitsReadingModule(ReadingModule):
         elif len(hdu_list) > 1:
             for i, item in enumerate(hdu_list[1:]):
                 if isinstance(item, fits.hdu.image.ImageHDU):
-                    warnings.simplefilter('always', UserWarning)
+                    warnings.simplefilter("always", UserWarning)
 
-                    warnings.warn(f"No data was found in the PrimaryHDU "
-                                  f"so reading data from the ImageHDU "
-                                  f"at number {i+1} instead.")
+                    warnings.warn(
+                        f"No data was found in the PrimaryHDU "
+                        f"so reading data from the ImageHDU "
+                        f"at number {i+1} instead."
+                    )
 
-                    images = hdu_list[i+1].data.byteswap()
+                    images = hdu_list[i + 1].data.byteswap()
                     images = images.view(images.dtype.newbyteorder("="))
 
                     break
@@ -138,12 +142,16 @@ class FitsReadingModule(ReadingModule):
         images = np.nan_to_num(images)
 
         if images.ndim == 4 and not self.m_ifs_data:
-            raise ValueError('The input data is 4D but ifs_data is set to False. Reading in 4D '
-                             'data is only possible by setting the argument to True.')
+            raise ValueError(
+                "The input data is 4D but ifs_data is set to False. Reading in 4D "
+                "data is only possible by setting the argument to True."
+            )
 
         if images.ndim < 3 and self.m_ifs_data:
-            raise ValueError('It is only possible to read 3D or 4D data when ifs_data is set to '
-                             'True.')
+            raise ValueError(
+                "It is only possible to read 3D or 4D data when ifs_data is set to "
+                "True."
+            )
 
         if self.m_overwrite and self.m_image_out_port.tag not in overwrite_tags:
             overwrite_tags.append(self.m_image_out_port.tag)
@@ -165,11 +173,13 @@ class FitsReadingModule(ReadingModule):
 
         fits_header = []
         for key in header:
-            fits_header.append(f'{key} = {header[key]}')
+            fits_header.append(f"{key} = {header[key]}")
 
         hdu_list.close()
 
-        header_out_port = self.add_output_port('fits_header/'+os.path.basename(fits_file))
+        header_out_port = self.add_output_port(
+            "fits_header/" + os.path.basename(fits_file)
+        )
         header_out_port.set_all(fits_header)
 
         return header, images.shape
@@ -211,23 +221,27 @@ class FitsReadingModule(ReadingModule):
 
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the '
-                                     f'path is correct.')
+                    raise ValueError(
+                        f"The file {item} does not exist. Please check that the "
+                        f"path is correct."
+                    )
 
         elif isinstance(self.m_filenames, list):
             files = self.m_filenames
 
             for item in files:
                 if not os.path.isfile(item):
-                    raise ValueError(f'The file {item} does not exist. Please check that the '
-                                     f'path is correct.')
+                    raise ValueError(
+                        f"The file {item} does not exist. Please check that the "
+                        f"path is correct."
+                    )
 
         elif isinstance(self.m_filenames, type(None)):
             for filename in os.listdir(self.m_input_location):
-                if filename.endswith('.fits') and not filename.startswith('._'):
+                if filename.endswith(".fits") and not filename.startswith("._"):
                     files.append(os.path.join(self.m_input_location, filename))
 
-            assert files, 'No FITS files found in %s.' % self.m_input_location
+            assert files, "No FITS files found in %s." % self.m_input_location
 
         files.sort()
 
@@ -236,7 +250,7 @@ class FitsReadingModule(ReadingModule):
 
         start_time = time.time()
         for i, fits_file in enumerate(files):
-            progress(i, len(files), 'Reading FITS files...', start_time)
+            progress(i, len(files), "Reading FITS files...", start_time)
 
             header, shape = self.read_single_file(fits_file, overwrite_tags)
 
@@ -253,24 +267,30 @@ class FitsReadingModule(ReadingModule):
                 nimages = shape[1]
 
             else:
-                raise ValueError('Data read from FITS file has an invalid shape.')
+                raise ValueError("Data read from FITS file has an invalid shape.")
 
-            set_static_attr(fits_file=fits_file,
-                            header=header,
-                            config_port=self._m_config_port,
-                            image_out_port=self.m_image_out_port,
-                            check=self.m_check)
+            set_static_attr(
+                fits_file=fits_file,
+                header=header,
+                config_port=self._m_config_port,
+                image_out_port=self.m_image_out_port,
+                check=self.m_check,
+            )
 
-            set_nonstatic_attr(header=header,
-                               config_port=self._m_config_port,
-                               image_out_port=self.m_image_out_port,
-                               check=self.m_check)
+            set_nonstatic_attr(
+                header=header,
+                config_port=self._m_config_port,
+                image_out_port=self.m_image_out_port,
+                check=self.m_check,
+            )
 
-            set_extra_attr(fits_file=fits_file,
-                           nimages=nimages,
-                           config_port=self._m_config_port,
-                           image_out_port=self.m_image_out_port,
-                           first_index=first_index)
+            set_extra_attr(
+                fits_file=fits_file,
+                nimages=nimages,
+                config_port=self._m_config_port,
+                image_out_port=self.m_image_out_port,
+                first_index=first_index,
+            )
 
             first_index += nimages
 

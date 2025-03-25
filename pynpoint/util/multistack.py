@@ -13,8 +13,14 @@ from typeguard import typechecked
 
 from pynpoint.core.dataio import InputPort, OutputPort
 from pynpoint.util.module import update_arguments
-from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
-                                    MultiprocessingCapsule, apply_function
+from pynpoint.util.multiproc import (
+    TaskInput,
+    TaskResult,
+    TaskCreator,
+    TaskProcessor,
+    MultiprocessingCapsule,
+    apply_function,
+)
 
 
 class StackReader(TaskCreator):
@@ -24,13 +30,15 @@ class StackReader(TaskCreator):
     """
 
     @typechecked
-    def __init__(self,
-                 data_port_in: InputPort,
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 data_mutex_in: multiprocessing.Lock,
-                 num_proc: int,
-                 stack_size: int,
-                 result_shape: tuple) -> None:
+    def __init__(
+        self,
+        data_port_in: InputPort,
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        data_mutex_in: multiprocessing.Lock,
+        num_proc: int,
+        stack_size: int,
+        result_shape: tuple,
+    ) -> None:
         """
         Parameters
         ----------
@@ -54,7 +62,9 @@ class StackReader(TaskCreator):
             None
         """
 
-        super(StackReader, self).__init__(data_port_in, tasks_queue_in, data_mutex_in, num_proc)
+        super(StackReader, self).__init__(
+            data_port_in, tasks_queue_in, data_mutex_in, num_proc
+        )
 
         self.m_stack_size = stack_size
         self.m_result_shape = result_shape
@@ -80,7 +90,7 @@ class StackReader(TaskCreator):
             # lock mutex and read data
             with self.m_data_mutex:
                 self.m_data_in_port._check_status_and_activate()
-                tmp_data = self.m_data_in_port[i:j, ]  # read images from i to j
+                tmp_data = self.m_data_in_port[i:j,]  # read images from i to j
                 self.m_data_in_port.close_port()
 
             # first dimension (start, stop, step)
@@ -105,12 +115,14 @@ class StackTaskProcessor(TaskProcessor):
     """
 
     @typechecked
-    def __init__(self,
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 result_queue_in: multiprocessing.JoinableQueue,
-                 function: Callable,
-                 function_args: Optional[tuple],
-                 nimages: int) -> None:
+    def __init__(
+        self,
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        result_queue_in: multiprocessing.JoinableQueue,
+        function: Callable,
+        function_args: Optional[tuple],
+        nimages: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -138,8 +150,7 @@ class StackTaskProcessor(TaskProcessor):
         self.m_nimages = nimages
 
     @typechecked
-    def run_job(self,
-                tmp_task: TaskInput) -> TaskResult:
+    def run_job(self, tmp_task: TaskInput) -> TaskResult:
         """
         Parameters
         ----------
@@ -170,9 +181,11 @@ class StackTaskProcessor(TaskProcessor):
 
             args = update_arguments(index, self.m_nimages, self.m_function_args)
 
-            result_arr[i, ] = apply_function(tmp_task.m_input_data[i, ], i, self.m_function, args)
+            result_arr[i,] = apply_function(
+                tmp_task.m_input_data[i,], i, self.m_function, args
+            )
 
-        sys.stdout.write('.')
+        sys.stdout.write(".")
         sys.stdout.flush()
 
         return TaskResult(result_arr, tmp_task.m_job_parameter[1])
@@ -185,15 +198,17 @@ class StackProcessingCapsule(MultiprocessingCapsule):
     """
 
     @typechecked
-    def __init__(self,
-                 image_in_port: InputPort,
-                 image_out_port: OutputPort,
-                 num_proc: int,
-                 function: Callable,
-                 function_args: Optional[tuple],
-                 stack_size: int,
-                 result_shape: tuple,
-                 nimages: int) -> None:
+    def __init__(
+        self,
+        image_in_port: InputPort,
+        image_out_port: OutputPort,
+        num_proc: int,
+        function: Callable,
+        function_args: Optional[tuple],
+        stack_size: int,
+        result_shape: tuple,
+        nimages: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -226,7 +241,9 @@ class StackProcessingCapsule(MultiprocessingCapsule):
         self.m_result_shape = result_shape
         self.m_nimages = nimages
 
-        super(StackProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
+        super(StackProcessingCapsule, self).__init__(
+            image_in_port, image_out_port, num_proc
+        )
 
     @typechecked
     def create_processors(self) -> List[StackTaskProcessor]:
@@ -241,17 +258,20 @@ class StackProcessingCapsule(MultiprocessingCapsule):
 
         for _ in range(self.m_num_proc):
 
-            processors.append(StackTaskProcessor(tasks_queue_in=self.m_tasks_queue,
-                                                 result_queue_in=self.m_result_queue,
-                                                 function=self.m_function,
-                                                 function_args=self.m_function_args,
-                                                 nimages=self.m_nimages))
+            processors.append(
+                StackTaskProcessor(
+                    tasks_queue_in=self.m_tasks_queue,
+                    result_queue_in=self.m_result_queue,
+                    function=self.m_function,
+                    function_args=self.m_function_args,
+                    nimages=self.m_nimages,
+                )
+            )
 
         return processors
 
     @typechecked
-    def init_creator(self,
-                     image_in_port: InputPort) -> StackReader:
+    def init_creator(self, image_in_port: InputPort) -> StackReader:
         """
         Parameters
         ----------
@@ -264,9 +284,11 @@ class StackProcessingCapsule(MultiprocessingCapsule):
             Reader of stacks of images.
         """
 
-        return StackReader(data_port_in=image_in_port,
-                           tasks_queue_in=self.m_tasks_queue,
-                           data_mutex_in=self.m_data_mutex,
-                           num_proc=self.m_num_proc,
-                           stack_size=self.m_stack_size,
-                           result_shape=self.m_result_shape)
+        return StackReader(
+            data_port_in=image_in_port,
+            tasks_queue_in=self.m_tasks_queue,
+            data_mutex_in=self.m_data_mutex,
+            num_proc=self.m_num_proc,
+            stack_size=self.m_stack_size,
+            result_shape=self.m_result_shape,
+        )

@@ -14,13 +14,15 @@ from pynpoint.util.image import scale_image, shift_image
 
 
 @typechecked
-def pca_psf_subtraction(images: np.ndarray,
-                        angles: Optional[np.ndarray],
-                        pca_number: Union[int, np.int32, np.int64],
-                        scales: Optional[np.ndarray] = None,
-                        pca_sklearn: Optional[PCA] = None,
-                        im_shape: Optional[tuple] = None,
-                        indices: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
+def pca_psf_subtraction(
+    images: np.ndarray,
+    angles: Optional[np.ndarray],
+    pca_number: Union[int, np.int32, np.int64],
+    scales: Optional[np.ndarray] = None,
+    pca_sklearn: Optional[PCA] = None,
+    im_shape: Optional[tuple] = None,
+    indices: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Function for PSF subtraction with PCA.
 
@@ -55,18 +57,18 @@ def pca_psf_subtraction(images: np.ndarray,
 
     if pca_sklearn is None:
         # Create a PCA object if not provided as argument
-        pca_sklearn = PCA(n_components=pca_number, svd_solver='arpack')
+        pca_sklearn = PCA(n_components=pca_number, svd_solver="arpack")
 
         # The 3D shape of the array with images
         im_shape = images.shape
 
         if indices is None:
             # Select the first image and get the unmasked image indices
-            im_star = images[0, ].reshape(-1)
-            indices = np.where(im_star != 0.)[0]
+            im_star = images[0,].reshape(-1)
+            indices = np.where(im_star != 0.0)[0]
 
         # Reshape the images and select the unmasked pixels
-        im_reshape = images.reshape(im_shape[0], im_shape[1]*im_shape[2])
+        im_reshape = images.reshape(im_shape[0], im_shape[1] * im_shape[2])
         im_reshape = im_reshape[:, indices]
 
         # Subtract the mean image
@@ -96,7 +98,7 @@ def pca_psf_subtraction(images: np.ndarray,
     psf_model = pca_sklearn.inverse_transform(pca_rep)
 
     # Create an array with the original shape
-    residuals = np.zeros((im_shape[0], im_shape[1]*im_shape[2]))
+    residuals = np.zeros((im_shape[0], im_shape[1] * im_shape[2]))
 
     # Select all pixel indices if set to None
     if indices is None:
@@ -115,31 +117,35 @@ def pca_psf_subtraction(images: np.ndarray,
 
         # check if the number of parang is equal to the number of images
         if residuals.shape[0] != scales.shape[0]:
-            raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
-                             f'number of wavelengths ({scales.shape[0]}).')
+            raise ValueError(
+                f"The number of images ({residuals.shape[0]}) is not equal to the "
+                f"number of wavelengths ({scales.shape[0]})."
+            )
 
         for i, _ in enumerate(scales):
             # rescaling the images
-            swaps = scale_image(residuals[i, ], 1/scales[i], 1/scales[i])
+            swaps = scale_image(residuals[i,], 1 / scales[i], 1 / scales[i])
 
             npix_del = scal_cor.shape[-1] - swaps.shape[-1]
 
             if npix_del == 0:
-                scal_cor[i, ] = swaps
+                scal_cor[i,] = swaps
 
             else:
                 if npix_del % 2 == 0:
-                    npix_del_a = int(npix_del/2)
-                    npix_del_b = int(npix_del/2)
+                    npix_del_a = int(npix_del / 2)
+                    npix_del_b = int(npix_del / 2)
 
                 else:
-                    npix_del_a = int((npix_del-1)/2)
-                    npix_del_b = int((npix_del+1)/2)
+                    npix_del_a = int((npix_del - 1) / 2)
+                    npix_del_b = int((npix_del + 1) / 2)
 
                 scal_cor[i, npix_del_a:-npix_del_b, npix_del_a:-npix_del_b] = swaps
 
                 if npix_del % 2 == 1:
-                    scal_cor[i, ] = shift_image(scal_cor[i, ], (0.5, 0.5), interpolation='spline')
+                    scal_cor[i,] = shift_image(
+                        scal_cor[i,], (0.5, 0.5), interpolation="spline"
+                    )
 
     else:
         scal_cor = residuals
@@ -150,11 +156,13 @@ def pca_psf_subtraction(images: np.ndarray,
 
         # Check if the number of parang is equal to the number of images
         if residuals.shape[0] != angles.shape[0]:
-            raise ValueError(f'The number of images ({residuals.shape[0]}) is not equal to the '
-                             f'number of parallactic angles ({angles.shape[0]}).')
+            raise ValueError(
+                f"The number of images ({residuals.shape[0]}) is not equal to the "
+                f"number of parallactic angles ({angles.shape[0]})."
+            )
 
         for j, item in enumerate(angles):
-            res_rot[j, ] = rotate(scal_cor[j, ], item, reshape=False)
+            res_rot[j,] = rotate(scal_cor[j,], item, reshape=False)
 
     else:
         res_rot = scal_cor

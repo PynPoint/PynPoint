@@ -33,28 +33,32 @@ class PcaPsfSubtractionModule(ProcessingModule):
     processes can therefore be set with the ``CPU`` keyword in the configuration file.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker, Sven Kiefer'
+    __author__ = "Markus Bonse, Tomas Stolker, Sven Kiefer"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 images_in_tag: str,
-                 reference_in_tag: str,
-                 res_mean_tag: Optional[str] = None,
-                 res_median_tag: Optional[str] = None,
-                 res_weighted_tag: Optional[str] = None,
-                 res_rot_mean_clip_tag: Optional[str] = None,
-                 res_arr_out_tag: Optional[str] = None,
-                 basis_out_tag: Optional[str] = None,
-                 pca_numbers: Union[range,
-                                    List[int],
-                                    np.ndarray,
-                                    Tuple[range, range],
-                                    Tuple[List[int], List[int]],
-                                    Tuple[np.ndarray, np.ndarray]] = range(1, 21),
-                 extra_rot: float = 0.,
-                 subtract_mean: bool = True,
-                 processing_type: str = 'ADI') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        images_in_tag: str,
+        reference_in_tag: str,
+        res_mean_tag: Optional[str] = None,
+        res_median_tag: Optional[str] = None,
+        res_weighted_tag: Optional[str] = None,
+        res_rot_mean_clip_tag: Optional[str] = None,
+        res_arr_out_tag: Optional[str] = None,
+        basis_out_tag: Optional[str] = None,
+        pca_numbers: Union[
+            range,
+            List[int],
+            np.ndarray,
+            Tuple[range, range],
+            Tuple[List[int], List[int]],
+            Tuple[np.ndarray, np.ndarray],
+        ] = range(1, 21),
+        extra_rot: float = 0.0,
+        subtract_mean: bool = True,
+        processing_type: str = "ADI",
+    ) -> None:
         """
         Parameters
         ----------
@@ -133,12 +137,16 @@ class PcaPsfSubtractionModule(ProcessingModule):
         self.m_pca_numbers = pca_numbers
 
         if isinstance(pca_numbers, tuple):
-            self.m_components = (np.sort(np.atleast_1d(pca_numbers[0])),
-                                 np.sort(np.atleast_1d(pca_numbers[1])))
+            self.m_components = (
+                np.sort(np.atleast_1d(pca_numbers[0])),
+                np.sort(np.atleast_1d(pca_numbers[1])),
+            )
 
         else:
             self.m_components = np.sort(np.atleast_1d(pca_numbers))
-            self.m_pca = PCA(n_components=np.amax(self.m_components), svd_solver='arpack')
+            self.m_pca = PCA(
+                n_components=np.amax(self.m_components), svd_solver="arpack"
+            )
 
         self.m_extra_rot = extra_rot
         self.m_subtract_mean = subtract_mean
@@ -165,7 +173,9 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if res_rot_mean_clip_tag is None:
             self.m_res_rot_mean_clip_out_port = None
         else:
-            self.m_res_rot_mean_clip_out_port = self.add_output_port(res_rot_mean_clip_tag)
+            self.m_res_rot_mean_clip_out_port = self.add_output_port(
+                res_rot_mean_clip_tag
+            )
 
         if res_arr_out_tag is None:
             self.m_res_arr_out_ports = None
@@ -177,73 +187,93 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
                 for pca_number in self.m_components:
                     self.m_res_arr_out_ports[pca_number] = self.add_output_port(
-                        res_arr_out_tag + str(pca_number))
+                        res_arr_out_tag + str(pca_number)
+                    )
 
         if basis_out_tag is None:
             self.m_basis_out_port = None
         else:
             self.m_basis_out_port = self.add_output_port(basis_out_tag)
 
-        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
+        if self.m_processing_type in ["ADI", "SDI", "CODI"]:
             if not isinstance(self.m_components, (range, list, np.ndarray)):
-                raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
-                                 f'a single range/list/array as argument for \'pca_numbers\'.')
+                raise ValueError(
+                    f"The post-processing type '{self.m_processing_type}' requires "
+                    f"a single range/list/array as argument for 'pca_numbers'."
+                )
 
-        elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
+        elif self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
             if not isinstance(self.m_components, tuple):
-                raise ValueError(f'The post-processing type \'{self.m_processing_type}\' requires '
-                                 f'a tuple for with twice a range/list/array as argument for '
-                                 f'\'pca_numbers\'.')
+                raise ValueError(
+                    f"The post-processing type '{self.m_processing_type}' requires "
+                    f"a tuple for with twice a range/list/array as argument for "
+                    f"'pca_numbers'."
+                )
 
-            if res_arr_out_tag is not None and len(self.m_components[0]) + \
-                    len(self.m_components[1]) != 2:
-                raise ValueError(f'If the post-processing type \'{self.m_processing_type}\' '
-                                 'is selected, residuals can only be calculated if no more than '
-                                 '1 principal component for ADI and SDI is given.')
+            if (
+                res_arr_out_tag is not None
+                and len(self.m_components[0]) + len(self.m_components[1]) != 2
+            ):
+                raise ValueError(
+                    f"If the post-processing type '{self.m_processing_type}' "
+                    "is selected, residuals can only be calculated if no more than "
+                    "1 principal component for ADI and SDI is given."
+                )
         else:
-            raise ValueError('Please select a valid post-processing type.')
+            raise ValueError("Please select a valid post-processing type.")
 
     @typechecked
-    def _run_multi_processing(self,
-                              star_reshape: np.ndarray,
-                              im_shape: tuple,
-                              indices: Optional[np.ndarray]) -> None:
+    def _run_multi_processing(
+        self, star_reshape: np.ndarray, im_shape: tuple, indices: Optional[np.ndarray]
+    ) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using multiprocessing.
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
-        parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+        cpu = self._m_config_port.get_attribute("CPU")
+        parang = -1.0 * self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         if self.m_ifs_data:
-            if 'WAVELENGTH' in self.m_star_in_port.get_all_non_static_attributes():
-                wavelength = self.m_star_in_port.get_attribute('WAVELENGTH')
+            if "WAVELENGTH" in self.m_star_in_port.get_all_non_static_attributes():
+                wavelength = self.m_star_in_port.get_attribute("WAVELENGTH")
 
             else:
-                raise ValueError('The wavelengths are not found. These should be stored '
-                                 'as the \'WAVELENGTH\' attribute.')
+                raise ValueError(
+                    "The wavelengths are not found. These should be stored "
+                    "as the 'WAVELENGTH' attribute."
+                )
 
             scales = scaling_factors(wavelength)
 
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
+        if self.m_processing_type in ["ADI", "SDI", "CODI"]:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
 
-        elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
+        elif self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
-                res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
+            if self.m_processing_type in ["ADI", "SDI", "CODI"]:
+                res_shape = (
+                    len(pca_first),
+                    len(wavelength),
+                    im_shape[-2],
+                    im_shape[-1],
+                )
 
-            elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                res_shape = (len(pca_first), len(pca_secon), len(wavelength),
-                             im_shape[-2], im_shape[-1])
+            elif self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                res_shape = (
+                    len(pca_first),
+                    len(pca_secon),
+                    len(wavelength),
+                    im_shape[-2],
+                    im_shape[-1],
+                )
 
         else:
             res_shape = (len(self.m_components), im_shape[1], im_shape[2])
@@ -280,27 +310,28 @@ class PcaPsfSubtractionModule(ProcessingModule):
         if self.m_basis_out_port is not None:
             self.m_basis_out_port.close_port()
 
-        capsule = PcaMultiprocessingCapsule(self.m_res_mean_out_port,
-                                            self.m_res_median_out_port,
-                                            self.m_res_weighted_out_port,
-                                            self.m_res_rot_mean_clip_out_port,
-                                            cpu,
-                                            deepcopy(self.m_components),
-                                            deepcopy(self.m_pca),
-                                            deepcopy(star_reshape),
-                                            deepcopy(parang),
-                                            deepcopy(scales),
-                                            im_shape,
-                                            indices,
-                                            self.m_processing_type)
+        capsule = PcaMultiprocessingCapsule(
+            self.m_res_mean_out_port,
+            self.m_res_median_out_port,
+            self.m_res_weighted_out_port,
+            self.m_res_rot_mean_clip_out_port,
+            cpu,
+            deepcopy(self.m_components),
+            deepcopy(self.m_pca),
+            deepcopy(star_reshape),
+            deepcopy(parang),
+            deepcopy(scales),
+            im_shape,
+            indices,
+            self.m_processing_type,
+        )
 
         capsule.run()
 
     @typechecked
-    def _run_single_processing(self,
-                               star_reshape: np.ndarray,
-                               im_shape: tuple,
-                               indices: Optional[np.ndarray]) -> None:
+    def _run_single_processing(
+        self, star_reshape: np.ndarray, im_shape: tuple, indices: Optional[np.ndarray]
+    ) -> None:
         """
         Internal function to create the residuals, derotate the images, and write the output
         using a single process.
@@ -309,16 +340,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
         start_time = time.time()
 
         # Get the parallactic angles
-        parang = -1.*self.m_star_in_port.get_attribute('PARANG') + self.m_extra_rot
+        parang = -1.0 * self.m_star_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         if self.m_ifs_data:
             # Get the wavelengths
-            if 'WAVELENGTH' in self.m_star_in_port.get_all_non_static_attributes():
-                wavelength = self.m_star_in_port.get_attribute('WAVELENGTH')
+            if "WAVELENGTH" in self.m_star_in_port.get_all_non_static_attributes():
+                wavelength = self.m_star_in_port.get_attribute("WAVELENGTH")
 
             else:
-                raise ValueError('The wavelengths are not found. These should be stored '
-                                 'as the \'WAVELENGTH\' attribute.')
+                raise ValueError(
+                    "The wavelengths are not found. These should be stored "
+                    "as the 'WAVELENGTH' attribute."
+                )
 
             # Calculate the wavelength ratios
             scales = scaling_factors(wavelength)
@@ -326,12 +359,12 @@ class PcaPsfSubtractionModule(ProcessingModule):
         else:
             scales = None
 
-        if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
+        if self.m_processing_type in ["ADI", "SDI", "CODI"]:
             pca_first = self.m_components
             pca_secon = [-1]  # Not used
             n_pca_total = len(pca_first)
 
-        elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
+        elif self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
             pca_first = self.m_components[0]
             pca_secon = self.m_components[1]
             n_pca_total = len(pca_first) + len(pca_secon)
@@ -341,12 +374,22 @@ class PcaPsfSubtractionModule(ProcessingModule):
         out_array_res = np.zeros(im_shape)
 
         if self.m_ifs_data:
-            if self.m_processing_type in ['ADI', 'SDI', 'CODI']:
-                res_shape = (len(pca_first), len(wavelength), im_shape[-2], im_shape[-1])
+            if self.m_processing_type in ["ADI", "SDI", "CODI"]:
+                res_shape = (
+                    len(pca_first),
+                    len(wavelength),
+                    im_shape[-2],
+                    im_shape[-1],
+                )
 
-            elif self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                res_shape = (len(pca_first), len(pca_secon), len(wavelength),
-                             im_shape[-2], im_shape[-1])
+            elif self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                res_shape = (
+                    len(pca_first),
+                    len(pca_secon),
+                    len(wavelength),
+                    im_shape[-2],
+                    im_shape[-1],
+                )
 
         else:
             res_shape = (len(pca_first), im_shape[-2], im_shape[-1])
@@ -359,87 +402,96 @@ class PcaPsfSubtractionModule(ProcessingModule):
         # loop over all different combination of pca_numbers and applying the reductions
         for i, pca_1 in enumerate(pca_first):
             for j, pca_2 in enumerate(pca_secon):
-                progress(i+j, n_pca_total, 'Creating residuals...', start_time)
+                progress(i + j, n_pca_total, "Creating residuals...", start_time)
 
                 # process images
-                residuals, res_rot = postprocessor(images=star_reshape,
-                                                   angles=parang,
-                                                   scales=scales,
-                                                   pca_number=(pca_1, pca_2),
-                                                   pca_sklearn=self.m_pca,
-                                                   im_shape=im_shape,
-                                                   indices=indices,
-                                                   processing_type=self.m_processing_type)
+                residuals, res_rot = postprocessor(
+                    images=star_reshape,
+                    angles=parang,
+                    scales=scales,
+                    pca_number=(pca_1, pca_2),
+                    pca_sklearn=self.m_pca,
+                    im_shape=im_shape,
+                    indices=indices,
+                    processing_type=self.m_processing_type,
+                )
 
                 # 1.) derotated residuals
                 if self.m_res_arr_out_ports is not None:
                     if not self.m_ifs_data:
                         self.m_res_arr_out_ports[pca_1].set_all(res_rot)
-                        self.m_res_arr_out_ports[pca_1].copy_attributes(self.m_star_in_port)
+                        self.m_res_arr_out_ports[pca_1].copy_attributes(
+                            self.m_star_in_port
+                        )
                         self.m_res_arr_out_ports[pca_1].add_history(
-                            'PcaPsfSubtractionModule', f'max PC number = {pca_first}')
+                            "PcaPsfSubtractionModule", f"max PC number = {pca_first}"
+                        )
 
                     else:
                         out_array_res = residuals
 
                 # 2.) mean residuals
                 if self.m_res_mean_out_port is not None:
-                    if self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                        out_array_mean[i, j] = combine_residuals(method='mean',
-                                                                 res_rot=res_rot,
-                                                                 angles=parang)
+                    if self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                        out_array_mean[i, j] = combine_residuals(
+                            method="mean", res_rot=res_rot, angles=parang
+                        )
 
                     else:
-                        out_array_mean[i] = combine_residuals(method='mean',
-                                                              res_rot=res_rot,
-                                                              angles=parang)
+                        out_array_mean[i] = combine_residuals(
+                            method="mean", res_rot=res_rot, angles=parang
+                        )
 
                 # 3.) median residuals
                 if self.m_res_median_out_port is not None:
-                    if self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                        out_array_medi[i, j] = combine_residuals(method='median',
-                                                                 res_rot=res_rot,
-                                                                 angles=parang)
+                    if self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                        out_array_medi[i, j] = combine_residuals(
+                            method="median", res_rot=res_rot, angles=parang
+                        )
 
                     else:
-                        out_array_medi[i] = combine_residuals(method='median',
-                                                              res_rot=res_rot,
-                                                              angles=parang)
+                        out_array_medi[i] = combine_residuals(
+                            method="median", res_rot=res_rot, angles=parang
+                        )
 
                 # 4.) noise-weighted residuals
                 if self.m_res_weighted_out_port is not None:
-                    if self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                        out_array_weig[i, j] = combine_residuals(method='weighted',
-                                                                 res_rot=res_rot,
-                                                                 residuals=residuals,
-                                                                 angles=parang)
+                    if self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                        out_array_weig[i, j] = combine_residuals(
+                            method="weighted",
+                            res_rot=res_rot,
+                            residuals=residuals,
+                            angles=parang,
+                        )
 
                     else:
-                        out_array_weig[i] = combine_residuals(method='weighted',
-                                                              res_rot=res_rot,
-                                                              residuals=residuals,
-                                                              angles=parang)
+                        out_array_weig[i] = combine_residuals(
+                            method="weighted",
+                            res_rot=res_rot,
+                            residuals=residuals,
+                            angles=parang,
+                        )
 
                 # 5.) clipped mean residuals
                 if self.m_res_rot_mean_clip_out_port is not None:
-                    if self.m_processing_type in ['SDI+ADI', 'ADI+SDI']:
-                        out_array_clip[i, j] = combine_residuals(method='clipped',
-                                                                 res_rot=res_rot,
-                                                                 angles=parang)
+                    if self.m_processing_type in ["SDI+ADI", "ADI+SDI"]:
+                        out_array_clip[i, j] = combine_residuals(
+                            method="clipped", res_rot=res_rot, angles=parang
+                        )
 
                     else:
-                        out_array_clip[i] = combine_residuals(method='clipped',
-                                                              res_rot=res_rot,
-                                                              angles=parang)
+                        out_array_clip[i] = combine_residuals(
+                            method="clipped", res_rot=res_rot, angles=parang
+                        )
 
         # Configurate data output according to the processing type
         # 1.) derotated residuals
         if self.m_res_arr_out_ports is not None and self.m_ifs_data:
             if pca_secon[0] == -1:
-                history = f'max PC number = {pca_first}'
+                history = f"max PC number = {pca_first}"
 
             else:
-                history = f'max PC number = {pca_first} / {pca_secon}'
+                history = f"max PC number = {pca_first} / {pca_secon}"
 
             # squeeze out_array_res to reduce dimensionallity as the residuals of
             # SDI+ADI and ADI+SDI are always of the form (1, 1, ...)
@@ -448,32 +500,38 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if isinstance(self.m_components, tuple):
                 self.m_res_arr_out_ports.set_all(squeezed, data_dim=squeezed.ndim)
                 self.m_res_arr_out_ports.copy_attributes(self.m_star_in_port)
-                self.m_res_arr_out_ports.add_history('PcaPsfSubtractionModule', history)
+                self.m_res_arr_out_ports.add_history("PcaPsfSubtractionModule", history)
 
             else:
                 for i, pca in enumerate(self.m_components):
                     self.m_res_arr_out_ports[pca].append(squeezed[i])
-                    self.m_res_arr_out_ports[pca].add_history('PcaPsfSubtractionModule', history)
+                    self.m_res_arr_out_ports[pca].add_history(
+                        "PcaPsfSubtractionModule", history
+                    )
 
         # 2.) mean residuals
         if self.m_res_mean_out_port is not None:
-            self.m_res_mean_out_port.set_all(out_array_mean,
-                                             data_dim=out_array_mean.ndim)
+            self.m_res_mean_out_port.set_all(
+                out_array_mean, data_dim=out_array_mean.ndim
+            )
 
         # 3.) median residuals
         if self.m_res_median_out_port is not None:
-            self.m_res_median_out_port.set_all(out_array_medi,
-                                               data_dim=out_array_medi.ndim)
+            self.m_res_median_out_port.set_all(
+                out_array_medi, data_dim=out_array_medi.ndim
+            )
 
         # 4.) noise-weighted residuals
         if self.m_res_weighted_out_port is not None:
-            self.m_res_weighted_out_port.set_all(out_array_weig,
-                                                 data_dim=out_array_weig.ndim)
+            self.m_res_weighted_out_port.set_all(
+                out_array_weig, data_dim=out_array_weig.ndim
+            )
 
         # 5.) clipped mean residuals
         if self.m_res_rot_mean_clip_out_port is not None:
-            self.m_res_rot_mean_clip_out_port.set_all(out_array_clip,
-                                                      data_dim=out_array_clip.ndim)
+            self.m_res_rot_mean_clip_out_port.set_all(
+                out_array_clip, data_dim=out_array_clip.ndim
+            )
 
     @typechecked
     def run(self) -> None:
@@ -489,17 +547,19 @@ class PcaPsfSubtractionModule(ProcessingModule):
             None
         """
 
-        print('Input parameters:')
-        print(f'   - Post-processing type: {self.m_processing_type}')
-        print(f'   - Number of principal components: {self.m_pca_numbers}')
-        print(f'   - Subtract mean: {self.m_subtract_mean}')
-        print(f'   - Extra rotation (deg): {self.m_extra_rot}')
+        print("Input parameters:")
+        print(f"   - Post-processing type: {self.m_processing_type}")
+        print(f"   - Number of principal components: {self.m_pca_numbers}")
+        print(f"   - Subtract mean: {self.m_subtract_mean}")
+        print(f"   - Extra rotation (deg): {self.m_extra_rot}")
 
-        cpu = self._m_config_port.get_attribute('CPU')
+        cpu = self._m_config_port.get_attribute("CPU")
 
         if cpu > 1 and self.m_res_arr_out_ports is not None:
-            warnings.warn('Multiprocessing not possible if \'res_arr_out_tag\' is not set '
-                          'to None.')
+            warnings.warn(
+                "Multiprocessing not possible if 'res_arr_out_tag' is not set "
+                "to None."
+            )
 
         # Read the data
         star_data = self.m_star_in_port.get_all()
@@ -513,16 +573,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             self.m_ifs_data = True
 
         else:
-            raise ValueError(f'The input data has {star_data.ndim} dimensions while only 3 or 4 '
-                             f' are supported by the pipeline module.')
+            raise ValueError(
+                f"The input data has {star_data.ndim} dimensions while only 3 or 4 "
+                f" are supported by the pipeline module."
+            )
 
-        if self.m_processing_type == 'ADI' and not self.m_ifs_data:
+        if self.m_processing_type == "ADI" and not self.m_ifs_data:
             # select the first image and get the unmasked image indices
-            im_star = star_data[0, ].reshape(-1)
-            indices = np.where(im_star != 0.)[0]
+            im_star = star_data[0,].reshape(-1)
+            indices = np.where(im_star != 0.0)[0]
 
             # reshape the star data and select the unmasked pixels
-            star_reshape = star_data.reshape(im_shape[0], im_shape[1]*im_shape[2])
+            star_reshape = star_data.reshape(im_shape[0], im_shape[1] * im_shape[2])
             star_reshape = star_reshape[:, indices]
 
             if self.m_reference_in_port.tag == self.m_star_in_port.tag:
@@ -533,11 +595,15 @@ class PcaPsfSubtractionModule(ProcessingModule):
                 ref_shape = ref_data.shape
 
                 if ref_shape[-2:] != im_shape[-2:]:
-                    raise ValueError('The image size of the science data and the reference data '
-                                     'should be identical.')
+                    raise ValueError(
+                        "The image size of the science data and the reference data "
+                        "should be identical."
+                    )
 
                 # reshape reference data and select the unmasked pixels
-                ref_reshape = ref_data.reshape(ref_shape[0], ref_shape[1]*ref_shape[2])
+                ref_reshape = ref_data.reshape(
+                    ref_shape[0], ref_shape[1] * ref_shape[2]
+                )
                 ref_reshape = ref_reshape[:, indices]
 
             # subtract mean from science data, if required
@@ -550,7 +616,7 @@ class PcaPsfSubtractionModule(ProcessingModule):
             ref_reshape -= mean_ref
 
             # create the PCA basis
-            print('Constructing PSF model...', end='')
+            print("Constructing PSF model...", end="")
             self.m_pca.fit(ref_reshape)
 
             # add mean of reference array as 1st PC and orthogonalize it with respect to
@@ -558,17 +624,18 @@ class PcaPsfSubtractionModule(ProcessingModule):
             if not self.m_subtract_mean:
                 mean_ref_reshape = mean_ref.reshape((1, mean_ref.shape[0]))
 
-                q_ortho, _ = np.linalg.qr(np.vstack((mean_ref_reshape,
-                                                     self.m_pca.components_[:-1, ])).T)
+                q_ortho, _ = np.linalg.qr(
+                    np.vstack((mean_ref_reshape, self.m_pca.components_[:-1,])).T
+                )
 
                 self.m_pca.components_ = q_ortho.T
 
-            print(' [DONE]')
+            print(" [DONE]")
 
             if self.m_basis_out_port is not None:
                 pc_size = self.m_pca.components_.shape[0]
 
-                basis = np.zeros((pc_size, im_shape[1]*im_shape[2]))
+                basis = np.zeros((pc_size, im_shape[1] * im_shape[2]))
                 basis[:, indices] = self.m_pca.components_
                 basis = basis.reshape((pc_size, im_shape[1], im_shape[2]))
 
@@ -587,34 +654,38 @@ class PcaPsfSubtractionModule(ProcessingModule):
 
         # Running multiprocessed PCA analysis
         else:
-            print('Creating residuals', end='')
+            print("Creating residuals", end="")
             self._run_multi_processing(star_reshape, im_shape, indices)
-            print(' [DONE]')
+            print(" [DONE]")
 
         # write history
         if isinstance(self.m_components, tuple):
-            history = f'max PC number = {np.amax(self.m_components[0])} / ' \
-                      f'{np.amax(self.m_components[1])}'
+            history = (
+                f"max PC number = {np.amax(self.m_components[0])} / "
+                f"{np.amax(self.m_components[1])}"
+            )
 
         else:
-            history = f'max PC number = {np.amax(self.m_components)}'
+            history = f"max PC number = {np.amax(self.m_components)}"
 
         # save history for all other ports
         if self.m_res_mean_out_port is not None:
             self.m_res_mean_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_mean_out_port.add_history('PcaPsfSubtractionModule', history)
+            self.m_res_mean_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_median_out_port is not None:
             self.m_res_median_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_median_out_port.add_history('PcaPsfSubtractionModule', history)
+            self.m_res_median_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_weighted_out_port is not None:
             self.m_res_weighted_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_weighted_out_port.add_history('PcaPsfSubtractionModule', history)
+            self.m_res_weighted_out_port.add_history("PcaPsfSubtractionModule", history)
 
         if self.m_res_rot_mean_clip_out_port is not None:
             self.m_res_rot_mean_clip_out_port.copy_attributes(self.m_star_in_port)
-            self.m_res_rot_mean_clip_out_port.add_history('PcaPsfSubtractionModule', history)
+            self.m_res_rot_mean_clip_out_port.add_history(
+                "PcaPsfSubtractionModule", history
+            )
 
         self.m_star_in_port.close_port()
 
@@ -626,18 +697,20 @@ class ClassicalADIModule(ProcessingModule):
     self-subtraction.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 res_out_tag: str,
-                 stack_out_tag: str,
-                 threshold: Optional[Tuple[float, float, float]],
-                 nreference: Optional[int] = None,
-                 residuals: str = 'median',
-                 extra_rot: float = 0.) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        res_out_tag: str,
+        stack_out_tag: str,
+        threshold: Optional[Tuple[float, float, float]],
+        nreference: Optional[int] = None,
+        residuals: str = "median",
+        extra_rot: float = 0.0,
+    ) -> None:
         """
         Parameters
         ----------
@@ -695,13 +768,14 @@ class ClassicalADIModule(ProcessingModule):
             None
         """
 
-        parang = -1.*self.m_image_in_port.get_attribute('PARANG') + self.m_extra_rot
+        parang = -1.0 * self.m_image_in_port.get_attribute("PARANG") + self.m_extra_rot
 
         nimages = self.m_image_in_port.get_shape()[0]
 
         if self.m_threshold:
-            parang_thres = 2.*math.atan2(self.m_threshold[2]*self.m_threshold[1],
-                                         2.*self.m_threshold[0])
+            parang_thres = 2.0 * math.atan2(
+                self.m_threshold[2] * self.m_threshold[1], 2.0 * self.m_threshold[0]
+            )
             parang_thres = math.degrees(parang_thres)
             reference = None
 
@@ -715,39 +789,42 @@ class ClassicalADIModule(ProcessingModule):
         for i in range(nimages):
             ang_diff[i, :] = np.abs(parang[i] - parang)
 
-        self.apply_function_to_images(subtract_psf,
-                                      self.m_image_in_port,
-                                      self.m_res_out_port,
-                                      'Classical ADI',
-                                      func_args=(parang_thres,
-                                                 self.m_nreference,
-                                                 reference,
-                                                 ang_diff,
-                                                 self.m_image_in_port))
+        self.apply_function_to_images(
+            subtract_psf,
+            self.m_image_in_port,
+            self.m_res_out_port,
+            "Classical ADI",
+            func_args=(
+                parang_thres,
+                self.m_nreference,
+                reference,
+                ang_diff,
+                self.m_image_in_port,
+            ),
+        )
 
         self.m_res_in_port = self.add_input_port(self.m_res_out_port._m_tag)
         im_res = self.m_res_in_port.get_all()
 
         res_rot = np.zeros(im_res.shape)
         for i, item in enumerate(parang):
-            res_rot[i, ] = rotate(im_res[i, ], item, reshape=False)
+            res_rot[i,] = rotate(im_res[i,], item, reshape=False)
 
-        stack = combine_residuals(self.m_residuals,
-                                  res_rot,
-                                  residuals=im_res,
-                                  angles=parang)
+        stack = combine_residuals(
+            self.m_residuals, res_rot, residuals=im_res, angles=parang
+        )
 
         self.m_stack_out_port.set_all(stack)
 
         if self.m_threshold:
-            history = f'threshold [deg] = {parang_thres:.2f}'
+            history = f"threshold [deg] = {parang_thres:.2f}"
         else:
-            history = 'threshold [deg] = None'
+            history = "threshold [deg] = None"
 
         self.m_res_out_port.copy_attributes(self.m_image_in_port)
-        self.m_res_out_port.add_history('ClassicalADIModule', history)
+        self.m_res_out_port.add_history("ClassicalADIModule", history)
 
         self.m_stack_out_port.copy_attributes(self.m_image_in_port)
-        self.m_stack_out_port.add_history('ClassicalADIModule', history)
+        self.m_stack_out_port.add_history("ClassicalADIModule", history)
 
         self.m_res_out_port.close_port()

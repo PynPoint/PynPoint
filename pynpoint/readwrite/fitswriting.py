@@ -25,17 +25,19 @@ class FitsWritingModule(WritingModule):
     of a :class:`~pynpoint.core.pypeline.Pypeline` or a specified location to store the FITS data.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 data_tag: str,
-                 file_name: str,
-                 output_dir: Optional[str] = None,
-                 data_range: Optional[Tuple[int, int]] = None,
-                 overwrite: bool = True,
-                 subset_size: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        data_tag: str,
+        file_name: str,
+        output_dir: Optional[str] = None,
+        data_range: Optional[Tuple[int, int]] = None,
+        overwrite: bool = True,
+        subset_size: Optional[int] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -67,8 +69,8 @@ class FitsWritingModule(WritingModule):
 
         super().__init__(name_in, output_dir=output_dir)
 
-        if not file_name.endswith('.fits'):
-            raise ValueError('Output \'file_name\' requires the FITS extension.')
+        if not file_name.endswith(".fits"):
+            raise ValueError("Output 'file_name' requires the FITS extension.")
 
         self.m_file_name = file_name
         self.m_data_port = self.add_input_port(data_tag)
@@ -90,11 +92,13 @@ class FitsWritingModule(WritingModule):
 
         out_name = os.path.join(self.m_output_location, self.m_file_name)
 
-        print('Writing FITS file...', end='')
+        print("Writing FITS file...", end="")
 
         if os.path.isfile(out_name) and not self.m_overwrite:
-            warnings.warn('Filename already present. Use overwrite=True to overwrite an existing '
-                          'FITS file.')
+            warnings.warn(
+                "Filename already present. Use overwrite=True to overwrite an existing "
+                "FITS file."
+            )
 
         else:
             header = fits.Header()
@@ -107,14 +111,16 @@ class FitsWritingModule(WritingModule):
                     # Check if the header keyword together with its value is
                     # too long for the FITS format. If that is the case, raise
                     # a warning and truncate the value to avoid a ValueError.
-                    key = 'hierarch ' + attr
+                    key = "hierarch " + attr
                     value = str(attributes[attr])
                     max_val_len = 75 - len(key)
 
                     if len(key + value) > 75:
-                        warnings.warn(f'Key \'{key}\' with value \'{value}\' is too long for '
-                                      f'the FITS format. To avoid an error, the value was '
-                                      f'truncated to \'{value[:max_val_len]}\'.')
+                        warnings.warn(
+                            f"Key '{key}' with value '{value}' is too long for "
+                            f"the FITS format. To avoid an error, the value was "
+                            f"truncated to '{value[:max_val_len]}'."
+                        )
 
                     header[key] = value[:max_val_len]
 
@@ -139,15 +145,19 @@ class FitsWritingModule(WritingModule):
                     frames = np.asarray(frames) + self.m_range[0]
 
             for i, _ in enumerate(frames[:-1]):
-                data_select = self.m_data_port[frames[i]:frames[i+1], ]
+                data_select = self.m_data_port[frames[i] : frames[i + 1],]
 
                 if len(frames) == 2:
-                    fits.writeto(out_name, data_select, header, overwrite=self.m_overwrite)
+                    fits.writeto(
+                        out_name, data_select, header, overwrite=self.m_overwrite
+                    )
 
                 else:
-                    filename = f'{out_name[:-5]}{i:03d}.fits'
-                    fits.writeto(filename, data_select, header, overwrite=self.m_overwrite)
+                    filename = f"{out_name[:-5]}{i:03d}.fits"
+                    fits.writeto(
+                        filename, data_select, header, overwrite=self.m_overwrite
+                    )
 
-            print(' [DONE]')
+            print(" [DONE]")
 
         self.m_data_port.close_port()

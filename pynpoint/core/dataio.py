@@ -24,8 +24,7 @@ class DataStorage:
     """
 
     @typechecked
-    def __init__(self,
-                 location_in: str) -> None:
+    def __init__(self, location_in: str) -> None:
         """
         Constructor of a DataStorage instance. It needs the location of the HDF5 file (Pypeline
         database) as input. If the file already exists it is opened and extended, if not a new File
@@ -42,9 +41,11 @@ class DataStorage:
             None
         """
 
-        assert (os.path.isdir(os.path.split(location_in)[0])), 'Input directory for DataStorage ' \
-                                                               'does not exist - input requested:'\
-                                                               ' %s.' % location_in
+        assert os.path.isdir(os.path.split(location_in)[0]), (
+            "Input directory for DataStorage "
+            "does not exist - input requested:"
+            " %s." % location_in
+        )
 
         self._m_location = location_in
         self.m_data_bank = None
@@ -62,7 +63,7 @@ class DataStorage:
         """
 
         if not self.m_open:
-            self.m_data_bank = h5py.File(self._m_location, mode='a')
+            self.m_data_bank = h5py.File(self._m_location, mode="a")
             self.m_open = True
 
     @typechecked
@@ -94,9 +95,7 @@ class Port(metaclass=ABCMeta):
 
     @abstractmethod
     @typechecked
-    def __init__(self,
-                 tag: str,
-                 data_storage_in: Optional[DataStorage] = None) -> None:
+    def __init__(self, tag: str, data_storage_in: Optional[DataStorage] = None) -> None:
         """
         Abstract constructor of a Port. As input the tag / key is expected which is needed to build
         the connection to the database entry with the same tag / key. It is possible to give the
@@ -117,7 +116,7 @@ class Port(metaclass=ABCMeta):
             None
         """
 
-        assert isinstance(tag, str), 'Port tag needs to be a string.'
+        assert isinstance(tag, str), "Port tag needs to be a string."
 
         self._m_tag = tag
         self._m_data_storage = data_storage_in
@@ -171,8 +170,7 @@ class Port(metaclass=ABCMeta):
             self._m_data_base_active = False
 
     @typechecked
-    def set_database_connection(self,
-                                data_base_in: DataStorage) -> None:
+    def set_database_connection(self, data_base_in: DataStorage) -> None:
         """
         Sets the internal DataStorage instance.
 
@@ -198,9 +196,7 @@ class ConfigPort(Port):
     """
 
     @typechecked
-    def __init__(self,
-                 tag: str,
-                 data_storage_in: Optional[DataStorage] = None) -> None:
+    def __init__(self, tag: str, data_storage_in: Optional[DataStorage] = None) -> None:
         """
         Constructor of the ConfigPort class which creates the config port instance which can read
         the settings stored in the central database under the tag `config`. An instance of the
@@ -230,8 +226,10 @@ class ConfigPort(Port):
 
         super().__init__(tag, data_storage_in)
 
-        if tag != 'config':
-            raise ValueError('The tag name of the central configuration should be \'config\'.')
+        if tag != "config":
+            raise ValueError(
+                "The tag name of the central configuration should be 'config'."
+            )
 
     @typechecked
     def _check_status_and_activate(self) -> bool:
@@ -245,7 +243,9 @@ class ConfigPort(Port):
         """
 
         if self._m_data_storage is None:
-            warnings.warn('ConfigPort can not load data unless a database is connected.')
+            warnings.warn(
+                "ConfigPort can not load data unless a database is connected."
+            )
             status = False
 
         else:
@@ -267,7 +267,7 @@ class ConfigPort(Port):
             Returns True if data exists, False if not.
         """
 
-        return 'config' in self._m_data_storage.m_data_bank
+        return "config" in self._m_data_storage.m_data_bank
 
     @typechecked
     def _check_error_cases(self) -> bool:
@@ -279,7 +279,7 @@ class ConfigPort(Port):
             status = False
 
         elif not self._check_if_data_exists():
-            warnings.warn('No data under the tag which is linked by the ConfigPort.')
+            warnings.warn("No data under the tag which is linked by the ConfigPort.")
             status = False
 
         else:
@@ -288,8 +288,7 @@ class ConfigPort(Port):
         return status
 
     @typechecked
-    def get_attribute(self,
-                      name: str) -> Optional[StaticAttribute]:
+    def get_attribute(self, name: str) -> Optional[StaticAttribute]:
         """
         Returns a static attribute which is connected to the dataset of the ConfigPort.
 
@@ -307,11 +306,11 @@ class ConfigPort(Port):
         if not self._check_error_cases():
             attr_val = None
 
-        elif name in self._m_data_storage.m_data_bank['config'].attrs:
-            attr_val = self._m_data_storage.m_data_bank['config'].attrs[name]
+        elif name in self._m_data_storage.m_data_bank["config"].attrs:
+            attr_val = self._m_data_storage.m_data_bank["config"].attrs[name]
 
         else:
-            warnings.warn(f'The attribute \'{name}\' was not found.')
+            warnings.warn(f"The attribute '{name}' was not found.")
             attr_val = None
 
         # Convert numpy types to base types (e.g., np.float64 -> float)
@@ -351,9 +350,7 @@ class InputPort(Port):
     """
 
     @typechecked
-    def __init__(self,
-                 tag: str,
-                 data_storage_in: Optional[DataStorage] = None) -> None:
+    def __init__(self, tag: str, data_storage_in: Optional[DataStorage] = None) -> None:
         """
         Constructor of InputPort. An input port can read data from the central database under the
         key `tag`. Instances of InputPort should not be created manually inside a PypelineModule
@@ -377,13 +374,17 @@ class InputPort(Port):
 
         super().__init__(tag, data_storage_in)
 
-        if tag == 'config':
-            raise ValueError('The tag name \'config\' is reserved for the central configuration '
-                             'of PynPoint.')
+        if tag == "config":
+            raise ValueError(
+                "The tag name 'config' is reserved for the central configuration "
+                "of PynPoint."
+            )
 
-        if tag == 'fits_header':
-            raise ValueError('The tag name \'fits_header\' is reserved for storage of the FITS '
-                             'headers.')
+        if tag == "fits_header":
+            raise ValueError(
+                "The tag name 'fits_header' is reserved for storage of the FITS "
+                "headers."
+            )
 
     @typechecked
     def _check_status_and_activate(self) -> bool:
@@ -397,7 +398,7 @@ class InputPort(Port):
         """
 
         if self._m_data_storage is None:
-            warnings.warn('InputPort can not load data unless a database is connected.')
+            warnings.warn("InputPort can not load data unless a database is connected.")
             status = False
 
         else:
@@ -428,7 +429,7 @@ class InputPort(Port):
             status = False
 
         elif not self._check_if_data_exists():
-            warnings.warn('No data under the tag which is linked by the InputPort.')
+            warnings.warn("No data under the tag which is linked by the InputPort.")
             status = False
 
         else:
@@ -437,9 +438,9 @@ class InputPort(Port):
         return status
 
     @typechecked
-    def __getitem__(self,
-                    item: Union[slice, int, tuple]) -> Optional[Union[StaticAttribute,
-                                                                      NonStaticAttribute]]:
+    def __getitem__(
+        self, item: Union[slice, int, tuple]
+    ) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
         """
         Internal function which handles the data access using slicing. See class documentation for a
         example (:class:`~pynpoint.core.dataio.InputPort`). None if the data does not exist.
@@ -527,8 +528,9 @@ class InputPort(Port):
         return data
 
     @typechecked
-    def get_attribute(self,
-                      name: str) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
+    def get_attribute(
+        self, name: str
+    ) -> Optional[Union[StaticAttribute, NonStaticAttribute]]:
         """
         Returns an attribute which is connected to the dataset of the port. The function can return
         static and non-static attributes (static attributes have priority). More information about
@@ -551,13 +553,15 @@ class InputPort(Port):
                 # static attribute
                 attr_val = self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
-            elif 'header_' + self._m_tag + '/' + name in self._m_data_storage.m_data_bank:
+            elif (
+                "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank
+            ):
                 # non-static attribute
-                attribute = 'header_' + self._m_tag + '/' + name
+                attribute = "header_" + self._m_tag + "/" + name
                 attr_val = np.asarray(self._m_data_storage.m_data_bank[attribute][...])
 
             else:
-                warnings.warn(f'The attribute \'{name}\' was not found.')
+                warnings.warn(f"The attribute '{name}' was not found.")
                 attr_val = None
 
         else:
@@ -604,8 +608,10 @@ class InputPort(Port):
         if self._check_error_cases():
             attr_key = []
 
-            if 'header_' + self._m_tag + '/' in self._m_data_storage.m_data_bank:
-                for key in self._m_data_storage.m_data_bank['header_' + self._m_tag + '/']:
+            if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
+                for key in self._m_data_storage.m_data_bank[
+                    "header_" + self._m_tag + "/"
+                ]:
                     attr_key.append(key)
 
             else:
@@ -652,10 +658,12 @@ class OutputPort(Port):
     """
 
     @typechecked
-    def __init__(self,
-                 tag: str,
-                 data_storage_in: Optional[DataStorage] = None,
-                 activate_init: bool = True) -> None:
+    def __init__(
+        self,
+        tag: str,
+        data_storage_in: Optional[DataStorage] = None,
+        activate_init: bool = True,
+    ) -> None:
         """
         Constructor of the OutputPort class which creates an output port instance which can write
         data to the the central database under the tag `tag`. If you write a PypelineModule you
@@ -681,13 +689,17 @@ class OutputPort(Port):
 
         self.m_activate = activate_init
 
-        if tag == 'config':
-            raise ValueError('The tag name \'config\' is reserved for the central configuration '
-                             'of PynPoint.')
+        if tag == "config":
+            raise ValueError(
+                "The tag name 'config' is reserved for the central configuration "
+                "of PynPoint."
+            )
 
-        if tag == 'fits_header':
-            raise ValueError('The tag name \'fits_header\' is reserved for storage of the FITS '
-                             'headers.')
+        if tag == "fits_header":
+            raise ValueError(
+                "The tag name 'fits_header' is reserved for storage of the FITS "
+                "headers."
+            )
 
     @typechecked
     def _check_status_and_activate(self) -> bool:
@@ -704,7 +716,9 @@ class OutputPort(Port):
             status = False
 
         elif self._m_data_storage is None:
-            warnings.warn('OutputPort can not store data unless a database is connected.')
+            warnings.warn(
+                "OutputPort can not store data unless a database is connected."
+            )
             status = False
 
         else:
@@ -716,10 +730,12 @@ class OutputPort(Port):
         return status
 
     @typechecked
-    def _init_dataset(self,
-                      first_data: Union[np.ndarray, list],
-                      tag: str,
-                      data_dim: Optional[int] = None) -> None:
+    def _init_dataset(
+        self,
+        first_data: Union[np.ndarray, list],
+        tag: str,
+        data_dim: Optional[int] = None,
+    ) -> None:
         """
         Internal function which is used to initialize a dataset in the HDF5 database.
 
@@ -739,22 +755,25 @@ class OutputPort(Port):
         """
 
         @typechecked
-        def _ndim_check(data_dim: int,
-                        first_dim: int) -> None:
+        def _ndim_check(data_dim: int, first_dim: int) -> None:
 
             if first_dim > 5 or first_dim < 1:
-                raise ValueError('Output port can only save numpy arrays from 1D to 5D. Use Port '
-                                 'attributes to save as int, float, or string.')
+                raise ValueError(
+                    "Output port can only save numpy arrays from 1D to 5D. Use Port "
+                    "attributes to save as int, float, or string."
+                )
 
             if data_dim > 5 or data_dim < 1:
-                raise ValueError('The data dimensions should be 1D, 2D, 3D, 4D, or 5D.')
+                raise ValueError("The data dimensions should be 1D, 2D, 3D, 4D, or 5D.")
 
             if data_dim < first_dim:
-                raise ValueError('The dimensions of the data should be equal to or larger than the '
-                                 'dimensions of the input data.')
+                raise ValueError(
+                    "The dimensions of the data should be equal to or larger than the "
+                    "dimensions of the input data."
+                )
 
             if data_dim == 3 and first_dim == 1:
-                raise ValueError('Cannot initialize 1D data in 3D data container.')
+                raise ValueError("Cannot initialize 1D data in 3D data container.")
 
         first_data = np.asarray(first_data)
 
@@ -765,7 +784,7 @@ class OutputPort(Port):
 
         if data_dim == first_data.ndim:
             if first_data.ndim == 1:  # 1D
-                data_shape = (None, )
+                data_shape = (None,)
 
             elif first_data.ndim == 2:  # 2D
                 data_shape = (None, first_data.shape[1])
@@ -774,11 +793,21 @@ class OutputPort(Port):
                 data_shape = (None, first_data.shape[1], first_data.shape[2])
 
             elif first_data.ndim == 4:  # 4D
-                data_shape = (first_data.shape[0], None, first_data.shape[2], first_data.shape[3])
+                data_shape = (
+                    first_data.shape[0],
+                    None,
+                    first_data.shape[2],
+                    first_data.shape[3],
+                )
 
             elif first_data.ndim == 5:  # 5D
-                data_shape = (first_data.shape[0], first_data.shape[1], first_data.shape[2],
-                              first_data.shape[3], first_data.shape[4])
+                data_shape = (
+                    first_data.shape[0],
+                    first_data.shape[1],
+                    first_data.shape[2],
+                    first_data.shape[3],
+                    first_data.shape[4],
+                )
 
         else:
             if data_dim == 2:  # 1D -> 2D
@@ -790,26 +819,35 @@ class OutputPort(Port):
                 first_data = first_data[np.newaxis, :, :]
 
             elif data_dim == 4:  # 3D -> 4D
-                data_shape = (first_data.shape[0], None, first_data.shape[1], first_data.shape[2])
+                data_shape = (
+                    first_data.shape[0],
+                    None,
+                    first_data.shape[1],
+                    first_data.shape[2],
+                )
                 first_data = first_data[:, np.newaxis, :, :]
 
         if first_data.size == 0:
-            warnings.warn(f'The new dataset that is stored under the tag name \'{tag}\' is empty.')
+            warnings.warn(
+                f"The new dataset that is stored under the tag name '{tag}' is empty."
+            )
 
         else:
             if isinstance(first_data[0], str):
-                first_data = np.array(first_data, dtype='|S')
+                first_data = np.array(first_data, dtype="|S")
 
-        self._m_data_storage.m_data_bank.create_dataset(tag,
-                                                        data=first_data,
-                                                        maxshape=data_shape)
+        self._m_data_storage.m_data_bank.create_dataset(
+            tag, data=first_data, maxshape=data_shape
+        )
 
     @typechecked
-    def _set_all_key(self,
-                     tag: str,
-                     data: np.ndarray,
-                     data_dim: Optional[int] = None,
-                     keep_attributes: bool = False) -> None:
+    def _set_all_key(
+        self,
+        tag: str,
+        data: np.ndarray,
+        data_dim: Optional[int] = None,
+        keep_attributes: bool = False,
+    ) -> None:
         """
         Internal function which sets the values of a dataset under the *tag* name in the database.
         If old data exists it will be overwritten. This function is used by
@@ -854,11 +892,13 @@ class OutputPort(Port):
                 self._m_data_storage.m_data_bank[tag].attrs[key] = value
 
     @typechecked
-    def _append_key(self,
-                    tag: str,
-                    data: Union[np.ndarray, list],
-                    data_dim: Optional[int] = None,
-                    force: bool = False) -> None:
+    def _append_key(
+        self,
+        tag: str,
+        data: Union[np.ndarray, list],
+        data_dim: Optional[int] = None,
+        force: bool = False,
+    ) -> None:
         """
         Internal function for appending data to a dataset or appending non-static attributes.
         See :func:`~pynpoint.core.dataio.OutputPort.append` for more information.
@@ -923,14 +963,17 @@ class OutputPort(Port):
 
                 elif tmp_dim == 3:
                     # check if the spatial shape is the same
-                    check_result = (tmp_shape[1] == data.shape[1]) and \
-                                   (tmp_shape[2] == data.shape[2])
+                    check_result = (tmp_shape[1] == data.shape[1]) and (
+                        tmp_shape[2] == data.shape[2]
+                    )
 
                 elif tmp_dim == 4:
                     # check if the spectral and spatial shape is the same
-                    check_result = (tmp_shape[0] == data.shape[0]) and \
-                                   (tmp_shape[2] == data.shape[2]) and \
-                                   (tmp_shape[3] == data.shape[3])
+                    check_result = (
+                        (tmp_shape[0] == data.shape[0])
+                        and (tmp_shape[2] == data.shape[2])
+                        and (tmp_shape[3] == data.shape[3])
+                    )
 
             return check_result
 
@@ -940,22 +983,28 @@ class OutputPort(Port):
             # 1D case
 
             if data.size == 0:
-                warnings.warn(f'The dataset that is appended under the tag name \'{tag}\' '
-                              f'is empty.')
+                warnings.warn(
+                    f"The dataset that is appended under the tag name '{tag}' "
+                    f"is empty."
+                )
 
             else:
                 if isinstance(data[0], str):
-                    data = np.array(data, dtype='|S')
+                    data = np.array(data, dtype="|S")
 
             if data.ndim == 4:
                 # IFS data: (n_wavelength, n_dit, y_pos, x_pos)
-                self._m_data_storage.m_data_bank[tag].resize(tmp_shape[1] + data.shape[1], axis=1)
-                self._m_data_storage.m_data_bank[tag][:, tmp_shape[1]:, :, :] = data
+                self._m_data_storage.m_data_bank[tag].resize(
+                    tmp_shape[1] + data.shape[1], axis=1
+                )
+                self._m_data_storage.m_data_bank[tag][:, tmp_shape[1] :, :, :] = data
 
             else:
                 # Other data: n_dit is the first dimension
-                self._m_data_storage.m_data_bank[tag].resize(tmp_shape[0] + data.shape[0], axis=0)
-                self._m_data_storage.m_data_bank[tag][tmp_shape[0]:, ] = data
+                self._m_data_storage.m_data_bank[tag].resize(
+                    tmp_shape[0] + data.shape[0], axis=0
+                )
+                self._m_data_storage.m_data_bank[tag][tmp_shape[0] :,] = data
 
             return None
 
@@ -967,13 +1016,15 @@ class OutputPort(Port):
             return None
 
         # NO -> Error message
-        raise ValueError(f'The port tag \'{self._m_tag}\' is already used with a different data '
-                         f'type. The \'force\' parameter can be used to replace the tag.')
+        raise ValueError(
+            f"The port tag '{self._m_tag}' is already used with a different data "
+            f"type. The 'force' parameter can be used to replace the tag."
+        )
 
     @typechecked
-    def __setitem__(self,
-                    key: Union[slice, int, tuple],
-                    value: Union[np.ndarray, int]) -> None:
+    def __setitem__(
+        self, key: Union[slice, int, tuple], value: Union[np.ndarray, int]
+    ) -> None:
         """
         Internal function needed to change data using slicing. See class documentation for an
         example (:class:`~pynpoint.core.dataio.OutputPort`).
@@ -1006,10 +1057,12 @@ class OutputPort(Port):
                 del self._m_data_storage.m_data_bank[self._m_tag]
 
     @typechecked
-    def set_all(self,
-                data: Union[np.ndarray, list],
-                data_dim: Optional[int] = None,
-                keep_attributes: bool = False) -> None:
+    def set_all(
+        self,
+        data: Union[np.ndarray, list],
+        data_dim: Optional[int] = None,
+        keep_attributes: bool = False,
+    ) -> None:
         """
         Set the data in the database by replacing all old values with the values of the input data.
         If no old values exists the data is just stored. Since it is not possible to change the
@@ -1062,16 +1115,20 @@ class OutputPort(Port):
 
         if self._check_status_and_activate():
 
-            self._set_all_key(tag=self._m_tag,
-                              data=data,
-                              data_dim=data_dim,
-                              keep_attributes=keep_attributes)
+            self._set_all_key(
+                tag=self._m_tag,
+                data=data,
+                data_dim=data_dim,
+                keep_attributes=keep_attributes,
+            )
 
     @typechecked
-    def append(self,
-               data: Union[np.ndarray, list],
-               data_dim: Optional[int] = None,
-               force: bool = False) -> None:
+    def append(
+        self,
+        data: Union[np.ndarray, list],
+        data_dim: Optional[int] = None,
+        force: bool = False,
+    ) -> None:
         """
         Appends data to an existing dataset along the first dimension. If no data exists for the
         :class:`~pynpoint.core.dataio.OutputPort`, then a new data set is created. For more
@@ -1106,10 +1163,7 @@ class OutputPort(Port):
 
         if self._check_status_and_activate():
 
-            self._append_key(self._m_tag,
-                             data=data,
-                             data_dim=data_dim,
-                             force=force)
+            self._append_key(self._m_tag, data=data, data_dim=data_dim, force=force)
 
     @typechecked
     def activate(self) -> None:
@@ -1138,10 +1192,12 @@ class OutputPort(Port):
         self.m_activate = False
 
     @typechecked
-    def add_attribute(self,
-                      name: str,
-                      value: Union[StaticAttribute, NonStaticAttribute],
-                      static: bool = True) -> None:
+    def add_attribute(
+        self,
+        name: str,
+        value: Union[StaticAttribute, NonStaticAttribute],
+        static: bool = True,
+    ) -> None:
         """
         Adds an attribute to the dataset of the Port with the attribute name = `name` and the
         value = `value`. If the attribute already exists it will be overwritten. Two different
@@ -1177,21 +1233,25 @@ class OutputPort(Port):
         if self._check_status_and_activate():
 
             if self._m_tag not in self._m_data_storage.m_data_bank:
-                warnings.warn(f'Can not store the attribute \'{name}\' because the dataset '
-                              f'\'{self._m_tag}\' does not exist.')
+                warnings.warn(
+                    f"Can not store the attribute '{name}' because the dataset "
+                    f"'{self._m_tag}' does not exist."
+                )
 
             else:
                 if static:
                     self._m_data_storage.m_data_bank[self._m_tag].attrs[name] = value
 
                 else:
-                    self._set_all_key(tag=('header_' + self._m_tag + '/' + name),
-                                      data=np.asarray(value))
+                    self._set_all_key(
+                        tag=("header_" + self._m_tag + "/" + name),
+                        data=np.asarray(value),
+                    )
 
     @typechecked
-    def append_attribute_data(self,
-                              name: str,
-                              value: Union[StaticAttribute, NonStaticAttribute]) -> None:
+    def append_attribute_data(
+        self, name: str, value: Union[StaticAttribute, NonStaticAttribute]
+    ) -> None:
         """
         Function which appends data (either a single value or an array) to non-static attributes.
 
@@ -1210,12 +1270,17 @@ class OutputPort(Port):
 
         if self._check_status_and_activate():
 
-            self._append_key(tag=('header_' + self._m_tag + '/' + name),
-                             data=np.asarray([value, ]))
+            self._append_key(
+                tag=("header_" + self._m_tag + "/" + name),
+                data=np.asarray(
+                    [
+                        value,
+                    ]
+                ),
+            )
 
     @typechecked
-    def copy_attributes(self,
-                        input_port: InputPort) -> None:
+    def copy_attributes(self, input_port: InputPort) -> None:
         """
         Copies all static and non-static attributes from a given InputPort. Attributes which already
         exist will be overwritten. Non-static attributes will be linked not copied. If the InputPort
@@ -1236,12 +1301,13 @@ class OutputPort(Port):
         if self._check_status_and_activate() and input_port.tag != self._m_tag:
 
             # link non-static attributes
-            if 'header_' + input_port.tag + '/' in self._m_data_storage.m_data_bank:
+            if "header_" + input_port.tag + "/" in self._m_data_storage.m_data_bank:
 
-                for attr_name, attr_data in self._m_data_storage\
-                        .m_data_bank['header_' + input_port.tag + '/'].items():
+                for attr_name, attr_data in self._m_data_storage.m_data_bank[
+                    "header_" + input_port.tag + "/"
+                ].items():
 
-                    database_name = 'header_'+self._m_tag+'/'+attr_name
+                    database_name = "header_" + self._m_tag + "/" + attr_name
 
                     # overwrite existing header information in the database
                     if database_name in self._m_data_storage.m_data_bank:
@@ -1257,8 +1323,7 @@ class OutputPort(Port):
             self._m_data_storage.m_data_bank.flush()
 
     @typechecked
-    def del_attribute(self,
-                      name: str) -> None:
+    def del_attribute(self, name: str) -> None:
         """
         Deletes the attribute of the dataset with the given name. Finds and removes static and
         non-static attributes.
@@ -1280,12 +1345,18 @@ class OutputPort(Port):
             if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
                 del self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
 
-            elif 'header_'+self._m_tag+'/'+name in self._m_data_storage.m_data_bank:
+            elif (
+                "header_" + self._m_tag + "/" + name in self._m_data_storage.m_data_bank
+            ):
                 # remove non-static attribute
-                del self._m_data_storage.m_data_bank[('header_' + self._m_tag + '/' + name)]
+                del self._m_data_storage.m_data_bank[
+                    ("header_" + self._m_tag + "/" + name)
+                ]
 
             else:
-                warnings.warn(f'Attribute \'{name}\' does not exist and could not be deleted.')
+                warnings.warn(
+                    f"Attribute '{name}' does not exist and could not be deleted."
+                )
 
     @typechecked
     def del_all_attributes(self) -> None:
@@ -1305,13 +1376,13 @@ class OutputPort(Port):
                 self._m_data_storage.m_data_bank[self._m_tag].attrs.clear()
 
             # non-static attributes
-            if 'header_' + self._m_tag + '/' in self._m_data_storage.m_data_bank:
-                del self._m_data_storage.m_data_bank[('header_' + self._m_tag + '/')]
+            if "header_" + self._m_tag + "/" in self._m_data_storage.m_data_bank:
+                del self._m_data_storage.m_data_bank[("header_" + self._m_tag + "/")]
 
     @typechecked
-    def check_static_attribute(self,
-                               name: str,
-                               comparison_value: StaticAttribute) -> Optional[int]:
+    def check_static_attribute(
+        self, name: str, comparison_value: StaticAttribute
+    ) -> Optional[int]:
         """
         Checks if a static attribute exists and if it is equal to a comparison value.
 
@@ -1333,7 +1404,10 @@ class OutputPort(Port):
             return None
 
         if name in self._m_data_storage.m_data_bank[self._m_tag].attrs:
-            if self._m_data_storage.m_data_bank[self._m_tag].attrs[name] == comparison_value:
+            if (
+                self._m_data_storage.m_data_bank[self._m_tag].attrs[name]
+                == comparison_value
+            ):
                 return 0
 
             return -1
@@ -1341,9 +1415,9 @@ class OutputPort(Port):
         return 1
 
     @typechecked
-    def check_non_static_attribute(self,
-                                   name: str,
-                                   comparison_value: NonStaticAttribute) -> Optional[int]:
+    def check_non_static_attribute(
+        self, name: str, comparison_value: NonStaticAttribute
+    ) -> Optional[int]:
         """
         Checks if a non-static attribute exists and if it is equal to a comparison value.
 
@@ -1364,12 +1438,13 @@ class OutputPort(Port):
         if not self._check_status_and_activate():
             return None
 
-        group = 'header_' + self._m_tag + '/'
+        group = "header_" + self._m_tag + "/"
 
         if group in self._m_data_storage.m_data_bank:
             if name in self._m_data_storage.m_data_bank[group]:
-                if np.array_equal(self._m_data_storage.m_data_bank[group+name][:],
-                                  comparison_value):
+                if np.array_equal(
+                    self._m_data_storage.m_data_bank[group + name][:], comparison_value
+                ):
                     return 0
 
                 return -1
@@ -1379,9 +1454,7 @@ class OutputPort(Port):
         return 1
 
     @typechecked
-    def add_history(self,
-                    module: str,
-                    history: str) -> None:
+    def add_history(self, module: str, history: str) -> None:
         """
         Adds an attribute with history information about the pipeline module.
 
@@ -1398,7 +1471,7 @@ class OutputPort(Port):
             None
         """
 
-        self.add_attribute('History: ' + module, history)
+        self.add_attribute("History: " + module, history)
 
     @typechecked
     def flush(self) -> None:

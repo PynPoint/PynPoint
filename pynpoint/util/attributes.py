@@ -14,11 +14,13 @@ from pynpoint.core.dataio import ConfigPort, OutputPort
 
 
 @typechecked
-def set_static_attr(fits_file: str,
-                    header: fits.header.Header,
-                    config_port: ConfigPort,
-                    image_out_port: OutputPort,
-                    check: bool = True) -> None:
+def set_static_attr(
+    fits_file: str,
+    header: fits.header.Header,
+    config_port: ConfigPort,
+    image_out_port: OutputPort,
+    check: bool = True,
+) -> None:
     """
     Function which adds the static attributes to the central database.
 
@@ -47,7 +49,7 @@ def set_static_attr(fits_file: str,
 
     static = []
     for key, value in attributes.items():
-        if value['config'] == 'header' and value['attribute'] == 'static':
+        if value["config"] == "header" and value["attribute"] == "static":
             static.append(key)
 
     for attr in static:
@@ -55,9 +57,9 @@ def set_static_attr(fits_file: str,
         fitskey = config_port.get_attribute(attr)
 
         if isinstance(fitskey, np.bytes_):
-            fitskey = str(fitskey.decode('utf-8'))
+            fitskey = str(fitskey.decode("utf-8"))
 
-        if fitskey != 'None':
+        if fitskey != "None":
             if fitskey in header:
                 status = image_out_port.check_static_attribute(attr, header[fitskey])
 
@@ -68,20 +70,26 @@ def set_static_attr(fits_file: str,
                     pass
 
                 elif status == -1:
-                    warnings.warn(f'Static attribute {fitskey} has changed. Possibly the '
-                                  f'current file {fits_file} does not belong to the data set '
-                                  f'\'{image_out_port.tag}\'. Attribute value is updated.')
+                    warnings.warn(
+                        f"Static attribute {fitskey} has changed. Possibly the "
+                        f"current file {fits_file} does not belong to the data set "
+                        f"'{image_out_port.tag}'. Attribute value is updated."
+                    )
 
             elif check:
-                warnings.warn(f'Static attribute {attr} (={fitskey}) not found in the FITS '
-                              'header.')
+                warnings.warn(
+                    f"Static attribute {attr} (={fitskey}) not found in the FITS "
+                    "header."
+                )
 
 
 @typechecked
-def set_nonstatic_attr(header: fits.header.Header,
-                       config_port: ConfigPort,
-                       image_out_port: OutputPort,
-                       check: bool = True) -> None:
+def set_nonstatic_attr(
+    header: fits.header.Header,
+    config_port: ConfigPort,
+    image_out_port: OutputPort,
+    check: bool = True,
+) -> None:
     """
     Function which adds the non-static attributes to the central database.
 
@@ -104,36 +112,40 @@ def set_nonstatic_attr(header: fits.header.Header,
 
     nonstatic = []
     for key, value in attributes.items():
-        if value['attribute'] == 'non-static':
+        if value["attribute"] == "non-static":
             nonstatic.append(key)
 
     for attr in nonstatic:
-        if attributes[attr]['config'] == 'header':
+        if attributes[attr]["config"] == "header":
             fitskey = config_port.get_attribute(attr)
 
             # if type(fitskey) == np.bytes_:
             #     fitskey = str(fitskey.decode('utf-8'))
 
-            if fitskey != 'None':
+            if fitskey != "None":
                 if fitskey in header:
                     image_out_port.append_attribute_data(attr, header[fitskey])
 
-                elif header['NAXIS'] == 2 and attr == 'NFRAMES':
+                elif header["NAXIS"] == 2 and attr == "NFRAMES":
                     image_out_port.append_attribute_data(attr, 1)
 
                 elif check:
-                    warnings.warn('Non-static attribute %s (=%s) not found in the '
-                                  'FITS header.' % (attr, fitskey))
+                    warnings.warn(
+                        "Non-static attribute %s (=%s) not found in the "
+                        "FITS header." % (attr, fitskey)
+                    )
 
                     image_out_port.append_attribute_data(attr, -1)
 
 
 @typechecked
-def set_extra_attr(fits_file: str,
-                   nimages: int,
-                   config_port: ConfigPort,
-                   image_out_port: OutputPort,
-                   first_index: int) -> int:
+def set_extra_attr(
+    fits_file: str,
+    nimages: int,
+    config_port: ConfigPort,
+    image_out_port: OutputPort,
+    first_index: int,
+) -> int:
     """
     Function which adds extra attributes to the central database.
 
@@ -156,14 +168,14 @@ def set_extra_attr(fits_file: str,
         First image index for the next subset.
     """
 
-    pixscale = config_port.get_attribute('PIXSCALE')
+    pixscale = config_port.get_attribute("PIXSCALE")
 
-    image_index = np.arange(first_index, first_index+nimages, 1)
+    image_index = np.arange(first_index, first_index + nimages, 1)
 
     for item in image_index:
-        image_out_port.append_attribute_data('INDEX', item)
+        image_out_port.append_attribute_data("INDEX", item)
 
-    image_out_port.append_attribute_data('FILES', fits_file)
-    image_out_port.add_attribute('PIXSCALE', pixscale, static=True)
+    image_out_port.append_attribute_data("FILES", fits_file)
+    image_out_port.add_attribute("PIXSCALE", pixscale, static=True)
 
     return first_index + nimages

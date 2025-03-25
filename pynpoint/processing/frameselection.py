@@ -27,15 +27,17 @@ class RemoveFramesModule(ProcessingModule):
     Pipeline module for removing images by their index number.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 selected_out_tag: str,
-                 removed_out_tag: str,
-                 frames: Union[str, range, list, np.ndarray]) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        selected_out_tag: str,
+        removed_out_tag: str,
+        frames: Union[str, range, list, np.ndarray],
+    ) -> None:
         """
         Parameters
         ----------
@@ -94,21 +96,27 @@ class RemoveFramesModule(ProcessingModule):
             self.m_frames = self.m_index_in_port.get_all()
 
         if np.size(np.where(self.m_frames >= self.m_image_in_port.get_shape()[0])) > 0:
-            raise ValueError(f'Some values in \'frames\' are larger than the total number of '
-                             f'available frames, {self.m_image_in_port.get_shape()[0]}.')
+            raise ValueError(
+                f"Some values in 'frames' are larger than the total number of "
+                f"available frames, {self.m_image_in_port.get_shape()[0]}."
+            )
 
-        write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
-                            indices=self.m_frames,
-                            image_in_port=self.m_image_in_port,
-                            selected_out_port=self.m_selected_out_port,
-                            removed_out_port=self.m_removed_out_port)
+        write_selected_data(
+            memory=self._m_config_port.get_attribute("MEMORY"),
+            indices=self.m_frames,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+        )
 
-        write_selected_attributes(indices=self.m_frames,
-                                  image_in_port=self.m_image_in_port,
-                                  selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port,
-                                  module_type='RemoveFramesModule',
-                                  history=f'frames removed = {np.size(self.m_frames)}')
+        write_selected_attributes(
+            indices=self.m_frames,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+            module_type="RemoveFramesModule",
+            history=f"frames removed = {np.size(self.m_frames)}",
+        )
 
         self.m_image_in_port.close_port()
 
@@ -118,21 +126,29 @@ class FrameSelectionModule(ProcessingModule):
     Pipeline module for applying a frame selection.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 selected_out_tag: str,
-                 removed_out_tag: str,
-                 index_out_tag: Optional[str] = None,
-                 method: str = 'median',
-                 threshold: Union[float, Tuple[float, float]] = 4.,
-                 fwhm: Optional[float] = 0.1,
-                 aperture: Union[Tuple[str, float], Tuple[str, float, float]] = ('circular', 0.2),
-                 position: Optional[Union[Tuple[int, int, float], Tuple[None, None, float],
-                                    Tuple[int, int, None]]] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        selected_out_tag: str,
+        removed_out_tag: str,
+        index_out_tag: Optional[str] = None,
+        method: str = "median",
+        threshold: Union[float, Tuple[float, float]] = 4.0,
+        fwhm: Optional[float] = 0.1,
+        aperture: Union[Tuple[str, float], Tuple[str, float, float]] = (
+            "circular",
+            0.2,
+        ),
+        position: Optional[
+            Union[
+                Tuple[int, int, float], Tuple[None, None, float], Tuple[int, int, None]
+            ]
+        ] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -215,10 +231,11 @@ class FrameSelectionModule(ProcessingModule):
 
     @staticmethod
     @typechecked
-    def aperture_phot(image: np.ndarray,
-                      position: np.ndarray,
-                      aperture: Union[Tuple[str, float, float],
-                                      Tuple[str, None, float]]) -> np.float64:
+    def aperture_phot(
+        image: np.ndarray,
+        position: np.ndarray,
+        aperture: Union[Tuple[str, float, float], Tuple[str, None, float]],
+    ) -> np.float64:
         """
         Parameters
         ----------
@@ -241,30 +258,35 @@ class FrameSelectionModule(ProcessingModule):
             Photometry value.
         """
 
-        check_pos_in = any(np.floor(position[:]-aperture[2]) < 0.)
-        check_pos_out = any(np.ceil(position[:]+aperture[2]) > image.shape[0])
+        check_pos_in = any(np.floor(position[:] - aperture[2]) < 0.0)
+        check_pos_out = any(np.ceil(position[:] + aperture[2]) > image.shape[0])
 
         if check_pos_in or check_pos_out:
             phot = np.nan
 
         else:
-            im_crop = crop_image(image, tuple(position), 2*int(math.ceil(aperture[2])))
+            im_crop = crop_image(
+                image, tuple(position), 2 * int(math.ceil(aperture[2]))
+            )
 
             npix = im_crop.shape[0]
 
-            x_grid = y_grid = np.linspace(-(npix-1)/2, (npix-1)/2, npix)
+            x_grid = y_grid = np.linspace(-(npix - 1) / 2, (npix - 1) / 2, npix)
             xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
             rr_grid = np.sqrt(xx_grid**2 + yy_grid**2)
 
-            if aperture[0] == 'circular':
+            if aperture[0] == "circular":
                 phot = np.sum(im_crop[rr_grid < aperture[2]])
 
-            elif aperture[0] == 'annulus':
-                phot = np.sum(im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])])
+            elif aperture[0] == "annulus":
+                phot = np.sum(
+                    im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])]
+                )
 
-            elif aperture[0] == 'ratio':
-                phot = np.sum(im_crop[rr_grid < aperture[1]]) / \
-                       np.sum(im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])])
+            elif aperture[0] == "ratio":
+                phot = np.sum(im_crop[rr_grid < aperture[1]]) / np.sum(
+                    im_crop[(rr_grid > aperture[1]) & (rr_grid < aperture[2])]
+                )
 
         return phot
 
@@ -283,26 +305,28 @@ class FrameSelectionModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         nimages = self.m_image_in_port.get_shape()[0]
 
         if self.m_fwhm is not None:
-            self.m_fwhm = int(math.ceil(self.m_fwhm/pixscale))
+            self.m_fwhm = int(math.ceil(self.m_fwhm / pixscale))
 
         if self.m_position is not None and self.m_position[2] is not None:
-            self.m_position = (self.m_position[0],
-                               self.m_position[0],
-                               int(math.ceil(self.m_position[2]/pixscale)))
+            self.m_position = (
+                self.m_position[0],
+                self.m_position[0],
+                int(math.ceil(self.m_position[2] / pixscale)),
+            )
 
         if len(self.m_aperture) == 2:
-            self.m_aperture = (self.m_aperture[0],
-                               None,
-                               self.m_aperture[1]/pixscale)
+            self.m_aperture = (self.m_aperture[0], None, self.m_aperture[1] / pixscale)
 
         elif len(self.m_aperture) == 3:
-            self.m_aperture = (self.m_aperture[0],
-                               self.m_aperture[1]/pixscale,
-                               self.m_aperture[2]/pixscale)
+            self.m_aperture = (
+                self.m_aperture[0],
+                self.m_aperture[1] / pixscale,
+                self.m_aperture[2] / pixscale,
+            )
 
         starpos = star_positions(self.m_image_in_port, self.m_fwhm, self.m_position)
 
@@ -310,32 +334,37 @@ class FrameSelectionModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(nimages):
-            progress(i, nimages, 'Aperture photometry...', start_time)
+            progress(i, nimages, "Aperture photometry...", start_time)
 
-            phot[i] = self.aperture_phot(self.m_image_in_port[i, ], starpos[i, :], self.m_aperture)
+            phot[i] = self.aperture_phot(
+                self.m_image_in_port[i,], starpos[i, :], self.m_aperture
+            )
 
-        if self.m_method == 'median':
+        if self.m_method == "median":
             phot_ref = np.nanmedian(phot)
-            print(f'Median = {phot_ref:.2f}')
+            print(f"Median = {phot_ref:.2f}")
 
-        elif self.m_method == 'max':
+        elif self.m_method == "max":
             phot_ref = np.nanmax(phot)
-            print(f'Maximum = {phot_ref:.2f}')
+            print(f"Maximum = {phot_ref:.2f}")
 
-        elif self.m_method == 'range':
+        elif self.m_method == "range":
             phot_ref = np.nanmedian(phot)
-            print(f'Median = {phot_ref:.2f}')
+            print(f"Median = {phot_ref:.2f}")
 
         phot_std = np.nanstd(phot)
-        print(f'Standard deviation = {phot_std:.2f}')
+        print(f"Standard deviation = {phot_std:.2f}")
 
-        if self.m_method in ['median', 'max']:
-            index_del = np.logical_or((phot > phot_ref + self.m_threshold*phot_std),
-                                      (phot < phot_ref - self.m_threshold*phot_std))
+        if self.m_method in ["median", "max"]:
+            index_del = np.logical_or(
+                (phot > phot_ref + self.m_threshold * phot_std),
+                (phot < phot_ref - self.m_threshold * phot_std),
+            )
 
-        elif self.m_method == 'range':
-            index_del = np.logical_or((phot < self.m_threshold[0]),
-                                      (phot > self.m_threshold[1]))
+        elif self.m_method == "range":
+            index_del = np.logical_or(
+                (phot < self.m_threshold[0]), (phot > self.m_threshold[1])
+            )
 
         index_del[np.isnan(phot)] = True
         index_del = np.where(index_del)[0]
@@ -343,32 +372,40 @@ class FrameSelectionModule(ProcessingModule):
         index_sel = np.ones(nimages, dtype=bool)
         index_sel[index_del] = False
 
-        write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
-                            indices=index_del,
-                            image_in_port=self.m_image_in_port,
-                            selected_out_port=self.m_selected_out_port,
-                            removed_out_port=self.m_removed_out_port)
+        write_selected_data(
+            memory=self._m_config_port.get_attribute("MEMORY"),
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+        )
 
-        history = f'frames removed = {np.size(index_del)}'
+        history = f"frames removed = {np.size(index_del)}"
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.set_all(index_del, data_dim=1)
             self.m_index_out_port.copy_attributes(self.m_image_in_port)
-            self.m_index_out_port.add_attribute('STAR_POSITION', starpos, static=False)
-            self.m_index_out_port.add_history('FrameSelectionModule', history)
+            self.m_index_out_port.add_attribute("STAR_POSITION", starpos, static=False)
+            self.m_index_out_port.add_history("FrameSelectionModule", history)
 
-        write_selected_attributes(indices=index_del,
-                                  image_in_port=self.m_image_in_port,
-                                  selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port,
-                                  module_type='FrameSelectionModule',
-                                  history=history)
+        write_selected_attributes(
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+            module_type="FrameSelectionModule",
+            history=history,
+        )
 
-        self.m_selected_out_port.add_attribute('STAR_POSITION', starpos[index_sel], static=False)
-        self.m_selected_out_port.add_history('FrameSelectionModule', history)
+        self.m_selected_out_port.add_attribute(
+            "STAR_POSITION", starpos[index_sel], static=False
+        )
+        self.m_selected_out_port.add_history("FrameSelectionModule", history)
 
-        self.m_removed_out_port.add_attribute('STAR_POSITION', starpos[index_del], static=False)
-        self.m_removed_out_port.add_history('FrameSelectionModule', history)
+        self.m_removed_out_port.add_attribute(
+            "STAR_POSITION", starpos[index_del], static=False
+        )
+        self.m_removed_out_port.add_history("FrameSelectionModule", history)
 
         self.m_image_in_port.close_port()
 
@@ -379,13 +416,10 @@ class RemoveLastFrameModule(ProcessingModule):
     frame contains the average pixel values of the cube.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str) -> None:
+    def __init__(self, name_in: str, image_in_tag: str, image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -418,38 +452,42 @@ class RemoveLastFrameModule(ProcessingModule):
             None
         """
 
-        ndit = self.m_image_in_port.get_attribute('NDIT')
-        nframes = self.m_image_in_port.get_attribute('NFRAMES')
-        index = self.m_image_in_port.get_attribute('INDEX')
+        ndit = self.m_image_in_port.get_attribute("NDIT")
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
         nframes_new = []
         index_new = []
 
         start_time = time.time()
         for i, item in enumerate(ndit):
-            progress(i, len(ndit), 'Removing the last image of each FITS cube...', start_time)
+            progress(
+                i, len(ndit), "Removing the last image of each FITS cube...", start_time
+            )
 
-            if nframes[i] != item+1:
-                warnings.warn(f'Number of frames ({nframes[i]}) is not equal to NDIT+1.')
+            if nframes[i] != item + 1:
+                warnings.warn(
+                    f"Number of frames ({nframes[i]}) is not equal to NDIT+1."
+                )
 
             frame_start = np.sum(nframes[0:i])
-            frame_end = np.sum(nframes[0:i+1]) - 1
+            frame_end = np.sum(nframes[0 : i + 1]) - 1
 
-            nframes_new.append(nframes[i]-1)
+            nframes_new.append(nframes[i] - 1)
             index_new.extend(index[frame_start:frame_end])
 
-            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
+            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end,])
 
         nframes_new = np.asarray(nframes_new, dtype=int)
         index_new = np.asarray(index_new, dtype=int)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
-        self.m_image_out_port.add_attribute('NFRAMES', nframes_new, static=False)
-        self.m_image_out_port.add_attribute('INDEX', index_new, static=False)
+        self.m_image_out_port.add_attribute("NFRAMES", nframes_new, static=False)
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
 
-        history = 'frames removed = NDIT+1'
-        self.m_image_out_port.add_history('RemoveLastFrameModule', history)
+        history = "frames removed = NDIT+1"
+        self.m_image_out_port.add_history("RemoveLastFrameModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -460,14 +498,12 @@ class RemoveStartFramesModule(ProcessingModule):
     be useful for NACO data in which the background is higher at the beginning of the cube.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 frames: int = 1) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, image_out_tag: str, frames: int = 1
+    ) -> None:
         """
         Parameters
         ----------
@@ -506,22 +542,22 @@ class RemoveStartFramesModule(ProcessingModule):
         """
 
         if self.m_image_out_port.tag == self.m_image_in_port.tag:
-            raise ValueError('Input and output port should have a different tag.')
+            raise ValueError("Input and output port should have a different tag.")
 
-        nframes = self.m_image_in_port.get_attribute('NFRAMES')
-        index = self.m_image_in_port.get_attribute('INDEX')
+        nframes = self.m_image_in_port.get_attribute("NFRAMES")
+        index = self.m_image_in_port.get_attribute("INDEX")
 
         index_new = []
 
-        if 'PARANG' in self.m_image_in_port.get_all_non_static_attributes():
-            parang = self.m_image_in_port.get_attribute('PARANG')
+        if "PARANG" in self.m_image_in_port.get_all_non_static_attributes():
+            parang = self.m_image_in_port.get_attribute("PARANG")
             parang_new = []
 
         else:
             parang = None
 
-        if 'STAR_POSITION' in self.m_image_in_port.get_all_non_static_attributes():
-            star = self.m_image_in_port.get_attribute('STAR_POSITION')
+        if "STAR_POSITION" in self.m_image_in_port.get_all_non_static_attributes():
+            star = self.m_image_in_port.get_attribute("STAR_POSITION")
             star_new = []
 
         else:
@@ -529,14 +565,21 @@ class RemoveStartFramesModule(ProcessingModule):
 
         start_time = time.time()
         for i, _ in enumerate(nframes):
-            progress(i, len(nframes), 'Removing images at the begin of each cube...', start_time)
+            progress(
+                i,
+                len(nframes),
+                "Removing images at the begin of each cube...",
+                start_time,
+            )
 
             frame_start = np.sum(nframes[0:i]) + self.m_frames
-            frame_end = np.sum(nframes[0:i+1])
+            frame_end = np.sum(nframes[0 : i + 1])
 
             if frame_start >= frame_end:
-                raise ValueError('The number of frames in the original data cube is equal or '
-                                 'smaller than the number of frames that have to be removed.')
+                raise ValueError(
+                    "The number of frames in the original data cube is equal or "
+                    "smaller than the number of frames that have to be removed."
+                )
 
             index_new.extend(index[frame_start:frame_end])
 
@@ -546,21 +589,25 @@ class RemoveStartFramesModule(ProcessingModule):
             if star is not None:
                 star_new.extend(star[frame_start:frame_end])
 
-            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end, ])
+            self.m_image_out_port.append(self.m_image_in_port[frame_start:frame_end,])
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
-        self.m_image_out_port.add_attribute('NFRAMES', nframes-self.m_frames, static=False)
-        self.m_image_out_port.add_attribute('INDEX', index_new, static=False)
+        self.m_image_out_port.add_attribute(
+            "NFRAMES", nframes - self.m_frames, static=False
+        )
+        self.m_image_out_port.add_attribute("INDEX", index_new, static=False)
 
         if parang is not None:
-            self.m_image_out_port.add_attribute('PARANG', parang_new, static=False)
+            self.m_image_out_port.add_attribute("PARANG", parang_new, static=False)
 
         if star is not None:
-            self.m_image_out_port.add_attribute('STAR_POSITION', np.asarray(star_new), static=False)
+            self.m_image_out_port.add_attribute(
+                "STAR_POSITION", np.asarray(star_new), static=False
+            )
 
-        history = 'frames removed = '+str(self.m_frames)
-        self.m_image_out_port.add_history('RemoveStartFramesModule', history)
+        history = "frames removed = " + str(self.m_frames)
+        self.m_image_out_port.add_history("RemoveStartFramesModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -571,15 +618,18 @@ class ImageStatisticsModule(ProcessingModule):
     images.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 stat_out_tag: str,
-                 position: Optional[Union[Tuple[int, int, float],
-                                          Tuple[None, None, float]]] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        stat_out_tag: str,
+        position: Optional[
+            Union[Tuple[int, int, float], Tuple[None, None, float]]
+        ] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -622,7 +672,7 @@ class ImageStatisticsModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         nimages = self.m_image_in_port.get_shape()[0]
         im_shape = self.m_image_in_port.get_shape()[1:]
@@ -632,30 +682,36 @@ class ImageStatisticsModule(ProcessingModule):
 
         else:
             if self.m_position[0] is None and self.m_position[1] is None:
-                center = center_pixel(self.m_image_in_port[0, ])
+                center = center_pixel(self.m_image_in_port[0,])
 
-                self.m_position = (center[0],  # y position
-                                   center[1],  # x position
-                                   self.m_position[2]/pixscale)  # radius (pix)
+                self.m_position = (
+                    center[0],  # y position
+                    center[1],  # x position
+                    self.m_position[2] / pixscale,
+                )  # radius (pix)
 
             else:
-                self.m_position = (int(self.m_position[1]),  # y position
-                                   int(self.m_position[0]),  # x position
-                                   self.m_position[2]/pixscale)  # radius (pix)
+                self.m_position = (
+                    int(self.m_position[1]),  # y position
+                    int(self.m_position[0]),  # x position
+                    self.m_position[2] / pixscale,
+                )  # radius (pix)
 
             rr_grid, _, _ = pixel_distance(im_shape, position=self.m_position[0:2])
-            rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0]*rr_grid.shape[1]))
+            rr_reshape = np.reshape(rr_grid, (rr_grid.shape[0] * rr_grid.shape[1]))
             indices = np.where(rr_reshape <= self.m_position[2])[0]
 
-        self.apply_function_to_images(image_stat,
-                                      self.m_image_in_port,
-                                      self.m_stat_out_port,
-                                      'Calculating image statistics',
-                                      func_args=(indices, ))
+        self.apply_function_to_images(
+            image_stat,
+            self.m_image_in_port,
+            self.m_stat_out_port,
+            "Calculating image statistics",
+            func_args=(indices,),
+        )
 
-        history = f'number of images = {nimages}'
+        history = f"number of images = {nimages}"
         self.m_stat_out_port.copy_attributes(self.m_image_in_port)
-        self.m_stat_out_port.add_history('ImageStatisticsModule', history)
+        self.m_stat_out_port.add_history("ImageStatisticsModule", history)
         self.m_stat_out_port.close_port()
 
 
@@ -664,16 +720,18 @@ class FrameSimilarityModule(ProcessingModule):
     Pipeline module for measuring the similarity between frames.
     """
 
-    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
+    __author__ = "Benedikt Schmidhuber, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_tag: str,
-                 method: str = 'MSE',
-                 mask_radius: Tuple[float, float] = (0., 5.),
-                 window_size: float = 0.1,
-                 temporal_median: str = 'full') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_tag: str,
+        method: str = "MSE",
+        mask_radius: Tuple[float, float] = (0.0, 5.0),
+        window_size: float = 0.1,
+        temporal_median: str = "full",
+    ) -> None:
         """
         Parameters
         ----------
@@ -710,14 +768,18 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_image_in_port = self.add_input_port(image_tag)
         self.m_image_out_port = self.add_output_port(image_tag)
 
-        if method not in ('MSE', 'PCC', 'SSIM'):
-            raise ValueError(f'The chosen method \'{method}\' is not available. Please ensure '
-                             f'that you have selected one of \'MSE\', \'PCC\', or \'SSIM\'.')
+        if method not in ("MSE", "PCC", "SSIM"):
+            raise ValueError(
+                f"The chosen method '{method}' is not available. Please ensure "
+                f"that you have selected one of 'MSE', 'PCC', or 'SSIM'."
+            )
 
-        if temporal_median not in ('full', 'constant'):
-            raise ValueError(f'The chosen temporal_median \'{temporal_median}\' is not '
-                             f'available. Please ensure that you have selected one of \'full\', '
-                             f'\'constant\'.')
+        if temporal_median not in ("full", "constant"):
+            raise ValueError(
+                f"The chosen temporal_median '{temporal_median}' is not "
+                f"available. Please ensure that you have selected one of 'full', "
+                f"'constant'."
+            )
 
         self.m_method = method
         self.m_temporal_median = temporal_median
@@ -726,24 +788,27 @@ class FrameSimilarityModule(ProcessingModule):
 
     @staticmethod
     @typechecked
-    def _similarity(images: np.ndarray,
-                    reference_index: int,
-                    mode: str,
-                    window_size: int,
-                    temporal_median: Union[bool, np.ndarray] = False) -> Tuple[int, float]:
+    def _similarity(
+        images: np.ndarray,
+        reference_index: int,
+        mode: str,
+        window_size: int,
+        temporal_median: Union[bool, np.ndarray] = False,
+    ) -> Tuple[int, float]:
         """
         Internal function to compute the MSE as defined by Ruane et al. 2019.
         """
 
         @typechecked
-        def _temporal_median(reference_index: int,
-                             images: np.ndarray) -> np.ndarray:
+        def _temporal_median(reference_index: int, images: np.ndarray) -> np.ndarray:
             """
             Internal function to calculate the temporal median for all frames, except the one with
             the ``reference_index``.
             """
 
-            image_m = np.concatenate((images[:reference_index], images[reference_index+1:]))
+            image_m = np.concatenate(
+                (images[:reference_index], images[reference_index + 1 :])
+            )
 
             return np.median(image_m, axis=0)
 
@@ -754,10 +819,10 @@ class FrameSimilarityModule(ProcessingModule):
         else:
             image_m = temporal_median
 
-        if mode == 'MSE':
+        if mode == "MSE":
             return reference_index, mean_squared_error(image_x_i, image_m)
 
-        if mode == 'PCC':
+        if mode == "PCC":
             # calculate the covariance matrix of the flattened images
             cov_mat = np.cov(image_x_i.flatten(), image_m.flatten(), ddof=1)
 
@@ -767,7 +832,7 @@ class FrameSimilarityModule(ProcessingModule):
             # does not matter whether [0, 1] or [1, 0] as cov_mat is symmetric
             return reference_index, cov_mat[0, 1] / (std[0] * std[1])
 
-        if mode == 'SSIM':
+        if mode == "SSIM":
             # winsize needs to be odd
             if int(window_size) % 2 == 0:
                 winsize = int(window_size) + 1
@@ -776,12 +841,11 @@ class FrameSimilarityModule(ProcessingModule):
 
             # TODO Unclear what value to pass to data_range
             # Previously the argument was not requires
-            data_range = np.amax(image_x_i)-np.amin(image_x_i)
+            data_range = np.amax(image_x_i) - np.amin(image_x_i)
 
-            struc_sim = structural_similarity(im1=image_x_i,
-                                              im2=image_m,
-                                              win_size=winsize,
-                                              data_range=data_range)
+            struc_sim = structural_similarity(
+                im1=image_x_i, im2=image_m, win_size=winsize, data_range=data_range
+            )
 
             return reference_index, struc_sim
 
@@ -801,15 +865,17 @@ class FrameSimilarityModule(ProcessingModule):
             None
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        cpu = self._m_config_port.get_attribute("CPU")
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
         # get number of images
         nimages = self.m_image_in_port.get_shape()[0]
 
         # convert arcsecs to pixels
-        self.m_mask_radii = (math.floor(self.m_mask_radii[0] / pixscale),
-                             math.floor(self.m_mask_radii[1] / pixscale))
+        self.m_mask_radii = (
+            math.floor(self.m_mask_radii[0] / pixscale),
+            math.floor(self.m_mask_radii[1] / pixscale),
+        )
         self.m_window_size = int(self.m_window_size / pixscale)
 
         # overlay the same mask over all images
@@ -819,9 +885,9 @@ class FrameSimilarityModule(ProcessingModule):
         self.m_image_out_port.close_port()
 
         # Change the radius to the image size
-        images = crop_image(images, None, int(2.*self.m_mask_radii[1]))
+        images = crop_image(images, None, int(2.0 * self.m_mask_radii[1]))
 
-        if self.m_temporal_median == 'constant':
+        if self.m_temporal_median == "constant":
             temporal_median = np.median(images, axis=0)
         else:
             temporal_median = False
@@ -833,12 +899,18 @@ class FrameSimilarityModule(ProcessingModule):
         async_results = []
 
         for i in range(nimages):
-            async_results.append(pool.apply_async(FrameSimilarityModule._similarity,
-                                                  args=(images,
-                                                        i,
-                                                        self.m_method,
-                                                        self.m_window_size,
-                                                        temporal_median)))
+            async_results.append(
+                pool.apply_async(
+                    FrameSimilarityModule._similarity,
+                    args=(
+                        images,
+                        i,
+                        self.m_method,
+                        self.m_window_size,
+                        temporal_median,
+                    ),
+                )
+            )
 
         pool.close()
 
@@ -849,14 +921,14 @@ class FrameSimilarityModule(ProcessingModule):
             # number of finished processes
             nfinished = sum([i.ready() for i in async_results])
 
-            progress(nfinished, nimages, 'Calculating image similarity...', start_time)
+            progress(nfinished, nimages, "Calculating image similarity...", start_time)
 
             # check if new processes have finished every 5 seconds
             time.sleep(5)
 
         if nfinished != nimages:
-            print('\r                                                      ')
-            print('\rCalculating image similarity... [DONE]')
+            print("\r                                                      ")
+            print("\rCalculating image similarity... [DONE]")
 
         # get the results for every async_result object
         for async_result in async_results:
@@ -867,7 +939,9 @@ class FrameSimilarityModule(ProcessingModule):
 
         # reopen the port after the calculation
         self.m_image_out_port.open_port()
-        self.m_image_out_port.add_attribute(f'{self.m_method}', similarities, static=False)
+        self.m_image_out_port.add_attribute(
+            f"{self.m_method}", similarities, static=False
+        )
         self.m_image_out_port.close_port()
 
 
@@ -876,17 +950,19 @@ class SelectByAttributeModule(ProcessingModule):
     Pipeline module for selecting frames based on attribute values.
     """
 
-    __author__ = 'Benedikt Schmidhuber, Tomas Stolker'
+    __author__ = "Benedikt Schmidhuber, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 selected_out_tag: str,
-                 removed_out_tag: str,
-                 attribute_tag: str,
-                 number_frames: int = 100,
-                 order: str = 'descending') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        selected_out_tag: str,
+        removed_out_tag: str,
+        attribute_tag: str,
+        number_frames: int = 100,
+        order: str = "descending",
+    ) -> None:
         """
         Parameters
         ----------
@@ -942,9 +1018,11 @@ class SelectByAttributeModule(ProcessingModule):
         self.m_selected_out_port = self.add_output_port(selected_out_tag)
         self.m_removed_out_port = self.add_output_port(removed_out_tag)
 
-        if order not in ('ascending', 'descending'):
-            raise ValueError('The selected order is not available. The available options are '
-                             '\'ascending\' or \'descending\'.')
+        if order not in ("ascending", "descending"):
+            raise ValueError(
+                "The selected order is not available. The available options are "
+                "'ascending' or 'descending'."
+            )
 
         self.m_attribute_tag = attribute_tag
         self.m_number_frames = number_frames
@@ -966,34 +1044,40 @@ class SelectByAttributeModule(ProcessingModule):
         """
 
         nimages = self.m_image_in_port.get_shape()[0]
-        attribute = self.m_image_in_port.get_attribute(f'{self.m_attribute_tag}')
+        attribute = self.m_image_in_port.get_attribute(f"{self.m_attribute_tag}")
 
         if nimages != attribute.size:
-            raise ValueError(f'The attribute {{self.m_attribute_tag}} does not have the same '
-                             f'length ({len(attribute)}) as the tag has images ({nimages}). '
-                             f'Please check the attribute you have chosen for selection.')
+            raise ValueError(
+                f"The attribute {{self.m_attribute_tag}} does not have the same "
+                f"length ({len(attribute)}) as the tag has images ({nimages}). "
+                f"Please check the attribute you have chosen for selection."
+            )
 
-        if self.m_order == 'descending':
+        if self.m_order == "descending":
             # sort attribute in descending order
             sorting_order = np.argsort(attribute)[::-1]
         else:
             # sort attribute in ascending order
             sorting_order = np.argsort(attribute)
 
-        index_del = sorting_order[self.m_number_frames:]
+        index_del = sorting_order[self.m_number_frames :]
 
-        write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
-                            indices=index_del,
-                            image_in_port=self.m_image_in_port,
-                            selected_out_port=self.m_selected_out_port,
-                            removed_out_port=self.m_removed_out_port)
+        write_selected_data(
+            memory=self._m_config_port.get_attribute("MEMORY"),
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+        )
 
-        write_selected_attributes(indices=index_del,
-                                  image_in_port=self.m_image_in_port,
-                                  selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port,
-                                  module_type='SelectByAttributeModule',
-                                  history=f'selected tag = {self.m_attribute_tag}')
+        write_selected_attributes(
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+            module_type="SelectByAttributeModule",
+            history=f"selected tag = {self.m_attribute_tag}",
+        )
 
         self.m_image_in_port.close_port()
 
@@ -1003,16 +1087,18 @@ class ResidualSelectionModule(ProcessingModule):
     Pipeline module for applying a frame selection on the residuals of the PSF subtraction.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 selected_out_tag: str,
-                 removed_out_tag: str,
-                 percentage: float = 10.,
-                 annulus_radii: Tuple[float, float] = (0.1, 0.2)) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        selected_out_tag: str,
+        removed_out_tag: str,
+        percentage: float = 10.0,
+        annulus_radii: Tuple[float, float] = (0.1, 0.2),
+    ) -> None:
         """
         Parameters
         ----------
@@ -1059,41 +1145,51 @@ class ResidualSelectionModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         nimages = self.m_image_in_port.get_shape()[0]
         npix = self.m_image_in_port.get_shape()[-1]
 
         rr_grid, _, _ = pixel_distance((npix, npix), position=None)
 
-        pixel_select = np.where((rr_grid > self.m_annulus_radii[0]/pixscale) &
-                                (rr_grid < self.m_annulus_radii[1]/pixscale))
+        pixel_select = np.where(
+            (rr_grid > self.m_annulus_radii[0] / pixscale)
+            & (rr_grid < self.m_annulus_radii[1] / pixscale)
+        )
 
         start_time = time.time()
         phot_annulus = np.zeros(nimages)
 
         for i in range(nimages):
-            progress(i, nimages, 'Aperture photometry...', start_time)
+            progress(i, nimages, "Aperture photometry...", start_time)
 
             phot_annulus[i] = np.sum(np.abs(self.m_image_in_port[i][pixel_select]))
 
-        print(f'Minimum, maximum = {np.amin(phot_annulus):.2f}, {np.amax(phot_annulus):.2f}')
-        print(f'Mean, median = {np.nanmean(phot_annulus):.2f}, {np.nanmedian(phot_annulus):.2f}')
-        print(f'Standard deviation = {np.nanstd(phot_annulus):.2f}')
+        print(
+            f"Minimum, maximum = {np.amin(phot_annulus):.2f}, {np.amax(phot_annulus):.2f}"
+        )
+        print(
+            f"Mean, median = {np.nanmean(phot_annulus):.2f}, {np.nanmedian(phot_annulus):.2f}"
+        )
+        print(f"Standard deviation = {np.nanstd(phot_annulus):.2f}")
 
-        n_select = int(nimages*self.m_percentage/100.)
+        n_select = int(nimages * self.m_percentage / 100.0)
         index_del = np.argsort(phot_annulus)[n_select:]
 
-        write_selected_data(memory=self._m_config_port.get_attribute('MEMORY'),
-                            indices=index_del,
-                            image_in_port=self.m_image_in_port,
-                            selected_out_port=self.m_selected_out_port,
-                            removed_out_port=self.m_removed_out_port)
+        write_selected_data(
+            memory=self._m_config_port.get_attribute("MEMORY"),
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+        )
 
-        write_selected_attributes(indices=index_del,
-                                  image_in_port=self.m_image_in_port,
-                                  selected_out_port=self.m_selected_out_port,
-                                  removed_out_port=self.m_removed_out_port,
-                                  module_type='ResidualSelectionModule',
-                                  history=f'frames removed = {index_del.size}')
+        write_selected_attributes(
+            indices=index_del,
+            image_in_port=self.m_image_in_port,
+            selected_out_port=self.m_selected_out_port,
+            removed_out_port=self.m_removed_out_port,
+            module_type="ResidualSelectionModule",
+            history=f"frames removed = {index_del.size}",
+        )
 
         self.m_image_in_port.close_port()

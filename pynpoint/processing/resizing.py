@@ -23,12 +23,14 @@ class CropImagesModule(ProcessingModule):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 size: float,
-                 center: Union[Tuple[int, int], None]) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        size: float,
+        center: Union[Tuple[int, int], None],
+    ) -> None:
         """
         Parameters
         ----------
@@ -78,7 +80,7 @@ class CropImagesModule(ProcessingModule):
         """
 
         # Get memory and number of images to split the frames into chunks
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
 
         # Get the numnber of dimensions and shape
@@ -94,31 +96,34 @@ class CropImagesModule(ProcessingModule):
 
         elif ndim == 4:
             # Process all wavelengths per exposure at once
-            frames = np.linspace(0, im_shape[-3], im_shape[-3]+1)
+            frames = np.linspace(0, im_shape[-3], im_shape[-3] + 1)
 
         # Convert size parameter from arcseconds to pixels
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-        print(f'New image size (arcsec) = {self.m_size}')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        print(f"New image size (arcsec) = {self.m_size}")
         self.m_size = int(math.ceil(self.m_size / pixscale))
-        print(f'New image size (pixels) = {self.m_size}')
+        print(f"New image size (pixels) = {self.m_size}")
 
         if self.m_center is not None:
-            print(f'New image center (x, y) = ({self.m_center[1]}, {self.m_center[0]})')
+            print(f"New image center (x, y) = ({self.m_center[1]}, {self.m_center[0]})")
 
         # Crop images chunk by chunk
         start_time = time.time()
         for i in range(len(frames[:-1])):
 
             # Update progress bar
-            progress(i, len(frames[:-1]), 'Cropping images...', start_time)
+            progress(i, len(frames[:-1]), "Cropping images...", start_time)
 
             # Select images in the current chunk
             if ndim == 3:
-                images = self.m_image_in_port[frames[i]:frames[i+1], ]
+                images = self.m_image_in_port[frames[i] : frames[i + 1],]
 
             elif ndim == 4:
                 # Process all wavelengths per exposure at once
-                images = self.m_image_in_port[:, i, ]
+                images = self.m_image_in_port[
+                    :,
+                    i,
+                ]
 
             # crop images according to input parameters
             images = crop_image(images, self.m_center, self.m_size, copy=False)
@@ -130,8 +135,8 @@ class CropImagesModule(ProcessingModule):
                 self.m_image_out_port.append(images, data_dim=4)
 
         # Save history and copy attributes
-        history = f'image size (pix) = {self.m_size}'
-        self.m_image_out_port.add_history('CropImagesModule', history)
+        history = f"image size (pix) = {self.m_size}"
+        self.m_image_out_port.add_history("CropImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -142,14 +147,18 @@ class ScaleImagesModule(ProcessingModule):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 scaling: Union[Tuple[float, float, float],
-                                Tuple[None, None, float],
-                                Tuple[float, float, None]],
-                 pixscale: bool = True) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        scaling: Union[
+            Tuple[float, float, float],
+            Tuple[None, None, float],
+            Tuple[float, float, None],
+        ],
+        pixscale: bool = True,
+    ) -> None:
         """
         Parameters
         ----------
@@ -179,17 +188,17 @@ class ScaleImagesModule(ProcessingModule):
         self.m_image_out_port = self.add_output_port(image_out_tag)
 
         if scaling[0] is None:
-            self.m_scaling_x = 1.
+            self.m_scaling_x = 1.0
         else:
             self.m_scaling_x = scaling[0]
 
         if scaling[1] is None:
-            self.m_scaling_y = 1.
+            self.m_scaling_y = 1.0
         else:
             self.m_scaling_y = scaling[1]
 
         if scaling[2] is None:
-            self.m_scaling_flux = 1.
+            self.m_scaling_flux = 1.0
         else:
             self.m_scaling_flux = scaling[2]
 
@@ -207,25 +216,27 @@ class ScaleImagesModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.apply_function_to_images(image_scaling,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Scaling images',
-                                      func_args=(self.m_scaling_y,
-                                                 self.m_scaling_x,
-                                                 self.m_scaling_flux))
+        self.apply_function_to_images(
+            image_scaling,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Scaling images",
+            func_args=(self.m_scaling_y, self.m_scaling_x, self.m_scaling_flux),
+        )
 
-        history = f'scaling = ({self.m_scaling_x:.2f}, {self.m_scaling_y:.2f}, ' \
-                  f'{self.m_scaling_flux:.2f})'
+        history = (
+            f"scaling = ({self.m_scaling_x:.2f}, {self.m_scaling_y:.2f}, "
+            f"{self.m_scaling_flux:.2f})"
+        )
 
-        self.m_image_out_port.add_history('ScaleImagesModule', history)
+        self.m_image_out_port.add_history("ScaleImagesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
 
         if self.m_pixscale:
-            mean_scaling = (self.m_scaling_x+self.m_scaling_y)/2.
-            self.m_image_out_port.add_attribute('PIXSCALE', pixscale/mean_scaling)
+            mean_scaling = (self.m_scaling_x + self.m_scaling_y) / 2.0
+            self.m_image_out_port.add_attribute("PIXSCALE", pixscale / mean_scaling)
 
         self.m_image_out_port.close_port()
 
@@ -236,11 +247,13 @@ class AddLinesModule(ProcessingModule):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 lines: Tuple[int, int, int, int]) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        lines: Tuple[int, int, int, int],
+    ) -> None:
         """
         Parameters
         ----------
@@ -278,14 +291,16 @@ class AddLinesModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         shape_in = self.m_image_in_port.get_shape()
 
-        shape_out = (shape_in[-2]+int(self.m_lines[2])+int(self.m_lines[3]),
-                     shape_in[-1]+int(self.m_lines[0])+int(self.m_lines[1]))
+        shape_out = (
+            shape_in[-2] + int(self.m_lines[2]) + int(self.m_lines[3]),
+            shape_in[-1] + int(self.m_lines[0]) + int(self.m_lines[1]),
+        )
 
         self.m_lines[1] = shape_out[1] - self.m_lines[1]  # right side of image
         self.m_lines[3] = shape_out[0] - self.m_lines[3]  # top side of image
@@ -293,20 +308,24 @@ class AddLinesModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Adding lines...', start_time)
+            progress(i, len(frames[:-1]), "Adding lines...", start_time)
 
-            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+            image_in = self.m_image_in_port[frames[i] : frames[i + 1],]
 
-            image_out = np.zeros((frames[i+1]-frames[i], shape_out[0], shape_out[1]))
+            image_out = np.zeros(
+                (frames[i + 1] - frames[i], shape_out[0], shape_out[1])
+            )
 
-            image_out[:,
-                      int(self.m_lines[2]):int(self.m_lines[3]),
-                      int(self.m_lines[0]):int(self.m_lines[1])] = image_in
+            image_out[
+                :,
+                int(self.m_lines[2]) : int(self.m_lines[3]),
+                int(self.m_lines[0]) : int(self.m_lines[1]),
+            ] = image_in
 
             self.m_image_out_port.append(image_out, data_dim=3)
 
-        history = f'number of lines = {self.m_lines}'
-        self.m_image_out_port.add_history('AddLinesModule', history)
+        history = f"number of lines = {self.m_lines}"
+        self.m_image_out_port.add_history("AddLinesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()
 
@@ -317,11 +336,13 @@ class RemoveLinesModule(ProcessingModule):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 lines: Tuple[int, int, int, int]) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        lines: Tuple[int, int, int, int],
+    ) -> None:
         """
         Parameters
         ----------
@@ -359,24 +380,26 @@ class RemoveLinesModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
+        memory = self._m_config_port.get_attribute("MEMORY")
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
         start_time = time.time()
 
         for i in range(len(frames[:-1])):
-            progress(i, len(frames[:-1]), 'Removing lines...', start_time)
+            progress(i, len(frames[:-1]), "Removing lines...", start_time)
 
-            image_in = self.m_image_in_port[frames[i]:frames[i+1], ]
+            image_in = self.m_image_in_port[frames[i] : frames[i + 1],]
 
-            image_out = image_in[:,
-                                 int(self.m_lines[2]):image_in.shape[1]-int(self.m_lines[3]),
-                                 int(self.m_lines[0]):image_in.shape[2]-int(self.m_lines[1])]
+            image_out = image_in[
+                :,
+                int(self.m_lines[2]) : image_in.shape[1] - int(self.m_lines[3]),
+                int(self.m_lines[0]) : image_in.shape[2] - int(self.m_lines[1]),
+            ]
 
             self.m_image_out_port.append(image_out, data_dim=3)
 
-        history = f'number of lines = {self.m_lines}'
-        self.m_image_out_port.add_history('RemoveLinesModule', history)
+        history = f"number of lines = {self.m_lines}"
+        self.m_image_out_port.add_history("RemoveLinesModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

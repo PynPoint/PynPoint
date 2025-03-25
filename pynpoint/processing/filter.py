@@ -18,14 +18,12 @@ class GaussianFilterModule(ProcessingModule):
     Pipeline module for applying a Gaussian filter.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 fwhm: float = 1.) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, image_out_tag: str, fwhm: float = 1.0
+    ) -> None:
         """
         Parameters
         ----------
@@ -63,25 +61,27 @@ class GaussianFilterModule(ProcessingModule):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
-        pixscale = self._m_config_port.get_attribute('PIXSCALE')
+        memory = self._m_config_port.get_attribute("MEMORY")
+        pixscale = self._m_config_port.get_attribute("PIXSCALE")
 
         nimages = self.m_image_in_port.get_shape()[0]
         frames = memory_frames(memory, nimages)
 
-        sigma = (self.m_fwhm/pixscale) / (2.*math.sqrt(2.*math.log(2.)))  # [pix]
+        sigma = (self.m_fwhm / pixscale) / (
+            2.0 * math.sqrt(2.0 * math.log(2.0))
+        )  # [pix]
 
         start_time = time.time()
 
         for i, _ in enumerate(frames[:-1]):
-            progress(i, len(frames[:-1]), 'Applying Gaussian filter...', start_time)
+            progress(i, len(frames[:-1]), "Applying Gaussian filter...", start_time)
 
-            images = self.m_image_in_port[frames[i]:frames[i+1], ]
+            images = self.m_image_in_port[frames[i] : frames[i + 1],]
             im_filter = gaussian_filter(images, (0, sigma, sigma))
 
             self.m_image_out_port.append(im_filter, data_dim=3)
 
-        history = f'fwhm [arcsec] = {self.m_fwhm}'
-        self.m_image_out_port.add_history('GaussianFilterModule', history)
+        history = f"fwhm [arcsec] = {self.m_fwhm}"
+        self.m_image_out_port.add_history("GaussianFilterModule", history)
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
         self.m_image_out_port.close_port()

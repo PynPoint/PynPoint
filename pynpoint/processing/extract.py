@@ -22,18 +22,21 @@ class StarExtractionModule(ProcessingModule):
     around this position.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 index_out_tag: Optional[str] = None,
-                 image_size: float = 2.,
-                 fwhm_star: float = 0.2,
-                 position: Optional[Union[Tuple[int, int, float],
-                                          Tuple[None, None, float]]] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        index_out_tag: Optional[str] = None,
+        image_size: float = 2.0,
+        fwhm_star: float = 0.2,
+        position: Optional[
+            Union[Tuple[int, int, float], Tuple[None, None, float]]
+        ] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -93,39 +96,45 @@ class StarExtractionModule(ProcessingModule):
             None
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
+        cpu = self._m_config_port.get_attribute("CPU")
 
         if cpu > 1 and self.m_index_out_port is not None:
-            warnings.warn('The \'index_out_port\' can only be used if CPU = 1. No data will '
-                          'be stored to this output port.')
+            warnings.warn(
+                "The 'index_out_port' can only be used if CPU = 1. No data will "
+                "be stored to this output port."
+            )
 
             del self._m_output_ports[self.m_index_out_port.tag]
             self.m_index_out_port = None
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
 
-        self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
-        self.m_fwhm_star = int(math.ceil(self.m_fwhm_star/pixscale))
+        self.m_image_size = int(math.ceil(self.m_image_size / pixscale))
+        self.m_fwhm_star = int(math.ceil(self.m_fwhm_star / pixscale))
 
-        self.apply_function_to_images(crop_around_star,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Extracting stellar position',
-                                      func_args=(self.m_position,
-                                                 self.m_image_size,
-                                                 self.m_fwhm_star,
-                                                 pixscale,
-                                                 self.m_index_out_port,
-                                                 self.m_image_out_port))
+        self.apply_function_to_images(
+            crop_around_star,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Extracting stellar position",
+            func_args=(
+                self.m_position,
+                self.m_image_size,
+                self.m_fwhm_star,
+                pixscale,
+                self.m_index_out_port,
+                self.m_image_out_port,
+            ),
+        )
 
-        history = f'fwhm_star (pix) = {self.m_fwhm_star}'
+        history = f"fwhm_star (pix) = {self.m_fwhm_star}"
 
         if self.m_index_out_port is not None:
             self.m_index_out_port.copy_attributes(self.m_image_in_port)
-            self.m_index_out_port.add_history('StarExtractionModule', history)
+            self.m_index_out_port.add_history("StarExtractionModule", history)
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('StarExtractionModule', history)
+        self.m_image_out_port.add_history("StarExtractionModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -136,18 +145,20 @@ class ExtractBinaryModule(ProcessingModule):
     image stack.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 pos_center: Tuple[float, float],
-                 pos_binary: Tuple[float, float],
-                 image_size: float = 2.,
-                 search_size: float = 0.1,
-                 filter_size: Optional[float] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        pos_center: Tuple[float, float],
+        pos_binary: Tuple[float, float],
+        image_size: float = 2.0,
+        search_size: float = 0.1,
+        filter_size: Optional[float] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -205,33 +216,39 @@ class ExtractBinaryModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
-        parang = self.m_image_in_port.get_attribute('PARANG')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
+        parang = self.m_image_in_port.get_attribute("PARANG")
 
         positions = np.zeros((parang.shape[0], 2), dtype=int)
 
         for i, item in enumerate(parang):
             # rotates in counterclockwise direction, hence the minus sign in angle
-            positions[i, :] = rotate_coordinates(center=self.m_pos_center,
-                                                 position=self.m_pos_binary,
-                                                 angle=item-parang[0])
+            positions[i, :] = rotate_coordinates(
+                center=self.m_pos_center,
+                position=self.m_pos_binary,
+                angle=item - parang[0],
+            )
 
-        self.m_image_size = int(math.ceil(self.m_image_size/pixscale))
-        self.m_search_size = int(math.ceil(self.m_search_size/pixscale))
+        self.m_image_size = int(math.ceil(self.m_image_size / pixscale))
+        self.m_search_size = int(math.ceil(self.m_search_size / pixscale))
 
         if self.m_filter_size is not None:
-            self.m_filter_size = int(math.ceil(self.m_filter_size/pixscale))
+            self.m_filter_size = int(math.ceil(self.m_filter_size / pixscale))
 
-        self.apply_function_to_images(crop_rotating_star,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Extracting binary position',
-                                      func_args=(positions,
-                                                 self.m_image_size,
-                                                 self.m_filter_size,
-                                                 self.m_search_size))
+        self.apply_function_to_images(
+            crop_rotating_star,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Extracting binary position",
+            func_args=(
+                positions,
+                self.m_image_size,
+                self.m_filter_size,
+                self.m_search_size,
+            ),
+        )
 
-        history = f'filter (pix) = {self.m_filter_size}'
+        history = f"filter (pix) = {self.m_filter_size}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('ExtractBinaryModule', history)
+        self.m_image_out_port.add_history("ExtractBinaryModule", history)
         self.m_image_out_port.close_port()

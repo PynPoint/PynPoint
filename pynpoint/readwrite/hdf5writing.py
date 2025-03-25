@@ -20,16 +20,18 @@ class Hdf5WritingModule(WritingModule):
     the static and non-static attributes.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 file_name: str,
-                 output_dir: Optional[str] = None,
-                 tag_dictionary: Optional[dict] = None,
-                 keep_attributes: bool = True,
-                 overwrite: bool = False) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        file_name: str,
+        output_dir: Optional[str] = None,
+        tag_dictionary: Optional[dict] = None,
+        keep_attributes: bool = True,
+        overwrite: bool = False,
+    ) -> None:
         """
         Parameters
         ----------
@@ -77,12 +79,16 @@ class Hdf5WritingModule(WritingModule):
             None
         """
 
-        print('Writing HDF5 file...', end='')
+        print("Writing HDF5 file...", end="")
 
         if self.m_overwrite:
-            out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='w')
+            out_file = h5py.File(
+                os.path.join(self.m_output_location, self.m_file_name), mode="w"
+            )
         else:
-            out_file = h5py.File(os.path.join(self.m_output_location, self.m_file_name), mode='a')
+            out_file = h5py.File(
+                os.path.join(self.m_output_location, self.m_file_name), mode="a"
+            )
 
         for in_tag, out_tag in self.m_tag_dictionary.items():
             tmp_port = self.add_input_port(in_tag)
@@ -107,11 +113,11 @@ class Hdf5WritingModule(WritingModule):
                 if non_static_attr_keys is not None:
                     for key in non_static_attr_keys:
                         tmp_data_attr = tmp_port.get_attribute(key)
-                        attr_tag = 'header_' + out_tag + '/' + key
+                        attr_tag = "header_" + out_tag + "/" + key
                         out_file.create_dataset(attr_tag, data=tmp_data_attr)
 
             tmp_port.close_port()
 
         out_file.close()
 
-        print(' [DONE]')
+        print(" [DONE]")

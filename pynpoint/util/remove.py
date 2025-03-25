@@ -15,11 +15,13 @@ from pynpoint.util.module import progress, memory_frames
 
 
 @typechecked
-def write_selected_data(memory: Union[int, np.int64],
-                        indices: np.ndarray,
-                        image_in_port: InputPort,
-                        selected_out_port: Optional[OutputPort],
-                        removed_out_port: Optional[OutputPort]) -> None:
+def write_selected_data(
+    memory: Union[int, np.int64],
+    indices: np.ndarray,
+    image_in_port: InputPort,
+    selected_out_port: Optional[OutputPort],
+    removed_out_port: Optional[OutputPort],
+) -> None:
     """
     Function to write the selected and removed data.
 
@@ -51,11 +53,13 @@ def write_selected_data(memory: Union[int, np.int64],
     start_time = time.time()
 
     for i, _ in enumerate(frames[:-1]):
-        progress(i, len(frames[:-1]), 'Writing selected data...', start_time)
+        progress(i, len(frames[:-1]), "Writing selected data...", start_time)
 
-        images = image_in_port[frames[i]:frames[i+1], ]
+        images = image_in_port[frames[i] : frames[i + 1],]
 
-        subset_del = np.where(np.logical_and(indices >= frames[i], indices < frames[i+1]))[0]
+        subset_del = np.where(
+            np.logical_and(indices >= frames[i], indices < frames[i + 1])
+        )[0]
         index_del = indices[subset_del] % memory
 
         index_sel = np.ones(images.shape[0], bool)
@@ -69,12 +73,14 @@ def write_selected_data(memory: Union[int, np.int64],
 
 
 @typechecked
-def write_selected_attributes(indices: np.ndarray,
-                              image_in_port: InputPort,
-                              selected_out_port: Optional[OutputPort],
-                              removed_out_port: Optional[OutputPort],
-                              module_type: str,
-                              history: str) -> None:
+def write_selected_attributes(
+    indices: np.ndarray,
+    image_in_port: InputPort,
+    selected_out_port: Optional[OutputPort],
+    removed_out_port: Optional[OutputPort],
+    module_type: str,
+    history: str,
+) -> None:
     """
     Function to write the attributes of the selected and removed data.
 
@@ -118,13 +124,15 @@ def write_selected_attributes(indices: np.ndarray,
         if values.shape[0] == image_in_port.get_shape()[0]:
 
             if selected_out_port is not None and index_sel.size > 0:
-                selected_out_port.add_attribute(attr_item, values[index_sel], static=False)
+                selected_out_port.add_attribute(
+                    attr_item, values[index_sel], static=False
+                )
 
             if removed_out_port is not None and indices.size > 0:
                 removed_out_port.add_attribute(attr_item, values[indices], static=False)
 
-    if 'NFRAMES' in non_static:
-        nframes = image_in_port.get_attribute('NFRAMES')
+    if "NFRAMES" in non_static:
+        nframes = image_in_port.get_attribute("NFRAMES")
 
         nframes_sel = np.zeros(nframes.shape, dtype=int)
         nframes_del = np.zeros(nframes.shape, dtype=int)
@@ -136,13 +144,15 @@ def write_selected_attributes(indices: np.ndarray,
 
             else:
                 sum_n = np.sum(nframes[:i])
-                index_del = np.where(np.logical_and(indices >= sum_n, indices < sum_n+frames))[0]
+                index_del = np.where(
+                    np.logical_and(indices >= sum_n, indices < sum_n + frames)
+                )[0]
 
                 nframes_sel[i] = frames - index_del.size
                 nframes_del[i] = index_del.size
 
         if selected_out_port is not None:
-            selected_out_port.add_attribute('NFRAMES', nframes_sel, static=False)
+            selected_out_port.add_attribute("NFRAMES", nframes_sel, static=False)
 
         if removed_out_port is not None:
-            removed_out_port.add_attribute('NFRAMES', nframes_del, static=False)
+            removed_out_port.add_attribute("NFRAMES", nframes_del, static=False)

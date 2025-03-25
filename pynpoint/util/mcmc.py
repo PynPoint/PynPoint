@@ -16,21 +16,23 @@ from pynpoint.util.residuals import combine_residuals
 
 
 @typechecked
-def lnprob(param: np.ndarray,
-           bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
-           images: np.ndarray,
-           psf: np.ndarray,
-           mask: np.ndarray,
-           parang: np.ndarray,
-           psf_scaling: float,
-           pixscale: float,
-           pca_number: int,
-           extra_rot: float,
-           aperture: Tuple[int, int, float],
-           indices: np.ndarray,
-           merit: str,
-           residuals: str,
-           var_noise: Optional[float]) -> float:
+def lnprob(
+    param: np.ndarray,
+    bounds: Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]],
+    images: np.ndarray,
+    psf: np.ndarray,
+    mask: np.ndarray,
+    parang: np.ndarray,
+    psf_scaling: float,
+    pixscale: float,
+    pca_number: int,
+    extra_rot: float,
+    aperture: Tuple[int, int, float],
+    indices: np.ndarray,
+    merit: str,
+    residuals: str,
+    var_noise: Optional[float],
+) -> float:
     """
     Function for the log posterior function. Should be placed at the highest level of the
     Python module to be pickable for the multiprocessing.
@@ -95,11 +97,13 @@ def lnprob(param: np.ndarray,
             Log prior.
         """
 
-        if bounds[0][0] <= param[0] <= bounds[0][1] and \
-           bounds[1][0] <= param[1] <= bounds[1][1] and \
-           bounds[2][0] <= param[2] <= bounds[2][1]:
+        if (
+            bounds[0][0] <= param[0] <= bounds[0][1]
+            and bounds[1][0] <= param[1] <= bounds[1][1]
+            and bounds[2][0] <= param[2] <= bounds[2][1]
+        ):
 
-            ln_prior = 0.
+            ln_prior = 0.0
 
         else:
 
@@ -120,30 +124,35 @@ def lnprob(param: np.ndarray,
 
         sep, ang, mag = param
 
-        fake = fake_planet(images=images,
-                           psf=psf,
-                           parang=parang-extra_rot,
-                           position=(sep/pixscale, ang),
-                           magnitude=mag,
-                           psf_scaling=psf_scaling)
+        fake = fake_planet(
+            images=images,
+            psf=psf,
+            parang=parang - extra_rot,
+            position=(sep / pixscale, ang),
+            magnitude=mag,
+            psf_scaling=psf_scaling,
+        )
 
-        im_res_rot, im_res_derot = pca_psf_subtraction(images=fake*mask,
-                                                       angles=-1.*parang+extra_rot,
-                                                       pca_number=pca_number,
-                                                       indices=indices)
+        im_res_rot, im_res_derot = pca_psf_subtraction(
+            images=fake * mask,
+            angles=-1.0 * parang + extra_rot,
+            pca_number=pca_number,
+            indices=indices,
+        )
 
-        res_stack = combine_residuals(method=residuals,
-                                      res_rot=im_res_derot,
-                                      residuals=im_res_rot,
-                                      angles=parang)
+        res_stack = combine_residuals(
+            method=residuals, res_rot=im_res_derot, residuals=im_res_rot, angles=parang
+        )
 
-        chi_square = merit_function(residuals=res_stack[0, ],
-                                    merit=merit,
-                                    aperture=aperture,
-                                    sigma=0.,
-                                    var_noise=var_noise)
+        chi_square = merit_function(
+            residuals=res_stack[0,],
+            merit=merit,
+            aperture=aperture,
+            sigma=0.0,
+            var_noise=var_noise,
+        )
 
-        return -0.5*chi_square
+        return -0.5 * chi_square
 
     ln_prior = _lnprior()
 

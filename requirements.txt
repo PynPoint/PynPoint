@@ -6,7 +6,6 @@ numpy
 opencv-python
 photutils
 PyWavelets
-schwimmbad
 scikit-image
 scikit-learn
 scipy

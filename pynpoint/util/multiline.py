@@ -11,8 +11,14 @@ import numpy as np
 from typeguard import typechecked
 
 from pynpoint.core.dataio import InputPort, OutputPort
-from pynpoint.util.multiproc import TaskInput, TaskResult, TaskCreator, TaskProcessor, \
-                                    MultiprocessingCapsule, apply_function
+from pynpoint.util.multiproc import (
+    TaskInput,
+    TaskResult,
+    TaskCreator,
+    TaskProcessor,
+    MultiprocessingCapsule,
+    apply_function,
+)
 
 
 class LineReader(TaskCreator):
@@ -22,12 +28,14 @@ class LineReader(TaskCreator):
     """
 
     @typechecked
-    def __init__(self,
-                 data_port_in: InputPort,
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 data_mutex_in: multiprocessing.Lock,
-                 num_proc: int,
-                 data_length: int) -> None:
+    def __init__(
+        self,
+        data_port_in: InputPort,
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        data_mutex_in: multiprocessing.Lock,
+        num_proc: int,
+        data_length: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -49,7 +57,9 @@ class LineReader(TaskCreator):
             None
         """
 
-        super(LineReader, self).__init__(data_port_in, tasks_queue_in, data_mutex_in, num_proc)
+        super(LineReader, self).__init__(
+            data_port_in, tasks_queue_in, data_mutex_in, num_proc
+        )
 
         self.m_data_length = data_length
 
@@ -63,7 +73,9 @@ class LineReader(TaskCreator):
         """
 
         n_rows = self.m_data_in_port.get_shape()[1]
-        row_length = int(np.ceil(self.m_data_in_port.get_shape()[1]/float(self.m_num_proc)))
+        row_length = int(
+            np.ceil(self.m_data_in_port.get_shape()[1] / float(self.m_num_proc))
+        )
 
         i = 0
         while i < n_rows:
@@ -75,7 +87,10 @@ class LineReader(TaskCreator):
                 tmp_data = self.m_data_in_port[:, i:j, :]  # read rows from i to j
                 self.m_data_in_port.close_port()
 
-            param = (self.m_data_length, ((None, None, None), (i, j, None), (None, None, None)))
+            param = (
+                self.m_data_length,
+                ((None, None, None), (i, j, None), (None, None, None)),
+            )
             self.m_task_queue.put(TaskInput(tmp_data, param))
 
             i = j
@@ -90,11 +105,13 @@ class LineTaskProcessor(TaskProcessor):
     """
 
     @typechecked
-    def __init__(self,
-                 tasks_queue_in: multiprocessing.JoinableQueue,
-                 result_queue_in: multiprocessing.JoinableQueue,
-                 function: Callable,
-                 function_args: Optional[tuple]) -> None:
+    def __init__(
+        self,
+        tasks_queue_in: multiprocessing.JoinableQueue,
+        result_queue_in: multiprocessing.JoinableQueue,
+        function: Callable,
+        function_args: Optional[tuple],
+    ) -> None:
         """
         Parameters
         ----------
@@ -119,8 +136,7 @@ class LineTaskProcessor(TaskProcessor):
         self.m_function_args = function_args
 
     @typechecked
-    def run_job(self,
-                tmp_task: TaskInput) -> TaskResult:
+    def run_job(self, tmp_task: TaskInput) -> TaskResult:
         """
         Parameters
         ----------
@@ -133,16 +149,24 @@ class LineTaskProcessor(TaskProcessor):
             Task result.
         """
 
-        result_arr = np.zeros((tmp_task.m_job_parameter[0],
-                               tmp_task.m_input_data.shape[1],
-                               tmp_task.m_input_data.shape[2]))
+        result_arr = np.zeros(
+            (
+                tmp_task.m_job_parameter[0],
+                tmp_task.m_input_data.shape[1],
+                tmp_task.m_input_data.shape[2],
+            )
+        )
 
         count = 0
 
         for i in range(tmp_task.m_input_data.shape[1]):
             for j in range(tmp_task.m_input_data.shape[2]):
-                result_arr[:, i, j] = apply_function(tmp_task.m_input_data[:, i, j], count,
-                                                     self.m_function, self.m_function_args)
+                result_arr[:, i, j] = apply_function(
+                    tmp_task.m_input_data[:, i, j],
+                    count,
+                    self.m_function,
+                    self.m_function_args,
+                )
 
                 count += 1
 
@@ -157,13 +181,15 @@ class LineProcessingCapsule(MultiprocessingCapsule):
     """
 
     @typechecked
-    def __init__(self,
-                 image_in_port: InputPort,
-                 image_out_port: OutputPort,
-                 num_proc: int,
-                 function: Callable,
-                 function_args: Optional[tuple],
-                 data_length: int) -> None:
+    def __init__(
+        self,
+        image_in_port: InputPort,
+        image_out_port: OutputPort,
+        num_proc: int,
+        function: Callable,
+        function_args: Optional[tuple],
+        data_length: int,
+    ) -> None:
         """
         Parameters
         ----------
@@ -190,7 +216,9 @@ class LineProcessingCapsule(MultiprocessingCapsule):
         self.m_function_args = function_args
         self.m_data_length = data_length
 
-        super(LineProcessingCapsule, self).__init__(image_in_port, image_out_port, num_proc)
+        super(LineProcessingCapsule, self).__init__(
+            image_in_port, image_out_port, num_proc
+        )
 
     @typechecked
     def create_processors(self) -> List[LineTaskProcessor]:
@@ -205,16 +233,19 @@ class LineProcessingCapsule(MultiprocessingCapsule):
 
         for _ in range(self.m_num_proc):
 
-            processors.append(LineTaskProcessor(tasks_queue_in=self.m_tasks_queue,
-                                                result_queue_in=self.m_result_queue,
-                                                function=self.m_function,
-                                                function_args=self.m_function_args))
+            processors.append(
+                LineTaskProcessor(
+                    tasks_queue_in=self.m_tasks_queue,
+                    result_queue_in=self.m_result_queue,
+                    function=self.m_function,
+                    function_args=self.m_function_args,
+                )
+            )
 
         return processors
 
     @typechecked
-    def init_creator(self,
-                     image_in_port: InputPort) -> LineReader:
+    def init_creator(self, image_in_port: InputPort) -> LineReader:
         """
         Parameters
         ----------
@@ -227,8 +258,10 @@ class LineProcessingCapsule(MultiprocessingCapsule):
             Line reader object.
         """
 
-        return LineReader(image_in_port,
-                          self.m_tasks_queue,
-                          self.m_data_mutex,
-                          self.m_num_proc,
-                          self.m_data_length)
+        return LineReader(
+            image_in_port,
+            self.m_tasks_queue,
+            self.m_data_mutex,
+            self.m_num_proc,
+            self.m_data_length,
+        )

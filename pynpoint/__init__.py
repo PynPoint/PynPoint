@@ -2,88 +2,110 @@ import warnings
 
 from pynpoint.core.pypeline import Pypeline
 
-from pynpoint.processing.background import SimpleBackgroundSubtractionModule, \
-                                           MeanBackgroundSubtractionModule, \
-                                           LineSubtractionModule, \
-                                           NoddingBackgroundModule
+from pynpoint.processing.background import (
+    SimpleBackgroundSubtractionModule,
+    MeanBackgroundSubtractionModule,
+    LineSubtractionModule,
+    NoddingBackgroundModule,
+)
 
-from pynpoint.processing.badpixel import BadPixelSigmaFilterModule, \
-                                         BadPixelInterpolationModule, \
-                                         BadPixelMapModule, \
-                                         BadPixelTimeFilterModule, \
-                                         ReplaceBadPixelsModule
+from pynpoint.processing.badpixel import (
+    BadPixelSigmaFilterModule,
+    BadPixelInterpolationModule,
+    BadPixelMapModule,
+    BadPixelTimeFilterModule,
+    ReplaceBadPixelsModule,
+)
 
-from pynpoint.processing.basic import SubtractImagesModule, \
-                                      AddImagesModule, \
-                                      RotateImagesModule, \
-                                      RepeatImagesModule
+from pynpoint.processing.basic import (
+    SubtractImagesModule,
+    AddImagesModule,
+    RotateImagesModule,
+    RepeatImagesModule,
+)
 
-from pynpoint.processing.centering import StarAlignmentModule, \
-                                          FitCenterModule, \
-                                          ShiftImagesModule, \
-                                          WaffleCenteringModule
+from pynpoint.processing.centering import (
+    StarAlignmentModule,
+    FitCenterModule,
+    ShiftImagesModule,
+    WaffleCenteringModule,
+)
 
-from pynpoint.processing.darkflat import DarkCalibrationModule, \
-                                         FlatCalibrationModule
+from pynpoint.processing.darkflat import DarkCalibrationModule, FlatCalibrationModule
 
-from pynpoint.processing.extract import StarExtractionModule, \
-                                        ExtractBinaryModule
+from pynpoint.processing.extract import StarExtractionModule, ExtractBinaryModule
 
 from pynpoint.processing.filter import GaussianFilterModule
 
-from pynpoint.processing.fluxposition import FakePlanetModule, \
-                                             SimplexMinimizationModule, \
-                                             FalsePositiveModule, \
-                                             MCMCsamplingModule, \
-                                             AperturePhotometryModule, \
-                                             SystematicErrorModule
+from pynpoint.processing.fluxposition import (
+    FakePlanetModule,
+    SimplexMinimizationModule,
+    FalsePositiveModule,
+    MCMCsamplingModule,
+    AperturePhotometryModule,
+    SystematicErrorModule,
+)
 
-from pynpoint.processing.frameselection import RemoveFramesModule, \
-                                               FrameSelectionModule, \
-                                               RemoveLastFrameModule, \
-                                               RemoveStartFramesModule, \
-                                               ImageStatisticsModule, \
-                                               FrameSimilarityModule, \
-                                               SelectByAttributeModule, \
-                                               ResidualSelectionModule
+from pynpoint.processing.frameselection import (
+    RemoveFramesModule,
+    FrameSelectionModule,
+    RemoveLastFrameModule,
+    RemoveStartFramesModule,
+    ImageStatisticsModule,
+    FrameSimilarityModule,
+    SelectByAttributeModule,
+    ResidualSelectionModule,
+)
 
-from pynpoint.processing.limits import ContrastCurveModule, \
-                                       MassLimitsModule
+from pynpoint.processing.limits import ContrastCurveModule, MassLimitsModule
 
-from pynpoint.processing.pcabackground import PCABackgroundPreparationModule, \
-                                              PCABackgroundSubtractionModule, \
-                                              DitheringBackgroundModule
+from pynpoint.processing.pcabackground import (
+    PCABackgroundPreparationModule,
+    PCABackgroundSubtractionModule,
+    DitheringBackgroundModule,
+)
 
-from pynpoint.processing.psfpreparation import PSFpreparationModule, \
-                                               AngleInterpolationModule, \
-                                               AngleCalculationModule, \
-                                               SortParangModule, \
-                                               SDIpreparationModule
+from pynpoint.processing.psfpreparation import (
+    PSFpreparationModule,
+    AngleInterpolationModule,
+    AngleCalculationModule,
+    SortParangModule,
+    SDIpreparationModule,
+)
 
-from pynpoint.processing.psfsubtraction import PcaPsfSubtractionModule, \
-                                               ClassicalADIModule
+from pynpoint.processing.psfsubtraction import (
+    PcaPsfSubtractionModule,
+    ClassicalADIModule,
+)
 
-from pynpoint.processing.resizing import CropImagesModule, \
-                                         ScaleImagesModule, \
-                                         AddLinesModule, \
-                                         RemoveLinesModule
+from pynpoint.processing.resizing import (
+    CropImagesModule,
+    ScaleImagesModule,
+    AddLinesModule,
+    RemoveLinesModule,
+)
 
-from pynpoint.processing.stacksubset import StackAndSubsetModule, \
-                                            StackCubesModule, \
-                                            DerotateAndStackModule, \
-                                            CombineTagsModule
+from pynpoint.processing.stacksubset import (
+    StackAndSubsetModule,
+    StackCubesModule,
+    DerotateAndStackModule,
+    CombineTagsModule,
+)
 
-from pynpoint.processing.timedenoising import CwtWaveletConfiguration, \
-                                              DwtWaveletConfiguration, \
-                                              WaveletTimeDenoisingModule, \
-                                              TimeNormalizationModule
+from pynpoint.processing.timedenoising import (
+    CwtWaveletConfiguration,
+    DwtWaveletConfiguration,
+    WaveletTimeDenoisingModule,
+    TimeNormalizationModule,
+)
 
-from pynpoint.readwrite.attr_reading import AttributeReadingModule, \
-                                            ParangReadingModule, \
-                                            WavelengthReadingModule
+from pynpoint.readwrite.attr_reading import (
+    AttributeReadingModule,
+    ParangReadingModule,
+    WavelengthReadingModule,
+)
 
-from pynpoint.readwrite.attr_writing import AttributeWritingModule, \
-                                            ParangWritingModule
+from pynpoint.readwrite.attr_writing import AttributeWritingModule, ParangWritingModule
 
 from pynpoint.readwrite.fitsreading import FitsReadingModule
 
@@ -97,11 +119,11 @@ from pynpoint.readwrite.textwriting import TextWritingModule
 
 from pynpoint.readwrite.nearreading import NearReadingModule
 
-warnings.simplefilter('always', DeprecationWarning)
+warnings.simplefilter("always", DeprecationWarning)
 
-__author__ = 'Tomas Stolker & Markus Bonse'
-__license__ = 'GPLv3'
-__version__ = '0.11.0'
-__maintainer__ = 'Tomas Stolker'
-__email__ = 'stolker@strw.leidenuniv.nl'
-__status__ = 'Development'
+__author__ = "Tomas Stolker & Markus Bonse"
+__license__ = "GPLv3"
+__version__ = "0.11.0"
+__maintainer__ = "Tomas Stolker"
+__email__ = "stolker@strw.leidenuniv.nl"
+__status__ = "Development"

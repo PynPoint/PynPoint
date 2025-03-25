@@ -18,10 +18,12 @@ from pynpoint.util.module import progress
 
 
 @typechecked
-def locate_star(image: np.ndarray,
-                center: Optional[tuple],
-                width: Optional[int],
-                fwhm: Optional[int]) -> np.ndarray:
+def locate_star(
+    image: np.ndarray,
+    center: Optional[tuple],
+    width: Optional[int],
+    fwhm: Optional[int],
+) -> np.ndarray:
     """
     Function to locate the star by finding the brightest pixel.
 
@@ -52,7 +54,7 @@ def locate_star(image: np.ndarray,
         smooth = np.copy(image)
 
     else:
-        sigma = fwhm / math.sqrt(8. * math.log(2.))
+        sigma = fwhm / math.sqrt(8.0 * math.log(2.0))
         kernel = (fwhm * 2 + 1, fwhm * 2 + 1)
         smooth = cv2.GaussianBlur(image, kernel, sigma)
 
@@ -67,11 +69,13 @@ def locate_star(image: np.ndarray,
 
 
 @typechecked
-def star_positions(input_port: InputPort,
-                   fwhm: Optional[int],
-                   position: Optional[Union[Tuple[int, int, float],
-                                            Tuple[None, None, float],
-                                            Tuple[int, int, None]]] = None) -> np.ndarray:
+def star_positions(
+    input_port: InputPort,
+    fwhm: Optional[int],
+    position: Optional[
+        Union[Tuple[int, int, float], Tuple[None, None, float], Tuple[int, int, None]]
+    ] = None,
+) -> np.ndarray:
     """
     Function to return the position of the star in each image.
 
@@ -116,9 +120,9 @@ def star_positions(input_port: InputPort,
         start_time = time.time()
 
         for i in range(nimages):
-            progress(i, nimages, 'Locating stellar position...', start_time)
+            progress(i, nimages, "Locating stellar position...", start_time)
 
             # [y. x] position
-            starpos[i, :] = locate_star(input_port[i, ], center, width, fwhm)
+            starpos[i, :] = locate_star(input_port[i,], center, width, fwhm)
 
     return starpos

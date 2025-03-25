@@ -11,14 +11,13 @@ from scipy.signal import medfilt
 from statsmodels.robust import mad
 
 from pynpoint.util.continuous import autoscales, cwt, icwt
+
 # from pynpoint.util.continuous import fourier_from_scales
 
 
 # This function cannot by @typechecked because of a compatibility issue with numba
 @jit(cache=True, nopython=True)
-def _fast_zeros(soft: bool,
-                spectrum: np.ndarray,
-                uthresh: float) -> np.ndarray:
+def _fast_zeros(soft: bool, spectrum: np.ndarray, uthresh: float) -> np.ndarray:
     """
     Fast numba method to modify values in the wavelet space by using a hard or soft threshold
     function.
@@ -62,12 +61,14 @@ class WaveletAnalysisCapsule:
     """
 
     @typechecked
-    def __init__(self,
-                 signal_in: np.ndarray,
-                 wavelet_in: str = 'dog',
-                 order: int = 2,
-                 padding: str = 'none',
-                 frequency_resolution: float = 0.5) -> None:
+    def __init__(
+        self,
+        signal_in: np.ndarray,
+        wavelet_in: str = "dog",
+        order: int = 2,
+        padding: str = "none",
+        frequency_resolution: float = 0.5,
+    ) -> None:
         """
         Parameters
         ----------
@@ -89,37 +90,41 @@ class WaveletAnalysisCapsule:
         """
 
         # save input data
-        self.m_supported_wavelets = ['dog', 'morlet']
+        self.m_supported_wavelets = ["dog", "morlet"]
 
         # check supported wavelets
         if wavelet_in not in self.m_supported_wavelets:
-            raise ValueError(f'Wavelet {wavelet_in} is not supported')
+            raise ValueError(f"Wavelet {wavelet_in} is not supported")
 
-        if wavelet_in == 'dog':
-            self._m_c_reconstructions = {2: 3.5987,
-                                         4: 2.4014,
-                                         6: 1.9212,
-                                         8: 1.6467,
-                                         12: 1.3307,
-                                         16: 1.1464,
-                                         20: 1.0222,
-                                         30: 0.8312,
-                                         40: 0.7183,
-                                         60: 0.5853}
-        elif wavelet_in == 'morlet':
-            self._m_c_reconstructions = {5: 0.9484,
-                                         6: 0.7784,
-                                         7: 0.6616,
-                                         8: 0.5758,
-                                         10: 0.4579,
-                                         12: 0.3804,
-                                         14: 0.3254,
-                                         16: 0.2844,
-                                         20: 0.2272}
+        if wavelet_in == "dog":
+            self._m_c_reconstructions = {
+                2: 3.5987,
+                4: 2.4014,
+                6: 1.9212,
+                8: 1.6467,
+                12: 1.3307,
+                16: 1.1464,
+                20: 1.0222,
+                30: 0.8312,
+                40: 0.7183,
+                60: 0.5853,
+            }
+        elif wavelet_in == "morlet":
+            self._m_c_reconstructions = {
+                5: 0.9484,
+                6: 0.7784,
+                7: 0.6616,
+                8: 0.5758,
+                10: 0.4579,
+                12: 0.3804,
+                14: 0.3254,
+                16: 0.2844,
+                20: 0.2272,
+            }
         self.m_wavelet = wavelet_in
 
-        if padding not in ['none', 'zero', 'mirror']:
-            raise ValueError('Padding can only be none, zero or mirror')
+        if padding not in ["none", "zero", "mirror"]:
+            raise ValueError("Padding can only be none, zero or mirror")
 
         self._m_data = signal_in - np.ones(len(signal_in)) * np.mean(signal_in)
         self.m_padding = padding
@@ -128,19 +133,22 @@ class WaveletAnalysisCapsule:
         self._m_data_mean = np.mean(signal_in)
 
         if order not in self._m_c_reconstructions:
-            raise ValueError('Wavelet ' + str(wavelet_in) + ' does not support order '
-                             + str(order) + ". \n Only orders: " +
-                             str(sorted(self._m_c_reconstructions.keys())).strip('[]') +
-                             " are supported")
+            raise ValueError(
+                "Wavelet "
+                + str(wavelet_in)
+                + " does not support order "
+                + str(order)
+                + ". \n Only orders: "
+                + str(sorted(self._m_c_reconstructions.keys())).strip("[]")
+                + " are supported"
+            )
         self.m_order = order
         self._m_c_final_reconstruction = self._m_c_reconstructions[order]
 
         # create scales for wavelet transform
-        self._m_scales = autoscales(N=self._m_data_size,
-                                    dt=1,
-                                    dj=frequency_resolution,
-                                    wf=wavelet_in,
-                                    p=order)
+        self._m_scales = autoscales(
+            N=self._m_data_size, dt=1, dj=frequency_resolution, wf=wavelet_in, p=order
+        )
 
         self._m_number_of_scales = len(self._m_scales)
         self._m_frequency_resolution = frequency_resolution
@@ -150,8 +158,7 @@ class WaveletAnalysisCapsule:
     # --- functions for reconstruction value
     @staticmethod
     @typechecked
-    def _morlet_function(omega0: float,
-                         x_in: float) -> np.complex128:
+    def _morlet_function(omega0: float, x_in: float) -> np.complex128:
         """
         Returns
         -------
@@ -159,12 +166,11 @@ class WaveletAnalysisCapsule:
             Morlet function.
         """
 
-        return np.pi**(-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-x_in**2/2.0)
+        return np.pi ** (-0.25) * np.exp(1j * omega0 * x_in) * np.exp(-(x_in**2) / 2.0)
 
     @staticmethod
     @typechecked
-    def _dog_function(order: int,
-                      x_in: float) -> float:
+    def _dog_function(order: int, x_in: float) -> float:
         """
         Returns
         -------
@@ -175,7 +181,7 @@ class WaveletAnalysisCapsule:
         p_hpoly = hermite(order)[int(x_in / np.power(2, 0.5))]
         herm = p_hpoly / (np.power(2, float(order) / 2))
 
-        return ((-1)**(order+1)) / np.sqrt(gamma(order + 0.5)) * herm
+        return ((-1) ** (order + 1)) / np.sqrt(gamma(order + 0.5)) * herm
 
     @typechecked
     def __pad_signal(self) -> None:
@@ -188,11 +194,15 @@ class WaveletAnalysisCapsule:
 
         padding_length = int(len(self._m_data) * 0.5)
 
-        if self.m_padding == 'zero':
-            new_data = np.append(self._m_data, np.zeros(padding_length, dtype=np.float64))
-            self._m_data = np.append(np.zeros(padding_length, dtype=np.float64), new_data)
+        if self.m_padding == "zero":
+            new_data = np.append(
+                self._m_data, np.zeros(padding_length, dtype=np.float64)
+            )
+            self._m_data = np.append(
+                np.zeros(padding_length, dtype=np.float64), new_data
+            )
 
-        elif self.m_padding == 'mirror':
+        elif self.m_padding == "mirror":
             left_half_signal = self._m_data[:padding_length]
             right_half_signal = self._m_data[padding_length:]
             new_data = np.append(self._m_data, right_half_signal[::-1])
@@ -213,14 +223,14 @@ class WaveletAnalysisCapsule:
         wavelet = self.m_wavelet
         order = self.m_order
 
-        if wavelet == 'morlet':
+        if wavelet == "morlet":
             zero_function = self._morlet_function(order, 0)
         else:
             zero_function = self._dog_function(order, 0)
 
         c_delta = self._m_c_final_reconstruction
 
-        reconstruction_factor = freq_res/(c_delta * zero_function)
+        reconstruction_factor = freq_res / (c_delta * zero_function)
 
         return reconstruction_factor.real
 
@@ -235,11 +245,9 @@ class WaveletAnalysisCapsule:
             None
         """
 
-        self.m_spectrum = cwt(self._m_data,
-                              dt=1,
-                              scales=self._m_scales,
-                              wf=self.m_wavelet,
-                              p=self.m_order)
+        self.m_spectrum = cwt(
+            self._m_data, dt=1, scales=self._m_scales, wf=self.m_wavelet, p=self.m_order
+        )
 
     @typechecked
     def update_signal(self) -> None:
@@ -257,8 +265,7 @@ class WaveletAnalysisCapsule:
         self._m_data *= reconstruction_factor
 
     @typechecked
-    def denoise_spectrum(self,
-                         soft: bool = False) -> None:
+    def denoise_spectrum(self, soft: bool = False) -> None:
         """
         Applies wavelet shrinkage on the current wavelet space (m_spectrum) by either a hard of
         soft threshold function.
@@ -274,15 +281,17 @@ class WaveletAnalysisCapsule:
             None
         """
 
-        if self.m_padding != 'none':
+        if self.m_padding != "none":
             noise_length_4 = len(self._m_data) // 4
-            noise_spectrum = self.m_spectrum[0, noise_length_4: (noise_length_4 * 3)].real
+            noise_spectrum = self.m_spectrum[
+                0, noise_length_4 : (noise_length_4 * 3)
+            ].real
 
         else:
             noise_spectrum = self.m_spectrum[0, :].real
 
         sigma = mad(noise_spectrum)
-        uthresh = sigma*np.sqrt(2.0*np.log(len(noise_spectrum)))
+        uthresh = sigma * np.sqrt(2.0 * np.log(len(noise_spectrum)))
 
         self.m_spectrum = _fast_zeros(soft, self.m_spectrum, uthresh)
 
@@ -314,10 +323,10 @@ class WaveletAnalysisCapsule:
 
         tmp_data = self._m_data + np.ones(len(self._m_data)) * self._m_data_mean
 
-        if self.m_padding == 'none':
+        if self.m_padding == "none":
             return tmp_data
 
-        return tmp_data[len(self._m_data) // 4: 3 * (len(self._m_data) // 4)]
+        return tmp_data[len(self._m_data) // 4 : 3 * (len(self._m_data) // 4)]
 
     # def __transform_period(self,
     #                        period):

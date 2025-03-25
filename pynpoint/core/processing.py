@@ -35,8 +35,7 @@ class PypelineModule(metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str) -> None:
+    def __init__(self, name_in: str) -> None:
         """
         Abstract constructor of a :class:`~pynpoint.core.processing.PypelineModule`.
 
@@ -53,7 +52,7 @@ class PypelineModule(metaclass=ABCMeta):
 
         self._m_name = name_in
         self._m_data_base = None
-        self._m_config_port = ConfigPort('config')
+        self._m_config_port = ConfigPort("config")
 
     @property
     @typechecked
@@ -72,8 +71,7 @@ class PypelineModule(metaclass=ABCMeta):
 
     @abstractmethod
     @typechecked
-    def connect_database(self,
-                         data_base_in: DataStorage) -> None:
+    def connect_database(self, data_base_in: DataStorage) -> None:
         """
         Abstract interface for the function ``connect_database`` which is needed to connect a
         :class:`~pynpoint.core.dataio.Port` of a :class:`~pynpoint.core.processing.PypelineModule`
@@ -104,9 +102,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 input_dir: Optional[str] = None) -> None:
+    def __init__(self, name_in: str, input_dir: Optional[str] = None) -> None:
         """
         Abstract constructor of ReadingModule which needs the unique name identifier as input
         (more information: :class:`pynpoint.core.processing.PypelineModule`). An input directory
@@ -128,16 +124,16 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
 
         super().__init__(name_in)
 
-        assert (os.path.isdir(str(input_dir)) or input_dir is None), 'Input directory for ' \
-            'reading module does not exist - input requested: %s.' % input_dir
+        assert os.path.isdir(str(input_dir)) or input_dir is None, (
+            "Input directory for "
+            "reading module does not exist - input requested: %s." % input_dir
+        )
 
         self.m_input_location = input_dir
         self._m_output_ports = {}
 
     @typechecked
-    def add_output_port(self,
-                        tag: str,
-                        activation: bool = True) -> OutputPort:
+    def add_output_port(self, tag: str, activation: bool = True) -> OutputPort:
         """
         Function which creates an OutputPort for a ReadingModule and appends it to the internal
         OutputPort dictionary. This function should be used by classes inheriting from
@@ -165,7 +161,9 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn(f'Tag \'{tag}\' of ReadingModule \'{self._m_name}\' is already used.')
+            warnings.warn(
+                f"Tag '{tag}' of ReadingModule '{self._m_name}' is already used."
+            )
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
@@ -175,8 +173,7 @@ class ReadingModule(PypelineModule, metaclass=ABCMeta):
         return port
 
     @typechecked
-    def connect_database(self,
-                         data_base_in: DataStorage) -> None:
+    def connect_database(self, data_base_in: DataStorage) -> None:
         """
         Function used by a ReadingModule to connect all ports in the internal input and output
         port dictionaries to the database. The function is called by Pypeline and connects the
@@ -233,9 +230,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 output_dir: Optional[str] = None) -> None:
+    def __init__(self, name_in: str, output_dir: Optional[str] = None) -> None:
         """
         Abstract constructor of a WritingModule which needs the unique name identifier as input
         (more information: :class:`pynpoint.core.processing.PypelineModule`). In addition one can
@@ -258,15 +253,16 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
 
         super().__init__(name_in)
 
-        assert (os.path.isdir(str(output_dir)) or output_dir is None), 'Output directory for ' \
-            'writing module does not exist - input requested: %s.' % output_dir
+        assert os.path.isdir(str(output_dir)) or output_dir is None, (
+            "Output directory for "
+            "writing module does not exist - input requested: %s." % output_dir
+        )
 
         self.m_output_location = output_dir
         self._m_input_ports = {}
 
     @typechecked
-    def add_input_port(self,
-                       tag: str) -> InputPort:
+    def add_input_port(self, tag: str) -> InputPort:
         """
         Function which creates an InputPort for a WritingModule and appends it to the internal
         InputPort dictionary. This function should be used by classes inheriting from WritingModule
@@ -298,8 +294,7 @@ class WritingModule(PypelineModule, metaclass=ABCMeta):
         return port
 
     @typechecked
-    def connect_database(self,
-                         data_base_in: DataStorage) -> None:
+    def connect_database(self, data_base_in: DataStorage) -> None:
         """
         Function used by a WritingModule to connect all ports in the internal input and output
         port dictionaries to the database. The function is called by Pypeline and connects the
@@ -354,8 +349,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
     """
 
     @typechecked
-    def __init__(self,
-                 name_in: str) -> None:
+    def __init__(self, name_in: str) -> None:
         """
         Abstract constructor of a ProcessingModule which needs the unique name identifier as input
         (more information: :class:`pynpoint.core.processing.PypelineModule`). Call this function in
@@ -373,8 +367,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         self._m_output_ports = {}
 
     @typechecked
-    def add_input_port(self,
-                       tag: str) -> InputPort:
+    def add_input_port(self, tag: str) -> InputPort:
         """
         Function which creates an InputPort for a ProcessingModule and appends it to the internal
         InputPort dictionary. This function should be used by classes inheriting from
@@ -406,9 +399,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         return port
 
     @typechecked
-    def add_output_port(self,
-                        tag: str,
-                        activation: bool = True) -> OutputPort:
+    def add_output_port(self, tag: str, activation: bool = True) -> OutputPort:
         """
         Function which creates an :class:`~pynpoint.core.dataio.OutputPort` for a
         :class:`~pynpoint.core.processing.ProcessingModule` and appends it to the internal
@@ -440,7 +431,9 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         port = OutputPort(tag, activate_init=activation)
 
         if tag in self._m_output_ports:
-            warnings.warn(f'Tag \'{tag}\' of ProcessingModule \'{self._m_name}\' is already used.')
+            warnings.warn(
+                f"Tag '{tag}' of ProcessingModule '{self._m_name}' is already used."
+            )
 
         if self._m_data_base is not None:
             port.set_database_connection(self._m_data_base)
@@ -450,8 +443,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         return port
 
     @typechecked
-    def connect_database(self,
-                         data_base_in: DataStorage) -> None:
+    def connect_database(self, data_base_in: DataStorage) -> None:
         """
         Function used by a ProcessingModule to connect all ports in the internal input and output
         port dictionaries to the database. The function is called by Pypeline and connects the
@@ -479,11 +471,13 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
         self._m_data_base = data_base_in
 
     @typechecked
-    def apply_function_in_time(self,
-                               func: Callable,
-                               image_in_port: InputPort,
-                               image_out_port: OutputPort,
-                               func_args: Optional[tuple] = None) -> None:
+    def apply_function_in_time(
+        self,
+        func: Callable,
+        image_in_port: InputPort,
+        image_out_port: OutputPort,
+        func_args: Optional[tuple] = None,
+    ) -> None:
         """
         Applies a function to all pixel lines in time.
 
@@ -504,7 +498,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
+        cpu = self._m_config_port.get_attribute("CPU")
 
         init_line = image_in_port[:, 0, 0]
 
@@ -512,29 +506,35 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         size = apply_function(init_line, 0, func, func_args).shape[0]
 
-        image_out_port.set_all(data=np.zeros((size, im_shape[1], im_shape[2])),
-                               data_dim=3,
-                               keep_attributes=False)
+        image_out_port.set_all(
+            data=np.zeros((size, im_shape[1], im_shape[2])),
+            data_dim=3,
+            keep_attributes=False,
+        )
 
         image_in_port.close_port()
         image_out_port.close_port()
 
-        capsule = LineProcessingCapsule(image_in_port=image_in_port,
-                                        image_out_port=image_out_port,
-                                        num_proc=cpu,
-                                        function=func,
-                                        function_args=func_args,
-                                        data_length=size)
+        capsule = LineProcessingCapsule(
+            image_in_port=image_in_port,
+            image_out_port=image_out_port,
+            num_proc=cpu,
+            function=func,
+            function_args=func_args,
+            data_length=size,
+        )
 
         capsule.run()
 
     @typechecked
-    def apply_function_to_images(self,
-                                 func: Callable[..., np.ndarray],
-                                 image_in_port: InputPort,
-                                 image_out_port: OutputPort,
-                                 message: str,
-                                 func_args: Optional[tuple] = None) -> None:
+    def apply_function_to_images(
+        self,
+        func: Callable[..., np.ndarray],
+        image_in_port: InputPort,
+        image_out_port: OutputPort,
+        message: str,
+        func_args: Optional[tuple] = None,
+    ) -> None:
         """
         Function which applies a function to all images of an input port. Stacks of images are
         processed in parallel if the CPU and MEMORY attribute are set in the central configuration.
@@ -568,8 +568,8 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             None
         """
 
-        memory = self._m_config_port.get_attribute('MEMORY')
-        cpu = self._m_config_port.get_attribute('CPU')
+        memory = self._m_config_port.get_attribute("MEMORY")
+        cpu = self._m_config_port.get_attribute("CPU")
 
         nimages = image_in_port.get_shape()[0]
 
@@ -586,14 +586,14 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             start_time = time.time()
 
             for i in range(nimages):
-                progress(i, nimages, message+'...', start_time)
+                progress(i, nimages, message + "...", start_time)
 
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
-                    result.append(func(images[i, ], i))
+                    result.append(func(images[i,], i))
                 else:
-                    result.append(func(images[i, ], i, *args))
+                    result.append(func(images[i,], i, *args))
 
             image_out_port.set_all(np.asarray(result), keep_attributes=True)
 
@@ -602,14 +602,14 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             start_time = time.time()
 
             for i in range(nimages):
-                progress(i, nimages, message+'...', start_time)
+                progress(i, nimages, message + "...", start_time)
 
                 args = update_arguments(i, nimages, func_args)
 
                 if args is None:
-                    result = func(image_in_port[i, ], i)
+                    result = func(image_in_port[i,], i)
                 else:
-                    result = func(image_in_port[i, ], i, *args)
+                    result = func(image_in_port[i,], i, *args)
 
                 if result.ndim == 1:
                     image_out_port.append(result, data_dim=2)
@@ -618,7 +618,7 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
 
         else:
             # process images in parallel in stacks of MEMORY/CPU images
-            print(message, end='')
+            print(message, end="")
 
             args = update_arguments(0, nimages, func_args)
 
@@ -630,25 +630,29 @@ class ProcessingModule(PypelineModule, metaclass=ABCMeta):
             for item in result_shape:
                 out_shape.append(item)
 
-            image_out_port.set_all(data=np.zeros(out_shape),
-                                   data_dim=len(result_shape)+1,
-                                   keep_attributes=False)
+            image_out_port.set_all(
+                data=np.zeros(out_shape),
+                data_dim=len(result_shape) + 1,
+                keep_attributes=False,
+            )
 
             image_in_port.close_port()
             image_out_port.close_port()
 
-            capsule = StackProcessingCapsule(image_in_port=image_in_port,
-                                             image_out_port=image_out_port,
-                                             num_proc=cpu,
-                                             function=func,
-                                             function_args=func_args,
-                                             stack_size=math.ceil(memory/cpu),
-                                             result_shape=result_shape,
-                                             nimages=nimages)
+            capsule = StackProcessingCapsule(
+                image_in_port=image_in_port,
+                image_out_port=image_out_port,
+                num_proc=cpu,
+                function=func,
+                function_args=func_args,
+                stack_size=math.ceil(memory / cpu),
+                result_shape=result_shape,
+                nimages=nimages,
+            )
 
             capsule.run()
 
-            print(' [DONE]')
+            print(" [DONE]")
 
     @typechecked
     def get_all_input_tags(self) -> List[str]:

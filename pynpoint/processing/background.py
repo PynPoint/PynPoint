@@ -23,14 +23,12 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 shift: int) -> None:
+    def __init__(
+        self, name_in: str, image_in_tag: str, image_out_tag: str, shift: int
+    ) -> None:
         """
         Parameters
         ----------
@@ -70,7 +68,9 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
 
         nframes = self.m_image_in_port.get_shape()[0]
 
-        subtract = self.m_image_in_port[0] - self.m_image_in_port[(0 + self.m_shift) % nframes]
+        subtract = (
+            self.m_image_in_port[0] - self.m_image_in_port[(0 + self.m_shift) % nframes]
+        )
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
             self.m_image_out_port[0] = subtract
@@ -80,18 +80,21 @@ class SimpleBackgroundSubtractionModule(ProcessingModule):
         start_time = time.time()
 
         for i in range(1, nframes):
-            progress(i, nframes, 'Subtracting background...', start_time)
+            progress(i, nframes, "Subtracting background...", start_time)
 
-            subtract = self.m_image_in_port[i] - self.m_image_in_port[(i + self.m_shift) % nframes]
+            subtract = (
+                self.m_image_in_port[i]
+                - self.m_image_in_port[(i + self.m_shift) % nframes]
+            )
 
             if self.m_image_in_port.tag == self.m_image_out_port.tag:
                 self.m_image_out_port[i] = subtract
             else:
                 self.m_image_out_port.append(subtract)
 
-        history = f'shift = {self.m_shift}'
+        history = f"shift = {self.m_shift}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('SimpleBackgroundSubtractionModule', history)
+        self.m_image_out_port.add_history("SimpleBackgroundSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -101,15 +104,17 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
     dithering.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 shift: Optional[int] = None,
-                 cubes: int = 1) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        shift: Optional[int] = None,
+        cubes: int = 1,
+    ) -> None:
         """
         Parameters
         ----------
@@ -157,50 +162,56 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
 
         # Use NFRAMES values if shift=None
         if self.m_shift is None:
-            self.m_shift = self.m_image_in_port.get_attribute('NFRAMES')
+            self.m_shift = self.m_image_in_port.get_attribute("NFRAMES")
 
         nframes = self.m_image_in_port.get_shape()[0]
 
-        if not isinstance(self.m_shift, np.ndarray) and nframes < self.m_shift*2.0:
-            raise ValueError('The input stack is too small for a mean background subtraction. The '
-                             'position of the star should shift at least once.')
+        if not isinstance(self.m_shift, np.ndarray) and nframes < self.m_shift * 2.0:
+            raise ValueError(
+                "The input stack is too small for a mean background subtraction. The "
+                "position of the star should shift at least once."
+            )
 
         if self.m_image_in_port.tag == self.m_image_out_port.tag:
-            raise ValueError('The tag of the input port should be different from the output port.')
+            raise ValueError(
+                "The tag of the input port should be different from the output port."
+            )
 
         # Number of substacks
         if isinstance(self.m_shift, np.ndarray):
             nstacks = np.size(self.m_shift)
         else:
-            nstacks = int(np.floor(nframes/self.m_shift))
+            nstacks = int(np.floor(nframes / self.m_shift))
 
         # First mean subtraction to set up the output port array
         if isinstance(self.m_shift, np.ndarray):
-            next_start = np.sum(self.m_shift[0:self.m_cubes])
-            next_end = np.sum(self.m_shift[0:2*self.m_cubes])
+            next_start = np.sum(self.m_shift[0 : self.m_cubes])
+            next_end = np.sum(self.m_shift[0 : 2 * self.m_cubes])
 
-            if 2*self.m_cubes > np.size(self.m_shift):
-                raise ValueError('Not enough frames available for the background subtraction.')
+            if 2 * self.m_cubes > np.size(self.m_shift):
+                raise ValueError(
+                    "Not enough frames available for the background subtraction."
+                )
 
-            bg_data = self.m_image_in_port[next_start:next_end, ]
+            bg_data = self.m_image_in_port[next_start:next_end,]
             bg_mean = np.mean(bg_data, axis=0)
 
         else:
-            bg_data = self.m_image_in_port[self.m_shift:2*self.m_shift, ]
+            bg_data = self.m_image_in_port[self.m_shift : 2 * self.m_shift,]
             bg_mean = np.mean(bg_data, axis=0)
 
         # Initiate the result port data with the first frame
-        bg_sub = self.m_image_in_port[0, ] - bg_mean
+        bg_sub = self.m_image_in_port[0,] - bg_mean
         self.m_image_out_port.set_all(bg_sub, data_dim=3)
 
         # Mean subtraction of the first stack (minus the first frame)
         if isinstance(self.m_shift, np.ndarray):
-            tmp_data = self.m_image_in_port[1:next_start, ]
+            tmp_data = self.m_image_in_port[1:next_start,]
             tmp_data = tmp_data - bg_mean
             self.m_image_out_port.append(tmp_data)
 
         else:
-            tmp_data = self.m_image_in_port[1:self.m_shift, ]
+            tmp_data = self.m_image_in_port[1 : self.m_shift,]
             tmp_data = tmp_data - bg_mean
             self.m_image_out_port.append(tmp_data)
 
@@ -208,82 +219,94 @@ class MeanBackgroundSubtractionModule(ProcessingModule):
         start_time = time.time()
         if isinstance(self.m_shift, np.ndarray):
             for i in range(self.m_cubes, nstacks, self.m_cubes):
-                progress(i, nstacks, 'Subtracting background...', start_time)
+                progress(i, nstacks, "Subtracting background...", start_time)
 
-                prev_start = np.sum(self.m_shift[0:i-self.m_cubes])
+                prev_start = np.sum(self.m_shift[0 : i - self.m_cubes])
                 prev_end = np.sum(self.m_shift[0:i])
 
-                next_start = np.sum(self.m_shift[0:i+self.m_cubes])
-                next_end = np.sum(self.m_shift[0:i+2*self.m_cubes])
+                next_start = np.sum(self.m_shift[0 : i + self.m_cubes])
+                next_end = np.sum(self.m_shift[0 : i + 2 * self.m_cubes])
 
                 # calc the mean (previous)
-                tmp_data = self.m_image_in_port[prev_start:prev_end, ]
+                tmp_data = self.m_image_in_port[prev_start:prev_end,]
                 tmp_mean = np.mean(tmp_data, axis=0)
 
-                if i < nstacks-self.m_cubes:
+                if i < nstacks - self.m_cubes:
                     # calc the mean (next)
-                    tmp_data = self.m_image_in_port[next_start:next_end, ]
+                    tmp_data = self.m_image_in_port[next_start:next_end,]
                     tmp_mean = (tmp_mean + np.mean(tmp_data, axis=0)) / 2.0
 
                 # subtract mean
-                tmp_data = self.m_image_in_port[prev_end:next_start, ]
+                tmp_data = self.m_image_in_port[prev_end:next_start,]
                 tmp_data = tmp_data - tmp_mean
                 self.m_image_out_port.append(tmp_data)
 
         else:
             # the last and the one before will be performed afterwards
-            top = int(np.ceil(nframes/self.m_shift)) - 2
+            top = int(np.ceil(nframes / self.m_shift)) - 2
 
             for i in range(1, top, 1):
-                progress(i, top, 'Subtracting background...', start_time)
+                progress(i, top, "Subtracting background...", start_time)
 
                 # calc the mean (next)
-                tmp_data = self.m_image_in_port[(i+1)*self.m_shift:(i+2)*self.m_shift, ]
+                tmp_data = self.m_image_in_port[
+                    (i + 1) * self.m_shift : (i + 2) * self.m_shift,
+                ]
                 tmp_mean = np.mean(tmp_data, axis=0)
 
                 # calc the mean (previous)
-                tmp_data = self.m_image_in_port[(i-1)*self.m_shift:(i+0)*self.m_shift, ]
+                tmp_data = self.m_image_in_port[
+                    (i - 1) * self.m_shift : (i + 0) * self.m_shift,
+                ]
                 tmp_mean = (tmp_mean + np.mean(tmp_data, axis=0)) / 2.0
 
                 # subtract mean
-                tmp_data = self.m_image_in_port[(i+0)*self.m_shift:(i+1)*self.m_shift, ]
+                tmp_data = self.m_image_in_port[
+                    (i + 0) * self.m_shift : (i + 1) * self.m_shift,
+                ]
                 tmp_data = tmp_data - tmp_mean
                 self.m_image_out_port.append(tmp_data)
 
             # last and the one before
             # 1. ------------------------------- one before -------------------
             # calc the mean (previous)
-            tmp_data = self.m_image_in_port[(top-1)*self.m_shift:(top+0)*self.m_shift, ]
+            tmp_data = self.m_image_in_port[
+                (top - 1) * self.m_shift : (top + 0) * self.m_shift,
+            ]
             tmp_mean = np.mean(tmp_data, axis=0)
 
             # calc the mean (next)
             # 'nframes' is important if the last step is to huge
-            tmp_data = self.m_image_in_port[(top+1)*self.m_shift:nframes, ]
+            tmp_data = self.m_image_in_port[(top + 1) * self.m_shift : nframes,]
             tmp_mean = (tmp_mean + np.mean(tmp_data, axis=0)) / 2.0
 
             # subtract mean
-            tmp_data = self.m_image_in_port[top*self.m_shift:(top+1)*self.m_shift, ]
+            tmp_data = self.m_image_in_port[
+                top * self.m_shift : (top + 1) * self.m_shift,
+            ]
             tmp_data = tmp_data - tmp_mean
             self.m_image_out_port.append(tmp_data)
 
             # 2. ------------------------------- last -------------------
             # calc the mean (previous)
-            tmp_data = self.m_image_in_port[(top+0)*self.m_shift:(top+1)*self.m_shift, ]
+            tmp_data = self.m_image_in_port[
+                (top + 0) * self.m_shift : (top + 1) * self.m_shift,
+            ]
             tmp_mean = np.mean(tmp_data, axis=0)
 
             # subtract mean
-            tmp_data = self.m_image_in_port[(top+1)*self.m_shift:nframes, ]
+            tmp_data = self.m_image_in_port[(top + 1) * self.m_shift : nframes,]
             tmp_data = tmp_data - tmp_mean
             self.m_image_out_port.append(tmp_data)
             # -----------------------------------------------------------
 
         if isinstance(self.m_shift, np.ndarray):
-            history = 'shift = NFRAMES'
+            history = "shift = NFRAMES"
         else:
-            history = f'shift = {self.m_shift}'
+            history = f"shift = {self.m_shift}"
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('MeanBackgroundSubtractionModule', history)
+        self.m_image_out_port.add_history("MeanBackgroundSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -294,15 +317,17 @@ class LineSubtractionModule(ProcessingModule):
     used if no background data is available or to remove a detector bias.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 combine: str = 'median',
-                 mask: Optional[float] = None) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        combine: str = "median",
+        mask: Optional[float] = None,
+    ) -> None:
         """
         Parameters
         ----------
@@ -346,27 +371,27 @@ class LineSubtractionModule(ProcessingModule):
             None
         """
 
-        pixscale = self.m_image_in_port.get_attribute('PIXSCALE')
+        pixscale = self.m_image_in_port.get_attribute("PIXSCALE")
         im_shape = self.m_image_in_port.get_shape()[-2:]
 
         if self.m_mask:
-            size = (self.m_mask/pixscale, None)
+            size = (self.m_mask / pixscale, None)
         else:
             size = (None, None)
 
         mask = create_mask(im_shape, size)
 
-        self.apply_function_to_images(subtract_line,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Background subtraction',
-                                      func_args=(mask,
-                                                 self.m_combine,
-                                                 im_shape))
+        self.apply_function_to_images(
+            subtract_line,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Background subtraction",
+            func_args=(mask, self.m_combine, im_shape),
+        )
 
-        history = f'combine = {self.m_combine}'
+        history = f"combine = {self.m_combine}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('LineSubtractionModule', history)
+        self.m_image_out_port.add_history("LineSubtractionModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -378,15 +403,17 @@ class NoddingBackgroundModule(ProcessingModule):
     single FITS data cube.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 science_in_tag: str,
-                 sky_in_tag: str,
-                 image_out_tag: str,
-                 mode: str = 'both') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        science_in_tag: str,
+        sky_in_tag: str,
+        image_out_tag: str,
+        mode: str = "both",
+    ) -> None:
         """
         Parameters
         ----------
@@ -419,10 +446,10 @@ class NoddingBackgroundModule(ProcessingModule):
 
         self.m_time_stamps = []
 
-        if mode in ['next', 'previous', 'both']:
+        if mode in ["next", "previous", "both"]:
             self.m_mode = mode
         else:
-            raise ValueError('Mode needs to be \'next\', \'previous\', or \'both\'.')
+            raise ValueError("Mode needs to be 'next', 'previous', or 'both'.")
 
     @typechecked
     def _create_time_stamp_list(self) -> None:
@@ -437,10 +464,9 @@ class NoddingBackgroundModule(ProcessingModule):
             """
 
             @typechecked
-            def __init__(self,
-                         time_in: Any,
-                         im_type: str,
-                         index: Union[int, slice]) -> None:
+            def __init__(
+                self, time_in: Any, im_type: str, index: Union[int, slice]
+            ) -> None:
 
                 self.m_time = time_in
                 self.m_im_type = im_type
@@ -449,49 +475,50 @@ class NoddingBackgroundModule(ProcessingModule):
             @typechecked
             def __repr__(self) -> str:
 
-                return repr((self.m_time,
-                             self.m_im_type,
-                             self.m_index))
+                return repr((self.m_time, self.m_im_type, self.m_index))
 
-        exp_no_sky = self.m_sky_in_port.get_attribute('EXP_NO')
-        exp_no_science = self.m_science_in_port.get_attribute('EXP_NO')
+        exp_no_sky = self.m_sky_in_port.get_attribute("EXP_NO")
+        exp_no_science = self.m_science_in_port.get_attribute("EXP_NO")
 
-        nframes_sky = self.m_sky_in_port.get_attribute('NFRAMES')
-        nframes_science = self.m_science_in_port.get_attribute('NFRAMES')
+        nframes_sky = self.m_sky_in_port.get_attribute("NFRAMES")
+        nframes_science = self.m_science_in_port.get_attribute("NFRAMES")
 
         if np.all(nframes_sky != 1):
-            warnings.warn('The NFRAMES values of the sky images are not all equal to unity. '
-                          'The StackCubesModule should be applied on the sky images before the '
-                          'NoddingBackgroundModule is used.')
+            warnings.warn(
+                "The NFRAMES values of the sky images are not all equal to unity. "
+                "The StackCubesModule should be applied on the sky images before the "
+                "NoddingBackgroundModule is used."
+            )
 
         for i, item in enumerate(exp_no_sky):
-            self.m_time_stamps.append(TimeStamp(item, 'SKY', i))
+            self.m_time_stamps.append(TimeStamp(item, "SKY", i))
 
         current = 0
         for i, item in enumerate(exp_no_science):
-            frames = slice(current, current+nframes_science[i])
-            self.m_time_stamps.append(TimeStamp(item, 'SCIENCE', frames))
+            frames = slice(current, current + nframes_science[i])
+            self.m_time_stamps.append(TimeStamp(item, "SCIENCE", frames))
             current += nframes_science[i]
 
-        self.m_time_stamps = sorted(self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time)
+        self.m_time_stamps = sorted(
+            self.m_time_stamps, key=lambda time_stamp: time_stamp.m_time
+        )
 
     @typechecked
-    def calc_sky_frame(self,
-                       index_of_science_data: int) -> np.ndarray:
+    def calc_sky_frame(self, index_of_science_data: int) -> np.ndarray:
         """
         Method for finding the required sky frame (next, previous, or the mean of next and
         previous) by comparing the time stamp of the science frame with preceding and following
         sky frames.
         """
 
-        if not any(x.m_im_type == 'SKY' for x in self.m_time_stamps):
-            raise ValueError('List of time stamps does not contain any SKY images.')
+        if not any(x.m_im_type == "SKY" for x in self.m_time_stamps):
+            raise ValueError("List of time stamps does not contain any SKY images.")
 
         @typechecked
         def search_for_next_sky() -> np.ndarray:
             for i in range(index_of_science_data, len(self.m_time_stamps)):
-                if self.m_time_stamps[i].m_im_type == 'SKY':
-                    return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
+                if self.m_time_stamps[i].m_im_type == "SKY":
+                    return self.m_sky_in_port[self.m_time_stamps[i].m_index,]
 
             # no next sky found, look for previous sky
             return search_for_previous_sky()
@@ -499,23 +526,23 @@ class NoddingBackgroundModule(ProcessingModule):
         @typechecked
         def search_for_previous_sky() -> np.ndarray:
             for i in reversed(list(range(0, index_of_science_data))):
-                if self.m_time_stamps[i].m_im_type == 'SKY':
-                    return self.m_sky_in_port[self.m_time_stamps[i].m_index, ]
+                if self.m_time_stamps[i].m_im_type == "SKY":
+                    return self.m_sky_in_port[self.m_time_stamps[i].m_index,]
 
             # no previous sky found, look for next sky
             return search_for_next_sky()
 
-        if self.m_mode == 'next':
+        if self.m_mode == "next":
             return search_for_next_sky()
 
-        if self.m_mode == 'previous':
+        if self.m_mode == "previous":
             return search_for_previous_sky()
 
-        if self.m_mode == 'both':
+        if self.m_mode == "both":
             previous_sky = search_for_previous_sky()
             next_sky = search_for_next_sky()
 
-            return (previous_sky+next_sky)/2.
+            return (previous_sky + next_sky) / 2.0
 
     @typechecked
     def run(self) -> None:
@@ -533,17 +560,19 @@ class NoddingBackgroundModule(ProcessingModule):
 
         start_time = time.time()
         for i, time_entry in enumerate(self.m_time_stamps):
-            progress(i, len(self.m_time_stamps), 'Subtracting background...', start_time)
+            progress(
+                i, len(self.m_time_stamps), "Subtracting background...", start_time
+            )
 
-            if time_entry.m_im_type == 'SKY':
+            if time_entry.m_im_type == "SKY":
                 continue
 
             sky = self.calc_sky_frame(i)
-            science = self.m_science_in_port[time_entry.m_index, ]
+            science = self.m_science_in_port[time_entry.m_index,]
 
-            self.m_image_out_port.append(science - sky[None, ], data_dim=3)
+            self.m_image_out_port.append(science - sky[None,], data_dim=3)
 
-        history = f'mode = {self.m_mode}'
+        history = f"mode = {self.m_mode}"
         self.m_image_out_port.copy_attributes(self.m_science_in_port)
-        self.m_image_out_port.add_history('NoddingBackgroundModule', history)
+        self.m_image_out_port.add_history("NoddingBackgroundModule", history)
         self.m_image_out_port.close_port()

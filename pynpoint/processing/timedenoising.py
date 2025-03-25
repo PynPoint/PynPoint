@@ -11,8 +11,11 @@ import pywt
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.apply_func import cwt_denoise_line_in_time, dwt_denoise_line_in_time, \
-                                     normalization
+from pynpoint.util.apply_func import (
+    cwt_denoise_line_in_time,
+    dwt_denoise_line_in_time,
+    normalization,
+)
 
 
 class CwtWaveletConfiguration:
@@ -21,14 +24,16 @@ class CwtWaveletConfiguration:
     original paper.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 wavelet: str = 'dog',
-                 wavelet_order: int = 2,
-                 keep_mean: bool = False,
-                 resolution: float = 0.5) -> None:
+    def __init__(
+        self,
+        wavelet: str = "dog",
+        wavelet_order: int = 2,
+        keep_mean: bool = False,
+        resolution: float = 0.5,
+    ) -> None:
         """
         Parameters
         ----------
@@ -47,8 +52,8 @@ class CwtWaveletConfiguration:
             None
         """
 
-        if wavelet not in ['dog', 'morlet']:
-            raise ValueError('CWT supports only \'dog\' and \'morlet\' wavelets.')
+        if wavelet not in ["dog", "morlet"]:
+            raise ValueError("CWT supports only 'dog' and 'morlet' wavelets.")
 
         self.m_wavelet = wavelet
         self.m_wavelet_order = wavelet_order
@@ -63,11 +68,10 @@ class DwtWaveletConfiguration:
     CWT DOG wavelet.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 wavelet: str = 'db8') -> None:
+    def __init__(self, wavelet: str = "db8") -> None:
         """
         Parameters
         ----------
@@ -87,7 +91,7 @@ class DwtWaveletConfiguration:
 
         # check if wavelet is supported
         if wavelet not in supported:
-            raise ValueError(f'DWT supports only {supported} as input wavelet.')
+            raise ValueError(f"DWT supports only {supported} as input wavelet.")
 
         self.m_wavelet = wavelet
 
@@ -98,17 +102,19 @@ class WaveletTimeDenoisingModule(ProcessingModule):
     shrinkage. See Bonse et al. (arXiv:1804.05063) for details.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 wavelet_configuration: Union[CwtWaveletConfiguration, DwtWaveletConfiguration],
-                 padding: str = 'zero',
-                 median_filter: bool = False,
-                 threshold_function: str = 'soft') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        wavelet_configuration: Union[CwtWaveletConfiguration, DwtWaveletConfiguration],
+        padding: str = "zero",
+        median_filter: bool = False,
+        threshold_function: str = "soft",
+    ) -> None:
         """
         Parameters
         ----------
@@ -145,14 +151,15 @@ class WaveletTimeDenoisingModule(ProcessingModule):
         self.m_wavelet_configuration = wavelet_configuration
         self.m_median_filter = median_filter
 
-        assert padding in ['zero', 'mirror', 'none']
+        assert padding in ["zero", "mirror", "none"]
         self.m_padding = padding
 
-        assert threshold_function in ['soft', 'hard']
-        self.m_threshold_function = threshold_function == 'soft'
+        assert threshold_function in ["soft", "hard"]
+        self.m_threshold_function = threshold_function == "soft"
 
-        assert isinstance(wavelet_configuration,
-                          (DwtWaveletConfiguration, CwtWaveletConfiguration))
+        assert isinstance(
+            wavelet_configuration, (DwtWaveletConfiguration, CwtWaveletConfiguration)
+        )
 
     @typechecked
     def run(self) -> None:
@@ -167,36 +174,44 @@ class WaveletTimeDenoisingModule(ProcessingModule):
 
         if isinstance(self.m_wavelet_configuration, DwtWaveletConfiguration):
 
-            if self.m_padding == 'const_mean':
-                self.m_padding = 'constant'
+            if self.m_padding == "const_mean":
+                self.m_padding = "constant"
 
-            if self.m_padding == 'none':
-                self.m_padding = 'periodic'
+            if self.m_padding == "none":
+                self.m_padding = "periodic"
 
-            self.apply_function_in_time(dwt_denoise_line_in_time,
-                                        self.m_image_in_port,
-                                        self.m_image_out_port,
-                                        func_args=(self.m_threshold_function,
-                                                   self.m_padding,
-                                                   self.m_wavelet_configuration))
+            self.apply_function_in_time(
+                dwt_denoise_line_in_time,
+                self.m_image_in_port,
+                self.m_image_out_port,
+                func_args=(
+                    self.m_threshold_function,
+                    self.m_padding,
+                    self.m_wavelet_configuration,
+                ),
+            )
 
         elif isinstance(self.m_wavelet_configuration, CwtWaveletConfiguration):
 
-            self.apply_function_in_time(cwt_denoise_line_in_time,
-                                        self.m_image_in_port,
-                                        self.m_image_out_port,
-                                        func_args=(self.m_threshold_function,
-                                                   self.m_padding,
-                                                   self.m_median_filter,
-                                                   self.m_wavelet_configuration))
+            self.apply_function_in_time(
+                cwt_denoise_line_in_time,
+                self.m_image_in_port,
+                self.m_image_out_port,
+                func_args=(
+                    self.m_threshold_function,
+                    self.m_padding,
+                    self.m_median_filter,
+                    self.m_wavelet_configuration,
+                ),
+            )
 
         if self.m_threshold_function:
-            history = 'threshold_function = soft'
+            history = "threshold_function = soft"
         else:
-            history = 'threshold_function = hard'
+            history = "threshold_function = hard"
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('WaveletTimeDenoisingModule', history)
+        self.m_image_out_port.add_history("WaveletTimeDenoisingModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -206,13 +221,10 @@ class TimeNormalizationModule(ProcessingModule):
     et al. (arXiv:1804.05063) for details.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str) -> None:
+    def __init__(self, name_in: str, image_in_tag: str, image_out_tag: str) -> None:
         """
         Parameters
         ----------
@@ -245,11 +257,15 @@ class TimeNormalizationModule(ProcessingModule):
             None
         """
 
-        self.apply_function_to_images(normalization,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Time normalization')
+        self.apply_function_to_images(
+            normalization,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Time normalization",
+        )
 
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('TimeNormalizationModule', 'normalization = median')
+        self.m_image_out_port.add_history(
+            "TimeNormalizationModule", "normalization = median"
+        )
         self.m_image_out_port.close_port()

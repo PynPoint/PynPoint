@@ -11,8 +11,12 @@ import numpy as np
 from typeguard import typechecked
 
 from pynpoint.core.processing import ProcessingModule
-from pynpoint.util.apply_func import bad_pixel_sigma_filter, image_interpolation, \
-                                     replace_pixels, time_filter
+from pynpoint.util.apply_func import (
+    bad_pixel_sigma_filter,
+    image_interpolation,
+    replace_pixels,
+    time_filter,
+)
 
 
 class BadPixelSigmaFilterModule(ProcessingModule):
@@ -21,17 +25,19 @@ class BadPixelSigmaFilterModule(ProcessingModule):
     value of the surrounding pixels.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 map_out_tag: Optional[str] = None,
-                 box: int = 9,
-                 sigma: float = 5.,
-                 iterate: int = 1) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        map_out_tag: Optional[str] = None,
+        box: int = 9,
+        sigma: float = 5.0,
+        iterate: int = 1,
+    ) -> None:
         """
         Parameters
         ----------
@@ -73,7 +79,7 @@ class BadPixelSigmaFilterModule(ProcessingModule):
         self.m_iterate = iterate
 
         if self.m_iterate < 1:
-            raise ValueError('The argument of \'iterate\' should be 1 or larger.')
+            raise ValueError("The argument of 'iterate' should be 1 or larger.")
 
     @typechecked
     def run(self) -> None:
@@ -87,31 +93,32 @@ class BadPixelSigmaFilterModule(ProcessingModule):
             None
         """
 
-        cpu = self._m_config_port.get_attribute('CPU')
+        cpu = self._m_config_port.get_attribute("CPU")
 
         if cpu > 1 and self.m_map_out_port is not None:
-            warnings.warn('The \'map_out_port\' can only be used if CPU = 1. No data will '
-                          'be stored to this output port.')
+            warnings.warn(
+                "The 'map_out_port' can only be used if CPU = 1. No data will "
+                "be stored to this output port."
+            )
 
             del self._m_output_ports[self.m_map_out_port.tag]
             self.m_map_out_port = None
 
-        self.apply_function_to_images(bad_pixel_sigma_filter,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Bad pixel sigma filter',
-                                      func_args=(self.m_box,
-                                                 self.m_sigma,
-                                                 self.m_iterate,
-                                                 self.m_map_out_port))
+        self.apply_function_to_images(
+            bad_pixel_sigma_filter,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Bad pixel sigma filter",
+            func_args=(self.m_box, self.m_sigma, self.m_iterate, self.m_map_out_port),
+        )
 
-        history = f'sigma = {self.m_sigma}'
+        history = f"sigma = {self.m_sigma}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('BadPixelSigmaFilterModule', history)
+        self.m_image_out_port.add_history("BadPixelSigmaFilterModule", history)
 
         if self.m_map_out_port is not None:
             self.m_map_out_port.copy_attributes(self.m_image_in_port)
-            self.m_map_out_port.add_history('BadPixelSigmaFilterModule', history)
+            self.m_map_out_port.add_history("BadPixelSigmaFilterModule", history)
 
         self.m_image_out_port.close_port()
 
@@ -121,16 +128,18 @@ class BadPixelMapModule(ProcessingModule):
     Pipeline module to create a bad pixel map from the dark frames and flat fields.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 dark_in_tag: Optional[str],
-                 flat_in_tag: Optional[str],
-                 bp_map_out_tag: str,
-                 dark_threshold: float = 0.2,
-                 flat_threshold: float = 0.2) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        dark_in_tag: Optional[str],
+        flat_in_tag: Optional[str],
+        bp_map_out_tag: str,
+        dark_threshold: float = 0.2,
+        flat_threshold: float = 0.2,
+    ) -> None:
         """
         Parameters
         ----------
@@ -197,10 +206,10 @@ class BadPixelMapModule(ProcessingModule):
 
             max_dark = np.max(dark)
 
-            print(f'Threshold dark frame = {max_dark*self.m_dark_threshold}')
+            print(f"Threshold dark frame = {max_dark*self.m_dark_threshold}")
 
             bpmap = np.ones(dark.shape)
-            bpmap[np.where(dark > max_dark*self.m_dark_threshold)] = 0
+            bpmap[np.where(dark > max_dark * self.m_dark_threshold)] = 0
 
         if self.m_flat_port is not None:
             flat = self.m_flat_port.get_all()
@@ -210,16 +219,16 @@ class BadPixelMapModule(ProcessingModule):
 
             max_flat = np.max(flat)
 
-            print(f'Threshold flat field (ADU) = {max_flat*self.m_flat_threshold:.2e}')
+            print(f"Threshold flat field (ADU) = {max_flat*self.m_flat_threshold:.2e}")
 
             if self.m_dark_port is None:
                 bpmap = np.ones(flat.shape)
 
-            bpmap[np.where(flat < max_flat*self.m_flat_threshold)] = 0
+            bpmap[np.where(flat < max_flat * self.m_flat_threshold)] = 0
 
         if self.m_dark_port is not None and self.m_flat_port is not None:
             if not dark.shape == flat.shape:
-                raise ValueError('Dark and flat images should have the same shape.')
+                raise ValueError("Dark and flat images should have the same shape.")
 
         self.m_bp_map_out_port.set_all(bpmap, data_dim=3)
 
@@ -228,8 +237,8 @@ class BadPixelMapModule(ProcessingModule):
         elif self.m_flat_port is not None:
             self.m_bp_map_out_port.copy_attributes(self.m_flat_port)
 
-        history = f'dark = {self.m_dark_threshold}, flat = {self.m_flat_threshold}'
-        self.m_bp_map_out_port.add_history('BadPixelMapModule', history)
+        history = f"dark = {self.m_dark_threshold}, flat = {self.m_flat_threshold}"
+        self.m_bp_map_out_port.add_history("BadPixelMapModule", history)
 
         self.m_bp_map_out_port.close_port()
 
@@ -239,15 +248,17 @@ class BadPixelInterpolationModule(ProcessingModule):
     Pipeline module to interpolate bad pixels with spectral deconvolution.
     """
 
-    __author__ = 'Markus Bonse, Tomas Stolker'
+    __author__ = "Markus Bonse, Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 bad_pixel_map_tag: str,
-                 image_out_tag: str,
-                 iterations: int = 1000) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        bad_pixel_map_tag: str,
+        image_out_tag: str,
+        iterations: int = 1000,
+    ) -> None:
         """
         Parameters
         ----------
@@ -287,27 +298,35 @@ class BadPixelInterpolationModule(ProcessingModule):
             None
         """
 
-        bad_pixel_map = self.m_bp_map_in_port.get_all()[0, ]
+        bad_pixel_map = self.m_bp_map_in_port.get_all()[0,]
         im_shape = self.m_image_in_port.get_shape()
 
-        if self.m_iterations > im_shape[1]*im_shape[2]:
-            raise ValueError('Maximum number of iterations needs to be smaller than the number of '
-                             'pixels in the image.')
+        if self.m_iterations > im_shape[1] * im_shape[2]:
+            raise ValueError(
+                "Maximum number of iterations needs to be smaller than the number of "
+                "pixels in the image."
+            )
 
-        if bad_pixel_map.shape[0] != im_shape[-2] or bad_pixel_map.shape[1] != im_shape[-1]:
-            raise ValueError('The shape of the bad pixel map does not match the shape of the '
-                             'images.')
+        if (
+            bad_pixel_map.shape[0] != im_shape[-2]
+            or bad_pixel_map.shape[1] != im_shape[-1]
+        ):
+            raise ValueError(
+                "The shape of the bad pixel map does not match the shape of the "
+                "images."
+            )
 
-        self.apply_function_to_images(image_interpolation,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Bad pixel interpolation',
-                                      func_args=(self.m_iterations,
-                                                 bad_pixel_map))
+        self.apply_function_to_images(
+            image_interpolation,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Bad pixel interpolation",
+            func_args=(self.m_iterations, bad_pixel_map),
+        )
 
-        history = f'iterations = {self.m_iterations}'
+        history = f"iterations = {self.m_iterations}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('BadPixelInterpolationModule', history)
+        self.m_image_out_port.add_history("BadPixelInterpolationModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -319,14 +338,16 @@ class BadPixelTimeFilterModule(ProcessingModule):
     processed in parallel by setting the CPU keyword in the configuration file.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 image_out_tag: str,
-                 sigma: Tuple[float, float] = (5., 5.)) -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        image_out_tag: str,
+        sigma: Tuple[float, float] = (5.0, 5.0),
+    ) -> None:
         """
         Parameters
         ----------
@@ -365,18 +386,20 @@ class BadPixelTimeFilterModule(ProcessingModule):
             None
         """
 
-        print('Temporal filtering of bad pixels ...', end='')
+        print("Temporal filtering of bad pixels ...", end="")
 
-        self.apply_function_in_time(time_filter,
-                                    self.m_image_in_port,
-                                    self.m_image_out_port,
-                                    func_args=(self.m_sigma, ))
+        self.apply_function_in_time(
+            time_filter,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            func_args=(self.m_sigma,),
+        )
 
-        print(' [DONE]')
+        print(" [DONE]")
 
-        history = f'sigma = {self.m_sigma}'
+        history = f"sigma = {self.m_sigma}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('BadPixelTimeFilterModule', history)
+        self.m_image_out_port.add_history("BadPixelTimeFilterModule", history)
         self.m_image_out_port.close_port()
 
 
@@ -386,16 +409,18 @@ class ReplaceBadPixelsModule(ProcessingModule):
     pixels. The bad pixels are selected from the input bad pixel map.
     """
 
-    __author__ = 'Tomas Stolker'
+    __author__ = "Tomas Stolker"
 
     @typechecked
-    def __init__(self,
-                 name_in: str,
-                 image_in_tag: str,
-                 map_in_tag: str,
-                 image_out_tag: str,
-                 size: int = 2,
-                 replace: str = 'median') -> None:
+    def __init__(
+        self,
+        name_in: str,
+        image_in_tag: str,
+        map_in_tag: str,
+        image_out_tag: str,
+        size: int = 2,
+        replace: str = "median",
+    ) -> None:
         """
         Parameters
         ----------
@@ -439,18 +464,18 @@ class ReplaceBadPixelsModule(ProcessingModule):
             None
         """
 
-        bpmap = self.m_map_in_port.get_all()[0, ]
+        bpmap = self.m_map_in_port.get_all()[0,]
         index = np.argwhere(bpmap == 0)
 
-        self.apply_function_to_images(replace_pixels,
-                                      self.m_image_in_port,
-                                      self.m_image_out_port,
-                                      'Running ReplaceBadPixelsModule',
-                                      func_args=(index,
-                                                 self.m_size,
-                                                 self.m_replace))
+        self.apply_function_to_images(
+            replace_pixels,
+            self.m_image_in_port,
+            self.m_image_out_port,
+            "Running ReplaceBadPixelsModule",
+            func_args=(index, self.m_size, self.m_replace),
+        )
 
-        history = f'replace = {self.m_replace}'
+        history = f"replace = {self.m_replace}"
         self.m_image_out_port.copy_attributes(self.m_image_in_port)
-        self.m_image_out_port.add_history('ReplaceBadPixelsModule', history)
+        self.m_image_out_port.add_history("ReplaceBadPixelsModule", history)
         self.m_image_out_port.close_port()
