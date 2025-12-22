@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'PynPoint'
-copyright = '2014-2023, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
+copyright = '2025, Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 author = 'Tomas Stolker, Markus Bonse, Sascha Quanz, and Adam Amara'
 
 # -- General configuration ---------------------------------------------------
@@ -68,7 +68,6 @@ html_theme_options = {
     'repository_url': 'https://github.com/PynPoint/PynPoint',
     'repository_branch': 'main',
     'launch_buttons': {
-        'binderhub_url': 'https://mybinder.org',
         'notebook_interface': 'jupyterlab',
     },
     'use_edit_page_button': True,

@@ -87,7 +87,7 @@ class StackAndSubsetModule(ProcessingModule):
         @typechecked
         def _stack_subsets(
             nimages: int, im_shape: Tuple[int, ...], parang: Optional[np.ndarray]
-        ) -> Tuple[Tuple[int, ...], np.ndarray, np.ndarray]:
+        ) -> Tuple[Tuple[int, ...], np.ndarray, Optional[np.ndarray]]:
 
             im_new = None
             parang_new = None
@@ -135,8 +135,8 @@ class StackAndSubsetModule(ProcessingModule):
 
         @typechecked
         def _random_subset(
-            im_shape: Tuple[int, ...], im_new: np.ndarray, parang_new: np.ndarray
-        ) -> Tuple[int, np.ndarray, np.ndarray]:
+            im_shape: Tuple[int, ...], im_new: np.ndarray, parang_new: Optional[np.ndarray]
+        ) -> Tuple[int, np.ndarray, Optional[np.ndarray]]:
 
             if self.m_random is not None:
                 choice = np.random.choice(im_shape[0], self.m_random, replace=False)

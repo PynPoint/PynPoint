@@ -4,32 +4,67 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pynpoint"
-version = "0.11.0"
 authors = [
     {name = "Tomas Stolker", email = "stolker@strw.leidenuniv.nl"},
-    {name = "Markus Bonse", email = "mbonse@phys.ethz.ch"},
+    {name = "Markus Bonse", email = "Markus.Bonse@eso.org"},
 ]
-description = "Pipeline for processing and analysis of high-contrast imaging dat"
+description = "Pipeline for processing and analysis of high-contrast imaging data"
 readme = "README.rst"
-requires-python = ">=3.10,<3.13"
-license = {text = "MIT License"}
+requires-python = ">=3.11,<3.14"
+license = { text = "GPL-3.0" }
 classifiers = [
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.13",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
-dynamic = ["dependencies"]
+dependencies = [
+    "astropy",
+    "emcee",
+    "h5py",
+    "numba",
+    "numpy",
+    "opencv-python",
+    "photutils",
+    "PyWavelets",
+    "scikit-image",
+    "scikit-learn",
+    "scipy",
+    "statsmodels",
+    "tqdm",
+    "typeguard",    
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+docs = [
+    "jupyter",
+    "nbsphinx",
+    "pandoc",
+    "sphinx",
+    "sphinx-automodapi",
+    "sphinx_book_theme",
+]
+test = [
+    "black",
+    "flake8",
+    "pooch",
+    "pycodestyle",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+]
 
 [project.urls]
 Documentation = "https://pynpoint.readthedocs.io"
 Repository = "https://github.com/PynPoint/PynPoint"
 Issues = "https://github.com/PynPoint/PynPoint/issues"
 
-[tool.setuptools]
-packages = ["pynpoint"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pynpoint*"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[tool.setuptools_scm]
+write_to = "pynpoint/_version.py"
+local_scheme = "no-local-version"

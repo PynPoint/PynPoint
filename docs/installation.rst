@@ -3,14 +3,12 @@
 Installation
 ============
 
-PynPoint is compatible with `Python <https://www.python.org>`_ versions 3.9/3.10/3.11.
-
 .. _virtual_environment:
 
 Virtual Environment
 -------------------
 
-PynPoint is available in the `PyPI repository <https://pypi.org/project/pynpoint/>`_ and on `Github <https://github.com/PynPoint/PynPoint>`_. We recommend using a Python virtual environment to install and run PynPoint such that the correct dependency versions are installed without affecting other Python installations. First install ``virtualenv``, for example with the `pip package manager <https://packaging.python.org/tutorials/installing-packages/>`_:
+PynPoint is available on `PyPI <https://pypi.org/project/pynpoint/>`_ and `Github <https://github.com/PynPoint/PynPoint>`_. We recommend using a Python virtual environment to install and run PynPoint such that the correct dependency versions are installed without affecting other Python installations. First install ``virtualenv``, for example with the `pip package manager <https://packaging.python.org/tutorials/installing-packages/>`_:
 
 .. code-block:: console
 

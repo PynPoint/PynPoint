@@ -18,8 +18,6 @@ import numpy as np
 
 from typeguard import typechecked
 
-import pynpoint
-
 from pynpoint.core.attributes import get_attributes
 from pynpoint.core.dataio import DataStorage
 from pynpoint.core.processing import (
@@ -30,6 +28,8 @@ from pynpoint.core.processing import (
 )
 from pynpoint.util.module import input_info, module_info, output_info
 from pynpoint.util.type_aliases import NonStaticAttribute, StaticAttribute
+
+from .._version import __version__, __version_tuple__
 
 
 class Pypeline:
@@ -73,7 +73,7 @@ class Pypeline:
             None
         """
 
-        pynpoint_version = "PynPoint v" + pynpoint.__version__
+        pynpoint_version = "PynPoint v" + __version__
 
         print(len(pynpoint_version) * "=")
         print(pynpoint_version)
@@ -89,7 +89,7 @@ class Pypeline:
         except URLError:
             latest_version = None
 
-        if latest_version is not None and pynpoint.__version__ != latest_version:
+        if latest_version is not None and __version__ != latest_version:
             print(f"A new version ({latest_version}) is available!\n")
             print("Want to stay informed about updates, bug fixes, and new features?")
             print("Please consider using the 'Watch' button on the Github page:")

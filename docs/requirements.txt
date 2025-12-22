@@ -1,4 +1,0 @@
-jupyter
-nbsphinx
-pandoc
-sphinx_book_theme

@@ -1,8 +1,7 @@
 import os
 
-from urllib.request import urlretrieve
-
 import h5py
+import pooch
 import pytest
 import numpy as np
 
@@ -155,9 +154,12 @@ class TestLimits:
             "model.AMES-Cond-2000.M-0.0.NaCo.Vega"
         )
 
-        filename = self.test_dir + "model.AMES-Cond-2000.M-0.0.NaCo.Vega"
-
-        urlretrieve(url, filename)
+        filename = pooch.retrieve(
+            url=url,
+            fname="model.AMES-Cond-2000.M-0.0.NaCo.Vega",
+            path=self.test_dir,
+            known_hash=None,
+        )
 
         module = MassLimitsModule(
             model_file=filename,

@@ -9,173 +9,173 @@ pynpoint.util.analysis module
 
 .. automodule:: pynpoint.util.analysis
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.apply\_func module
 --------------------------------
 
 .. automodule:: pynpoint.util.apply_func
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.attributes module
 -------------------------------
 
 .. automodule:: pynpoint.util.attributes
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.continuous module
 -------------------------------
 
 .. automodule:: pynpoint.util.continuous
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.image module
 --------------------------
 
 .. automodule:: pynpoint.util.image
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.limits module
 ---------------------------
 
 .. automodule:: pynpoint.util.limits
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.mcmc module
 -------------------------
 
 .. automodule:: pynpoint.util.mcmc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.module module
 ---------------------------
 
 .. automodule:: pynpoint.util.module
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.multiline module
 ------------------------------
 
 .. automodule:: pynpoint.util.multiline
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.multipca module
 -----------------------------
 
 .. automodule:: pynpoint.util.multipca
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.multiproc module
 ------------------------------
 
 .. automodule:: pynpoint.util.multiproc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.multistack module
 -------------------------------
 
 .. automodule:: pynpoint.util.multistack
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.postproc module
 -----------------------------
 
 .. automodule:: pynpoint.util.postproc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.psf module
 ------------------------
 
 .. automodule:: pynpoint.util.psf
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.remove module
 ---------------------------
 
 .. automodule:: pynpoint.util.remove
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.residuals module
 ------------------------------
 
 .. automodule:: pynpoint.util.residuals
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.sdi module
 ------------------------
 
 .. automodule:: pynpoint.util.sdi
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.star module
 -------------------------
 
 .. automodule:: pynpoint.util.star
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.tests module
 --------------------------
 
 .. automodule:: pynpoint.util.tests
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.type\_aliases module
 ----------------------------------
 
 .. automodule:: pynpoint.util.type_aliases
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 pynpoint.util.wavelets module
 -----------------------------
 
 .. automodule:: pynpoint.util.wavelets
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: pynpoint.util
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -31,6 +31,7 @@ docs/_build
 .vscode/settings.json
 
 # pip install -e
+pynpoint/_version.py
 pynpoint.egg-info
 pynpoint.egg-info/*
 
