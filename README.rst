@@ -27,14 +27,9 @@ Contributions in the form of bug fixes, new or improved functionalities, and pip
 License
 -------
 
-Copyright 2025 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and `contributors <https://github.com/PynPoint/PynPoint/graphs/contributors>`_.
+Copyright 2026 Tomas Stolker, Markus Bonse, Sascha Quanz, Adam Amara, and `contributors <https://github.com/PynPoint/PynPoint/graphs/contributors>`_.
 
 PynPoint is distributed under the GNU General Public License v3. See the `LICENSE <https://github.com/PynPoint/PynPoint/blob/main/LICENSE>`_ file for the terms and conditions.
-
-Acknowledgements
-----------------
-
-The PynPoint logo was designed by `Atlas Digital <https://atlas-digital.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
 
 .. |PyPI Status| image:: https://img.shields.io/pypi/v/pynpoint
    :target: https://pypi.python.org/pypi/pynpoint

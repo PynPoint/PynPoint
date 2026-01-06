@@ -22,6 +22,4 @@ If you use PynPoint in your publication then please cite `Stolker et al. (2019) 
 Acknowledgements 
 ----------------
 
-We would like to thank those who have provided `contributions <https://github.com/PynPoint/PynPoint/graphs/contributors>`_ to PynPoint.
-
-The PynPoint logo was designed by `Atlas Digital <https://atlas-digital.nl>`_ and is `available <https://quanz-group.ethz.ch/research/algorithms/pynpoint.html>`_ for use in presentations.
+We would like to thank everyone who provided `contributions <https://github.com/PynPoint/PynPoint/graphs/contributors>`_ to PynPoint.
